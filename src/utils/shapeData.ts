@@ -1,6 +1,6 @@
-import { SELECTION_PADDING } from '../constants/shapes'
+import { SELECTION_PADDING } from 'constants/shapes'
 import _ from 'lodash/fp'
-import { Circle, Ellipse, Line, Point, Polygon, Rect, ShapeDrawable } from '../types/Shapes'
+import { Circle, Ellipse, Line, Picture, Point, Polygon, Rect, DrawableShape } from 'types/Shapes'
 
 const getLineBorder = (line: Line): Rect => {
   const x = Math.min(line.points[0][0], line.points[1][0]) - SELECTION_PADDING
@@ -44,6 +44,10 @@ const getRectBorder = (rect: Rect): Rect => {
   }
 }
 
+const getPictureBorder = (picture: Picture): Rect => {
+  return getRectBorder(picture)
+}
+
 const getCircleBorder = (circle: Circle): Rect => {
   return {
     x: circle.x - circle.radius - SELECTION_PADDING,
@@ -62,7 +66,7 @@ const getEllipseBorder = (ellipse: Ellipse): Rect => {
   }
 }
 
-const getShapeBorders = (marker: ShapeDrawable): Rect => {
+const getShapeBorders = (marker: DrawableShape): Rect => {
   switch (marker.type) {
     case 'line':
       return getLineBorder(marker)
@@ -74,15 +78,18 @@ const getShapeBorders = (marker: ShapeDrawable): Rect => {
       return getEllipseBorder(marker)
     case 'rect':
       return getRectBorder(marker)
+    case 'picture':
+      return getPictureBorder(marker)
   }
+  return { x: 0, y: 0, width: 0, height: 0 }
 }
 
 const getShapeCenter = (borders: Rect): Point => {
   return [borders.x + borders.width / 2, borders.y + borders.height / 2]
 }
 
-export const getShapeInfos = (marker: ShapeDrawable) => {
-  const borders = getShapeBorders(marker)
+export const getShapeInfos = (shape: DrawableShape) => {
+  const borders = getShapeBorders(shape)
   const center = getShapeCenter(borders)
   return { borders, center }
 }

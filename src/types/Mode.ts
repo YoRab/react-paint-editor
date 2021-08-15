@@ -1,6 +1,4 @@
-import { LoDashExplicitNumberArrayWrapper } from 'lodash'
-import { type } from 'os'
-import { Point, ShapeDrawable } from './Shapes'
+import { Point, DrawableShape } from './Shapes'
 
 export enum SelectionModeLib {
   'default' = 'default',
@@ -16,20 +14,20 @@ export type SelectionModeDefault = {
 export type SelectionModeResize = {
   mode: SelectionModeLib.resize
   cursorStartPosition: Point
-  originalShape: ShapeDrawable
+  originalShape: DrawableShape
   anchor: [number, number]
 }
 
 export type SelectionModeRotate = {
   mode: SelectionModeLib.rotate
   cursorStartPosition: Point
-  originalShape: ShapeDrawable
+  originalShape: DrawableShape
   center: Point
 }
 export type SelectionModeTranslate = {
   mode: SelectionModeLib.translate
   cursorStartPosition: Point
-  originalShape: ShapeDrawable
+  originalShape: DrawableShape
 }
 
 export type SelectionModeData =

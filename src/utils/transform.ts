@@ -1,47 +1,50 @@
 import { getShapeInfos } from './shapeData'
-import _ from 'lodash/fp'
-import { SELECTION_PADDING } from '../constants/shapes'
-import { SelectionModeData, SelectionModeLib, SelectionModeResize } from '../types/Mode'
+import { SELECTION_PADDING } from 'constants/shapes'
+import { SelectionModeData, SelectionModeLib, SelectionModeResize } from 'types/Mode'
 import {
-  CircleDrawable,
-  EllipseDrawable,
+  DrawableCircle,
+  DrawableEllipse,
   Point,
-  RectDrawable,
-  ShapeDrawable
-} from '../types/Shapes'
-import { getPointPositionAfterShapeTransformation } from './intersect'
+  DrawableRect,
+  DrawableShape,
+  DrawablePicture,
+  Rect
+} from 'types/Shapes'
+import { getPointPositionAfterCanvasTransformation } from './intersect'
 
 const getLengthBetweenTwoPoints = (p1: Point, p2: Point) => {
   return Math.sqrt(Math.pow(p2[0] - p1[0], 2) + Math.pow(p2[1] - p1[1], 2))
 }
 export const translateShape = (
-  shape: ShapeDrawable,
+  shape: DrawableShape,
   cursorPosition: Point,
-  originalShape: ShapeDrawable,
+  originalShape: DrawableShape,
   originalCursorPosition: Point
-): ShapeDrawable => {
+): DrawableShape => {
   return {
     ...shape,
     ...{
-      translation: [
-        originalShape.translation[0] + cursorPosition[0] - originalCursorPosition[0],
-        originalShape.translation[1] + cursorPosition[1] - originalCursorPosition[1]
+      translationBeforeRotation: [
+        originalShape.translationBeforeRotation[0] + cursorPosition[0] - originalCursorPosition[0],
+        originalShape.translationBeforeRotation[1] + cursorPosition[1] - originalCursorPosition[1]
       ]
     }
   }
 }
 
 export const rotateShape = (
-  shape: ShapeDrawable,
+  shape: DrawableShape,
   cursorPosition: Point,
-  originalShape: ShapeDrawable,
+  originalShape: DrawableShape,
   originalCursorPosition: Point,
   shapeCenter: Point
 ) => {
-  const p1x = shapeCenter[0] + originalShape.translation[0] - originalCursorPosition[0]
-  const p1y = shapeCenter[1] + originalShape.translation[1] - originalCursorPosition[1]
-  const p2x = shapeCenter[0] + originalShape.translation[0] - cursorPosition[0]
-  const p2y = shapeCenter[1] + originalShape.translation[1] - cursorPosition[1]
+  const p1x =
+    shapeCenter[0] + originalShape.translationBeforeRotation[0] - originalCursorPosition[0]
+  const p1y =
+    shapeCenter[1] + originalShape.translationBeforeRotation[1] - originalCursorPosition[1]
+  const p2x = shapeCenter[0] + originalShape.translationBeforeRotation[0] - cursorPosition[0]
+  const p2y = shapeCenter[1] + originalShape.translationBeforeRotation[1] - cursorPosition[1]
   const rotation = originalShape.rotation + Math.atan2(p2y, p2x) - Math.atan2(p1y, p1x)
   return {
     ...shape,
@@ -56,156 +59,246 @@ export const isDiagAnchor = (anchor: [number, number]) => {
 }
 
 export const resizeCircle = (
-  shape: CircleDrawable,
   cursorPosition: Point,
+  originalShape: DrawableCircle,
   selectionMode: SelectionModeResize
-): CircleDrawable => {
-  const { center } = getShapeInfos(shape)
-  const trueCenter: Point = [center[0] + shape.translation[0], center[1] + shape.translation[1]]
+): DrawableCircle => {
+  const { center, borders } = getShapeInfos(originalShape)
+
+  const cursorPositionBeforeResize = getPointPositionAfterCanvasTransformation(
+    cursorPosition,
+    originalShape.translationBeforeRotation,
+    originalShape.rotation,
+    center
+  )
+
+  const newCursorPosition = [
+    cursorPositionBeforeResize[0] - originalShape.translationOnceRotated[0],
+    cursorPositionBeforeResize[1] - originalShape.translationOnceRotated[1]
+  ]
+
+  const radius =
+    selectionMode.anchor[1] === 0.5
+      ? (selectionMode.anchor[0] === 0
+          ? borders.x +
+            borders.width -
+            newCursorPosition[0] +
+            SELECTION_PADDING * (selectionMode.anchor[0] === 0 ? -2 : 2)
+          : newCursorPosition[0] -
+            borders.x -
+            SELECTION_PADDING * (selectionMode.anchor[0] === 0 ? -2 : 2)) / 2
+      : (selectionMode.anchor[1] === 0
+          ? borders.y +
+            borders.height -
+            newCursorPosition[1] +
+            SELECTION_PADDING * (selectionMode.anchor[1] === 0 ? -2 : 2)
+          : newCursorPosition[1] -
+            borders.y -
+            SELECTION_PADDING * (selectionMode.anchor[1] === 0 ? -2 : 2)) / 2
+
+  const translationOnceRotated: Point = [
+    originalShape.translationOnceRotated[0] +
+      (originalShape.radius - radius) *
+        (selectionMode.anchor[0] === 0 ? 1 : selectionMode.anchor[0] === 0.5 ? 0 : -1),
+    originalShape.translationOnceRotated[1] +
+      (originalShape.radius - radius) *
+        (selectionMode.anchor[1] === 0 ? 1 : selectionMode.anchor[1] === 0.5 ? 0 : -1)
+  ]
 
   return {
-    ...shape,
+    ...originalShape,
     ...{
-      radius: Math.abs(
-        getLengthBetweenTwoPoints(trueCenter, cursorPosition) /
-          (isDiagAnchor(selectionMode.anchor) ? Math.sqrt(2) : 1) -
-          SELECTION_PADDING
-      )
+      translationOnceRotated,
+      radius: Math.abs(radius)
     }
   }
 }
 
 export const resizeEllipse = (
-  shape: EllipseDrawable,
   cursorPosition: Point,
+  originalShape: DrawableEllipse,
   selectionMode: SelectionModeResize
-): EllipseDrawable => {
-  const { center, borders } = getShapeInfos(shape)
-  // if (selectionMode.anchor[0] === 0.5 || selectionMode.anchor[1] === 0.5) {
-  //   const centerAfterTranslation: Point = [
-  //     center[0] + shape.translation[0],
-  //     center[1] + shape.translation[1]
-  //   ]
+): DrawableEllipse => {
+  const { center, borders } = getShapeInfos(originalShape)
 
-  //   return {
-  //     ...shape,
-  //     ...{
-  //       [selectionMode.anchor[0] === 0 || selectionMode.anchor[0] === 1 ? 'radiusX' : 'radiusY']:
-  //         Math.abs(
-  //           getLengthBetweenTwoPoints(centerAfterTranslation, cursorPosition) - SELECTION_PADDING
-  //         )
-  //     }
-  //   }
-  // }
-
-  const newCursorPosition = getPointPositionAfterShapeTransformation(
+  const cursorPositionBeforeResize = getPointPositionAfterCanvasTransformation(
     cursorPosition,
-    shape.translation,
-    shape.rotation,
+    originalShape.translationBeforeRotation,
+    originalShape.rotation,
     center
   )
+
+  const newCursorPosition = [
+    cursorPositionBeforeResize[0] - originalShape.translationOnceRotated[0],
+    cursorPositionBeforeResize[1] - originalShape.translationOnceRotated[1]
+  ]
 
   const radiusX =
     selectionMode.anchor[0] === 0.5
-      ? shape.radiusX
-      : Math.abs(
-          ((selectionMode.anchor[0] === 0 ? borders.x + borders.width : borders.x) -
+      ? originalShape.radiusX
+      : (selectionMode.anchor[0] === 0
+          ? borders.x +
+            borders.width -
             newCursorPosition[0] +
-            SELECTION_PADDING * (selectionMode.anchor[0] === 0 ? -2 : 2)) /
-            2
-        )
+            SELECTION_PADDING * (selectionMode.anchor[0] === 0 ? -2 : 2)
+          : newCursorPosition[0] -
+            borders.x -
+            SELECTION_PADDING * (selectionMode.anchor[0] === 0 ? -2 : 2)) / 2
 
-  // const radiusX =
-  //   selectionMode.anchor[0] === 0.5
-  //     ? shape.radiusX
-  //     : Math.abs(
-  //         center[0] -
-  //           newCursorPosition[0] +
-  //           SELECTION_PADDING * (selectionMode.anchor[0] === 0 ? -1 : 1)
-  //       )
+  const radiusY =
+    selectionMode.anchor[1] === 0.5
+      ? originalShape.radiusY
+      : (selectionMode.anchor[1] === 0
+          ? borders.y +
+            borders.height -
+            newCursorPosition[1] +
+            SELECTION_PADDING * (selectionMode.anchor[1] === 0 ? -2 : 2)
+          : newCursorPosition[1] -
+            borders.y -
+            SELECTION_PADDING * (selectionMode.anchor[1] === 0 ? -2 : 2)) / 2
 
-  const x = shape.x + (shape.radiusX - radiusX)
-
+  const translationOnceRotated: Point = [
+    originalShape.translationOnceRotated[0] +
+      (originalShape.radiusX - radiusX) * (selectionMode.anchor[0] === 0 ? 1 : -1),
+    originalShape.translationOnceRotated[1] +
+      (originalShape.radiusY - radiusY) * (selectionMode.anchor[1] === 0 ? 1 : -1)
+  ]
   return {
-    ...shape,
+    ...originalShape,
     ...{
-      x,
-      radiusX,
-      radiusY:
-        selectionMode.anchor[1] === 0.5
-          ? shape.radiusY
-          : Math.abs(
-              center[1] -
-                newCursorPosition[1] +
-                SELECTION_PADDING * (selectionMode.anchor[1] === 0 ? -1 : 1)
-            )
+      translationOnceRotated,
+      radiusX: Math.abs(radiusX),
+      radiusY: Math.abs(radiusY)
     }
   }
 }
 
-export const resizeRect = (
-  shape: RectDrawable,
-  cursorPosition: Point,
-  selectionMode: SelectionModeResize
-): RectDrawable => {
-  const { center } = getShapeInfos(shape)
-  if (selectionMode.anchor[0] === 0.5 || selectionMode.anchor[1] === 0.5) {
-    const centerAfterTranslation: Point = [
-      center[0] + shape.translation[0],
-      center[1] + shape.translation[1]
-    ]
-
-    return {
-      ...shape,
-      ...{
-        [selectionMode.anchor[0] === 0 || selectionMode.anchor[0] === 1 ? 'width' : 'height']:
-          2 *
-          Math.abs(
-            getLengthBetweenTwoPoints(centerAfterTranslation, cursorPosition) - SELECTION_PADDING
-          )
-      }
-    }
+export const getNormalizedSize = (originalShape: Rect, width: number, height: number) => {
+  const originalRatio = originalShape.width / originalShape.height
+  const newRatio = width / height
+  if (newRatio > originalRatio) {
+    return width > originalShape.width
+      ? [width, width / originalRatio]
+      : [height * originalRatio, height]
+  } else if (newRatio < originalRatio) {
+    return height > originalShape.height
+      ? [height * originalRatio, height]
+      : [width, width / originalRatio]
   }
+  return [width, height]
+}
+export const resizeRect = <T extends DrawableShape & Rect>(
+  cursorPosition: Point,
+  originalShape: T,
+  selectionMode: SelectionModeResize,
+  keepRatio = false
+): T => {
+  const { center, borders } = getShapeInfos(originalShape)
 
-  const newCursorPosition = getPointPositionAfterShapeTransformation(
+  const cursorPositionBeforeResize = getPointPositionAfterCanvasTransformation(
     cursorPosition,
-    shape.translation,
-    shape.rotation,
+    originalShape.translationBeforeRotation,
+    originalShape.rotation,
     center
   )
+
+  const newCursorPosition = [
+    cursorPositionBeforeResize[0] - originalShape.translationOnceRotated[0],
+    cursorPositionBeforeResize[1] - originalShape.translationOnceRotated[1]
+  ]
+
+  const newWidth =
+    selectionMode.anchor[0] === 0.5
+      ? originalShape.width
+      : selectionMode.anchor[0] === 0
+      ? borders.x +
+        borders.width -
+        newCursorPosition[0] +
+        SELECTION_PADDING * (selectionMode.anchor[0] === 0 ? -2 : 2)
+      : newCursorPosition[0] -
+        borders.x -
+        SELECTION_PADDING * (selectionMode.anchor[0] === 0 ? -2 : 2)
+
+  const newHeight =
+    selectionMode.anchor[1] === 0.5
+      ? originalShape.height
+      : selectionMode.anchor[1] === 0
+      ? borders.y +
+        borders.height -
+        newCursorPosition[1] +
+        SELECTION_PADDING * (selectionMode.anchor[1] === 0 ? -2 : 2)
+      : newCursorPosition[1] -
+        borders.y -
+        SELECTION_PADDING * (selectionMode.anchor[1] === 0 ? -2 : 2)
+
+  const [width, height] = keepRatio
+    ? getNormalizedSize(originalShape, newWidth, newHeight)
+    : [newWidth, newHeight]
+
+  const translationOnceRotated: Point = [
+    originalShape.translationOnceRotated[0] +
+      (selectionMode.anchor[0] === 0
+        ? originalShape.width - Math.max(0, width)
+        : Math.min(width, 0)),
+    originalShape.translationOnceRotated[1] +
+      (selectionMode.anchor[1] === 0
+        ? originalShape.height - Math.max(0, height)
+        : Math.min(height, 0))
+  ]
+
   return {
-    ...shape,
+    ...originalShape,
     ...{
-      radiusX: Math.abs(
-        center[0] -
-          newCursorPosition[0] +
-          SELECTION_PADDING * (selectionMode.anchor[0] === 0 ? -1 : 1)
-      ),
-      radiusY: Math.abs(
-        center[1] -
-          newCursorPosition[1] +
-          SELECTION_PADDING * (selectionMode.anchor[1] === 0 ? -1 : 1)
-      )
+      translationOnceRotated,
+      width: Math.abs(width),
+      height: Math.abs(height)
     }
   }
+}
+
+export const resizePicture = (
+  cursorPosition: Point,
+  originalShape: DrawablePicture,
+  selectionMode: SelectionModeResize
+): DrawablePicture => {
+  return resizeRect(cursorPosition, originalShape, selectionMode, true)
 }
 
 export const resizeShape = (
-  shape: ShapeDrawable,
+  shape: DrawableShape,
   cursorPosition: Point,
+  originalShape: DrawableShape,
   selectionMode: SelectionModeData
-): ShapeDrawable => {
+): DrawableShape => {
   if (shape.type === 'circle')
-    return resizeCircle(shape, cursorPosition, selectionMode as SelectionModeResize)
+    return resizeCircle(
+      cursorPosition,
+      originalShape as DrawableCircle,
+      selectionMode as SelectionModeResize
+    )
   else if (shape.type === 'ellipse')
-    return resizeEllipse(shape, cursorPosition, selectionMode as SelectionModeResize)
+    return resizeEllipse(
+      cursorPosition,
+      originalShape as DrawableEllipse,
+      selectionMode as SelectionModeResize
+    )
   else if (shape.type === 'rect')
-    return resizeRect(shape, cursorPosition, selectionMode as SelectionModeResize)
+    return resizeRect(
+      cursorPosition,
+      originalShape as DrawableRect,
+      selectionMode as SelectionModeResize
+    )
+  else if (shape.type === 'picture')
+    return resizePicture(
+      cursorPosition,
+      originalShape as DrawablePicture,
+      selectionMode as SelectionModeResize
+    )
   return shape
 }
 
 export const transformShape = (
-  shape: ShapeDrawable,
+  shape: DrawableShape,
   cursorPosition: Point,
   selectionMode: SelectionModeData
 ) => {
@@ -225,7 +318,7 @@ export const transformShape = (
       selectionMode.center
     )
   } else if (selectionMode.mode === SelectionModeLib.resize) {
-    return resizeShape(shape, cursorPosition, selectionMode)
+    return resizeShape(shape, cursorPosition, selectionMode.originalShape, selectionMode)
   }
   return shape
 }

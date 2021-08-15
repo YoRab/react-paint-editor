@@ -2,10 +2,14 @@ import {
   SELECTION_ANCHOR_SIZE,
   SELECTION_RESIZE_ANCHOR_POSITIONS,
   SELECTION_ROTATED_ANCHOR_POSITION
-} from '../constants/shapes'
-import { HoverModeData, SelectionModeLib } from '../types/Mode'
-import { Point, Rect, ShapeDrawable } from '../types/Shapes'
+} from 'constants/shapes'
+import { HoverModeData, SelectionModeLib } from 'types/Mode'
+import { Point, Rect, DrawableShape } from 'types/Shapes'
 import { getShapeInfos } from './shapeData'
+
+export const getCursorPosition = (e: MouseEvent, canvas: HTMLCanvasElement | null): Point => {
+  return [e.clientX - (canvas?.offsetLeft ?? 0), e.clientY - (canvas?.offsetTop ?? 0)]
+}
 
 const isPointInsideRect = (rect: Rect, point: Point) => {
   return (
@@ -16,14 +20,14 @@ const isPointInsideRect = (rect: Rect, point: Point) => {
   )
 }
 
-export const getPointPositionAfterShapeTransformation = (
+export const getPointPositionAfterCanvasTransformation = (
   position: Point,
-  shapeTranslation: Point,
+  shapeTranslationBeforeRotation: Point,
   shapeRotation: number,
   shapeCenter: Point
 ): Point => {
-  const newX = position[0] - shapeCenter[0] - shapeTranslation[0]
-  const newY = position[1] - shapeCenter[1] - shapeTranslation[1]
+  const newX = position[0] - shapeCenter[0] - shapeTranslationBeforeRotation[0]
+  const newY = position[1] - shapeCenter[1] - shapeTranslationBeforeRotation[1]
   const rotatedY = newY * Math.cos(shapeRotation) - newX * Math.sin(shapeRotation)
   const rotatedX = newY * Math.sin(shapeRotation) + newX * Math.cos(shapeRotation)
 
@@ -33,15 +37,19 @@ export const getPointPositionAfterShapeTransformation = (
 }
 
 export const checkPositionIntersection = (
-  shape: ShapeDrawable,
+  shape: DrawableShape,
   position: Point,
   checkAnchors = false
 ): false | HoverModeData => {
-  const { borders, center } = getShapeInfos(shape)
-
-  const newPosition = getPointPositionAfterShapeTransformation(
+  const { borders: bordersBeforeResizing, center } = getShapeInfos(shape)
+  const borders = {
+    ...bordersBeforeResizing,
+    x: bordersBeforeResizing.x + shape.translationOnceRotated[0],
+    y: bordersBeforeResizing.y + shape.translationOnceRotated[1]
+  }
+  const newPosition = getPointPositionAfterCanvasTransformation(
     position,
-    shape.translation,
+    shape.translationBeforeRotation,
     shape.rotation,
     center
   )

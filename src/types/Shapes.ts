@@ -1,51 +1,71 @@
-type Shape = {
-  filled?: boolean
+export type StyledShape = {
+  style?: {
+    fillColor?: string
+    strokeColor?: string
+    lineWidth?: number
+  }
+}
+
+export enum ShapeType {
+  'rect' = 'rect',
+  'line' = 'line',
+  'polygon' = 'polygon',
+  'circle' = 'circle',
+  'ellipse' = 'ellipse',
+  'picture' = 'picture'
 }
 
 export type Point = [number, number]
 
 type Drawable = {
   id: string
-  translation: Point
+  translationOnceRotated: Point
+  translationBeforeRotation: Point
   rotation: number
 }
 
-export type Rect = Shape & {
+export type Rect = StyledShape & {
   x: number
   y: number
   width: number
   height: number
 }
 
-export type Line = Shape & {
+export type Picture = Rect & {
+  img: CanvasImageSource
+}
+
+export type Line = StyledShape & {
   points: [Point, Point]
 }
 
-export type Polygon = Shape & {
+export type Polygon = StyledShape & {
   points: Point[]
 }
 
-export type Circle = Shape & {
+export type Circle = StyledShape & {
   x: number
   y: number
   radius: number
 }
 
-export type Ellipse = Shape & {
+export type Ellipse = StyledShape & {
   x: number
   y: number
   radiusX: number
   radiusY: number
 }
-export type RectDrawable = Rect & Drawable & { type: 'rect' }
-export type LineDrawable = Line & Drawable & { type: 'line' }
-export type PolygonDrawable = Polygon & Drawable & { type: 'polygon' }
-export type CircleDrawable = Circle & Drawable & { type: 'circle' }
-export type EllipseDrawable = Ellipse & Drawable & { type: 'ellipse' }
+export type DrawableRect = Rect & Drawable & { type: ShapeType.rect }
+export type DrawablePicture = Picture & Drawable & { type: ShapeType.picture }
+export type DrawableLine = Line & Drawable & { type: ShapeType.line }
+export type DrawablePolygon = Polygon & Drawable & { type: ShapeType.polygon }
+export type DrawableCircle = Circle & Drawable & { type: ShapeType.circle }
+export type DrawableEllipse = Ellipse & Drawable & { type: ShapeType.ellipse }
 
-export type ShapeDrawable =
-  | RectDrawable
-  | LineDrawable
-  | PolygonDrawable
-  | CircleDrawable
-  | EllipseDrawable
+export type DrawableShape =
+  | DrawableRect
+  | DrawablePicture
+  | DrawableLine
+  | DrawablePolygon
+  | DrawableCircle
+  | DrawableEllipse

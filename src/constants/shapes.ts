@@ -1,5 +1,5 @@
-export const SELECTION_PADDING = 20
-export const SELECTION_ANCHOR_SIZE = 12
+export const SELECTION_PADDING = 5
+export const SELECTION_ANCHOR_SIZE = 20
 export const SELECTION_ROTATED_ANCHOR_POSITION = 20
 export const SELECTION_RESIZE_ANCHOR_POSITIONS: [number, number][] = [
   [0, 0],

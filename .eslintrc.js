@@ -16,13 +16,16 @@ module.exports = {
     project: './tsconfig.json',
     tsconfigRootDir: './'
   },
-  plugins: ['@typescript-eslint', 'import'],
+  plugins: ['@typescript-eslint', 'import', 'react-hooks'],
   extends: [
-    // 'plugin:@typescript-eslint/recommended',
-    // 'plugin:@typescript-eslint/recommended-requiring-type-checking',
+    'plugin:@typescript-eslint/recommended',
+    'plugin:@typescript-eslint/recommended-requiring-type-checking',
     'prettier'
   ],
   rules: {
-    'no-unsafe-assignment': 'off'
+    '@typescript-eslint/no-unsafe-assignment': 'off',
+    '@typescript-eslint/explicit-module-boundary-types': 'off',
+    'react-hooks/rules-of-hooks': 'error', // Vérifie les règles des Hooks
+    'react-hooks/exhaustive-deps': 'warn' // Vérifie les tableaux de dépendances
   }
 }

@@ -2,8 +2,8 @@ import _ from 'lodash/fp'
 import React, { useCallback } from 'react'
 import { ReactSortable } from 'react-sortablejs'
 import styled from 'styled-components'
-import map from '../../types/lodash'
-import { ShapeDrawable } from '../../types/Shapes'
+import map from 'types/lodash'
+import { DrawableShape } from 'types/Shapes'
 
 const StyledLayouts = styled(ReactSortable)`
   display: inline-block;
@@ -27,29 +27,29 @@ const StyledRemove = styled.span`
 `
 
 type LayoutType = {
-  shape: ShapeDrawable
+  shape: DrawableShape
   selected: boolean
-  handleRemove: (shape: ShapeDrawable) => void
-  handleSelect: (shape: ShapeDrawable) => void
+  handleRemove: (shape: DrawableShape) => void
+  handleSelect: (shape: DrawableShape) => void
 }
 
 const Layout = ({ shape, selected, handleRemove, handleSelect }: LayoutType) => {
   const onRemove = useCallback(
-    e => {
+    (e: React.MouseEvent<HTMLElement>) => {
       e.preventDefault()
       e.stopPropagation()
       handleRemove(shape)
     },
-    [shape]
+    [shape, handleRemove]
   )
 
   const onSelect = useCallback(
-    e => {
+    (e: React.MouseEvent<HTMLElement>) => {
       e.preventDefault()
       e.stopPropagation()
       handleSelect(shape)
     },
-    [shape]
+    [shape, handleSelect]
   )
 
   return (
@@ -61,28 +61,34 @@ const Layout = ({ shape, selected, handleRemove, handleSelect }: LayoutType) => 
 }
 
 type LayoutsType = {
-  shapes: ShapeDrawable[]
-  setMarkers: React.Dispatch<React.SetStateAction<ShapeDrawable[]>>
-  selectedShape: ShapeDrawable | undefined
-  setSelectedShape: React.Dispatch<React.SetStateAction<ShapeDrawable | undefined>>
+  shapes: DrawableShape[]
+  setMarkers: React.Dispatch<React.SetStateAction<DrawableShape[]>>
+  selectedShape: DrawableShape | undefined
+  setSelectedShape: React.Dispatch<React.SetStateAction<DrawableShape | undefined>>
 }
 
 const Layouts = ({ shapes, setMarkers, selectedShape, setSelectedShape }: LayoutsType) => {
-  const handleRemove = useCallback((shape: ShapeDrawable) => {
-    setSelectedShape(prevSelectedShape => {
-      return prevSelectedShape?.id === shape.id ? undefined : prevSelectedShape
-    })
-    setMarkers(prevMakers => _.remove({ id: shape.id }, prevMakers))
-  }, [])
+  const handleRemove = useCallback(
+    (shape: DrawableShape) => {
+      setSelectedShape(prevSelectedShape => {
+        return prevSelectedShape?.id === shape.id ? undefined : prevSelectedShape
+      })
+      setMarkers(prevMakers => _.remove({ id: shape.id }, prevMakers))
+    },
+    [setMarkers, setSelectedShape]
+  )
 
-  const handleSelect = useCallback((shape: ShapeDrawable) => {
-    setSelectedShape(shape)
-  }, [])
+  const handleSelect = useCallback(
+    (shape: DrawableShape) => {
+      setSelectedShape(shape)
+    },
+    [setSelectedShape]
+  )
 
   return (
     <StyledLayouts list={shapes} setList={setMarkers}>
       {map(
-        (shape: ShapeDrawable) => (
+        (shape: DrawableShape) => (
           <Layout
             key={shape.id}
             shape={shape}
