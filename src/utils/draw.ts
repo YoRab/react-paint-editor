@@ -6,7 +6,7 @@ import {
 import { Circle, Ellipse, Line, Picture, Polygon, Rect, DrawableShape } from 'types/Shapes'
 import { getShapeInfos } from './shapeData'
 
-export const applyShapeTransformations = (ctx: CanvasRenderingContext2D, marker: DrawableShape) => {
+const applyShapeTransformations = (ctx: CanvasRenderingContext2D, marker: DrawableShape) => {
   ctx.save()
   ctx.translate(marker.translationBeforeRotation[0], marker.translationBeforeRotation[1])
   if (marker.rotation !== 0) {
@@ -19,7 +19,7 @@ export const applyShapeTransformations = (ctx: CanvasRenderingContext2D, marker:
   ctx.translate(marker.translationOnceRotated[0], marker.translationOnceRotated[1])
 }
 
-export const restoreShapeTransformations = (ctx: CanvasRenderingContext2D) => {
+const restoreShapeTransformations = (ctx: CanvasRenderingContext2D) => {
   ctx.restore()
 }
 

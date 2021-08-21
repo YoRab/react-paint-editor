@@ -88,7 +88,7 @@ const Layouts = ({ shapes, setMarkers, selectedShape, setSelectedShape }: Layout
   return (
     <StyledLayouts list={shapes} setList={setMarkers}>
       {map(
-        (shape: DrawableShape) => (
+        shape => (
           <Layout
             key={shape.id}
             shape={shape}
