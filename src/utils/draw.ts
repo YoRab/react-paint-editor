@@ -13,7 +13,6 @@ const applyShapeTransformations = (ctx: CanvasRenderingContext2D, marker: Drawab
     const { center } = getShapeInfos(marker)
     ctx.translate(center[0], center[1])
     ctx.rotate(marker.rotation)
-
     ctx.translate(-center[0], -center[1])
   }
   ctx.translate(marker.translationOnceRotated[0], marker.translationOnceRotated[1])
