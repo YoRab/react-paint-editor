@@ -71,8 +71,8 @@ export const checkPositionIntersection = (
   const { borders: bordersBeforeResizing, center } = getShapeInfos(shape)
   const borders = {
     ...bordersBeforeResizing,
-    x: bordersBeforeResizing.x + shape.translationOnceRotated[0],
-    y: bordersBeforeResizing.y + shape.translationOnceRotated[1]
+    x: bordersBeforeResizing.x,
+    y: bordersBeforeResizing.y
   }
   const newPosition = getPointPositionAfterCanvasTransformation(
     position,

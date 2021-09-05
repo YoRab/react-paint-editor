@@ -19,7 +19,6 @@ export type Point = [number, number]
 
 type Drawable = {
   id: string
-  translationOnceRotated: Point
   translation: Point
   rotation: number
 }

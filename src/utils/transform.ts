@@ -83,10 +83,7 @@ export const resizeCircle = (
     center
   )
 
-  const newCursorPosition = [
-    cursorPositionBeforeResize[0] - originalShape.translationOnceRotated[0],
-    cursorPositionBeforeResize[1] - originalShape.translationOnceRotated[1]
-  ]
+  const newCursorPosition = [cursorPositionBeforeResize[0], cursorPositionBeforeResize[1]]
 
   const scaledRadius =
     selectionMode.anchor[1] === 0.5
@@ -153,10 +150,7 @@ export const resizeEllipse = (
     center
   )
 
-  const newCursorPosition = [
-    cursorPositionBeforeResize[0] - originalShape.translationOnceRotated[0],
-    cursorPositionBeforeResize[1] - originalShape.translationOnceRotated[1]
-  ]
+  const newCursorPosition = [cursorPositionBeforeResize[0], cursorPositionBeforeResize[1]]
 
   const scaledRadiusX =
     selectionMode.anchor[0] === 0.5

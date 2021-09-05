@@ -18,10 +18,7 @@ export const getNewSelectionData = (
     }
   } else if (hoverMode.mode === 'rotate') {
     const { center: centerBeforeResize } = getShapeInfos(selectedShape)
-    const center: Point = [
-      centerBeforeResize[0] - selectedShape.translationOnceRotated[0],
-      centerBeforeResize[1] - selectedShape.translationOnceRotated[1]
-    ]
+    const center: Point = [centerBeforeResize[0], centerBeforeResize[1]]
     return {
       mode: SelectionModeLib.rotate,
       cursorStartPosition: cursorPosition,
@@ -54,7 +51,6 @@ export const createPicture = (file: unknown, maxPictureSize: number) => {
         width: imgRatio < 1 ? imgRatio * maxSize : maxSize,
         height: imgRatio > 1 ? maxSize / imgRatio : maxSize,
         img,
-        translationOnceRotated: [0, 0],
         translation: [0, 0],
         rotation: 0
       }
@@ -87,7 +83,6 @@ export const createShape = (
         y: cursorPosition[1],
         width: 0,
         height: 0,
-        translationOnceRotated: [0, 0],
         translation: [0, 0],
         rotation: 0,
         style: defaultConf.style
@@ -100,7 +95,6 @@ export const createShape = (
         y: cursorPosition[1],
         radiusX: 0,
         radiusY: 0,
-        translationOnceRotated: [0, 0],
         translation: [0, 0],
         rotation: 0,
         style: defaultConf.style
@@ -113,7 +107,6 @@ export const createShape = (
         x: cursorPosition[0],
         y: cursorPosition[1],
         radius: 0,
-        translationOnceRotated: [0, 0],
         translation: [0, 0],
         rotation: 0,
         style: defaultConf.style

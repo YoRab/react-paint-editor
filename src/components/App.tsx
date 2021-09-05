@@ -35,8 +35,7 @@ const App = () => {
     //     [20, 30],
     //     [50, 100]
     //   ],
-    //   translationOnceRotated: [0, 0],
-    //   translationBeforeRotation: [0, 0],
+    //   translation: [0, 0],
     //   rotation: 0
     // },
     // {
@@ -49,8 +48,7 @@ const App = () => {
     //     [20, 40],
     //     [150, 200]
     //   ],
-    //   translationOnceRotated: [0, 0],
-    //   translationBeforeRotation: [0, 0],
+    //   translation: [0, 0],
     //   rotation: 0
     // },
     // {
@@ -62,8 +60,7 @@ const App = () => {
     //     [120, 40],
     //     [80, 80]
     //   ],
-    //   translationOnceRotated: [0, 0],
-    //   translationBeforeRotation: [0, 0],
+    //   translation: [0, 0],
     //   rotation: 0
     // }
   ])
