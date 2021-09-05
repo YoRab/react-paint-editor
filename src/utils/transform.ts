@@ -8,13 +8,30 @@ import {
   DrawableRect,
   DrawableShape,
   DrawablePicture,
-  Rect
+  Rect,
+  Ellipse,
+  Circle
 } from 'types/Shapes'
-import { getPointPositionAfterCanvasTransformation } from './intersect'
+import {
+  getPointPositionAfterCanvasTransformation,
+  getPointPositionBeforeCanvasTransformation
+} from './intersect'
 
-const getLengthBetweenTwoPoints = (p1: Point, p2: Point) => {
-  return Math.sqrt(Math.pow(p2[0] - p1[0], 2) + Math.pow(p2[1] - p1[1], 2))
+export const getNormalizedSize = (originalShape: Rect, width: number, height: number) => {
+  const originalRatio = originalShape.width / originalShape.height
+  const newRatio = width / height
+  if (newRatio > originalRatio) {
+    return width > originalShape.width
+      ? [width, width / originalRatio]
+      : [height * originalRatio, height]
+  } else if (newRatio < originalRatio) {
+    return height > originalShape.height
+      ? [height * originalRatio, height]
+      : [width, width / originalRatio]
+  }
+  return [width, height]
 }
+
 export const translateShape = (
   shape: DrawableShape,
   cursorPosition: Point,
@@ -24,9 +41,9 @@ export const translateShape = (
   return {
     ...shape,
     ...{
-      translationBeforeRotation: [
-        originalShape.translationBeforeRotation[0] + cursorPosition[0] - originalCursorPosition[0],
-        originalShape.translationBeforeRotation[1] + cursorPosition[1] - originalCursorPosition[1]
+      translation: [
+        originalShape.translation[0] + cursorPosition[0] - originalCursorPosition[0],
+        originalShape.translation[1] + cursorPosition[1] - originalCursorPosition[1]
       ]
     }
   }
@@ -39,12 +56,10 @@ export const rotateShape = (
   originalCursorPosition: Point,
   shapeCenter: Point
 ) => {
-  const p1x =
-    shapeCenter[0] + originalShape.translationBeforeRotation[0] - originalCursorPosition[0]
-  const p1y =
-    shapeCenter[1] + originalShape.translationBeforeRotation[1] - originalCursorPosition[1]
-  const p2x = shapeCenter[0] + originalShape.translationBeforeRotation[0] - cursorPosition[0]
-  const p2y = shapeCenter[1] + originalShape.translationBeforeRotation[1] - cursorPosition[1]
+  const p1x = shapeCenter[0] + originalShape.translation[0] - originalCursorPosition[0]
+  const p1y = shapeCenter[1] + originalShape.translation[1] - originalCursorPosition[1]
+  const p2x = shapeCenter[0] + originalShape.translation[0] - cursorPosition[0]
+  const p2y = shapeCenter[1] + originalShape.translation[1] - cursorPosition[1]
   const rotation = originalShape.rotation + Math.atan2(p2y, p2x) - Math.atan2(p1y, p1x)
   return {
     ...shape,
@@ -52,10 +67,6 @@ export const rotateShape = (
       rotation
     }
   }
-}
-
-export const isDiagAnchor = (anchor: [number, number]) => {
-  return (anchor[0] === 0 || anchor[0] === 1) && (anchor[1] === 0 || anchor[1] === 1)
 }
 
 export const resizeCircle = (
@@ -67,7 +78,7 @@ export const resizeCircle = (
 
   const cursorPositionBeforeResize = getPointPositionAfterCanvasTransformation(
     cursorPosition,
-    originalShape.translationBeforeRotation,
+    originalShape.translation,
     originalShape.rotation,
     center
   )
@@ -77,7 +88,7 @@ export const resizeCircle = (
     cursorPositionBeforeResize[1] - originalShape.translationOnceRotated[1]
   ]
 
-  const radius =
+  const scaledRadius =
     selectionMode.anchor[1] === 0.5
       ? (selectionMode.anchor[0] === 0
           ? borders.x +
@@ -96,20 +107,34 @@ export const resizeCircle = (
             borders.y -
             SELECTION_PADDING * (selectionMode.anchor[1] === 0 ? -2 : 2)) / 2
 
-  const translationOnceRotated: Point = [
-    originalShape.translationOnceRotated[0] +
-      (originalShape.radius - radius) *
-        (selectionMode.anchor[0] === 0 ? 1 : selectionMode.anchor[0] === 0.5 ? 0 : -1),
-    originalShape.translationOnceRotated[1] +
-      (originalShape.radius - radius) *
-        (selectionMode.anchor[1] === 0 ? 1 : selectionMode.anchor[1] === 0.5 ? 0 : -1)
-  ]
-
-  return {
+  const shapeWithNewDimensions = {
     ...originalShape,
     ...{
-      translationOnceRotated,
-      radius: Math.abs(radius)
+      radius: Math.abs(scaledRadius)
+    }
+  }
+  const { center: shapeWithNewDimensionsCenter } = getShapeInfos(shapeWithNewDimensions)
+
+  const [oppTrueX, oppTrueY] = getCircleOppositeAnchorAbsolutePosition(
+    selectionMode.anchor,
+    center,
+    originalShape
+  )
+
+  const [newOppTrueX, newOppTrueY] = getCircleOppositeAnchorAbsolutePosition(
+    selectionMode.anchor,
+    shapeWithNewDimensionsCenter,
+    shapeWithNewDimensions,
+    [scaledRadius < 0, scaledRadius < 0]
+  )
+
+  return {
+    ...shapeWithNewDimensions,
+    ...{
+      translation: [
+        originalShape.translation[0] - (newOppTrueX - oppTrueX),
+        originalShape.translation[1] - (newOppTrueY - oppTrueY)
+      ]
     }
   }
 }
@@ -123,7 +148,7 @@ export const resizeEllipse = (
 
   const cursorPositionBeforeResize = getPointPositionAfterCanvasTransformation(
     cursorPosition,
-    originalShape.translationBeforeRotation,
+    originalShape.translation,
     originalShape.rotation,
     center
   )
@@ -133,7 +158,7 @@ export const resizeEllipse = (
     cursorPositionBeforeResize[1] - originalShape.translationOnceRotated[1]
   ]
 
-  const radiusX =
+  const scaledRadiusX =
     selectionMode.anchor[0] === 0.5
       ? originalShape.radiusX
       : (selectionMode.anchor[0] === 0
@@ -145,7 +170,7 @@ export const resizeEllipse = (
             borders.x -
             SELECTION_PADDING * (selectionMode.anchor[0] === 0 ? -2 : 2)) / 2
 
-  const radiusY =
+  const scaledRadiusY =
     selectionMode.anchor[1] === 0.5
       ? originalShape.radiusY
       : (selectionMode.anchor[1] === 0
@@ -157,36 +182,39 @@ export const resizeEllipse = (
             borders.y -
             SELECTION_PADDING * (selectionMode.anchor[1] === 0 ? -2 : 2)) / 2
 
-  const translationOnceRotated: Point = [
-    originalShape.translationOnceRotated[0] +
-      (originalShape.radiusX - radiusX) * (selectionMode.anchor[0] === 0 ? 1 : -1),
-    originalShape.translationOnceRotated[1] +
-      (originalShape.radiusY - radiusY) * (selectionMode.anchor[1] === 0 ? 1 : -1)
-  ]
-  return {
+  const shapeWithNewDimensions = {
     ...originalShape,
     ...{
-      translationOnceRotated,
-      radiusX: Math.abs(radiusX),
-      radiusY: Math.abs(radiusY)
+      radiusX: Math.abs(scaledRadiusX),
+      radiusY: Math.abs(scaledRadiusY)
+    }
+  }
+  const { center: shapeWithNewDimensionsCenter } = getShapeInfos(shapeWithNewDimensions)
+
+  const [oppTrueX, oppTrueY] = getEllipseOppositeAnchorAbsolutePosition(
+    selectionMode.anchor,
+    center,
+    originalShape
+  )
+
+  const [newOppTrueX, newOppTrueY] = getEllipseOppositeAnchorAbsolutePosition(
+    selectionMode.anchor,
+    shapeWithNewDimensionsCenter,
+    shapeWithNewDimensions,
+    [scaledRadiusX < 0, scaledRadiusY < 0]
+  )
+
+  return {
+    ...shapeWithNewDimensions,
+    ...{
+      translation: [
+        originalShape.translation[0] - (newOppTrueX - oppTrueX),
+        originalShape.translation[1] - (newOppTrueY - oppTrueY)
+      ]
     }
   }
 }
 
-export const getNormalizedSize = (originalShape: Rect, width: number, height: number) => {
-  const originalRatio = originalShape.width / originalShape.height
-  const newRatio = width / height
-  if (newRatio > originalRatio) {
-    return width > originalShape.width
-      ? [width, width / originalRatio]
-      : [height * originalRatio, height]
-  } else if (newRatio < originalRatio) {
-    return height > originalShape.height
-      ? [height * originalRatio, height]
-      : [width, width / originalRatio]
-  }
-  return [width, height]
-}
 export const resizeRect = <T extends DrawableShape & Rect>(
   cursorPosition: Point,
   originalShape: T,
@@ -197,63 +225,151 @@ export const resizeRect = <T extends DrawableShape & Rect>(
 
   const cursorPositionBeforeResize = getPointPositionAfterCanvasTransformation(
     cursorPosition,
-    originalShape.translationBeforeRotation,
+    originalShape.translation,
     originalShape.rotation,
     center
   )
 
-  const newCursorPosition = [
-    cursorPositionBeforeResize[0] - originalShape.translationOnceRotated[0],
-    cursorPositionBeforeResize[1] - originalShape.translationOnceRotated[1]
-  ]
-
-  const newWidth =
+  const scaledWidth =
     selectionMode.anchor[0] === 0.5
       ? originalShape.width
       : selectionMode.anchor[0] === 0
       ? borders.x +
         borders.width -
-        newCursorPosition[0] +
+        cursorPositionBeforeResize[0] +
         SELECTION_PADDING * (selectionMode.anchor[0] === 0 ? -2 : 2)
-      : newCursorPosition[0] -
+      : cursorPositionBeforeResize[0] -
         borders.x -
         SELECTION_PADDING * (selectionMode.anchor[0] === 0 ? -2 : 2)
 
-  const newHeight =
+  const scaledHeight =
     selectionMode.anchor[1] === 0.5
       ? originalShape.height
       : selectionMode.anchor[1] === 0
       ? borders.y +
         borders.height -
-        newCursorPosition[1] +
+        cursorPositionBeforeResize[1] +
         SELECTION_PADDING * (selectionMode.anchor[1] === 0 ? -2 : 2)
-      : newCursorPosition[1] -
+      : cursorPositionBeforeResize[1] -
         borders.y -
         SELECTION_PADDING * (selectionMode.anchor[1] === 0 ? -2 : 2)
 
-  const [width, height] = keepRatio
-    ? getNormalizedSize(originalShape, newWidth, newHeight)
-    : [newWidth, newHeight]
+  const [widthWithRatio, heightWithRatio] = keepRatio
+    ? getNormalizedSize(originalShape, scaledWidth, scaledHeight)
+    : [scaledWidth, scaledHeight]
 
-  const translationOnceRotated: Point = [
-    originalShape.translationOnceRotated[0] +
-      (selectionMode.anchor[0] === 0
-        ? originalShape.width - Math.max(0, width)
-        : Math.min(width, 0)),
-    originalShape.translationOnceRotated[1] +
-      (selectionMode.anchor[1] === 0
-        ? originalShape.height - Math.max(0, height)
-        : Math.min(height, 0))
-  ]
-
-  return {
+  const shapeWithNewDimensions = {
     ...originalShape,
     ...{
-      translationOnceRotated,
-      width: Math.abs(width),
-      height: Math.abs(height)
+      width: Math.abs(widthWithRatio),
+      height: Math.abs(heightWithRatio)
     }
   }
+  const { center: shapeWithNewDimensionsCenter } = getShapeInfos(shapeWithNewDimensions)
+
+  const [oppTrueX, oppTrueY] = getRectOppositeAnchorAbsolutePosition(
+    selectionMode.anchor,
+    center,
+    originalShape
+  )
+
+  const [newOppTrueX, newOppTrueY] = getRectOppositeAnchorAbsolutePosition(
+    selectionMode.anchor,
+    shapeWithNewDimensionsCenter,
+    shapeWithNewDimensions,
+    [widthWithRatio < 0, heightWithRatio < 0]
+  )
+
+  return {
+    ...shapeWithNewDimensions,
+    ...{
+      translation: [
+        originalShape.translation[0] - (newOppTrueX - oppTrueX),
+        originalShape.translation[1] - (newOppTrueY - oppTrueY)
+      ]
+    }
+  }
+}
+
+const getRectOppositeAnchorAbsolutePosition = <T extends DrawableShape & Rect>(
+  anchor: Point,
+  center: Point,
+  shape: T,
+  [negW, negH] = [false, false]
+) => {
+  const oppositeX =
+    (anchor[0] === 0.5
+      ? shape.x + shape.width / 2
+      : anchor[0] === 0
+      ? shape.x + (negW ? 0 : shape.width)
+      : shape.x + (negW ? shape.width : 0)) + shape.translation[0]
+  const oppositeY =
+    (anchor[1] === 0.5
+      ? shape.y + shape.height / 2
+      : anchor[1] === 0
+      ? shape.y + (negH ? 0 : shape.height)
+      : shape.y + (negH ? shape.height : 0)) + shape.translation[1]
+
+  return getPointPositionBeforeCanvasTransformation(
+    [oppositeX, oppositeY],
+    shape.translation,
+    shape.rotation,
+    center
+  )
+}
+
+const getEllipseOppositeAnchorAbsolutePosition = <T extends DrawableShape & Ellipse>(
+  anchor: Point,
+  center: Point,
+  shape: T,
+  [negW, negH] = [false, false]
+) => {
+  const oppositeX =
+    (anchor[0] === 0.5
+      ? shape.x + shape.radiusX / 2
+      : anchor[0] === 0
+      ? shape.x + (negW ? -shape.radiusX : shape.radiusX)
+      : shape.x + (negW ? shape.radiusX : -shape.radiusX)) + shape.translation[0]
+  const oppositeY =
+    (anchor[1] === 0.5
+      ? shape.y + shape.radiusY / 2
+      : anchor[1] === 0
+      ? shape.y + (negH ? -shape.radiusY : shape.radiusY)
+      : shape.y + (negH ? shape.radiusY : -shape.radiusY)) + shape.translation[1]
+
+  return getPointPositionBeforeCanvasTransformation(
+    [oppositeX, oppositeY],
+    shape.translation,
+    shape.rotation,
+    center
+  )
+}
+
+const getCircleOppositeAnchorAbsolutePosition = <T extends DrawableShape & Circle>(
+  anchor: Point,
+  center: Point,
+  shape: T,
+  [negW, negH] = [false, false]
+) => {
+  const oppositeX =
+    (anchor[0] === 0.5
+      ? shape.x
+      : anchor[0] === 0
+      ? shape.x + (negW ? -shape.radius : shape.radius)
+      : shape.x + (negW ? shape.radius : -shape.radius)) + shape.translation[0]
+  const oppositeY =
+    (anchor[1] === 0.5
+      ? shape.y
+      : anchor[1] === 0
+      ? shape.y + (negH ? -shape.radius : shape.radius)
+      : shape.y + (negH ? shape.radius : -shape.radius)) + shape.translation[1]
+
+  return getPointPositionBeforeCanvasTransformation(
+    [oppositeX, oppositeY],
+    shape.translation,
+    shape.rotation,
+    center
+  )
 }
 
 export const resizePicture = (

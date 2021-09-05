@@ -26,7 +26,7 @@ const drawCanvas = (
 const throttledDrawCanvas = _.throttle(FRAMERATE_DRAW, drawCanvas)
 
 const handleSelection = (
-  e: any,
+  e: MouseEvent,
   canvasRef: React.RefObject<HTMLCanvasElement>,
   selectedShape: DrawableShape | undefined,
   selectionMode: SelectionModeData,
@@ -85,6 +85,7 @@ type DrawerType = {
   width?: number
   height?: number
   shapes: DrawableShape[]
+  saveShape: () => void
   setShapes: React.Dispatch<React.SetStateAction<DrawableShape[]>>
   selectedShape: DrawableShape | undefined
   setSelectedShape: React.Dispatch<React.SetStateAction<DrawableShape | undefined>>
@@ -100,6 +101,7 @@ const Canvas = ({
   setShapes,
   selectedShape,
   setSelectedShape,
+  saveShape,
   activeTool,
   setActiveTool,
   defaultConf
@@ -113,7 +115,10 @@ const Canvas = ({
 
   const handleMouseDown = useCallback(
     e => {
+      // eslint-disable-next-line
+      // e.preventDefault()
       const cursorPosition = getCursorPosition(e, canvasRef.current)
+
       if (activeTool === undefined) {
         const { shape, mode } = selectShape(shapes, cursorPosition, selectedShape, hoverMode)
         setSelectedShape(shape)
@@ -144,12 +149,15 @@ const Canvas = ({
     ]
   )
 
-  const handleMouseUp = useCallback(e => {
+  const handleMouseUp = useCallback(() => {
     setSelectionMode({ mode: SelectionModeLib.default })
-  }, [])
+    saveShape()
+  }, [setSelectionMode, saveShape])
 
   const handleMouseMove = useCallback(
     e => {
+      // eslint-disable-next-line
+      // e.preventDefault()
       throttledHandleSelection(
         e,
         canvasRef,

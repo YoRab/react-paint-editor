@@ -39,7 +39,7 @@ export const getNewSelectionData = (
   return undefined
 }
 
-export const createPicture = (file: any, maxPictureSize: number) => {
+export const createPicture = (file: unknown, maxPictureSize: number) => {
   return new Promise<DrawablePicture>((resolve, reject) => {
     const img = new Image()
     img.onload = () => {
@@ -55,7 +55,7 @@ export const createPicture = (file: any, maxPictureSize: number) => {
         height: imgRatio > 1 ? maxSize / imgRatio : maxSize,
         img,
         translationOnceRotated: [0, 0],
-        translationBeforeRotation: [0, 0],
+        translation: [0, 0],
         rotation: 0
       }
       resolve(pictureShape)
@@ -88,7 +88,7 @@ export const createShape = (
         width: 0,
         height: 0,
         translationOnceRotated: [0, 0],
-        translationBeforeRotation: [0, 0],
+        translation: [0, 0],
         rotation: 0,
         style: defaultConf.style
       }
@@ -101,7 +101,7 @@ export const createShape = (
         radiusX: 0,
         radiusY: 0,
         translationOnceRotated: [0, 0],
-        translationBeforeRotation: [0, 0],
+        translation: [0, 0],
         rotation: 0,
         style: defaultConf.style
       }
@@ -114,7 +114,7 @@ export const createShape = (
         y: cursorPosition[1],
         radius: 0,
         translationOnceRotated: [0, 0],
-        translationBeforeRotation: [0, 0],
+        translation: [0, 0],
         rotation: 0,
         style: defaultConf.style
       }

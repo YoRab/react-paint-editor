@@ -73,6 +73,7 @@ const PictureTool = ({
 
 type ToolboxType = {
   activeTool: React.SetStateAction<ShapeType | undefined>
+  cancelMove: () => void
   setActiveTool: (tool: ShapeType | undefined) => void
   setShapes: React.Dispatch<React.SetStateAction<DrawableShape[]>>
   setSelectedShape: React.Dispatch<React.SetStateAction<DrawableShape | undefined>>
@@ -82,6 +83,7 @@ type ToolboxType = {
 const Toolbox = ({
   activeTool,
   setActiveTool,
+  cancelMove,
   setShapes,
   setSelectedShape,
   maxPictureSize = 300
@@ -96,6 +98,7 @@ const Toolbox = ({
         isActive={activeTool === undefined}
         setActive={setActiveTool}
       />
+      <Tool type={undefined} lib="Annuler" isActive={false} setActive={cancelMove} />
       {_.map(
         toolType => (
           <Tool
