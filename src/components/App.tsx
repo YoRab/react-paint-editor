@@ -115,6 +115,11 @@ const App = () => {
     })
   }, [])
 
+  const clearCanvas = useCallback(() => {
+    setSelectedShape(undefined)
+    setSavedShapes([[]])
+  }, [])
+
   const selectTool = useCallback((tool: ShapeType | undefined) => {
     setActiveTool(tool)
     setSelectedShape(undefined)
@@ -126,14 +131,17 @@ const App = () => {
     })
   }, [savedShapes])
 
+  const hasMoveToCancel = savedShapes.length > 1 || savedShapes[0].length > 0
+
   return (
     <StyledApp>
       <Toolbox
         activeTool={activeTool}
+        clearCanvas={clearCanvas}
         setSelectedShape={setSelectedShape}
         setActiveTool={selectTool}
         setShapes={setShapes}
-        hasMoveToCancel={savedShapes.length > 0}
+        hasMoveToCancel={hasMoveToCancel}
         cancelMove={cancelMove}
       />
       <StyledRow>

@@ -76,6 +76,7 @@ type ToolboxType = {
   activeTool: React.SetStateAction<ShapeType | undefined>
   hasMoveToCancel?: boolean
   cancelMove: () => void
+  clearCanvas: () => void
   setActiveTool: (tool: ShapeType | undefined) => void
   setShapes: React.Dispatch<React.SetStateAction<DrawableShape[]>>
   setSelectedShape: React.Dispatch<React.SetStateAction<DrawableShape | undefined>>
@@ -85,6 +86,7 @@ type ToolboxType = {
 const Toolbox = ({
   activeTool,
   hasMoveToCancel = false,
+  clearCanvas,
   setActiveTool,
   cancelMove,
   setShapes,
@@ -108,6 +110,7 @@ const Toolbox = ({
         isActive={false}
         setActive={cancelMove}
       />
+      <Tool type={undefined} lib="Clear" isActive={false} setActive={clearCanvas} />
       {_.map(
         toolType => (
           <Tool
