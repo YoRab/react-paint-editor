@@ -85,7 +85,7 @@ type DrawerType = {
   width?: number
   height?: number
   shapes: DrawableShape[]
-  saveShape: () => void
+  saveShapes: () => void
   setShapes: React.Dispatch<React.SetStateAction<DrawableShape[]>>
   selectedShape: DrawableShape | undefined
   setSelectedShape: React.Dispatch<React.SetStateAction<DrawableShape | undefined>>
@@ -101,7 +101,7 @@ const Canvas = ({
   setShapes,
   selectedShape,
   setSelectedShape,
-  saveShape,
+  saveShapes,
   activeTool,
   setActiveTool,
   defaultConf
@@ -151,8 +151,8 @@ const Canvas = ({
 
   const handleMouseUp = useCallback(() => {
     setSelectionMode({ mode: SelectionModeLib.default })
-    saveShape()
-  }, [setSelectionMode, saveShape])
+    saveShapes()
+  }, [setSelectionMode, saveShapes])
 
   const handleMouseMove = useCallback(
     e => {

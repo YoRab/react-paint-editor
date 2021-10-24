@@ -33,7 +33,7 @@ const App = () => {
     //   id: _.uniqueId('line_'),
     //   points: [
     //     [20, 30],
-    //     [50, 100]
+    //     [500, 100]
     //   ],
     //   translation: [0, 0],
     //   rotation: 0
@@ -73,52 +73,58 @@ const App = () => {
         ? prevSavedShaped
         : [...prevSavedShaped, shapes]
     })
-  }, [shapes, setSavedShapes])
+  }, [shapes])
 
   const cancelMove = useCallback(() => {
     setSelectedShape(undefined)
     setSavedShapes(prevSavedShaped => {
       return _.slice(0, -1, prevSavedShaped)
     })
-  }, [setSelectedShape, setSavedShapes])
+  }, [])
 
-  useEffect(() => {
-    setShapes(() => {
-      return _.last(savedShapes) ?? []
+  const updateShape = useCallback((shape: DrawableShape) => {
+    setSelectedShape(prevSelectedShape =>
+      prevSelectedShape?.id === shape.id ? shape : prevSelectedShape
+    )
+    setSavedShapes(prevSavedShaped => {
+      const prevShapes = _.last(prevSavedShaped) || []
+      if (_.isEmpty(prevShapes)) return prevSavedShaped
+      const newShapes = prevShapes.map(prevShape => {
+        return prevShape.id === shape.id ? shape : prevShape
+      })
+
+      return _.isEqual(_.last(prevSavedShaped), newShapes)
+        ? prevSavedShaped
+        : [...prevSavedShaped, newShapes]
     })
-  }, [savedShapes, setShapes])
+  }, [])
 
-  const updateShape = useCallback(
-    (shape: DrawableShape) => {
-      setSelectedShape(prevSelectedShape =>
-        prevSelectedShape?.id === shape.id ? shape : prevSelectedShape
-      )
-      setShapes(prevShapes =>
-        prevShapes.map(prevShape => {
-          return prevShape.id === shape.id ? shape : prevShape
-        })
-      )
-      setTimeout(() => {
-        saveShapes()
-      }, 500)
-    },
-    [setSelectedShape, setShapes, saveShapes]
-  )
+  const removeShape = useCallback((shape: DrawableShape) => {
+    setSelectedShape(prevSelectedShape =>
+      prevSelectedShape?.id === shape.id ? undefined : prevSelectedShape
+    )
+    setSavedShapes(prevSavedShaped => {
+      const prevShapes = _.last(prevSavedShaped) || []
+      if (_.isEmpty(prevShapes)) return prevSavedShaped
 
-  const removeShape = useCallback(
-    (shape: DrawableShape) => {
-      setSelectedShape(prevSelectedShape =>
-        prevSelectedShape?.id === shape.id ? undefined : prevSelectedShape
-      )
-      setShapes(prevMakers => _.remove({ id: shape.id }, prevMakers))
-    },
-    [setShapes]
-  )
+      const newShapes = _.remove({ id: shape.id }, prevShapes)
+
+      return _.isEqual(_.last(prevSavedShaped), newShapes)
+        ? prevSavedShaped
+        : [...prevSavedShaped, newShapes]
+    })
+  }, [])
 
   const selectTool = useCallback((tool: ShapeType | undefined) => {
     setActiveTool(tool)
     setSelectedShape(undefined)
   }, [])
+
+  useEffect(() => {
+    setShapes(() => {
+      return _.last(savedShapes) ?? []
+    })
+  }, [savedShapes])
 
   return (
     <StyledApp>
@@ -127,6 +133,7 @@ const App = () => {
         setSelectedShape={setSelectedShape}
         setActiveTool={selectTool}
         setShapes={setShapes}
+        hasMoveToCancel={savedShapes.length > 0}
         cancelMove={cancelMove}
       />
       <StyledRow>
@@ -138,7 +145,7 @@ const App = () => {
           selectedShape={selectedShape}
           setSelectedShape={setSelectedShape}
           defaultConf={defaultConf}
-          saveShape={saveShapes}
+          saveShapes={saveShapes}
         />
         <Layouts
           shapes={shapes}
