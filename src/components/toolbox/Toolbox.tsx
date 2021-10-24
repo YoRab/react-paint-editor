@@ -14,16 +14,17 @@ type ToolType = {
   type: ShapeType | undefined
   lib: string
   isActive: boolean
+  isDisabled?: boolean
   setActive: (marker: ShapeType | undefined) => void
 }
 
-const Tool = ({ type, lib, isActive, setActive }: ToolType) => {
+const Tool = ({ type, lib, isActive, isDisabled = false, setActive }: ToolType) => {
   const handleClick = useCallback(() => {
     setActive(type)
   }, [type, setActive])
 
   return (
-    <StyledTool selected={isActive} onClick={handleClick}>
+    <StyledTool disabled={isDisabled} selected={isActive} onClick={handleClick}>
       {lib}
     </StyledTool>
   )
@@ -73,6 +74,8 @@ const PictureTool = ({
 
 type ToolboxType = {
   activeTool: React.SetStateAction<ShapeType | undefined>
+  hasMoveToCancel?: boolean
+  cancelMove: () => void
   setActiveTool: (tool: ShapeType | undefined) => void
   setShapes: React.Dispatch<React.SetStateAction<DrawableShape[]>>
   setSelectedShape: React.Dispatch<React.SetStateAction<DrawableShape | undefined>>
@@ -81,7 +84,9 @@ type ToolboxType = {
 
 const Toolbox = ({
   activeTool,
+  hasMoveToCancel = false,
   setActiveTool,
+  cancelMove,
   setShapes,
   setSelectedShape,
   maxPictureSize = 300
@@ -95,6 +100,13 @@ const Toolbox = ({
         lib="selection"
         isActive={activeTool === undefined}
         setActive={setActiveTool}
+      />
+      <Tool
+        type={undefined}
+        isDisabled={!hasMoveToCancel}
+        lib="Annuler"
+        isActive={false}
+        setActive={cancelMove}
       />
       {_.map(
         toolType => (

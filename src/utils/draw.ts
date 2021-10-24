@@ -8,15 +8,13 @@ import { getShapeInfos } from './shapeData'
 
 const applyShapeTransformations = (ctx: CanvasRenderingContext2D, marker: DrawableShape) => {
   ctx.save()
-  ctx.translate(marker.translationBeforeRotation[0], marker.translationBeforeRotation[1])
+  ctx.translate(marker.translation[0], marker.translation[1])
   if (marker.rotation !== 0) {
     const { center } = getShapeInfos(marker)
     ctx.translate(center[0], center[1])
     ctx.rotate(marker.rotation)
-
     ctx.translate(-center[0], -center[1])
   }
-  ctx.translate(marker.translationOnceRotated[0], marker.translationOnceRotated[1])
 }
 
 const restoreShapeTransformations = (ctx: CanvasRenderingContext2D) => {

@@ -19,8 +19,7 @@ export type Point = [number, number]
 
 type Drawable = {
   id: string
-  translationOnceRotated: Point
-  translationBeforeRotation: Point
+  translation: Point
   rotation: number
 }
 
