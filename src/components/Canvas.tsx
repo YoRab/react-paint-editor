@@ -2,7 +2,7 @@ import React, { RefObject, useCallback, useEffect, useRef, useState } from 'reac
 import styled from 'styled-components'
 import _ from 'lodash/fp'
 import { createShape, selectShape } from 'utils/selection'
-import { DrawableShape, ShapeType, StyledShape } from 'types/Shapes'
+import { DrawableShape, Point, ShapeEnum, StyledShape, ToolEnum, ToolsType } from 'types/Shapes'
 import { checkPositionIntersection, getCursorPosition } from 'utils/intersect'
 import { drawSelection, drawShape } from 'utils/draw'
 import { HoverModeData, SelectionModeData, SelectionModeLib } from 'types/Mode'
@@ -13,14 +13,15 @@ const drawCanvas = (
   ctx: CanvasRenderingContext2D,
   width: number,
   height: number,
+  canvasOffset: [number, number],
   shapes: DrawableShape[],
   selectedShape: DrawableShape | undefined
 ) => {
   ctx.clearRect(0, 0, width, height)
   for (let i = shapes.length - 1; i >= 0; i--) {
-    drawShape(ctx, shapes[i])
+    drawShape(ctx, shapes[i], canvasOffset)
   }
-  selectedShape && drawSelection({ ctx, shape: selectedShape })
+  selectedShape && drawSelection({ ctx, shape: selectedShape, canvasOffset })
 }
 
 const throttledDrawCanvas = _.throttle(FRAMERATE_DRAW, drawCanvas)
@@ -28,22 +29,38 @@ const throttledDrawCanvas = _.throttle(FRAMERATE_DRAW, drawCanvas)
 const handleSelection = (
   e: MouseEvent,
   canvasRef: React.RefObject<HTMLCanvasElement>,
+  activeTool: ToolsType,
+  canvasOffset: Point,
   selectedShape: DrawableShape | undefined,
   selectionMode: SelectionModeData,
+  canvasOffsetStartPosition: Point | undefined,
   setHoverMode: React.Dispatch<React.SetStateAction<HoverModeData>>,
   setShapes: React.Dispatch<React.SetStateAction<DrawableShape[]>>,
+  setCanvasOffset: React.Dispatch<React.SetStateAction<[number, number]>>,
   setSelectedShape: React.Dispatch<React.SetStateAction<DrawableShape | undefined>>
 ) => {
+  if (activeTool === ToolEnum.move && canvasOffsetStartPosition !== undefined) {
+    const cursorPosition = getCursorPosition(e, canvasRef.current)
+    setCanvasOffset([
+      cursorPosition[0] - canvasOffsetStartPosition[0],
+      cursorPosition[1] - canvasOffsetStartPosition[1]
+    ])
+  }
   if (selectedShape == undefined) return
   const cursorPosition = getCursorPosition(e, canvasRef.current)
 
   if (selectionMode.mode === SelectionModeLib.default) {
-    const positionIntersection = checkPositionIntersection(selectedShape, cursorPosition, true) || {
+    const positionIntersection = checkPositionIntersection(
+      selectedShape,
+      cursorPosition,
+      canvasOffset,
+      true
+    ) || {
       mode: SelectionModeLib.default
     }
     setHoverMode(positionIntersection)
   } else {
-    const newShape = transformShape(selectedShape, cursorPosition, selectionMode)
+    const newShape = transformShape(selectedShape, cursorPosition, canvasOffset, selectionMode)
     setShapes(prevMarkers =>
       prevMarkers.map(marker => {
         return marker.id === selectedShape.id ? newShape : marker
@@ -63,18 +80,29 @@ const StyledCanvas = styled.canvas.attrs<{
   width: width,
   height: height
 }))<{
-  activetool: ShapeType | undefined
+  activetool: ToolsType
   selectionmode: SelectionModeLib
   width: number
   height: number
+  responsive: boolean
 }>`
   user-select: none;
-  width: ${_.get('width')}px;
-  height: ${_.get('height')}px;
+  /* ${({ responsive = false, width, height }) =>
+    responsive
+      ? `
+  width: 100%;
+  height: 100%;
+  `
+      : `
+  width: ${width}px;
+  height: ${height}px;
+  `} */
+
   ${({ selectionmode, activetool }) =>
-    activetool !== undefined || selectionmode === SelectionModeLib.resize
+    (activetool !== ToolEnum.selection && activetool !== ToolEnum.move) ||
+    selectionmode === SelectionModeLib.resize
       ? 'cursor: crosshair'
-      : selectionmode === SelectionModeLib.translate
+      : activetool === ToolEnum.move || selectionmode === SelectionModeLib.translate
       ? 'cursor:move'
       : selectionmode === SelectionModeLib.rotate
       ? 'cursor:grab'
@@ -89,8 +117,12 @@ type DrawerType = {
   setShapes: React.Dispatch<React.SetStateAction<DrawableShape[]>>
   selectedShape: DrawableShape | undefined
   setSelectedShape: React.Dispatch<React.SetStateAction<DrawableShape | undefined>>
-  activeTool: ShapeType | undefined
-  setActiveTool: React.Dispatch<React.SetStateAction<ShapeType | undefined>>
+  activeTool: ToolsType
+  setActiveTool: React.Dispatch<React.SetStateAction<ToolsType>>
+  canvasOffsetStartPosition: Point | undefined
+  setCanvasOffsetStartPosition: React.Dispatch<React.SetStateAction<Point | undefined>>
+  canvasOffset: [number, number]
+  setCanvasOffset: React.Dispatch<React.SetStateAction<[number, number]>>
   defaultConf: StyledShape
 }
 
@@ -104,6 +136,10 @@ const Canvas = ({
   saveShapes,
   activeTool,
   setActiveTool,
+  canvasOffsetStartPosition,
+  setCanvasOffsetStartPosition,
+  canvasOffset,
+  setCanvasOffset,
   defaultConf
 }: DrawerType) => {
   const canvasRef = useRef<HTMLCanvasElement>(null)
@@ -119,14 +155,23 @@ const Canvas = ({
       // e.preventDefault()
       const cursorPosition = getCursorPosition(e, canvasRef.current)
 
-      if (activeTool === undefined) {
-        const { shape, mode } = selectShape(shapes, cursorPosition, selectedShape, hoverMode)
+      if (activeTool === ToolEnum.selection) {
+        const { shape, mode } = selectShape(
+          shapes,
+          cursorPosition,
+          canvasOffset,
+          selectedShape,
+          hoverMode
+        )
         setSelectedShape(shape)
         setSelectionMode(mode)
-      } else {
-        const newShape = createShape(activeTool, cursorPosition, defaultConf)
+      } else if (activeTool === ToolEnum.move) {
+        setCanvasOffsetStartPosition(cursorPosition)
+      }
+      if (_.includes(activeTool, ShapeEnum)) {
+        const newShape = createShape(activeTool as ShapeEnum, cursorPosition, defaultConf)
         setShapes(prevShapes => [newShape, ...prevShapes])
-        setActiveTool(undefined)
+        setActiveTool(ToolEnum.selection)
         setSelectedShape(newShape)
         setSelectionMode({
           mode: SelectionModeLib.resize,
@@ -140,6 +185,8 @@ const Canvas = ({
       selectedShape,
       hoverMode,
       activeTool,
+      canvasOffset,
+      setCanvasOffsetStartPosition,
       shapes,
       defaultConf,
       setShapes,
@@ -161,20 +208,34 @@ const Canvas = ({
       throttledHandleSelection(
         e,
         canvasRef,
+        activeTool,
+        canvasOffset,
         selectedShape,
         selectionMode,
+        canvasOffsetStartPosition,
         setHoverMode,
         setShapes,
+        setCanvasOffset,
         setSelectedShape
       )
     },
-    [selectedShape, selectionMode, setHoverMode, setShapes, setSelectedShape]
+    [
+      selectedShape,
+      selectionMode,
+      setHoverMode,
+      canvasOffset,
+      canvasOffsetStartPosition,
+      setShapes,
+      activeTool,
+      setCanvasOffset,
+      setSelectedShape
+    ]
   )
 
   useEffect(() => {
     const ctx = canvasRef.current?.getContext('2d')
-    ctx && throttledDrawCanvas(ctx, width, height, shapes, selectedShape)
-  }, [shapes, selectedShape, width, height])
+    ctx && throttledDrawCanvas(ctx, width, height, canvasOffset, shapes, selectedShape)
+  }, [shapes, selectedShape, canvasOffset, width, height])
 
   return (
     <StyledCanvas
@@ -189,6 +250,7 @@ const Canvas = ({
       ref={canvasRef}
       width={width}
       height={height}
+      responsive={true}
     />
   )
 }

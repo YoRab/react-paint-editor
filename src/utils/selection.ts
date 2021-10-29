@@ -1,7 +1,7 @@
 import _ from 'lodash/fp'
 
 import { HoverModeData, SelectionModeData, SelectionModeLib } from 'types/Mode'
-import { DrawablePicture, Point, DrawableShape, ShapeType } from 'types/Shapes'
+import { DrawablePicture, Point, DrawableShape, ShapeEnum } from 'types/Shapes'
 import { checkPositionIntersection } from './intersect'
 import { getShapeInfos } from './shapeData'
 
@@ -44,7 +44,7 @@ export const createPicture = (file: unknown, maxPictureSize: number) => {
       const imgRatio = img.width / img.height
 
       const pictureShape: DrawablePicture = {
-        type: ShapeType.picture,
+        type: ShapeEnum.picture,
         id: _.uniqueId('picture_'),
         x: 0,
         y: 0,
@@ -64,7 +64,7 @@ export const createPicture = (file: unknown, maxPictureSize: number) => {
 }
 
 export const createShape = (
-  shape: ShapeType,
+  shape: ShapeEnum,
   cursorPosition: Point,
   defaultConf: {
     style?: {
@@ -75,9 +75,9 @@ export const createShape = (
   }
 ): DrawableShape => {
   switch (shape) {
-    case ShapeType.rect:
+    case ShapeEnum.rect:
       return {
-        type: ShapeType.rect,
+        type: ShapeEnum.rect,
         id: _.uniqueId('rect_'),
         x: cursorPosition[0],
         y: cursorPosition[1],
@@ -87,9 +87,9 @@ export const createShape = (
         rotation: 0,
         style: defaultConf.style
       }
-    case ShapeType.ellipse:
+    case ShapeEnum.ellipse:
       return {
-        type: ShapeType.ellipse,
+        type: ShapeEnum.ellipse,
         id: _.uniqueId('ellipse_'),
         x: cursorPosition[0],
         y: cursorPosition[1],
@@ -99,10 +99,10 @@ export const createShape = (
         rotation: 0,
         style: defaultConf.style
       }
-    case ShapeType.circle:
+    case ShapeEnum.circle:
     default:
       return {
-        type: ShapeType.circle,
+        type: ShapeEnum.circle,
         id: _.uniqueId('circle_'),
         x: cursorPosition[0],
         y: cursorPosition[1],
@@ -117,6 +117,7 @@ export const createShape = (
 export const selectShape = (
   shapes: DrawableShape[],
   cursorPosition: Point,
+  canvasOffset: Point,
   selectedShape: DrawableShape | undefined,
   hoverMode: HoverModeData
 ): { mode: SelectionModeData; shape: DrawableShape | undefined } => {
@@ -126,8 +127,8 @@ export const selectShape = (
       return { shape: selectedShape, mode: newSelectionMode }
     }
   }
-  const foundShape = _.findLast(shape => {
-    return !!checkPositionIntersection(shape, cursorPosition, false)
+  const foundShape = _.find(shape => {
+    return !!checkPositionIntersection(shape, cursorPosition, canvasOffset, false)
   }, shapes)
   if (!!foundShape) {
     return {

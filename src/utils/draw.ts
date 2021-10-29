@@ -6,9 +6,13 @@ import {
 import { Circle, Ellipse, Line, Picture, Polygon, Rect, DrawableShape } from 'types/Shapes'
 import { getShapeInfos } from './shapeData'
 
-const applyShapeTransformations = (ctx: CanvasRenderingContext2D, marker: DrawableShape) => {
+const applyShapeTransformations = (
+  ctx: CanvasRenderingContext2D,
+  marker: DrawableShape,
+  canvasOffset: [number, number]
+) => {
   ctx.save()
-  ctx.translate(marker.translation[0], marker.translation[1])
+  ctx.translate(marker.translation[0] + canvasOffset[0], marker.translation[1] + canvasOffset[1])
   if (marker.rotation !== 0) {
     const { center } = getShapeInfos(marker)
     ctx.translate(center[0], center[1])
@@ -94,8 +98,12 @@ export const drawPicture = (ctx: CanvasRenderingContext2D, picture: Picture): vo
   ctx.drawImage(picture.img, picture.x, picture.y, picture.width, picture.height)
 }
 
-export const drawShape = (ctx: CanvasRenderingContext2D, shape: DrawableShape): void => {
-  applyShapeTransformations(ctx, shape)
+export const drawShape = (
+  ctx: CanvasRenderingContext2D,
+  shape: DrawableShape,
+  canvasOffset: [number, number]
+): void => {
+  applyShapeTransformations(ctx, shape, canvasOffset)
 
   switch (shape.type) {
     case 'line':
@@ -121,12 +129,14 @@ export const drawShape = (ctx: CanvasRenderingContext2D, shape: DrawableShape): 
 }
 export const drawSelection = ({
   ctx,
-  shape
+  shape,
+  canvasOffset
 }: {
   ctx: CanvasRenderingContext2D
   shape: DrawableShape
+  canvasOffset: [number, number]
 }) => {
-  applyShapeTransformations(ctx, shape)
+  applyShapeTransformations(ctx, shape, canvasOffset)
   const { borders } = getShapeInfos(shape)
   ctx.setLineDash([4, 2])
   drawRect(ctx, borders)

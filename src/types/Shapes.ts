@@ -6,7 +6,7 @@ export type StyledShape = {
   }
 }
 
-export enum ShapeType {
+export enum ShapeEnum {
   'rect' = 'rect',
   'line' = 'line',
   'polygon' = 'polygon',
@@ -14,6 +14,16 @@ export enum ShapeType {
   'ellipse' = 'ellipse',
   'picture' = 'picture'
 }
+
+export enum ToolEnum {
+  selection = 'selection',
+  undo = 'undo',
+  redo = 'redo',
+  clear = 'clear',
+  move = 'move'
+}
+
+export type ToolsType = ShapeEnum | ToolEnum
 
 export type Point = [number, number]
 
@@ -54,12 +64,12 @@ export type Ellipse = StyledShape & {
   radiusX: number
   radiusY: number
 }
-export type DrawableRect = Rect & Drawable & { type: ShapeType.rect }
-export type DrawablePicture = Picture & Drawable & { type: ShapeType.picture }
-export type DrawableLine = Line & Drawable & { type: ShapeType.line }
-export type DrawablePolygon = Polygon & Drawable & { type: ShapeType.polygon }
-export type DrawableCircle = Circle & Drawable & { type: ShapeType.circle }
-export type DrawableEllipse = Ellipse & Drawable & { type: ShapeType.ellipse }
+export type DrawableRect = Rect & Drawable & { type: ShapeEnum.rect }
+export type DrawablePicture = Picture & Drawable & { type: ShapeEnum.picture }
+export type DrawableLine = Line & Drawable & { type: ShapeEnum.line }
+export type DrawablePolygon = Polygon & Drawable & { type: ShapeEnum.polygon }
+export type DrawableCircle = Circle & Drawable & { type: ShapeEnum.circle }
+export type DrawableEllipse = Ellipse & Drawable & { type: ShapeEnum.ellipse }
 
 export type DrawableShape =
   | DrawableRect

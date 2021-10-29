@@ -27,12 +27,13 @@ const isPointInsideRect = (rect: Rect, point: Point) => {
 
 export const getPointPositionAfterCanvasTransformation = (
   [positionX, positionY]: Point,
+  [canvasOffsetX, canvasOffsetY]: Point,
   [translationX, translationY]: Point,
   shapeRotation: number,
   [centerX, centerY]: Point
 ): Point => {
-  const newX = positionX - centerX - translationX
-  const newY = positionY - centerY - translationY
+  const newX = positionX + canvasOffsetX - centerX - translationX
+  const newY = positionY + canvasOffsetY - centerY - translationY
   const rotatedY = newY * Math.cos(shapeRotation) - newX * Math.sin(shapeRotation)
   const rotatedX = newY * Math.sin(shapeRotation) + newX * Math.cos(shapeRotation)
 
@@ -66,6 +67,7 @@ export const applyRotationToVector = (vector: Point, shapeRotation: number): Poi
 export const checkPositionIntersection = (
   shape: DrawableShape,
   position: Point,
+  canvasOffset: Point,
   checkAnchors = false
 ): false | HoverModeData => {
   const { borders: bordersBeforeResizing, center } = getShapeInfos(shape)
@@ -76,6 +78,7 @@ export const checkPositionIntersection = (
   }
   const newPosition = getPointPositionAfterCanvasTransformation(
     position,
+    canvasOffset,
     shape.translation,
     shape.rotation,
     center

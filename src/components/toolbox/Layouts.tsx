@@ -1,9 +1,8 @@
-import _ from 'lodash/fp'
 import React, { useCallback } from 'react'
 import { ReactSortable } from 'react-sortablejs'
 import styled from 'styled-components'
 import map from 'types/lodash'
-import { DrawableShape } from 'types/Shapes'
+import { DrawableShape, ToolEnum, ToolsType } from 'types/Shapes'
 
 const StyledLayouts = styled(ReactSortable)`
   display: inline-block;
@@ -62,31 +61,38 @@ const Layout = ({ shape, selected, handleRemove, handleSelect }: LayoutType) => 
 
 type LayoutsType = {
   shapes: DrawableShape[]
-  setMarkers: React.Dispatch<React.SetStateAction<DrawableShape[]>>
+  updateShapes: (shapes: DrawableShape[]) => void
+  removeShape: (shape: DrawableShape) => void
   selectedShape: DrawableShape | undefined
   setSelectedShape: React.Dispatch<React.SetStateAction<DrawableShape | undefined>>
+  setActiveTool: React.Dispatch<React.SetStateAction<ToolsType>>
 }
 
-const Layouts = ({ shapes, setMarkers, selectedShape, setSelectedShape }: LayoutsType) => {
-  const handleRemove = useCallback(
-    (shape: DrawableShape) => {
-      setSelectedShape(prevSelectedShape => {
-        return prevSelectedShape?.id === shape.id ? undefined : prevSelectedShape
-      })
-      setMarkers(prevMakers => _.remove({ id: shape.id }, prevMakers))
+const Layouts = ({
+  shapes,
+  updateShapes,
+  removeShape,
+  selectedShape,
+  setSelectedShape,
+  setActiveTool
+}: LayoutsType) => {
+  const setList = useCallback(
+    (markers: DrawableShape[]) => {
+      updateShapes(markers)
     },
-    [setMarkers, setSelectedShape]
+    [updateShapes]
   )
 
   const handleSelect = useCallback(
     (shape: DrawableShape) => {
       setSelectedShape(shape)
+      setActiveTool(ToolEnum.selection)
     },
-    [setSelectedShape]
+    [setSelectedShape, setActiveTool]
   )
 
   return (
-    <StyledLayouts list={shapes} setList={setMarkers}>
+    <StyledLayouts list={shapes} setList={setList}>
       {map(
         shape => (
           <Layout
@@ -94,7 +100,7 @@ const Layouts = ({ shapes, setMarkers, selectedShape, setSelectedShape }: Layout
             shape={shape}
             selected={selectedShape?.id === shape.id}
             handleSelect={handleSelect}
-            handleRemove={handleRemove}
+            handleRemove={removeShape}
           />
         ),
         shapes

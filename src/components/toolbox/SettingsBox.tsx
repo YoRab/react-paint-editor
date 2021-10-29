@@ -2,7 +2,7 @@ import _ from 'lodash/fp'
 import React, { useCallback } from 'react'
 import styled from 'styled-components'
 import { STYLE_COLORS, STYLE_LINE_WIDTH } from 'constants/style'
-import { DrawableShape, ShapeType, StyledShape } from 'types/Shapes'
+import { DrawableShape, ShapeEnum, StyledShape, ToolsType } from 'types/Shapes'
 
 const StyledSettingsBox = styled.div``
 const StyledDeleteButton = styled.button``
@@ -49,7 +49,7 @@ const ShapeStyleSelect = ({ field, values, defaultValue, valueChanged }: ShapeSt
 }
 
 type SettingsBoxType = {
-  activeTool: ShapeType | undefined
+  activeTool: ToolsType
   selectedShape: DrawableShape | undefined
   updateShape: (shape: DrawableShape) => void
   removeShape: (shape: DrawableShape) => void
@@ -65,7 +65,7 @@ const SettingsBox = ({
   defaultConf,
   setDefaultConf
 }: SettingsBoxType) => {
-  const shapes = [ShapeType.ellipse, ShapeType.circle, ShapeType.rect]
+  const shapes = [ShapeEnum.ellipse, ShapeEnum.circle, ShapeEnum.rect]
   const handleShapeStyleChange = useCallback(
     (field: string, value: string | number) => {
       if (selectedShape) {
@@ -106,8 +106,7 @@ const SettingsBox = ({
           )}
         </>
       ) : (
-        activeTool &&
-        shapes.includes(activeTool) && (
+        _.includes(activeTool, shapes) && (
           <>
             <ShapeStyleSelect
               field="style.lineWidth"

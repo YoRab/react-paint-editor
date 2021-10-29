@@ -1,7 +1,7 @@
 import _ from 'lodash/fp'
 import React, { useCallback, useRef } from 'react'
 import styled from 'styled-components'
-import { DrawableShape, ShapeType } from 'types/Shapes'
+import { DrawableShape, ShapeEnum, ToolEnum, ToolsType } from 'types/Shapes'
 import { createPicture } from 'utils/selection'
 
 const StyledToolbox = styled.div``
@@ -11,11 +11,11 @@ const StyledTool = styled.button<{ selected: boolean }>`
 `
 
 type ToolType = {
-  type: ShapeType | undefined
+  type: ToolsType
   lib: string
   isActive: boolean
   isDisabled?: boolean
-  setActive: (marker: ShapeType | undefined) => void
+  setActive: (marker: ToolsType) => void
 }
 
 const Tool = ({ type, lib, isActive, isDisabled = false, setActive }: ToolType) => {
@@ -33,7 +33,7 @@ const Tool = ({ type, lib, isActive, isDisabled = false, setActive }: ToolType) 
 type PictureToolType = {
   setShapes: React.Dispatch<React.SetStateAction<DrawableShape[]>>
   setSelectedShape: React.Dispatch<React.SetStateAction<DrawableShape | undefined>>
-  setActiveTool: (tool: ShapeType | undefined) => void
+  setActiveTool: (tool: ToolsType) => void
   maxPictureSize: number
 }
 
@@ -55,7 +55,7 @@ const PictureTool = ({
       if (!file) return
       const pictureShape = await createPicture(file, maxPictureSize)
       setShapes(prevShapes => [pictureShape, ...prevShapes])
-      setActiveTool(undefined)
+      setActiveTool(ToolEnum.selection)
       setSelectedShape(pictureShape)
     },
     [maxPictureSize, setShapes, setActiveTool, setSelectedShape]
@@ -73,11 +73,13 @@ const PictureTool = ({
 }
 
 type ToolboxType = {
-  activeTool: React.SetStateAction<ShapeType | undefined>
-  hasMoveToCancel?: boolean
-  cancelMove: () => void
+  activeTool: React.SetStateAction<ToolsType>
+  hasActionToUndo?: boolean
+  hasActionToRedo?: boolean
+  undoAction: () => void
+  redoAction: () => void
   clearCanvas: () => void
-  setActiveTool: (tool: ShapeType | undefined) => void
+  setActiveTool: (tool: ToolsType) => void
   setShapes: React.Dispatch<React.SetStateAction<DrawableShape[]>>
   setSelectedShape: React.Dispatch<React.SetStateAction<DrawableShape | undefined>>
   maxPictureSize?: number
@@ -85,32 +87,52 @@ type ToolboxType = {
 
 const Toolbox = ({
   activeTool,
-  hasMoveToCancel = false,
+  hasActionToUndo = false,
+  hasActionToRedo = false,
   clearCanvas,
   setActiveTool,
-  cancelMove,
+  undoAction,
+  redoAction,
   setShapes,
   setSelectedShape,
   maxPictureSize = 300
 }: ToolboxType) => {
-  const toolsTypes: ShapeType[] = [ShapeType.rect, ShapeType.circle, ShapeType.ellipse]
+  const toolsTypes: ShapeEnum[] = [ShapeEnum.rect, ShapeEnum.circle, ShapeEnum.ellipse]
 
   return (
     <StyledToolbox>
       <Tool
-        type={undefined}
+        type={ToolEnum.selection}
         lib="selection"
-        isActive={activeTool === undefined}
+        isActive={activeTool === ToolEnum.selection}
         setActive={setActiveTool}
       />
       <Tool
-        type={undefined}
-        isDisabled={!hasMoveToCancel}
-        lib="Annuler"
-        isActive={false}
-        setActive={cancelMove}
+        type={ToolEnum.move}
+        lib="move"
+        isActive={activeTool === ToolEnum.move}
+        setActive={setActiveTool}
       />
-      <Tool type={undefined} lib="Clear" isActive={false} setActive={clearCanvas} />
+      <Tool
+        type={ToolEnum.undo}
+        isDisabled={!hasActionToUndo}
+        lib="Undo"
+        isActive={activeTool === ToolEnum.undo}
+        setActive={undoAction}
+      />
+      <Tool
+        type={ToolEnum.redo}
+        isDisabled={!hasActionToRedo}
+        lib="Redo"
+        isActive={activeTool === ToolEnum.redo}
+        setActive={redoAction}
+      />
+      <Tool
+        type={ToolEnum.clear}
+        lib="Clear"
+        isActive={activeTool === ToolEnum.clear}
+        setActive={clearCanvas}
+      />
       {_.map(
         toolType => (
           <Tool

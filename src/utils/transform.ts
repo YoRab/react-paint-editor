@@ -71,6 +71,7 @@ export const rotateShape = (
 
 export const resizeCircle = (
   cursorPosition: Point,
+  canvasOffset: Point,
   originalShape: DrawableCircle,
   selectionMode: SelectionModeResize
 ): DrawableCircle => {
@@ -78,6 +79,7 @@ export const resizeCircle = (
 
   const cursorPositionBeforeResize = getPointPositionAfterCanvasTransformation(
     cursorPosition,
+    canvasOffset,
     originalShape.translation,
     originalShape.rotation,
     center
@@ -138,6 +140,8 @@ export const resizeCircle = (
 
 export const resizeEllipse = (
   cursorPosition: Point,
+  canvasOffset: Point,
+
   originalShape: DrawableEllipse,
   selectionMode: SelectionModeResize
 ): DrawableEllipse => {
@@ -145,6 +149,7 @@ export const resizeEllipse = (
 
   const cursorPositionBeforeResize = getPointPositionAfterCanvasTransformation(
     cursorPosition,
+    canvasOffset,
     originalShape.translation,
     originalShape.rotation,
     center
@@ -211,6 +216,7 @@ export const resizeEllipse = (
 
 export const resizeRect = <T extends DrawableShape & Rect>(
   cursorPosition: Point,
+  canvasOffset: Point,
   originalShape: T,
   selectionMode: SelectionModeResize,
   keepRatio = false
@@ -219,6 +225,8 @@ export const resizeRect = <T extends DrawableShape & Rect>(
 
   const cursorPositionBeforeResize = getPointPositionAfterCanvasTransformation(
     cursorPosition,
+    canvasOffset,
+
     originalShape.translation,
     originalShape.rotation,
     center
@@ -368,39 +376,47 @@ const getCircleOppositeAnchorAbsolutePosition = <T extends DrawableShape & Circl
 
 export const resizePicture = (
   cursorPosition: Point,
+  canvasOffset: Point,
+
   originalShape: DrawablePicture,
   selectionMode: SelectionModeResize
 ): DrawablePicture => {
-  return resizeRect(cursorPosition, originalShape, selectionMode, true)
+  return resizeRect(cursorPosition, canvasOffset, originalShape, selectionMode, true)
 }
 
 export const resizeShape = (
   shape: DrawableShape,
   cursorPosition: Point,
+  canvasOffset: Point,
+
   originalShape: DrawableShape,
   selectionMode: SelectionModeData
 ): DrawableShape => {
   if (shape.type === 'circle')
     return resizeCircle(
       cursorPosition,
+      canvasOffset,
       originalShape as DrawableCircle,
       selectionMode as SelectionModeResize
     )
   else if (shape.type === 'ellipse')
     return resizeEllipse(
       cursorPosition,
+      canvasOffset,
       originalShape as DrawableEllipse,
       selectionMode as SelectionModeResize
     )
   else if (shape.type === 'rect')
     return resizeRect(
       cursorPosition,
+      canvasOffset,
       originalShape as DrawableRect,
       selectionMode as SelectionModeResize
     )
   else if (shape.type === 'picture')
     return resizePicture(
       cursorPosition,
+      canvasOffset,
       originalShape as DrawablePicture,
       selectionMode as SelectionModeResize
     )
@@ -410,6 +426,7 @@ export const resizeShape = (
 export const transformShape = (
   shape: DrawableShape,
   cursorPosition: Point,
+  canvasOffset: Point,
   selectionMode: SelectionModeData
 ) => {
   if (selectionMode.mode === SelectionModeLib.translate) {
@@ -428,7 +445,13 @@ export const transformShape = (
       selectionMode.center
     )
   } else if (selectionMode.mode === SelectionModeLib.resize) {
-    return resizeShape(shape, cursorPosition, selectionMode.originalShape, selectionMode)
+    return resizeShape(
+      shape,
+      cursorPosition,
+      canvasOffset,
+      selectionMode.originalShape,
+      selectionMode
+    )
   }
   return shape
 }
