@@ -13,7 +13,7 @@ const drawCanvas = (
   ctx: CanvasRenderingContext2D,
   width: number,
   height: number,
-  canvasOffset: [number, number],
+  canvasOffset: Point,
   shapes: DrawableShape[],
   selectedShape: DrawableShape | undefined
 ) => {
@@ -36,7 +36,7 @@ const handleSelection = (
   canvasOffsetStartPosition: Point | undefined,
   setHoverMode: React.Dispatch<React.SetStateAction<HoverModeData>>,
   setShapes: React.Dispatch<React.SetStateAction<DrawableShape[]>>,
-  setCanvasOffset: React.Dispatch<React.SetStateAction<[number, number]>>,
+  setCanvasOffset: React.Dispatch<React.SetStateAction<Point>>,
   setSelectedShape: React.Dispatch<React.SetStateAction<DrawableShape | undefined>>
 ) => {
   if (activeTool === ToolEnum.move && canvasOffsetStartPosition !== undefined) {
@@ -121,8 +121,8 @@ type DrawerType = {
   setActiveTool: React.Dispatch<React.SetStateAction<ToolsType>>
   canvasOffsetStartPosition: Point | undefined
   setCanvasOffsetStartPosition: React.Dispatch<React.SetStateAction<Point | undefined>>
-  canvasOffset: [number, number]
-  setCanvasOffset: React.Dispatch<React.SetStateAction<[number, number]>>
+  canvasOffset: Point
+  setCanvasOffset: React.Dispatch<React.SetStateAction<Point>>
   defaultConf: StyledShape
 }
 

@@ -20,7 +20,7 @@ import {
 export const getNormalizedSize = (originalShape: Rect, width: number, height: number) => {
   const originalRatio = originalShape.width / originalShape.height
   const newRatio = width / height
-  if (newRatio > originalRatio) {
+  if (newRatio > originalRatio || height < 0) {
     return width > originalShape.width
       ? [width, width / originalRatio]
       : [height * originalRatio, height]
@@ -377,7 +377,6 @@ const getCircleOppositeAnchorAbsolutePosition = <T extends DrawableShape & Circl
 export const resizePicture = (
   cursorPosition: Point,
   canvasOffset: Point,
-
   originalShape: DrawablePicture,
   selectionMode: SelectionModeResize
 ): DrawablePicture => {

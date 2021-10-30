@@ -3,13 +3,13 @@ import {
   SELECTION_RESIZE_ANCHOR_POSITIONS,
   SELECTION_ROTATED_ANCHOR_POSITION
 } from 'constants/shapes'
-import { Circle, Ellipse, Line, Picture, Polygon, Rect, DrawableShape } from 'types/Shapes'
+import { Circle, Ellipse, Line, Picture, Polygon, Rect, DrawableShape, Point } from 'types/Shapes'
 import { getShapeInfos } from './shapeData'
 
 const applyShapeTransformations = (
   ctx: CanvasRenderingContext2D,
   marker: DrawableShape,
-  canvasOffset: [number, number]
+  canvasOffset: Point
 ) => {
   ctx.save()
   ctx.translate(marker.translation[0] + canvasOffset[0], marker.translation[1] + canvasOffset[1])
@@ -101,7 +101,7 @@ export const drawPicture = (ctx: CanvasRenderingContext2D, picture: Picture): vo
 export const drawShape = (
   ctx: CanvasRenderingContext2D,
   shape: DrawableShape,
-  canvasOffset: [number, number]
+  canvasOffset: Point
 ): void => {
   applyShapeTransformations(ctx, shape, canvasOffset)
 
@@ -134,7 +134,7 @@ export const drawSelection = ({
 }: {
   ctx: CanvasRenderingContext2D
   shape: DrawableShape
-  canvasOffset: [number, number]
+  canvasOffset: Point
 }) => {
   applyShapeTransformations(ctx, shape, canvasOffset)
   const { borders } = getShapeInfos(shape)

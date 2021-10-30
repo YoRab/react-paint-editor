@@ -12,22 +12,22 @@ const getLineBorder = (line: Line): Rect => {
 
 const getPolygonBorder = (polygon: Polygon): Rect => {
   const minX: number = _.flow(
-    _.map((point: [number, number]) => point[0]),
+    _.map((point: Point) => point[0]),
     _.min,
     _.add(-SELECTION_PADDING)
   )(polygon.points)
   const maxX: number = _.flow(
-    _.map((point: [number, number]) => point[0]),
+    _.map((point: Point) => point[0]),
     _.max,
     _.add(SELECTION_PADDING)
   )(polygon.points)
   const minY: number = _.flow(
-    _.map((point: [number, number]) => point[1]),
+    _.map((point: Point) => point[1]),
     _.min,
     _.add(-SELECTION_PADDING)
   )(polygon.points)
   const maxY: number = _.flow(
-    _.map((point: [number, number]) => point[1]),
+    _.map((point: Point) => point[1]),
     _.max,
     _.add(SELECTION_PADDING)
   )(polygon.points)
