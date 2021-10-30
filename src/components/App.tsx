@@ -7,9 +7,17 @@ import Toolbox from './toolbox/Toolbox'
 import styled from 'styled-components'
 import SettingsBox from './toolbox/SettingsBox'
 
-const StyledApp = styled.div`
+const StyledApp = styled.div<{
+  toolboxposition: 'top' | 'left'
+  width: string
+  height: string
+}>`
   display: flex;
-  flex-direction: column;
+  flex-direction: ${({ toolboxposition }) => (toolboxposition === 'top' ? 'column' : 'row')};
+  ${({ width, height }) => `
+  width:${width};
+  height:${height};
+  `}
 `
 
 const StyledRow = styled.div`
@@ -17,7 +25,19 @@ const StyledRow = styled.div`
   flex-direction: row;
 `
 
-const App = () => {
+type AppType = {
+  hover?: boolean
+  toolboxPosition?: 'top' | 'left'
+  width?: string
+  height?: string
+}
+
+const App = ({
+  hover = false,
+  toolboxPosition = 'top',
+  width = '100%',
+  height = '600px'
+}: AppType) => {
   const [defaultConf, setDefaultConf] = useState<StyledShape>({
     style: {
       fillColor: 'transparent',
@@ -195,7 +215,7 @@ const App = () => {
   const hasActionToRedo = savedShapes.cursor < savedShapes.states.length - 1
 
   return (
-    <StyledApp>
+    <StyledApp toolboxposition={toolboxPosition} width={width} height={height}>
       <Toolbox
         activeTool={activeTool}
         clearCanvas={clearCanvas}
@@ -206,6 +226,8 @@ const App = () => {
         hasActionToRedo={hasActionToRedo}
         undoAction={undoAction}
         redoAction={redoAction}
+        toolboxPosition={toolboxPosition}
+        hover={hover}
       />
       <StyledRow>
         <Canvas
@@ -229,16 +251,19 @@ const App = () => {
           removeShape={removeShape}
           setSelectedShape={setSelectedShape}
           setActiveTool={setActiveTool}
+          hover={hover}
         />
       </StyledRow>
-      <SettingsBox
-        activeTool={activeTool}
-        selectedShape={selectedShape}
-        removeShape={removeShape}
-        updateShape={updateShape}
-        defaultConf={defaultConf}
-        setDefaultConf={setDefaultConf}
-      />
+      {selectedShape && (
+        <SettingsBox
+          activeTool={activeTool}
+          selectedShape={selectedShape}
+          removeShape={removeShape}
+          updateShape={updateShape}
+          defaultConf={defaultConf}
+          setDefaultConf={setDefaultConf}
+        />
+      )}
     </StyledApp>
   )
 }

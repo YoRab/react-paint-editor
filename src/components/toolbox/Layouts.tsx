@@ -4,10 +4,19 @@ import styled from 'styled-components'
 import map from 'types/lodash'
 import { DrawableShape, ToolEnum, ToolsType } from 'types/Shapes'
 
-const StyledLayouts = styled(ReactSortable)`
+const StyledLayouts = styled(ReactSortable)<{ hover: boolean }>`
   display: inline-block;
   border: 1px solid black;
   width: 200px;
+  overflow-y: auto;
+
+  ${({ hover }) =>
+    hover &&
+    `
+    position:absolute;
+    right:0;
+    height:60%;
+  `}
 `
 
 const StyledLayout = styled.div<{ selected: boolean }>`
@@ -61,6 +70,7 @@ const Layout = ({ shape, selected, handleRemove, handleSelect }: LayoutType) => 
 
 type LayoutsType = {
   shapes: DrawableShape[]
+  hover: boolean
   updateShapes: (shapes: DrawableShape[]) => void
   removeShape: (shape: DrawableShape) => void
   selectedShape: DrawableShape | undefined
@@ -70,6 +80,7 @@ type LayoutsType = {
 
 const Layouts = ({
   shapes,
+  hover,
   updateShapes,
   removeShape,
   selectedShape,
@@ -92,7 +103,7 @@ const Layouts = ({
   )
 
   return (
-    <StyledLayouts list={shapes} setList={setList}>
+    <StyledLayouts list={shapes} setList={setList} hover={hover}>
       {map(
         shape => (
           <Layout

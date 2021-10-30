@@ -4,9 +4,23 @@ import styled from 'styled-components'
 import { DrawableShape, ShapeEnum, ToolEnum, ToolsType } from 'types/Shapes'
 import { createPicture } from 'utils/selection'
 
-const StyledToolbox = styled.div``
+const StyledToolbox = styled.div<{
+  toolboxposition: 'top' | 'left'
+  hover: boolean
+}>`
+  display: flex;
+
+  ${({ hover }) =>
+    hover &&
+    `
+    position:absolute;
+  `}
+  flex-direction: ${({ toolboxposition }) => (toolboxposition === 'top' ? 'row' : 'column')};
+`
 
 const StyledTool = styled.button<{ selected: boolean }>`
+  width: 64px;
+  height: 48px;
   ${({ selected }) => selected && `background:white;`}
 `
 
@@ -83,6 +97,8 @@ type ToolboxType = {
   setShapes: React.Dispatch<React.SetStateAction<DrawableShape[]>>
   setSelectedShape: React.Dispatch<React.SetStateAction<DrawableShape | undefined>>
   maxPictureSize?: number
+  toolboxPosition: 'top' | 'left'
+  hover: boolean
 }
 
 const Toolbox = ({
@@ -95,12 +111,14 @@ const Toolbox = ({
   redoAction,
   setShapes,
   setSelectedShape,
-  maxPictureSize = 300
+  maxPictureSize = 300,
+  toolboxPosition,
+  hover
 }: ToolboxType) => {
   const toolsTypes: ShapeEnum[] = [ShapeEnum.rect, ShapeEnum.circle, ShapeEnum.ellipse]
 
   return (
-    <StyledToolbox>
+    <StyledToolbox toolboxposition={toolboxPosition} hover={hover}>
       <Tool
         type={ToolEnum.selection}
         lib="selection"

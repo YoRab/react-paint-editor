@@ -1,10 +1,26 @@
 import _ from 'lodash/fp'
-import React, { useCallback } from 'react'
+import React, { useCallback, useMemo } from 'react'
 import styled from 'styled-components'
 import { STYLE_COLORS, STYLE_LINE_WIDTH } from 'constants/style'
 import { DrawableShape, ShapeEnum, StyledShape, ToolsType } from 'types/Shapes'
+import { getSettingsPosition } from 'utils/shapeData'
 
-const StyledSettingsBox = styled.div``
+const StyledSettingsBox = styled.div.attrs<{
+  left: number
+  top: number
+}>(({ left, top }) => ({
+  style: {
+    left: `${left}px`,
+    top: `${top}px`
+  }
+}))<{
+  left: number
+  top: number
+}>`
+  position: absolute;
+  user-select: none;
+  transform: translate(-50%, 0);
+`
 const StyledDeleteButton = styled.button``
 
 type DeleteShapeButtonType = {
@@ -77,8 +93,13 @@ const SettingsBox = ({
     [selectedShape, updateShape, setDefaultConf]
   )
 
+  const pointPosition = useMemo(
+    () => (selectedShape ? getSettingsPosition(selectedShape) : [0, 0]),
+    [selectedShape]
+  )
+
   return (
-    <StyledSettingsBox>
+    <StyledSettingsBox left={pointPosition[0]} top={pointPosition[1]}>
       {selectedShape ? (
         <>
           <DeleteShapeButton selectedShape={selectedShape} removeShape={removeShape} />

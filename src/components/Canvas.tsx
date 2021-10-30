@@ -87,16 +87,7 @@ const StyledCanvas = styled.canvas.attrs<{
   responsive: boolean
 }>`
   user-select: none;
-  /* ${({ responsive = false, width, height }) =>
-    responsive
-      ? `
-  width: 100%;
-  height: 100%;
-  `
-      : `
-  width: ${width}px;
-  height: ${height}px;
-  `} */
+  border: 1px solid black;
 
   ${({ selectionmode, activetool }) =>
     (activetool !== ToolEnum.selection && activetool !== ToolEnum.move) ||
@@ -237,16 +228,34 @@ const Canvas = ({
     ctx && throttledDrawCanvas(ctx, width, height, canvasOffset, shapes, selectedShape)
   }, [shapes, selectedShape, canvasOffset, width, height])
 
+  useEffect(() => {
+    document.addEventListener('mouseup', handleMouseUp)
+    document.addEventListener('touchend', handleMouseUp)
+    document.addEventListener('mousemove', handleMouseMove)
+    document.addEventListener('touchmove', handleMouseMove)
+    document.addEventListener('touchstart', handleMouseDown)
+    document.addEventListener('mousedown', handleMouseDown)
+
+    return () => {
+      document.removeEventListener('mouseup', handleMouseUp)
+      document.removeEventListener('touchend', handleMouseUp)
+      document.removeEventListener('mousemove', handleMouseMove)
+      document.removeEventListener('touchmove', handleMouseMove)
+      document.removeEventListener('touchstart', handleMouseDown)
+      document.removeEventListener('mousedown', handleMouseDown)
+    }
+  }, [handleMouseUp, handleMouseMove, handleMouseDown])
+
   return (
     <StyledCanvas
       activetool={activeTool}
       selectionmode={hoverMode.mode}
-      onTouchStart={handleMouseDown}
-      onMouseDown={handleMouseDown}
-      onMouseUp={handleMouseUp}
-      onTouchEnd={handleMouseUp}
-      onMouseMove={handleMouseMove}
-      onTouchMove={handleMouseMove}
+      // onTouchStart={handleMouseDown}
+      // onMouseDown={handleMouseDown}
+      // onMouseUp={handleMouseUp}
+      // onTouchEnd={handleMouseUp}
+      // onMouseMove={handleMouseMove}
+      // onTouchMove={handleMouseMove}
       ref={canvasRef}
       width={width}
       height={height}
