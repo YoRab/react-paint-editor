@@ -8,20 +8,23 @@ import { drawSelection, drawShape } from 'utils/draw'
 import { HoverModeData, SelectionModeData, SelectionModeLib } from 'types/Mode'
 import { transformShape } from 'utils/transform'
 import { FRAMERATE_DRAW, FRAMERATE_SELECTION } from 'constants/draw'
+import { useCombinedRefs } from 'utils/reactUtils'
 
 const drawCanvas = (
-  ctx: CanvasRenderingContext2D,
+  drawCtx: CanvasRenderingContext2D,
+  selectionCtx: CanvasRenderingContext2D,
   width: number,
   height: number,
   canvasOffset: Point,
   shapes: DrawableShape[],
   selectedShape: DrawableShape | undefined
 ) => {
-  ctx.clearRect(0, 0, width, height)
+  drawCtx.clearRect(0, 0, width, height)
+  selectionCtx.clearRect(0, 0, width, height)
   for (let i = shapes.length - 1; i >= 0; i--) {
-    drawShape(ctx, shapes[i], canvasOffset)
+    drawShape(drawCtx, shapes[i], canvasOffset)
   }
-  selectedShape && drawSelection({ ctx, shape: selectedShape, canvasOffset })
+  selectedShape && drawSelection({ ctx: selectionCtx, shape: selectedShape, canvasOffset })
 }
 
 const throttledDrawCanvas = _.throttle(FRAMERATE_DRAW, drawCanvas)
@@ -72,7 +75,24 @@ const handleSelection = (
 
 const throttledHandleSelection = _.throttle(FRAMERATE_SELECTION, handleSelection)
 
-const StyledCanvas = styled.canvas.attrs<{
+const StyledDrawCanvas = styled.canvas.attrs<{
+  width: number
+  height: number
+  ref: RefObject<HTMLCanvasElement>
+}>(({ width, height }) => ({
+  width: width,
+  height: height
+}))<{
+  width: number
+  height: number
+}>`
+  position: absolute;
+  z-index: -1;
+  user-select: none;
+  border: 1px solid black;
+`
+
+const StyledSelectionCanvas = styled.canvas.attrs<{
   width: number
   height: number
   ref: RefObject<HTMLCanvasElement>
@@ -84,7 +104,6 @@ const StyledCanvas = styled.canvas.attrs<{
   selectionmode: SelectionModeLib
   width: number
   height: number
-  responsive: boolean
 }>`
   user-select: none;
   border: 1px solid black;
@@ -117,151 +136,162 @@ type DrawerType = {
   defaultConf: StyledShape
 }
 
-const Canvas = ({
-  width = 1000,
-  height = 600,
-  shapes,
-  setShapes,
-  selectedShape,
-  setSelectedShape,
-  saveShapes,
-  activeTool,
-  setActiveTool,
-  canvasOffsetStartPosition,
-  setCanvasOffsetStartPosition,
-  canvasOffset,
-  setCanvasOffset,
-  defaultConf
-}: DrawerType) => {
-  const canvasRef = useRef<HTMLCanvasElement>(null)
-
-  const [selectionMode, setSelectionMode] = useState<SelectionModeData>({
-    mode: SelectionModeLib.default
-  })
-  const [hoverMode, setHoverMode] = useState<HoverModeData>({ mode: SelectionModeLib.default })
-
-  const handleMouseDown = useCallback(
-    e => {
-      // eslint-disable-next-line
-      // e.preventDefault()
-      const cursorPosition = getCursorPosition(e, canvasRef.current)
-
-      if (activeTool === ToolEnum.selection) {
-        const { shape, mode } = selectShape(
-          shapes,
-          cursorPosition,
-          canvasOffset,
-          selectedShape,
-          hoverMode
-        )
-        setSelectedShape(shape)
-        setSelectionMode(mode)
-      } else if (activeTool === ToolEnum.move) {
-        setCanvasOffsetStartPosition(cursorPosition)
-      }
-      if (_.includes(activeTool, ShapeEnum)) {
-        const newShape = createShape(activeTool as ShapeEnum, cursorPosition, defaultConf)
-        setShapes(prevShapes => [newShape, ...prevShapes])
-        setActiveTool(ToolEnum.selection)
-        setSelectedShape(newShape)
-        setSelectionMode({
-          mode: SelectionModeLib.resize,
-          cursorStartPosition: cursorPosition,
-          originalShape: newShape,
-          anchor: [1, 1]
-        })
-      }
-    },
-    [
-      selectedShape,
-      hoverMode,
-      activeTool,
-      canvasOffset,
-      setCanvasOffsetStartPosition,
+const Canvas = React.forwardRef<HTMLCanvasElement, DrawerType>(
+  (
+    {
+      width = 1000,
+      height = 600,
       shapes,
-      defaultConf,
       setShapes,
-      setActiveTool,
+      selectedShape,
       setSelectedShape,
-      setSelectionMode
-    ]
-  )
+      saveShapes,
+      activeTool,
+      setActiveTool,
+      canvasOffsetStartPosition,
+      setCanvasOffsetStartPosition,
+      canvasOffset,
+      setCanvasOffset,
+      defaultConf
+    },
+    ref
+  ) => {
+    const drawCanvasRef = useRef<HTMLCanvasElement | null>(null)
+    const selectionCanvasRef = useRef<HTMLCanvasElement | null>(null)
+    const combinedRef = useCombinedRefs(ref, drawCanvasRef)
 
-  const handleMouseUp = useCallback(() => {
-    setSelectionMode({ mode: SelectionModeLib.default })
-    saveShapes()
-  }, [setSelectionMode, saveShapes])
+    const [selectionMode, setSelectionMode] = useState<SelectionModeData>({
+      mode: SelectionModeLib.default
+    })
+    const [hoverMode, setHoverMode] = useState<HoverModeData>({ mode: SelectionModeLib.default })
 
-  const handleMouseMove = useCallback(
-    e => {
-      // eslint-disable-next-line
-      // e.preventDefault()
-      throttledHandleSelection(
-        e,
-        canvasRef,
+    const handleMouseDown = useCallback(
+      e => {
+        // eslint-disable-next-line
+        // e.preventDefault()
+        const cursorPosition = getCursorPosition(e, selectionCanvasRef.current)
+
+        if (activeTool === ToolEnum.selection) {
+          const { shape, mode } = selectShape(
+            shapes,
+            cursorPosition,
+            canvasOffset,
+            selectedShape,
+            hoverMode
+          )
+          setSelectedShape(shape)
+          setSelectionMode(mode)
+        } else if (activeTool === ToolEnum.move) {
+          setCanvasOffsetStartPosition(cursorPosition)
+        }
+        if (_.includes(activeTool, ShapeEnum)) {
+          const newShape = createShape(activeTool as ShapeEnum, cursorPosition, defaultConf)
+          setShapes(prevShapes => [newShape, ...prevShapes])
+          setActiveTool(ToolEnum.selection)
+          setSelectedShape(newShape)
+          setSelectionMode({
+            mode: SelectionModeLib.resize,
+            cursorStartPosition: cursorPosition,
+            originalShape: newShape,
+            anchor: [1, 1]
+          })
+        }
+      },
+      [
+        selectedShape,
+        hoverMode,
         activeTool,
         canvasOffset,
+        setCanvasOffsetStartPosition,
+        shapes,
+        defaultConf,
+        setShapes,
+        setActiveTool,
+        setSelectedShape,
+        setSelectionMode
+      ]
+    )
+
+    const handleMouseUp = useCallback(() => {
+      setSelectionMode({ mode: SelectionModeLib.default })
+      saveShapes()
+    }, [setSelectionMode, saveShapes])
+
+    const handleMouseMove = useCallback(
+      e => {
+        // eslint-disable-next-line
+        // e.preventDefault()
+        throttledHandleSelection(
+          e,
+          selectionCanvasRef,
+          activeTool,
+          canvasOffset,
+          selectedShape,
+          selectionMode,
+          canvasOffsetStartPosition,
+          setHoverMode,
+          setShapes,
+          setCanvasOffset,
+          setSelectedShape
+        )
+      },
+      [
         selectedShape,
         selectionMode,
-        canvasOffsetStartPosition,
         setHoverMode,
+        canvasOffset,
+        canvasOffsetStartPosition,
         setShapes,
+        activeTool,
         setCanvasOffset,
         setSelectedShape
-      )
-    },
-    [
-      selectedShape,
-      selectionMode,
-      setHoverMode,
-      canvasOffset,
-      canvasOffsetStartPosition,
-      setShapes,
-      activeTool,
-      setCanvasOffset,
-      setSelectedShape
-    ]
-  )
+      ]
+    )
+    useEffect(() => {
+      const drawCtx = drawCanvasRef.current?.getContext('2d')
+      const selectionCtx = selectionCanvasRef.current?.getContext('2d')
+      drawCtx &&
+        selectionCtx &&
+        throttledDrawCanvas(
+          drawCtx,
+          selectionCtx,
+          width,
+          height,
+          canvasOffset,
+          shapes,
+          selectedShape
+        )
+    }, [shapes, selectedShape, canvasOffset, width, height])
 
-  useEffect(() => {
-    const ctx = canvasRef.current?.getContext('2d')
-    ctx && throttledDrawCanvas(ctx, width, height, canvasOffset, shapes, selectedShape)
-  }, [shapes, selectedShape, canvasOffset, width, height])
+    useEffect(() => {
+      document.addEventListener('mouseup', handleMouseUp)
+      document.addEventListener('touchend', handleMouseUp)
+      document.addEventListener('mousemove', handleMouseMove)
+      document.addEventListener('touchmove', handleMouseMove)
 
-  useEffect(() => {
-    document.addEventListener('mouseup', handleMouseUp)
-    document.addEventListener('touchend', handleMouseUp)
-    document.addEventListener('mousemove', handleMouseMove)
-    document.addEventListener('touchmove', handleMouseMove)
-    document.addEventListener('touchstart', handleMouseDown)
-    document.addEventListener('mousedown', handleMouseDown)
+      return () => {
+        document.removeEventListener('mouseup', handleMouseUp)
+        document.removeEventListener('touchend', handleMouseUp)
+        document.removeEventListener('mousemove', handleMouseMove)
+        document.removeEventListener('touchmove', handleMouseMove)
+      }
+    }, [handleMouseUp, handleMouseMove, handleMouseDown])
 
-    return () => {
-      document.removeEventListener('mouseup', handleMouseUp)
-      document.removeEventListener('touchend', handleMouseUp)
-      document.removeEventListener('mousemove', handleMouseMove)
-      document.removeEventListener('touchmove', handleMouseMove)
-      document.removeEventListener('touchstart', handleMouseDown)
-      document.removeEventListener('mousedown', handleMouseDown)
-    }
-  }, [handleMouseUp, handleMouseMove, handleMouseDown])
-
-  return (
-    <StyledCanvas
-      activetool={activeTool}
-      selectionmode={hoverMode.mode}
-      // onTouchStart={handleMouseDown}
-      // onMouseDown={handleMouseDown}
-      // onMouseUp={handleMouseUp}
-      // onTouchEnd={handleMouseUp}
-      // onMouseMove={handleMouseMove}
-      // onTouchMove={handleMouseMove}
-      ref={canvasRef}
-      width={width}
-      height={height}
-      responsive={true}
-    />
-  )
-}
+    return (
+      <>
+        <StyledDrawCanvas ref={combinedRef} width={width} height={height} />
+        <StyledSelectionCanvas
+          activetool={activeTool}
+          selectionmode={hoverMode.mode}
+          onTouchStart={handleMouseDown}
+          onMouseDown={handleMouseDown}
+          ref={selectionCanvasRef}
+          width={width}
+          height={height}
+        />
+      </>
+    )
+  }
+)
 
 export default Canvas

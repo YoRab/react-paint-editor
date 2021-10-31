@@ -94,6 +94,7 @@ type ToolboxType = {
   redoAction: () => void
   clearCanvas: () => void
   setActiveTool: (tool: ToolsType) => void
+  saveCanvasInFile: () => void
   setShapes: React.Dispatch<React.SetStateAction<DrawableShape[]>>
   setSelectedShape: React.Dispatch<React.SetStateAction<DrawableShape | undefined>>
   maxPictureSize?: number
@@ -110,6 +111,7 @@ const Toolbox = ({
   undoAction,
   redoAction,
   setShapes,
+  saveCanvasInFile,
   setSelectedShape,
   maxPictureSize = 300,
   toolboxPosition,
@@ -168,6 +170,12 @@ const Toolbox = ({
         setSelectedShape={setSelectedShape}
         setActiveTool={setActiveTool}
         setShapes={setShapes}
+      />
+      <Tool
+        type={ToolEnum.save}
+        lib="Save"
+        isActive={activeTool === ToolEnum.save}
+        setActive={saveCanvasInFile}
       />
     </StyledToolbox>
   )

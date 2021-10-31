@@ -5,6 +5,8 @@ import { STYLE_COLORS, STYLE_LINE_WIDTH } from 'constants/style'
 import { DrawableShape, ShapeEnum, StyledShape, ToolsType } from 'types/Shapes'
 import { getSettingsPosition } from 'utils/shapeData'
 
+const POSITION_DELAY = 50
+
 const StyledSettingsBox = styled.div.attrs<{
   left: number
   top: number
@@ -20,6 +22,7 @@ const StyledSettingsBox = styled.div.attrs<{
   position: absolute;
   user-select: none;
   transform: translate(-50%, 0);
+  transition: all ${POSITION_DELAY * 2}ms ease-out;
 `
 const StyledDeleteButton = styled.button``
 
@@ -64,6 +67,10 @@ const ShapeStyleSelect = ({ field, values, defaultValue, valueChanged }: ShapeSt
   )
 }
 
+const getSettingsPositionDebounced = _.throttle(POSITION_DELAY, selectedShape =>
+  getSettingsPosition(selectedShape)
+)
+
 type SettingsBoxType = {
   activeTool: ToolsType
   selectedShape: DrawableShape | undefined
@@ -93,10 +100,9 @@ const SettingsBox = ({
     [selectedShape, updateShape, setDefaultConf]
   )
 
-  const pointPosition = useMemo(
-    () => (selectedShape ? getSettingsPosition(selectedShape) : [0, 0]),
-    [selectedShape]
-  )
+  const pointPosition = useMemo(() => {
+    return getSettingsPositionDebounced(selectedShape) ?? [0, 0]
+  }, [selectedShape])
 
   return (
     <StyledSettingsBox left={pointPosition[0]} top={pointPosition[1]}>

@@ -20,6 +20,7 @@ export enum ToolEnum {
   undo = 'undo',
   redo = 'redo',
   clear = 'clear',
+  save = 'save',
   move = 'move'
 }
 

@@ -1,5 +1,5 @@
 import _ from 'lodash/fp'
-import React, { useCallback, useEffect, useState } from 'react'
+import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { DrawableShape, Point, StyledShape, ToolEnum, ToolsType } from 'types/Shapes'
 import Canvas from './Canvas'
 import Layouts from './toolbox/Layouts'
@@ -97,6 +97,8 @@ const App = ({
     cursor: 0
   })
 
+  const canvasRef = useRef<HTMLCanvasElement>(null)
+
   const saveShapes = useCallback(() => {
     setSavedShapes(prevSavedShaped => {
       return _.isEqual(_.get(prevSavedShaped.cursor, prevSavedShaped.states), shapes)
@@ -107,6 +109,17 @@ const App = ({
           }
     })
   }, [shapes])
+
+  const saveCanvasInFile = useCallback(() => {
+    const dataURL = canvasRef.current?.toDataURL('image/png')
+    if (!dataURL) return
+    const a = document.createElement('a')
+    a.href = dataURL
+    a.download = 'drawing.png'
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+  }, [])
 
   const selectTool = useCallback((tool: ToolsType) => {
     setActiveTool(tool)
@@ -221,6 +234,7 @@ const App = ({
         clearCanvas={clearCanvas}
         setSelectedShape={setSelectedShape}
         setActiveTool={selectTool}
+        saveCanvasInFile={saveCanvasInFile}
         setShapes={setShapes}
         hasActionToUndo={hasActionToUndo}
         hasActionToRedo={hasActionToRedo}
@@ -243,6 +257,7 @@ const App = ({
           setCanvasOffset={setCanvasOffset}
           defaultConf={defaultConf}
           saveShapes={saveShapes}
+          ref={canvasRef}
         />
         <Layouts
           shapes={_.get(savedShapes.cursor, savedShapes.states)}
