@@ -4,6 +4,16 @@ import styled from 'styled-components'
 import { DrawableShape, ShapeEnum, ToolEnum, ToolsType } from 'types/Shapes'
 import { createPicture } from 'utils/selection'
 
+import circleIcon from 'assets/icons/circle.svg'
+import moveIcon from 'assets/icons/hand-rock.svg'
+import pictureIcon from 'assets/icons/image.svg'
+import selectIcon from 'assets/icons/mouse-pointer.svg'
+import redoIcon from 'assets/icons/redo.svg'
+import saveIcon from 'assets/icons/save.svg'
+import squareIcon from 'assets/icons/square.svg'
+import clearIcon from 'assets/icons/times.svg'
+import undoIcon from 'assets/icons/undo.svg'
+
 const StyledToolbox = styled.div<{
   toolboxposition: 'top' | 'left'
   hover: boolean
@@ -19,27 +29,64 @@ const StyledToolbox = styled.div<{
 `
 
 const StyledTool = styled.button<{ selected: boolean }>`
-  width: 64px;
-  height: 48px;
-  ${({ selected }) => selected && `background:white;`}
+  width: 36px;
+  height: 36px;
+  display: flex;
+  box-sizing: border-box;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  cursor: pointer;
+
+  ${({ selected }) =>
+    selected &&
+    `
+  
+  border:1px solid black;
+  
+  `}
+
+  &:hover:not(:disabled) {
+    background: lightgray;
+  }
+
+  &:disabled {
+    opacity: 0.25;
+    cursor: default;
+  }
+
+  input {
+    display: none;
+  }
+
+  img {
+    width: 16px;
+    height: 16px;
+  }
+`
+
+const StyledSeparator = styled.div`
+  flex: 1;
 `
 
 type ToolType = {
   type: ToolsType
   lib: string
+  imgSrc?: string
   isActive: boolean
   isDisabled?: boolean
   setActive: (marker: ToolsType) => void
 }
 
-const Tool = ({ type, lib, isActive, isDisabled = false, setActive }: ToolType) => {
+const Tool = ({ type, lib, imgSrc, isActive, isDisabled = false, setActive }: ToolType) => {
   const handleClick = useCallback(() => {
     setActive(type)
   }, [type, setActive])
 
   return (
     <StyledTool disabled={isDisabled} selected={isActive} onClick={handleClick}>
-      {lib}
+      {imgSrc ? <img src={imgSrc} /> : lib}
     </StyledTool>
   )
 }
@@ -76,13 +123,17 @@ const PictureTool = ({
   )
 
   return (
-    <input
-      ref={inputRef}
-      type="file"
-      onClick={handleClick}
-      onChange={handleChange}
-      accept="image/png, image/gif, image/jpeg"
-    />
+    <StyledTool as="label" selected={false}>
+      <input
+        ref={inputRef}
+        type="file"
+        onClick={handleClick}
+        onChange={handleChange}
+        accept="image/png, image/gif, image/jpeg"
+      />
+
+      <img src={pictureIcon} />
+    </StyledTool>
   )
 }
 
@@ -117,19 +168,25 @@ const Toolbox = ({
   toolboxPosition,
   hover
 }: ToolboxType) => {
-  const toolsTypes: ShapeEnum[] = [ShapeEnum.rect, ShapeEnum.circle, ShapeEnum.ellipse]
+  const toolsTypes: { shape: ShapeEnum; img?: string }[] = [
+    { shape: ShapeEnum.rect, img: squareIcon },
+    { shape: ShapeEnum.circle, img: circleIcon },
+    { shape: ShapeEnum.ellipse }
+  ]
 
   return (
     <StyledToolbox toolboxposition={toolboxPosition} hover={hover}>
       <Tool
         type={ToolEnum.selection}
         lib="selection"
+        imgSrc={selectIcon}
         isActive={activeTool === ToolEnum.selection}
         setActive={setActiveTool}
       />
       <Tool
         type={ToolEnum.move}
         lib="move"
+        imgSrc={moveIcon}
         isActive={activeTool === ToolEnum.move}
         setActive={setActiveTool}
       />
@@ -137,6 +194,7 @@ const Toolbox = ({
         type={ToolEnum.undo}
         isDisabled={!hasActionToUndo}
         lib="Undo"
+        imgSrc={undoIcon}
         isActive={activeTool === ToolEnum.undo}
         setActive={undoAction}
       />
@@ -144,22 +202,26 @@ const Toolbox = ({
         type={ToolEnum.redo}
         isDisabled={!hasActionToRedo}
         lib="Redo"
+        imgSrc={redoIcon}
         isActive={activeTool === ToolEnum.redo}
         setActive={redoAction}
       />
       <Tool
         type={ToolEnum.clear}
         lib="Clear"
+        imgSrc={clearIcon}
         isActive={activeTool === ToolEnum.clear}
         setActive={clearCanvas}
       />
+      <StyledSeparator />
       {_.map(
         toolType => (
           <Tool
-            key={toolType}
-            type={toolType}
-            lib={toolType}
-            isActive={activeTool === toolType}
+            key={toolType.shape}
+            type={toolType.shape}
+            lib={toolType.shape}
+            imgSrc={toolType.img}
+            isActive={activeTool === toolType.shape}
             setActive={setActiveTool}
           />
         ),
@@ -171,9 +233,12 @@ const Toolbox = ({
         setActiveTool={setActiveTool}
         setShapes={setShapes}
       />
+      <StyledSeparator />
+
       <Tool
         type={ToolEnum.save}
         lib="Save"
+        imgSrc={saveIcon}
         isActive={activeTool === ToolEnum.save}
         setActive={saveCanvasInFile}
       />

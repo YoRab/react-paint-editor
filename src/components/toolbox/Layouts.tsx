@@ -3,6 +3,7 @@ import { ReactSortable } from 'react-sortablejs'
 import styled from 'styled-components'
 import map from 'types/lodash'
 import { DrawableShape, ToolEnum, ToolsType } from 'types/Shapes'
+import deleteIcon from 'assets/icons/trash.svg'
 
 const StyledLayouts = styled(ReactSortable)<{ hover: boolean }>`
   display: inline-block;
@@ -28,10 +29,30 @@ const StyledLayout = styled.div<{ selected: boolean }>`
   ${({ selected }) => selected && 'background:yellow'};
 `
 
-const StyledRemove = styled.span`
+const StyledRemove = styled.div`
   position: absolute;
+  width: 36px;
+  display: inline-block;
   right: 0;
+  top: 0;
+  bottom: 0;
   cursor: pointer;
+  display: flex;
+  box-sizing: border-box;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  cursor: pointer;
+
+  &:hover:not(:disabled) {
+    background: lightgray;
+  }
+
+  img {
+    width: 16px;
+    height: 16px;
+  }
 `
 
 type LayoutType = {
@@ -63,7 +84,9 @@ const Layout = ({ shape, selected, handleRemove, handleSelect }: LayoutType) => 
   return (
     <StyledLayout onClick={onSelect} selected={selected}>
       {shape.type}
-      <StyledRemove onClick={onRemove}>X</StyledRemove>
+      <StyledRemove onClick={onRemove}>
+        <img src={deleteIcon} />
+      </StyledRemove>
     </StyledLayout>
   )
 }

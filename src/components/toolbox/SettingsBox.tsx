@@ -4,6 +4,7 @@ import styled from 'styled-components'
 import { STYLE_COLORS, STYLE_LINE_WIDTH } from 'constants/style'
 import { DrawableShape, ShapeEnum, StyledShape, ToolsType } from 'types/Shapes'
 import { getSettingsPosition } from 'utils/shapeData'
+import deleteIcon from 'assets/icons/trash.svg'
 
 const POSITION_DELAY = 50
 
@@ -21,10 +22,30 @@ const StyledSettingsBox = styled.div.attrs<{
 }>`
   position: absolute;
   user-select: none;
+  display: flex;
   transform: translate(-50%, 0);
   transition: all ${POSITION_DELAY * 2}ms ease-out;
 `
-const StyledDeleteButton = styled.button``
+const StyledDeleteButton = styled.button`
+  width: 36px;
+  height: 36px;
+  display: flex;
+  box-sizing: border-box;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  cursor: pointer;
+
+  &:hover:not(:disabled) {
+    background: lightgray;
+  }
+
+  img {
+    width: 16px;
+    height: 16px;
+  }
+`
 
 type DeleteShapeButtonType = {
   selectedShape: DrawableShape
@@ -36,7 +57,11 @@ const DeleteShapeButton = ({ selectedShape, removeShape }: DeleteShapeButtonType
     removeShape(selectedShape)
   }, [selectedShape, removeShape])
 
-  return <StyledDeleteButton onClick={handleRemove}>Supprimer</StyledDeleteButton>
+  return (
+    <StyledDeleteButton onClick={handleRemove}>
+      <img src={deleteIcon} />
+    </StyledDeleteButton>
+  )
 }
 
 type ShapeStyleSelectType = {
@@ -108,7 +133,6 @@ const SettingsBox = ({
     <StyledSettingsBox left={pointPosition[0]} top={pointPosition[1]}>
       {selectedShape ? (
         <>
-          <DeleteShapeButton selectedShape={selectedShape} removeShape={removeShape} />
           {shapes.includes(selectedShape?.type) && (
             <>
               <ShapeStyleSelect
@@ -131,6 +155,7 @@ const SettingsBox = ({
               />
             </>
           )}
+          <DeleteShapeButton selectedShape={selectedShape} removeShape={removeShape} />
         </>
       ) : (
         _.includes(activeTool, shapes) && (
