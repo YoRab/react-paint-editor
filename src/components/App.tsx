@@ -9,14 +9,13 @@ import SettingsBox from './toolbox/SettingsBox'
 
 const StyledApp = styled.div<{
   toolboxposition: 'top' | 'left'
-  width: string
-  height: string
+  height: number
 }>`
   display: flex;
   flex-direction: ${({ toolboxposition }) => (toolboxposition === 'top' ? 'column' : 'row')};
-  ${({ width, height }) => `
-  width:${width};
-  height:${height};
+  ${({ height }) => `
+  width:100%;
+  height:${height}px;
   `}
 `
 
@@ -28,16 +27,11 @@ const StyledRow = styled.div`
 type AppType = {
   hover?: boolean
   toolboxPosition?: 'top' | 'left'
-  width?: string
-  height?: string
+  width?: number
+  height?: number
 }
 
-const App = ({
-  hover = false,
-  toolboxPosition = 'top',
-  width = '100%',
-  height = '600px'
-}: AppType) => {
+const App = ({ hover = false, toolboxPosition = 'top', width = 1000, height = 600 }: AppType) => {
   const [defaultConf, setDefaultConf] = useState<StyledShape>({
     style: {
       fillColor: 'transparent',
@@ -228,7 +222,7 @@ const App = ({
   const hasActionToRedo = savedShapes.cursor < savedShapes.states.length - 1
 
   return (
-    <StyledApp toolboxposition={toolboxPosition} width={width} height={height}>
+    <StyledApp toolboxposition={toolboxPosition} height={height}>
       <Toolbox
         activeTool={activeTool}
         clearCanvas={clearCanvas}
@@ -258,6 +252,8 @@ const App = ({
           defaultConf={defaultConf}
           saveShapes={saveShapes}
           ref={canvasRef}
+          width={width}
+          height={height}
         />
         <Layouts
           shapes={_.get(savedShapes.cursor, savedShapes.states)}
@@ -277,6 +273,9 @@ const App = ({
           updateShape={updateShape}
           defaultConf={defaultConf}
           setDefaultConf={setDefaultConf}
+          canvas={canvasRef.current}
+          givenWidth={width}
+          givenHeight={height}
         />
       )}
     </StyledApp>

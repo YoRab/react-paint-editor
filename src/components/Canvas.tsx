@@ -37,20 +37,22 @@ const handleSelection = (
   selectedShape: DrawableShape | undefined,
   selectionMode: SelectionModeData,
   canvasOffsetStartPosition: Point | undefined,
+  width: number,
+  height: number,
   setHoverMode: React.Dispatch<React.SetStateAction<HoverModeData>>,
   setShapes: React.Dispatch<React.SetStateAction<DrawableShape[]>>,
   setCanvasOffset: React.Dispatch<React.SetStateAction<Point>>,
   setSelectedShape: React.Dispatch<React.SetStateAction<DrawableShape | undefined>>
 ) => {
   if (activeTool === ToolEnum.move && canvasOffsetStartPosition !== undefined) {
-    const cursorPosition = getCursorPosition(e, canvasRef.current)
+    const cursorPosition = getCursorPosition(e, canvasRef.current, width, height)
     setCanvasOffset([
       cursorPosition[0] - canvasOffsetStartPosition[0],
       cursorPosition[1] - canvasOffsetStartPosition[1]
     ])
   }
   if (selectedShape == undefined) return
-  const cursorPosition = getCursorPosition(e, canvasRef.current)
+  const cursorPosition = getCursorPosition(e, canvasRef.current, width, height)
 
   if (selectionMode.mode === SelectionModeLib.default) {
     const positionIntersection = checkPositionIntersection(
@@ -75,6 +77,19 @@ const handleSelection = (
 
 const throttledHandleSelection = _.throttle(FRAMERATE_SELECTION, handleSelection)
 
+const StyledCanvasBox = styled.div`
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: lightgray;
+`
+
+const StyledCanvasContainer = styled.div`
+  position: relative;
+  background: white;
+`
+
 const StyledDrawCanvas = styled.canvas.attrs<{
   width: number
   height: number
@@ -87,9 +102,9 @@ const StyledDrawCanvas = styled.canvas.attrs<{
   height: number
 }>`
   position: absolute;
-  z-index: -1;
   user-select: none;
   border: 1px solid black;
+  max-width: 100%;
 `
 
 const StyledSelectionCanvas = styled.canvas.attrs<{
@@ -107,6 +122,8 @@ const StyledSelectionCanvas = styled.canvas.attrs<{
 }>`
   user-select: none;
   border: 1px solid black;
+  position: relative;
+  max-width: 100%;
 
   ${({ selectionmode, activetool }) =>
     (activetool !== ToolEnum.selection && activetool !== ToolEnum.move) ||
@@ -120,8 +137,8 @@ const StyledSelectionCanvas = styled.canvas.attrs<{
 `
 
 type DrawerType = {
-  width?: number
-  height?: number
+  width: number
+  height: number
   shapes: DrawableShape[]
   saveShapes: () => void
   setShapes: React.Dispatch<React.SetStateAction<DrawableShape[]>>
@@ -139,8 +156,8 @@ type DrawerType = {
 const Canvas = React.forwardRef<HTMLCanvasElement, DrawerType>(
   (
     {
-      width = 1000,
-      height = 600,
+      width,
+      height,
       shapes,
       setShapes,
       selectedShape,
@@ -169,7 +186,7 @@ const Canvas = React.forwardRef<HTMLCanvasElement, DrawerType>(
       e => {
         // eslint-disable-next-line
         // e.preventDefault()
-        const cursorPosition = getCursorPosition(e, selectionCanvasRef.current)
+        const cursorPosition = getCursorPosition(e, selectionCanvasRef.current, width, height)
 
         if (activeTool === ToolEnum.selection) {
           const { shape, mode } = selectShape(
@@ -205,6 +222,8 @@ const Canvas = React.forwardRef<HTMLCanvasElement, DrawerType>(
         setCanvasOffsetStartPosition,
         shapes,
         defaultConf,
+        width,
+        height,
         setShapes,
         setActiveTool,
         setSelectedShape,
@@ -229,6 +248,8 @@ const Canvas = React.forwardRef<HTMLCanvasElement, DrawerType>(
           selectedShape,
           selectionMode,
           canvasOffsetStartPosition,
+          width,
+          height,
           setHoverMode,
           setShapes,
           setCanvasOffset,
@@ -241,6 +262,8 @@ const Canvas = React.forwardRef<HTMLCanvasElement, DrawerType>(
         setHoverMode,
         canvasOffset,
         canvasOffsetStartPosition,
+        width,
+        height,
         setShapes,
         activeTool,
         setCanvasOffset,
@@ -278,18 +301,20 @@ const Canvas = React.forwardRef<HTMLCanvasElement, DrawerType>(
     }, [handleMouseUp, handleMouseMove, handleMouseDown])
 
     return (
-      <>
-        <StyledDrawCanvas ref={combinedRef} width={width} height={height} />
-        <StyledSelectionCanvas
-          activetool={activeTool}
-          selectionmode={hoverMode.mode}
-          onTouchStart={handleMouseDown}
-          onMouseDown={handleMouseDown}
-          ref={selectionCanvasRef}
-          width={width}
-          height={height}
-        />
-      </>
+      <StyledCanvasBox>
+        <StyledCanvasContainer>
+          <StyledDrawCanvas ref={combinedRef} width={width} height={height} />
+          <StyledSelectionCanvas
+            activetool={activeTool}
+            selectionmode={hoverMode.mode}
+            onTouchStart={handleMouseDown}
+            onMouseDown={handleMouseDown}
+            ref={selectionCanvasRef}
+            width={width}
+            height={height}
+          />
+        </StyledCanvasContainer>
+      </StyledCanvasBox>
     )
   }
 )

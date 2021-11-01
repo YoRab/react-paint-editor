@@ -3,7 +3,7 @@ import React, { useCallback, useMemo } from 'react'
 import styled from 'styled-components'
 import { STYLE_COLORS, STYLE_LINE_WIDTH } from 'constants/style'
 import { DrawableShape, ShapeEnum, StyledShape, ToolsType } from 'types/Shapes'
-import { getSettingsPosition } from 'utils/shapeData'
+import { getSettingsPosition } from 'utils/intersect'
 import deleteIcon from 'assets/icons/trash.svg'
 
 const POSITION_DELAY = 50
@@ -92,13 +92,22 @@ const ShapeStyleSelect = ({ field, values, defaultValue, valueChanged }: ShapeSt
   )
 }
 
-const getSettingsPositionDebounced = _.throttle(POSITION_DELAY, selectedShape =>
-  getSettingsPosition(selectedShape)
+const getSettingsPositionDebounced = _.throttle(
+  POSITION_DELAY,
+  (
+    selectedShape: DrawableShape,
+    canvas: HTMLCanvasElement | null,
+    givenWidth: number,
+    givenHeight: number
+  ) => getSettingsPosition(selectedShape, canvas, givenWidth, givenHeight)
 )
 
 type SettingsBoxType = {
   activeTool: ToolsType
   selectedShape: DrawableShape | undefined
+  canvas: HTMLCanvasElement | null
+  givenWidth: number
+  givenHeight: number
   updateShape: (shape: DrawableShape) => void
   removeShape: (shape: DrawableShape) => void
   defaultConf: StyledShape
@@ -108,6 +117,9 @@ type SettingsBoxType = {
 const SettingsBox = ({
   activeTool,
   selectedShape,
+  canvas,
+  givenWidth,
+  givenHeight,
   updateShape,
   removeShape,
   defaultConf,
@@ -126,8 +138,11 @@ const SettingsBox = ({
   )
 
   const pointPosition = useMemo(() => {
-    return getSettingsPositionDebounced(selectedShape) ?? [0, 0]
-  }, [selectedShape])
+    return (
+      (selectedShape &&
+        getSettingsPositionDebounced(selectedShape, canvas, givenWidth, givenHeight)) ?? [0, 0]
+    )
+  }, [selectedShape, canvas, givenWidth, givenHeight])
 
   return (
     <StyledSettingsBox left={pointPosition[0]} top={pointPosition[1]}>

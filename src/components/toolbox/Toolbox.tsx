@@ -19,6 +19,7 @@ const StyledToolbox = styled.div<{
   hover: boolean
 }>`
   display: flex;
+  border: 1px solid black;
 
   ${({ hover }) =>
     hover &&
@@ -183,13 +184,13 @@ const Toolbox = ({
         isActive={activeTool === ToolEnum.selection}
         setActive={setActiveTool}
       />
-      <Tool
+      {/* <Tool
         type={ToolEnum.move}
         lib="move"
         imgSrc={moveIcon}
         isActive={activeTool === ToolEnum.move}
         setActive={setActiveTool}
-      />
+      /> */}
       <Tool
         type={ToolEnum.undo}
         isDisabled={!hasActionToUndo}

@@ -10,10 +10,49 @@ import { getShapeInfos } from './shapeData'
 
 export const getCursorPosition = (
   e: MouseEvent | TouchEvent,
-  canvas: HTMLCanvasElement | null
+  canvas: HTMLCanvasElement | null,
+  givenWidth: number,
+  givenHeight: number
 ): Point => {
   const { clientX, clientY } = _.getOr(e, 'touches[0]', e)
-  return [clientX - (canvas?.offsetLeft ?? 0), clientY - (canvas?.offsetTop ?? 0)]
+  const canvasBoundingRect = canvas?.getBoundingClientRect() ?? {
+    left: 0,
+    top: 0,
+    width: givenWidth,
+    height: givenHeight
+  }
+  return [
+    (clientX - canvasBoundingRect.left) * (givenWidth / canvasBoundingRect.width),
+    (clientY - canvasBoundingRect.top) * (givenHeight / canvasBoundingRect.height)
+  ]
+}
+
+export const getSettingsPosition = (
+  shape: DrawableShape,
+  canvas: HTMLCanvasElement | null,
+  givenWidth: number,
+  givenHeight: number
+) => {
+  const shapeInfos = getShapeInfos(shape)
+
+  const positionInCanvas = getPointPositionBeforeCanvasTransformation(
+    shapeInfos.center,
+    [-shape.translation[0], -shape.translation[1]],
+    shape.rotation,
+    shapeInfos.center
+  )
+
+  const canvasBoundingRect = canvas?.getBoundingClientRect() ?? {
+    left: 0,
+    top: 0,
+    width: givenWidth,
+    height: givenHeight
+  }
+
+  return [
+    canvasBoundingRect.left + positionInCanvas[0] * (canvasBoundingRect.width / givenWidth),
+    canvasBoundingRect.top + positionInCanvas[1] * (canvasBoundingRect.height / givenHeight)
+  ]
 }
 
 const isPointInsideRect = (rect: Rect, point: Point) => {

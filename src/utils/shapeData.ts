@@ -94,14 +94,3 @@ export const getShapeInfos = (shape: DrawableShape) => {
   const center = getShapeCenter(borders)
   return { borders, center }
 }
-
-export const getSettingsPosition = (shape: DrawableShape) => {
-  const shapeInfos = getShapeInfos(shape)
-
-  return getPointPositionBeforeCanvasTransformation(
-    shapeInfos.center,
-    [-shape.translation[0], -shape.translation[1]],
-    shape.rotation,
-    shapeInfos.center
-  )
-}
