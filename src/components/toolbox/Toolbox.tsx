@@ -5,7 +5,6 @@ import { DrawableShape, ShapeEnum, ToolEnum, ToolsType } from 'types/Shapes'
 import { createPicture } from 'utils/selection'
 
 import circleIcon from 'assets/icons/circle.svg'
-import moveIcon from 'assets/icons/hand-rock.svg'
 import pictureIcon from 'assets/icons/image.svg'
 import selectIcon from 'assets/icons/mouse-pointer.svg'
 import redoIcon from 'assets/icons/redo.svg'
@@ -93,14 +92,14 @@ const Tool = ({ type, lib, imgSrc, isActive, isDisabled = false, setActive }: To
 }
 
 type PictureToolType = {
-  setShapes: React.Dispatch<React.SetStateAction<DrawableShape[]>>
+  addShape: (pictureShape: DrawableShape) => void
   setSelectedShape: React.Dispatch<React.SetStateAction<DrawableShape | undefined>>
   setActiveTool: (tool: ToolsType) => void
   maxPictureSize: number
 }
 
 const PictureTool = ({
-  setShapes,
+  addShape,
   setSelectedShape,
   setActiveTool,
   maxPictureSize
@@ -116,11 +115,11 @@ const PictureTool = ({
       const file = event.target.files?.item(0)
       if (!file) return
       const pictureShape = await createPicture(file, maxPictureSize)
-      setShapes(prevShapes => [pictureShape, ...prevShapes])
+      addShape(pictureShape)
       setActiveTool(ToolEnum.selection)
       setSelectedShape(pictureShape)
     },
-    [maxPictureSize, setShapes, setActiveTool, setSelectedShape]
+    [maxPictureSize, addShape, setActiveTool, setSelectedShape]
   )
 
   return (
@@ -142,12 +141,13 @@ type ToolboxType = {
   activeTool: React.SetStateAction<ToolsType>
   hasActionToUndo?: boolean
   hasActionToRedo?: boolean
+  hasActionToClear?: boolean
   undoAction: () => void
   redoAction: () => void
   clearCanvas: () => void
   setActiveTool: (tool: ToolsType) => void
   saveCanvasInFile: () => void
-  setShapes: React.Dispatch<React.SetStateAction<DrawableShape[]>>
+  addShape: (pictureShape: DrawableShape) => void
   setSelectedShape: React.Dispatch<React.SetStateAction<DrawableShape | undefined>>
   maxPictureSize?: number
   toolboxPosition: 'top' | 'left'
@@ -158,11 +158,12 @@ const Toolbox = ({
   activeTool,
   hasActionToUndo = false,
   hasActionToRedo = false,
+  hasActionToClear = false,
   clearCanvas,
   setActiveTool,
   undoAction,
   redoAction,
-  setShapes,
+  addShape,
   saveCanvasInFile,
   setSelectedShape,
   maxPictureSize = 300,
@@ -209,6 +210,7 @@ const Toolbox = ({
       />
       <Tool
         type={ToolEnum.clear}
+        isDisabled={!hasActionToClear}
         lib="Clear"
         imgSrc={clearIcon}
         isActive={activeTool === ToolEnum.clear}
@@ -232,7 +234,7 @@ const Toolbox = ({
         maxPictureSize={maxPictureSize}
         setSelectedShape={setSelectedShape}
         setActiveTool={setActiveTool}
-        setShapes={setShapes}
+        addShape={addShape}
       />
       <StyledSeparator />
 

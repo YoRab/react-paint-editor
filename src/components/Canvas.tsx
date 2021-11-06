@@ -40,7 +40,7 @@ const handleSelection = (
   width: number,
   height: number,
   setHoverMode: React.Dispatch<React.SetStateAction<HoverModeData>>,
-  setShapes: React.Dispatch<React.SetStateAction<DrawableShape[]>>,
+  updateSingleShape: (updatedShape: DrawableShape) => void,
   setCanvasOffset: React.Dispatch<React.SetStateAction<Point>>,
   setSelectedShape: React.Dispatch<React.SetStateAction<DrawableShape | undefined>>
 ) => {
@@ -66,11 +66,7 @@ const handleSelection = (
     setHoverMode(positionIntersection)
   } else {
     const newShape = transformShape(selectedShape, cursorPosition, canvasOffset, selectionMode)
-    setShapes(prevMarkers =>
-      prevMarkers.map(marker => {
-        return marker.id === selectedShape.id ? newShape : marker
-      })
-    )
+    updateSingleShape(newShape)
     setSelectedShape(newShape)
   }
 }
@@ -141,7 +137,8 @@ type DrawerType = {
   height: number
   shapes: DrawableShape[]
   saveShapes: () => void
-  setShapes: React.Dispatch<React.SetStateAction<DrawableShape[]>>
+  addShape: (newShape: DrawableShape) => void
+  updateSingleShape: (updatedShape: DrawableShape) => void
   selectedShape: DrawableShape | undefined
   setSelectedShape: React.Dispatch<React.SetStateAction<DrawableShape | undefined>>
   activeTool: ToolsType
@@ -159,7 +156,8 @@ const Canvas = React.forwardRef<HTMLCanvasElement, DrawerType>(
       width,
       height,
       shapes,
-      setShapes,
+      addShape,
+      updateSingleShape,
       selectedShape,
       setSelectedShape,
       saveShapes,
@@ -203,7 +201,7 @@ const Canvas = React.forwardRef<HTMLCanvasElement, DrawerType>(
         }
         if (_.includes(activeTool, ShapeEnum)) {
           const newShape = createShape(activeTool as ShapeEnum, cursorPosition, defaultConf)
-          setShapes(prevShapes => [newShape, ...prevShapes])
+          addShape(newShape)
           setActiveTool(ToolEnum.selection)
           setSelectedShape(newShape)
           setSelectionMode({
@@ -224,7 +222,7 @@ const Canvas = React.forwardRef<HTMLCanvasElement, DrawerType>(
         defaultConf,
         width,
         height,
-        setShapes,
+        addShape,
         setActiveTool,
         setSelectedShape,
         setSelectionMode
@@ -251,7 +249,7 @@ const Canvas = React.forwardRef<HTMLCanvasElement, DrawerType>(
           width,
           height,
           setHoverMode,
-          setShapes,
+          updateSingleShape,
           setCanvasOffset,
           setSelectedShape
         )
@@ -264,7 +262,7 @@ const Canvas = React.forwardRef<HTMLCanvasElement, DrawerType>(
         canvasOffsetStartPosition,
         width,
         height,
-        setShapes,
+        updateSingleShape,
         activeTool,
         setCanvasOffset,
         setSelectedShape
