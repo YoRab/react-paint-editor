@@ -1,5 +1,5 @@
 import _ from 'lodash/fp'
-import React, { useCallback, useEffect, useRef, useState } from 'react'
+import React, { useCallback, useRef, useState } from 'react'
 import { DrawableShape, Point, StyledShape, ToolEnum, ToolsType } from 'types/Shapes'
 import Canvas from './Canvas'
 import Layouts from './toolbox/Layouts'
@@ -45,64 +45,53 @@ const App = ({ hover = false, toolboxPosition = 'top', width = 1000, height = 60
   )
   const [activeTool, setActiveTool] = useState<ToolsType>(ToolEnum.selection)
   const [selectedShape, setSelectedShape] = useState<DrawableShape | undefined>(undefined)
-  const [shapes, setShapes] = useState<DrawableShape[]>([
-    // {
-    //   type: ShapeType.line,
-    //   id: _.uniqueId('line_'),
-    //   points: [
-    //     [20, 30],
-    //     [500, 100]
-    //   ],
-    //   translation: [0, 0],
-    //   rotation: 0
-    // },
-    // {
-    //   type: ShapeType.polygon,
-    //   id: _.uniqueId(''),
-    //   points: [
-    //     [40, 20],
-    //     [100, 100],
-    //     [150, 250],
-    //     [20, 40],
-    //     [150, 200]
-    //   ],
-    //   translation: [0, 0],
-    //   rotation: 0
-    // },
-    // {
-    //   type: ShapeType.polygon,
-    //   id: _.uniqueId(''),
-    //   points: [
-    //     [40, 20],
-    //     [80, 20],
-    //     [120, 40],
-    //     [80, 80]
-    //   ],
-    //   translation: [0, 0],
-    //   rotation: 0
-    // }
-  ])
+
+  const shapesRef = useRef<DrawableShape[]>([])
+  //   // {
+  //   //   type: ShapeType.line,
+  //   //   id: _.uniqueId('line_'),
+  //   //   points: [
+  //   //     [20, 30],
+  //   //     [500, 100]
+  //   //   ],
+  //   //   translation: [0, 0],
+  //   //   rotation: 0
+  //   // },
+  //   // {
+  //   //   type: ShapeType.polygon,
+  //   //   id: _.uniqueId(''),
+  //   //   points: [
+  //   //     [40, 20],
+  //   //     [100, 100],
+  //   //     [150, 250],
+  //   //     [20, 40],
+  //   //     [150, 200]
+  //   //   ],
+  //   //   translation: [0, 0],
+  //   //   rotation: 0
+  //   // },
+  //   // {
+  //   //   type: ShapeType.polygon,
+  //   //   id: _.uniqueId(''),
+  //   //   points: [
+  //   //     [40, 20],
+  //   //     [80, 20],
+  //   //     [120, 40],
+  //   //     [80, 80]
+  //   //   ],
+  //   //   translation: [0, 0],
+  //   //   rotation: 0
+  //   // }
 
   const [savedShapes, setSavedShapes] = useState<{
     states: DrawableShape[][]
     cursor: number
   }>({
-    states: [shapes],
+    states: [[]],
     cursor: 0
   })
 
   const canvasRef = useRef<HTMLCanvasElement>(null)
-
-  const saveShapes = useCallback(() => {
-    setSavedShapes(prevSavedShaped => {
-      return _.isEqual(_.get(prevSavedShaped.cursor, prevSavedShaped.states), shapes)
-        ? prevSavedShaped
-        : {
-            states: [...prevSavedShaped.states.slice(0, prevSavedShaped.cursor + 1), shapes],
-            cursor: prevSavedShaped.cursor + 1
-          }
-    })
-  }, [shapes])
 
   const saveCanvasInFile = useCallback(() => {
     const dataURL = canvasRef.current?.toDataURL('image/png')
@@ -120,10 +109,27 @@ const App = ({ hover = false, toolboxPosition = 'top', width = 1000, height = 60
     setSelectedShape(undefined)
   }, [])
 
+  const saveShapes = useCallback(() => {
+    setSavedShapes(prevSavedShaped => {
+      return _.isEqual(_.get(prevSavedShaped.cursor, prevSavedShaped.states), shapesRef.current)
+        ? prevSavedShaped
+        : {
+            states: [
+              ...prevSavedShaped.states.slice(0, prevSavedShaped.cursor + 1),
+              shapesRef.current
+            ],
+            cursor: prevSavedShaped.cursor + 1
+          }
+    })
+  }, [])
+
   const undoAction = useCallback(() => {
     setSelectedShape(undefined)
+
     setSavedShapes(prevSavedShaped => {
-      return _.set('cursor', Math.max(0, prevSavedShaped.cursor - 1), prevSavedShaped)
+      const newCursor = Math.max(0, prevSavedShaped.cursor - 1)
+      shapesRef.current = _.get(newCursor, prevSavedShaped.states)
+      return _.set('cursor', newCursor, prevSavedShaped)
     })
     selectTool(ToolEnum.selection)
   }, [selectTool])
@@ -132,94 +138,61 @@ const App = ({ hover = false, toolboxPosition = 'top', width = 1000, height = 60
     setSelectedShape(undefined)
 
     setSavedShapes(prevSavedShaped => {
-      return _.set(
-        'cursor',
-        Math.min(prevSavedShaped.states.length - 1, prevSavedShaped.cursor + 1),
-        prevSavedShaped
-      )
+      const newCursor = Math.min(prevSavedShaped.states.length - 1, prevSavedShaped.cursor + 1)
+      shapesRef.current = _.get(newCursor, prevSavedShaped.states)
+      return _.set('cursor', newCursor, prevSavedShaped)
     })
     selectTool(ToolEnum.selection)
   }, [selectTool])
 
-  const updateShape = useCallback((shape: DrawableShape) => {
-    setSelectedShape(prevSelectedShape =>
-      prevSelectedShape?.id === shape.id ? shape : prevSelectedShape
-    )
-    setSavedShapes(prevSavedShaped => {
-      const currentSavedShapes = _.get(prevSavedShaped.cursor, prevSavedShaped.states) || []
-      if (_.isEmpty(currentSavedShapes)) return prevSavedShaped
-      const newShapes = currentSavedShapes.map(prevShape => {
-        return prevShape.id === shape.id ? shape : prevShape
+  const addShape = useCallback((newShape: DrawableShape) => {
+    shapesRef.current = [newShape, ...shapesRef.current]
+  }, [])
+
+  const updateShape = useCallback(
+    (updatedShape: DrawableShape) => {
+      shapesRef.current = shapesRef.current.map(marker => {
+        return marker.id === selectedShape?.id ? updatedShape : marker
       })
-
-      return _.isEqual(currentSavedShapes, newShapes)
-        ? prevSavedShaped
-        : {
-            states: [...prevSavedShaped.states.slice(0, prevSavedShaped.cursor + 1), newShapes],
-            cursor: prevSavedShaped.cursor + 1
-          }
-    })
-  }, [])
-
-  const updateShapes = useCallback((newShapes: DrawableShape[]) => {
-    setSavedShapes(prevSavedShaped => {
-      const pureShapes = newShapes.map(shape => _.omit(['chosen'], shape)) as DrawableShape[]
-
-      const currentSavedShapes = (_.get(prevSavedShaped.cursor, prevSavedShaped.states) || []).map(
-        shape => _.omit(['chosen'], shape)
+      setSelectedShape(prevSelectedShape =>
+        prevSelectedShape?.id === updatedShape.id ? updatedShape : prevSelectedShape
       )
-      if (_.isEmpty(currentSavedShapes)) return prevSavedShaped
+    },
+    [selectedShape]
+  )
 
-      return _.isEqual(currentSavedShapes, pureShapes)
-        ? prevSavedShaped
-        : {
-            states: [...prevSavedShaped.states.slice(0, prevSavedShaped.cursor + 1), pureShapes],
-            cursor: prevSavedShaped.cursor + 1
-          }
-    })
-  }, [])
+  const updateShapes = useCallback(
+    (newShapes: DrawableShape[]) => {
+      const pureShapes = newShapes.map(shape => _.omit(['chosen'], shape)) as DrawableShape[]
+      shapesRef.current = pureShapes
+      saveShapes()
+    },
+    [saveShapes]
+  )
 
-  const removeShape = useCallback((shape: DrawableShape) => {
-    setSelectedShape(prevSelectedShape =>
-      prevSelectedShape?.id === shape.id ? undefined : prevSelectedShape
-    )
-    setSavedShapes(prevSavedShaped => {
-      const currentSavedShapes = _.get(prevSavedShaped.cursor, prevSavedShaped.states) || []
-      if (_.isEmpty(currentSavedShapes)) return prevSavedShaped
-      const newShapes = _.remove({ id: shape.id }, currentSavedShapes)
-
-      return _.isEqual(currentSavedShapes, newShapes)
-        ? prevSavedShaped
-        : {
-            states: [...prevSavedShaped.states.slice(0, prevSavedShaped.cursor + 1), newShapes],
-            cursor: prevSavedShaped.cursor + 1
-          }
-    })
-  }, [])
+  const removeShape = useCallback(
+    (shape: DrawableShape) => {
+      setSelectedShape(prevSelectedShape =>
+        prevSelectedShape?.id === shape.id ? undefined : prevSelectedShape
+      )
+      shapesRef.current = _.remove({ id: shape.id }, shapesRef.current)
+      saveShapes()
+    },
+    [saveShapes]
+  )
 
   const clearCanvas = useCallback(() => {
     setSelectedShape(undefined)
-
-    setSavedShapes(prevSavedShaped => {
-      return _.isEmpty(_.get(prevSavedShaped.cursor, prevSavedShaped.states))
-        ? prevSavedShaped
-        : {
-            states: [...prevSavedShaped.states.slice(0, prevSavedShaped.cursor + 1), []],
-            cursor: prevSavedShaped.cursor + 1
-          }
-    })
+    shapesRef.current = []
+    setSavedShapes({ states: [[]], cursor: 0 })
     selectTool(ToolEnum.selection)
     setCanvasOffset([0, 0])
   }, [selectTool])
 
-  useEffect(() => {
-    setShapes(() => {
-      return _.get(savedShapes.cursor, savedShapes.states) ?? []
-    })
-  }, [savedShapes])
-
   const hasActionToUndo = savedShapes.cursor > 0
   const hasActionToRedo = savedShapes.cursor < savedShapes.states.length - 1
+  const hasActionToClear = savedShapes.states.length > 1
+  console.log(savedShapes.cursor)
 
   return (
     <StyledApp toolboxposition={toolboxPosition} height={height}>
@@ -229,9 +202,10 @@ const App = ({ hover = false, toolboxPosition = 'top', width = 1000, height = 60
         setSelectedShape={setSelectedShape}
         setActiveTool={selectTool}
         saveCanvasInFile={saveCanvasInFile}
-        setShapes={setShapes}
+        addShape={addShape}
         hasActionToUndo={hasActionToUndo}
         hasActionToRedo={hasActionToRedo}
+        hasActionToClear={hasActionToClear}
         undoAction={undoAction}
         redoAction={redoAction}
         toolboxPosition={toolboxPosition}
@@ -243,8 +217,9 @@ const App = ({ hover = false, toolboxPosition = 'top', width = 1000, height = 60
           setActiveTool={setActiveTool}
           canvasOffsetStartPosition={canvasOffsetStartPosition}
           setCanvasOffsetStartPosition={setCanvasOffsetStartPosition}
-          shapes={shapes}
-          setShapes={setShapes}
+          shapes={shapesRef.current}
+          addShape={addShape}
+          updateSingleShape={updateShape}
           selectedShape={selectedShape}
           setSelectedShape={setSelectedShape}
           canvasOffset={canvasOffset}
@@ -256,7 +231,7 @@ const App = ({ hover = false, toolboxPosition = 'top', width = 1000, height = 60
           height={height}
         />
         <Layouts
-          shapes={_.get(savedShapes.cursor, savedShapes.states)}
+          shapes={shapesRef.current}
           updateShapes={updateShapes}
           selectedShape={selectedShape}
           removeShape={removeShape}
