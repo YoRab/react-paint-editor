@@ -36,7 +36,7 @@ export const getNewSelectionData = (
   return undefined
 }
 
-export const createPicture = (file: unknown, maxPictureSize: number) => {
+export const createPicture = (file: File, maxPictureSize: number) => {
   return new Promise<DrawablePicture>((resolve, reject) => {
     const img = new Image()
     img.onload = () => {

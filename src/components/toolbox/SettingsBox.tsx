@@ -6,8 +6,6 @@ import { DrawableShape, ShapeEnum, StyledShape, ToolsType } from 'types/Shapes'
 import { getSettingsPosition } from 'utils/intersect'
 import deleteIcon from 'assets/icons/trash.svg'
 
-const POSITION_DELAY = 50
-
 const StyledSettingsBox = styled.div.attrs<{
   left: number
   top: number
@@ -24,7 +22,6 @@ const StyledSettingsBox = styled.div.attrs<{
   user-select: none;
   display: flex;
   transform: translate(-50%, 0);
-  transition: all ${POSITION_DELAY * 2}ms ease-out;
 `
 const StyledDeleteButton = styled.button`
   width: 36px;
@@ -92,16 +89,6 @@ const ShapeStyleSelect = ({ field, values, defaultValue, valueChanged }: ShapeSt
   )
 }
 
-const getSettingsPositionDebounced = _.throttle(
-  POSITION_DELAY,
-  (
-    selectedShape: DrawableShape,
-    canvas: HTMLCanvasElement | null,
-    givenWidth: number,
-    givenHeight: number
-  ) => getSettingsPosition(selectedShape, canvas, givenWidth, givenHeight)
-)
-
 type SettingsBoxType = {
   activeTool: ToolsType
   selectedShape: DrawableShape | undefined
@@ -139,8 +126,9 @@ const SettingsBox = ({
 
   const pointPosition = useMemo(() => {
     return (
-      (selectedShape &&
-        getSettingsPositionDebounced(selectedShape, canvas, givenWidth, givenHeight)) ?? [0, 0]
+      (selectedShape && getSettingsPosition(selectedShape, canvas, givenWidth, givenHeight)) ?? [
+        0, 0
+      ]
     )
   }, [selectedShape, canvas, givenWidth, givenHeight])
 
