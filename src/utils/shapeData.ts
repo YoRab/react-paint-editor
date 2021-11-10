@@ -1,7 +1,6 @@
 import { SELECTION_PADDING } from 'constants/shapes'
 import _ from 'lodash/fp'
 import { Circle, Ellipse, Line, Picture, Point, Polygon, Rect, DrawableShape } from 'types/Shapes'
-import { getPointPositionBeforeCanvasTransformation } from './intersect'
 
 const getLineBorder = (line: Line): Rect => {
   const x = Math.min(line.points[0][0], line.points[1][0]) - SELECTION_PADDING
