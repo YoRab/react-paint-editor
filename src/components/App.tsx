@@ -29,9 +29,16 @@ type AppType = {
   toolboxPosition?: 'top' | 'left'
   width?: number
   height?: number
+  withLayouts?: boolean
 }
 
-const App = ({ hover = false, toolboxPosition = 'top', width = 1000, height = 600 }: AppType) => {
+const App = ({
+  hover = false,
+  toolboxPosition = 'top',
+  width = 1000,
+  height = 600,
+  withLayouts = true
+}: AppType) => {
   const [defaultConf, setDefaultConf] = useState<StyledShape>({
     style: {
       fillColor: 'transparent',
@@ -230,15 +237,17 @@ const App = ({ hover = false, toolboxPosition = 'top', width = 1000, height = 60
           width={width}
           height={height}
         />
-        <Layouts
-          shapes={shapesRef.current}
-          updateShapes={updateShapes}
-          selectedShape={selectedShape}
-          removeShape={removeShape}
-          setSelectedShape={setSelectedShape}
-          setActiveTool={setActiveTool}
-          hover={hover}
-        />
+        {withLayouts && (
+          <Layouts
+            shapes={shapesRef.current}
+            updateShapes={updateShapes}
+            selectedShape={selectedShape}
+            removeShape={removeShape}
+            setSelectedShape={setSelectedShape}
+            setActiveTool={setActiveTool}
+            hover={hover}
+          />
+        )}
       </StyledRow>
       {selectedShape && (
         <SettingsBox
