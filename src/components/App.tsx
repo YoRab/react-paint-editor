@@ -199,7 +199,6 @@ const App = ({
   const hasActionToUndo = savedShapes.cursor > 0
   const hasActionToRedo = savedShapes.cursor < savedShapes.states.length - 1
   const hasActionToClear = savedShapes.states.length > 1
-  console.log(savedShapes.cursor)
 
   return (
     <StyledApp toolboxposition={toolboxPosition} height={height}>
