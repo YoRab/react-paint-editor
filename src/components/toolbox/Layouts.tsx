@@ -99,13 +99,14 @@ const Layout = ({
 
   const handleDragStart = useCallback(
     (e: DragEvent) => {
+      handleSelect(shape)
       if (!e.dataTransfer) return
       e.dataTransfer.effectAllowed = 'move'
       e.dataTransfer.setData('draggableShapeId', shape.id)
 
       setLayoutDragging(shape.id)
     },
-    [shape, setLayoutDragging]
+    [shape, setLayoutDragging, handleSelect]
   )
 
   const handleDragEnd = useCallback(() => {
@@ -203,12 +204,21 @@ const Layouts = ({
       const firstShapeIndex = _.findIndex({ id: firstShapeId }, shapes)
       const lastShapeIndex = _.findIndex({ id: lastShapeId }, shapes)
 
-      const markers = _.flow(
-        _.set(firstShapeIndex, shapes[lastShapeIndex]),
-        _.set(lastShapeIndex, shapes[firstShapeIndex])
-      )(shapes)
-
-      updateShapes(markers)
+      if (firstShapeIndex < lastShapeIndex) {
+        updateShapes([
+          ..._.slice(0, firstShapeIndex, shapes),
+          ..._.slice(firstShapeIndex + 1, lastShapeIndex + 1, shapes),
+          shapes[firstShapeIndex],
+          ..._.slice(lastShapeIndex + 1, shapes.length, shapes)
+        ])
+      } else {
+        updateShapes([
+          ..._.slice(0, lastShapeIndex, shapes),
+          shapes[firstShapeIndex],
+          ..._.slice(lastShapeIndex, firstShapeIndex, shapes),
+          ..._.slice(firstShapeIndex + 1, shapes.length, shapes)
+        ])
+      }
     },
     [shapes, updateShapes]
   )
