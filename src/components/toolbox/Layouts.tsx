@@ -145,20 +145,21 @@ const Layout = ({
   }, [layoutDragging])
 
   useEffect(() => {
-    ref.current?.addEventListener('dragstart', handleDragStart)
-    ref.current?.addEventListener('dragend', handleDragEnd)
-    ref.current?.addEventListener('dragover', handleDragOver)
-    ref.current?.addEventListener('dragenter', handleDragEnter)
-    ref.current?.addEventListener('dragleave', handleDragLeave)
-    ref.current?.addEventListener('drop', handleDrop)
+    const layoutRef = ref.current
+    layoutRef?.addEventListener('dragstart', handleDragStart)
+    layoutRef?.addEventListener('dragend', handleDragEnd)
+    layoutRef?.addEventListener('dragover', handleDragOver)
+    layoutRef?.addEventListener('dragenter', handleDragEnter)
+    layoutRef?.addEventListener('dragleave', handleDragLeave)
+    layoutRef?.addEventListener('drop', handleDrop)
 
     return () => {
-      ref.current?.removeEventListener('dragstart', handleDragStart)
-      ref.current?.removeEventListener('dragend', handleDragEnd)
-      ref.current?.removeEventListener('dragover', handleDragOver)
-      ref.current?.removeEventListener('dragenter', handleDragEnter)
-      ref.current?.removeEventListener('dragleave', handleDragLeave)
-      ref.current?.removeEventListener('drop', handleDrop)
+      layoutRef?.removeEventListener('dragstart', handleDragStart)
+      layoutRef?.removeEventListener('dragend', handleDragEnd)
+      layoutRef?.removeEventListener('dragover', handleDragOver)
+      layoutRef?.removeEventListener('dragenter', handleDragEnter)
+      layoutRef?.removeEventListener('dragleave', handleDragLeave)
+      layoutRef?.removeEventListener('drop', handleDrop)
     }
   })
 
