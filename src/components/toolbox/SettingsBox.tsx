@@ -112,7 +112,7 @@ const SettingsBox = ({
   defaultConf,
   setDefaultConf
 }: SettingsBoxType) => {
-  const shapes = [ShapeEnum.ellipse, ShapeEnum.circle, ShapeEnum.rect]
+  const shapes = [ShapeEnum.ellipse, ShapeEnum.circle, ShapeEnum.rect, ShapeEnum.line]
   const handleShapeStyleChange = useCallback(
     (field: string, value: string | number) => {
       if (selectedShape) {

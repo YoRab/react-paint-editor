@@ -3,7 +3,17 @@ import {
   SELECTION_RESIZE_ANCHOR_POSITIONS,
   SELECTION_ROTATED_ANCHOR_POSITION
 } from 'constants/shapes'
-import { Circle, Ellipse, Line, Picture, Polygon, Rect, DrawableShape, Point } from 'types/Shapes'
+import {
+  Circle,
+  Ellipse,
+  Line,
+  Picture,
+  Polygon,
+  Rect,
+  DrawableShape,
+  Point,
+  DrawableLine
+} from 'types/Shapes'
 import { getShapeInfos } from './shapeData'
 
 const applyShapeTransformations = (
@@ -127,16 +137,14 @@ export const drawShape = (
   }
   restoreShapeTransformations(ctx)
 }
-export const drawSelection = ({
+
+const drawSelectionDefault = ({
   ctx,
-  shape,
-  canvasOffset
+  shape
 }: {
   ctx: CanvasRenderingContext2D
   shape: DrawableShape
-  canvasOffset: Point
 }) => {
-  applyShapeTransformations(ctx, shape, canvasOffset)
   const { borders } = getShapeInfos(shape)
   ctx.setLineDash([4, 2])
   drawRect(ctx, borders)
@@ -173,6 +181,50 @@ export const drawSelection = ({
       lineWidth: 2
     }
   })
+}
+const drawLineSelection = ({
+  ctx,
+  shape
+}: {
+  ctx: CanvasRenderingContext2D
+  shape: DrawableLine
+}) => {
+  const { borders } = getShapeInfos(shape)
+  ctx.setLineDash([4, 2])
+  drawRect(ctx, borders)
+  ctx.setLineDash([])
 
+  for (const coordinate of shape.points) {
+    drawCircle(ctx, {
+      x: coordinate[0],
+      y: coordinate[1],
+      radius: SELECTION_ANCHOR_SIZE / 2,
+      style: {
+        fillColor: 'rgba(200,200,200,0.85)',
+        strokeColor: 'rgba(50,50,50,0.75)',
+        lineWidth: 2
+      }
+    })
+  }
+}
+
+export const drawSelection = ({
+  ctx,
+  shape,
+  canvasOffset
+}: {
+  ctx: CanvasRenderingContext2D
+  shape: DrawableShape
+  canvasOffset: Point
+}) => {
+  applyShapeTransformations(ctx, shape, canvasOffset)
+  switch (shape.type) {
+    case 'line':
+      drawLineSelection({ ctx, shape })
+      break
+    default:
+      drawSelectionDefault({ ctx, shape })
+      break
+  }
   restoreShapeTransformations(ctx)
 }

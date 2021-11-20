@@ -5,7 +5,7 @@ import {
 } from 'constants/shapes'
 import _ from 'lodash/fp'
 import { HoverModeData, SelectionModeLib } from 'types/Mode'
-import { Point, Rect, DrawableShape } from 'types/Shapes'
+import { Point, Rect, DrawableShape, ShapeEnum } from 'types/Shapes'
 import { getShapeInfos } from './shapeData'
 
 export const getCursorPosition = (
@@ -109,12 +109,8 @@ export const checkPositionIntersection = (
   canvasOffset: Point,
   checkAnchors = false
 ): false | HoverModeData => {
-  const { borders: bordersBeforeResizing, center } = getShapeInfos(shape)
-  const borders = {
-    ...bordersBeforeResizing,
-    x: bordersBeforeResizing.x,
-    y: bordersBeforeResizing.y
-  }
+  const { borders, center } = getShapeInfos(shape)
+
   const newPosition = getPointPositionAfterCanvasTransformation(
     position,
     canvasOffset,
@@ -124,33 +120,51 @@ export const checkPositionIntersection = (
   )
 
   if (checkAnchors) {
-    if (
-      isPointInsideRect(
-        {
-          x: borders.x + borders.width / 2 - SELECTION_ANCHOR_SIZE / 2,
-          y: borders.y - SELECTION_ANCHOR_SIZE - SELECTION_ROTATED_ANCHOR_POSITION,
-          width: SELECTION_ANCHOR_SIZE,
-          height: SELECTION_ANCHOR_SIZE
-        },
-        newPosition
-      )
-    ) {
-      return { mode: SelectionModeLib.rotate }
-    }
-
-    for (const anchorPosition of SELECTION_RESIZE_ANCHOR_POSITIONS) {
+    if (shape.type === ShapeEnum.line) {
+      for (let i = 0; i < shape.points.length; i++) {
+        if (
+          isPointInsideRect(
+            {
+              x: shape.points[i][0] - SELECTION_ANCHOR_SIZE / 2,
+              y: shape.points[i][1] - SELECTION_ANCHOR_SIZE / 2,
+              width: SELECTION_ANCHOR_SIZE,
+              height: SELECTION_ANCHOR_SIZE
+            },
+            newPosition
+          )
+        ) {
+          return { mode: SelectionModeLib.resize, anchor: i }
+        }
+      }
+    } else {
       if (
         isPointInsideRect(
           {
-            x: borders.x + borders.width * anchorPosition[0] - SELECTION_ANCHOR_SIZE / 2,
-            y: borders.y + borders.height * anchorPosition[1] - SELECTION_ANCHOR_SIZE / 2,
+            x: borders.x + borders.width / 2 - SELECTION_ANCHOR_SIZE / 2,
+            y: borders.y - SELECTION_ANCHOR_SIZE - SELECTION_ROTATED_ANCHOR_POSITION,
             width: SELECTION_ANCHOR_SIZE,
             height: SELECTION_ANCHOR_SIZE
           },
           newPosition
         )
       ) {
-        return { mode: SelectionModeLib.resize, anchor: anchorPosition }
+        return { mode: SelectionModeLib.rotate }
+      }
+
+      for (const anchorPosition of SELECTION_RESIZE_ANCHOR_POSITIONS) {
+        if (
+          isPointInsideRect(
+            {
+              x: borders.x + borders.width * anchorPosition[0] - SELECTION_ANCHOR_SIZE / 2,
+              y: borders.y + borders.height * anchorPosition[1] - SELECTION_ANCHOR_SIZE / 2,
+              width: SELECTION_ANCHOR_SIZE,
+              height: SELECTION_ANCHOR_SIZE
+            },
+            newPosition
+          )
+        ) {
+          return { mode: SelectionModeLib.resize, anchor: anchorPosition }
+        }
       }
     }
   }

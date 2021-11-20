@@ -11,11 +11,11 @@ export type SelectionModeDefault = {
   mode: SelectionModeLib.default
 }
 
-export type SelectionModeResize = {
+export type SelectionModeResize<AnchorType extends Point | number = Point> = {
   mode: SelectionModeLib.resize
   cursorStartPosition: Point
   originalShape: DrawableShape
-  anchor: Point
+  anchor: AnchorType
 }
 
 export type SelectionModeRotate = {
@@ -30,9 +30,9 @@ export type SelectionModeTranslate = {
   originalShape: DrawableShape
 }
 
-export type SelectionModeData =
+export type SelectionModeData<AnchorType extends Point | number> =
   | SelectionModeDefault
-  | SelectionModeResize
+  | SelectionModeResize<AnchorType>
   | SelectionModeRotate
   | SelectionModeTranslate
 
@@ -42,7 +42,7 @@ export type HoverModeData =
     }
   | {
       mode: SelectionModeLib.resize
-      anchor: Point
+      anchor: Point | number
     }
   | {
       mode: SelectionModeLib.rotate

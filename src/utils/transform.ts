@@ -1,3 +1,5 @@
+import _ from 'lodash/fp'
+
 import { getShapeInfos } from './shapeData'
 import { SELECTION_PADDING } from 'constants/shapes'
 import { SelectionModeData, SelectionModeLib, SelectionModeResize } from 'types/Mode'
@@ -10,7 +12,8 @@ import {
   DrawablePicture,
   Rect,
   Ellipse,
-  Circle
+  Circle,
+  DrawableLine
 } from 'types/Shapes'
 import {
   getPointPositionAfterCanvasTransformation,
@@ -67,6 +70,30 @@ export const rotateShape = (
       rotation
     }
   }
+}
+
+export const resizeLine = (
+  cursorPosition: Point,
+  canvasOffset: Point,
+  originalShape: DrawableLine,
+  selectionMode: SelectionModeResize<number>
+): DrawableLine => {
+  const { center } = getShapeInfos(originalShape)
+
+  const cursorPositionBeforeResize = getPointPositionAfterCanvasTransformation(
+    cursorPosition,
+    canvasOffset,
+    originalShape.translation,
+    originalShape.rotation,
+    center
+  )
+  const updatedShape = _.set(
+    ['points', selectionMode.anchor],
+    cursorPositionBeforeResize,
+    originalShape
+  )
+
+  return updatedShape
 }
 
 export const resizeCircle = (
@@ -387,11 +414,17 @@ export const resizeShape = (
   shape: DrawableShape,
   cursorPosition: Point,
   canvasOffset: Point,
-
   originalShape: DrawableShape,
-  selectionMode: SelectionModeData
+  selectionMode: SelectionModeData<Point | number>
 ): DrawableShape => {
-  if (shape.type === 'circle')
+  if (shape.type === 'line')
+    return resizeLine(
+      cursorPosition,
+      canvasOffset,
+      originalShape as DrawableLine,
+      selectionMode as SelectionModeResize<number>
+    )
+  else if (shape.type === 'circle')
     return resizeCircle(
       cursorPosition,
       canvasOffset,
@@ -426,7 +459,7 @@ export const transformShape = (
   shape: DrawableShape,
   cursorPosition: Point,
   canvasOffset: Point,
-  selectionMode: SelectionModeData
+  selectionMode: SelectionModeData<Point | number>
 ) => {
   if (selectionMode.mode === SelectionModeLib.translate) {
     return translateShape(

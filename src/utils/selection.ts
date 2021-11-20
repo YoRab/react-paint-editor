@@ -9,7 +9,7 @@ export const getNewSelectionData = (
   hoverMode: HoverModeData,
   selectedShape: DrawableShape,
   cursorPosition: Point
-): SelectionModeData | undefined => {
+): SelectionModeData<Point | number> | undefined => {
   if (hoverMode.mode === 'translate') {
     return {
       mode: SelectionModeLib.translate,
@@ -75,6 +75,18 @@ export const createShape = (
   }
 ): DrawableShape => {
   switch (shape) {
+    case ShapeEnum.line:
+      return {
+        type: ShapeEnum.line,
+        id: _.uniqueId('line_'),
+        points: [
+          [cursorPosition[0], cursorPosition[1]],
+          [cursorPosition[0], cursorPosition[1]]
+        ],
+        translation: [0, 0],
+        rotation: 0,
+        style: defaultConf.style
+      }
     case ShapeEnum.rect:
       return {
         type: ShapeEnum.rect,
@@ -120,7 +132,7 @@ export const selectShape = (
   canvasOffset: Point,
   selectedShape: DrawableShape | undefined,
   hoverMode: HoverModeData
-): { mode: SelectionModeData; shape: DrawableShape | undefined } => {
+): { mode: SelectionModeData<Point | number>; shape: DrawableShape | undefined } => {
   if (selectedShape) {
     const newSelectionMode = getNewSelectionData(hoverMode, selectedShape, cursorPosition)
     if (newSelectionMode) {

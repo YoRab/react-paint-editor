@@ -35,7 +35,7 @@ const handleSelection = (
   activeTool: ToolsType,
   canvasOffset: Point,
   selectedShape: DrawableShape | undefined,
-  selectionMode: SelectionModeData,
+  selectionMode: SelectionModeData<Point | number>,
   canvasOffsetStartPosition: Point | undefined,
   width: number,
   height: number,
@@ -175,7 +175,7 @@ const Canvas = React.forwardRef<HTMLCanvasElement, DrawerType>(
     const selectionCanvasRef = useRef<HTMLCanvasElement | null>(null)
     const combinedRef = useCombinedRefs(ref, drawCanvasRef)
 
-    const [selectionMode, setSelectionMode] = useState<SelectionModeData>({
+    const [selectionMode, setSelectionMode] = useState<SelectionModeData<Point | number>>({
       mode: SelectionModeLib.default
     })
     const [hoverMode, setHoverMode] = useState<HoverModeData>({ mode: SelectionModeLib.default })
@@ -208,7 +208,7 @@ const Canvas = React.forwardRef<HTMLCanvasElement, DrawerType>(
             mode: SelectionModeLib.resize,
             cursorStartPosition: cursorPosition,
             originalShape: newShape,
-            anchor: [1, 1]
+            anchor: activeTool === ShapeEnum.line ? 0 : [1, 1]
           })
         }
       },
