@@ -13,7 +13,8 @@ import {
   Rect,
   Ellipse,
   Circle,
-  DrawableLine
+  DrawableLine,
+  DrawablePolygon
 } from 'types/Shapes'
 import {
   getPointPositionAfterCanvasTransformation,
@@ -75,9 +76,9 @@ export const rotateShape = (
 export const resizeLine = (
   cursorPosition: Point,
   canvasOffset: Point,
-  originalShape: DrawableLine,
+  originalShape: DrawableLine | DrawablePolygon,
   selectionMode: SelectionModeResize<number>
-): DrawableLine => {
+): DrawableLine | DrawablePolygon => {
   const { center } = getShapeInfos(originalShape)
 
   const cursorPositionBeforeResize = getPointPositionAfterCanvasTransformation(
@@ -94,6 +95,35 @@ export const resizeLine = (
   )
 
   return updatedShape
+}
+
+export const updatePolygonLinesCount = (
+  shape: DrawablePolygon,
+  newPointsCount: number
+): DrawablePolygon => {
+  const currentPointsCount = shape.points.length
+  if (currentPointsCount === newPointsCount) return shape
+  if (currentPointsCount > newPointsCount) {
+    return _.set('points', shape.points.slice(0, newPointsCount), shape)
+  } else {
+    //TODO : better distribution for new points
+    const nbPointsToAdd = newPointsCount - currentPointsCount
+    const newPoints = _.flow(
+      _.range(0),
+      _.map(index => [
+        shape.points[0][0] +
+          ((shape.points[1][0] - shape.points[0][0]) * (index + 1)) / (nbPointsToAdd + 1),
+        shape.points[0][1] +
+          ((shape.points[1][1] - shape.points[0][1]) * (index + 1)) / (nbPointsToAdd + 1)
+      ])
+    )(nbPointsToAdd) as Point[]
+
+    return _.set(
+      'points',
+      [shape.points[0], ...newPoints, ...shape.points.slice(1, shape.points.length)],
+      shape
+    )
+  }
 }
 
 export const resizeCircle = (
@@ -417,7 +447,7 @@ export const resizeShape = (
   originalShape: DrawableShape,
   selectionMode: SelectionModeData<Point | number>
 ): DrawableShape => {
-  if (shape.type === 'line')
+  if (shape.type === 'line' || shape.type === 'polygon')
     return resizeLine(
       cursorPosition,
       canvasOffset,

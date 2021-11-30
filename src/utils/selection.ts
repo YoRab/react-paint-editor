@@ -87,6 +87,18 @@ export const createShape = (
         rotation: 0,
         style: defaultConf.style
       }
+    case ShapeEnum.polygon:
+      return {
+        type: ShapeEnum.polygon,
+        id: _.uniqueId('polygon_'),
+        points: [
+          [cursorPosition[0], cursorPosition[1]],
+          [cursorPosition[0], cursorPosition[1]]
+        ],
+        translation: [0, 0],
+        rotation: 0,
+        style: defaultConf.style
+      }
     case ShapeEnum.rect:
       return {
         type: ShapeEnum.rect,

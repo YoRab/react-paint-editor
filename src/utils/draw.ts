@@ -12,7 +12,8 @@ import {
   Rect,
   DrawableShape,
   Point,
-  DrawableLine
+  DrawableLine,
+  DrawablePolygon
 } from 'types/Shapes'
 import { getShapeInfos } from './shapeData'
 
@@ -75,6 +76,7 @@ export const drawPolygon = (ctx: CanvasRenderingContext2D, polygon: Polygon): vo
   polygon.points.slice(1).map(point => {
     ctx.lineTo(...point)
   })
+  ctx.lineTo(...polygon.points[0])
   polygon.style?.fillColor !== 'transparent' && ctx.fill()
   polygon.style?.strokeColor !== 'transparent' && ctx.stroke()
 }
@@ -187,7 +189,7 @@ const drawLineSelection = ({
   shape
 }: {
   ctx: CanvasRenderingContext2D
-  shape: DrawableLine
+  shape: DrawableLine | DrawablePolygon
 }) => {
   const { borders } = getShapeInfos(shape)
   ctx.setLineDash([4, 2])
@@ -219,6 +221,7 @@ export const drawSelection = ({
 }) => {
   applyShapeTransformations(ctx, shape, canvasOffset)
   switch (shape.type) {
+    case 'polygon':
     case 'line':
       drawLineSelection({ ctx, shape })
       break

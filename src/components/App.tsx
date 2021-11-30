@@ -54,41 +54,6 @@ const App = ({
   const [selectedShape, setSelectedShape] = useState<DrawableShape | undefined>(undefined)
 
   const shapesRef = useRef<DrawableShape[]>([])
-  //   // {
-  //   //   type: ShapeType.line,
-  //   //   id: _.uniqueId('line_'),
-  //   //   points: [
-  //   //     [20, 30],
-  //   //     [500, 100]
-  //   //   ],
-  //   //   translation: [0, 0],
-  //   //   rotation: 0
-  //   // },
-  //   // {
-  //   //   type: ShapeType.polygon,
-  //   //   id: _.uniqueId(''),
-  //   //   points: [
-  //   //     [40, 20],
-  //   //     [100, 100],
-  //   //     [150, 250],
-  //   //     [20, 40],
-  //   //     [150, 200]
-  //   //   ],
-  //   //   translation: [0, 0],
-  //   //   rotation: 0
-  //   // },
-  //   // {
-  //   //   type: ShapeType.polygon,
-  //   //   id: _.uniqueId(''),
-  //   //   points: [
-  //   //     [40, 20],
-  //   //     [80, 20],
-  //   //     [120, 40],
-  //   //     [80, 80]
-  //   //   ],
-  //   //   translation: [0, 0],
-  //   //   rotation: 0
-  //   // }
 
   const [savedShapes, setSavedShapes] = useState<{
     states: DrawableShape[][]

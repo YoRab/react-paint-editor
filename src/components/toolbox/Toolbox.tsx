@@ -172,6 +172,7 @@ const Toolbox = ({
 }: ToolboxType) => {
   const toolsTypes: { shape: ShapeEnum; img?: string }[] = [
     { shape: ShapeEnum.line },
+    { shape: ShapeEnum.polygon },
     { shape: ShapeEnum.rect, img: squareIcon },
     { shape: ShapeEnum.circle, img: circleIcon },
     { shape: ShapeEnum.ellipse }

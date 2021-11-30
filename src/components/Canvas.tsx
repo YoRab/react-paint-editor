@@ -208,7 +208,7 @@ const Canvas = React.forwardRef<HTMLCanvasElement, DrawerType>(
             mode: SelectionModeLib.resize,
             cursorStartPosition: cursorPosition,
             originalShape: newShape,
-            anchor: activeTool === ShapeEnum.line ? 0 : [1, 1]
+            anchor: activeTool === ShapeEnum.line || activeTool === ShapeEnum.polygon ? 0 : [1, 1]
           })
         }
       },

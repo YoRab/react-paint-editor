@@ -1,10 +1,11 @@
 import _ from 'lodash/fp'
 import React, { useCallback, useMemo } from 'react'
 import styled from 'styled-components'
-import { STYLE_COLORS, STYLE_LINE_WIDTH } from 'constants/style'
-import { DrawableShape, ShapeEnum, StyledShape, ToolsType } from 'types/Shapes'
+import { POLYGON_POINTS_VALUES, STYLE_COLORS, STYLE_LINE_WIDTH } from 'constants/style'
+import { DrawablePolygon, DrawableShape, ShapeEnum, StyledShape, ToolsType } from 'types/Shapes'
 import { getSettingsPosition } from 'utils/intersect'
 import deleteIcon from 'assets/icons/trash.svg'
+import { updatePolygonLinesCount } from 'utils/transform'
 
 const StyledSettingsBox = styled.div.attrs<{
   left: number
@@ -80,7 +81,7 @@ const ShapeStyleSelect = ({ field, values, defaultValue, valueChanged }: ShapeSt
     <select onChange={handleChange}>
       {values.map(value => {
         return (
-          <option key={value} value={value} selected={defaultValue === `${value}`}>
+          <option key={value} value={value} selected={defaultValue == value}>
             {value}
           </option>
         )
@@ -112,11 +113,28 @@ const SettingsBox = ({
   defaultConf,
   setDefaultConf
 }: SettingsBoxType) => {
-  const shapes = [ShapeEnum.ellipse, ShapeEnum.circle, ShapeEnum.rect, ShapeEnum.line]
+  const shapes = [
+    ShapeEnum.ellipse,
+    ShapeEnum.circle,
+    ShapeEnum.rect,
+    ShapeEnum.line,
+    ShapeEnum.polygon
+  ]
   const handleShapeStyleChange = useCallback(
     (field: string, value: string | number) => {
       if (selectedShape) {
         updateShape(_.set(field, value, selectedShape))
+      } else {
+        setDefaultConf(prevDefaultConf => _.set(field, value, prevDefaultConf))
+      }
+    },
+    [selectedShape, updateShape, setDefaultConf]
+  )
+
+  const hanndlePolygonLinesCount = useCallback(
+    (field: string, value: string | number) => {
+      if (selectedShape) {
+        updateShape(updatePolygonLinesCount(selectedShape as DrawablePolygon, value as number))
       } else {
         setDefaultConf(prevDefaultConf => _.set(field, value, prevDefaultConf))
       }
@@ -138,6 +156,16 @@ const SettingsBox = ({
         <>
           {shapes.includes(selectedShape?.type) && (
             <>
+              {selectedShape.type === ShapeEnum.polygon && (
+                <>
+                  <ShapeStyleSelect
+                    field="pointsCount"
+                    values={POLYGON_POINTS_VALUES}
+                    defaultValue={selectedShape.points.length}
+                    valueChanged={hanndlePolygonLinesCount}
+                  />
+                </>
+              )}
               <ShapeStyleSelect
                 field="style.lineWidth"
                 values={STYLE_LINE_WIDTH}
