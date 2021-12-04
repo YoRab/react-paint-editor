@@ -48,7 +48,7 @@ const updateDrawStyle = (
     lineWidth?: number
   } = {
     fillColor: 'transparent',
-    strokeColor: 'black',
+    strokeColor: 'blue',
     lineWidth: 1
   }
 ) => {
@@ -148,7 +148,6 @@ const drawSelectionDefault = ({
   shape: DrawableShape
 }) => {
   const { borders } = getShapeInfos(shape)
-  ctx.setLineDash([4, 2])
   drawRect(ctx, borders)
   drawLine(ctx, {
     points: [
@@ -159,7 +158,6 @@ const drawSelectionDefault = ({
       ]
     ]
   })
-  ctx.setLineDash([])
 
   for (const anchorPosition of SELECTION_RESIZE_ANCHOR_POSITIONS) {
     drawCircle(ctx, {
@@ -167,8 +165,8 @@ const drawSelectionDefault = ({
       y: borders.y + borders.height * anchorPosition[1],
       radius: SELECTION_ANCHOR_SIZE / 2,
       style: {
-        fillColor: 'rgba(200,200,200,0.85)',
-        strokeColor: 'rgba(50,50,50,0.75)',
+        fillColor: 'rgb(255,255,255)',
+        strokeColor: 'rgb(150,150,150)',
         lineWidth: 2
       }
     })
@@ -178,8 +176,8 @@ const drawSelectionDefault = ({
     y: borders.y - SELECTION_ANCHOR_SIZE / 2 - SELECTION_ROTATED_ANCHOR_POSITION,
     radius: SELECTION_ANCHOR_SIZE / 2,
     style: {
-      fillColor: 'rgba(200,200,200,0.85)',
-      strokeColor: 'rgba(50,50,50,0.75)',
+      fillColor: 'rgb(255,255,255)',
+      strokeColor: 'rgb(150,150,150)',
       lineWidth: 2
     }
   })
