@@ -2,11 +2,19 @@ import React, { RefObject, useCallback, useEffect, useRef, useState } from 'reac
 import styled from 'styled-components'
 import _ from 'lodash/fp'
 import { createShape, selectShape } from 'utils/selection'
-import { DrawableShape, Point, ShapeEnum, StyledShape, ToolEnum, ToolsType } from 'types/Shapes'
+import {
+  DrawableBrush,
+  DrawableShape,
+  Point,
+  ShapeEnum,
+  StyledShape,
+  ToolEnum,
+  ToolsType
+} from 'types/Shapes'
 import { checkPositionIntersection, getCursorPosition } from 'utils/intersect'
 import { drawSelection, drawShape } from 'utils/draw'
 import { HoverModeData, SelectionModeData, SelectionModeLib } from 'types/Mode'
-import { transformShape } from 'utils/transform'
+import { createNewPointGroupToShape, transformShape } from 'utils/transform'
 import { FRAMERATE_DRAW, FRAMERATE_SELECTION } from 'constants/draw'
 import { useCombinedRefs } from 'utils/reactUtils'
 
@@ -200,16 +208,35 @@ const Canvas = React.forwardRef<HTMLCanvasElement, DrawerType>(
           setCanvasOffsetStartPosition(cursorPosition)
         }
         if (_.includes(activeTool, ShapeEnum)) {
-          const newShape = createShape(activeTool as ShapeEnum, cursorPosition, defaultConf)
-          addShape(newShape)
-          setActiveTool(ToolEnum.selection)
-          setSelectedShape(newShape)
-          setSelectionMode({
-            mode: SelectionModeLib.resize,
-            cursorStartPosition: cursorPosition,
-            originalShape: newShape,
-            anchor: activeTool === ShapeEnum.line || activeTool === ShapeEnum.polygon ? 0 : [1, 1]
-          })
+          if (activeTool === ShapeEnum.brush) {
+            if (!!selectedShape) {
+              const newShape = createNewPointGroupToShape(
+                selectedShape as DrawableBrush,
+                cursorPosition
+              )
+              updateSingleShape(newShape)
+              setSelectedShape(newShape)
+            } else {
+              const newShape = createShape(activeTool as ShapeEnum, cursorPosition, defaultConf)
+              addShape(newShape)
+              setSelectedShape(newShape)
+            }
+
+            setSelectionMode({
+              mode: SelectionModeLib.brush
+            })
+          } else {
+            const newShape = createShape(activeTool as ShapeEnum, cursorPosition, defaultConf)
+            addShape(newShape)
+            setActiveTool(ToolEnum.selection)
+            setSelectedShape(newShape)
+            setSelectionMode({
+              mode: SelectionModeLib.resize,
+              cursorStartPosition: cursorPosition,
+              originalShape: newShape,
+              anchor: activeTool === ShapeEnum.line || activeTool === ShapeEnum.polygon ? 0 : [1, 1]
+            })
+          }
         }
       },
       [
@@ -222,6 +249,7 @@ const Canvas = React.forwardRef<HTMLCanvasElement, DrawerType>(
         defaultConf,
         width,
         height,
+        updateSingleShape,
         addShape,
         setActiveTool,
         setSelectedShape,

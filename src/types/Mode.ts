@@ -2,6 +2,7 @@ import { Point, DrawableShape } from './Shapes'
 
 export enum SelectionModeLib {
   'default' = 'default',
+  'brush' = 'brush',
   'resize' = 'resize',
   'rotate' = 'rotate',
   'translate' = 'translate'
@@ -9,6 +10,10 @@ export enum SelectionModeLib {
 
 export type SelectionModeDefault = {
   mode: SelectionModeLib.default
+}
+
+export type SelectionModeBrush = {
+  mode: SelectionModeLib.brush
 }
 
 export type SelectionModeResize<AnchorType extends Point | number = Point> = {
@@ -32,6 +37,7 @@ export type SelectionModeTranslate = {
 
 export type SelectionModeData<AnchorType extends Point | number> =
   | SelectionModeDefault
+  | SelectionModeBrush
   | SelectionModeResize<AnchorType>
   | SelectionModeRotate
   | SelectionModeTranslate
@@ -43,6 +49,9 @@ export type HoverModeData =
   | {
       mode: SelectionModeLib.resize
       anchor: Point | number
+    }
+  | {
+      mode: SelectionModeLib.brush
     }
   | {
       mode: SelectionModeLib.rotate

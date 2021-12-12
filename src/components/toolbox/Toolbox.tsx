@@ -171,6 +171,7 @@ const Toolbox = ({
   hover
 }: ToolboxType) => {
   const toolsTypes: { shape: ShapeEnum; img?: string }[] = [
+    { shape: ShapeEnum.brush },
     { shape: ShapeEnum.line },
     { shape: ShapeEnum.polygon },
     { shape: ShapeEnum.rect, img: squareIcon },

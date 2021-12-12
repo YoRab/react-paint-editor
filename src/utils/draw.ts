@@ -13,7 +13,8 @@ import {
   DrawableShape,
   Point,
   DrawableLine,
-  DrawablePolygon
+  DrawablePolygon,
+  Brush
 } from 'types/Shapes'
 import { getShapeInfos } from './shapeData'
 
@@ -55,6 +56,23 @@ const updateDrawStyle = (
   fillColor && (ctx.fillStyle = fillColor)
   strokeColor && (ctx.strokeStyle = strokeColor)
   lineWidth && (ctx.lineWidth = lineWidth)
+}
+
+export const drawBrush = (ctx: CanvasRenderingContext2D, brush: Brush): void => {
+  if (brush.points.length < 1) return
+  updateDrawStyle(ctx, brush.style)
+  console.log(brush)
+  ctx.beginPath()
+
+  brush.points.map(points => {
+    ctx.moveTo(...points[0])
+    points.slice(1).map(point => {
+      ctx.lineTo(...point)
+    })
+  })
+
+  brush.style?.fillColor !== 'transparent' && ctx.fill()
+  brush.style?.strokeColor !== 'transparent' && ctx.stroke()
 }
 
 export const drawLine = (ctx: CanvasRenderingContext2D, line: Line): void => {
@@ -118,6 +136,9 @@ export const drawShape = (
   applyShapeTransformations(ctx, shape, canvasOffset)
 
   switch (shape.type) {
+    case 'brush':
+      drawBrush(ctx, shape)
+      break
     case 'line':
       drawLine(ctx, shape)
       break
@@ -190,9 +211,7 @@ const drawLineSelection = ({
   shape: DrawableLine | DrawablePolygon
 }) => {
   const { borders } = getShapeInfos(shape)
-  ctx.setLineDash([4, 2])
   drawRect(ctx, borders)
-  ctx.setLineDash([])
 
   for (const coordinate of shape.points) {
     drawCircle(ctx, {
@@ -200,8 +219,8 @@ const drawLineSelection = ({
       y: coordinate[1],
       radius: SELECTION_ANCHOR_SIZE / 2,
       style: {
-        fillColor: 'rgba(200,200,200,0.85)',
-        strokeColor: 'rgba(50,50,50,0.75)',
+        fillColor: 'rgb(255,255,255)',
+        strokeColor: 'rgb(150,150,150)',
         lineWidth: 2
       }
     })

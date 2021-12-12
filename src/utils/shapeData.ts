@@ -1,6 +1,17 @@
 import { SELECTION_PADDING } from 'constants/shapes'
+import { flatMap } from 'lodash'
 import _ from 'lodash/fp'
-import { Circle, Ellipse, Line, Picture, Point, Polygon, Rect, DrawableShape } from 'types/Shapes'
+import {
+  Circle,
+  Ellipse,
+  Line,
+  Picture,
+  Point,
+  Polygon,
+  Rect,
+  DrawableShape,
+  Brush
+} from 'types/Shapes'
 
 const getLineBorder = (line: Line): Rect => {
   const x = Math.min(line.points[0][0], line.points[1][0]) - SELECTION_PADDING
@@ -8,6 +19,32 @@ const getLineBorder = (line: Line): Rect => {
   const y = Math.min(line.points[0][1], line.points[1][1]) - SELECTION_PADDING
   const height = Math.abs(line.points[0][1] - line.points[1][1]) + SELECTION_PADDING * 2
   return { x, width, y, height }
+}
+
+const getBrushBorder = (brush: Brush): Rect => {
+  const brushPoints = _.flatMap(points => points, brush.points)
+  const minX: number = _.flow(
+    _.map((point: Point) => point[0]),
+    _.min,
+    _.add(-SELECTION_PADDING)
+  )(brushPoints)
+  const maxX: number = _.flow(
+    _.map((point: Point) => point[0]),
+    _.max,
+    _.add(SELECTION_PADDING)
+  )(brushPoints)
+  const minY: number = _.flow(
+    _.map((point: Point) => point[1]),
+    _.min,
+    _.add(-SELECTION_PADDING)
+  )(brushPoints)
+  const maxY: number = _.flow(
+    _.map((point: Point) => point[1]),
+    _.max,
+    _.add(SELECTION_PADDING)
+  )(brushPoints)
+
+  return { x: minX, width: maxX - minX, y: minY, height: maxY - minY }
 }
 
 const getPolygonBorder = (polygon: Polygon): Rect => {
@@ -68,6 +105,8 @@ const getEllipseBorder = (ellipse: Ellipse): Rect => {
 
 const getShapeBorders = (marker: DrawableShape): Rect => {
   switch (marker.type) {
+    case 'brush':
+      return getBrushBorder(marker)
     case 'line':
       return getLineBorder(marker)
     case 'polygon':

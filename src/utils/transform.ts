@@ -14,7 +14,8 @@ import {
   Ellipse,
   Circle,
   DrawableLine,
-  DrawablePolygon
+  DrawablePolygon,
+  DrawableBrush
 } from 'types/Shapes'
 import {
   getPointPositionAfterCanvasTransformation,
@@ -71,6 +72,43 @@ export const rotateShape = (
       rotation
     }
   }
+}
+
+export const paintNewPointToShape = (shape: DrawableBrush, cursorPosition: Point) => {
+  const p2x = cursorPosition[0]
+  const p2y = cursorPosition[1]
+  const points: Point[][] = _.set(
+    shape.points.length - 1,
+    [...shape.points[shape.points.length - 1], [p2x, p2y]],
+    shape.points
+  )
+  return {
+    ...shape,
+    ...{
+      points
+    }
+  }
+}
+
+export const createNewPointGroupToShape = (shape: DrawableBrush, cursorPosition: Point) => {
+  const p2x = cursorPosition[0]
+  const p2y = cursorPosition[1]
+  const points: Point[][] = _.set(shape.points.length, [[p2x, p2y]], shape.points)
+  return {
+    ...shape,
+    ...{
+      points
+    }
+  }
+}
+
+export const resizeBrush = (
+  cursorPosition: Point,
+  canvasOffset: Point,
+  originalShape: DrawableBrush,
+  selectionMode: SelectionModeResize
+): DrawableBrush => {
+  return originalShape
 }
 
 export const resizeLine = (
@@ -454,6 +492,13 @@ export const resizeShape = (
       originalShape as DrawableLine,
       selectionMode as SelectionModeResize<number>
     )
+  else if (shape.type === 'brush')
+    return resizeBrush(
+      cursorPosition,
+      canvasOffset,
+      originalShape as DrawableBrush,
+      selectionMode as SelectionModeResize
+    )
   else if (shape.type === 'circle')
     return resizeCircle(
       cursorPosition,
@@ -491,7 +536,9 @@ export const transformShape = (
   canvasOffset: Point,
   selectionMode: SelectionModeData<Point | number>
 ) => {
-  if (selectionMode.mode === SelectionModeLib.translate) {
+  if (selectionMode.mode === SelectionModeLib.brush) {
+    return paintNewPointToShape(shape as DrawableBrush, cursorPosition)
+  } else if (selectionMode.mode === SelectionModeLib.translate) {
     return translateShape(
       shape,
       cursorPosition,

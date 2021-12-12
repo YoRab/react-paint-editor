@@ -75,6 +75,15 @@ export const createShape = (
   }
 ): DrawableShape => {
   switch (shape) {
+    case ShapeEnum.brush:
+      return {
+        type: ShapeEnum.brush,
+        id: _.uniqueId('brush_'),
+        points: [[[cursorPosition[0], cursorPosition[1]]]],
+        translation: [0, 0],
+        rotation: 0,
+        style: defaultConf.style
+      }
     case ShapeEnum.line:
       return {
         type: ShapeEnum.line,
