@@ -31,6 +31,7 @@ const applyShapeTransformations = (
     ctx.rotate(marker.rotation)
     ctx.translate(-center[0], -center[1])
   }
+  ctx.scale(marker.scale[0], marker.scale[1])
 }
 
 const restoreShapeTransformations = (ctx: CanvasRenderingContext2D) => {
@@ -61,17 +62,19 @@ const updateDrawStyle = (
 export const drawBrush = (ctx: CanvasRenderingContext2D, brush: Brush): void => {
   if (brush.points.length < 1) return
   updateDrawStyle(ctx, brush.style)
-  console.log(brush)
   ctx.beginPath()
 
   brush.points.map(points => {
-    ctx.moveTo(...points[0])
-    points.slice(1).map(point => {
-      ctx.lineTo(...point)
-    })
+    if (points.length === 1) {
+      ctx.rect(points[0][0], points[0][1], 1, 1)
+    } else {
+      ctx.moveTo(...points[0])
+      points.slice(1).map(point => {
+        ctx.lineTo(...point)
+      })
+    }
   })
 
-  brush.style?.fillColor !== 'transparent' && ctx.fill()
   brush.style?.strokeColor !== 'transparent' && ctx.stroke()
 }
 

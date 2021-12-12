@@ -33,6 +33,7 @@ type Drawable = {
   id: string
   translation: Point
   rotation: number
+  scale: Point
 }
 
 export type Rect = StyledShape & {

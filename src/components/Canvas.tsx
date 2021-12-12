@@ -23,6 +23,7 @@ const drawCanvas = (
   selectionCtx: CanvasRenderingContext2D,
   width: number,
   height: number,
+  activeTool: ToolsType,
   canvasOffset: Point,
   shapes: DrawableShape[],
   selectedShape: DrawableShape | undefined
@@ -32,7 +33,9 @@ const drawCanvas = (
   for (let i = shapes.length - 1; i >= 0; i--) {
     drawShape(drawCtx, shapes[i], canvasOffset)
   }
-  selectedShape && drawSelection({ ctx: selectionCtx, shape: selectedShape, canvasOffset })
+  selectedShape &&
+    activeTool !== ShapeEnum.brush &&
+    drawSelection({ ctx: selectionCtx, shape: selectedShape, canvasOffset })
 }
 
 const throttledDrawCanvas = _.throttle(FRAMERATE_DRAW, drawCanvas)
@@ -306,11 +309,12 @@ const Canvas = React.forwardRef<HTMLCanvasElement, DrawerType>(
           selectionCtx,
           width,
           height,
+          activeTool,
           canvasOffset,
           shapes,
           selectedShape
         )
-    }, [shapes, selectedShape, canvasOffset, width, height])
+    }, [shapes, selectedShape, activeTool, canvasOffset, width, height])
 
     useEffect(() => {
       document.addEventListener('mouseup', handleMouseUp)

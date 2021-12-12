@@ -114,6 +114,7 @@ const SettingsBox = ({
   setDefaultConf
 }: SettingsBoxType) => {
   const shapes = [
+    ShapeEnum.brush,
     ShapeEnum.ellipse,
     ShapeEnum.circle,
     ShapeEnum.rect,
@@ -157,14 +158,12 @@ const SettingsBox = ({
           {shapes.includes(selectedShape?.type) && (
             <>
               {selectedShape.type === ShapeEnum.polygon && (
-                <>
-                  <ShapeStyleSelect
-                    field="pointsCount"
-                    values={POLYGON_POINTS_VALUES}
-                    defaultValue={selectedShape.points.length}
-                    valueChanged={hanndlePolygonLinesCount}
-                  />
-                </>
+                <ShapeStyleSelect
+                  field="pointsCount"
+                  values={POLYGON_POINTS_VALUES}
+                  defaultValue={selectedShape.points.length}
+                  valueChanged={hanndlePolygonLinesCount}
+                />
               )}
               <ShapeStyleSelect
                 field="style.lineWidth"
@@ -178,12 +177,14 @@ const SettingsBox = ({
                 defaultValue={selectedShape.style?.strokeColor}
                 valueChanged={handleShapeStyleChange}
               />
-              <ShapeStyleSelect
-                field="style.fillColor"
-                values={STYLE_COLORS}
-                defaultValue={selectedShape.style?.fillColor}
-                valueChanged={handleShapeStyleChange}
-              />
+              {selectedShape.type !== ShapeEnum.brush && (
+                <ShapeStyleSelect
+                  field="style.fillColor"
+                  values={STYLE_COLORS}
+                  defaultValue={selectedShape.style?.fillColor}
+                  valueChanged={handleShapeStyleChange}
+                />
+              )}
             </>
           )}
           <DeleteShapeButton selectedShape={selectedShape} removeShape={removeShape} />

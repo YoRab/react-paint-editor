@@ -52,6 +52,7 @@ export const createPicture = (file: File, maxPictureSize: number) => {
         height: imgRatio > 1 ? maxSize / imgRatio : maxSize,
         img,
         translation: [0, 0],
+        scale: [1, 1],
         rotation: 0
       }
       resolve(pictureShape)
@@ -81,6 +82,7 @@ export const createShape = (
         id: _.uniqueId('brush_'),
         points: [[[cursorPosition[0], cursorPosition[1]]]],
         translation: [0, 0],
+        scale: [1, 1],
         rotation: 0,
         style: defaultConf.style
       }
@@ -93,6 +95,7 @@ export const createShape = (
           [cursorPosition[0], cursorPosition[1]]
         ],
         translation: [0, 0],
+        scale: [1, 1],
         rotation: 0,
         style: defaultConf.style
       }
@@ -105,6 +108,7 @@ export const createShape = (
           [cursorPosition[0], cursorPosition[1]]
         ],
         translation: [0, 0],
+        scale: [1, 1],
         rotation: 0,
         style: defaultConf.style
       }
@@ -117,6 +121,7 @@ export const createShape = (
         width: 0,
         height: 0,
         translation: [0, 0],
+        scale: [1, 1],
         rotation: 0,
         style: defaultConf.style
       }
@@ -129,6 +134,7 @@ export const createShape = (
         radiusX: 0,
         radiusY: 0,
         translation: [0, 0],
+        scale: [1, 1],
         rotation: 0,
         style: defaultConf.style
       }
@@ -141,6 +147,7 @@ export const createShape = (
         y: cursorPosition[1],
         radius: 0,
         translation: [0, 0],
+        scale: [1, 1],
         rotation: 0,
         style: defaultConf.style
       }

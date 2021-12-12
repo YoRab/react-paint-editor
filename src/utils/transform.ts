@@ -75,29 +75,23 @@ export const rotateShape = (
 }
 
 export const paintNewPointToShape = (shape: DrawableBrush, cursorPosition: Point) => {
-  const p2x = cursorPosition[0]
-  const p2y = cursorPosition[1]
-  const points: Point[][] = _.set(
-    shape.points.length - 1,
-    [...shape.points[shape.points.length - 1], [p2x, p2y]],
-    shape.points
-  )
   return {
     ...shape,
     ...{
-      points
+      points: _.set(
+        shape.points.length - 1,
+        [...shape.points[shape.points.length - 1], cursorPosition],
+        shape.points
+      )
     }
   }
 }
 
 export const createNewPointGroupToShape = (shape: DrawableBrush, cursorPosition: Point) => {
-  const p2x = cursorPosition[0]
-  const p2y = cursorPosition[1]
-  const points: Point[][] = _.set(shape.points.length, [[p2x, p2y]], shape.points)
   return {
     ...shape,
     ...{
-      points
+      points: _.set(shape.points.length, [cursorPosition], shape.points)
     }
   }
 }
@@ -108,7 +102,65 @@ export const resizeBrush = (
   originalShape: DrawableBrush,
   selectionMode: SelectionModeResize
 ): DrawableBrush => {
-  return originalShape
+  const { center, borders } = getShapeInfos(originalShape)
+
+  const cursorPositionBeforeResize = getPointPositionAfterCanvasTransformation(
+    cursorPosition,
+    canvasOffset,
+    originalShape.translation,
+    originalShape.rotation,
+    center
+  )
+
+  const scaledWidth =
+    selectionMode.anchor[0] === 0.5
+      ? originalShape.scale[0]
+      : selectionMode.anchor[0] === 0
+      ? (borders.x + borders.width - cursorPositionBeforeResize[0] + SELECTION_PADDING * -2) /
+        (borders.width + SELECTION_PADDING * -2)
+      : (cursorPositionBeforeResize[0] - borders.x - SELECTION_PADDING * 2) /
+        (borders.width - SELECTION_PADDING * 2)
+
+  const scaledHeight =
+    selectionMode.anchor[1] === 0.5
+      ? originalShape.scale[1]
+      : selectionMode.anchor[1] === 0
+      ? (borders.y + borders.height - cursorPositionBeforeResize[1] + SELECTION_PADDING * -2) /
+        (borders.height + SELECTION_PADDING * -2)
+      : (cursorPositionBeforeResize[1] - borders.y - SELECTION_PADDING * 2) /
+        (borders.height - SELECTION_PADDING * 2)
+
+  const shapeWithNewDimensions = {
+    ...originalShape,
+    ...{
+      scale: [scaledWidth, scaledHeight] as Point
+    }
+  }
+  const { center: shapeWithNewDimensionsCenter } = getShapeInfos(shapeWithNewDimensions)
+
+  return shapeWithNewDimensions
+  // const [oppTrueX, oppTrueY] = getRectOppositeAnchorAbsolutePosition(
+  //   selectionMode.anchor,
+  //   center,
+  //   originalShape
+  // )
+
+  // const [newOppTrueX, newOppTrueY] = getRectOppositeAnchorAbsolutePosition(
+  //   selectionMode.anchor,
+  //   shapeWithNewDimensionsCenter,
+  //   shapeWithNewDimensions,
+  //   [widthWithRatio < 0, heightWithRatio < 0]
+  // )
+
+  // return {
+  //   ...shapeWithNewDimensions,
+  //   ...{
+  //     translation: [
+  //       originalShape.translation[0] - (newOppTrueX - oppTrueX),
+  //       originalShape.translation[1] - (newOppTrueY - oppTrueY)
+  //     ]
+  //   }
+  // }
 }
 
 export const resizeLine = (
@@ -331,25 +383,15 @@ export const resizeRect = <T extends DrawableShape & Rect>(
     selectionMode.anchor[0] === 0.5
       ? originalShape.width
       : selectionMode.anchor[0] === 0
-      ? borders.x +
-        borders.width -
-        cursorPositionBeforeResize[0] +
-        SELECTION_PADDING * (selectionMode.anchor[0] === 0 ? -2 : 2)
-      : cursorPositionBeforeResize[0] -
-        borders.x -
-        SELECTION_PADDING * (selectionMode.anchor[0] === 0 ? -2 : 2)
+      ? borders.x + borders.width - cursorPositionBeforeResize[0] + SELECTION_PADDING * -2
+      : cursorPositionBeforeResize[0] - borders.x - SELECTION_PADDING * 2
 
   const scaledHeight =
     selectionMode.anchor[1] === 0.5
       ? originalShape.height
       : selectionMode.anchor[1] === 0
-      ? borders.y +
-        borders.height -
-        cursorPositionBeforeResize[1] +
-        SELECTION_PADDING * (selectionMode.anchor[1] === 0 ? -2 : 2)
-      : cursorPositionBeforeResize[1] -
-        borders.y -
-        SELECTION_PADDING * (selectionMode.anchor[1] === 0 ? -2 : 2)
+      ? borders.y + borders.height - cursorPositionBeforeResize[1] + SELECTION_PADDING * -2
+      : cursorPositionBeforeResize[1] - borders.y - SELECTION_PADDING * 2
 
   const [widthWithRatio, heightWithRatio] = keepRatio
     ? getNormalizedSize(originalShape, scaledWidth, scaledHeight)

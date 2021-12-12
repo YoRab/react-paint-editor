@@ -1,5 +1,4 @@
 import { SELECTION_PADDING } from 'constants/shapes'
-import { flatMap } from 'lodash'
 import _ from 'lodash/fp'
 import {
   Circle,
