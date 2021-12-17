@@ -176,7 +176,8 @@ const Toolbox = ({
     { shape: ShapeEnum.polygon },
     { shape: ShapeEnum.rect, img: squareIcon },
     { shape: ShapeEnum.circle, img: circleIcon },
-    { shape: ShapeEnum.ellipse }
+    { shape: ShapeEnum.ellipse },
+    { shape: ShapeEnum.text }
   ]
 
   return (

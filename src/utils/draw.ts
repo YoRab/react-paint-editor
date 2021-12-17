@@ -14,7 +14,8 @@ import {
   Point,
   DrawableLine,
   DrawablePolygon,
-  Brush
+  Brush,
+  Text
 } from 'types/Shapes'
 import { getShapeInfos } from './shapeData'
 
@@ -126,6 +127,26 @@ export const drawRect = (ctx: CanvasRenderingContext2D, rect: Rect): void => {
   rect.style?.strokeColor !== 'transparent' && ctx.stroke()
 }
 
+const getFontSizeToFit = (
+  ctx: CanvasRenderingContext2D,
+  text: string,
+  fontFace: string,
+  maxWidth: number
+) => {
+  ctx.font = `1px serif`
+  return maxWidth / ctx.measureText(text).width
+}
+
+export const drawText = (ctx: CanvasRenderingContext2D, text: Text): void => {
+  updateDrawStyle(ctx, text.style)
+  const fontSize = getFontSizeToFit(ctx, text.value, '', text.width)
+  ctx.font = `${fontSize}px serif`
+  ctx.textBaseline = 'hanging'
+
+  text.style?.strokeColor !== 'transparent' &&
+    ctx.strokeText(text.value, text.x, text.y, text.width)
+}
+
 export const drawPicture = (ctx: CanvasRenderingContext2D, picture: Picture): void => {
   ctx.beginPath()
   ctx.drawImage(picture.img, picture.x, picture.y, picture.width, picture.height)
@@ -141,6 +162,9 @@ export const drawShape = (
   switch (shape.type) {
     case 'brush':
       drawBrush(ctx, shape)
+      break
+    case 'text':
+      drawText(ctx, shape)
       break
     case 'line':
       drawLine(ctx, shape)

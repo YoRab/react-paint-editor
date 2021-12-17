@@ -15,7 +15,9 @@ import {
   Circle,
   DrawableLine,
   DrawablePolygon,
-  DrawableBrush
+  DrawableBrush,
+  DrawableText,
+  Text
 } from 'types/Shapes'
 import {
   getPointPositionAfterCanvasTransformation,
@@ -430,6 +432,15 @@ export const resizeRect = <T extends DrawableShape & Rect>(
   }
 }
 
+export const resizeText = <T extends DrawableShape & Text>(
+  cursorPosition: Point,
+  canvasOffset: Point,
+  originalShape: T,
+  selectionMode: SelectionModeResize
+): T => {
+  return resizeRect(cursorPosition, canvasOffset, originalShape, selectionMode, true)
+}
+
 const getRectOppositeAnchorAbsolutePosition = <T extends DrawableShape & Rect>(
   anchor: Point,
   center: Point,
@@ -560,6 +571,13 @@ export const resizeShape = (
       cursorPosition,
       canvasOffset,
       originalShape as DrawableRect,
+      selectionMode as SelectionModeResize
+    )
+  else if (shape.type === 'text')
+    return resizeText(
+      cursorPosition,
+      canvasOffset,
+      originalShape as DrawableText,
       selectionMode as SelectionModeResize
     )
   else if (shape.type === 'picture')

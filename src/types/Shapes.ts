@@ -5,7 +5,8 @@ export enum ShapeEnum {
   'polygon' = 'polygon',
   'circle' = 'circle',
   'ellipse' = 'ellipse',
-  'picture' = 'picture'
+  'picture' = 'picture',
+  'text' = 'text'
 }
 
 export enum ToolEnum {
@@ -48,6 +49,10 @@ export type Picture = Rect & {
   img: CanvasImageSource
 }
 
+export type Text = Rect & {
+  value: string
+}
+
 export type Line = StyledShape & {
   points: [Point, Point]
 }
@@ -74,6 +79,7 @@ export type Ellipse = StyledShape & {
 }
 export type DrawableRect = Rect & Drawable & { type: ShapeEnum.rect }
 export type DrawablePicture = Picture & Drawable & { type: ShapeEnum.picture }
+export type DrawableText = Text & Drawable & { type: ShapeEnum.text }
 export type DrawableLine = Line & Drawable & { type: ShapeEnum.line }
 export type DrawablePolygon = Polygon & Drawable & { type: ShapeEnum.polygon }
 export type DrawableBrush = Brush & Drawable & { type: ShapeEnum.brush }
@@ -83,6 +89,7 @@ export type DrawableEllipse = Ellipse & Drawable & { type: ShapeEnum.ellipse }
 export type DrawableShape =
   | DrawableRect
   | DrawablePicture
+  | DrawableText
   | DrawableLine
   | DrawablePolygon
   | DrawableBrush

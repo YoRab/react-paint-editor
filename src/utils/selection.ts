@@ -116,6 +116,20 @@ export const createShape = (
         rotation: 0,
         style: defaultConf.style
       }
+    case ShapeEnum.text:
+      return {
+        type: ShapeEnum.text,
+        id: _.uniqueId('text_'),
+        x: cursorPosition[0],
+        y: cursorPosition[1],
+        value: 'Test',
+        width: 100,
+        height: 30,
+        translation: [0, 0],
+        scale: [1, 1],
+        rotation: 0,
+        style: defaultConf.style
+      }
     case ShapeEnum.ellipse:
       return {
         type: ShapeEnum.ellipse,

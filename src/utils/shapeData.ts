@@ -9,7 +9,8 @@ import {
   Polygon,
   Rect,
   DrawableShape,
-  Brush
+  Brush,
+  Text
 } from 'types/Shapes'
 
 const getLineBorder = (line: Line): Rect => {
@@ -80,6 +81,15 @@ const getRectBorder = (rect: Rect): Rect => {
   }
 }
 
+const getTextBorder = (text: Text): Rect => {
+  return {
+    x: text.x - SELECTION_PADDING,
+    width: text.width + SELECTION_PADDING * 2,
+    y: text.y - SELECTION_PADDING,
+    height: text.height + SELECTION_PADDING * 2
+  }
+}
+
 const getPictureBorder = (picture: Picture): Rect => {
   return getRectBorder(picture)
 }
@@ -116,6 +126,8 @@ const getShapeBorders = (marker: DrawableShape): Rect => {
       return getEllipseBorder(marker)
     case 'rect':
       return getRectBorder(marker)
+    case 'text':
+      return getTextBorder(marker)
     case 'picture':
       return getPictureBorder(marker)
   }
