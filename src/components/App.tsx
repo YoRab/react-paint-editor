@@ -57,10 +57,13 @@ const App = ({
   const shapesRef = useRef<DrawableShape[]>([])
 
   const [savedShapes, setSavedShapes] = useState<{
-    states: DrawableShape[][]
+    states: {
+      shapes: DrawableShape[]
+      selectedShape: DrawableShape | undefined
+    }[]
     cursor: number
   }>({
-    states: [[]],
+    states: [{ shapes: [], selectedShape: undefined }],
     cursor: 0
   })
 
@@ -78,44 +81,50 @@ const App = ({
   }, [])
 
   const selectTool = useCallback((tool: ToolsType) => {
-    setActiveTool(tool)
     setSelectedShape(undefined)
+    setActiveTool(tool)
   }, [])
 
   const saveShapes = useCallback(() => {
     setSavedShapes(prevSavedShaped => {
-      return _.isEqual(_.get(prevSavedShaped.cursor, prevSavedShaped.states), shapesRef.current)
+      return _.isEqual(
+        _.get([prevSavedShaped.cursor, 'shapes'], prevSavedShaped.states),
+        shapesRef.current
+      )
         ? prevSavedShaped
         : {
             states: [
               ...prevSavedShaped.states.slice(0, prevSavedShaped.cursor + 1),
-              shapesRef.current
+              {
+                shapes: shapesRef.current,
+                selectedShape
+              }
             ],
             cursor: prevSavedShaped.cursor + 1
           }
     })
-  }, [])
+  }, [selectedShape])
 
   const undoAction = useCallback(() => {
-    setSelectedShape(undefined)
+    selectTool(ToolEnum.selection)
 
     setSavedShapes(prevSavedShaped => {
       const newCursor = Math.max(0, prevSavedShaped.cursor - 1)
-      shapesRef.current = _.get(newCursor, prevSavedShaped.states)
+      shapesRef.current = _.get([newCursor, 'shapes'], prevSavedShaped.states)
+      setSelectedShape(_.get([newCursor, 'selectedShape'], prevSavedShaped.states))
       return _.set('cursor', newCursor, prevSavedShaped)
     })
-    selectTool(ToolEnum.selection)
   }, [selectTool])
 
   const redoAction = useCallback(() => {
-    setSelectedShape(undefined)
+    selectTool(ToolEnum.selection)
 
     setSavedShapes(prevSavedShaped => {
       const newCursor = Math.min(prevSavedShaped.states.length - 1, prevSavedShaped.cursor + 1)
-      shapesRef.current = _.get(newCursor, prevSavedShaped.states)
+      shapesRef.current = _.get([newCursor, 'shapes'], prevSavedShaped.states)
+      setSelectedShape(_.get([newCursor, 'selectedShape'], prevSavedShaped.states))
       return _.set('cursor', newCursor, prevSavedShaped)
     })
-    selectTool(ToolEnum.selection)
   }, [selectTool])
 
   const addShape = useCallback((newShape: DrawableShape) => {
@@ -157,7 +166,7 @@ const App = ({
   const clearCanvas = useCallback(() => {
     setSelectedShape(undefined)
     shapesRef.current = []
-    setSavedShapes({ states: [[]], cursor: 0 })
+    setSavedShapes({ states: [{ shapes: [], selectedShape: undefined }], cursor: 0 })
     selectTool(ToolEnum.selection)
     setCanvasOffset([0, 0])
   }, [selectTool])
