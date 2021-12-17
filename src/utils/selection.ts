@@ -1,7 +1,7 @@
 import _ from 'lodash/fp'
 
 import { HoverModeData, SelectionModeData, SelectionModeLib } from 'types/Mode'
-import { DrawablePicture, Point, DrawableShape, ShapeEnum } from 'types/Shapes'
+import { DrawablePicture, Point, DrawableShape, ShapeEnum, StyledShape } from 'types/Shapes'
 import { checkPositionIntersection } from './intersect'
 import { getShapeInfos } from './shapeData'
 
@@ -67,20 +67,14 @@ export const createPicture = (file: File, maxPictureSize: number) => {
 export const createShape = (
   shape: ShapeEnum,
   cursorPosition: Point,
-  defaultConf: {
-    style?: {
-      fillColor?: string
-      strokeColor?: string
-      lineWidth?: number
-    }
-  }
+  defaultConf: StyledShape
 ): DrawableShape => {
   switch (shape) {
     case ShapeEnum.brush:
       return {
         type: ShapeEnum.brush,
         id: _.uniqueId('brush_'),
-        points: [[[cursorPosition[0], cursorPosition[1]]]],
+        points: [[cursorPosition]],
         translation: [0, 0],
         scale: [1, 1],
         rotation: 0,
@@ -90,10 +84,7 @@ export const createShape = (
       return {
         type: ShapeEnum.line,
         id: _.uniqueId('line_'),
-        points: [
-          [cursorPosition[0], cursorPosition[1]],
-          [cursorPosition[0], cursorPosition[1]]
-        ],
+        points: [cursorPosition, cursorPosition],
         translation: [0, 0],
         scale: [1, 1],
         rotation: 0,
@@ -103,10 +94,10 @@ export const createShape = (
       return {
         type: ShapeEnum.polygon,
         id: _.uniqueId('polygon_'),
-        points: [
-          [cursorPosition[0], cursorPosition[1]],
-          [cursorPosition[0], cursorPosition[1]]
-        ],
+        points: _.flow(
+          _.range(0),
+          _.map(() => cursorPosition)
+        )(defaultConf.pointsCount ?? 2),
         translation: [0, 0],
         scale: [1, 1],
         rotation: 0,

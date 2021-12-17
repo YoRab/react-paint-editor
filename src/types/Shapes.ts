@@ -1,11 +1,3 @@
-export type StyledShape = {
-  style?: {
-    fillColor?: string
-    strokeColor?: string
-    lineWidth?: number
-  }
-}
-
 export enum ShapeEnum {
   'brush' = 'brush',
   'rect' = 'rect',
@@ -28,6 +20,15 @@ export enum ToolEnum {
 export type ToolsType = ShapeEnum | ToolEnum
 
 export type Point = [number, number]
+
+export type StyledShape = {
+  style?: {
+    fillColor?: string
+    strokeColor?: string
+    lineWidth?: number
+  }
+  pointsCount?: number
+}
 
 type Drawable = {
   id: string

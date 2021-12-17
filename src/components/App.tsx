@@ -44,7 +44,8 @@ const App = ({
       fillColor: 'transparent',
       strokeColor: 'black',
       lineWidth: 1
-    }
+    },
+    pointsCount: 2
   })
   const [canvasOffset, setCanvasOffset] = useState<Point>([0, 0])
   const [canvasOffsetStartPosition, setCanvasOffsetStartPosition] = useState<Point | undefined>(

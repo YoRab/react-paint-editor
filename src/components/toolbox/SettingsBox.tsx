@@ -132,7 +132,7 @@ const SettingsBox = ({
     [selectedShape, updateShape, setDefaultConf]
   )
 
-  const hanndlePolygonLinesCount = useCallback(
+  const handlePolygonLinesCount = useCallback(
     (field: string, value: string | number) => {
       if (selectedShape) {
         updateShape(updatePolygonLinesCount(selectedShape as DrawablePolygon, value as number))
@@ -162,7 +162,7 @@ const SettingsBox = ({
                   field="pointsCount"
                   values={POLYGON_POINTS_VALUES}
                   defaultValue={selectedShape.points.length}
-                  valueChanged={hanndlePolygonLinesCount}
+                  valueChanged={handlePolygonLinesCount}
                 />
               )}
               <ShapeStyleSelect
@@ -177,7 +177,7 @@ const SettingsBox = ({
                 defaultValue={selectedShape.style?.strokeColor}
                 valueChanged={handleShapeStyleChange}
               />
-              {selectedShape.type !== ShapeEnum.brush && (
+              {selectedShape.type !== ShapeEnum.brush && selectedShape.type !== ShapeEnum.line && (
                 <ShapeStyleSelect
                   field="style.fillColor"
                   values={STYLE_COLORS}
@@ -192,6 +192,14 @@ const SettingsBox = ({
       ) : (
         _.includes(activeTool, shapes) && (
           <>
+            {activeTool === ShapeEnum.polygon && (
+              <ShapeStyleSelect
+                field="pointsCount"
+                values={POLYGON_POINTS_VALUES}
+                defaultValue={2}
+                valueChanged={handlePolygonLinesCount}
+              />
+            )}
             <ShapeStyleSelect
               field="style.lineWidth"
               values={STYLE_LINE_WIDTH}
@@ -204,12 +212,14 @@ const SettingsBox = ({
               defaultValue={defaultConf.style?.strokeColor}
               valueChanged={handleShapeStyleChange}
             />
-            <ShapeStyleSelect
-              field="style.fillColor"
-              values={STYLE_COLORS}
-              defaultValue={defaultConf.style?.fillColor}
-              valueChanged={handleShapeStyleChange}
-            />
+            {activeTool !== ShapeEnum.brush && activeTool !== ShapeEnum.line && (
+              <ShapeStyleSelect
+                field="style.fillColor"
+                values={STYLE_COLORS}
+                defaultValue={defaultConf.style?.fillColor}
+                valueChanged={handleShapeStyleChange}
+              />
+            )}
           </>
         )
       )}
