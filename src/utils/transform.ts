@@ -23,6 +23,7 @@ import {
   getPointPositionAfterCanvasTransformation,
   getPointPositionBeforeCanvasTransformation
 } from './intersect'
+import { STYLE_FONT_DEFAULT } from 'constants/style'
 
 export const getNormalizedSize = (originalShape: Rect, width: number, height: number) => {
   const originalRatio = originalShape.width / originalShape.height
@@ -442,7 +443,7 @@ export const resizeText = <T extends DrawableShape & Text>(
   const newRect = resizeRect(cursorPosition, canvasOffset, originalShape, selectionMode, true)
   return {
     ...newRect,
-    fontSize: calculateTextFontSize(ctx, newRect.value, '', newRect.width)
+    fontSize: calculateTextFontSize(ctx, newRect.value, newRect.width, newRect.style?.fontFamily)
   }
 }
 
@@ -637,10 +638,10 @@ export const transformShape = (
 export const calculateTextFontSize = (
   ctx: CanvasRenderingContext2D,
   text: string[],
-  fontFace: string,
-  maxWidth: number
+  maxWidth: number,
+  fontFamily: string | undefined = STYLE_FONT_DEFAULT
 ) => {
-  ctx.font = `1px serif`
+  ctx.font = `1px ${fontFamily}`
   return (
     _.flow(
       _.map((value: string) => maxWidth / ctx.measureText(value).width),

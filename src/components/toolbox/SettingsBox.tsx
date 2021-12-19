@@ -1,7 +1,7 @@
 import _ from 'lodash/fp'
 import React, { useCallback, useMemo } from 'react'
 import styled from 'styled-components'
-import { POLYGON_POINTS_VALUES, STYLE_COLORS, STYLE_LINE_WIDTH } from 'constants/style'
+import { POLYGON_POINTS_VALUES, STYLE_COLORS, STYLE_FONTS, STYLE_LINE_WIDTH } from 'constants/style'
 import { DrawablePolygon, DrawableShape, ShapeEnum, StyledShape, ToolsType } from 'types/Shapes'
 import { getSettingsPosition } from 'utils/intersect'
 import deleteIcon from 'assets/icons/trash.svg'
@@ -173,7 +173,14 @@ const SettingsBox = ({
                   valueChanged={handlePolygonLinesCount}
                 />
               )}
-              {selectedShape.type !== ShapeEnum.text && (
+              {selectedShape.type === ShapeEnum.text ? (
+                <ShapeStyleSelect
+                  field="style.fontFamily"
+                  values={STYLE_FONTS}
+                  defaultValue={selectedShape.style?.fontFamily}
+                  valueChanged={handleShapeStyleChange}
+                />
+              ) : (
                 <ShapeStyleSelect
                   field="style.lineWidth"
                   values={STYLE_LINE_WIDTH}
@@ -214,7 +221,14 @@ const SettingsBox = ({
                 valueChanged={handlePolygonLinesCount}
               />
             )}
-            {activeTool !== ShapeEnum.text && (
+            {activeTool === ShapeEnum.text ? (
+              <ShapeStyleSelect
+                field="style.fontFamily"
+                values={STYLE_FONTS}
+                defaultValue={defaultConf.style?.fontFamily}
+                valueChanged={handleShapeStyleChange}
+              />
+            ) : (
               <ShapeStyleSelect
                 field="style.lineWidth"
                 values={STYLE_LINE_WIDTH}

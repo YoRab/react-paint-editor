@@ -3,6 +3,7 @@ import {
   SELECTION_RESIZE_ANCHOR_POSITIONS,
   SELECTION_ROTATED_ANCHOR_POSITION
 } from 'constants/shapes'
+import { STYLE_FONT_DEFAULT } from 'constants/style'
 import {
   Circle,
   Ellipse,
@@ -129,9 +130,8 @@ export const drawRect = (ctx: CanvasRenderingContext2D, rect: Rect): void => {
 
 export const drawText = (ctx: CanvasRenderingContext2D, text: Text): void => {
   updateDrawStyle(ctx, text.style)
-  ctx.font = `${text.fontSize}px serif`
+  ctx.font = `${text.fontSize}px ${text.style?.fontFamily ?? STYLE_FONT_DEFAULT}`
   ctx.textBaseline = 'hanging'
-
   if (text.style?.strokeColor && text.style.strokeColor !== 'transparent') {
     ctx.fillStyle = text.style.strokeColor
     for (let i = 0; i < text.value.length; i++) {

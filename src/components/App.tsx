@@ -6,6 +6,7 @@ import Layouts from './toolbox/Layouts'
 import Toolbox from './toolbox/Toolbox'
 import styled from 'styled-components'
 import SettingsBox from './toolbox/SettingsBox'
+import { STYLE_FONT_DEFAULT } from 'constants/style'
 
 const StyledApp = styled.div<{
   toolboxposition: 'top' | 'left'
@@ -46,7 +47,8 @@ const App = ({
       fillColor: 'transparent',
       strokeColor: 'black',
       lineWidth: 1,
-      pointsCount: 2
+      pointsCount: 2,
+      fontFamily: STYLE_FONT_DEFAULT
     }
   })
   const [canvasOffset, setCanvasOffset] = useState<Point>([0, 0])

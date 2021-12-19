@@ -120,7 +120,7 @@ export const createShape = (
       }
     case ShapeEnum.text:
       const defaultValue = ['Test', '', 'te sdfddf df df dsdf']
-      const fontSize = calculateTextFontSize(ctx, defaultValue, '', 100)
+      const fontSize = calculateTextFontSize(ctx, defaultValue, 100, defaultConf.style?.fontFamily)
       return {
         type: ShapeEnum.text,
         id: _.uniqueId('text_'),

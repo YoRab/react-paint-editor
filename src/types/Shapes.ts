@@ -28,6 +28,7 @@ export type StyledShape = {
     strokeColor?: string
     lineWidth?: number
     pointsCount?: number
+    fontFamily?: string
   }
 }
 
