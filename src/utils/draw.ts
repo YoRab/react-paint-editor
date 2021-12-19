@@ -127,24 +127,17 @@ export const drawRect = (ctx: CanvasRenderingContext2D, rect: Rect): void => {
   rect.style?.strokeColor !== 'transparent' && ctx.stroke()
 }
 
-const getFontSizeToFit = (
-  ctx: CanvasRenderingContext2D,
-  text: string,
-  fontFace: string,
-  maxWidth: number
-) => {
-  ctx.font = `1px serif`
-  return maxWidth / ctx.measureText(text).width
-}
-
 export const drawText = (ctx: CanvasRenderingContext2D, text: Text): void => {
   updateDrawStyle(ctx, text.style)
-  const fontSize = getFontSizeToFit(ctx, text.value, '', text.width)
-  ctx.font = `${fontSize}px serif`
+  ctx.font = `${text.fontSize}px serif`
   ctx.textBaseline = 'hanging'
 
-  text.style?.strokeColor !== 'transparent' &&
-    ctx.strokeText(text.value, text.x, text.y, text.width)
+  if (text.style?.strokeColor && text.style.strokeColor !== 'transparent') {
+    ctx.fillStyle = text.style.strokeColor
+    for (let i = 0; i < text.value.length; i++) {
+      ctx.fillText(text.value[i], text.x, text.y + i * text.fontSize, text.width)
+    }
+  }
 }
 
 export const drawPicture = (ctx: CanvasRenderingContext2D, picture: Picture): void => {

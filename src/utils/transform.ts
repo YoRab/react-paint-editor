@@ -433,12 +433,17 @@ export const resizeRect = <T extends DrawableShape & Rect>(
 }
 
 export const resizeText = <T extends DrawableShape & Text>(
+  ctx: CanvasRenderingContext2D,
   cursorPosition: Point,
   canvasOffset: Point,
   originalShape: T,
   selectionMode: SelectionModeResize
 ): T => {
-  return resizeRect(cursorPosition, canvasOffset, originalShape, selectionMode, true)
+  const newRect = resizeRect(cursorPosition, canvasOffset, originalShape, selectionMode, true)
+  return {
+    ...newRect,
+    fontSize: calculateTextFontSize(ctx, newRect.value, '', newRect.width)
+  }
 }
 
 const getRectOppositeAnchorAbsolutePosition = <T extends DrawableShape & Rect>(
@@ -532,6 +537,7 @@ export const resizePicture = (
 }
 
 export const resizeShape = (
+  ctx: CanvasRenderingContext2D,
   shape: DrawableShape,
   cursorPosition: Point,
   canvasOffset: Point,
@@ -575,6 +581,7 @@ export const resizeShape = (
     )
   else if (shape.type === 'text')
     return resizeText(
+      ctx,
       cursorPosition,
       canvasOffset,
       originalShape as DrawableText,
@@ -591,6 +598,7 @@ export const resizeShape = (
 }
 
 export const transformShape = (
+  ctx: CanvasRenderingContext2D,
   shape: DrawableShape,
   cursorPosition: Point,
   canvasOffset: Point,
@@ -615,6 +623,7 @@ export const transformShape = (
     )
   } else if (selectionMode.mode === SelectionModeLib.resize) {
     return resizeShape(
+      ctx,
       shape,
       cursorPosition,
       canvasOffset,
@@ -623,4 +632,19 @@ export const transformShape = (
     )
   }
   return shape
+}
+
+export const calculateTextFontSize = (
+  ctx: CanvasRenderingContext2D,
+  text: string[],
+  fontFace: string,
+  maxWidth: number
+) => {
+  ctx.font = `1px serif`
+  return (
+    _.flow(
+      _.map((value: string) => maxWidth / ctx.measureText(value).width),
+      _.min
+    )(text) ?? 12
+  )
 }

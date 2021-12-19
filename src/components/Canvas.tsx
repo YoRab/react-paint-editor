@@ -76,7 +76,9 @@ const handleSelection = (
     }
     setHoverMode(positionIntersection)
   } else {
-    const newShape = transformShape(selectedShape, cursorPosition, canvasOffset, selectionMode)
+    const ctx = canvasRef.current?.getContext('2d')
+    if (!ctx) return
+    const newShape = transformShape(ctx, selectedShape, cursorPosition, canvasOffset, selectionMode)
     updateSingleShape(newShape)
     setSelectedShape(newShape)
   }
@@ -211,6 +213,8 @@ const Canvas = React.forwardRef<HTMLCanvasElement, DrawerType>(
           setCanvasOffsetStartPosition(cursorPosition)
         }
         if (_.includes(activeTool, ShapeEnum)) {
+          const drawCtx = drawCanvasRef.current?.getContext('2d')
+          if (!drawCtx) return
           if (activeTool === ShapeEnum.brush) {
             if (!!selectedShape) {
               const newShape = createNewPointGroupToShape(
@@ -220,7 +224,12 @@ const Canvas = React.forwardRef<HTMLCanvasElement, DrawerType>(
               updateSingleShape(newShape)
               setSelectedShape(newShape)
             } else {
-              const newShape = createShape(activeTool as ShapeEnum, cursorPosition, defaultConf)
+              const newShape = createShape(
+                drawCtx,
+                activeTool as ShapeEnum,
+                cursorPosition,
+                defaultConf
+              )
               addShape(newShape)
               setSelectedShape(newShape)
             }
@@ -229,7 +238,12 @@ const Canvas = React.forwardRef<HTMLCanvasElement, DrawerType>(
               mode: SelectionModeLib.brush
             })
           } else {
-            const newShape = createShape(activeTool as ShapeEnum, cursorPosition, defaultConf)
+            const newShape = createShape(
+              drawCtx,
+              activeTool as ShapeEnum,
+              cursorPosition,
+              defaultConf
+            )
             addShape(newShape)
             setActiveTool(ToolEnum.selection)
             setSelectedShape(newShape)

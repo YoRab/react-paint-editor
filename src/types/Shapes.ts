@@ -27,8 +27,8 @@ export type StyledShape = {
     fillColor?: string
     strokeColor?: string
     lineWidth?: number
+    pointsCount?: number
   }
-  pointsCount?: number
 }
 
 type Drawable = {
@@ -50,7 +50,8 @@ export type Picture = Rect & {
 }
 
 export type Text = Rect & {
-  value: string
+  value: string[]
+  fontSize: number
 }
 
 export type Line = StyledShape & {

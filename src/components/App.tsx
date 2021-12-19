@@ -26,6 +26,7 @@ const StyledRow = styled.div`
 
 type AppType = {
   hover?: boolean
+  settingsHover?: boolean
   toolboxPosition?: 'top' | 'left'
   width?: number
   height?: number
@@ -34,6 +35,7 @@ type AppType = {
 
 const App = ({
   hover = false,
+  settingsHover = false,
   toolboxPosition = 'top',
   width = 1000,
   height = 600,
@@ -43,9 +45,9 @@ const App = ({
     style: {
       fillColor: 'transparent',
       strokeColor: 'black',
-      lineWidth: 1
-    },
-    pointsCount: 2
+      lineWidth: 1,
+      pointsCount: 2
+    }
   })
   const [canvasOffset, setCanvasOffset] = useState<Point>([0, 0])
   const [canvasOffsetStartPosition, setCanvasOffsetStartPosition] = useState<Point | undefined>(
@@ -223,9 +225,10 @@ const App = ({
           />
         )}
       </StyledRow>
-      {selectedShape && (
+      {(!settingsHover || selectedShape) && (
         <SettingsBox
           activeTool={activeTool}
+          settingsHover={settingsHover}
           selectedShape={selectedShape}
           removeShape={removeShape}
           updateShape={updateShape}
