@@ -16,7 +16,7 @@ import { drawSelection, drawShape } from 'utils/draw'
 import { HoverModeData, SelectionModeData, SelectionModeLib } from 'types/Mode'
 import { createNewPointGroupToShape, transformShape } from 'utils/transform'
 import { FRAMERATE_DRAW, FRAMERATE_SELECTION } from 'constants/draw'
-import { useCombinedRefs } from 'utils/reactUtils'
+import { useCombinedRefs } from 'hooks/useCombinedRefs'
 
 const drawCanvas = (
   drawCtx: CanvasRenderingContext2D,
