@@ -137,6 +137,40 @@ const PictureTool = ({
   )
 }
 
+type LoadFileToolType = {
+  loadFile: (file: File) => void
+}
+
+const LoadFileTool = ({ loadFile }: LoadFileToolType) => {
+  const inputRef = useRef<HTMLInputElement>(null)
+
+  const handleClick = useCallback(() => {
+    if (inputRef.current) inputRef.current.value = ''
+  }, [])
+
+  const handleChange = useCallback(
+    (event: React.ChangeEvent<HTMLInputElement>) => {
+      const file = event.target.files?.item(0)
+      if (!file) return
+      loadFile(file)
+    },
+    [loadFile]
+  )
+
+  return (
+    <StyledTool as="label" selected={false}>
+      <input
+        ref={inputRef}
+        type="file"
+        onClick={handleClick}
+        onChange={handleChange}
+        accept="application/JSON"
+      />
+      Load file
+    </StyledTool>
+  )
+}
+
 type ToolboxType = {
   activeTool: React.SetStateAction<ToolsType>
   hasActionToUndo?: boolean
@@ -146,7 +180,9 @@ type ToolboxType = {
   redoAction: () => void
   clearCanvas: () => void
   setActiveTool: (tool: ToolsType) => void
-  saveCanvasInFile: () => void
+  loadFile: (file: File) => void
+  saveFile: () => void
+  exportCanvasInFile: () => void
   addShape: (pictureShape: DrawableShape) => void
   setSelectedShape: React.Dispatch<React.SetStateAction<DrawableShape | undefined>>
   maxPictureSize?: number
@@ -164,7 +200,9 @@ const Toolbox = ({
   undoAction,
   redoAction,
   addShape,
-  saveCanvasInFile,
+  loadFile,
+  saveFile,
+  exportCanvasInFile,
   setSelectedShape,
   maxPictureSize = 300,
   toolboxPosition,
@@ -218,7 +256,7 @@ const Toolbox = ({
         lib="Clear"
         imgSrc={clearIcon}
         isActive={activeTool === ToolEnum.clear}
-        setActive={clearCanvas}
+        setActive={() => clearCanvas()}
       />
       <StyledSeparator />
       {_.map(
@@ -242,12 +280,21 @@ const Toolbox = ({
       />
       <StyledSeparator />
 
+      <LoadFileTool loadFile={loadFile} />
+
       <Tool
-        type={ToolEnum.save}
-        lib="Save"
+        type={ToolEnum.saveFile}
+        lib="Save file"
+        isActive={activeTool === ToolEnum.saveFile}
+        setActive={saveFile}
+      />
+
+      <Tool
+        type={ToolEnum.export}
+        lib="Export"
         imgSrc={saveIcon}
-        isActive={activeTool === ToolEnum.save}
-        setActive={saveCanvasInFile}
+        isActive={activeTool === ToolEnum.export}
+        setActive={exportCanvasInFile}
       />
     </StyledToolbox>
   )

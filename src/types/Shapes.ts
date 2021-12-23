@@ -14,7 +14,9 @@ export enum ToolEnum {
   undo = 'undo',
   redo = 'redo',
   clear = 'clear',
-  save = 'save',
+  export = 'export',
+  loadFile = 'loadfile',
+  saveFile = 'savefile',
   move = 'move'
 }
 
