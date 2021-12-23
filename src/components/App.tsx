@@ -191,7 +191,7 @@ const App = ({
         if (!isValidated) throw new Error('Le fichier est corrompu')
         clearCanvas(shapes as DrawableShape[])
       } catch (e) {
-        console.error(e)
+        console.warn(e)
       }
     },
     [clearCanvas]

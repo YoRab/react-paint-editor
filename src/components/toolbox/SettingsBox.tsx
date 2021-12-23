@@ -2,10 +2,17 @@ import _ from 'lodash/fp'
 import React, { useCallback, useMemo } from 'react'
 import styled from 'styled-components'
 import { POLYGON_POINTS_VALUES, STYLE_COLORS, STYLE_FONTS, STYLE_LINE_WIDTH } from 'constants/style'
-import { DrawablePolygon, DrawableShape, ShapeEnum, StyledShape, ToolsType } from 'types/Shapes'
+import {
+  DrawablePolygon,
+  DrawableShape,
+  DrawableText,
+  ShapeEnum,
+  StyledShape,
+  ToolsType
+} from 'types/Shapes'
 import { getSettingsPosition } from 'utils/intersect'
 import deleteIcon from 'assets/icons/trash.svg'
-import { updatePolygonLinesCount } from 'utils/transform'
+import { calculateTextFontSize, updatePolygonLinesCount } from 'utils/transform'
 
 const StyledSettingsBox = styled.div.attrs<{
   left: number
@@ -142,6 +149,31 @@ const SettingsBox = ({
     [selectedShape, updateShape, setDefaultConf]
   )
 
+  const handleShapeFontFamilyChange = useCallback(
+    (field: string, value: string | number) => {
+      if (selectedShape) {
+        const ctx = canvas?.getContext('2d')
+        if (!ctx) return
+        const newShape = _.set(field, value, selectedShape) as DrawableText
+        const fontSize = calculateTextFontSize(
+          ctx,
+          newShape.value,
+          newShape.width,
+          newShape.style?.fontFamily
+        )
+        const resizedShape = {
+          ...newShape,
+          fontSize,
+          height: fontSize * newShape.value.length
+        }
+        updateShape(resizedShape)
+      } else {
+        setDefaultConf(prevDefaultConf => _.set(field, value, prevDefaultConf))
+      }
+    },
+    [canvas, selectedShape, updateShape, setDefaultConf]
+  )
+
   const handlePolygonLinesCount = useCallback(
     (field: string, value: string | number) => {
       if (selectedShape) {
@@ -178,7 +210,7 @@ const SettingsBox = ({
                   field="style.fontFamily"
                   values={STYLE_FONTS}
                   defaultValue={selectedShape.style?.fontFamily}
-                  valueChanged={handleShapeStyleChange}
+                  valueChanged={handleShapeFontFamilyChange}
                 />
               ) : (
                 <ShapeStyleSelect
