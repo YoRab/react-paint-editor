@@ -5,7 +5,8 @@ export enum SelectionModeLib {
   'brush' = 'brush',
   'resize' = 'resize',
   'rotate' = 'rotate',
-  'translate' = 'translate'
+  'translate' = 'translate',
+  'textedition' = 'textedition'
 }
 
 export type SelectionModeDefault = {
@@ -14,6 +15,11 @@ export type SelectionModeDefault = {
 
 export type SelectionModeBrush = {
   mode: SelectionModeLib.brush
+}
+
+export type SelectionModeEditText = {
+  mode: SelectionModeLib.textedition
+  defaultValue: string[]
 }
 
 export type SelectionModeResize<AnchorType extends Point | number = Point> = {
@@ -41,6 +47,7 @@ export type SelectionModeData<AnchorType extends Point | number> =
   | SelectionModeResize<AnchorType>
   | SelectionModeRotate
   | SelectionModeTranslate
+  | SelectionModeEditText
 
 export type HoverModeData =
   | {
@@ -58,4 +65,7 @@ export type HoverModeData =
     }
   | {
       mode: SelectionModeLib.translate
+    }
+  | {
+      mode: SelectionModeLib.textedition
     }

@@ -119,8 +119,8 @@ export const createShape = (
         style: defaultConf.style
       }
     case ShapeEnum.text:
-      const defaultValue = ['Test', '', 'te sdfddf df df dsdf']
-      const fontSize = calculateTextFontSize(ctx, defaultValue, 100, defaultConf.style?.fontFamily)
+      const defaultValue: string[] = []
+      const fontSize = calculateTextFontSize(ctx, defaultValue, 50, defaultConf.style?.fontFamily)
       return {
         type: ShapeEnum.text,
         id: _.uniqueId('text_'),
@@ -128,8 +128,8 @@ export const createShape = (
         y: cursorPosition[1],
         value: defaultValue,
         fontSize,
-        width: 100,
-        height: fontSize * defaultValue.length,
+        width: 50,
+        height: fontSize * (defaultValue.length || 1),
         translation: [0, 0],
         scale: [1, 1],
         rotation: 0,

@@ -139,7 +139,7 @@ export const resizeBrush = (
       scale: [scaledWidth, scaledHeight] as Point
     }
   }
-  const { center: shapeWithNewDimensionsCenter } = getShapeInfos(shapeWithNewDimensions)
+  // const { center: shapeWithNewDimensionsCenter } = getShapeInfos(shapeWithNewDimensions)
 
   return shapeWithNewDimensions
   // const [oppTrueX, oppTrueY] = getRectOppositeAnchorAbsolutePosition(
@@ -649,3 +649,22 @@ export const calculateTextFontSize = (
     )(text) ?? 12
   )
 }
+
+export const calculateTextWidth = (
+  ctx: CanvasRenderingContext2D,
+  text: string[],
+  fontSize: number,
+  fontFamily: string | undefined = STYLE_FONT_DEFAULT
+) => {
+  ctx.font = `${fontSize}px ${fontFamily}`
+  return (
+    _.flow(
+      _.map((value: string) => ctx.measureText(value).width),
+      _.max
+    )(text) ?? 20
+  )
+}
+
+export const degreesToRadians = (degrees: number) => degrees * (Math.PI / 180)
+
+export const radiansToDegrees = (radians: number) => (radians * 180) / Math.PI
