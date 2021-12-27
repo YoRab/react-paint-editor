@@ -3,6 +3,7 @@ import {
   SELECTION_RESIZE_ANCHOR_POSITIONS,
   SELECTION_ROTATED_ANCHOR_POSITION
 } from 'constants/shapes'
+import { STYLE_FONT_DEFAULT } from 'constants/style'
 import {
   Circle,
   Ellipse,
@@ -14,7 +15,8 @@ import {
   Point,
   DrawableLine,
   DrawablePolygon,
-  Brush
+  Brush,
+  Text
 } from 'types/Shapes'
 import { getShapeInfos } from './shapeData'
 
@@ -126,6 +128,18 @@ export const drawRect = (ctx: CanvasRenderingContext2D, rect: Rect): void => {
   rect.style?.strokeColor !== 'transparent' && ctx.stroke()
 }
 
+export const drawText = (ctx: CanvasRenderingContext2D, text: Text): void => {
+  updateDrawStyle(ctx, text.style)
+  ctx.font = `${text.fontSize}px ${text.style?.fontFamily ?? STYLE_FONT_DEFAULT}`
+  ctx.textBaseline = 'hanging'
+  if (text.style?.strokeColor && text.style.strokeColor !== 'transparent') {
+    ctx.fillStyle = text.style.strokeColor
+    for (let i = 0; i < text.value.length; i++) {
+      ctx.fillText(text.value[i], text.x, text.y + i * text.fontSize, text.width)
+    }
+  }
+}
+
 export const drawPicture = (ctx: CanvasRenderingContext2D, picture: Picture): void => {
   ctx.beginPath()
   ctx.drawImage(picture.img, picture.x, picture.y, picture.width, picture.height)
@@ -141,6 +155,9 @@ export const drawShape = (
   switch (shape.type) {
     case 'brush':
       drawBrush(ctx, shape)
+      break
+    case 'text':
+      drawText(ctx, shape)
       break
     case 'line':
       drawLine(ctx, shape)

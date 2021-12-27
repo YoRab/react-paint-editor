@@ -15,12 +15,15 @@ import {
   Circle,
   DrawableLine,
   DrawablePolygon,
-  DrawableBrush
+  DrawableBrush,
+  DrawableText,
+  Text
 } from 'types/Shapes'
 import {
   getPointPositionAfterCanvasTransformation,
   getPointPositionBeforeCanvasTransformation
 } from './intersect'
+import { STYLE_FONT_DEFAULT } from 'constants/style'
 
 export const getNormalizedSize = (originalShape: Rect, width: number, height: number) => {
   const originalRatio = originalShape.width / originalShape.height
@@ -136,7 +139,7 @@ export const resizeBrush = (
       scale: [scaledWidth, scaledHeight] as Point
     }
   }
-  const { center: shapeWithNewDimensionsCenter } = getShapeInfos(shapeWithNewDimensions)
+  // const { center: shapeWithNewDimensionsCenter } = getShapeInfos(shapeWithNewDimensions)
 
   return shapeWithNewDimensions
   // const [oppTrueX, oppTrueY] = getRectOppositeAnchorAbsolutePosition(
@@ -430,6 +433,20 @@ export const resizeRect = <T extends DrawableShape & Rect>(
   }
 }
 
+export const resizeText = <T extends DrawableShape & Text>(
+  ctx: CanvasRenderingContext2D,
+  cursorPosition: Point,
+  canvasOffset: Point,
+  originalShape: T,
+  selectionMode: SelectionModeResize
+): T => {
+  const newRect = resizeRect(cursorPosition, canvasOffset, originalShape, selectionMode, true)
+  return {
+    ...newRect,
+    fontSize: calculateTextFontSize(ctx, newRect.value, newRect.width, newRect.style?.fontFamily)
+  }
+}
+
 const getRectOppositeAnchorAbsolutePosition = <T extends DrawableShape & Rect>(
   anchor: Point,
   center: Point,
@@ -521,6 +538,7 @@ export const resizePicture = (
 }
 
 export const resizeShape = (
+  ctx: CanvasRenderingContext2D,
   shape: DrawableShape,
   cursorPosition: Point,
   canvasOffset: Point,
@@ -562,6 +580,14 @@ export const resizeShape = (
       originalShape as DrawableRect,
       selectionMode as SelectionModeResize
     )
+  else if (shape.type === 'text')
+    return resizeText(
+      ctx,
+      cursorPosition,
+      canvasOffset,
+      originalShape as DrawableText,
+      selectionMode as SelectionModeResize
+    )
   else if (shape.type === 'picture')
     return resizePicture(
       cursorPosition,
@@ -573,6 +599,7 @@ export const resizeShape = (
 }
 
 export const transformShape = (
+  ctx: CanvasRenderingContext2D,
   shape: DrawableShape,
   cursorPosition: Point,
   canvasOffset: Point,
@@ -597,6 +624,7 @@ export const transformShape = (
     )
   } else if (selectionMode.mode === SelectionModeLib.resize) {
     return resizeShape(
+      ctx,
       shape,
       cursorPosition,
       canvasOffset,
@@ -606,3 +634,37 @@ export const transformShape = (
   }
   return shape
 }
+
+export const calculateTextFontSize = (
+  ctx: CanvasRenderingContext2D,
+  text: string[],
+  maxWidth: number,
+  fontFamily: string | undefined = STYLE_FONT_DEFAULT
+) => {
+  ctx.font = `1px ${fontFamily}`
+  return (
+    _.flow(
+      _.map((value: string) => maxWidth / ctx.measureText(value).width),
+      _.min
+    )(text) ?? 12
+  )
+}
+
+export const calculateTextWidth = (
+  ctx: CanvasRenderingContext2D,
+  text: string[],
+  fontSize: number,
+  fontFamily: string | undefined = STYLE_FONT_DEFAULT
+) => {
+  ctx.font = `${fontSize}px ${fontFamily}`
+  return (
+    _.flow(
+      _.map((value: string) => ctx.measureText(value).width),
+      _.max
+    )(text) ?? 20
+  )
+}
+
+export const degreesToRadians = (degrees: number) => degrees * (Math.PI / 180)
+
+export const radiansToDegrees = (radians: number) => (radians * 180) / Math.PI

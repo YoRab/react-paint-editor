@@ -1,11 +1,18 @@
 import _ from 'lodash/fp'
 import React, { useCallback, useMemo } from 'react'
 import styled from 'styled-components'
-import { POLYGON_POINTS_VALUES, STYLE_COLORS, STYLE_LINE_WIDTH } from 'constants/style'
-import { DrawablePolygon, DrawableShape, ShapeEnum, StyledShape, ToolsType } from 'types/Shapes'
+import { POLYGON_POINTS_VALUES, STYLE_COLORS, STYLE_FONTS, STYLE_LINE_WIDTH } from 'constants/style'
+import {
+  DrawablePolygon,
+  DrawableShape,
+  DrawableText,
+  ShapeEnum,
+  StyledShape,
+  ToolsType
+} from 'types/Shapes'
 import { getSettingsPosition } from 'utils/intersect'
 import deleteIcon from 'assets/icons/trash.svg'
-import { updatePolygonLinesCount } from 'utils/transform'
+import { calculateTextFontSize, updatePolygonLinesCount } from 'utils/transform'
 
 const StyledSettingsBox = styled.div.attrs<{
   left: number
@@ -18,11 +25,18 @@ const StyledSettingsBox = styled.div.attrs<{
 }))<{
   left: number
   top: number
+  hover: boolean
 }>`
-  position: absolute;
   user-select: none;
   display: flex;
+
+  ${({ hover }) =>
+    hover &&
+    `
+  position: absolute;
   transform: translate(-50%, 0);
+  
+  `}
 `
 const StyledDeleteButton = styled.button`
   width: 36px;
@@ -92,6 +106,7 @@ const ShapeStyleSelect = ({ field, values, defaultValue, valueChanged }: ShapeSt
 
 type SettingsBoxType = {
   activeTool: ToolsType
+  settingsHover: boolean
   selectedShape: DrawableShape | undefined
   canvas: HTMLCanvasElement | null
   givenWidth: number
@@ -104,6 +119,7 @@ type SettingsBoxType = {
 
 const SettingsBox = ({
   activeTool,
+  settingsHover,
   selectedShape,
   canvas,
   givenWidth,
@@ -119,7 +135,8 @@ const SettingsBox = ({
     ShapeEnum.circle,
     ShapeEnum.rect,
     ShapeEnum.line,
-    ShapeEnum.polygon
+    ShapeEnum.polygon,
+    ShapeEnum.text
   ]
   const handleShapeStyleChange = useCallback(
     (field: string, value: string | number) => {
@@ -130,6 +147,31 @@ const SettingsBox = ({
       }
     },
     [selectedShape, updateShape, setDefaultConf]
+  )
+
+  const handleShapeFontFamilyChange = useCallback(
+    (field: string, value: string | number) => {
+      if (selectedShape) {
+        const ctx = canvas?.getContext('2d')
+        if (!ctx) return
+        const newShape = _.set(field, value, selectedShape) as DrawableText
+        const fontSize = calculateTextFontSize(
+          ctx,
+          newShape.value,
+          newShape.width,
+          newShape.style?.fontFamily
+        )
+        const resizedShape = {
+          ...newShape,
+          fontSize,
+          height: fontSize * newShape.value.length
+        }
+        updateShape(resizedShape)
+      } else {
+        setDefaultConf(prevDefaultConf => _.set(field, value, prevDefaultConf))
+      }
+    },
+    [canvas, selectedShape, updateShape, setDefaultConf]
   )
 
   const handlePolygonLinesCount = useCallback(
@@ -144,47 +186,58 @@ const SettingsBox = ({
   )
 
   const pointPosition = useMemo(() => {
-    return (
-      (selectedShape && getSettingsPosition(selectedShape, canvas, givenWidth, givenHeight)) ?? [
-        0, 0
-      ]
-    )
-  }, [selectedShape, canvas, givenWidth, givenHeight])
+    return settingsHover && selectedShape
+      ? getSettingsPosition(selectedShape, canvas, givenWidth, givenHeight)
+      : [0, 0]
+  }, [selectedShape, settingsHover, canvas, givenWidth, givenHeight])
 
   return (
-    <StyledSettingsBox left={pointPosition[0]} top={pointPosition[1]}>
+    <StyledSettingsBox hover={settingsHover} left={pointPosition[0]} top={pointPosition[1]}>
       {selectedShape ? (
         <>
           {shapes.includes(selectedShape?.type) && (
             <>
               {selectedShape.type === ShapeEnum.polygon && (
                 <ShapeStyleSelect
-                  field="pointsCount"
+                  field="style.pointsCount"
                   values={POLYGON_POINTS_VALUES}
                   defaultValue={selectedShape.points.length}
                   valueChanged={handlePolygonLinesCount}
                 />
               )}
-              <ShapeStyleSelect
-                field="style.lineWidth"
-                values={STYLE_LINE_WIDTH}
-                defaultValue={selectedShape.style?.lineWidth}
-                valueChanged={handleShapeStyleChange}
-              />
+              {selectedShape.type === ShapeEnum.text ? (
+                <ShapeStyleSelect
+                  field="style.fontFamily"
+                  values={STYLE_FONTS}
+                  defaultValue={selectedShape.style?.fontFamily}
+                  valueChanged={handleShapeFontFamilyChange}
+                />
+              ) : (
+                <ShapeStyleSelect
+                  field="style.lineWidth"
+                  values={STYLE_LINE_WIDTH}
+                  defaultValue={selectedShape.style?.lineWidth}
+                  valueChanged={handleShapeStyleChange}
+                />
+              )}
+
               <ShapeStyleSelect
                 field="style.strokeColor"
                 values={STYLE_COLORS}
                 defaultValue={selectedShape.style?.strokeColor}
                 valueChanged={handleShapeStyleChange}
               />
-              {selectedShape.type !== ShapeEnum.brush && selectedShape.type !== ShapeEnum.line && (
-                <ShapeStyleSelect
-                  field="style.fillColor"
-                  values={STYLE_COLORS}
-                  defaultValue={selectedShape.style?.fillColor}
-                  valueChanged={handleShapeStyleChange}
-                />
-              )}
+
+              {selectedShape.type !== ShapeEnum.text &&
+                selectedShape.type !== ShapeEnum.brush &&
+                selectedShape.type !== ShapeEnum.line && (
+                  <ShapeStyleSelect
+                    field="style.fillColor"
+                    values={STYLE_COLORS}
+                    defaultValue={selectedShape.style?.fillColor}
+                    valueChanged={handleShapeStyleChange}
+                  />
+                )}
             </>
           )}
           <DeleteShapeButton selectedShape={selectedShape} removeShape={removeShape} />
@@ -194,32 +247,45 @@ const SettingsBox = ({
           <>
             {activeTool === ShapeEnum.polygon && (
               <ShapeStyleSelect
-                field="pointsCount"
+                field="style.pointsCount"
                 values={POLYGON_POINTS_VALUES}
                 defaultValue={2}
                 valueChanged={handlePolygonLinesCount}
               />
             )}
-            <ShapeStyleSelect
-              field="style.lineWidth"
-              values={STYLE_LINE_WIDTH}
-              defaultValue={defaultConf.style?.lineWidth}
-              valueChanged={handleShapeStyleChange}
-            />
+            {activeTool === ShapeEnum.text ? (
+              <ShapeStyleSelect
+                field="style.fontFamily"
+                values={STYLE_FONTS}
+                defaultValue={defaultConf.style?.fontFamily}
+                valueChanged={handleShapeStyleChange}
+              />
+            ) : (
+              <ShapeStyleSelect
+                field="style.lineWidth"
+                values={STYLE_LINE_WIDTH}
+                defaultValue={defaultConf.style?.lineWidth}
+                valueChanged={handleShapeStyleChange}
+              />
+            )}
+
             <ShapeStyleSelect
               field="style.strokeColor"
               values={STYLE_COLORS}
               defaultValue={defaultConf.style?.strokeColor}
               valueChanged={handleShapeStyleChange}
             />
-            {activeTool !== ShapeEnum.brush && activeTool !== ShapeEnum.line && (
-              <ShapeStyleSelect
-                field="style.fillColor"
-                values={STYLE_COLORS}
-                defaultValue={defaultConf.style?.fillColor}
-                valueChanged={handleShapeStyleChange}
-              />
-            )}
+
+            {activeTool !== ShapeEnum.text &&
+              activeTool !== ShapeEnum.brush &&
+              activeTool !== ShapeEnum.line && (
+                <ShapeStyleSelect
+                  field="style.fillColor"
+                  values={STYLE_COLORS}
+                  defaultValue={defaultConf.style?.fillColor}
+                  valueChanged={handleShapeStyleChange}
+                />
+              )}
           </>
         )
       )}

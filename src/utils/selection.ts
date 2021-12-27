@@ -4,6 +4,7 @@ import { HoverModeData, SelectionModeData, SelectionModeLib } from 'types/Mode'
 import { DrawablePicture, Point, DrawableShape, ShapeEnum, StyledShape } from 'types/Shapes'
 import { checkPositionIntersection } from './intersect'
 import { getShapeInfos } from './shapeData'
+import { calculateTextFontSize } from './transform'
 
 export const getNewSelectionData = (
   hoverMode: HoverModeData,
@@ -65,6 +66,7 @@ export const createPicture = (file: File, maxPictureSize: number) => {
 }
 
 export const createShape = (
+  ctx: CanvasRenderingContext2D,
   shape: ShapeEnum,
   cursorPosition: Point,
   defaultConf: StyledShape
@@ -97,7 +99,7 @@ export const createShape = (
         points: _.flow(
           _.range(0),
           _.map(() => cursorPosition)
-        )(defaultConf.pointsCount ?? 2),
+        )(defaultConf.style?.pointsCount ?? 2),
         translation: [0, 0],
         scale: [1, 1],
         rotation: 0,
@@ -111,6 +113,23 @@ export const createShape = (
         y: cursorPosition[1],
         width: 0,
         height: 0,
+        translation: [0, 0],
+        scale: [1, 1],
+        rotation: 0,
+        style: defaultConf.style
+      }
+    case ShapeEnum.text:
+      const defaultValue: string[] = []
+      const fontSize = calculateTextFontSize(ctx, defaultValue, 50, defaultConf.style?.fontFamily)
+      return {
+        type: ShapeEnum.text,
+        id: _.uniqueId('text_'),
+        x: cursorPosition[0],
+        y: cursorPosition[1],
+        value: defaultValue,
+        fontSize,
+        width: 50,
+        height: fontSize * (defaultValue.length || 1),
         translation: [0, 0],
         scale: [1, 1],
         rotation: 0,

@@ -6,6 +6,8 @@ import Layouts from './toolbox/Layouts'
 import Toolbox from './toolbox/Toolbox'
 import styled from 'styled-components'
 import SettingsBox from './toolbox/SettingsBox'
+import { STYLE_FONT_DEFAULT } from 'constants/style'
+import { decodeJson, downloadFile, encodeJson, validateJson } from 'utils/file'
 
 const StyledApp = styled.div<{
   toolboxposition: 'top' | 'left'
@@ -26,6 +28,7 @@ const StyledRow = styled.div`
 
 type AppType = {
   hover?: boolean
+  settingsHover?: boolean
   toolboxPosition?: 'top' | 'left'
   width?: number
   height?: number
@@ -34,6 +37,7 @@ type AppType = {
 
 const App = ({
   hover = false,
+  settingsHover = false,
   toolboxPosition = 'top',
   width = 1000,
   height = 600,
@@ -43,9 +47,10 @@ const App = ({
     style: {
       fillColor: 'transparent',
       strokeColor: 'black',
-      lineWidth: 1
-    },
-    pointsCount: 2
+      lineWidth: 1,
+      pointsCount: 2,
+      fontFamily: STYLE_FONT_DEFAULT
+    }
   })
   const [canvasOffset, setCanvasOffset] = useState<Point>([0, 0])
   const [canvasOffsetStartPosition, setCanvasOffsetStartPosition] = useState<Point | undefined>(
@@ -68,17 +73,6 @@ const App = ({
   })
 
   const canvasRef = useRef<HTMLCanvasElement>(null)
-
-  const saveCanvasInFile = useCallback(() => {
-    const dataURL = canvasRef.current?.toDataURL('image/png')
-    if (!dataURL) return
-    const a = document.createElement('a')
-    a.href = dataURL
-    a.download = 'drawing.png'
-    document.body.appendChild(a)
-    a.click()
-    document.body.removeChild(a)
-  }, [])
 
   const selectTool = useCallback((tool: ToolsType) => {
     setSelectedShape(undefined)
@@ -163,13 +157,45 @@ const App = ({
     [saveShapes]
   )
 
-  const clearCanvas = useCallback(() => {
-    setSelectedShape(undefined)
-    shapesRef.current = []
-    setSavedShapes({ states: [{ shapes: [], selectedShape: undefined }], cursor: 0 })
-    selectTool(ToolEnum.selection)
-    setCanvasOffset([0, 0])
-  }, [selectTool])
+  const clearCanvas = useCallback(
+    (shapesToInit: DrawableShape[] = []) => {
+      setSelectedShape(undefined)
+      shapesRef.current = shapesToInit
+      setSavedShapes({
+        states: [{ shapes: shapesToInit, selectedShape: undefined }],
+        cursor: 0
+      })
+      selectTool(ToolEnum.selection)
+      setCanvasOffset([0, 0])
+    },
+    [selectTool]
+  )
+
+  const exportCanvasInFile = useCallback(() => {
+    const dataURL = canvasRef.current?.toDataURL('image/png')
+    if (!dataURL) return
+    downloadFile(dataURL, 'drawing.png')
+  }, [])
+
+  const saveFile = useCallback(() => {
+    const content = encodeJson(shapesRef.current)
+    if (!content) return
+    downloadFile(content, 'drawing.json')
+  }, [])
+
+  const loadFile = useCallback(
+    async (file: File) => {
+      try {
+        const shapes = await decodeJson(file)
+        const isValidated = validateJson(shapes)
+        if (!isValidated) throw new Error('Le fichier est corrompu')
+        clearCanvas(shapes as DrawableShape[])
+      } catch (e) {
+        console.warn(e)
+      }
+    },
+    [clearCanvas]
+  )
 
   const hasActionToUndo = savedShapes.cursor > 0
   const hasActionToRedo = savedShapes.cursor < savedShapes.states.length - 1
@@ -182,7 +208,9 @@ const App = ({
         clearCanvas={clearCanvas}
         setSelectedShape={setSelectedShape}
         setActiveTool={selectTool}
-        saveCanvasInFile={saveCanvasInFile}
+        exportCanvasInFile={exportCanvasInFile}
+        saveFile={saveFile}
+        loadFile={loadFile}
         addShape={addShape}
         hasActionToUndo={hasActionToUndo}
         hasActionToRedo={hasActionToRedo}
@@ -223,9 +251,10 @@ const App = ({
           />
         )}
       </StyledRow>
-      {selectedShape && (
+      {(!settingsHover || selectedShape) && (
         <SettingsBox
           activeTool={activeTool}
+          settingsHover={settingsHover}
           selectedShape={selectedShape}
           removeShape={removeShape}
           updateShape={updateShape}
