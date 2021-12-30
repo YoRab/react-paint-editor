@@ -1,7 +1,7 @@
 import React, { RefObject, useCallback, useEffect, useRef, useState } from 'react'
 import styled from 'styled-components'
 import _ from 'lodash/fp'
-import { createShape, selectShape } from 'utils/selection'
+import { selectShape } from 'utils/selection'
 import {
   DrawableBrush,
   DrawableShape,
@@ -18,6 +18,7 @@ import { calculateTextWidth, createNewPointGroupToShape, transformShape } from '
 import { FRAMERATE_DRAW, FRAMERATE_SELECTION } from 'constants/draw'
 import { useCombinedRefs } from 'hooks/useCombinedRefs'
 import EditTextBox from './toolbox/EditTextBox'
+import { createShape } from 'utils/data'
 
 const drawCanvas = (
   drawCtx: CanvasRenderingContext2D,

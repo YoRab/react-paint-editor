@@ -8,6 +8,7 @@ import styled from 'styled-components'
 import SettingsBox from './toolbox/SettingsBox'
 import { STYLE_FONT_DEFAULT } from 'constants/style'
 import { decodeJson, downloadFile, encodeJson, validateJson } from 'utils/file'
+import { useKeyboard } from 'hooks/useKeyboard'
 
 const StyledApp = styled.div<{
   toolboxposition: 'top' | 'left'
@@ -52,6 +53,8 @@ const App = ({
       fontFamily: STYLE_FONT_DEFAULT
     }
   })
+  const componentRef = useRef<HTMLDivElement>(null)
+
   const [canvasOffset, setCanvasOffset] = useState<Point>([0, 0])
   const [canvasOffsetStartPosition, setCanvasOffsetStartPosition] = useState<Point | undefined>(
     undefined
@@ -197,12 +200,23 @@ const App = ({
     [clearCanvas]
   )
 
+  const onPasteShape = useCallback(
+    (shape: DrawableShape) => {
+      addShape(shape)
+      setActiveTool(ToolEnum.selection)
+      setSelectedShape(shape)
+    },
+    [addShape]
+  )
+
+  useKeyboard({ componentRef, selectedShape, onPasteShape })
+
   const hasActionToUndo = savedShapes.cursor > 0
   const hasActionToRedo = savedShapes.cursor < savedShapes.states.length - 1
   const hasActionToClear = savedShapes.states.length > 1
 
   return (
-    <StyledApp toolboxposition={toolboxPosition} height={height}>
+    <StyledApp ref={componentRef} toolboxposition={toolboxPosition} height={height} tabIndex={0}>
       <Toolbox
         activeTool={activeTool}
         clearCanvas={clearCanvas}
