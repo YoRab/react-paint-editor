@@ -3,7 +3,7 @@ import {
   SELECTION_RESIZE_ANCHOR_POSITIONS,
   SELECTION_ROTATED_ANCHOR_POSITION
 } from 'constants/shapes'
-import { STYLE_FONT_DEFAULT } from 'constants/style'
+import { LINE_DASH_DATA, STYLE_FONT_DEFAULT } from 'constants/style'
 import {
   Circle,
   Ellipse,
@@ -45,20 +45,24 @@ const updateDrawStyle = (
   {
     fillColor,
     strokeColor,
-    lineWidth
+    lineWidth,
+    lineDash
   }: {
     fillColor?: string
     strokeColor?: string
     lineWidth?: number
+    lineDash?: number
   } = {
     fillColor: 'transparent',
     strokeColor: 'blue',
-    lineWidth: 1
+    lineWidth: 1,
+    lineDash: 0
   }
 ) => {
   fillColor && (ctx.fillStyle = fillColor)
   strokeColor && (ctx.strokeStyle = strokeColor)
   lineWidth && (ctx.lineWidth = lineWidth)
+  lineDash && ctx.setLineDash(LINE_DASH_DATA[lineDash])
 }
 
 export const drawBrush = (ctx: CanvasRenderingContext2D, brush: Brush): void => {

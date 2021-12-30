@@ -1,7 +1,13 @@
 import _ from 'lodash/fp'
 import React, { useCallback, useMemo } from 'react'
 import styled from 'styled-components'
-import { POLYGON_POINTS_VALUES, STYLE_COLORS, STYLE_FONTS, STYLE_LINE_WIDTH } from 'constants/style'
+import {
+  POLYGON_POINTS_VALUES,
+  STYLE_COLORS,
+  STYLE_FONTS,
+  STYLE_LINE_DASH,
+  STYLE_LINE_WIDTH
+} from 'constants/style'
 import {
   DrawablePolygon,
   DrawableShape,
@@ -213,12 +219,20 @@ const SettingsBox = ({
                   valueChanged={handleShapeFontFamilyChange}
                 />
               ) : (
-                <ShapeStyleSelect
-                  field="style.lineWidth"
-                  values={STYLE_LINE_WIDTH}
-                  defaultValue={selectedShape.style?.lineWidth}
-                  valueChanged={handleShapeStyleChange}
-                />
+                <>
+                  <ShapeStyleSelect
+                    field="style.lineWidth"
+                    values={STYLE_LINE_WIDTH}
+                    defaultValue={selectedShape.style?.lineWidth}
+                    valueChanged={handleShapeStyleChange}
+                  />
+                  <ShapeStyleSelect
+                    field="style.lineDash"
+                    values={STYLE_LINE_DASH}
+                    defaultValue={selectedShape.style?.lineDash}
+                    valueChanged={handleShapeStyleChange}
+                  />
+                </>
               )}
 
               <ShapeStyleSelect
@@ -261,12 +275,20 @@ const SettingsBox = ({
                 valueChanged={handleShapeStyleChange}
               />
             ) : (
-              <ShapeStyleSelect
-                field="style.lineWidth"
-                values={STYLE_LINE_WIDTH}
-                defaultValue={defaultConf.style?.lineWidth}
-                valueChanged={handleShapeStyleChange}
-              />
+              <>
+                <ShapeStyleSelect
+                  field="style.lineWidth"
+                  values={STYLE_LINE_WIDTH}
+                  defaultValue={defaultConf.style?.lineWidth}
+                  valueChanged={handleShapeStyleChange}
+                />
+                <ShapeStyleSelect
+                  field="style.lineDash"
+                  values={STYLE_LINE_DASH}
+                  defaultValue={defaultConf.style?.lineDash}
+                  valueChanged={handleShapeStyleChange}
+                />
+              </>
             )}
 
             <ShapeStyleSelect

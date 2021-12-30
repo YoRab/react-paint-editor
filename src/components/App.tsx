@@ -48,6 +48,7 @@ const App = ({
       fillColor: 'transparent',
       strokeColor: 'black',
       lineWidth: 1,
+      lineDash: 0,
       pointsCount: 2,
       fontFamily: STYLE_FONT_DEFAULT
     }
