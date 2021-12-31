@@ -201,7 +201,10 @@ export const drawText = (ctx: CanvasRenderingContext2D, text: Text): void => {
   }
 }
 
-export const drawPicture = (ctx: CanvasRenderingContext2D, picture: Picture): void => {
+export const drawPicture = (
+  ctx: CanvasRenderingContext2D,
+  picture: Picture<HTMLImageElement>
+): void => {
   ctx.beginPath()
   ctx.drawImage(picture.img, picture.x, picture.y, picture.width, picture.height)
 }
