@@ -49,6 +49,7 @@ const App = ({
       strokeColor: 'black',
       lineWidth: 1,
       lineDash: 0,
+      lineArrow: 0,
       pointsCount: 2,
       fontFamily: STYLE_FONT_DEFAULT
     }

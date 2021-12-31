@@ -16,8 +16,11 @@ import {
   DrawableLine,
   DrawablePolygon,
   Brush,
-  Text
+  Text,
+  Triangle,
+  StyledShape
 } from 'types/Shapes'
+import { applyRotationToVector } from './intersect'
 import { getShapeInfos } from './shapeData'
 
 const applyShapeTransformations = (
@@ -62,7 +65,12 @@ const updateDrawStyle = (
   fillColor && (ctx.fillStyle = fillColor)
   strokeColor && (ctx.strokeStyle = strokeColor)
   lineWidth && (ctx.lineWidth = lineWidth)
-  lineDash && ctx.setLineDash(LINE_DASH_DATA[lineDash])
+  lineDash !== undefined &&
+    lineWidth &&
+    ctx.setLineDash([
+      LINE_DASH_DATA[lineDash][0] * lineWidth,
+      LINE_DASH_DATA[lineDash][1] * lineWidth
+    ])
 }
 
 export const drawBrush = (ctx: CanvasRenderingContext2D, brush: Brush): void => {
@@ -84,6 +92,43 @@ export const drawBrush = (ctx: CanvasRenderingContext2D, brush: Brush): void => 
   brush.style?.strokeColor !== 'transparent' && ctx.stroke()
 }
 
+export const drawTriangle = (ctx: CanvasRenderingContext2D, triangle: Triangle): void => {
+  updateDrawStyle(ctx, triangle.style)
+  ctx.beginPath()
+  ctx.moveTo(...triangle.points[0])
+  ctx.lineTo(...triangle.points[1])
+  ctx.lineTo(...triangle.points[2])
+  ctx.lineTo(...triangle.points[0])
+  triangle.style?.fillColor !== 'transparent' && ctx.fill()
+  triangle.style?.strokeColor !== 'transparent' && ctx.stroke()
+}
+
+const buildTriangleOnLine = (center: Point, angle: number, lineStyle: StyledShape) => {
+  const trianglePoints = [
+    applyRotationToVector([0, -(10 + (lineStyle.style?.lineWidth ?? 0) * 1)], angle),
+    applyRotationToVector(
+      [-(5 + (lineStyle.style?.lineWidth ?? 0) * 1), 5 + (lineStyle.style?.lineWidth ?? 0) * 2],
+      angle
+    ),
+    applyRotationToVector(
+      [5 + (lineStyle.style?.lineWidth ?? 0) * 1, 5 + (lineStyle.style?.lineWidth ?? 0) * 2],
+      angle
+    )
+  ]
+  return {
+    points: [
+      [center[0] + trianglePoints[0][0], center[1] + trianglePoints[0][1]],
+      [center[0] + trianglePoints[1][0], center[1] + trianglePoints[1][1]],
+      [center[0] + trianglePoints[2][0], center[1] + trianglePoints[2][1]]
+    ],
+    style: {
+      ...lineStyle.style,
+      fillColor: lineStyle.style?.strokeColor,
+      strokeColor: 'transparent'
+    }
+  } as Triangle
+}
+
 export const drawLine = (ctx: CanvasRenderingContext2D, line: Line): void => {
   updateDrawStyle(ctx, line.style)
 
@@ -92,6 +137,18 @@ export const drawLine = (ctx: CanvasRenderingContext2D, line: Line): void => {
   ctx.lineTo(...line.points[1])
   line.style?.fillColor !== 'transparent' && ctx.fill()
   line.style?.strokeColor !== 'transparent' && ctx.stroke()
+  if (line.style?.lineArrow === 1 || line.style?.lineArrow === 3) {
+    const rotation =
+      Math.PI / 2 -
+      Math.atan2(line.points[1][1] - line.points[0][1], line.points[1][0] - line.points[0][0])
+    drawTriangle(ctx, buildTriangleOnLine(line.points[0], rotation, { style: line.style }))
+  }
+  if (line.style?.lineArrow === 2 || line.style?.lineArrow === 3) {
+    const rotation =
+      Math.PI / 2 -
+      Math.atan2(line.points[0][1] - line.points[1][1], line.points[0][0] - line.points[1][0])
+    drawTriangle(ctx, buildTriangleOnLine(line.points[1], rotation, { style: line.style }))
+  }
 }
 
 export const drawPolygon = (ctx: CanvasRenderingContext2D, polygon: Polygon): void => {

@@ -6,6 +6,7 @@ import {
   STYLE_COLORS,
   STYLE_FONTS,
   STYLE_LINE_DASH,
+  STYLE_LINE_WITH_ARROW,
   STYLE_LINE_WIDTH
 } from 'constants/style'
 import {
@@ -92,7 +93,8 @@ type ShapeStyleSelectType = {
 const ShapeStyleSelect = ({ field, values, defaultValue, valueChanged }: ShapeStyleSelectType) => {
   const handleChange = useCallback(
     (event: React.ChangeEvent<HTMLSelectElement>) => {
-      valueChanged(field, event.target.value)
+      const parsedValue = _.toNumber(event.target.value)
+      valueChanged(field, _.isNaN(parsedValue) ? event.target.value : parsedValue)
     },
     [field, valueChanged]
   )
@@ -235,6 +237,15 @@ const SettingsBox = ({
                 </>
               )}
 
+              {selectedShape.type === ShapeEnum.line && (
+                <ShapeStyleSelect
+                  field="style.lineArrow"
+                  values={STYLE_LINE_WITH_ARROW}
+                  defaultValue={selectedShape.style?.lineArrow}
+                  valueChanged={handleShapeStyleChange}
+                />
+              )}
+
               <ShapeStyleSelect
                 field="style.strokeColor"
                 values={STYLE_COLORS}
@@ -289,6 +300,15 @@ const SettingsBox = ({
                   valueChanged={handleShapeStyleChange}
                 />
               </>
+            )}
+
+            {activeTool === ShapeEnum.line && (
+              <ShapeStyleSelect
+                field="style.lineArrow"
+                values={STYLE_LINE_WITH_ARROW}
+                defaultValue={defaultConf.style?.lineArrow}
+                valueChanged={handleShapeStyleChange}
+              />
             )}
 
             <ShapeStyleSelect

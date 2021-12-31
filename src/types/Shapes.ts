@@ -30,6 +30,7 @@ export type StyledShape = {
     strokeColor?: string
     lineWidth?: number
     lineDash?: number
+    lineArrow?: number
     pointsCount?: number
     fontFamily?: string
   }
@@ -60,6 +61,10 @@ export type Text = Rect & {
 
 export type Line = StyledShape & {
   points: [Point, Point]
+}
+
+export type Triangle = StyledShape & {
+  points: [Point, Point, Point]
 }
 
 export type Polygon = StyledShape & {
