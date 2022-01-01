@@ -1,14 +1,27 @@
 import _ from 'lodash/fp'
 import React, { useCallback, useRef, useState } from 'react'
-import { DrawableShape, Point, StyledShape, ToolEnum, ToolsType } from 'types/Shapes'
+import {
+  DrawableShape,
+  DrawableShapeJson,
+  Point,
+  StyledShape,
+  ToolEnum,
+  ToolsType
+} from 'types/Shapes'
 import Canvas from './Canvas'
 import Layouts from './toolbox/Layouts'
 import Toolbox from './toolbox/Toolbox'
 import styled from 'styled-components'
 import SettingsBox from './toolbox/SettingsBox'
 import { STYLE_FONT_DEFAULT } from 'constants/style'
-import { decodeJson, downloadFile, encodeJson, validateJson } from 'utils/file'
 import { useKeyboard } from 'hooks/useKeyboard'
+import {
+  decodeJson,
+  decodePicturesInShapes,
+  downloadFile,
+  encodeShapesInString,
+  validateJson
+} from 'utils/file'
 
 const StyledApp = styled.div<{
   toolboxposition: 'top' | 'left'
@@ -49,6 +62,8 @@ const App = ({
       fillColor: 'transparent',
       strokeColor: 'black',
       lineWidth: 1,
+      lineDash: 0,
+      lineArrow: 0,
       pointsCount: 2,
       fontFamily: STYLE_FONT_DEFAULT
     }
@@ -181,7 +196,7 @@ const App = ({
   }, [])
 
   const saveFile = useCallback(() => {
-    const content = encodeJson(shapesRef.current)
+    const content = encodeShapesInString(shapesRef.current)
     if (!content) return
     downloadFile(content, 'drawing.json')
   }, [])
@@ -189,10 +204,11 @@ const App = ({
   const loadFile = useCallback(
     async (file: File) => {
       try {
-        const shapes = await decodeJson(file)
-        const isValidated = validateJson(shapes)
+        const json = await decodeJson(file)
+        const isValidated = validateJson(json)
         if (!isValidated) throw new Error('Le fichier est corrompu')
-        clearCanvas(shapes as DrawableShape[])
+        const shapes = decodePicturesInShapes(json as DrawableShapeJson[])
+        clearCanvas(shapes)
       } catch (e) {
         console.warn(e)
       }

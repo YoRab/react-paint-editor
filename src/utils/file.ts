@@ -1,6 +1,7 @@
 import Ajv from 'ajv'
 import _ from 'lodash/fp'
 import schema from 'schemas/drawableShape.json'
+import { DrawableShape, DrawableShapeJson, ShapeEnum } from 'types/Shapes'
 
 export const downloadFile = (content: string, fileName: string) => {
   const a = document.createElement('a')
@@ -11,8 +12,32 @@ export const downloadFile = (content: string, fileName: string) => {
   document.body.removeChild(a)
 }
 
-export const encodeJson = (jsonObject: unknown) => {
-  return 'data:text/plain;charset=utf-8,' + encodeURIComponent(JSON.stringify(jsonObject))
+const getBase64Image = (img: HTMLImageElement) => {
+  const canvas = document.createElement('canvas')
+  canvas.width = img.width
+  canvas.height = img.height
+  const ctx = canvas.getContext('2d')
+  if (!ctx) return ''
+  ctx.drawImage(img, 0, 0)
+  const dataURL = canvas.toDataURL('image/png')
+  return dataURL
+}
+
+const encodeObjectToString = (objectToEncode: unknown) => {
+  return 'data:text/plain;charset=utf-8,' + encodeURIComponent(JSON.stringify(objectToEncode))
+}
+
+export const encodeShapesInString = (shapes: DrawableShape[]) => {
+  const shapesWithStringifyPictures = shapes.map(shape => {
+    if (shape.type === ShapeEnum.picture) {
+      return {
+        ...shape,
+        img: getBase64Image(shape.img)
+      }
+    }
+    return shape
+  })
+  return encodeObjectToString(shapesWithStringifyPictures)
 }
 
 export const decodeJson = async (file: File) => {
@@ -26,6 +51,21 @@ export const decodeJson = async (file: File) => {
     }
     reader.readAsText(file)
   })
+}
+
+export const decodePicturesInShapes = (shapesForJson: DrawableShapeJson[]) => {
+  const shapes: DrawableShape[] = shapesForJson.map(shape => {
+    if (shape.type === ShapeEnum.picture) {
+      const img = new Image()
+      img.src = shape.img
+      return {
+        ...shape,
+        img
+      }
+    }
+    return shape
+  })
+  return shapes
 }
 
 export const validateJson = (json: unknown) => {

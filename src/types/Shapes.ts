@@ -29,6 +29,8 @@ export type StyledShape = {
     fillColor?: string
     strokeColor?: string
     lineWidth?: number
+    lineDash?: number
+    lineArrow?: number
     pointsCount?: number
     fontFamily?: string
   }
@@ -48,8 +50,8 @@ export type Rect = StyledShape & {
   height: number
 }
 
-export type Picture = Rect & {
-  img: CanvasImageSource
+export type Picture<T extends HTMLImageElement | string> = Rect & {
+  img: T
 }
 
 export type Text = Rect & {
@@ -59,6 +61,10 @@ export type Text = Rect & {
 
 export type Line = StyledShape & {
   points: [Point, Point]
+}
+
+export type Triangle = StyledShape & {
+  points: [Point, Point, Point]
 }
 
 export type Polygon = StyledShape & {
@@ -82,7 +88,8 @@ export type Ellipse = StyledShape & {
   radiusY: number
 }
 export type DrawableRect = Rect & Drawable & { type: ShapeEnum.rect }
-export type DrawablePicture = Picture & Drawable & { type: ShapeEnum.picture }
+export type DrawablePicture<T extends HTMLImageElement | string> = Picture<T> &
+  Drawable & { type: ShapeEnum.picture }
 export type DrawableText = Text & Drawable & { type: ShapeEnum.text }
 export type DrawableLine = Line & Drawable & { type: ShapeEnum.line }
 export type DrawablePolygon = Polygon & Drawable & { type: ShapeEnum.polygon }
@@ -92,7 +99,17 @@ export type DrawableEllipse = Ellipse & Drawable & { type: ShapeEnum.ellipse }
 
 export type DrawableShape =
   | DrawableRect
-  | DrawablePicture
+  | DrawablePicture<HTMLImageElement>
+  | DrawableText
+  | DrawableLine
+  | DrawablePolygon
+  | DrawableBrush
+  | DrawableCircle
+  | DrawableEllipse
+
+export type DrawableShapeJson =
+  | DrawableRect
+  | DrawablePicture<string>
   | DrawableText
   | DrawableLine
   | DrawablePolygon

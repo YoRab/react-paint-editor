@@ -3,13 +3,13 @@ import { calculateTextFontSize } from './transform'
 import { DrawablePicture, Point, DrawableShape, ShapeEnum, StyledShape } from 'types/Shapes'
 
 export const createPicture = (file: File, maxPictureSize: number) => {
-  return new Promise<DrawablePicture>((resolve, reject) => {
+  return new Promise<DrawablePicture<HTMLImageElement>>((resolve, reject) => {
     const img = new Image()
     img.onload = () => {
       const maxSize = Math.min(Math.max(img.width, img.height), maxPictureSize)
       const imgRatio = img.width / img.height
 
-      const pictureShape: DrawablePicture = {
+      const pictureShape: DrawablePicture<HTMLImageElement> = {
         type: ShapeEnum.picture,
         id: _.uniqueId(ShapeEnum.picture),
         x: 0,
