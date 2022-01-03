@@ -1,10 +1,9 @@
 import _ from 'lodash/fp'
 
 import { HoverModeData, SelectionModeData, SelectionModeLib } from 'types/Mode'
-import { DrawablePicture, Point, DrawableShape, ShapeEnum, StyledShape } from 'types/Shapes'
+import { Point, DrawableShape } from 'types/Shapes'
 import { checkPositionIntersection } from './intersect'
 import { getShapeInfos } from './shapeData'
-import { calculateTextFontSize } from './transform'
 
 export const getNewSelectionData = (
   hoverMode: HoverModeData,
@@ -35,133 +34,6 @@ export const getNewSelectionData = (
     }
   }
   return undefined
-}
-
-export const createPicture = (file: File, maxPictureSize: number) => {
-  return new Promise<DrawablePicture<HTMLImageElement>>((resolve, reject) => {
-    const img = new Image()
-    img.onload = () => {
-      const maxSize = Math.min(Math.max(img.width, img.height), maxPictureSize)
-      const imgRatio = img.width / img.height
-
-      const pictureShape: DrawablePicture<HTMLImageElement> = {
-        type: ShapeEnum.picture,
-        id: _.uniqueId('picture_'),
-        x: 0,
-        y: 0,
-        width: imgRatio < 1 ? imgRatio * maxSize : maxSize,
-        height: imgRatio > 1 ? maxSize / imgRatio : maxSize,
-        img,
-        translation: [0, 0],
-        scale: [1, 1],
-        rotation: 0
-      }
-      resolve(pictureShape)
-    }
-    img.src = URL.createObjectURL(file)
-    setTimeout(() => {
-      reject('timeout')
-    }, 4000)
-  })
-}
-
-export const createShape = (
-  ctx: CanvasRenderingContext2D,
-  shape: ShapeEnum,
-  cursorPosition: Point,
-  defaultConf: StyledShape
-): DrawableShape => {
-  switch (shape) {
-    case ShapeEnum.brush:
-      return {
-        type: ShapeEnum.brush,
-        id: _.uniqueId('brush_'),
-        points: [[cursorPosition]],
-        translation: [0, 0],
-        scale: [1, 1],
-        rotation: 0,
-        style: defaultConf.style
-      }
-    case ShapeEnum.line:
-      return {
-        type: ShapeEnum.line,
-        id: _.uniqueId('line_'),
-        points: [cursorPosition, cursorPosition],
-        translation: [0, 0],
-        scale: [1, 1],
-        rotation: 0,
-        style: defaultConf.style
-      }
-    case ShapeEnum.polygon:
-      return {
-        type: ShapeEnum.polygon,
-        id: _.uniqueId('polygon_'),
-        points: _.flow(
-          _.range(0),
-          _.map(() => cursorPosition)
-        )(defaultConf.style?.pointsCount ?? 2),
-        translation: [0, 0],
-        scale: [1, 1],
-        rotation: 0,
-        style: defaultConf.style
-      }
-    case ShapeEnum.rect:
-      return {
-        type: ShapeEnum.rect,
-        id: _.uniqueId('rect_'),
-        x: cursorPosition[0],
-        y: cursorPosition[1],
-        width: 0,
-        height: 0,
-        translation: [0, 0],
-        scale: [1, 1],
-        rotation: 0,
-        style: defaultConf.style
-      }
-    case ShapeEnum.text:
-      const defaultValue: string[] = []
-      const fontSize = calculateTextFontSize(ctx, defaultValue, 50, defaultConf.style?.fontFamily)
-      return {
-        type: ShapeEnum.text,
-        id: _.uniqueId('text_'),
-        x: cursorPosition[0],
-        y: cursorPosition[1],
-        value: defaultValue,
-        fontSize,
-        width: 50,
-        height: fontSize * (defaultValue.length || 1),
-        translation: [0, 0],
-        scale: [1, 1],
-        rotation: 0,
-        style: defaultConf.style
-      }
-    case ShapeEnum.ellipse:
-      return {
-        type: ShapeEnum.ellipse,
-        id: _.uniqueId('ellipse_'),
-        x: cursorPosition[0],
-        y: cursorPosition[1],
-        radiusX: 0,
-        radiusY: 0,
-        translation: [0, 0],
-        scale: [1, 1],
-        rotation: 0,
-        style: defaultConf.style
-      }
-    case ShapeEnum.circle:
-    default:
-      return {
-        type: ShapeEnum.circle,
-        id: _.uniqueId('circle_'),
-        x: cursorPosition[0],
-        y: cursorPosition[1],
-        radius: 0,
-        translation: [0, 0],
-        scale: [1, 1],
-        rotation: 0,
-        style: defaultConf.style
-      }
-  }
 }
 
 export const selectShape = (

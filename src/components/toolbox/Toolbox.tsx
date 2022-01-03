@@ -2,7 +2,6 @@ import _ from 'lodash/fp'
 import React, { useCallback, useRef } from 'react'
 import styled from 'styled-components'
 import { DrawableShape, ShapeEnum, ToolEnum, ToolsType } from 'types/Shapes'
-import { createPicture } from 'utils/selection'
 
 import circleIcon from 'assets/icons/circle.svg'
 import pictureIcon from 'assets/icons/image.svg'
@@ -12,6 +11,7 @@ import saveIcon from 'assets/icons/save.svg'
 import squareIcon from 'assets/icons/square.svg'
 import clearIcon from 'assets/icons/times.svg'
 import undoIcon from 'assets/icons/undo.svg'
+import { createPicture } from 'utils/data'
 
 const StyledToolbox = styled.div<{
   toolboxposition: 'top' | 'left'

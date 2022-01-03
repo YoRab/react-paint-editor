@@ -1,10 +1,11 @@
 import React, { RefObject, useCallback, useEffect, useRef, useState } from 'react'
 import styled from 'styled-components'
 import _ from 'lodash/fp'
-import { createShape, selectShape } from 'utils/selection'
+import { selectShape } from 'utils/selection'
 import {
   DrawableBrush,
   DrawableShape,
+  DrawableText,
   Point,
   ShapeEnum,
   StyledShape,
@@ -18,6 +19,7 @@ import { calculateTextWidth, createNewPointGroupToShape, transformShape } from '
 import { FRAMERATE_DRAW, FRAMERATE_SELECTION } from 'constants/draw'
 import { useCombinedRefs } from 'hooks/useCombinedRefs'
 import EditTextBox from './toolbox/EditTextBox'
+import { createShape } from 'utils/data'
 
 const drawCanvas = (
   drawCtx: CanvasRenderingContext2D,
@@ -166,6 +168,9 @@ type DrawerType = {
   canvasOffset: Point
   setCanvasOffset: React.Dispatch<React.SetStateAction<Point>>
   defaultConf: StyledShape
+  isInsideComponent: boolean
+  selectionMode: SelectionModeData<number | Point>
+  setSelectionMode: React.Dispatch<React.SetStateAction<SelectionModeData<number | Point>>>
 }
 
 const Canvas = React.forwardRef<HTMLCanvasElement, DrawerType>(
@@ -185,7 +190,10 @@ const Canvas = React.forwardRef<HTMLCanvasElement, DrawerType>(
       setCanvasOffsetStartPosition,
       canvasOffset,
       setCanvasOffset,
-      defaultConf
+      defaultConf,
+      isInsideComponent,
+      selectionMode,
+      setSelectionMode
     },
     ref
   ) => {
@@ -193,10 +201,6 @@ const Canvas = React.forwardRef<HTMLCanvasElement, DrawerType>(
     const selectionCanvasRef = useRef<HTMLCanvasElement | null>(null)
     const combinedRef = useCombinedRefs(ref, drawCanvasRef)
     const [hoverMode, setHoverMode] = useState<HoverModeData>({ mode: SelectionModeLib.default })
-
-    const [selectionMode, setSelectionMode] = useState<SelectionModeData<Point | number>>({
-      mode: SelectionModeLib.default
-    })
 
     const handleDoubleClick = useCallback(
       e => {
@@ -212,7 +216,7 @@ const Canvas = React.forwardRef<HTMLCanvasElement, DrawerType>(
           }
         }
       },
-      [activeTool, selectedShape, width, height, canvasOffset]
+      [activeTool, selectedShape, width, height, canvasOffset, setSelectionMode]
     )
 
     const handleMouseDown = useCallback(
@@ -222,14 +226,6 @@ const Canvas = React.forwardRef<HTMLCanvasElement, DrawerType>(
         const cursorPosition = getCursorPosition(e, selectionCanvasRef.current, width, height)
 
         if (activeTool === ToolEnum.selection) {
-          if (
-            selectedShape?.type === ShapeEnum.text &&
-            selectionMode.mode === SelectionModeLib.textedition
-          ) {
-            if (checkPositionIntersection(selectedShape, cursorPosition, canvasOffset)) {
-              return
-            }
-          }
           const { shape, mode } = selectShape(
             shapes,
             cursorPosition,
@@ -267,7 +263,7 @@ const Canvas = React.forwardRef<HTMLCanvasElement, DrawerType>(
             setSelectionMode({
               mode: SelectionModeLib.brush
             })
-          } else {
+          } else if (activeTool !== ShapeEnum.text) {
             const newShape = createShape(
               drawCtx,
               activeTool as ShapeEnum,
@@ -277,26 +273,19 @@ const Canvas = React.forwardRef<HTMLCanvasElement, DrawerType>(
             addShape(newShape)
             setActiveTool(ToolEnum.selection)
             setSelectedShape(newShape)
-            if (newShape.type === ShapeEnum.text) {
-              setSelectionMode({
-                mode: SelectionModeLib.textedition,
-                defaultValue: newShape.value
-              })
-            } else {
-              setSelectionMode({
-                mode: SelectionModeLib.resize,
-                cursorStartPosition: cursorPosition,
-                originalShape: newShape,
-                anchor:
-                  activeTool === ShapeEnum.line || activeTool === ShapeEnum.polygon ? 0 : [1, 1]
-              })
-            }
+
+            setSelectionMode({
+              mode: SelectionModeLib.resize,
+              cursorStartPosition: cursorPosition,
+              originalShape: newShape,
+              anchor: activeTool === ShapeEnum.line || activeTool === ShapeEnum.polygon ? 0 : [1, 1]
+            })
           }
         }
       },
       [
         selectedShape,
-        selectionMode,
+        // selectionMode,
         hoverMode,
         activeTool,
         canvasOffset,
@@ -313,13 +302,45 @@ const Canvas = React.forwardRef<HTMLCanvasElement, DrawerType>(
       ]
     )
 
-    const handleMouseUp = useCallback(() => {
-      if (selectionMode.mode === SelectionModeLib.textedition) {
-        return
-      }
-      setSelectionMode({ mode: SelectionModeLib.default })
-      saveShapes()
-    }, [selectionMode, saveShapes])
+    const handleMouseUp = useCallback(
+      e => {
+        if (selectionMode.mode === SelectionModeLib.textedition) return
+        if (activeTool === ShapeEnum.text) {
+          const cursorPosition = getCursorPosition(e, selectionCanvasRef.current, width, height)
+          const drawCtx = drawCanvasRef.current?.getContext('2d')
+          if (!drawCtx) return
+          const newShape = createShape(
+            drawCtx,
+            activeTool as ShapeEnum,
+            cursorPosition,
+            defaultConf
+          ) as DrawableText
+          addShape(newShape)
+          setActiveTool(ToolEnum.selection)
+          setSelectedShape(newShape)
+          setSelectionMode({
+            mode: SelectionModeLib.textedition,
+            defaultValue: newShape.value
+          })
+
+          return
+        }
+        setSelectionMode({ mode: SelectionModeLib.default })
+        saveShapes()
+      },
+      [
+        selectionMode,
+        saveShapes,
+        activeTool,
+        addShape,
+        defaultConf,
+        width,
+        height,
+        setActiveTool,
+        setSelectedShape,
+        setSelectionMode
+      ]
+    )
 
     const handleMouseMove = useCallback(
       e => {
@@ -398,18 +419,32 @@ const Canvas = React.forwardRef<HTMLCanvasElement, DrawerType>(
     }, [shapes, selectionMode, selectedShape, activeTool, canvasOffset, width, height])
 
     useEffect(() => {
-      document.addEventListener('mouseup', handleMouseUp)
-      document.addEventListener('touchend', handleMouseUp)
-      document.addEventListener('mousemove', handleMouseMove)
-      document.addEventListener('touchmove', handleMouseMove)
+      if (isInsideComponent) {
+        document.addEventListener('mousemove', handleMouseMove)
+        document.addEventListener('touchmove', handleMouseMove)
+      }
 
       return () => {
-        document.removeEventListener('mouseup', handleMouseUp)
-        document.removeEventListener('touchend', handleMouseUp)
-        document.removeEventListener('mousemove', handleMouseMove)
-        document.removeEventListener('touchmove', handleMouseMove)
+        if (isInsideComponent) {
+          document.removeEventListener('mousemove', handleMouseMove)
+          document.removeEventListener('touchmove', handleMouseMove)
+        }
       }
-    }, [handleMouseUp, handleMouseMove, handleMouseDown])
+    }, [isInsideComponent, handleMouseMove])
+
+    useEffect(() => {
+      if (isInsideComponent) {
+        document.addEventListener('mouseup', handleMouseUp)
+        document.addEventListener('touchend', handleMouseUp)
+      }
+
+      return () => {
+        if (isInsideComponent) {
+          document.removeEventListener('mouseup', handleMouseUp)
+          document.removeEventListener('touchend', handleMouseUp)
+        }
+      }
+    }, [isInsideComponent, handleMouseUp])
 
     return (
       <StyledCanvasBox>
@@ -430,7 +465,6 @@ const Canvas = React.forwardRef<HTMLCanvasElement, DrawerType>(
               <EditTextBox
                 shape={selectedShape}
                 defaultValue={selectionMode.defaultValue}
-                cancelUpdate={console.log}
                 updateValue={updateSelectedShapeText}
               />
             )}

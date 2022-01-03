@@ -1,5 +1,5 @@
 import _ from 'lodash/fp'
-import React, { useCallback, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useRef, useState } from 'react'
 import {
   DrawableShape,
   DrawableShapeJson,
@@ -14,6 +14,7 @@ import Toolbox from './toolbox/Toolbox'
 import styled from 'styled-components'
 import SettingsBox from './toolbox/SettingsBox'
 import { STYLE_FONT_DEFAULT } from 'constants/style'
+import { useKeyboard } from 'hooks/useKeyboard'
 import {
   decodeJson,
   decodePicturesInShapes,
@@ -21,6 +22,7 @@ import {
   encodeShapesInString,
   validateJson
 } from 'utils/file'
+import { SelectionModeData, SelectionModeLib } from 'types/Mode'
 
 const StyledApp = styled.div<{
   toolboxposition: 'top' | 'left'
@@ -67,6 +69,8 @@ const App = ({
       fontFamily: STYLE_FONT_DEFAULT
     }
   })
+  const componentRef = useRef<HTMLDivElement>(null)
+
   const [canvasOffset, setCanvasOffset] = useState<Point>([0, 0])
   const [canvasOffsetStartPosition, setCanvasOffsetStartPosition] = useState<Point | undefined>(
     undefined
@@ -85,6 +89,10 @@ const App = ({
   }>({
     states: [{ shapes: [], selectedShape: undefined }],
     cursor: 0
+  })
+
+  const [selectionMode, setSelectionMode] = useState<SelectionModeData<Point | number>>({
+    mode: SelectionModeLib.default
   })
 
   const canvasRef = useRef<HTMLCanvasElement>(null)
@@ -213,12 +221,34 @@ const App = ({
     [clearCanvas]
   )
 
+  const onPasteShape = useCallback(
+    (shape: DrawableShape) => {
+      addShape(shape)
+      setActiveTool(ToolEnum.selection)
+      setSelectedShape(shape)
+    },
+    [addShape]
+  )
+
+  const { isInsideComponent } = useKeyboard({
+    selectionMode,
+    componentRef,
+    selectedShape,
+    setSelectedShape,
+    removeShape,
+    onPasteShape,
+    updateShape
+  })
+
+  useEffect(() => {
+    if (!isInsideComponent) setSelectedShape(undefined)
+  }, [isInsideComponent])
   const hasActionToUndo = savedShapes.cursor > 0
   const hasActionToRedo = savedShapes.cursor < savedShapes.states.length - 1
   const hasActionToClear = savedShapes.states.length > 1
 
   return (
-    <StyledApp toolboxposition={toolboxPosition} height={height}>
+    <StyledApp ref={componentRef} toolboxposition={toolboxPosition} height={height} tabIndex={0}>
       <Toolbox
         activeTool={activeTool}
         clearCanvas={clearCanvas}
@@ -238,6 +268,7 @@ const App = ({
       />
       <StyledRow>
         <Canvas
+          isInsideComponent={isInsideComponent}
           activeTool={activeTool}
           setActiveTool={setActiveTool}
           canvasOffsetStartPosition={canvasOffsetStartPosition}
@@ -254,6 +285,8 @@ const App = ({
           ref={canvasRef}
           width={width}
           height={height}
+          selectionMode={selectionMode}
+          setSelectionMode={setSelectionMode}
         />
         {withLayouts && (
           <Layouts

@@ -1,9 +1,9 @@
-import React, { ForwardedRef, MutableRefObject } from 'react'
+import { ForwardedRef, MutableRefObject, useRef, useEffect } from 'react'
 
 export const useCombinedRefs = <T>(...refs: (MutableRefObject<T> | ForwardedRef<T>)[]) => {
-  const targetRef = React.useRef<T>(null)
+  const targetRef = useRef<T>(null)
 
-  React.useEffect(() => {
+  useEffect(() => {
     refs.forEach(ref => {
       if (!ref) return
 
