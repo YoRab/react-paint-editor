@@ -1,5 +1,5 @@
 import _ from 'lodash/fp'
-import React, { useCallback, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useRef, useState } from 'react'
 import {
   DrawableShape,
   DrawableShapeJson,
@@ -22,6 +22,7 @@ import {
   encodeShapesInString,
   validateJson
 } from 'utils/file'
+import { SelectionModeData, SelectionModeLib } from 'types/Mode'
 
 const StyledApp = styled.div<{
   toolboxposition: 'top' | 'left'
@@ -88,6 +89,10 @@ const App = ({
   }>({
     states: [{ shapes: [], selectedShape: undefined }],
     cursor: 0
+  })
+
+  const [selectionMode, setSelectionMode] = useState<SelectionModeData<Point | number>>({
+    mode: SelectionModeLib.default
   })
 
   const canvasRef = useRef<HTMLCanvasElement>(null)
@@ -225,8 +230,19 @@ const App = ({
     [addShape]
   )
 
-  useKeyboard({ componentRef, selectedShape, onPasteShape })
+  const { isInsideComponent } = useKeyboard({
+    selectionMode,
+    componentRef,
+    selectedShape,
+    setSelectedShape,
+    removeShape,
+    onPasteShape,
+    updateShape
+  })
 
+  useEffect(() => {
+    if (!isInsideComponent) setSelectedShape(undefined)
+  }, [isInsideComponent])
   const hasActionToUndo = savedShapes.cursor > 0
   const hasActionToRedo = savedShapes.cursor < savedShapes.states.length - 1
   const hasActionToClear = savedShapes.states.length > 1
@@ -252,6 +268,7 @@ const App = ({
       />
       <StyledRow>
         <Canvas
+          isInsideComponent={isInsideComponent}
           activeTool={activeTool}
           setActiveTool={setActiveTool}
           canvasOffsetStartPosition={canvasOffsetStartPosition}
@@ -268,6 +285,8 @@ const App = ({
           ref={canvasRef}
           width={width}
           height={height}
+          selectionMode={selectionMode}
+          setSelectionMode={setSelectionMode}
         />
         {withLayouts && (
           <Layouts

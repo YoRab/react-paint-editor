@@ -32,11 +32,10 @@ const StyledEditBox = styled.div<{
 type EditTextBoxType = {
   shape: DrawableText
   defaultValue: string[]
-  cancelUpdate: () => void
   updateValue: (newValue: string[]) => void
 }
 
-const EditTextBox = ({ shape, defaultValue, cancelUpdate, updateValue }: EditTextBoxType) => {
+const EditTextBox = ({ shape, defaultValue, updateValue }: EditTextBoxType) => {
   const ref = useRef<HTMLDivElement>(null)
 
   const updateContentEditable = useCallback(

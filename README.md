@@ -5,4 +5,3 @@ known issues :
 
 - scaling brush
 - TextEdit cursor overflow
-- Events détéctés en dehors du component
