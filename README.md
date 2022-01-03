@@ -5,5 +5,4 @@ known issues :
 
 - scaling brush
 - TextEdit cursor overflow
-- Textedit format conversion
 - Events détéctés en dehors du component

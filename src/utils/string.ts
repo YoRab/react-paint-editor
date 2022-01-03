@@ -8,9 +8,15 @@ export const convertStringArrayToDivContent = (toConvert: string[]) => {
   return toConvert.map(val => `<div>${val === '' ? '<br/>' : val}</div>`).join('')
 }
 
+export const decodeHtmlEntities = (html: string) => {
+  const txt = document.createElement('textarea')
+  txt.innerHTML = html
+  return txt.value
+}
+
 export const convertDivContentToStringArray = (toConvert: string) => {
-  console.log(`<div>${toConvert}</div>`)
   return _.flow(
+    (divContent: string) => decodeHtmlEntities(divContent),
     (divContent: string) => `<div>${divContent}</div>`.replaceAll(stripBrRegexp, ''),
     (divContent: string) => divContent.matchAll(divContentRegexp),
     Array.from,
