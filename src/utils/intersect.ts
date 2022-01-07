@@ -14,7 +14,7 @@ export const getCursorPosition = (
   givenWidth: number,
   givenHeight: number
 ): Point => {
-  const { clientX, clientY } = _.getOr(e, 'touches[0]', e)
+  const { clientX, clientY } = _.getOr(_.getOr(e, 'changedTouches[0]', e), 'touches[0]', e)
   const canvasBoundingRect = canvas?.getBoundingClientRect() ?? {
     left: 0,
     top: 0,
