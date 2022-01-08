@@ -1,9 +1,9 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react'
+import React, { useCallback, useRef, useState } from 'react'
 import styled from 'styled-components'
 import map from 'types/lodash'
-import { DrawableShape, ToolEnum, ToolsType } from 'types/Shapes'
+import { DrawableShape } from 'types/Shapes'
 import deleteIcon from 'assets/icons/trash.svg'
-import _ from 'lodash/fp'
+import { useDrag } from 'hooks/useDrag'
 
 const StyledLayouts = styled.div<{ hover: boolean }>`
   display: inline-block;
@@ -77,7 +77,6 @@ const Layout = ({
   onMoveShapes
 }: LayoutType) => {
   const ref = useRef<HTMLDivElement>(null)
-  const [isOver, setIsOver] = useState(false)
 
   const onRemove = useCallback(
     (e: React.MouseEvent<HTMLElement>) => {
@@ -97,70 +96,13 @@ const Layout = ({
     [shape, handleSelect]
   )
 
-  const handleDragStart = useCallback(
-    (e: DragEvent) => {
-      handleSelect(shape)
-      if (!e.dataTransfer) return
-      e.dataTransfer.effectAllowed = 'move'
-      e.dataTransfer.setData('draggableShapeId', shape.id)
-
-      setLayoutDragging(shape.id)
-    },
-    [shape, setLayoutDragging, handleSelect]
-  )
-
-  const handleDragEnd = useCallback(() => {
-    setLayoutDragging(undefined)
-  }, [setLayoutDragging])
-
-  const handleDragOver = useCallback((e: DragEvent) => {
-    if (e.preventDefault) {
-      e.preventDefault()
-    }
-
-    return false
-  }, [])
-
-  const handleDragEnter = useCallback(() => {
-    layoutDragging !== shape.id && setIsOver(true)
-  }, [layoutDragging, shape])
-
-  const handleDragLeave = useCallback(() => {
-    setIsOver(false)
-  }, [])
-
-  const handleDrop = useCallback(
-    (e: DragEvent) => {
-      e.stopPropagation() // stops the browser from redirecting.
-      if (e.dataTransfer) {
-        onMoveShapes(e.dataTransfer.getData('draggableShapeId'), shape.id)
-      }
-      return false
-    },
-    [shape, onMoveShapes]
-  )
-
-  useEffect(() => {
-    if (!layoutDragging) setIsOver(false)
-  }, [layoutDragging])
-
-  useEffect(() => {
-    const layoutRef = ref.current
-    layoutRef?.addEventListener('dragstart', handleDragStart)
-    layoutRef?.addEventListener('dragend', handleDragEnd)
-    layoutRef?.addEventListener('dragover', handleDragOver)
-    layoutRef?.addEventListener('dragenter', handleDragEnter)
-    layoutRef?.addEventListener('dragleave', handleDragLeave)
-    layoutRef?.addEventListener('drop', handleDrop)
-
-    return () => {
-      layoutRef?.removeEventListener('dragstart', handleDragStart)
-      layoutRef?.removeEventListener('dragend', handleDragEnd)
-      layoutRef?.removeEventListener('dragover', handleDragOver)
-      layoutRef?.removeEventListener('dragenter', handleDragEnter)
-      layoutRef?.removeEventListener('dragleave', handleDragLeave)
-      layoutRef?.removeEventListener('drop', handleDrop)
-    }
+  const { isOver } = useDrag({
+    ref,
+    shape,
+    layoutDragging,
+    setLayoutDragging,
+    handleSelect,
+    onMoveShapes
   })
 
   return (
@@ -182,55 +124,21 @@ const Layout = ({
 type LayoutsType = {
   shapes: DrawableShape[]
   hover: boolean
-  updateShapes: (shapes: DrawableShape[]) => void
   removeShape: (shape: DrawableShape) => void
   selectedShape: DrawableShape | undefined
-  setSelectedShape: React.Dispatch<React.SetStateAction<DrawableShape | undefined>>
-  setActiveTool: React.Dispatch<React.SetStateAction<ToolsType>>
+  selectShape: (shape: DrawableShape) => void
+  moveShapes: (firstShapeId: string, lastShapeId: string) => void
 }
 
 const Layouts = ({
   shapes,
   hover,
-  updateShapes,
   removeShape,
   selectedShape,
-  setSelectedShape,
-  setActiveTool
+  moveShapes,
+  selectShape
 }: LayoutsType) => {
   const [layoutDragging, setLayoutDragging] = useState<string | undefined>(undefined)
-
-  const moveShapes = useCallback(
-    (firstShapeId: string, lastShapeId: string) => {
-      const firstShapeIndex = _.findIndex({ id: firstShapeId }, shapes)
-      const lastShapeIndex = _.findIndex({ id: lastShapeId }, shapes)
-
-      if (firstShapeIndex < lastShapeIndex) {
-        updateShapes([
-          ..._.slice(0, firstShapeIndex, shapes),
-          ..._.slice(firstShapeIndex + 1, lastShapeIndex + 1, shapes),
-          shapes[firstShapeIndex],
-          ..._.slice(lastShapeIndex + 1, shapes.length, shapes)
-        ])
-      } else {
-        updateShapes([
-          ..._.slice(0, lastShapeIndex, shapes),
-          shapes[firstShapeIndex],
-          ..._.slice(lastShapeIndex, firstShapeIndex, shapes),
-          ..._.slice(firstShapeIndex + 1, shapes.length, shapes)
-        ])
-      }
-    },
-    [shapes, updateShapes]
-  )
-
-  const handleSelect = useCallback(
-    (shape: DrawableShape) => {
-      setSelectedShape(shape)
-      setActiveTool(ToolEnum.selection)
-    },
-    [setSelectedShape, setActiveTool]
-  )
 
   return (
     <StyledLayouts hover={hover}>
@@ -242,7 +150,7 @@ const Layouts = ({
             layoutDragging={layoutDragging}
             setLayoutDragging={setLayoutDragging}
             selected={selectedShape?.id === shape.id}
-            handleSelect={handleSelect}
+            handleSelect={selectShape}
             handleRemove={removeShape}
             onMoveShapes={moveShapes}
           />
