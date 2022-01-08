@@ -5,3 +5,6 @@ known issues :
 
 - scaling brush
 - TextEdit cursor overflow
+- dnd layout on mobile not working
+- double click not working with touch
+- double event on mouseup & down with mobile
