@@ -1,4 +1,11 @@
-import React, { RefObject, useCallback, useEffect, useRef, useState } from 'react'
+import React, {
+  RefObject,
+  useCallback,
+  useEffect,
+  useImperativeHandle,
+  useRef,
+  useState
+} from 'react'
 import styled from 'styled-components'
 import _ from 'lodash/fp'
 import { selectShape } from 'utils/selection'
@@ -17,7 +24,6 @@ import { drawSelection, drawShape } from 'utils/draw'
 import { HoverModeData, SelectionModeData, SelectionModeLib } from 'types/Mode'
 import { calculateTextWidth, createNewPointGroupToShape, transformShape } from 'utils/transform'
 import { FRAMERATE_DRAW, FRAMERATE_SELECTION } from 'constants/draw'
-import { useCombinedRefs } from 'hooks/useCombinedRefs'
 import EditTextBox from './toolbox/EditTextBox'
 import { createShape } from 'utils/data'
 
@@ -206,7 +212,10 @@ const Canvas = React.forwardRef<HTMLCanvasElement, DrawerType>(
   ) => {
     const drawCanvasRef = useRef<HTMLCanvasElement | null>(null)
     const selectionCanvasRef = useRef<HTMLCanvasElement | null>(null)
-    const combinedRef = useCombinedRefs(ref, drawCanvasRef)
+
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    useImperativeHandle(ref, () => drawCanvasRef.current!)
+
     const [hoverMode, setHoverMode] = useState<HoverModeData>({ mode: SelectionModeLib.default })
 
     const handleDoubleClick = useCallback(
@@ -447,7 +456,7 @@ const Canvas = React.forwardRef<HTMLCanvasElement, DrawerType>(
     return (
       <StyledCanvasBox>
         <StyledCanvasContainer>
-          <StyledDrawCanvas ref={combinedRef} width={width} height={height} />
+          <StyledDrawCanvas ref={drawCanvasRef} width={width} height={height} />
           <StyledSelectionCanvas
             activetool={activeTool}
             selectionmode={hoverMode.mode}
