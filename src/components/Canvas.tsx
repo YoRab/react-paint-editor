@@ -41,7 +41,12 @@ const drawCanvas = (
   }
   selectedShape &&
     activeTool !== ShapeEnum.brush &&
-    drawSelection({ ctx: selectionCtx, shape: selectedShape, canvasOffset })
+    drawSelection({
+      ctx: selectionCtx,
+      shape: selectedShape,
+      canvasOffset,
+      withAnchors: selectionMode.mode !== SelectionModeLib.textedition
+    })
 }
 
 const throttledDrawCanvas = _.throttle(FRAMERATE_DRAW, drawCanvas)
@@ -121,6 +126,7 @@ const StyledDrawCanvas = styled.canvas.attrs<{
   user-select: none;
   border: 1px solid black;
   max-width: 100%;
+  touch-action: none; /* prevent scroll on touch */
 `
 
 const StyledSelectionCanvas = styled.canvas.attrs<{
@@ -140,6 +146,7 @@ const StyledSelectionCanvas = styled.canvas.attrs<{
   border: 1px solid black;
   position: relative;
   max-width: 100%;
+  touch-action: none; /* prevent scroll on touch */
 
   ${({ selectionmode, activetool }) =>
     (activetool !== ToolEnum.selection && activetool !== ToolEnum.move) ||
@@ -226,13 +233,7 @@ const Canvas = React.forwardRef<HTMLCanvasElement, DrawerType>(
         const cursorPosition = getCursorPosition(e, selectionCanvasRef.current, width, height)
 
         if (activeTool === ToolEnum.selection) {
-          const { shape, mode } = selectShape(
-            shapes,
-            cursorPosition,
-            canvasOffset,
-            selectedShape,
-            hoverMode
-          )
+          const { shape, mode } = selectShape(shapes, cursorPosition, canvasOffset, selectedShape)
           setSelectedShape(shape)
           setSelectionMode(mode)
         } else if (activeTool === ToolEnum.move) {
@@ -285,8 +286,6 @@ const Canvas = React.forwardRef<HTMLCanvasElement, DrawerType>(
       },
       [
         selectedShape,
-        // selectionMode,
-        hoverMode,
         activeTool,
         canvasOffset,
         setCanvasOffsetStartPosition,
@@ -322,11 +321,12 @@ const Canvas = React.forwardRef<HTMLCanvasElement, DrawerType>(
             mode: SelectionModeLib.textedition,
             defaultValue: newShape.value
           })
-
           return
         }
-        setSelectionMode({ mode: SelectionModeLib.default })
-        saveShapes()
+        if (selectionMode.mode !== SelectionModeLib.default) {
+          setSelectionMode({ mode: SelectionModeLib.default })
+          saveShapes()
+        }
       },
       [
         selectionMode,
@@ -344,8 +344,6 @@ const Canvas = React.forwardRef<HTMLCanvasElement, DrawerType>(
 
     const handleMouseMove = useCallback(
       e => {
-        // eslint-disable-next-line
-        // e.preventDefault()
         throttledHandleSelection(
           e,
           selectionCanvasRef,

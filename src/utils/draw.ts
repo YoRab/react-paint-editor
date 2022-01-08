@@ -247,13 +247,18 @@ export const drawShape = (
 
 const drawSelectionDefault = ({
   ctx,
-  shape
+  shape,
+  withAnchors
 }: {
   ctx: CanvasRenderingContext2D
   shape: DrawableShape
+  withAnchors: boolean
 }) => {
   const { borders } = getShapeInfos(shape)
   drawRect(ctx, borders)
+
+  if (!withAnchors) return
+
   drawLine(ctx, {
     points: [
       [borders.x + borders.width / 2, borders.y],
@@ -289,14 +294,16 @@ const drawSelectionDefault = ({
 }
 const drawLineSelection = ({
   ctx,
-  shape
+  shape,
+  withAnchors
 }: {
   ctx: CanvasRenderingContext2D
   shape: DrawableLine | DrawablePolygon
+  withAnchors: boolean
 }) => {
   const { borders } = getShapeInfos(shape)
   drawRect(ctx, borders)
-
+  if (!withAnchors) return
   for (const coordinate of shape.points) {
     drawCircle(ctx, {
       x: coordinate[0],
@@ -314,20 +321,22 @@ const drawLineSelection = ({
 export const drawSelection = ({
   ctx,
   shape,
-  canvasOffset
+  canvasOffset,
+  withAnchors = true
 }: {
   ctx: CanvasRenderingContext2D
   shape: DrawableShape
   canvasOffset: Point
+  withAnchors?: boolean
 }) => {
   applyShapeTransformations(ctx, shape, canvasOffset)
   switch (shape.type) {
     case 'polygon':
     case 'line':
-      drawLineSelection({ ctx, shape })
+      drawLineSelection({ ctx, shape, withAnchors })
       break
     default:
-      drawSelectionDefault({ ctx, shape })
+      drawSelectionDefault({ ctx, shape, withAnchors })
       break
   }
   restoreShapeTransformations(ctx)

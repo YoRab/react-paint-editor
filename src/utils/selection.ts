@@ -40,11 +40,23 @@ export const selectShape = (
   shapes: DrawableShape[],
   cursorPosition: Point,
   canvasOffset: Point,
-  selectedShape: DrawableShape | undefined,
-  hoverMode: HoverModeData
+  selectedShape: DrawableShape | undefined
 ): { mode: SelectionModeData<Point | number>; shape: DrawableShape | undefined } => {
   if (selectedShape) {
-    const newSelectionMode = getNewSelectionData(hoverMode, selectedShape, cursorPosition)
+    const positionIntersection = checkPositionIntersection(
+      selectedShape,
+      cursorPosition,
+      canvasOffset,
+      true
+    ) || {
+      mode: SelectionModeLib.default
+    }
+
+    const newSelectionMode = getNewSelectionData(
+      positionIntersection,
+      selectedShape,
+      cursorPosition
+    )
     if (newSelectionMode) {
       return { shape: selectedShape, mode: newSelectionMode }
     }
