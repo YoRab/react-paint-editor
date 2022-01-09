@@ -1,6 +1,7 @@
 import { useCallback, useRef, useState } from 'react'
 import { DrawableShape } from 'types/Shapes'
 import _ from 'lodash/fp'
+import { createPicture } from 'utils/data'
 
 export const useShapes = () => {
   const shapesRef = useRef<DrawableShape[]>([])
@@ -45,6 +46,15 @@ export const useShapes = () => {
   const addShape = useCallback((newShape: DrawableShape) => {
     shapesRef.current = [newShape, ...shapesRef.current]
   }, [])
+
+  const addPictureShape = useCallback(
+    async (file: File, maxSize = 300) => {
+      const pictureShape = await createPicture(file, maxSize)
+      addShape(pictureShape)
+      return pictureShape
+    },
+    [addShape]
+  )
 
   const updateShape = useCallback(
     (updatedShape: DrawableShape) => {
@@ -134,6 +144,7 @@ export const useShapes = () => {
     shapesRef,
     selectedShape,
     addShape,
+    addPictureShape,
     moveShapes,
     saveShapes,
     setSelectedShape,

@@ -1,6 +1,6 @@
 import React, { useCallback, useRef, useState } from 'react'
 import styled from 'styled-components'
-import map from 'types/lodash'
+import _ from 'lodash/fp'
 import { DrawableShape } from 'types/Shapes'
 import deleteIcon from 'assets/icons/trash.svg'
 import { useDrag } from 'hooks/useDrag'
@@ -142,7 +142,7 @@ const Layouts = ({
 
   return (
     <StyledLayouts hover={hover}>
-      {map(
+      {_.map(
         shape => (
           <Layout
             key={shape.id}

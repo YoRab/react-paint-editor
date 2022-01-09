@@ -1,7 +1,7 @@
 import _ from 'lodash/fp'
 import React, { useCallback, useRef } from 'react'
 import styled from 'styled-components'
-import { DrawableShape, ShapeEnum, ToolEnum, ToolsType } from 'types/Shapes'
+import { ShapeEnum, ToolEnum, ToolsType } from 'types/Shapes'
 
 import circleIcon from 'assets/icons/circle.svg'
 import pictureIcon from 'assets/icons/image.svg'
@@ -11,7 +11,6 @@ import saveIcon from 'assets/icons/save.svg'
 import squareIcon from 'assets/icons/square.svg'
 import clearIcon from 'assets/icons/times.svg'
 import undoIcon from 'assets/icons/undo.svg'
-import { createPicture } from 'utils/data'
 
 const StyledToolbox = styled.div<{
   toolboxposition: 'top' | 'left'
@@ -91,57 +90,14 @@ const Tool = ({ type, lib, imgSrc, isActive, isDisabled = false, setActive }: To
   )
 }
 
-type PictureToolType = {
-  addShape: (pictureShape: DrawableShape) => void
-  setSelectedShape: React.Dispatch<React.SetStateAction<DrawableShape | undefined>>
-  setActiveTool: (tool: ToolsType) => void
-  maxPictureSize: number
-}
-
-const PictureTool = ({
-  addShape,
-  setSelectedShape,
-  setActiveTool,
-  maxPictureSize
-}: PictureToolType) => {
-  const inputRef = useRef<HTMLInputElement>(null)
-
-  const handleClick = useCallback(() => {
-    if (inputRef.current) inputRef.current.value = ''
-  }, [])
-
-  const handleChange = useCallback(
-    async (event: React.ChangeEvent<HTMLInputElement>) => {
-      const file = event.target.files?.item(0)
-      if (!file) return
-      const pictureShape = await createPicture(file, maxPictureSize)
-      addShape(pictureShape)
-      setActiveTool(ToolEnum.selection)
-      setSelectedShape(pictureShape)
-    },
-    [maxPictureSize, addShape, setActiveTool, setSelectedShape]
-  )
-
-  return (
-    <StyledTool as="label" selected={false}>
-      <input
-        ref={inputRef}
-        type="file"
-        onClick={handleClick}
-        onChange={handleChange}
-        accept="image/png, image/gif, image/jpeg"
-      />
-
-      <img src={pictureIcon} />
-    </StyledTool>
-  )
-}
-
 type LoadFileToolType = {
   loadFile: (file: File) => void
+  lib: string
+  imgSrc?: string
+  accept: string
 }
 
-const LoadFileTool = ({ loadFile }: LoadFileToolType) => {
+const LoadFileTool = ({ loadFile, lib, imgSrc, accept }: LoadFileToolType) => {
   const inputRef = useRef<HTMLInputElement>(null)
 
   const handleClick = useCallback(() => {
@@ -164,9 +120,9 @@ const LoadFileTool = ({ loadFile }: LoadFileToolType) => {
         type="file"
         onClick={handleClick}
         onChange={handleChange}
-        accept="application/JSON"
+        accept={accept}
       />
-      Load file
+      {imgSrc ? <img src={imgSrc} /> : lib}
     </StyledTool>
   )
 }
@@ -181,11 +137,9 @@ type ToolboxType = {
   clearCanvas: () => void
   setActiveTool: (tool: ToolsType) => void
   loadFile: (file: File) => void
+  addPicture: (file: File) => void
   saveFile: () => void
   exportCanvasInFile: () => void
-  addShape: (pictureShape: DrawableShape) => void
-  setSelectedShape: React.Dispatch<React.SetStateAction<DrawableShape | undefined>>
-  maxPictureSize?: number
   toolboxPosition: 'top' | 'left'
   hover: boolean
 }
@@ -199,12 +153,10 @@ const Toolbox = ({
   setActiveTool,
   undoAction,
   redoAction,
-  addShape,
+  addPicture,
   loadFile,
   saveFile,
   exportCanvasInFile,
-  setSelectedShape,
-  maxPictureSize = 300,
   toolboxPosition,
   hover
 }: ToolboxType) => {
@@ -272,15 +224,17 @@ const Toolbox = ({
         ),
         toolsTypes
       )}
-      <PictureTool
-        maxPictureSize={maxPictureSize}
-        setSelectedShape={setSelectedShape}
-        setActiveTool={setActiveTool}
-        addShape={addShape}
+
+      <LoadFileTool
+        loadFile={addPicture}
+        lib="Image"
+        imgSrc={pictureIcon}
+        accept="image/png, image/gif, image/jpeg"
       />
+
       <StyledSeparator />
 
-      <LoadFileTool loadFile={loadFile} />
+      <LoadFileTool loadFile={loadFile} lib="Load file" accept="application/JSON" />
 
       <Tool
         type={ToolEnum.saveFile}

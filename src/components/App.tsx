@@ -92,6 +92,7 @@ const App = ({
     shapesRef,
     selectedShape,
     addShape,
+    addPictureShape,
     moveShapes,
     setSelectedShape,
     removeShape,
@@ -175,6 +176,14 @@ const App = ({
     [clearCanvas]
   )
 
+  const addPicture = useCallback(
+    async (file: File) => {
+      const pictureShape = await addPictureShape(file)
+      selectShape(pictureShape)
+    },
+    [addPictureShape, selectShape]
+  )
+
   useKeyboard({
     isInsideComponent,
     isEditingText: selectionMode.mode === SelectionModeLib.textedition,
@@ -194,12 +203,11 @@ const App = ({
       <Toolbox
         activeTool={activeTool}
         clearCanvas={clearCanvas}
-        setSelectedShape={setSelectedShape}
         setActiveTool={selectTool}
         exportCanvasInFile={exportCanvasInFile}
         saveFile={saveFile}
         loadFile={loadFile}
-        addShape={addShape}
+        addPicture={addPicture}
         hasActionToUndo={canGoBackward}
         hasActionToRedo={canGoForward}
         hasActionToClear={canClear}
