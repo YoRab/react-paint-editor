@@ -1,4 +1,4 @@
-import { RefObject, useCallback, useEffect, useState } from 'react'
+import { RefObject, useEffect, useState } from 'react'
 
 type UseComponentType = {
   componentRef: RefObject<HTMLElement>
@@ -7,18 +7,15 @@ type UseComponentType = {
 export const useComponent = ({ componentRef }: UseComponentType) => {
   const [isInsideComponent, setIsInsideComponent] = useState(false)
 
-  const onDetectClick = useCallback(
-    (event: MouseEvent | TouchEvent) => {
+  useEffect(() => {
+    const onDetectClick = (event: MouseEvent | TouchEvent) => {
       setIsInsideComponent(
         !(event.target instanceof HTMLElement) || !componentRef.current
           ? false
           : componentRef.current.contains(event.target)
       )
-    },
-    [componentRef]
-  )
+    }
 
-  useEffect(() => {
     document.addEventListener('mousedown', onDetectClick)
     document.addEventListener('touchstart', onDetectClick)
 
@@ -26,7 +23,7 @@ export const useComponent = ({ componentRef }: UseComponentType) => {
       document.removeEventListener('mousedown', onDetectClick)
       document.removeEventListener('touchstart', onDetectClick)
     }
-  }, [onDetectClick])
+  }, [componentRef])
 
   return { isInsideComponent }
 }

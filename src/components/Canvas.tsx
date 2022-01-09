@@ -150,7 +150,7 @@ const Canvas = React.forwardRef<HTMLCanvasElement, DrawerType>(
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     useImperativeHandle(ref, () => drawCanvasRef.current!)
 
-    const { handleMouseDown, handleDoubleClick, hoverMode } = useDrawableCanvas({
+    const { hoverMode } = useDrawableCanvas({
       addShape,
       drawCanvasRef,
       setActiveTool,
@@ -221,9 +221,6 @@ const Canvas = React.forwardRef<HTMLCanvasElement, DrawerType>(
           <StyledSelectionCanvas
             activetool={activeTool}
             selectionmode={hoverMode.mode}
-            onTouchStart={handleMouseDown}
-            onMouseDown={handleMouseDown}
-            onDoubleClick={handleDoubleClick}
             ref={selectionCanvasRef}
             width={width}
             height={height}

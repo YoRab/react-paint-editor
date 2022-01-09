@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import _ from 'lodash/fp'
 import { selectShape } from 'utils/selection'
 import {
@@ -17,7 +17,7 @@ import { createNewPointGroupToShape, transformShape } from 'utils/transform'
 import { FRAMERATE_SELECTION } from 'constants/draw'
 import { createShape } from 'utils/data'
 
-const handleSelection = (
+const handleMove = (
   e: MouseEvent | TouchEvent,
   canvasRef: React.RefObject<HTMLCanvasElement>,
   activeTool: ToolsType,
@@ -108,27 +108,110 @@ export const useDrawableCanvas = ({
 }: UseCanvasType) => {
   const [hoverMode, setHoverMode] = useState<HoverModeData>({ mode: SelectionModeLib.default })
 
-  const handleDoubleClick = useCallback(
-    e => {
-      if (activeTool === ToolEnum.selection) {
-        if (selectedShape?.type === ShapeEnum.text) {
-          const cursorPosition = getCursorPosition(e, selectionCanvasRef.current, width, height)
-          if (checkPositionIntersection(selectedShape, cursorPosition, canvasOffset)) {
-            setSelectionMode({
-              mode: SelectionModeLib.textedition,
-              defaultValue: selectedShape.value
-            })
-          }
-        }
-      }
-    },
-    [selectionCanvasRef, activeTool, selectedShape, width, height, canvasOffset, setSelectionMode]
-  )
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent | TouchEvent) =>
+      _.throttle(FRAMERATE_SELECTION, handleMove)(
+        e,
+        selectionCanvasRef,
+        activeTool,
+        canvasOffset,
+        selectedShape,
+        selectionMode,
+        canvasOffsetStartPosition,
+        width,
+        height,
+        setHoverMode,
+        updateSingleShape,
+        setCanvasOffset,
+        setSelectedShape
+      )
+    if (isInsideComponent) {
+      document.addEventListener('mousemove', handleMouseMove)
+      document.addEventListener('touchmove', handleMouseMove)
+    }
 
-  const handleMouseDown = useCallback(
-    e => {
-      // eslint-disable-next-line
-      // e.preventDefault()
+    return () => {
+      if (isInsideComponent) {
+        document.removeEventListener('mousemove', handleMouseMove)
+        document.removeEventListener('touchmove', handleMouseMove)
+      }
+    }
+  }, [
+    isInsideComponent,
+    selectionCanvasRef,
+    selectedShape,
+    selectionMode,
+    setHoverMode,
+    canvasOffset,
+    canvasOffsetStartPosition,
+    width,
+    height,
+    updateSingleShape,
+    activeTool,
+    setCanvasOffset,
+    setSelectedShape
+  ])
+
+  useEffect(() => {
+    const handleMouseUp = (e: MouseEvent | TouchEvent) => {
+      if (selectionMode.mode === SelectionModeLib.textedition) return
+      if (activeTool === ShapeEnum.text) {
+        const cursorPosition = getCursorPosition(e, selectionCanvasRef.current, width, height)
+        const drawCtx = drawCanvasRef.current?.getContext('2d')
+        if (!drawCtx) return
+        const newShape = createShape(
+          drawCtx,
+          activeTool,
+          cursorPosition,
+          defaultConf
+        ) as DrawableText
+        addShape(newShape)
+        setActiveTool(ToolEnum.selection)
+        setSelectedShape(newShape)
+        setSelectionMode({
+          mode: SelectionModeLib.textedition,
+          defaultValue: newShape.value
+        })
+        return
+      }
+      if (selectionMode.mode !== SelectionModeLib.default) {
+        setSelectionMode({ mode: SelectionModeLib.default })
+        saveShapes()
+      }
+    }
+
+    if (isInsideComponent) {
+      document.addEventListener('mouseup', handleMouseUp)
+      document.addEventListener('touchend', handleMouseUp)
+    }
+
+    return () => {
+      if (isInsideComponent) {
+        document.removeEventListener('mouseup', handleMouseUp)
+        document.removeEventListener('touchend', handleMouseUp)
+      }
+    }
+  }, [
+    isInsideComponent,
+    selectionCanvasRef,
+    drawCanvasRef,
+    selectionMode,
+    saveShapes,
+    activeTool,
+    addShape,
+    defaultConf,
+    width,
+    height,
+    setActiveTool,
+    setSelectedShape,
+    setSelectionMode
+  ])
+
+  useEffect(() => {
+    const ref = selectionCanvasRef.current
+    if (!ref) return
+
+    const handleMouseDown = (e: MouseEvent | TouchEvent) => {
       const cursorPosition = getCursorPosition(e, selectionCanvasRef.current, width, height)
 
       if (activeTool === ToolEnum.selection) {
@@ -177,128 +260,59 @@ export const useDrawableCanvas = ({
           })
         }
       }
-    },
-    [
-      selectionCanvasRef,
-      drawCanvasRef,
-      selectedShape,
-      activeTool,
-      canvasOffset,
-      setCanvasOffsetStartPosition,
-      shapes,
-      defaultConf,
-      width,
-      height,
-      updateSingleShape,
-      addShape,
-      setActiveTool,
-      setSelectedShape,
-      setSelectionMode
-    ]
-  )
-
-  const handleMouseUp = useCallback(
-    e => {
-      if (selectionMode.mode === SelectionModeLib.textedition) return
-      if (activeTool === ShapeEnum.text) {
-        const cursorPosition = getCursorPosition(e, selectionCanvasRef.current, width, height)
-        const drawCtx = drawCanvasRef.current?.getContext('2d')
-        if (!drawCtx) return
-        const newShape = createShape(
-          drawCtx,
-          activeTool,
-          cursorPosition,
-          defaultConf
-        ) as DrawableText
-        addShape(newShape)
-        setActiveTool(ToolEnum.selection)
-        setSelectedShape(newShape)
-        setSelectionMode({
-          mode: SelectionModeLib.textedition,
-          defaultValue: newShape.value
-        })
-        return
-      }
-      if (selectionMode.mode !== SelectionModeLib.default) {
-        setSelectionMode({ mode: SelectionModeLib.default })
-        saveShapes()
-      }
-    },
-    [
-      selectionCanvasRef,
-      drawCanvasRef,
-      selectionMode,
-      saveShapes,
-      activeTool,
-      addShape,
-      defaultConf,
-      width,
-      height,
-      setActiveTool,
-      setSelectedShape,
-      setSelectionMode
-    ]
-  )
-
-  useEffect(() => {
-    let handleMouseMove: (e: MouseEvent | TouchEvent) => void | undefined
-    if (isInsideComponent) {
-      handleMouseMove = (e: MouseEvent | TouchEvent) =>
-        _.throttle(FRAMERATE_SELECTION, handleSelection)(
-          e,
-          selectionCanvasRef,
-          activeTool,
-          canvasOffset,
-          selectedShape,
-          selectionMode,
-          canvasOffsetStartPosition,
-          width,
-          height,
-          setHoverMode,
-          updateSingleShape,
-          setCanvasOffset,
-          setSelectedShape
-        )
-
-      document.addEventListener('mousemove', handleMouseMove)
-      document.addEventListener('touchmove', handleMouseMove)
     }
+
+    ref.addEventListener('mousedown', handleMouseDown)
+    ref.addEventListener('touchstart', handleMouseDown)
 
     return () => {
-      if (isInsideComponent) {
-        document.removeEventListener('mousemove', handleMouseMove)
-        document.removeEventListener('touchmove', handleMouseMove)
-      }
+      ref.removeEventListener('mousedown', handleMouseDown)
+      ref.removeEventListener('touchstart', handleMouseDown)
     }
   }, [
-    isInsideComponent,
     selectionCanvasRef,
+    drawCanvasRef,
     selectedShape,
-    selectionMode,
-    setHoverMode,
+    activeTool,
     canvasOffset,
-    canvasOffsetStartPosition,
+    setCanvasOffsetStartPosition,
+    shapes,
+    defaultConf,
     width,
     height,
     updateSingleShape,
-    activeTool,
-    setCanvasOffset,
-    setSelectedShape
+    addShape,
+    setActiveTool,
+    setSelectedShape,
+    setSelectionMode
   ])
 
   useEffect(() => {
-    if (isInsideComponent) {
-      document.addEventListener('mouseup', handleMouseUp)
-      document.addEventListener('touchend', handleMouseUp)
-    }
+    const ref = selectionCanvasRef.current
+    if (!ref) return
 
-    return () => {
-      if (isInsideComponent) {
-        document.removeEventListener('mouseup', handleMouseUp)
-        document.removeEventListener('touchend', handleMouseUp)
+    const handleDoubleClick = (e: MouseEvent | TouchEvent) => {
+      if (activeTool === ToolEnum.selection) {
+        if (selectedShape?.type === ShapeEnum.text) {
+          const cursorPosition = getCursorPosition(e, selectionCanvasRef.current, width, height)
+          if (checkPositionIntersection(selectedShape, cursorPosition, canvasOffset)) {
+            setSelectionMode({
+              mode: SelectionModeLib.textedition,
+              defaultValue: selectedShape.value
+            })
+          }
+        }
       }
     }
-  }, [isInsideComponent, handleMouseUp])
 
-  return { hoverMode, handleMouseDown, handleDoubleClick }
+    ref.addEventListener('dblclick', handleDoubleClick)
+    ref.addEventListener('dblclick', handleDoubleClick)
+
+    return () => {
+      ref.removeEventListener('dblclick', handleDoubleClick)
+      ref.removeEventListener('dblclick', handleDoubleClick)
+    }
+  }, [selectionCanvasRef, activeTool, selectedShape, width, height, canvasOffset, setSelectionMode])
+
+  return { hoverMode }
 }

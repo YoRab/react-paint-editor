@@ -1,4 +1,4 @@
-import { RefObject, useCallback, useEffect, useState } from 'react'
+import { RefObject, useEffect, useState } from 'react'
 import { DrawableShape } from 'types/Shapes'
 
 type useDragType = {
@@ -20,79 +20,66 @@ export const useDrag = ({
 }: useDragType) => {
   const [isOver, setIsOver] = useState(false)
 
-  const handleDragStart = useCallback(
-    (e: DragEvent) => {
-      handleSelect(shape)
-      if (!e.dataTransfer) return
-      e.dataTransfer.effectAllowed = 'move'
-      e.dataTransfer.setData('draggableShapeId', shape.id)
-
-      setLayoutDragging(shape.id)
-    },
-    [shape, setLayoutDragging, handleSelect]
-  )
-
-  const handleDragEnd = useCallback(() => {
-    setLayoutDragging(undefined)
-  }, [setLayoutDragging])
-
-  const handleDragOver = useCallback((e: DragEvent) => {
-    if (e.preventDefault) {
-      e.preventDefault()
-    }
-
-    return false
-  }, [])
-
-  const handleDragEnter = useCallback(() => {
-    layoutDragging !== shape.id && setIsOver(true)
-  }, [layoutDragging, shape])
-
-  const handleDragLeave = useCallback(() => {
-    setIsOver(false)
-  }, [])
-
-  const handleDrop = useCallback(
-    (e: DragEvent) => {
-      e.stopPropagation() // stops the browser from redirecting.
-      if (e.dataTransfer) {
-        onMoveShapes(e.dataTransfer.getData('draggableShapeId'), shape.id)
-      }
-      return false
-    },
-    [shape, onMoveShapes]
-  )
-
   useEffect(() => {
     if (!layoutDragging) setIsOver(false)
   }, [layoutDragging])
 
   useEffect(() => {
     const layoutRef = ref.current
-    layoutRef?.addEventListener('dragstart', handleDragStart)
-    layoutRef?.addEventListener('dragend', handleDragEnd)
-    layoutRef?.addEventListener('dragover', handleDragOver)
-    layoutRef?.addEventListener('dragenter', handleDragEnter)
-    layoutRef?.addEventListener('dragleave', handleDragLeave)
-    layoutRef?.addEventListener('drop', handleDrop)
+    if (!layoutRef) return
+
+    const handleDragEnd = () => {
+      setLayoutDragging(undefined)
+    }
+
+    const handleDragOver = (e: DragEvent) => {
+      if (e.preventDefault) {
+        e.preventDefault()
+      }
+
+      return false
+    }
+    const handleDragStart = (e: DragEvent) => {
+      handleSelect(shape)
+      if (!e.dataTransfer) return
+      e.dataTransfer.effectAllowed = 'move'
+      e.dataTransfer.setData('draggableShapeId', shape.id)
+
+      setLayoutDragging(shape.id)
+    }
+
+    const handleDragEnter = () => {
+      layoutDragging !== shape.id && setIsOver(true)
+    }
+
+    const handleDragLeave = () => {
+      setIsOver(false)
+    }
+
+    const handleDrop = (e: DragEvent) => {
+      e.stopPropagation() // stops the browser from redirecting.
+      if (e.dataTransfer) {
+        onMoveShapes(e.dataTransfer.getData('draggableShapeId'), shape.id)
+      }
+      return false
+    }
+
+    layoutRef.addEventListener('dragstart', handleDragStart)
+    layoutRef.addEventListener('dragend', handleDragEnd)
+    layoutRef.addEventListener('dragover', handleDragOver)
+    layoutRef.addEventListener('dragenter', handleDragEnter)
+    layoutRef.addEventListener('dragleave', handleDragLeave)
+    layoutRef.addEventListener('drop', handleDrop)
 
     return () => {
-      layoutRef?.removeEventListener('dragstart', handleDragStart)
-      layoutRef?.removeEventListener('dragend', handleDragEnd)
-      layoutRef?.removeEventListener('dragover', handleDragOver)
-      layoutRef?.removeEventListener('dragenter', handleDragEnter)
-      layoutRef?.removeEventListener('dragleave', handleDragLeave)
-      layoutRef?.removeEventListener('drop', handleDrop)
+      layoutRef.removeEventListener('dragstart', handleDragStart)
+      layoutRef.removeEventListener('dragend', handleDragEnd)
+      layoutRef.removeEventListener('dragover', handleDragOver)
+      layoutRef.removeEventListener('dragenter', handleDragEnter)
+      layoutRef.removeEventListener('dragleave', handleDragLeave)
+      layoutRef.removeEventListener('drop', handleDrop)
     }
-  }, [
-    ref,
-    handleDragStart,
-    handleDragEnd,
-    handleDragOver,
-    handleDragEnter,
-    handleDragLeave,
-    handleDrop
-  ])
+  }, [ref, shape, setLayoutDragging, handleSelect, onMoveShapes, layoutDragging])
 
   return { isOver }
 }

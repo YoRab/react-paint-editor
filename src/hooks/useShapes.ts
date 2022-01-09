@@ -121,6 +121,7 @@ export const useShapes = () => {
       const firstShapeIndex = _.findIndex({ id: firstShapeId }, shapes)
       const lastShapeIndex = _.findIndex({ id: lastShapeId }, shapes)
 
+      // todo utils
       if (firstShapeIndex < lastShapeIndex) {
         updateShapes([
           ..._.slice(0, firstShapeIndex, shapes),

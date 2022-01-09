@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { DrawableShape } from 'types/Shapes'
 import _ from 'lodash/fp'
 import { copyShape } from 'utils/data'
@@ -25,8 +25,23 @@ export const useKeyboard = ({
 }: UseKeyboardType) => {
   const [copiedShape, setCopiedShape] = useState<DrawableShape | undefined>(undefined)
 
-  const handleKeyDown = useCallback(
-    (e: KeyboardEvent) => {
+  useEffect(() => {
+    const handleCopy = (e: ClipboardEvent) => {
+      if (!selectedShape) return
+      if (isEditingText) return
+
+      e.preventDefault()
+      setCopiedShape({ ...selectedShape })
+    }
+
+    const handlePaste = (e: ClipboardEvent) => {
+      if (!copiedShape) return
+      if (isEditingText) return
+      e.preventDefault()
+      pasteShape(copyShape(copiedShape))
+    }
+
+    const handleKeyDown = (e: KeyboardEvent) => {
       if (!selectedShape) return
 
       if (e.code === KeyboardCode.Escape) {
@@ -75,32 +90,8 @@ export const useKeyboard = ({
           removeShape(selectedShape)
           break
       }
-    },
-    [isEditingText, selectedShape, updateShape, removeShape, setSelectedShape]
-  )
+    }
 
-  const handleCopy = useCallback(
-    (e: ClipboardEvent) => {
-      if (!selectedShape) return
-      if (isEditingText) return
-
-      e.preventDefault()
-      setCopiedShape({ ...selectedShape })
-    },
-    [selectedShape, isEditingText]
-  )
-
-  const handlePaste = useCallback(
-    (e: ClipboardEvent) => {
-      if (!copiedShape) return
-      if (isEditingText) return
-      e.preventDefault()
-      pasteShape(copyShape(copiedShape))
-    },
-    [copiedShape, isEditingText, pasteShape]
-  )
-
-  useEffect(() => {
     if (isInsideComponent) {
       document.addEventListener('keydown', handleKeyDown)
       document.addEventListener(KeyboardCommand.Copy, handleCopy)
@@ -114,7 +105,16 @@ export const useKeyboard = ({
         document.removeEventListener(KeyboardCommand.Paste, handlePaste)
       }
     }
-  }, [isInsideComponent, handleKeyDown, handleCopy, handlePaste])
+  }, [
+    isInsideComponent,
+    copiedShape,
+    isEditingText,
+    selectedShape,
+    updateShape,
+    removeShape,
+    setSelectedShape,
+    pasteShape
+  ])
 
   return {}
 }

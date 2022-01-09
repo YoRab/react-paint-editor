@@ -1,4 +1,4 @@
-import React, { useCallback, useRef, useState } from 'react'
+import React, { useRef, useState } from 'react'
 import styled from 'styled-components'
 import _ from 'lodash/fp'
 import { DrawableShape } from 'types/Shapes'
@@ -78,23 +78,17 @@ const Layout = ({
 }: LayoutType) => {
   const ref = useRef<HTMLDivElement>(null)
 
-  const onRemove = useCallback(
-    (e: React.MouseEvent<HTMLElement>) => {
-      e.preventDefault()
-      e.stopPropagation()
-      handleRemove(shape)
-    },
-    [shape, handleRemove]
-  )
+  const onRemove = (e: React.MouseEvent<HTMLElement>) => {
+    e.preventDefault()
+    e.stopPropagation()
+    handleRemove(shape)
+  }
 
-  const onSelect = useCallback(
-    (e: React.MouseEvent<HTMLElement>) => {
-      e.preventDefault()
-      e.stopPropagation()
-      handleSelect(shape)
-    },
-    [shape, handleSelect]
-  )
+  const onSelect = (e: React.MouseEvent<HTMLElement>) => {
+    e.preventDefault()
+    e.stopPropagation()
+    handleSelect(shape)
+  }
 
   const { isOver } = useDrag({
     ref,

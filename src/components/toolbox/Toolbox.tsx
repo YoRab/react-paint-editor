@@ -1,5 +1,5 @@
 import _ from 'lodash/fp'
-import React, { useCallback, useRef } from 'react'
+import React, { useRef } from 'react'
 import styled from 'styled-components'
 import { ShapeEnum, ToolEnum, ToolsType } from 'types/Shapes'
 
@@ -79,9 +79,9 @@ type ToolType = {
 }
 
 const Tool = ({ type, lib, imgSrc, isActive, isDisabled = false, setActive }: ToolType) => {
-  const handleClick = useCallback(() => {
+  const handleClick = () => {
     setActive(type)
-  }, [type, setActive])
+  }
 
   return (
     <StyledTool disabled={isDisabled} selected={isActive} onClick={handleClick}>
@@ -100,18 +100,15 @@ type LoadFileToolType = {
 const LoadFileTool = ({ loadFile, lib, imgSrc, accept }: LoadFileToolType) => {
   const inputRef = useRef<HTMLInputElement>(null)
 
-  const handleClick = useCallback(() => {
+  const handleClick = () => {
     if (inputRef.current) inputRef.current.value = ''
-  }, [])
+  }
 
-  const handleChange = useCallback(
-    (event: React.ChangeEvent<HTMLInputElement>) => {
-      const file = event.target.files?.item(0)
-      if (!file) return
-      loadFile(file)
-    },
-    [loadFile]
-  )
+  const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.item(0)
+    if (!file) return
+    loadFile(file)
+  }
 
   return (
     <StyledTool as="label" selected={false}>
