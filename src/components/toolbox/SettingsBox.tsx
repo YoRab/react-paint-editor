@@ -1,5 +1,5 @@
 import _ from 'lodash/fp'
-import React, { useCallback, useMemo } from 'react'
+import React, { useMemo } from 'react'
 import styled from 'styled-components'
 import {
   POLYGON_POINTS_VALUES,
@@ -72,9 +72,9 @@ type DeleteShapeButtonType = {
 }
 
 const DeleteShapeButton = ({ selectedShape, removeShape }: DeleteShapeButtonType) => {
-  const handleRemove = useCallback(() => {
+  const handleRemove = () => {
     removeShape(selectedShape)
-  }, [selectedShape, removeShape])
+  }
 
   return (
     <StyledDeleteButton onClick={handleRemove}>
@@ -91,13 +91,10 @@ type ShapeStyleSelectType = {
 }
 
 const ShapeStyleSelect = ({ field, values, defaultValue, valueChanged }: ShapeStyleSelectType) => {
-  const handleChange = useCallback(
-    (event: React.ChangeEvent<HTMLSelectElement>) => {
-      const parsedValue = _.toNumber(event.target.value)
-      valueChanged(field, _.isNaN(parsedValue) ? event.target.value : parsedValue)
-    },
-    [field, valueChanged]
-  )
+  const handleChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
+    const parsedValue = _.toNumber(event.target.value)
+    valueChanged(field, _.isNaN(parsedValue) ? event.target.value : parsedValue)
+  }
 
   return (
     <select onChange={handleChange}>
@@ -146,52 +143,43 @@ const SettingsBox = ({
     ShapeEnum.polygon,
     ShapeEnum.text
   ]
-  const handleShapeStyleChange = useCallback(
-    (field: string, value: string | number) => {
-      if (selectedShape) {
-        updateShape(_.set(field, value, selectedShape))
-      } else {
-        setDefaultConf(prevDefaultConf => _.set(field, value, prevDefaultConf))
-      }
-    },
-    [selectedShape, updateShape, setDefaultConf]
-  )
+  const handleShapeStyleChange = (field: string, value: string | number) => {
+    if (selectedShape) {
+      updateShape(_.set(field, value, selectedShape))
+    } else {
+      setDefaultConf(prevDefaultConf => _.set(field, value, prevDefaultConf))
+    }
+  }
 
-  const handleShapeFontFamilyChange = useCallback(
-    (field: string, value: string | number) => {
-      if (selectedShape) {
-        const ctx = canvas?.getContext('2d')
-        if (!ctx) return
-        const newShape = _.set(field, value, selectedShape) as DrawableText
-        const fontSize = calculateTextFontSize(
-          ctx,
-          newShape.value,
-          newShape.width,
-          newShape.style?.fontFamily
-        )
-        const resizedShape = {
-          ...newShape,
-          fontSize,
-          height: fontSize * newShape.value.length
-        }
-        updateShape(resizedShape)
-      } else {
-        setDefaultConf(prevDefaultConf => _.set(field, value, prevDefaultConf))
+  const handleShapeFontFamilyChange = (field: string, value: string | number) => {
+    if (selectedShape) {
+      const ctx = canvas?.getContext('2d')
+      if (!ctx) return
+      const newShape = _.set(field, value, selectedShape) as DrawableText
+      const fontSize = calculateTextFontSize(
+        ctx,
+        newShape.value,
+        newShape.width,
+        newShape.style?.fontFamily
+      )
+      const resizedShape = {
+        ...newShape,
+        fontSize,
+        height: fontSize * newShape.value.length
       }
-    },
-    [canvas, selectedShape, updateShape, setDefaultConf]
-  )
+      updateShape(resizedShape)
+    } else {
+      setDefaultConf(prevDefaultConf => _.set(field, value, prevDefaultConf))
+    }
+  }
 
-  const handlePolygonLinesCount = useCallback(
-    (field: string, value: string | number) => {
-      if (selectedShape) {
-        updateShape(updatePolygonLinesCount(selectedShape as DrawablePolygon, value as number))
-      } else {
-        setDefaultConf(prevDefaultConf => _.set(field, value, prevDefaultConf))
-      }
-    },
-    [selectedShape, updateShape, setDefaultConf]
-  )
+  const handlePolygonLinesCount = (field: string, value: string | number) => {
+    if (selectedShape) {
+      updateShape(updatePolygonLinesCount(selectedShape as DrawablePolygon, value as number))
+    } else {
+      setDefaultConf(prevDefaultConf => _.set(field, value, prevDefaultConf))
+    }
+  }
 
   const pointPosition = useMemo(() => {
     return settingsHover && selectedShape

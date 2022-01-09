@@ -1,52 +1,54 @@
-import { RefObject, useCallback, useEffect, useState } from 'react'
-import { DrawableShape, Point } from 'types/Shapes'
+import { useEffect, useState } from 'react'
+import { DrawableShape } from 'types/Shapes'
 import _ from 'lodash/fp'
 import { copyShape } from 'utils/data'
 import { KeyboardCode, KeyboardCommand } from 'types/keyboard'
-import { SelectionModeData, SelectionModeLib } from 'types/Mode'
 
 type UseKeyboardType = {
+  isInsideComponent: boolean
   selectedShape: DrawableShape | undefined
-  onPasteShape: (shape: DrawableShape) => void
-  componentRef: RefObject<HTMLElement>
+  pasteShape: (shape: DrawableShape) => void
   updateShape: (shape: DrawableShape) => void
   setSelectedShape: (value: React.SetStateAction<DrawableShape | undefined>) => void
   removeShape: (shape: DrawableShape) => void
-  selectionMode: SelectionModeData<Point | number>
+  isEditingText: boolean
 }
 
 export const useKeyboard = ({
-  componentRef,
+  isInsideComponent,
   selectedShape,
-  selectionMode,
+  isEditingText,
   setSelectedShape,
   removeShape,
-  onPasteShape,
+  pasteShape,
   updateShape
 }: UseKeyboardType) => {
   const [copiedShape, setCopiedShape] = useState<DrawableShape | undefined>(undefined)
-  const [isInsideComponent, setIsInsideComponent] = useState(false)
 
-  const onDetectClick = useCallback(
-    (event: MouseEvent | TouchEvent) => {
-      setIsInsideComponent(
-        !(event.target instanceof HTMLElement) || !componentRef.current
-          ? false
-          : componentRef.current.contains(event.target)
-      )
-    },
-    [componentRef]
-  )
+  useEffect(() => {
+    const handleCopy = (e: ClipboardEvent) => {
+      if (!selectedShape) return
+      if (isEditingText) return
 
-  const handleKeyDown = useCallback(
-    (e: KeyboardEvent) => {
+      e.preventDefault()
+      setCopiedShape({ ...selectedShape })
+    }
+
+    const handlePaste = (e: ClipboardEvent) => {
+      if (!copiedShape) return
+      if (isEditingText) return
+      e.preventDefault()
+      pasteShape(copyShape(copiedShape))
+    }
+
+    const handleKeyDown = (e: KeyboardEvent) => {
       if (!selectedShape) return
 
       if (e.code === KeyboardCode.Escape) {
         setSelectedShape(undefined)
         return
       }
-      if (selectionMode.mode === SelectionModeLib.textedition) return
+      if (isEditingText) return
       switch (e.code) {
         case KeyboardCode.ArrowLeft:
           updateShape(
@@ -88,48 +90,8 @@ export const useKeyboard = ({
           removeShape(selectedShape)
           break
       }
-    },
-    [selectionMode, selectedShape, updateShape, removeShape, setSelectedShape]
-  )
-
-  const handleCopy = useCallback(
-    (e: ClipboardEvent) => {
-      if (!selectedShape) return
-      if (selectionMode.mode === SelectionModeLib.textedition) return
-
-      e.preventDefault()
-      setCopiedShape({ ...selectedShape })
-    },
-    [selectedShape, selectionMode]
-  )
-
-  const handlePaste = useCallback(
-    (e: ClipboardEvent) => {
-      if (!copiedShape) return
-      if (selectionMode.mode === SelectionModeLib.textedition) return
-      e.preventDefault()
-      onPasteShape(copyShape(copiedShape))
-    },
-    [copiedShape, selectionMode, onPasteShape]
-  )
-
-  useEffect(() => {
-    document.addEventListener('mousedown', onDetectClick)
-    document.addEventListener('touchstart', onDetectClick)
-    document.addEventListener('keydown', handleKeyDown)
-    document.addEventListener(KeyboardCommand.Copy, handleCopy)
-    document.addEventListener(KeyboardCommand.Paste, handlePaste)
-
-    return () => {
-      document.removeEventListener('mousedown', onDetectClick)
-      document.removeEventListener('touchstart', onDetectClick)
-      document.removeEventListener('keydown', handleKeyDown)
-      document.removeEventListener(KeyboardCommand.Copy, handleCopy)
-      document.removeEventListener(KeyboardCommand.Paste, handlePaste)
     }
-  }, [onDetectClick, handleKeyDown, handleCopy, handlePaste])
 
-  useEffect(() => {
     if (isInsideComponent) {
       document.addEventListener('keydown', handleKeyDown)
       document.addEventListener(KeyboardCommand.Copy, handleCopy)
@@ -143,7 +105,16 @@ export const useKeyboard = ({
         document.removeEventListener(KeyboardCommand.Paste, handlePaste)
       }
     }
-  }, [isInsideComponent, handleKeyDown, handleCopy, handlePaste])
+  }, [
+    isInsideComponent,
+    copiedShape,
+    isEditingText,
+    selectedShape,
+    updateShape,
+    removeShape,
+    setSelectedShape,
+    pasteShape
+  ])
 
-  return { isInsideComponent }
+  return {}
 }

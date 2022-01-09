@@ -1,5 +1,5 @@
 import { STYLE_FONT_DEFAULT } from 'constants/style'
-import React, { useCallback, useEffect, useMemo, useRef } from 'react'
+import React, { useEffect, useMemo, useRef } from 'react'
 import styled from 'styled-components'
 import { DrawableText, Point } from 'types/Shapes'
 import { getPointPositionBeforeCanvasTransformation } from 'utils/intersect'
@@ -38,12 +38,9 @@ type EditTextBoxType = {
 const EditTextBox = ({ shape, defaultValue, updateValue }: EditTextBoxType) => {
   const ref = useRef<HTMLDivElement>(null)
 
-  const updateContentEditable = useCallback(
-    (e: React.ChangeEvent<HTMLDivElement>) => {
-      updateValue(convertDivContentToStringArray(e.target.innerHTML))
-    },
-    [updateValue]
-  )
+  const updateContentEditable = (e: React.ChangeEvent<HTMLDivElement>) => {
+    updateValue(convertDivContentToStringArray(e.target.innerHTML))
+  }
 
   useEffect(() => {
     if (!ref.current) return
