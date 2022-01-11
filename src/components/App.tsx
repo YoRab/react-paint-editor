@@ -26,19 +26,17 @@ import { SelectionModeData, SelectionModeLib } from 'types/Mode'
 
 const StyledApp = styled.div<{
   toolboxposition: 'top' | 'left'
-  height: number
 }>`
   display: flex;
+  width: fit-content;
+  background:#ededed
   flex-direction: ${({ toolboxposition }) => (toolboxposition === 'top' ? 'column' : 'row')};
-  ${({ height }) => `
-  width:100%;
-  height:${height}px;
-  `}
 `
 
 const StyledRow = styled.div`
   display: flex;
   flex-direction: row;
+  position: relative;
 `
 
 type AppType = {
@@ -47,7 +45,8 @@ type AppType = {
   toolboxPosition?: 'top' | 'left'
   width?: number
   height?: number
-  withLayouts?: boolean
+  withLayouts?: 'always' | 'never' | 'visible' | 'hidden'
+  className?: string
 }
 
 const App = ({
@@ -56,7 +55,8 @@ const App = ({
   toolboxPosition = 'top',
   width = 1000,
   height = 600,
-  withLayouts = true
+  withLayouts = 'hidden',
+  className
 }: AppType) => {
   const [defaultConf, setDefaultConf] = useState<StyledShape>({
     style: {
@@ -71,6 +71,9 @@ const App = ({
   })
   const componentRef = useRef<HTMLDivElement>(null)
 
+  const [isLayoutPanelShown, setIsLayoutPanelShown] = useState(
+    withLayouts === 'always' || withLayouts === 'visible'
+  )
   const [canvasOffset, setCanvasOffset] = useState<Point>([0, 0])
   const [canvasOffsetStartPosition, setCanvasOffsetStartPosition] = useState<Point | undefined>(
     undefined
@@ -206,10 +209,9 @@ const App = ({
     downloadFile(content, 'drawing.json')
   }, [])
 
-  const loadFile = useCallback(
-    async (file: File) => {
+  const loadJson = useCallback(
+    (json: unknown) => {
       try {
-        const json = await decodeJson(file)
         const isValidated = validateJson(json)
         if (!isValidated) throw new Error('Le fichier est corrompu')
         const shapes = decodePicturesInShapes(json as DrawableShapeJson[])
@@ -219,6 +221,18 @@ const App = ({
       }
     },
     [clearCanvas]
+  )
+
+  const loadFile = useCallback(
+    async (file: File) => {
+      try {
+        const json = await decodeJson(file)
+        loadJson(json)
+      } catch (e) {
+        console.warn(e)
+      }
+    },
+    [loadJson]
   )
 
   const onPasteShape = useCallback(
@@ -248,7 +262,7 @@ const App = ({
   const hasActionToClear = savedShapes.states.length > 1
 
   return (
-    <StyledApp ref={componentRef} toolboxposition={toolboxPosition} height={height} tabIndex={0}>
+    <StyledApp ref={componentRef} toolboxposition={toolboxPosition} className={className}>
       <Toolbox
         activeTool={activeTool}
         clearCanvas={clearCanvas}
@@ -288,7 +302,7 @@ const App = ({
           selectionMode={selectionMode}
           setSelectionMode={setSelectionMode}
         />
-        {withLayouts && (
+        {isLayoutPanelShown && (
           <Layouts
             shapes={shapesRef.current}
             updateShapes={updateShapes}
@@ -310,8 +324,10 @@ const App = ({
           defaultConf={defaultConf}
           setDefaultConf={setDefaultConf}
           canvas={canvasRef.current}
-          givenWidth={width}
-          givenHeight={height}
+          withLayouts={withLayouts}
+          toggleLayoutPanel={() => {
+            setIsLayoutPanelShown(prev => !prev)
+          }}
         />
       )}
     </StyledApp>

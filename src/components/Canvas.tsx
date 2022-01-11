@@ -130,7 +130,6 @@ const StyledDrawCanvas = styled.canvas.attrs<{
 }>`
   position: absolute;
   user-select: none;
-  border: 1px solid black;
   max-width: 100%;
   touch-action: none; /* prevent scroll on touch */
 `
@@ -149,7 +148,6 @@ const StyledSelectionCanvas = styled.canvas.attrs<{
   height: number
 }>`
   user-select: none;
-  border: 1px solid black;
   position: relative;
   max-width: 100%;
   touch-action: none; /* prevent scroll on touch */

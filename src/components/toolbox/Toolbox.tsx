@@ -18,7 +18,6 @@ const StyledToolbox = styled.div<{
   hover: boolean
 }>`
   display: flex;
-  border: 1px solid black;
 
   ${({ hover }) =>
     hover &&
@@ -43,7 +42,7 @@ const StyledTool = styled.button<{ selected: boolean }>`
     selected &&
     `
   
-  border:1px solid black;
+  border:1px solid #666;
   
   `}
 
