@@ -191,7 +191,9 @@ const App = ({
     setSelectedShape,
     removeShape,
     pasteShape,
-    updateShape
+    updateShape,
+    backwardShape,
+    forwardShape
   })
 
   useEffect(() => {

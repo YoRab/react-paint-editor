@@ -11,6 +11,8 @@ type UseKeyboardType = {
   updateShape: (shape: DrawableShape) => void
   setSelectedShape: (value: React.SetStateAction<DrawableShape | undefined>) => void
   removeShape: (shape: DrawableShape) => void
+  backwardShape: () => void
+  forwardShape: () => void
   isEditingText: boolean
 }
 
@@ -21,7 +23,9 @@ export const useKeyboard = ({
   setSelectedShape,
   removeShape,
   pasteShape,
-  updateShape
+  updateShape,
+  backwardShape,
+  forwardShape
 }: UseKeyboardType) => {
   const [copiedShape, setCopiedShape] = useState<DrawableShape | undefined>(undefined)
 
@@ -42,14 +46,28 @@ export const useKeyboard = ({
     }
 
     const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.metaKey || e.ctrlKey) {
+        if (e.key === KeyboardCode.Z) {
+          e.preventDefault()
+          e.stopPropagation()
+          backwardShape()
+          return
+        } else if (e.key === KeyboardCode.Y) {
+          e.preventDefault()
+          e.stopPropagation()
+          forwardShape()
+          return
+        }
+      }
+
       if (!selectedShape) return
 
-      if (e.code === KeyboardCode.Escape) {
+      if (e.key === KeyboardCode.Escape) {
         setSelectedShape(undefined)
         return
       }
       if (isEditingText) return
-      switch (e.code) {
+      switch (e.key) {
         case KeyboardCode.ArrowLeft:
           updateShape(
             _.set(
@@ -113,7 +131,9 @@ export const useKeyboard = ({
     updateShape,
     removeShape,
     setSelectedShape,
-    pasteShape
+    pasteShape,
+    backwardShape,
+    forwardShape
   ])
 
   return {}
