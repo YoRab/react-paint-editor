@@ -1,4 +1,3 @@
-import _ from 'lodash/fp'
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 import {
   DrawableShape,
@@ -23,6 +22,8 @@ import {
   validateJson
 } from 'utils/file'
 import { SelectionModeData, SelectionModeLib } from 'types/Mode'
+import { useComponent } from 'hooks/useComponent'
+import { useShapes } from 'hooks/useShapes'
 
 const StyledApp = styled.div<{
   toolboxposition: 'top' | 'left'
@@ -58,6 +59,13 @@ const App = ({
   withLayouts = 'hidden',
   className
 }: AppType) => {
+  const componentRef = useRef<HTMLDivElement>(null)
+  const canvasRef = useRef<HTMLCanvasElement>(null)
+
+  const { isInsideComponent } = useComponent({
+    componentRef
+  })
+
   const [defaultConf, setDefaultConf] = useState<StyledShape>({
     style: {
       fillColor: 'transparent',
@@ -69,7 +77,6 @@ const App = ({
       fontFamily: STYLE_FONT_DEFAULT
     }
   })
-  const componentRef = useRef<HTMLDivElement>(null)
 
   const [isLayoutPanelShown, setIsLayoutPanelShown] = useState(
     withLayouts === 'always' || withLayouts === 'visible'
@@ -79,122 +86,70 @@ const App = ({
     undefined
   )
   const [activeTool, setActiveTool] = useState<ToolsType>(ToolEnum.selection)
-  const [selectedShape, setSelectedShape] = useState<DrawableShape | undefined>(undefined)
-
-  const shapesRef = useRef<DrawableShape[]>([])
-
-  const [savedShapes, setSavedShapes] = useState<{
-    states: {
-      shapes: DrawableShape[]
-      selectedShape: DrawableShape | undefined
-    }[]
-    cursor: number
-  }>({
-    states: [{ shapes: [], selectedShape: undefined }],
-    cursor: 0
-  })
 
   const [selectionMode, setSelectionMode] = useState<SelectionModeData<Point | number>>({
     mode: SelectionModeLib.default
   })
 
-  const canvasRef = useRef<HTMLCanvasElement>(null)
+  const {
+    shapesRef,
+    selectedShape,
+    addShape,
+    addPictureShape,
+    moveShapes,
+    setSelectedShape,
+    removeShape,
+    updateShape,
+    backwardShape,
+    forwardShape,
+    clearShapes,
+    saveShapes,
+    canGoBackward,
+    canGoForward,
+    canClear
+  } = useShapes()
 
-  const selectTool = useCallback((tool: ToolsType) => {
-    setSelectedShape(undefined)
-    setActiveTool(tool)
-  }, [])
-
-  const saveShapes = useCallback(() => {
-    setSavedShapes(prevSavedShaped => {
-      return _.isEqual(
-        _.get([prevSavedShaped.cursor, 'shapes'], prevSavedShaped.states),
-        shapesRef.current
-      )
-        ? prevSavedShaped
-        : {
-            states: [
-              ...prevSavedShaped.states.slice(0, prevSavedShaped.cursor + 1),
-              {
-                shapes: shapesRef.current,
-                selectedShape
-              }
-            ],
-            cursor: prevSavedShaped.cursor + 1
-          }
-    })
-  }, [selectedShape])
+  const selectTool = useCallback(
+    (tool: ToolsType) => {
+      setSelectedShape(undefined)
+      setActiveTool(tool)
+    },
+    [setSelectedShape]
+  )
 
   const undoAction = useCallback(() => {
     selectTool(ToolEnum.selection)
-
-    setSavedShapes(prevSavedShaped => {
-      const newCursor = Math.max(0, prevSavedShaped.cursor - 1)
-      shapesRef.current = _.get([newCursor, 'shapes'], prevSavedShaped.states)
-      setSelectedShape(_.get([newCursor, 'selectedShape'], prevSavedShaped.states))
-      return _.set('cursor', newCursor, prevSavedShaped)
-    })
-  }, [selectTool])
+    backwardShape()
+  }, [selectTool, backwardShape])
 
   const redoAction = useCallback(() => {
     selectTool(ToolEnum.selection)
-
-    setSavedShapes(prevSavedShaped => {
-      const newCursor = Math.min(prevSavedShaped.states.length - 1, prevSavedShaped.cursor + 1)
-      shapesRef.current = _.get([newCursor, 'shapes'], prevSavedShaped.states)
-      setSelectedShape(_.get([newCursor, 'selectedShape'], prevSavedShaped.states))
-      return _.set('cursor', newCursor, prevSavedShaped)
-    })
-  }, [selectTool])
-
-  const addShape = useCallback((newShape: DrawableShape) => {
-    shapesRef.current = [newShape, ...shapesRef.current]
-  }, [])
-
-  const updateShape = useCallback(
-    (updatedShape: DrawableShape) => {
-      shapesRef.current = shapesRef.current.map(marker => {
-        return marker.id === selectedShape?.id ? updatedShape : marker
-      })
-      setSelectedShape(prevSelectedShape =>
-        prevSelectedShape?.id === updatedShape.id ? updatedShape : prevSelectedShape
-      )
-    },
-    [selectedShape]
-  )
-
-  const updateShapes = useCallback(
-    (newShapes: DrawableShape[]) => {
-      const pureShapes = newShapes.map(shape => _.omit(['chosen'], shape)) as DrawableShape[]
-      shapesRef.current = pureShapes
-      saveShapes()
-    },
-    [saveShapes]
-  )
-
-  const removeShape = useCallback(
-    (shape: DrawableShape) => {
-      setSelectedShape(prevSelectedShape =>
-        prevSelectedShape?.id === shape.id ? undefined : prevSelectedShape
-      )
-      shapesRef.current = _.remove({ id: shape.id }, shapesRef.current)
-      saveShapes()
-    },
-    [saveShapes]
-  )
+    forwardShape()
+  }, [selectTool, forwardShape])
 
   const clearCanvas = useCallback(
     (shapesToInit: DrawableShape[] = []) => {
-      setSelectedShape(undefined)
-      shapesRef.current = shapesToInit
-      setSavedShapes({
-        states: [{ shapes: shapesToInit, selectedShape: undefined }],
-        cursor: 0
-      })
+      clearShapes(shapesToInit)
       selectTool(ToolEnum.selection)
       setCanvasOffset([0, 0])
     },
-    [selectTool]
+    [selectTool, clearShapes]
+  )
+
+  const selectShape = useCallback(
+    (shape: DrawableShape) => {
+      setActiveTool(ToolEnum.selection)
+      setSelectedShape(shape)
+    },
+    [setSelectedShape]
+  )
+
+  const pasteShape = useCallback(
+    (shape: DrawableShape) => {
+      addShape(shape)
+      selectShape(shape)
+    },
+    [addShape, selectShape]
   )
 
   const exportCanvasInFile = useCallback(() => {
@@ -207,7 +162,7 @@ const App = ({
     const content = encodeShapesInString(shapesRef.current)
     if (!content) return
     downloadFile(content, 'drawing.json')
-  }, [])
+  }, [shapesRef])
 
   const loadJson = useCallback(
     (json: unknown) => {
@@ -235,46 +190,41 @@ const App = ({
     [loadJson]
   )
 
-  const onPasteShape = useCallback(
-    (shape: DrawableShape) => {
-      addShape(shape)
-      setActiveTool(ToolEnum.selection)
-      setSelectedShape(shape)
+  const addPicture = useCallback(
+    async (file: File) => {
+      const pictureShape = await addPictureShape(file)
+      selectShape(pictureShape)
     },
-    [addShape]
+    [addPictureShape, selectShape]
   )
 
-  const { isInsideComponent } = useKeyboard({
-    selectionMode,
-    componentRef,
+  useKeyboard({
+    isInsideComponent,
+    isEditingText: selectionMode.mode === SelectionModeLib.textedition,
     selectedShape,
     setSelectedShape,
     removeShape,
-    onPasteShape,
+    pasteShape,
     updateShape
   })
 
   useEffect(() => {
     if (!isInsideComponent) setSelectedShape(undefined)
-  }, [isInsideComponent])
-  const hasActionToUndo = savedShapes.cursor > 0
-  const hasActionToRedo = savedShapes.cursor < savedShapes.states.length - 1
-  const hasActionToClear = savedShapes.states.length > 1
+  }, [isInsideComponent, setSelectedShape])
 
   return (
     <StyledApp ref={componentRef} toolboxposition={toolboxPosition} className={className}>
       <Toolbox
         activeTool={activeTool}
         clearCanvas={clearCanvas}
-        setSelectedShape={setSelectedShape}
         setActiveTool={selectTool}
         exportCanvasInFile={exportCanvasInFile}
         saveFile={saveFile}
         loadFile={loadFile}
-        addShape={addShape}
-        hasActionToUndo={hasActionToUndo}
-        hasActionToRedo={hasActionToRedo}
-        hasActionToClear={hasActionToClear}
+        addPicture={addPicture}
+        hasActionToUndo={canGoBackward}
+        hasActionToRedo={canGoForward}
+        hasActionToClear={canClear}
         undoAction={undoAction}
         redoAction={redoAction}
         toolboxPosition={toolboxPosition}
@@ -305,11 +255,10 @@ const App = ({
         {isLayoutPanelShown && (
           <Layouts
             shapes={shapesRef.current}
-            updateShapes={updateShapes}
+            moveShapes={moveShapes}
             selectedShape={selectedShape}
             removeShape={removeShape}
-            setSelectedShape={setSelectedShape}
-            setActiveTool={setActiveTool}
+            selectShape={selectShape}
             hover={hover}
           />
         )}
