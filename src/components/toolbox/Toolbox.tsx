@@ -1,5 +1,5 @@
 import _ from 'lodash/fp'
-import React, { useRef } from 'react'
+import React, { useRef, useState } from 'react'
 import styled from 'styled-components'
 import { ShapeEnum, ToolEnum, ToolsType } from 'types/Shapes'
 
@@ -12,24 +12,11 @@ import squareIcon from 'assets/icons/square.svg'
 import clearIcon from 'assets/icons/times.svg'
 import undoIcon from 'assets/icons/undo.svg'
 
-const StyledToolbox = styled.div<{
-  toolboxposition: 'top' | 'left'
-  hover: boolean
-}>`
-  display: flex;
-
-  ${({ hover }) =>
-    hover &&
-    `
-    position:absolute;
-  `}
-  flex-direction: ${({ toolboxposition }) => (toolboxposition === 'top' ? 'row' : 'column')};
-`
-
 const StyledTool = styled.button<{ selected: boolean }>`
   width: 36px;
   height: 36px;
-  display: flex;
+  display: inline-flex;
+  vertical-align: middle;
   box-sizing: border-box;
   align-items: center;
   justify-content: center;
@@ -64,8 +51,52 @@ const StyledTool = styled.button<{ selected: boolean }>`
   }
 `
 
-const StyledSeparator = styled.div`
+const StyledShrinkableTools = styled.div`
   flex: 1;
+  position: relative;
+  height: 100%;
+  text-align: center;
+
+  max-height: 72px;
+
+  & > ${StyledTool} {
+    position: absolute;
+    right: 0;
+    bottom: 36px;
+    background: #ededed;
+  }
+`
+
+const StyledToolbox = styled.div<{
+  toolboxposition: 'top' | 'left'
+  hover: boolean
+  ismenuopen: boolean
+}>`
+  display: flex;
+  max-height: 36px;
+
+  z-index: 1;
+
+  ${({ ismenuopen }) =>
+    !ismenuopen &&
+    `
+    overflow: hidden;
+  
+  `}
+
+  ${({ hover }) =>
+    hover &&
+    `
+    position:absolute;
+  `}
+  flex-direction: ${({ toolboxposition }) => (toolboxposition === 'top' ? 'row' : 'column')};
+`
+
+const StyledShrinkableToolsInner = styled.div`
+  display: inline-block;
+  text-align: left;
+  background: #ededed;
+  padding-right: 36px;
 `
 
 type ToolType = {
@@ -166,8 +197,14 @@ const Toolbox = ({
     { shape: ShapeEnum.text }
   ]
 
+  const [isMenuOpen, setIsMenuOpen] = useState(false)
+
+  const toggleTools = () => {
+    setIsMenuOpen(prev => !prev)
+  }
+
   return (
-    <StyledToolbox toolboxposition={toolboxPosition} hover={hover}>
+    <StyledToolbox toolboxposition={toolboxPosition} hover={hover} ismenuopen={isMenuOpen}>
       <Tool
         type={ToolEnum.selection}
         lib="selection"
@@ -206,29 +243,32 @@ const Toolbox = ({
         isActive={activeTool === ToolEnum.clear}
         setActive={() => clearCanvas()}
       />
-      <StyledSeparator />
-      {_.map(
-        toolType => (
-          <Tool
-            key={toolType.shape}
-            type={toolType.shape}
-            lib={toolType.shape}
-            imgSrc={toolType.img}
-            isActive={activeTool === toolType.shape}
-            setActive={setActiveTool}
+      <StyledShrinkableTools>
+        <StyledShrinkableToolsInner>
+          {_.map(
+            toolType => (
+              <Tool
+                key={toolType.shape}
+                type={toolType.shape}
+                lib={toolType.shape}
+                imgSrc={toolType.img}
+                isActive={activeTool === toolType.shape}
+                setActive={setActiveTool}
+              />
+            ),
+            toolsTypes
+          )}
+          <LoadFileTool
+            loadFile={addPicture}
+            lib="Image"
+            imgSrc={pictureIcon}
+            accept="image/png, image/gif, image/jpeg"
           />
-        ),
-        toolsTypes
-      )}
-
-      <LoadFileTool
-        loadFile={addPicture}
-        lib="Image"
-        imgSrc={pictureIcon}
-        accept="image/png, image/gif, image/jpeg"
-      />
-
-      <StyledSeparator />
+        </StyledShrinkableToolsInner>
+        <StyledTool disabled={false} selected={false} onClick={toggleTools}>
+          Menu
+        </StyledTool>
+      </StyledShrinkableTools>
 
       <LoadFileTool loadFile={loadFile} lib="Load file" accept="application/JSON" />
 
