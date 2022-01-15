@@ -212,6 +212,7 @@ const useDrawableCanvas = ({
     if (!ref) return
 
     const handleMouseDown = (e: MouseEvent | TouchEvent) => {
+      e.preventDefault()
       const cursorPosition = getCursorPosition(e, selectionCanvasRef.current, width, height)
 
       if (activeTool === ToolEnum.selection) {
@@ -306,10 +307,8 @@ const useDrawableCanvas = ({
     }
 
     ref.addEventListener('dblclick', handleDoubleClick)
-    ref.addEventListener('dblclick', handleDoubleClick)
 
     return () => {
-      ref.removeEventListener('dblclick', handleDoubleClick)
       ref.removeEventListener('dblclick', handleDoubleClick)
     }
   }, [selectionCanvasRef, activeTool, selectedShape, width, height, canvasOffset, setSelectionMode])
