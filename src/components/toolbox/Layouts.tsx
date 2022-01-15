@@ -3,7 +3,7 @@ import styled from 'styled-components'
 import _ from 'lodash/fp'
 import { DrawableShape } from 'types/Shapes'
 import deleteIcon from 'assets/icons/trash.svg'
-import { useDrag } from 'hooks/useDrag'
+import useDrag from 'hooks/useDrag'
 
 const StyledLayouts = styled.div<{ hover: boolean }>`
   position: absolute;

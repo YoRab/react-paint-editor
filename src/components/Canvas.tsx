@@ -7,7 +7,7 @@ import { SelectionModeData, SelectionModeLib } from 'types/Mode'
 import { calculateTextWidth } from 'utils/transform'
 import { FRAMERATE_DRAW } from 'constants/draw'
 import EditTextBox from './toolbox/EditTextBox'
-import { useDrawableCanvas } from 'hooks/useDrawableCanvas'
+import useDrawableCanvas from 'hooks/useDrawableCanvas'
 
 const drawCanvas = (
   drawCtx: CanvasRenderingContext2D,

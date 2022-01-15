@@ -10,7 +10,7 @@ type useDragType = {
   onMoveShapes: (firstShapeId: string, lastShapeId: string) => void
 }
 
-export const useDrag = ({
+const useDrag = ({
   ref,
   shape,
   layoutDragging,
@@ -83,3 +83,5 @@ export const useDrag = ({
 
   return { isOver }
 }
+
+export default useDrag

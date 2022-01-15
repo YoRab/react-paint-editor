@@ -4,7 +4,7 @@ type UseComponentType = {
   componentRef: RefObject<HTMLElement>
 }
 
-export const useComponent = ({ componentRef }: UseComponentType) => {
+const useComponent = ({ componentRef }: UseComponentType) => {
   const [isInsideComponent, setIsInsideComponent] = useState(false)
 
   useEffect(() => {
@@ -27,3 +27,5 @@ export const useComponent = ({ componentRef }: UseComponentType) => {
 
   return { isInsideComponent }
 }
+
+export default useComponent

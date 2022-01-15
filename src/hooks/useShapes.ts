@@ -3,7 +3,7 @@ import { DrawableShape } from 'types/Shapes'
 import _ from 'lodash/fp'
 import { createPicture } from 'utils/data'
 
-export const useShapes = () => {
+const useShapes = () => {
   const shapesRef = useRef<DrawableShape[]>([])
 
   const [selectedShape, setSelectedShape] = useState<DrawableShape | undefined>(undefined)
@@ -159,3 +159,5 @@ export const useShapes = () => {
     canClear
   }
 }
+
+export default useShapes
