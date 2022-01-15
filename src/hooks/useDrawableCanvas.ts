@@ -84,7 +84,7 @@ type UseCanvasType = {
   selectionCanvasRef: React.MutableRefObject<HTMLCanvasElement | null>
 }
 
-export const useDrawableCanvas = ({
+const useDrawableCanvas = ({
   addShape,
   drawCanvasRef,
   setActiveTool,
@@ -316,3 +316,5 @@ export const useDrawableCanvas = ({
 
   return { hoverMode }
 }
+
+export default useDrawableCanvas

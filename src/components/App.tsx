@@ -13,7 +13,7 @@ import Toolbox from './toolbox/Toolbox'
 import styled from 'styled-components'
 import SettingsBox from './toolbox/SettingsBox'
 import { STYLE_FONT_DEFAULT } from 'constants/style'
-import { useKeyboard } from 'hooks/useKeyboard'
+import useKeyboard from 'hooks/useKeyboard'
 import {
   decodeJson,
   decodePicturesInShapes,
@@ -22,24 +22,26 @@ import {
   validateJson
 } from 'utils/file'
 import { SelectionModeData, SelectionModeLib } from 'types/Mode'
-import { useComponent } from 'hooks/useComponent'
-import { useShapes } from 'hooks/useShapes'
+import useComponent from 'hooks/useComponent'
+import useShapes from 'hooks/useShapes'
+import SnackbarContainer from './common/Snackbar'
+import useSnackbar from 'hooks/useSnackbar'
+import { SnackbarTypeEnum } from 'constants/snackbar'
 
 const StyledApp = styled.div<{
   toolboxposition: 'top' | 'left'
-  height: number
 }>`
   display: flex;
+  width: fit-content;
+  background: #ededed;
+  position: relative;
   flex-direction: ${({ toolboxposition }) => (toolboxposition === 'top' ? 'column' : 'row')};
-  ${({ height }) => `
-  width:100%;
-  height:${height}px;
-  `}
 `
 
 const StyledRow = styled.div`
   display: flex;
   flex-direction: row;
+  position: relative;
 `
 
 type AppType = {
@@ -48,7 +50,8 @@ type AppType = {
   toolboxPosition?: 'top' | 'left'
   width?: number
   height?: number
-  withLayouts?: boolean
+  withLayouts?: 'always' | 'never' | 'visible' | 'hidden'
+  className?: string
 }
 
 const App = ({
@@ -57,7 +60,8 @@ const App = ({
   toolboxPosition = 'top',
   width = 1000,
   height = 600,
-  withLayouts = true
+  withLayouts = 'hidden',
+  className
 }: AppType) => {
   const componentRef = useRef<HTMLDivElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
@@ -78,6 +82,9 @@ const App = ({
     }
   })
 
+  const [isLayoutPanelShown, setIsLayoutPanelShown] = useState(
+    withLayouts === 'always' || withLayouts === 'visible'
+  )
   const [canvasOffset, setCanvasOffset] = useState<Point>([0, 0])
   const [canvasOffsetStartPosition, setCanvasOffsetStartPosition] = useState<Point | undefined>(
     undefined
@@ -105,6 +112,8 @@ const App = ({
     canGoForward,
     canClear
   } = useShapes()
+
+  const { snackbarList, addSnackbar } = useSnackbar()
 
   const selectTool = useCallback(
     (tool: ToolsType) => {
@@ -150,30 +159,54 @@ const App = ({
   )
 
   const exportCanvasInFile = useCallback(() => {
+    addSnackbar({ type: SnackbarTypeEnum.Infos, text: 'Export en cours...' })
     const dataURL = canvasRef.current?.toDataURL('image/png')
-    if (!dataURL) return
+    if (!dataURL) {
+      addSnackbar({ type: SnackbarTypeEnum.Error, text: "L'export a échoué" })
+      return
+    }
     downloadFile(dataURL, 'drawing.png')
-  }, [])
+    addSnackbar({ type: SnackbarTypeEnum.Success, text: 'Export terminé !' })
+  }, [addSnackbar])
 
   const saveFile = useCallback(() => {
+    addSnackbar({ type: SnackbarTypeEnum.Infos, text: 'Enregistrement...' })
     const content = encodeShapesInString(shapesRef.current)
-    if (!content) return
+    if (!content) {
+      addSnackbar({ type: SnackbarTypeEnum.Error, text: "L'enregistrement a échoué" })
+      return
+    }
     downloadFile(content, 'drawing.json')
-  }, [shapesRef])
+    addSnackbar({ type: SnackbarTypeEnum.Success, text: 'Fichier enregistré !' })
+  }, [shapesRef, addSnackbar])
+
+  const loadJson = useCallback(
+    (json: unknown) => {
+      const isValidated = validateJson(json)
+      if (!isValidated) throw new Error('Le fichier est corrompu')
+      const shapes = decodePicturesInShapes(json as DrawableShapeJson[])
+      clearCanvas(shapes)
+    },
+    [clearCanvas]
+  )
 
   const loadFile = useCallback(
     async (file: File) => {
       try {
+        addSnackbar({ type: SnackbarTypeEnum.Infos, text: 'Chargement...' })
+
         const json = await decodeJson(file)
-        const isValidated = validateJson(json)
-        if (!isValidated) throw new Error('Le fichier est corrompu')
-        const shapes = decodePicturesInShapes(json as DrawableShapeJson[])
-        clearCanvas(shapes)
+        loadJson(json)
+        addSnackbar({ type: SnackbarTypeEnum.Success, text: 'Fichier chargé !' })
       } catch (e) {
-        console.warn(e)
+        if (e instanceof Error) {
+          addSnackbar({ type: SnackbarTypeEnum.Error, text: e.message })
+        } else {
+          console.warn(e)
+        }
       }
     },
-    [clearCanvas]
+    [loadJson, addSnackbar]
   )
 
   const addPicture = useCallback(
@@ -201,7 +234,7 @@ const App = ({
   }, [isInsideComponent, setSelectedShape])
 
   return (
-    <StyledApp ref={componentRef} toolboxposition={toolboxPosition} height={height} tabIndex={0}>
+    <StyledApp ref={componentRef} toolboxposition={toolboxPosition} className={className}>
       <Toolbox
         activeTool={activeTool}
         clearCanvas={clearCanvas}
@@ -240,7 +273,7 @@ const App = ({
           selectionMode={selectionMode}
           setSelectionMode={setSelectionMode}
         />
-        {withLayouts && (
+        {isLayoutPanelShown && (
           <Layouts
             shapes={shapesRef.current}
             moveShapes={moveShapes}
@@ -261,10 +294,13 @@ const App = ({
           defaultConf={defaultConf}
           setDefaultConf={setDefaultConf}
           canvas={canvasRef.current}
-          givenWidth={width}
-          givenHeight={height}
+          withLayouts={withLayouts}
+          toggleLayoutPanel={() => {
+            setIsLayoutPanelShown(prev => !prev)
+          }}
         />
       )}
+      <SnackbarContainer snackbarList={snackbarList} />
     </StyledApp>
   )
 }

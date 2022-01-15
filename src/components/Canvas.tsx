@@ -7,7 +7,7 @@ import { SelectionModeData, SelectionModeLib } from 'types/Mode'
 import { calculateTextWidth } from 'utils/transform'
 import { FRAMERATE_DRAW } from 'constants/draw'
 import EditTextBox from './toolbox/EditTextBox'
-import { useDrawableCanvas } from 'hooks/useDrawableCanvas'
+import useDrawableCanvas from 'hooks/useDrawableCanvas'
 
 const drawCanvas = (
   drawCtx: CanvasRenderingContext2D,
@@ -64,7 +64,6 @@ const StyledDrawCanvas = styled.canvas.attrs<{
 }>`
   position: absolute;
   user-select: none;
-  border: 1px solid black;
   max-width: 100%;
   touch-action: none; /* prevent scroll on touch */
 `
@@ -83,7 +82,6 @@ const StyledSelectionCanvas = styled.canvas.attrs<{
   height: number
 }>`
   user-select: none;
-  border: 1px solid black;
   position: relative;
   max-width: 100%;
   touch-action: none; /* prevent scroll on touch */

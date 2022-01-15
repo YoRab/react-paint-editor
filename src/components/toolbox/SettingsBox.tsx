@@ -17,21 +17,10 @@ import {
   StyledShape,
   ToolsType
 } from 'types/Shapes'
-import { getSettingsPosition } from 'utils/intersect'
 import deleteIcon from 'assets/icons/trash.svg'
 import { calculateTextFontSize, updatePolygonLinesCount } from 'utils/transform'
 
-const StyledSettingsBox = styled.div.attrs<{
-  left: number
-  top: number
-}>(({ left, top }) => ({
-  style: {
-    left: `${left}px`,
-    top: `${top}px`
-  }
-}))<{
-  left: number
-  top: number
+const StyledSettingsBox = styled.div<{
   hover: boolean
 }>`
   user-select: none;
@@ -45,6 +34,27 @@ const StyledSettingsBox = styled.div.attrs<{
   
   `}
 `
+
+const StyledSeparator = styled.div`
+  flex: 1;
+`
+
+const StyleToggleLayoutButton = styled.button`
+  width: 36px;
+  height: 36px;
+  display: flex;
+  box-sizing: border-box;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  cursor: pointer;
+
+  &:hover:not(:disabled) {
+    background: lightgray;
+  }
+`
+
 const StyledDeleteButton = styled.button`
   width: 36px;
   height: 36px;
@@ -110,25 +120,25 @@ const ShapeStyleSelect = ({ field, values, defaultValue, valueChanged }: ShapeSt
 }
 
 type SettingsBoxType = {
+  withLayouts?: 'always' | 'never' | 'visible' | 'hidden'
   activeTool: ToolsType
   settingsHover: boolean
   selectedShape: DrawableShape | undefined
   canvas: HTMLCanvasElement | null
-  givenWidth: number
-  givenHeight: number
   updateShape: (shape: DrawableShape) => void
   removeShape: (shape: DrawableShape) => void
   defaultConf: StyledShape
   setDefaultConf: React.Dispatch<React.SetStateAction<StyledShape>>
+  toggleLayoutPanel: () => void
 }
 
 const SettingsBox = ({
+  withLayouts,
+  toggleLayoutPanel,
   activeTool,
   settingsHover,
   selectedShape,
   canvas,
-  givenWidth,
-  givenHeight,
   updateShape,
   removeShape,
   defaultConf,
@@ -181,14 +191,8 @@ const SettingsBox = ({
     }
   }
 
-  const pointPosition = useMemo(() => {
-    return settingsHover && selectedShape
-      ? getSettingsPosition(selectedShape, canvas, givenWidth, givenHeight)
-      : [0, 0]
-  }, [selectedShape, settingsHover, canvas, givenWidth, givenHeight])
-
   return (
-    <StyledSettingsBox hover={settingsHover} left={pointPosition[0]} top={pointPosition[1]}>
+    <StyledSettingsBox hover={settingsHover}>
       {selectedShape ? (
         <>
           {shapes.includes(selectedShape?.type) && (
@@ -319,6 +323,13 @@ const SettingsBox = ({
           </>
         )
       )}
+      <StyledSeparator />
+      {withLayouts === 'visible' ||
+        (withLayouts === 'hidden' && (
+          <StyleToggleLayoutButton onClick={toggleLayoutPanel}>
+            Toggle layout
+          </StyleToggleLayoutButton>
+        ))}
     </StyledSettingsBox>
   )
 }

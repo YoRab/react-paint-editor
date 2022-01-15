@@ -16,7 +16,7 @@ type UseKeyboardType = {
   isEditingText: boolean
 }
 
-export const useKeyboard = ({
+const useKeyboard = ({
   isInsideComponent,
   selectedShape,
   isEditingText,
@@ -138,3 +138,5 @@ export const useKeyboard = ({
 
   return {}
 }
+
+export default useKeyboard

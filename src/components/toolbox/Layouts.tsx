@@ -3,12 +3,16 @@ import styled from 'styled-components'
 import _ from 'lodash/fp'
 import { DrawableShape } from 'types/Shapes'
 import deleteIcon from 'assets/icons/trash.svg'
-import { useDrag } from 'hooks/useDrag'
+import useDrag from 'hooks/useDrag'
 
 const StyledLayouts = styled.div<{ hover: boolean }>`
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
   display: inline-block;
-  border: 1px solid black;
-  width: 200px;
+  background: #ededed;
+  width: 100px;
   overflow-y: auto;
 
   ${({ hover }) =>
@@ -21,7 +25,7 @@ const StyledLayouts = styled.div<{ hover: boolean }>`
 `
 
 const StyledLayout = styled.div<{ selected: boolean; isdragging: boolean; isover: boolean }>`
-  border: 1px solid black;
+  border: 1px solid #666;
   padding: 12px;
   padding-right: 24px;
   position: relative;
