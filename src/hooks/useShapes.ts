@@ -21,7 +21,7 @@ const useShapes = () => {
 
   const canGoBackward = savedShapes.cursor > 0
   const canGoForward = savedShapes.cursor < savedShapes.states.length - 1
-  const canClear = savedShapes.states.length > 1
+  const canClear = shapesRef.current.length > 0
 
   const saveShapes = useCallback(() => {
     setSavedShapes(prevSavedShaped => {
