@@ -6,13 +6,9 @@ import deleteIcon from 'assets/icons/trash.svg'
 import useDrag from 'hooks/useDrag'
 
 const StyledLayouts = styled.div<{ hover: boolean }>`
-  position: absolute;
-  right: 0;
-  top: 0;
-  bottom: 0;
   display: inline-block;
   background: #ededed;
-  width: 100px;
+  width: 200px;
   overflow-y: auto;
 
   ${({ hover }) =>

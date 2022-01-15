@@ -32,7 +32,7 @@ const StyledSnackbar = styled.div<{
   display: inline-block;
 
   padding: 12px 48px;
-  margin: 8px;
+  margin: 4px;
   max-width: calc(100% - 24px);
   overflow-wrap: break-word;
   box-sizing: border-box;

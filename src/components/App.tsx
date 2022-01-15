@@ -35,13 +35,22 @@ const StyledApp = styled.div<{
   width: fit-content;
   background: #ededed;
   position: relative;
+  max-width: 100%;
   flex-direction: ${({ toolboxposition }) => (toolboxposition === 'top' ? 'column' : 'row')};
 `
 
-const StyledRow = styled.div`
+const StyledRow = styled.div<{
+  width: number
+  height: number
+}>`
   display: flex;
   flex-direction: row;
   position: relative;
+  max-width: 100%;
+  ${({ width, height }) => `
+    width:${width}px;
+    aspect-ratio:${width / height}
+  `}
 `
 
 type AppType = {
@@ -251,7 +260,7 @@ const App = ({
         toolboxPosition={toolboxPosition}
         hover={hover}
       />
-      <StyledRow>
+      <StyledRow width={width} height={height}>
         <Canvas
           isInsideComponent={isInsideComponent}
           activeTool={activeTool}

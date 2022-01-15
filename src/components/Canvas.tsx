@@ -42,7 +42,6 @@ const StyledCanvasBox = styled.div`
   display: flex;
   align-items: center;
   justify-content: center;
-  background: lightgray;
 `
 
 const StyledCanvasContainer = styled.div`
@@ -66,6 +65,7 @@ const StyledDrawCanvas = styled.canvas.attrs<{
   user-select: none;
   max-width: 100%;
   touch-action: none; /* prevent scroll on touch */
+  display: block;
 `
 
 const StyledSelectionCanvas = styled.canvas.attrs<{
@@ -85,6 +85,7 @@ const StyledSelectionCanvas = styled.canvas.attrs<{
   position: relative;
   max-width: 100%;
   touch-action: none; /* prevent scroll on touch */
+  display: block;
 
   ${({ selectionmode, activetool }) =>
     (activetool !== ToolEnum.selection && activetool !== ToolEnum.move) ||
