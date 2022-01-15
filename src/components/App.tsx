@@ -181,10 +181,10 @@ const App = ({
   }, [shapesRef, addSnackbar])
 
   const loadJson = useCallback(
-    (json: unknown) => {
+    async (json: unknown) => {
       const isValidated = validateJson(json)
       if (!isValidated) throw new Error('Le fichier est corrompu')
-      const shapes = decodePicturesInShapes(json as DrawableShapeJson[])
+      const shapes = await decodePicturesInShapes(json as DrawableShapeJson[])
       clearCanvas(shapes)
     },
     [clearCanvas]
@@ -196,7 +196,7 @@ const App = ({
         addSnackbar({ type: SnackbarTypeEnum.Infos, text: 'Chargement...' })
 
         const json = await decodeJson(file)
-        loadJson(json)
+        await loadJson(json)
         addSnackbar({ type: SnackbarTypeEnum.Success, text: 'Fichier chargé !' })
       } catch (e) {
         if (e instanceof Error) {
