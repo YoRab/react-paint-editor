@@ -5,6 +5,8 @@
   "keywords": [],
   "author": "Yohann Rabatel",
   "license": "MIT",
+  "main": "./dist/bundle.js",
+  "types": "./dist/index.d.ts",
   "dependencies": {
     "ajv": "8.8.2",
     "react": "17.0.2",
