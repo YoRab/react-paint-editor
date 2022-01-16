@@ -33,7 +33,8 @@ const StyledApp = styled.div<{
 }>`
   display: flex;
   width: fit-content;
-  background: #ededed;
+  background: black;
+  color: white;
   position: relative;
   max-width: 100%;
   flex-direction: ${({ toolboxposition }) => (toolboxposition === 'top' ? 'column' : 'row')};

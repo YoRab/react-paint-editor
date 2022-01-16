@@ -1,20 +1,22 @@
 import _ from 'lodash/fp'
-import React, { useRef, useState } from 'react'
+import React, { FunctionComponent, useRef, useState } from 'react'
 import styled from 'styled-components'
 import { ShapeEnum, ToolEnum, ToolsType } from 'types/Shapes'
 
-import circleIcon from 'assets/icons/circle.svg'
-import pictureIcon from 'assets/icons/image.svg'
-import selectIcon from 'assets/icons/mouse-pointer.svg'
-import redoIcon from 'assets/icons/redo.svg'
-import saveIcon from 'assets/icons/save.svg'
-import squareIcon from 'assets/icons/square.svg'
-import clearIcon from 'assets/icons/times.svg'
-import undoIcon from 'assets/icons/undo.svg'
+import { ReactComponent as CircleIcon } from 'assets/icons/circle.svg'
+import { ReactComponent as PictureIcon } from 'assets/icons/image.svg'
+import { ReactComponent as SelectIcon } from 'assets/icons/mouse-pointer.svg'
+import { ReactComponent as RedoIcon } from 'assets/icons/redo.svg'
+import { ReactComponent as SaveIcon } from 'assets/icons/save.svg'
+import { ReactComponent as SquareIcon } from 'assets/icons/square.svg'
+import { ReactComponent as ClearIcon } from 'assets/icons/times.svg'
+import { ReactComponent as UndoIcon } from 'assets/icons/undo.svg'
 
 const StyledTool = styled.button<{ selected: boolean }>`
   width: 36px;
   height: 36px;
+
+  color: white;
   display: inline-flex;
   vertical-align: middle;
   box-sizing: border-box;
@@ -33,7 +35,7 @@ const StyledTool = styled.button<{ selected: boolean }>`
   `}
 
   &:hover:not(:disabled) {
-    background: lightgray;
+    background: #3a3a3a;
   }
 
   &:disabled {
@@ -45,7 +47,8 @@ const StyledTool = styled.button<{ selected: boolean }>`
     display: none;
   }
 
-  img {
+  svg {
+    color: white;
     width: 16px;
     height: 16px;
   }
@@ -63,7 +66,6 @@ const StyledShrinkableTools = styled.div`
     position: absolute;
     right: 0;
     bottom: 36px;
-    background: #ededed;
   }
 `
 
@@ -95,27 +97,27 @@ const StyledToolbox = styled.div<{
 const StyledShrinkableToolsInner = styled.div`
   display: inline-block;
   text-align: left;
-  background: #ededed;
+  background: black;
   padding-right: 36px;
 `
 
 type ToolType = {
   type: ToolsType
   lib: string
-  imgSrc?: string
+  Img?: FunctionComponent
   isActive: boolean
   isDisabled?: boolean
   setActive: (marker: ToolsType) => void
 }
 
-const Tool = ({ type, lib, imgSrc, isActive, isDisabled = false, setActive }: ToolType) => {
+const Tool = ({ type, lib, Img, isActive, isDisabled = false, setActive }: ToolType) => {
   const handleClick = () => {
     setActive(type)
   }
 
   return (
     <StyledTool disabled={isDisabled} selected={isActive} onClick={handleClick}>
-      {imgSrc ? <img src={imgSrc} /> : lib}
+      {Img ? <Img /> : lib}
     </StyledTool>
   )
 }
@@ -123,11 +125,11 @@ const Tool = ({ type, lib, imgSrc, isActive, isDisabled = false, setActive }: To
 type LoadFileToolType = {
   loadFile: (file: File) => void
   lib: string
-  imgSrc?: string
+  Img?: FunctionComponent
   accept: string
 }
 
-const LoadFileTool = ({ loadFile, lib, imgSrc, accept }: LoadFileToolType) => {
+const LoadFileTool = ({ loadFile, lib, Img, accept }: LoadFileToolType) => {
   const inputRef = useRef<HTMLInputElement>(null)
 
   const handleClick = () => {
@@ -149,7 +151,7 @@ const LoadFileTool = ({ loadFile, lib, imgSrc, accept }: LoadFileToolType) => {
         onChange={handleChange}
         accept={accept}
       />
-      {imgSrc ? <img src={imgSrc} /> : lib}
+      {Img ? <Img /> : lib}
     </StyledTool>
   )
 }
@@ -187,12 +189,12 @@ const Toolbox = ({
   toolboxPosition,
   hover
 }: ToolboxType) => {
-  const toolsTypes: { shape: ShapeEnum; img?: string }[] = [
+  const toolsTypes: { shape: ShapeEnum; img?: FunctionComponent }[] = [
     { shape: ShapeEnum.brush },
     { shape: ShapeEnum.line },
     { shape: ShapeEnum.polygon },
-    { shape: ShapeEnum.rect, img: squareIcon },
-    { shape: ShapeEnum.circle, img: circleIcon },
+    { shape: ShapeEnum.rect, img: SquareIcon },
+    { shape: ShapeEnum.circle, img: CircleIcon },
     { shape: ShapeEnum.ellipse },
     { shape: ShapeEnum.text }
   ]
@@ -208,7 +210,7 @@ const Toolbox = ({
       <Tool
         type={ToolEnum.selection}
         lib="selection"
-        imgSrc={selectIcon}
+        Img={SelectIcon}
         isActive={activeTool === ToolEnum.selection}
         setActive={setActiveTool}
       />
@@ -223,7 +225,7 @@ const Toolbox = ({
         type={ToolEnum.undo}
         isDisabled={!hasActionToUndo}
         lib="Undo"
-        imgSrc={undoIcon}
+        Img={UndoIcon}
         isActive={activeTool === ToolEnum.undo}
         setActive={undoAction}
       />
@@ -231,7 +233,7 @@ const Toolbox = ({
         type={ToolEnum.redo}
         isDisabled={!hasActionToRedo}
         lib="Redo"
-        imgSrc={redoIcon}
+        Img={RedoIcon}
         isActive={activeTool === ToolEnum.redo}
         setActive={redoAction}
       />
@@ -239,7 +241,7 @@ const Toolbox = ({
         type={ToolEnum.clear}
         isDisabled={!hasActionToClear}
         lib="Clear"
-        imgSrc={clearIcon}
+        Img={ClearIcon}
         isActive={activeTool === ToolEnum.clear}
         setActive={() => clearCanvas()}
       />
@@ -251,7 +253,7 @@ const Toolbox = ({
                 key={toolType.shape}
                 type={toolType.shape}
                 lib={toolType.shape}
-                imgSrc={toolType.img}
+                Img={toolType.img}
                 isActive={activeTool === toolType.shape}
                 setActive={setActiveTool}
               />
@@ -261,7 +263,7 @@ const Toolbox = ({
           <LoadFileTool
             loadFile={addPicture}
             lib="Image"
-            imgSrc={pictureIcon}
+            Img={PictureIcon}
             accept="image/png, image/gif, image/jpeg"
           />
         </StyledShrinkableToolsInner>
@@ -282,7 +284,7 @@ const Toolbox = ({
       <Tool
         type={ToolEnum.export}
         lib="Export"
-        imgSrc={saveIcon}
+        Img={SaveIcon}
         isActive={activeTool === ToolEnum.export}
         setActive={exportCanvasInFile}
       />
