@@ -1,5 +1,5 @@
 import _ from 'lodash/fp'
-import React, { useCallback, useMemo } from 'react'
+import React, { useMemo } from 'react'
 import styled from 'styled-components'
 import {
   POLYGON_POINTS_VALUES,
@@ -17,21 +17,10 @@ import {
   StyledShape,
   ToolsType
 } from 'types/Shapes'
-import { getSettingsPosition } from 'utils/intersect'
 import deleteIcon from 'assets/icons/trash.svg'
 import { calculateTextFontSize, updatePolygonLinesCount } from 'utils/transform'
 
-const StyledSettingsBox = styled.div.attrs<{
-  left: number
-  top: number
-}>(({ left, top }) => ({
-  style: {
-    left: `${left}px`,
-    top: `${top}px`
-  }
-}))<{
-  left: number
-  top: number
+const StyledSettingsBox = styled.div<{
   hover: boolean
 }>`
   user-select: none;
@@ -45,6 +34,27 @@ const StyledSettingsBox = styled.div.attrs<{
   
   `}
 `
+
+const StyledSeparator = styled.div`
+  flex: 1;
+`
+
+const StyleToggleLayoutButton = styled.button`
+  width: 36px;
+  height: 36px;
+  display: flex;
+  box-sizing: border-box;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  cursor: pointer;
+
+  &:hover:not(:disabled) {
+    background: lightgray;
+  }
+`
+
 const StyledDeleteButton = styled.button`
   width: 36px;
   height: 36px;
@@ -72,9 +82,9 @@ type DeleteShapeButtonType = {
 }
 
 const DeleteShapeButton = ({ selectedShape, removeShape }: DeleteShapeButtonType) => {
-  const handleRemove = useCallback(() => {
+  const handleRemove = () => {
     removeShape(selectedShape)
-  }, [selectedShape, removeShape])
+  }
 
   return (
     <StyledDeleteButton onClick={handleRemove}>
@@ -91,13 +101,10 @@ type ShapeStyleSelectType = {
 }
 
 const ShapeStyleSelect = ({ field, values, defaultValue, valueChanged }: ShapeStyleSelectType) => {
-  const handleChange = useCallback(
-    (event: React.ChangeEvent<HTMLSelectElement>) => {
-      const parsedValue = _.toNumber(event.target.value)
-      valueChanged(field, _.isNaN(parsedValue) ? event.target.value : parsedValue)
-    },
-    [field, valueChanged]
-  )
+  const handleChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
+    const parsedValue = _.toNumber(event.target.value)
+    valueChanged(field, _.isNaN(parsedValue) ? event.target.value : parsedValue)
+  }
 
   return (
     <select onChange={handleChange}>
@@ -113,25 +120,25 @@ const ShapeStyleSelect = ({ field, values, defaultValue, valueChanged }: ShapeSt
 }
 
 type SettingsBoxType = {
+  withLayouts?: 'always' | 'never' | 'visible' | 'hidden'
   activeTool: ToolsType
   settingsHover: boolean
   selectedShape: DrawableShape | undefined
   canvas: HTMLCanvasElement | null
-  givenWidth: number
-  givenHeight: number
   updateShape: (shape: DrawableShape) => void
   removeShape: (shape: DrawableShape) => void
   defaultConf: StyledShape
   setDefaultConf: React.Dispatch<React.SetStateAction<StyledShape>>
+  toggleLayoutPanel: () => void
 }
 
 const SettingsBox = ({
+  withLayouts,
+  toggleLayoutPanel,
   activeTool,
   settingsHover,
   selectedShape,
   canvas,
-  givenWidth,
-  givenHeight,
   updateShape,
   removeShape,
   defaultConf,
@@ -146,61 +153,46 @@ const SettingsBox = ({
     ShapeEnum.polygon,
     ShapeEnum.text
   ]
-  const handleShapeStyleChange = useCallback(
-    (field: string, value: string | number) => {
-      if (selectedShape) {
-        updateShape(_.set(field, value, selectedShape))
-      } else {
-        setDefaultConf(prevDefaultConf => _.set(field, value, prevDefaultConf))
-      }
-    },
-    [selectedShape, updateShape, setDefaultConf]
-  )
+  const handleShapeStyleChange = (field: string, value: string | number) => {
+    if (selectedShape) {
+      updateShape(_.set(field, value, selectedShape))
+    } else {
+      setDefaultConf(prevDefaultConf => _.set(field, value, prevDefaultConf))
+    }
+  }
 
-  const handleShapeFontFamilyChange = useCallback(
-    (field: string, value: string | number) => {
-      if (selectedShape) {
-        const ctx = canvas?.getContext('2d')
-        if (!ctx) return
-        const newShape = _.set(field, value, selectedShape) as DrawableText
-        const fontSize = calculateTextFontSize(
-          ctx,
-          newShape.value,
-          newShape.width,
-          newShape.style?.fontFamily
-        )
-        const resizedShape = {
-          ...newShape,
-          fontSize,
-          height: fontSize * newShape.value.length
-        }
-        updateShape(resizedShape)
-      } else {
-        setDefaultConf(prevDefaultConf => _.set(field, value, prevDefaultConf))
+  const handleShapeFontFamilyChange = (field: string, value: string | number) => {
+    if (selectedShape) {
+      const ctx = canvas?.getContext('2d')
+      if (!ctx) return
+      const newShape = _.set(field, value, selectedShape) as DrawableText
+      const fontSize = calculateTextFontSize(
+        ctx,
+        newShape.value,
+        newShape.width,
+        newShape.style?.fontFamily
+      )
+      const resizedShape = {
+        ...newShape,
+        fontSize,
+        height: fontSize * newShape.value.length
       }
-    },
-    [canvas, selectedShape, updateShape, setDefaultConf]
-  )
+      updateShape(resizedShape)
+    } else {
+      setDefaultConf(prevDefaultConf => _.set(field, value, prevDefaultConf))
+    }
+  }
 
-  const handlePolygonLinesCount = useCallback(
-    (field: string, value: string | number) => {
-      if (selectedShape) {
-        updateShape(updatePolygonLinesCount(selectedShape as DrawablePolygon, value as number))
-      } else {
-        setDefaultConf(prevDefaultConf => _.set(field, value, prevDefaultConf))
-      }
-    },
-    [selectedShape, updateShape, setDefaultConf]
-  )
-
-  const pointPosition = useMemo(() => {
-    return settingsHover && selectedShape
-      ? getSettingsPosition(selectedShape, canvas, givenWidth, givenHeight)
-      : [0, 0]
-  }, [selectedShape, settingsHover, canvas, givenWidth, givenHeight])
+  const handlePolygonLinesCount = (field: string, value: string | number) => {
+    if (selectedShape) {
+      updateShape(updatePolygonLinesCount(selectedShape as DrawablePolygon, value as number))
+    } else {
+      setDefaultConf(prevDefaultConf => _.set(field, value, prevDefaultConf))
+    }
+  }
 
   return (
-    <StyledSettingsBox hover={settingsHover} left={pointPosition[0]} top={pointPosition[1]}>
+    <StyledSettingsBox hover={settingsHover}>
       {selectedShape ? (
         <>
           {shapes.includes(selectedShape?.type) && (
@@ -331,6 +323,13 @@ const SettingsBox = ({
           </>
         )
       )}
+      <StyledSeparator />
+      {withLayouts === 'visible' ||
+        (withLayouts === 'hidden' && (
+          <StyleToggleLayoutButton onClick={toggleLayoutPanel}>
+            Toggle layout
+          </StyleToggleLayoutButton>
+        ))}
     </StyledSettingsBox>
   )
 }

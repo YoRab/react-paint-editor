@@ -53,11 +53,21 @@ export const decodeJson = async (file: File) => {
   })
 }
 
-export const decodePicturesInShapes = (shapesForJson: DrawableShapeJson[]) => {
+export const decodePicturesInShapes = async (shapesForJson: DrawableShapeJson[]) => {
+  const promisesArray: Promise<void>[] = []
+
   const shapes: DrawableShape[] = shapesForJson.map(shape => {
     if (shape.type === ShapeEnum.picture) {
       const img = new Image()
+      const newPromise = new Promise<void>(resolve => {
+        img.onload = () => {
+          resolve()
+        }
+      })
+      promisesArray.push(newPromise)
+
       img.src = shape.img
+
       return {
         ...shape,
         img
@@ -65,6 +75,8 @@ export const decodePicturesInShapes = (shapesForJson: DrawableShapeJson[]) => {
     }
     return shape
   })
+
+  await Promise.all(promisesArray)
   return shapes
 }
 

@@ -1,5 +1,4 @@
-import _ from 'lodash/fp'
-import React, { useCallback, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useRef, useState } from 'react'
 import {
   DrawableShape,
   DrawableShapeJson,
@@ -14,6 +13,7 @@ import Toolbox from './toolbox/Toolbox'
 import styled from 'styled-components'
 import SettingsBox from './toolbox/SettingsBox'
 import { STYLE_FONT_DEFAULT } from 'constants/style'
+import useKeyboard from 'hooks/useKeyboard'
 import {
   decodeJson,
   decodePicturesInShapes,
@@ -21,22 +21,36 @@ import {
   encodeShapesInString,
   validateJson
 } from 'utils/file'
+import { SelectionModeData, SelectionModeLib } from 'types/Mode'
+import useComponent from 'hooks/useComponent'
+import useShapes from 'hooks/useShapes'
+import SnackbarContainer from './common/Snackbar'
+import useSnackbar from 'hooks/useSnackbar'
+import { SnackbarTypeEnum } from 'constants/snackbar'
 
 const StyledApp = styled.div<{
   toolboxposition: 'top' | 'left'
+}>`
+  display: flex;
+  width: fit-content;
+  background: #ededed;
+  position: relative;
+  max-width: 100%;
+  flex-direction: ${({ toolboxposition }) => (toolboxposition === 'top' ? 'column' : 'row')};
+`
+
+const StyledRow = styled.div<{
+  width: number
   height: number
 }>`
   display: flex;
-  flex-direction: ${({ toolboxposition }) => (toolboxposition === 'top' ? 'column' : 'row')};
-  ${({ height }) => `
-  width:100%;
-  height:${height}px;
-  `}
-`
-
-const StyledRow = styled.div`
-  display: flex;
   flex-direction: row;
+  position: relative;
+  max-width: 100%;
+  ${({ width, height }) => `
+    width:${width}px;
+    aspect-ratio:${width / height}
+  `}
 `
 
 type AppType = {
@@ -45,7 +59,8 @@ type AppType = {
   toolboxPosition?: 'top' | 'left'
   width?: number
   height?: number
-  withLayouts?: boolean
+  withLayouts?: 'always' | 'never' | 'visible' | 'hidden'
+  className?: string
 }
 
 const App = ({
@@ -54,8 +69,16 @@ const App = ({
   toolboxPosition = 'top',
   width = 1000,
   height = 600,
-  withLayouts = true
+  withLayouts = 'hidden',
+  className
 }: AppType) => {
+  const componentRef = useRef<HTMLDivElement>(null)
+  const canvasRef = useRef<HTMLCanvasElement>(null)
+
+  const { isInsideComponent } = useComponent({
+    componentRef
+  })
+
   const [defaultConf, setDefaultConf] = useState<StyledShape>({
     style: {
       fillColor: 'transparent',
@@ -67,177 +90,179 @@ const App = ({
       fontFamily: STYLE_FONT_DEFAULT
     }
   })
+
+  const [isLayoutPanelShown, setIsLayoutPanelShown] = useState(
+    withLayouts === 'always' || withLayouts === 'visible'
+  )
   const [canvasOffset, setCanvasOffset] = useState<Point>([0, 0])
   const [canvasOffsetStartPosition, setCanvasOffsetStartPosition] = useState<Point | undefined>(
     undefined
   )
   const [activeTool, setActiveTool] = useState<ToolsType>(ToolEnum.selection)
-  const [selectedShape, setSelectedShape] = useState<DrawableShape | undefined>(undefined)
 
-  const shapesRef = useRef<DrawableShape[]>([])
-
-  const [savedShapes, setSavedShapes] = useState<{
-    states: {
-      shapes: DrawableShape[]
-      selectedShape: DrawableShape | undefined
-    }[]
-    cursor: number
-  }>({
-    states: [{ shapes: [], selectedShape: undefined }],
-    cursor: 0
+  const [selectionMode, setSelectionMode] = useState<SelectionModeData<Point | number>>({
+    mode: SelectionModeLib.default
   })
 
-  const canvasRef = useRef<HTMLCanvasElement>(null)
+  const {
+    shapesRef,
+    selectedShape,
+    addShape,
+    addPictureShape,
+    moveShapes,
+    setSelectedShape,
+    removeShape,
+    updateShape,
+    backwardShape,
+    forwardShape,
+    clearShapes,
+    saveShapes,
+    canGoBackward,
+    canGoForward,
+    canClear
+  } = useShapes()
 
-  const selectTool = useCallback((tool: ToolsType) => {
-    setSelectedShape(undefined)
-    setActiveTool(tool)
-  }, [])
+  const { snackbarList, addSnackbar } = useSnackbar()
 
-  const saveShapes = useCallback(() => {
-    setSavedShapes(prevSavedShaped => {
-      return _.isEqual(
-        _.get([prevSavedShaped.cursor, 'shapes'], prevSavedShaped.states),
-        shapesRef.current
-      )
-        ? prevSavedShaped
-        : {
-            states: [
-              ...prevSavedShaped.states.slice(0, prevSavedShaped.cursor + 1),
-              {
-                shapes: shapesRef.current,
-                selectedShape
-              }
-            ],
-            cursor: prevSavedShaped.cursor + 1
-          }
-    })
-  }, [selectedShape])
+  const selectTool = useCallback(
+    (tool: ToolsType) => {
+      setSelectedShape(undefined)
+      setActiveTool(tool)
+    },
+    [setSelectedShape]
+  )
 
   const undoAction = useCallback(() => {
     selectTool(ToolEnum.selection)
-
-    setSavedShapes(prevSavedShaped => {
-      const newCursor = Math.max(0, prevSavedShaped.cursor - 1)
-      shapesRef.current = _.get([newCursor, 'shapes'], prevSavedShaped.states)
-      setSelectedShape(_.get([newCursor, 'selectedShape'], prevSavedShaped.states))
-      return _.set('cursor', newCursor, prevSavedShaped)
-    })
-  }, [selectTool])
+    backwardShape()
+  }, [selectTool, backwardShape])
 
   const redoAction = useCallback(() => {
     selectTool(ToolEnum.selection)
-
-    setSavedShapes(prevSavedShaped => {
-      const newCursor = Math.min(prevSavedShaped.states.length - 1, prevSavedShaped.cursor + 1)
-      shapesRef.current = _.get([newCursor, 'shapes'], prevSavedShaped.states)
-      setSelectedShape(_.get([newCursor, 'selectedShape'], prevSavedShaped.states))
-      return _.set('cursor', newCursor, prevSavedShaped)
-    })
-  }, [selectTool])
-
-  const addShape = useCallback((newShape: DrawableShape) => {
-    shapesRef.current = [newShape, ...shapesRef.current]
-  }, [])
-
-  const updateShape = useCallback(
-    (updatedShape: DrawableShape) => {
-      shapesRef.current = shapesRef.current.map(marker => {
-        return marker.id === selectedShape?.id ? updatedShape : marker
-      })
-      setSelectedShape(prevSelectedShape =>
-        prevSelectedShape?.id === updatedShape.id ? updatedShape : prevSelectedShape
-      )
-    },
-    [selectedShape]
-  )
-
-  const updateShapes = useCallback(
-    (newShapes: DrawableShape[]) => {
-      const pureShapes = newShapes.map(shape => _.omit(['chosen'], shape)) as DrawableShape[]
-      shapesRef.current = pureShapes
-      saveShapes()
-    },
-    [saveShapes]
-  )
-
-  const removeShape = useCallback(
-    (shape: DrawableShape) => {
-      setSelectedShape(prevSelectedShape =>
-        prevSelectedShape?.id === shape.id ? undefined : prevSelectedShape
-      )
-      shapesRef.current = _.remove({ id: shape.id }, shapesRef.current)
-      saveShapes()
-    },
-    [saveShapes]
-  )
+    forwardShape()
+  }, [selectTool, forwardShape])
 
   const clearCanvas = useCallback(
     (shapesToInit: DrawableShape[] = []) => {
-      setSelectedShape(undefined)
-      shapesRef.current = shapesToInit
-      setSavedShapes({
-        states: [{ shapes: shapesToInit, selectedShape: undefined }],
-        cursor: 0
-      })
+      clearShapes(shapesToInit)
       selectTool(ToolEnum.selection)
       setCanvasOffset([0, 0])
     },
-    [selectTool]
+    [selectTool, clearShapes]
+  )
+
+  const selectShape = useCallback(
+    (shape: DrawableShape) => {
+      setActiveTool(ToolEnum.selection)
+      setSelectedShape(shape)
+    },
+    [setSelectedShape]
+  )
+
+  const pasteShape = useCallback(
+    (shape: DrawableShape) => {
+      addShape(shape)
+      selectShape(shape)
+    },
+    [addShape, selectShape]
   )
 
   const exportCanvasInFile = useCallback(() => {
+    addSnackbar({ type: SnackbarTypeEnum.Infos, text: 'Export en cours...' })
     const dataURL = canvasRef.current?.toDataURL('image/png')
-    if (!dataURL) return
+    if (!dataURL) {
+      addSnackbar({ type: SnackbarTypeEnum.Error, text: "L'export a échoué" })
+      return
+    }
     downloadFile(dataURL, 'drawing.png')
-  }, [])
+    addSnackbar({ type: SnackbarTypeEnum.Success, text: 'Export terminé !' })
+  }, [addSnackbar])
 
   const saveFile = useCallback(() => {
+    addSnackbar({ type: SnackbarTypeEnum.Infos, text: 'Enregistrement...' })
     const content = encodeShapesInString(shapesRef.current)
-    if (!content) return
+    if (!content) {
+      addSnackbar({ type: SnackbarTypeEnum.Error, text: "L'enregistrement a échoué" })
+      return
+    }
     downloadFile(content, 'drawing.json')
-  }, [])
+    addSnackbar({ type: SnackbarTypeEnum.Success, text: 'Fichier enregistré !' })
+  }, [shapesRef, addSnackbar])
 
-  const loadFile = useCallback(
-    async (file: File) => {
-      try {
-        const json = await decodeJson(file)
-        const isValidated = validateJson(json)
-        if (!isValidated) throw new Error('Le fichier est corrompu')
-        const shapes = decodePicturesInShapes(json as DrawableShapeJson[])
-        clearCanvas(shapes)
-      } catch (e) {
-        console.warn(e)
-      }
+  const loadJson = useCallback(
+    async (json: unknown) => {
+      const isValidated = validateJson(json)
+      if (!isValidated) throw new Error('Le fichier est corrompu')
+      const shapes = await decodePicturesInShapes(json as DrawableShapeJson[])
+      clearCanvas(shapes)
     },
     [clearCanvas]
   )
 
-  const hasActionToUndo = savedShapes.cursor > 0
-  const hasActionToRedo = savedShapes.cursor < savedShapes.states.length - 1
-  const hasActionToClear = savedShapes.states.length > 1
+  const loadFile = useCallback(
+    async (file: File) => {
+      try {
+        addSnackbar({ type: SnackbarTypeEnum.Infos, text: 'Chargement...' })
+
+        const json = await decodeJson(file)
+        await loadJson(json)
+        addSnackbar({ type: SnackbarTypeEnum.Success, text: 'Fichier chargé !' })
+      } catch (e) {
+        if (e instanceof Error) {
+          addSnackbar({ type: SnackbarTypeEnum.Error, text: e.message })
+        } else {
+          console.warn(e)
+        }
+      }
+    },
+    [loadJson, addSnackbar]
+  )
+
+  const addPicture = useCallback(
+    async (file: File) => {
+      const pictureShape = await addPictureShape(file)
+      selectShape(pictureShape)
+    },
+    [addPictureShape, selectShape]
+  )
+
+  useKeyboard({
+    isInsideComponent,
+    isEditingText: selectionMode.mode === SelectionModeLib.textedition,
+    selectedShape,
+    setSelectedShape,
+    removeShape,
+    pasteShape,
+    updateShape,
+    backwardShape,
+    forwardShape
+  })
+
+  useEffect(() => {
+    if (!isInsideComponent) setSelectedShape(undefined)
+  }, [isInsideComponent, setSelectedShape])
 
   return (
-    <StyledApp toolboxposition={toolboxPosition} height={height}>
+    <StyledApp ref={componentRef} toolboxposition={toolboxPosition} className={className}>
       <Toolbox
         activeTool={activeTool}
         clearCanvas={clearCanvas}
-        setSelectedShape={setSelectedShape}
         setActiveTool={selectTool}
         exportCanvasInFile={exportCanvasInFile}
         saveFile={saveFile}
         loadFile={loadFile}
-        addShape={addShape}
-        hasActionToUndo={hasActionToUndo}
-        hasActionToRedo={hasActionToRedo}
-        hasActionToClear={hasActionToClear}
+        addPicture={addPicture}
+        hasActionToUndo={canGoBackward}
+        hasActionToRedo={canGoForward}
+        hasActionToClear={canClear}
         undoAction={undoAction}
         redoAction={redoAction}
         toolboxPosition={toolboxPosition}
         hover={hover}
       />
-      <StyledRow>
+      <StyledRow width={width} height={height}>
         <Canvas
+          isInsideComponent={isInsideComponent}
           activeTool={activeTool}
           setActiveTool={setActiveTool}
           canvasOffsetStartPosition={canvasOffsetStartPosition}
@@ -254,15 +279,16 @@ const App = ({
           ref={canvasRef}
           width={width}
           height={height}
+          selectionMode={selectionMode}
+          setSelectionMode={setSelectionMode}
         />
-        {withLayouts && (
+        {isLayoutPanelShown && (
           <Layouts
             shapes={shapesRef.current}
-            updateShapes={updateShapes}
+            moveShapes={moveShapes}
             selectedShape={selectedShape}
             removeShape={removeShape}
-            setSelectedShape={setSelectedShape}
-            setActiveTool={setActiveTool}
+            selectShape={selectShape}
             hover={hover}
           />
         )}
@@ -277,10 +303,13 @@ const App = ({
           defaultConf={defaultConf}
           setDefaultConf={setDefaultConf}
           canvas={canvasRef.current}
-          givenWidth={width}
-          givenHeight={height}
+          withLayouts={withLayouts}
+          toggleLayoutPanel={() => {
+            setIsLayoutPanelShown(prev => !prev)
+          }}
         />
       )}
+      <SnackbarContainer snackbarList={snackbarList} />
     </StyledApp>
   )
 }

@@ -1,8 +1,7 @@
 import _ from 'lodash/fp'
-import React, { useCallback, useRef } from 'react'
+import React, { useRef } from 'react'
 import styled from 'styled-components'
-import { DrawableShape, ShapeEnum, ToolEnum, ToolsType } from 'types/Shapes'
-import { createPicture } from 'utils/selection'
+import { ShapeEnum, ToolEnum, ToolsType } from 'types/Shapes'
 
 import circleIcon from 'assets/icons/circle.svg'
 import pictureIcon from 'assets/icons/image.svg'
@@ -18,7 +17,6 @@ const StyledToolbox = styled.div<{
   hover: boolean
 }>`
   display: flex;
-  border: 1px solid black;
 
   ${({ hover }) =>
     hover &&
@@ -43,7 +41,7 @@ const StyledTool = styled.button<{ selected: boolean }>`
     selected &&
     `
   
-  border:1px solid black;
+  border:1px solid #666;
   
   `}
 
@@ -80,9 +78,9 @@ type ToolType = {
 }
 
 const Tool = ({ type, lib, imgSrc, isActive, isDisabled = false, setActive }: ToolType) => {
-  const handleClick = useCallback(() => {
+  const handleClick = () => {
     setActive(type)
-  }, [type, setActive])
+  }
 
   return (
     <StyledTool disabled={isDisabled} selected={isActive} onClick={handleClick}>
@@ -91,71 +89,25 @@ const Tool = ({ type, lib, imgSrc, isActive, isDisabled = false, setActive }: To
   )
 }
 
-type PictureToolType = {
-  addShape: (pictureShape: DrawableShape) => void
-  setSelectedShape: React.Dispatch<React.SetStateAction<DrawableShape | undefined>>
-  setActiveTool: (tool: ToolsType) => void
-  maxPictureSize: number
-}
-
-const PictureTool = ({
-  addShape,
-  setSelectedShape,
-  setActiveTool,
-  maxPictureSize
-}: PictureToolType) => {
-  const inputRef = useRef<HTMLInputElement>(null)
-
-  const handleClick = useCallback(() => {
-    if (inputRef.current) inputRef.current.value = ''
-  }, [])
-
-  const handleChange = useCallback(
-    async (event: React.ChangeEvent<HTMLInputElement>) => {
-      const file = event.target.files?.item(0)
-      if (!file) return
-      const pictureShape = await createPicture(file, maxPictureSize)
-      addShape(pictureShape)
-      setActiveTool(ToolEnum.selection)
-      setSelectedShape(pictureShape)
-    },
-    [maxPictureSize, addShape, setActiveTool, setSelectedShape]
-  )
-
-  return (
-    <StyledTool as="label" selected={false}>
-      <input
-        ref={inputRef}
-        type="file"
-        onClick={handleClick}
-        onChange={handleChange}
-        accept="image/png, image/gif, image/jpeg"
-      />
-
-      <img src={pictureIcon} />
-    </StyledTool>
-  )
-}
-
 type LoadFileToolType = {
   loadFile: (file: File) => void
+  lib: string
+  imgSrc?: string
+  accept: string
 }
 
-const LoadFileTool = ({ loadFile }: LoadFileToolType) => {
+const LoadFileTool = ({ loadFile, lib, imgSrc, accept }: LoadFileToolType) => {
   const inputRef = useRef<HTMLInputElement>(null)
 
-  const handleClick = useCallback(() => {
+  const handleClick = () => {
     if (inputRef.current) inputRef.current.value = ''
-  }, [])
+  }
 
-  const handleChange = useCallback(
-    (event: React.ChangeEvent<HTMLInputElement>) => {
-      const file = event.target.files?.item(0)
-      if (!file) return
-      loadFile(file)
-    },
-    [loadFile]
-  )
+  const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.item(0)
+    if (!file) return
+    loadFile(file)
+  }
 
   return (
     <StyledTool as="label" selected={false}>
@@ -164,9 +116,9 @@ const LoadFileTool = ({ loadFile }: LoadFileToolType) => {
         type="file"
         onClick={handleClick}
         onChange={handleChange}
-        accept="application/JSON"
+        accept={accept}
       />
-      Load file
+      {imgSrc ? <img src={imgSrc} /> : lib}
     </StyledTool>
   )
 }
@@ -181,11 +133,9 @@ type ToolboxType = {
   clearCanvas: () => void
   setActiveTool: (tool: ToolsType) => void
   loadFile: (file: File) => void
+  addPicture: (file: File) => void
   saveFile: () => void
   exportCanvasInFile: () => void
-  addShape: (pictureShape: DrawableShape) => void
-  setSelectedShape: React.Dispatch<React.SetStateAction<DrawableShape | undefined>>
-  maxPictureSize?: number
   toolboxPosition: 'top' | 'left'
   hover: boolean
 }
@@ -199,12 +149,10 @@ const Toolbox = ({
   setActiveTool,
   undoAction,
   redoAction,
-  addShape,
+  addPicture,
   loadFile,
   saveFile,
   exportCanvasInFile,
-  setSelectedShape,
-  maxPictureSize = 300,
   toolboxPosition,
   hover
 }: ToolboxType) => {
@@ -272,15 +220,17 @@ const Toolbox = ({
         ),
         toolsTypes
       )}
-      <PictureTool
-        maxPictureSize={maxPictureSize}
-        setSelectedShape={setSelectedShape}
-        setActiveTool={setActiveTool}
-        addShape={addShape}
+
+      <LoadFileTool
+        loadFile={addPicture}
+        lib="Image"
+        imgSrc={pictureIcon}
+        accept="image/png, image/gif, image/jpeg"
       />
+
       <StyledSeparator />
 
-      <LoadFileTool loadFile={loadFile} />
+      <LoadFileTool loadFile={loadFile} lib="Load file" accept="application/JSON" />
 
       <Tool
         type={ToolEnum.saveFile}

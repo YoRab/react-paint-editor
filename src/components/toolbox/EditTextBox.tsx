@@ -1,5 +1,5 @@
 import { STYLE_FONT_DEFAULT } from 'constants/style'
-import React, { useCallback, useEffect, useMemo, useRef } from 'react'
+import React, { useEffect, useMemo, useRef } from 'react'
 import styled from 'styled-components'
 import { DrawableText, Point } from 'types/Shapes'
 import { getPointPositionBeforeCanvasTransformation } from 'utils/intersect'
@@ -20,8 +20,8 @@ const StyledEditBox = styled.div<{
   left: 0px;
   top: 0px;
   ${({ rotation, position }) => `
-  transform-origin: left top;
-  transform : translate3D(${position[0]}px, ${position[1]}px, 0) rotate(${rotation}deg);
+    transform-origin: left top;
+    transform: translate3D(${position[0]}px, ${position[1]}px, 0) rotate(${rotation}deg);
   `}
   color: ${({ color }) => color};
   font-size: ${({ fontsize }) => fontsize}px;
@@ -32,19 +32,15 @@ const StyledEditBox = styled.div<{
 type EditTextBoxType = {
   shape: DrawableText
   defaultValue: string[]
-  cancelUpdate: () => void
   updateValue: (newValue: string[]) => void
 }
 
-const EditTextBox = ({ shape, defaultValue, cancelUpdate, updateValue }: EditTextBoxType) => {
+const EditTextBox = ({ shape, defaultValue, updateValue }: EditTextBoxType) => {
   const ref = useRef<HTMLDivElement>(null)
 
-  const updateContentEditable = useCallback(
-    (e: React.ChangeEvent<HTMLDivElement>) => {
-      updateValue(convertDivContentToStringArray(e.target.innerHTML))
-    },
-    [updateValue]
-  )
+  const updateContentEditable = (e: React.ChangeEvent<HTMLDivElement>) => {
+    updateValue(convertDivContentToStringArray(e.target.innerHTML))
+  }
 
   useEffect(() => {
     if (!ref.current) return
