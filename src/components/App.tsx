@@ -33,7 +33,8 @@ const StyledApp = styled.div<{
 }>`
   display: flex;
   width: fit-content;
-  background: #ededed;
+  background: black;
+  color: white;
   position: relative;
   max-width: 100%;
   flex-direction: ${({ toolboxposition }) => (toolboxposition === 'top' ? 'column' : 'row')};
@@ -201,8 +202,10 @@ const App = ({
 
   const loadFile = useCallback(
     async (file: File) => {
+
+      addSnackbar({ type: SnackbarTypeEnum.Infos, text: 'Chargement...' })
+
       try {
-        addSnackbar({ type: SnackbarTypeEnum.Infos, text: 'Chargement...' })
 
         const json = await decodeJson(file)
         await loadJson(json)

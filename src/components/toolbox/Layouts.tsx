@@ -2,12 +2,12 @@ import React, { useRef, useState } from 'react'
 import styled from 'styled-components'
 import _ from 'lodash/fp'
 import { DrawableShape } from 'types/Shapes'
-import deleteIcon from 'assets/icons/trash.svg'
+import { ReactComponent as DeleteIcon } from 'assets/icons/trash.svg'
 import useDrag from 'hooks/useDrag'
 
 const StyledLayouts = styled.div<{ hover: boolean }>`
   display: inline-block;
-  background: #ededed;
+  background: black;
   width: 200px;
   overflow-y: auto;
 
@@ -26,7 +26,7 @@ const StyledLayout = styled.div<{ selected: boolean; isdragging: boolean; isover
   padding-right: 24px;
   position: relative;
   cursor: move;
-  ${({ selected }) => selected && 'background:yellow'};
+  ${({ selected }) => selected && 'background:#3c3c3c'};
   ${({ isdragging }) => isdragging && 'opacity:0.4'};
   ${({ isover }) => isover && '  border: 3px dotted #666;'};
 `
@@ -48,10 +48,11 @@ const StyledRemove = styled.div`
   cursor: pointer;
 
   &:hover:not(:disabled) {
-    background: lightgray;
+    background: #3a3a3a;
   }
 
-  img {
+  svg {
+    color: inherit;
     width: 16px;
     height: 16px;
   }
@@ -109,7 +110,7 @@ const Layout = ({
       ref={ref}>
       {shape.type}
       <StyledRemove onClick={onRemove}>
-        <img src={deleteIcon} />
+        <DeleteIcon />
       </StyledRemove>
     </StyledLayout>
   )
