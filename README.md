@@ -16,3 +16,9 @@ known issues :
 - other
   - TextEdit cursor overflow MINOR (quick fix : edit on modale. possible solution : try to use textarea)
   - scaling MINOR (quick fix : disable it. Then, add support for scale)
+
+- Webpack
+  - bundle types ?
+  - tsc does not resolve svg imports
+  - decrease bundle size (remove source-map in prod mode, get rid of styled component)
+  - bundle component without html
