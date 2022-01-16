@@ -17,7 +17,7 @@ import {
   StyledShape,
   ToolsType
 } from 'types/Shapes'
-import deleteIcon from 'assets/icons/trash.svg'
+import { ReactComponent as DeleteIcon } from 'assets/icons/trash.svg'
 import { calculateTextFontSize, updatePolygonLinesCount } from 'utils/transform'
 
 const StyledSettingsBox = styled.div<{
@@ -33,6 +33,25 @@ const StyledSettingsBox = styled.div<{
   transform: translate(-50%, 0);
   
   `}
+
+  select {
+    // A reset of styles, including removing the default dropdown arrow
+    appearance: none;
+    // Additional resets for further consistency
+    background-color: transparent;
+    color: inherit;
+    border: none;
+    padding: 0 12px 0 0;
+    margin: 0;
+    font-family: inherit;
+    font-size: inherit;
+    cursor: inherit;
+    line-height: inherit;
+
+    option {
+      background-color: black;
+    }
+  }
 `
 
 const StyledSeparator = styled.div`
@@ -49,9 +68,10 @@ const StyleToggleLayoutButton = styled.button`
   background: none;
   border: none;
   cursor: pointer;
+  color: white;
 
   &:hover:not(:disabled) {
-    background: lightgray;
+    background: #3a3a3a;
   }
 `
 
@@ -65,12 +85,14 @@ const StyledDeleteButton = styled.button`
   background: none;
   border: none;
   cursor: pointer;
+  color: white;
 
   &:hover:not(:disabled) {
-    background: lightgray;
+    background: #3a3a3a;
   }
 
-  img {
+  svg {
+    color: inherit;
     width: 16px;
     height: 16px;
   }
@@ -83,12 +105,13 @@ type DeleteShapeButtonType = {
 
 const DeleteShapeButton = ({ selectedShape, removeShape }: DeleteShapeButtonType) => {
   const handleRemove = () => {
+    console.log('remove')
     removeShape(selectedShape)
   }
 
   return (
     <StyledDeleteButton onClick={handleRemove}>
-      <img src={deleteIcon} />
+      <DeleteIcon />
     </StyledDeleteButton>
   )
 }
