@@ -202,8 +202,10 @@ const App = ({
 
   const loadFile = useCallback(
     async (file: File) => {
+
+      addSnackbar({ type: SnackbarTypeEnum.Infos, text: 'Chargement...' })
+
       try {
-        addSnackbar({ type: SnackbarTypeEnum.Infos, text: 'Chargement...' })
 
         const json = await decodeJson(file)
         await loadJson(json)
