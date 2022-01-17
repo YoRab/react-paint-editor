@@ -2,8 +2,8 @@ import React, { useRef, useState } from 'react'
 import styled from 'styled-components'
 import _ from 'lodash/fp'
 import { DrawableShape } from 'types/Shapes'
-import { ReactComponent as DeleteIcon } from 'assets/icons/trash.svg'
 import useDrag from 'hooks/useDrag'
+import { trashIcon } from 'constants/icons'
 
 const StyledLayouts = styled.div<{ hover: boolean }>`
   display: inline-block;
@@ -109,8 +109,7 @@ const Layout = ({
       selected={selected}
       ref={ref}>
       {shape.type}
-      <StyledRemove onClick={onRemove}>
-        <DeleteIcon />
+      <StyledRemove onClick={onRemove}  dangerouslySetInnerHTML={{__html: trashIcon}}>
       </StyledRemove>
     </StyledLayout>
   )
