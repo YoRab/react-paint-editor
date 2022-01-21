@@ -1,7 +1,7 @@
 const path = require('path')
 
 module.exports = {
-  entry: path.join(__dirname, 'src', 'components', 'App.tsx'),
+  entry: path.join(__dirname, 'src', 'index.prod.ts'),
   mode: 'production',
   resolve: {
     modules: [path.resolve(__dirname, './src/'), 'node_modules'],
@@ -23,6 +23,8 @@ module.exports = {
   output: {
     filename: 'index.js',
     path: path.join(__dirname, 'dist'),
-    clean: false
+    clean: false,
+    libraryTarget: 'umd'
+
   }
 }
