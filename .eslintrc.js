@@ -1,14 +1,14 @@
 module.exports = {
   settings: {
-    'import/extensions': ['.js', '.ts'],
+    'import/extensions': ['.js', '.ts', '.tsx'],
     'import/resolver': {
       typescript: {},
       node: {
-        extensions: ['.js', '.ts']
+        extensions: ['.js', '.ts', '.tsx']
       }
     },
     'import/parsers': {
-      '@typescript-eslint/parser': ['.ts']
+      '@typescript-eslint/parser': ['.ts', '.tsx']
     }
   },
   parser: '@typescript-eslint/parser',

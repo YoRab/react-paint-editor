@@ -6,6 +6,8 @@
       {
         "regenerator": true
       }
-    ]
+    ],
+    ["module-resolver", { "root": ["./src/"], "extensions": [".tsx", ".ts", ".js", ".json"], "loglevel": "warn" }]
+
   ]
 }

@@ -2,11 +2,11 @@ const path = require('path')
 const HtmlWebpackPlugin = require('html-webpack-plugin')
 
 module.exports = {
-  entry: path.join(__dirname, 'src', 'index.tsx'),
+  entry: path.join(__dirname, 'examples', 'index.tsx'),
   devtool: 'inline-source-map',
   mode: 'development',
   resolve: {
-    modules: [path.resolve(__dirname, './src/'), 'node_modules'],
+    modules: [path.resolve(__dirname, './src/'),path.resolve(__dirname, './examples/'), 'node_modules'],
     extensions: ['.tsx', '.ts', '.js', '.json']
   },
   module: {
