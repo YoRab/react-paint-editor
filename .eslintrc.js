@@ -1,14 +1,14 @@
 module.exports = {
   settings: {
-    'import/extensions': ['.js', '.ts'],
+    'import/extensions': ['.js', '.ts', '.tsx'],
     'import/resolver': {
       typescript: {},
       node: {
-        extensions: ['.js', '.ts']
+        extensions: ['.js', '.ts', '.tsx']
       }
     },
     'import/parsers': {
-      '@typescript-eslint/parser': ['.ts']
+      '@typescript-eslint/parser': ['.ts', '.tsx']
     }
   },
   parser: '@typescript-eslint/parser',
@@ -25,7 +25,7 @@ module.exports = {
   rules: {
     '@typescript-eslint/no-unsafe-assignment': 'off',
     '@typescript-eslint/explicit-module-boundary-types': 'off',
-    'react-hooks/rules-of-hooks': 'error', // Vérifie les règles des Hooks
-    'react-hooks/exhaustive-deps': 'warn' // Vérifie les tableaux de dépendances
+    'react-hooks/rules-of-hooks': 'error',
+    'react-hooks/exhaustive-deps': 'warn'
   }
 }

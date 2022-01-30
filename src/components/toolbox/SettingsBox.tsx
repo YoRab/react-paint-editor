@@ -17,8 +17,8 @@ import {
   StyledShape,
   ToolsType
 } from 'types/Shapes'
-import { ReactComponent as DeleteIcon } from 'assets/icons/trash.svg'
 import { calculateTextFontSize, updatePolygonLinesCount } from 'utils/transform'
+import { trashIcon } from 'constants/icons'
 
 const StyledSettingsBox = styled.div<{
   hover: boolean
@@ -110,8 +110,7 @@ const DeleteShapeButton = ({ selectedShape, removeShape }: DeleteShapeButtonType
   }
 
   return (
-    <StyledDeleteButton onClick={handleRemove}>
-      <DeleteIcon />
+    <StyledDeleteButton onClick={handleRemove} dangerouslySetInnerHTML={{__html: trashIcon}}>
     </StyledDeleteButton>
   )
 }
