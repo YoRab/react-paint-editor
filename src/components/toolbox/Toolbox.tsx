@@ -1,4 +1,4 @@
-import { brushIcon, circleIcon, clearIcon, ellipseIcon, pictureIcon, redoIcon, saveIcon, selectIcon, squareIcon, undoIcon } from 'constants/icons'
+import { brushIcon, circleIcon, clearIcon, ellipseIcon, lineIcon, pictureIcon, polygonIcon, redoIcon, saveIcon, selectIcon, squareIcon, textIcon, undoIcon } from 'constants/icons'
 import _ from 'lodash/fp'
 import React, {  useRef, useState } from 'react'
 import styled from 'styled-components'
@@ -8,7 +8,7 @@ const StyledTool = styled.button<{ selected: boolean }>`
   width: 36px;
   height: 36px;
 
-  color: white;
+  color: var(--text-color);
   display: inline-flex;
   vertical-align: middle;
   box-sizing: border-box;
@@ -22,12 +22,12 @@ const StyledTool = styled.button<{ selected: boolean }>`
     selected &&
     `
   
-  border:1px solid #666;
+  border:1px solid var(--btn-hover);
   
   `}
 
   &:hover:not(:disabled) {
-    background: #3a3a3a;
+    background: var(--btn-hover);
   }
 
   &:disabled {
@@ -89,7 +89,7 @@ const StyledToolbox = styled.div<{
 const StyledShrinkableToolsInner = styled.div`
   display: inline-block;
   text-align: left;
-  background: black;
+  background: var(--bg-color);
   padding-right: 36px;
 `
 
@@ -182,12 +182,12 @@ const Toolbox = ({
 }: ToolboxType) => {
   const toolsTypes: { shape: ShapeEnum; img?: string }[] = [
     { shape: ShapeEnum.brush, img: brushIcon },
-    { shape: ShapeEnum.line },
-    { shape: ShapeEnum.polygon },
+    { shape: ShapeEnum.line, img: lineIcon },
+    { shape: ShapeEnum.polygon, img: polygonIcon },
     { shape: ShapeEnum.rect, img: squareIcon },
     { shape: ShapeEnum.circle, img: circleIcon },
     { shape: ShapeEnum.ellipse, img: ellipseIcon },
-    { shape: ShapeEnum.text }
+    { shape: ShapeEnum.text, img: textIcon }
   ]
 
   const [isMenuOpen, setIsMenuOpen] = useState(false)

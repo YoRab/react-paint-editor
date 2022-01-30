@@ -49,7 +49,7 @@ const StyledSettingsBox = styled.div<{
     line-height: inherit;
 
     option {
-      background-color: black;
+      background-color: var(--bg-color);
     }
   }
 `
@@ -68,10 +68,10 @@ const StyleToggleLayoutButton = styled.button`
   background: none;
   border: none;
   cursor: pointer;
-  color: white;
+  color: var(--text-color);
 
   &:hover:not(:disabled) {
-    background: #3a3a3a;
+    background: var(--btn-hover);
   }
 `
 
@@ -85,10 +85,10 @@ const StyledDeleteButton = styled.button`
   background: none;
   border: none;
   cursor: pointer;
-  color: white;
+  color: var(--text-color);
 
   &:hover:not(:disabled) {
-    background: #3a3a3a;
+    background: var(--btn-hover);
   }
 
   svg {

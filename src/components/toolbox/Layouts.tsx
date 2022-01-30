@@ -7,7 +7,7 @@ import { trashIcon } from 'constants/icons'
 
 const StyledLayouts = styled.div<{ hover: boolean }>`
   display: inline-block;
-  background: black;
+  background: var(--bg-color);
   width: 200px;
   overflow-y: auto;
 
@@ -21,14 +21,14 @@ const StyledLayouts = styled.div<{ hover: boolean }>`
 `
 
 const StyledLayout = styled.div<{ selected: boolean; isdragging: boolean; isover: boolean }>`
-  border: 1px solid #666;
+  border: 1px solid var(--btn-hover);
   padding: 12px;
   padding-right: 24px;
   position: relative;
   cursor: move;
-  ${({ selected }) => selected && 'background:#3c3c3c'};
+  ${({ selected }) => selected && 'background:var(--btn-hover)'};
   ${({ isdragging }) => isdragging && 'opacity:0.4'};
-  ${({ isover }) => isover && '  border: 3px dotted #666;'};
+  ${({ isover }) => isover && '  border: 3px dotted var(--btn-hover);'};
 `
 
 const StyledRemove = styled.div`
@@ -48,7 +48,7 @@ const StyledRemove = styled.div`
   cursor: pointer;
 
   &:hover:not(:disabled) {
-    background: #3a3a3a;
+    background: var(--btn-hover);
   }
 
   svg {

@@ -31,10 +31,13 @@ import { SnackbarTypeEnum } from 'constants/snackbar'
 const StyledApp = styled.div<{
   toolboxposition: 'top' | 'left'
 }>`
+--bg-color: #762c2c;
+--text-color: white;
+--btn-hover: #3a0e0e;
   display: flex;
   width: fit-content;
-  background: black;
-  color: white;
+  background: var(--bg-color);
+  color: var(--text-color);
   position: relative;
   max-width: 100%;
   flex-direction: ${({ toolboxposition }) => (toolboxposition === 'top' ? 'column' : 'row')};
