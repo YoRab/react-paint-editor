@@ -18,7 +18,7 @@ import {
   ToolsType
 } from 'types/Shapes'
 import { calculateTextFontSize, updatePolygonLinesCount } from 'utils/transform'
-import { trashIcon } from 'constants/icons'
+import { layersIcon, trashIcon } from 'constants/icons'
 
 const StyledSettingsBox = styled.div<{
   hover: boolean
@@ -348,9 +348,8 @@ const SettingsBox = ({
       <StyledSeparator />
       {withLayouts === 'visible' ||
         (withLayouts === 'hidden' && (
-          <StyleToggleLayoutButton onClick={toggleLayoutPanel}>
-            Toggle layout
-          </StyleToggleLayoutButton>
+          <StyleToggleLayoutButton onClick={toggleLayoutPanel}  dangerouslySetInnerHTML={{__html: layersIcon}}>
+                             </StyleToggleLayoutButton>
         ))}
     </StyledSettingsBox>
   )

@@ -1,4 +1,4 @@
-import { circleIcon, clearIcon, pictureIcon, redoIcon, saveIcon, selectIcon, squareIcon, undoIcon } from 'constants/icons'
+import { brushIcon, circleIcon, clearIcon, ellipseIcon, pictureIcon, redoIcon, saveIcon, selectIcon, squareIcon, undoIcon } from 'constants/icons'
 import _ from 'lodash/fp'
 import React, {  useRef, useState } from 'react'
 import styled from 'styled-components'
@@ -181,12 +181,12 @@ const Toolbox = ({
   hover
 }: ToolboxType) => {
   const toolsTypes: { shape: ShapeEnum; img?: string }[] = [
-    { shape: ShapeEnum.brush },
+    { shape: ShapeEnum.brush, img: brushIcon },
     { shape: ShapeEnum.line },
     { shape: ShapeEnum.polygon },
     { shape: ShapeEnum.rect, img: squareIcon },
     { shape: ShapeEnum.circle, img: circleIcon },
-    { shape: ShapeEnum.ellipse },
+    { shape: ShapeEnum.ellipse, img: ellipseIcon },
     { shape: ShapeEnum.text }
   ]
 
