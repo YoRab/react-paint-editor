@@ -65,6 +65,7 @@
     "declarationfiles": "tsc --project tsconfig.prod.json",
     "start": "webpack serve --config webpack.config.js --open",
     "test": "echo \"Error: no test specified\" && exit 1",
+    "buildexamples": "webpack --config webpack.prod.config.js",
     "build": "npx babel src/ --extensions '.js,.ts,.tsx,.jsx' --copy-files --delete-dir-on-start -d dist && npm run declarationfiles"
   },
   "jest": {
