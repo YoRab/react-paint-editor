@@ -8,6 +8,8 @@ import { calculateTextWidth } from 'utils/transform'
 import { FRAMERATE_DRAW } from 'constants/draw'
 import EditTextBox from './toolbox/EditTextBox'
 import useDrawableCanvas from 'hooks/useDrawableCanvas'
+import {encodedTransparentIcon} from 'constants/icons'
+
 
 const drawCanvas = (
   drawCtx: CanvasRenderingContext2D,
@@ -46,7 +48,9 @@ const StyledCanvasBox = styled.div`
 
 const StyledCanvasContainer = styled.div`
   position: relative;
-  background: white;
+  background: white url('data:image/svg+xml,${encodedTransparentIcon}');
+  background-repeat: repeat;
+  background-size: 16px;
   overflow: hidden;
 `
 

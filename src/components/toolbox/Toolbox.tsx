@@ -265,22 +265,22 @@ const Toolbox = ({
 
       <LoadFileTool loadFile={loadFile} lib="Load file" img={openFileIcon} accept="application/JSON" />
 
-     
+      <Tool
+        type={ToolEnum.saveFile}
+        lib="Save file"
+        img={saveIcon}
+        isActive={activeTool === ToolEnum.saveFile}
+        setActive={saveFile}
+      />
 
       <Tool
         type={ToolEnum.export}
         lib="Export"
-        img={saveIcon}
+        img={exportFileIcon}
         isActive={activeTool === ToolEnum.export}
         setActive={exportCanvasInFile}
       />
-       <Tool
-        type={ToolEnum.saveFile}
-        lib="Save file"
-        img={exportFileIcon}
-        isActive={activeTool === ToolEnum.saveFile}
-        setActive={saveFile}
-      />
+
     </StyledToolbox>
   )
 }
