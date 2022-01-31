@@ -25,6 +25,7 @@ const StyledSettingsBox = styled.div<{
 }>`
   user-select: none;
   display: flex;
+  background: var(--bg-color);
 
   ${({ hover }) =>
     hover &&
@@ -72,6 +73,16 @@ const StyleToggleLayoutButton = styled.button`
 
   &:hover:not(:disabled) {
     background: var(--btn-hover);
+  }
+
+  .layoutPanelOpened & {
+    color:var(--text-color-selected);
+    background:var(--bg-color-selected);
+
+
+    &:hover:not(:disabled) {
+      background:var(--bg-color-selected);
+  }
   }
 `
 
@@ -348,8 +359,7 @@ const SettingsBox = ({
       <StyledSeparator />
       {withLayouts === 'visible' ||
         (withLayouts === 'hidden' && (
-          <StyleToggleLayoutButton onClick={toggleLayoutPanel}  dangerouslySetInnerHTML={{__html: layersIcon}}>
-                             </StyleToggleLayoutButton>
+          <StyleToggleLayoutButton onClick={toggleLayoutPanel}  dangerouslySetInnerHTML={{__html: layersIcon}} />
         ))}
     </StyledSettingsBox>
   )

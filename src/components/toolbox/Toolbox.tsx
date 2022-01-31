@@ -19,16 +19,20 @@ const StyledTool = styled.button<{ selected: boolean }>`
   cursor: pointer;
 
   ${({ selected }) =>
-    selected &&
+    selected ?
     `
   
-  border:1px solid var(--btn-hover);
-  
-  `}
+    color:var(--text-color-selected);
+    background:var(--bg-color-selected);
 
+  
+  ` : `
   &:hover:not(:disabled) {
     background: var(--btn-hover);
   }
+  `}
+
+
 
   &:disabled {
     opacity: 0.25;
@@ -68,6 +72,7 @@ const StyledToolbox = styled.div<{
 }>`
   display: flex;
   max-height: 36px;
+  background: var(--bg-color);
 
   z-index: 1;
 

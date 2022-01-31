@@ -7,7 +7,7 @@ import { trashIcon } from 'constants/icons'
 
 const StyledLayouts = styled.div<{ hover: boolean }>`
   display: inline-block;
-  background: var(--bg-color);
+  background: var(---shrinkedcanvas-bg-color);
   width: 200px;
   overflow-y: auto;
 

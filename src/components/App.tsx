@@ -31,12 +31,14 @@ import { SnackbarTypeEnum } from 'constants/snackbar'
 const StyledApp = styled.div<{
   toolboxposition: 'top' | 'left'
 }>`
---bg-color: #762c2c;
---text-color: white;
---btn-hover: #3a0e0e;
+--bg-color: #d7ecec;
+--text-color: #364181;
+--btn-hover: #afd8d8;
+--bg-color-selected: #364181;
+--text-color-selected: white;
+--shrinkedcanvas-bg-color: #364181;
   display: flex;
   width: fit-content;
-  background: var(--bg-color);
   color: var(--text-color);
   position: relative;
   max-width: 100%;
@@ -51,9 +53,17 @@ const StyledRow = styled.div<{
   flex-direction: row;
   position: relative;
   max-width: 100%;
+
+
+  .layoutPanelOpened & {
+      background: var(--shrinkedcanvas-bg-color);
+
+    }
   ${({ width, height }) => `
     width:${width}px;
-    aspect-ratio:${width / height}
+    aspect-ratio:calc(${width} / ${height});
+
+   
   `}
 `
 
@@ -74,7 +84,7 @@ const App = ({
   width = 1000,
   height = 600,
   withLayouts = 'hidden',
-  className
+  className: classNameFromProps
 }: AppType) => {
   const componentRef = useRef<HTMLDivElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
@@ -247,6 +257,8 @@ const App = ({
   useEffect(() => {
     if (!isInsideComponent) setSelectedShape(undefined)
   }, [isInsideComponent, setSelectedShape])
+
+  const className = `${classNameFromProps??''} ${isLayoutPanelShown? 'layoutPanelOpened' : ''}`
 
   return (
     <StyledApp ref={componentRef} toolboxposition={toolboxPosition} className={className}>

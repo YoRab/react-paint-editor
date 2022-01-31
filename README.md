@@ -20,5 +20,6 @@ known issues :
   - TextEdit cursor overflow MINOR (quick fix : edit on modale. possible solution : try to use textarea)
   - scaling MINOR (quick fix : disable it. Then, add support for scale)
   - circle resizing only goes one direction
+  - delete button in settings is not clickable
 
 
