@@ -37,6 +37,7 @@ const StyledApp = styled.div<{
 --bg-color-selected: #364181;
 --text-color-selected: white;
 --shrinkedcanvas-bg-color: #364181;
+/* --shrinkedcanvas-bg-color: #d7ecec; */
   display: flex;
   width: fit-content;
   color: var(--text-color);

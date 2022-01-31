@@ -1,8 +1,9 @@
-import { brushIcon, circleIcon, clearIcon, ellipseIcon, lineIcon, pictureIcon, polygonIcon, redoIcon, saveIcon, selectIcon, squareIcon, textIcon, undoIcon } from 'constants/icons'
+import {  clearIcon, exportFileIcon, openFileIcon, pictureIcon, redoIcon, saveIcon, selectIcon, undoIcon } from 'constants/icons'
 import _ from 'lodash/fp'
 import React, {  useRef, useState } from 'react'
 import styled from 'styled-components'
 import { ShapeEnum, ToolEnum, ToolsType } from 'types/Shapes'
+import { getShapePicture } from 'utils/style'
 
 const StyledTool = styled.button<{ selected: boolean }>`
   width: 36px;
@@ -185,14 +186,8 @@ const Toolbox = ({
   toolboxPosition,
   hover
 }: ToolboxType) => {
-  const toolsTypes: { shape: ShapeEnum; img?: string }[] = [
-    { shape: ShapeEnum.brush, img: brushIcon },
-    { shape: ShapeEnum.line, img: lineIcon },
-    { shape: ShapeEnum.polygon, img: polygonIcon },
-    { shape: ShapeEnum.rect, img: squareIcon },
-    { shape: ShapeEnum.circle, img: circleIcon },
-    { shape: ShapeEnum.ellipse, img: ellipseIcon },
-    { shape: ShapeEnum.text, img: textIcon }
+  const toolsTypes:ShapeEnum[] = [
+     ShapeEnum.brush, ShapeEnum.line, ShapeEnum.polygon, ShapeEnum.rect, ShapeEnum.circle,  ShapeEnum.ellipse,ShapeEnum.text
   ]
 
   const [isMenuOpen, setIsMenuOpen] = useState(false)
@@ -246,11 +241,11 @@ const Toolbox = ({
           {_.map(
             toolType => (
               <Tool
-                key={toolType.shape}
-                type={toolType.shape}
-                lib={toolType.shape}
-                img={toolType.img}
-                isActive={activeTool === toolType.shape}
+                key={toolType}
+                type={toolType}
+                lib={toolType}
+                img={getShapePicture(toolType)}
+                isActive={activeTool === toolType}
                 setActive={setActiveTool}
               />
             ),
@@ -268,14 +263,9 @@ const Toolbox = ({
         </StyledTool>
       </StyledShrinkableTools>
 
-      <LoadFileTool loadFile={loadFile} lib="Load file" accept="application/JSON" />
+      <LoadFileTool loadFile={loadFile} lib="Load file" img={openFileIcon} accept="application/JSON" />
 
-      <Tool
-        type={ToolEnum.saveFile}
-        lib="Save file"
-        isActive={activeTool === ToolEnum.saveFile}
-        setActive={saveFile}
-      />
+     
 
       <Tool
         type={ToolEnum.export}
@@ -283,6 +273,13 @@ const Toolbox = ({
         img={saveIcon}
         isActive={activeTool === ToolEnum.export}
         setActive={exportCanvasInFile}
+      />
+       <Tool
+        type={ToolEnum.saveFile}
+        lib="Save file"
+        img={exportFileIcon}
+        isActive={activeTool === ToolEnum.saveFile}
+        setActive={saveFile}
       />
     </StyledToolbox>
   )

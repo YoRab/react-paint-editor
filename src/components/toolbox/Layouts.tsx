@@ -4,11 +4,15 @@ import _ from 'lodash/fp'
 import { DrawableShape } from 'types/Shapes'
 import useDrag from 'hooks/useDrag'
 import { trashIcon } from 'constants/icons'
+import { getShapePicture } from 'utils/style'
 
 const StyledLayouts = styled.div<{ hover: boolean }>`
   display: inline-block;
-  background: var(---shrinkedcanvas-bg-color);
-  width: 200px;
+  /* background: var(--shrinkedcanvas-bg-color); */
+  background: white;
+  border: 3px solid var(--text-color);
+  box-sizing:border-box;
+  width: 80px;
   overflow-y: auto;
 
   ${({ hover }) =>
@@ -21,14 +25,26 @@ const StyledLayouts = styled.div<{ hover: boolean }>`
 `
 
 const StyledLayout = styled.div<{ selected: boolean; isdragging: boolean; isover: boolean }>`
-  border: 1px solid var(--btn-hover);
+  border-bottom: 1px solid var(--btn-hover);
   padding: 12px;
   padding-right: 24px;
   position: relative;
   cursor: move;
-  ${({ selected }) => selected && 'background:var(--btn-hover)'};
+  background:white;
+  ${({ selected }) => selected ? `    color:var(--text-color-selected);
+    background:var(--bg-color-selected);` : `  &:hover:not(:disabled) {
+    background: var(--btn-hover);
+  }`};
   ${({ isdragging }) => isdragging && 'opacity:0.4'};
   ${({ isover }) => isover && '  border: 3px dotted var(--btn-hover);'};
+
+
+
+  >span>svg {
+    color:#8a8a8a;
+    width:16px;
+    height:16px;
+  }
 `
 
 const StyledRemove = styled.div`
@@ -108,7 +124,8 @@ const Layout = ({
       onClick={onSelect}
       selected={selected}
       ref={ref}>
-      {shape.type}
+        <span dangerouslySetInnerHTML={{__html:getShapePicture(shape.type)}} />
+      
       <StyledRemove onClick={onRemove}  dangerouslySetInnerHTML={{__html: trashIcon}}>
       </StyledRemove>
     </StyledLayout>

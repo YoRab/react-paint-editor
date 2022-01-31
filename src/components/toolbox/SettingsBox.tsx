@@ -46,8 +46,12 @@ const StyledSettingsBox = styled.div<{
     margin: 0;
     font-family: inherit;
     font-size: inherit;
-    cursor: inherit;
+    cursor: pointer;
     line-height: inherit;
+
+    &:hover:not(:disabled) {
+    background: var(--btn-hover);
+  }
 
     option {
       background-color: var(--bg-color);
