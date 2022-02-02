@@ -1,4 +1,4 @@
-import {  clearIcon, exportFileIcon, openFileIcon, pictureIcon, redoIcon, saveIcon, selectIcon, undoIcon } from 'constants/icons'
+import {  clearIcon, dotsIcon, exportFileIcon, openFileIcon, pictureIcon, redoIcon, saveIcon, selectIcon, undoIcon } from 'constants/icons'
 import _ from 'lodash/fp'
 import React, {  useRef, useState } from 'react'
 import styled from 'styled-components'
@@ -96,7 +96,8 @@ const StyledShrinkableToolsInner = styled.div`
   display: inline-block;
   text-align: left;
   background: var(--bg-color);
-  padding-right: 36px;
+  margin-right: 36px;
+  text-align:right;
 `
 
 type ToolType = {
@@ -258,8 +259,7 @@ const Toolbox = ({
             accept="image/png, image/gif, image/jpeg"
           />
         </StyledShrinkableToolsInner>
-        <StyledTool disabled={false} selected={false} onClick={toggleTools}>
-          Menu
+        <StyledTool disabled={false} selected={false} onClick={toggleTools}  dangerouslySetInnerHTML={{__html: dotsIcon}}>
         </StyledTool>
       </StyledShrinkableTools>
 

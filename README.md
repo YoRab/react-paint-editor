@@ -13,9 +13,6 @@ known issues :
   - TextEdit position and size not working with canvas resized MINOR (fix : apply current canvas ratio to position and font size)
   - anchors become too small MAJOR (possible fix : increase size with current canvas ratio )
 
-- babel build
-  - decrease bundle size (get rid of styled component)
-
 - other
   - TextEdit cursor overflow MINOR (quick fix : edit on modale. possible solution : try to use textarea)
   - scaling MINOR (quick fix : disable it. Then, add support for scale)

@@ -19,6 +19,7 @@ switch(shape) {
                                 return textIcon;
                                 case ShapeEnum.picture:
                                     return pictureIcon;
+                                    
       
     
 }

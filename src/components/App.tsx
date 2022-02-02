@@ -29,7 +29,8 @@ import useSnackbar from 'hooks/useSnackbar'
 import { SnackbarTypeEnum } from 'constants/snackbar'
 
 const StyledApp = styled.div<{
-  toolboxposition: 'top' | 'left'
+  toolboxposition: 'top' | 'left',
+  width: number
 }>`
 --bg-color: #d7ecec;
 --text-color: #364181;
@@ -42,7 +43,8 @@ const StyledApp = styled.div<{
   width: fit-content;
   color: var(--text-color);
   position: relative;
-  max-width: 100%;
+  ${({width}) => `max-width: min(100%, ${width}px);`}
+
   flex-direction: ${({ toolboxposition }) => (toolboxposition === 'top' ? 'column' : 'row')};
 `
 
@@ -262,7 +264,7 @@ const App = ({
   const className = `${classNameFromProps??''} ${isLayoutPanelShown? 'layoutPanelOpened' : ''}`
 
   return (
-    <StyledApp ref={componentRef} toolboxposition={toolboxPosition} className={className}>
+    <StyledApp ref={componentRef} toolboxposition={toolboxPosition} className={className} width={width}>
       <Toolbox
         activeTool={activeTool}
         clearCanvas={clearCanvas}
