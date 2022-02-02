@@ -10,7 +10,7 @@ const useComponent = ({ componentRef }: UseComponentType) => {
   useEffect(() => {
     const onDetectClick = (event: MouseEvent | TouchEvent) => {
       setIsInsideComponent(
-        !(event.target instanceof HTMLElement) || !componentRef.current
+        !(event.target instanceof Node) || !componentRef.current
           ? false
           : componentRef.current.contains(event.target)
       )
