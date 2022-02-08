@@ -71,6 +71,7 @@ type AppType = {
   width?: number
   height?: number
   withLayouts?: 'always' | 'never' | 'visible' | 'hidden'
+  shapes?: DrawableShape[]
   className?: string
 }
 
@@ -78,6 +79,7 @@ const App = ({
   width = 1000,
   height = 600,
   withLayouts = 'hidden',
+  shapes: shapesFromProps,
   className: classNameFromProps
 }: AppType) => {
   const componentRef = useRef<HTMLDivElement>(null)
@@ -249,6 +251,12 @@ const App = ({
   useEffect(() => {
     if (!isInsideComponent) setSelectedShape(undefined)
   }, [isInsideComponent, setSelectedShape])
+
+  useEffect(() => {
+    if (shapesFromProps !== undefined) {
+      clearCanvas(shapesFromProps)
+    }
+  }, [clearCanvas, shapesFromProps])
 
   const className = `${classNameFromProps ?? ''} ${isLayoutPanelShown ? 'layoutPanelOpened' : ''}`
 
