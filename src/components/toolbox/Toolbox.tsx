@@ -1,6 +1,16 @@
-import {  clearIcon, dotsIcon, exportFileIcon, openFileIcon, pictureIcon, redoIcon, saveIcon, selectIcon, undoIcon } from 'constants/icons'
+import {
+  clearIcon,
+  dotsIcon,
+  exportFileIcon,
+  openFileIcon,
+  pictureIcon,
+  redoIcon,
+  saveIcon,
+  selectIcon,
+  undoIcon
+} from 'constants/icons'
 import _ from 'lodash/fp'
-import React, {  useRef, useState } from 'react'
+import React, { useRef, useState } from 'react'
 import styled from 'styled-components'
 import { ShapeEnum, ToolEnum, ToolsType } from 'types/Shapes'
 import { getShapePicture } from 'utils/style'
@@ -20,20 +30,19 @@ const StyledTool = styled.button<{ selected: boolean }>`
   cursor: pointer;
 
   ${({ selected }) =>
-    selected ?
-    `
+    selected
+      ? `
   
     color:var(--text-color-selected);
     background:var(--bg-color-selected);
 
   
-  ` : `
+  `
+      : `
   &:hover:not(:disabled) {
     background: var(--btn-hover);
   }
   `}
-
-
 
   &:disabled {
     opacity: 0.25;
@@ -67,8 +76,6 @@ const StyledShrinkableTools = styled.div`
 `
 
 const StyledToolbox = styled.div<{
-  toolboxposition: 'top' | 'left'
-  hover: boolean
   ismenuopen: boolean
 }>`
   display: flex;
@@ -83,13 +90,6 @@ const StyledToolbox = styled.div<{
     overflow: hidden;
   
   `}
-
-  ${({ hover }) =>
-    hover &&
-    `
-    position:absolute;
-  `}
-  flex-direction: ${({ toolboxposition }) => (toolboxposition === 'top' ? 'row' : 'column')};
 `
 
 const StyledShrinkableToolsInner = styled.div`
@@ -97,7 +97,7 @@ const StyledShrinkableToolsInner = styled.div`
   text-align: left;
   background: var(--bg-color);
   margin-right: 36px;
-  text-align:right;
+  text-align: right;
 `
 
 type ToolType = {
@@ -115,8 +115,11 @@ const Tool = ({ type, lib, img, isActive, isDisabled = false, setActive }: ToolT
   }
 
   return (
-    <StyledTool disabled={isDisabled} selected={isActive} onClick={handleClick} dangerouslySetInnerHTML={{__html: img?img:lib}}>
-    </StyledTool>
+    <StyledTool
+      disabled={isDisabled}
+      selected={isActive}
+      onClick={handleClick}
+      dangerouslySetInnerHTML={{ __html: img ? img : lib }}></StyledTool>
   )
 }
 
@@ -149,7 +152,7 @@ const LoadFileTool = ({ loadFile, lib, img, accept }: LoadFileToolType) => {
         onChange={handleChange}
         accept={accept}
       />
-      {img ? <span  dangerouslySetInnerHTML={{__html: img}} /> : lib}
+      {img ? <span dangerouslySetInnerHTML={{ __html: img }} /> : lib}
     </StyledTool>
   )
 }
@@ -167,8 +170,6 @@ type ToolboxType = {
   addPicture: (file: File) => void
   saveFile: () => void
   exportCanvasInFile: () => void
-  toolboxPosition: 'top' | 'left'
-  hover: boolean
 }
 
 const Toolbox = ({
@@ -183,12 +184,16 @@ const Toolbox = ({
   addPicture,
   loadFile,
   saveFile,
-  exportCanvasInFile,
-  toolboxPosition,
-  hover
+  exportCanvasInFile
 }: ToolboxType) => {
-  const toolsTypes:ShapeEnum[] = [
-     ShapeEnum.brush, ShapeEnum.line, ShapeEnum.polygon, ShapeEnum.rect, ShapeEnum.circle,  ShapeEnum.ellipse,ShapeEnum.text
+  const toolsTypes: ShapeEnum[] = [
+    ShapeEnum.brush,
+    ShapeEnum.line,
+    ShapeEnum.polygon,
+    ShapeEnum.rect,
+    ShapeEnum.circle,
+    ShapeEnum.ellipse,
+    ShapeEnum.text
   ]
 
   const [isMenuOpen, setIsMenuOpen] = useState(false)
@@ -198,7 +203,7 @@ const Toolbox = ({
   }
 
   return (
-    <StyledToolbox toolboxposition={toolboxPosition} hover={hover} ismenuopen={isMenuOpen}>
+    <StyledToolbox ismenuopen={isMenuOpen}>
       <Tool
         type={ToolEnum.selection}
         lib="selection"
@@ -259,11 +264,19 @@ const Toolbox = ({
             accept="image/png, image/gif, image/jpeg"
           />
         </StyledShrinkableToolsInner>
-        <StyledTool disabled={false} selected={false} onClick={toggleTools}  dangerouslySetInnerHTML={{__html: dotsIcon}}>
-        </StyledTool>
+        <StyledTool
+          disabled={false}
+          selected={false}
+          onClick={toggleTools}
+          dangerouslySetInnerHTML={{ __html: dotsIcon }}></StyledTool>
       </StyledShrinkableTools>
 
-      <LoadFileTool loadFile={loadFile} lib="Load file" img={openFileIcon} accept="application/JSON" />
+      <LoadFileTool
+        loadFile={loadFile}
+        lib="Load file"
+        img={openFileIcon}
+        accept="application/JSON"
+      />
 
       <Tool
         type={ToolEnum.saveFile}
@@ -280,7 +293,6 @@ const Toolbox = ({
         isActive={activeTool === ToolEnum.export}
         setActive={exportCanvasInFile}
       />
-
     </StyledToolbox>
   )
 }

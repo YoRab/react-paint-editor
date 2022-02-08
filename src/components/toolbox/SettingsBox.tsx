@@ -20,20 +20,10 @@ import {
 import { calculateTextFontSize, updatePolygonLinesCount } from 'utils/transform'
 import { layersIcon, trashIcon } from 'constants/icons'
 
-const StyledSettingsBox = styled.div<{
-  hover: boolean
-}>`
+const StyledSettingsBox = styled.div`
   user-select: none;
   display: flex;
   background: var(--bg-color);
-
-  ${({ hover }) =>
-    hover &&
-    `
-  position: absolute;
-  transform: translate(-50%, 0);
-  
-  `}
 
   select {
     // A reset of styles, including removing the default dropdown arrow
@@ -50,8 +40,8 @@ const StyledSettingsBox = styled.div<{
     line-height: inherit;
 
     &:hover:not(:disabled) {
-    background: var(--btn-hover);
-  }
+      background: var(--btn-hover);
+    }
 
     option {
       background-color: var(--bg-color);
@@ -80,13 +70,12 @@ const StyleToggleLayoutButton = styled.button`
   }
 
   .layoutPanelOpened & {
-    color:var(--text-color-selected);
-    background:var(--bg-color-selected);
-
+    color: var(--text-color-selected);
+    background: var(--bg-color-selected);
 
     &:hover:not(:disabled) {
-      background:var(--bg-color-selected);
-  }
+      background: var(--bg-color-selected);
+    }
   }
 `
 
@@ -125,8 +114,9 @@ const DeleteShapeButton = ({ selectedShape, removeShape }: DeleteShapeButtonType
   }
 
   return (
-    <StyledDeleteButton onClick={handleRemove} dangerouslySetInnerHTML={{__html: trashIcon}}>
-    </StyledDeleteButton>
+    <StyledDeleteButton
+      onClick={handleRemove}
+      dangerouslySetInnerHTML={{ __html: trashIcon }}></StyledDeleteButton>
   )
 }
 
@@ -159,7 +149,6 @@ const ShapeStyleSelect = ({ field, values, defaultValue, valueChanged }: ShapeSt
 type SettingsBoxType = {
   withLayouts?: 'always' | 'never' | 'visible' | 'hidden'
   activeTool: ToolsType
-  settingsHover: boolean
   selectedShape: DrawableShape | undefined
   canvas: HTMLCanvasElement | null
   updateShape: (shape: DrawableShape) => void
@@ -173,7 +162,6 @@ const SettingsBox = ({
   withLayouts,
   toggleLayoutPanel,
   activeTool,
-  settingsHover,
   selectedShape,
   canvas,
   updateShape,
@@ -229,7 +217,7 @@ const SettingsBox = ({
   }
 
   return (
-    <StyledSettingsBox hover={settingsHover}>
+    <StyledSettingsBox>
       {selectedShape ? (
         <>
           {shapes.includes(selectedShape?.type) && (
@@ -363,7 +351,10 @@ const SettingsBox = ({
       <StyledSeparator />
       {withLayouts === 'visible' ||
         (withLayouts === 'hidden' && (
-          <StyleToggleLayoutButton onClick={toggleLayoutPanel}  dangerouslySetInnerHTML={{__html: layersIcon}} />
+          <StyleToggleLayoutButton
+            onClick={toggleLayoutPanel}
+            dangerouslySetInnerHTML={{ __html: layersIcon }}
+          />
         ))}
     </StyledSettingsBox>
   )

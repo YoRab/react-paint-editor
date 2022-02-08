@@ -8,8 +8,7 @@ import { calculateTextWidth } from 'utils/transform'
 import { FRAMERATE_DRAW } from 'constants/draw'
 import EditTextBox from './toolbox/EditTextBox'
 import useDrawableCanvas from 'hooks/useDrawableCanvas'
-import {encodedTransparentIcon} from 'constants/icons'
-
+import { encodedTransparentIcon } from 'constants/icons'
 
 const drawCanvas = (
   drawCtx: CanvasRenderingContext2D,

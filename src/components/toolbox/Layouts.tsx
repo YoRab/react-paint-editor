@@ -6,22 +6,14 @@ import useDrag from 'hooks/useDrag'
 import { trashIcon } from 'constants/icons'
 import { getShapePicture } from 'utils/style'
 
-const StyledLayouts = styled.div<{ hover: boolean }>`
+const StyledLayouts = styled.div`
   display: inline-block;
   /* background: var(--shrinkedcanvas-bg-color); */
   background: white;
   border: 3px solid var(--text-color);
-  box-sizing:border-box;
+  box-sizing: border-box;
   width: 80px;
   overflow-y: auto;
-
-  ${({ hover }) =>
-    hover &&
-    `
-    position:absolute;
-    right:0;
-    height:60%;
-  `}
 `
 
 const StyledLayout = styled.div<{ selected: boolean; isdragging: boolean; isover: boolean }>`
@@ -30,20 +22,21 @@ const StyledLayout = styled.div<{ selected: boolean; isdragging: boolean; isover
   padding-right: 24px;
   position: relative;
   cursor: move;
-  background:white;
-  ${({ selected }) => selected ? `    color:var(--text-color-selected);
-    background:var(--bg-color-selected);` : `  &:hover:not(:disabled) {
+  background: white;
+  ${({ selected }) =>
+    selected
+      ? `    color:var(--text-color-selected);
+    background:var(--bg-color-selected);`
+      : `  &:hover:not(:disabled) {
     background: var(--btn-hover);
   }`};
   ${({ isdragging }) => isdragging && 'opacity:0.4'};
   ${({ isover }) => isover && '  border: 3px dotted var(--btn-hover);'};
 
-
-
-  >span>svg {
-    color:#8a8a8a;
-    width:16px;
-    height:16px;
+  > span > svg {
+    color: #8a8a8a;
+    width: 16px;
+    height: 16px;
   }
 `
 
@@ -124,35 +117,28 @@ const Layout = ({
       onClick={onSelect}
       selected={selected}
       ref={ref}>
-        <span dangerouslySetInnerHTML={{__html:getShapePicture(shape.type)}} />
-      
-      <StyledRemove onClick={onRemove}  dangerouslySetInnerHTML={{__html: trashIcon}}>
-      </StyledRemove>
+      <span dangerouslySetInnerHTML={{ __html: getShapePicture(shape.type) }} />
+
+      <StyledRemove
+        onClick={onRemove}
+        dangerouslySetInnerHTML={{ __html: trashIcon }}></StyledRemove>
     </StyledLayout>
   )
 }
 
 type LayoutsType = {
   shapes: DrawableShape[]
-  hover: boolean
   removeShape: (shape: DrawableShape) => void
   selectedShape: DrawableShape | undefined
   selectShape: (shape: DrawableShape) => void
   moveShapes: (firstShapeId: string, lastShapeId: string) => void
 }
 
-const Layouts = ({
-  shapes,
-  hover,
-  removeShape,
-  selectedShape,
-  moveShapes,
-  selectShape
-}: LayoutsType) => {
+const Layouts = ({ shapes, removeShape, selectedShape, moveShapes, selectShape }: LayoutsType) => {
   const [layoutDragging, setLayoutDragging] = useState<string | undefined>(undefined)
 
   return (
-    <StyledLayouts hover={hover}>
+    <StyledLayouts>
       {_.map(
         shape => (
           <Layout

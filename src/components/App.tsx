@@ -29,23 +29,22 @@ import useSnackbar from 'hooks/useSnackbar'
 import { SnackbarTypeEnum } from 'constants/snackbar'
 
 const StyledApp = styled.div<{
-  toolboxposition: 'top' | 'left',
   width: number
 }>`
---bg-color: #d7ecec;
---text-color: #364181;
---btn-hover: #afd8d8;
---bg-color-selected: #364181;
---text-color-selected: white;
---shrinkedcanvas-bg-color: #364181;
-/* --shrinkedcanvas-bg-color: #d7ecec; */
+  --bg-color: #d7ecec;
+  --text-color: #364181;
+  --btn-hover: #afd8d8;
+  --bg-color-selected: #364181;
+  --text-color-selected: white;
+  --shrinkedcanvas-bg-color: #364181;
+  /* --shrinkedcanvas-bg-color: #d7ecec; */
   display: flex;
   width: fit-content;
   color: var(--text-color);
   position: relative;
-  ${({width}) => `max-width: min(100%, ${width}px);`}
+  ${({ width }) => `max-width: min(100%, ${width}px);`}
 
-  flex-direction: ${({ toolboxposition }) => (toolboxposition === 'top' ? 'column' : 'row')};
+  flex-direction:column;
 `
 
 const StyledRow = styled.div<{
@@ -57,11 +56,9 @@ const StyledRow = styled.div<{
   position: relative;
   max-width: 100%;
 
-
   .layoutPanelOpened & {
-      background: var(--shrinkedcanvas-bg-color);
-
-    }
+    background: var(--shrinkedcanvas-bg-color);
+  }
   ${({ width, height }) => `
     width:${width}px;
     aspect-ratio:calc(${width} / ${height});
@@ -71,9 +68,6 @@ const StyledRow = styled.div<{
 `
 
 type AppType = {
-  hover?: boolean
-  settingsHover?: boolean
-  toolboxPosition?: 'top' | 'left'
   width?: number
   height?: number
   withLayouts?: 'always' | 'never' | 'visible' | 'hidden'
@@ -81,9 +75,6 @@ type AppType = {
 }
 
 const App = ({
-  hover = false,
-  settingsHover = false,
-  toolboxPosition = 'top',
   width = 1000,
   height = 600,
   withLayouts = 'hidden',
@@ -218,11 +209,9 @@ const App = ({
 
   const loadFile = useCallback(
     async (file: File) => {
-
       addSnackbar({ type: SnackbarTypeEnum.Infos, text: 'Chargement...' })
 
       try {
-
         const json = await decodeJson(file)
         await loadJson(json)
         addSnackbar({ type: SnackbarTypeEnum.Success, text: 'Fichier chargé !' })
@@ -261,10 +250,10 @@ const App = ({
     if (!isInsideComponent) setSelectedShape(undefined)
   }, [isInsideComponent, setSelectedShape])
 
-  const className = `${classNameFromProps??''} ${isLayoutPanelShown? 'layoutPanelOpened' : ''}`
+  const className = `${classNameFromProps ?? ''} ${isLayoutPanelShown ? 'layoutPanelOpened' : ''}`
 
   return (
-    <StyledApp ref={componentRef} toolboxposition={toolboxPosition} className={className} width={width}>
+    <StyledApp ref={componentRef} className={className} width={width}>
       <Toolbox
         activeTool={activeTool}
         clearCanvas={clearCanvas}
@@ -278,8 +267,6 @@ const App = ({
         hasActionToClear={canClear}
         undoAction={undoAction}
         redoAction={redoAction}
-        toolboxPosition={toolboxPosition}
-        hover={hover}
       />
       <StyledRow width={width} height={height}>
         <Canvas
@@ -310,14 +297,12 @@ const App = ({
             selectedShape={selectedShape}
             removeShape={removeShape}
             selectShape={selectShape}
-            hover={hover}
           />
         )}
       </StyledRow>
-      {(!settingsHover || selectedShape) && (
+      {selectedShape && (
         <SettingsBox
           activeTool={activeTool}
-          settingsHover={settingsHover}
           selectedShape={selectedShape}
           removeShape={removeShape}
           updateShape={updateShape}

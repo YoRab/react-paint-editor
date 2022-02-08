@@ -17,7 +17,10 @@ export const convertDivContentToStringArray = (toConvert: string) => {
   return _.flow(
     (divContent: string) => decodeHtmlEntities(divContent),
     (divContent: string) => divContent.split('<div>'),
-    _.flatMap((val: string) => {const newVal = val.replaceAll(stripDivRegexp, ''); return newVal===''? undefined : newVal.replaceAll(stripBrRegexp, '')}),
+    _.flatMap((val: string) => {
+      const newVal = val.replaceAll(stripDivRegexp, '')
+      return newVal === '' ? undefined : newVal.replaceAll(stripBrRegexp, '')
+    }),
     _.reject(_.isUndefined)
-  )(toConvert) as string[] 
+  )(toConvert) as string[]
 }
