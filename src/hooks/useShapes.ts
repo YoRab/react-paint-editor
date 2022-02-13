@@ -1,9 +1,9 @@
-import { useCallback, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { DrawableShape } from 'types/Shapes'
 import _ from 'lodash/fp'
 import { createPicture } from 'utils/data'
 
-const useShapes = () => {
+const useShapes = (onDataChanged: () => void = _.noop) => {
   const shapesRef = useRef<DrawableShape[]>([])
 
   const [selectedShape, setSelectedShape] = useState<DrawableShape | undefined>(undefined)
@@ -57,15 +57,16 @@ const useShapes = () => {
   )
 
   const updateShape = useCallback(
-    (updatedShape: DrawableShape) => {
+    (updatedShape: DrawableShape, withSave = false) => {
       shapesRef.current = shapesRef.current.map(marker => {
         return marker.id === selectedShape?.id ? updatedShape : marker
       })
       setSelectedShape(prevSelectedShape =>
         prevSelectedShape?.id === updatedShape.id ? updatedShape : prevSelectedShape
       )
+      withSave && saveShapes()
     },
-    [selectedShape]
+    [selectedShape, saveShapes]
   )
 
   const updateShapes = useCallback(
@@ -140,6 +141,10 @@ const useShapes = () => {
     },
     [updateShapes]
   )
+
+  useEffect(() => {
+    onDataChanged()
+  }, [onDataChanged, savedShapes])
 
   return {
     shapesRef,

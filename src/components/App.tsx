@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react'
+import React, { MutableRefObject, useCallback, useEffect, useRef, useState } from 'react'
 import {
   DrawableShape,
   DrawableShapeJson,
@@ -18,7 +18,9 @@ import {
   decodeJson,
   decodePicturesInShapes,
   downloadFile,
+  encodePicturesInShapes,
   encodeShapesInString,
+  getCanvasImage,
   validateJson
 } from 'utils/file'
 import { SelectionModeData, SelectionModeLib } from 'types/Mode'
@@ -71,8 +73,16 @@ type AppType = {
   width?: number
   height?: number
   withLayouts?: 'always' | 'never' | 'visible' | 'hidden'
-  shapes?: DrawableShape[]
+  shapes?: DrawableShapeJson[]
   className?: string
+  onDataChanged?: () => void
+  apiRef?: MutableRefObject<
+    | undefined
+    | {
+        getCurrentImage: () => string | undefined
+        getCurrentData: () => DrawableShapeJson[]
+      }
+  >
 }
 
 const App = ({
@@ -80,7 +90,9 @@ const App = ({
   height = 600,
   withLayouts = 'hidden',
   shapes: shapesFromProps,
-  className: classNameFromProps
+  className: classNameFromProps,
+  onDataChanged,
+  apiRef
 }: AppType) => {
   const componentRef = useRef<HTMLDivElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
@@ -130,7 +142,7 @@ const App = ({
     canGoBackward,
     canGoForward,
     canClear
-  } = useShapes()
+  } = useShapes(onDataChanged)
 
   const { snackbarList, addSnackbar } = useSnackbar()
 
@@ -179,7 +191,7 @@ const App = ({
 
   const exportCanvasInFile = useCallback(() => {
     addSnackbar({ type: SnackbarTypeEnum.Infos, text: 'Export en cours...' })
-    const dataURL = canvasRef.current?.toDataURL('image/png')
+    const dataURL = canvasRef.current && getCanvasImage(canvasRef.current)
     if (!dataURL) {
       addSnackbar({ type: SnackbarTypeEnum.Error, text: "L'export a échoué" })
       return
@@ -254,9 +266,22 @@ const App = ({
 
   useEffect(() => {
     if (shapesFromProps !== undefined) {
-      clearCanvas(shapesFromProps)
+      void loadJson(shapesFromProps)
     }
-  }, [clearCanvas, shapesFromProps])
+  }, [loadJson, shapesFromProps])
+
+  useEffect(() => {
+    if (!apiRef) return
+    apiRef.current = {
+      getCurrentImage: () => {
+        return canvasRef.current ? getCanvasImage(canvasRef.current) : undefined
+      },
+
+      getCurrentData: () => {
+        return encodePicturesInShapes(shapesRef.current)
+      }
+    }
+  }, [apiRef, shapesRef])
 
   const className = `${classNameFromProps ?? ''} ${isLayoutPanelShown ? 'layoutPanelOpened' : ''}`
 

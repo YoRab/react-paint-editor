@@ -27,8 +27,12 @@ const encodeObjectToString = (objectToEncode: unknown) => {
   return 'data:text/plain;charset=utf-8,' + encodeURIComponent(JSON.stringify(objectToEncode))
 }
 
-export const encodeShapesInString = (shapes: DrawableShape[]) => {
-  const shapesWithStringifyPictures = shapes.map(shape => {
+export const getCanvasImage = (canvas: HTMLCanvasElement) => {
+  return canvas.toDataURL('image/png')
+}
+
+export const encodePicturesInShapes = (shapes: DrawableShape[]) => {
+  return shapes.map(shape => {
     if (shape.type === ShapeEnum.picture) {
       return {
         ...shape,
@@ -37,6 +41,9 @@ export const encodeShapesInString = (shapes: DrawableShape[]) => {
     }
     return shape
   })
+}
+export const encodeShapesInString = (shapes: DrawableShape[]) => {
+  const shapesWithStringifyPictures = encodePicturesInShapes(shapes)
   return encodeObjectToString(shapesWithStringifyPictures)
 }
 

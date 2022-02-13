@@ -1,4 +1,5 @@
-import React, { useState } from 'react'
+import React, { useCallback, useRef, useState } from 'react'
+import { DrawableShapeJson } from 'types/Shapes'
 import App from '../src/components/App'
 
 type MenuType = {
@@ -6,7 +7,7 @@ type MenuType = {
   setSelectedComponent: (componentIndex: number) => void
 }
 
-const MenuItems = ['Default', 'Mini', 'With default shapes']
+const MenuItems = ['Default', 'Mini', 'With default shapes', 'Manual saves', 'Auto saves']
 
 const Menu = ({ selectedComponent, setSelectedComponent }: MenuType) => {
   return (
@@ -26,6 +27,55 @@ const Menu = ({ selectedComponent, setSelectedComponent }: MenuType) => {
 
 type CurrentAppType = {
   selectedComponent: number
+}
+
+const ManualSaveApp = () => {
+  const ref = useRef<{
+    getCurrentImage: () => string | undefined
+    getCurrentData: () => DrawableShapeJson[]
+  }>()
+  const [shapes, setShapes] = useState<DrawableShapeJson[] | undefined>(undefined)
+  const [image, setImage] = useState<string | undefined>(undefined)
+
+  const saveDatas = () => {
+    const currentData = ref.current?.getCurrentData()
+    const currentImage = ref.current?.getCurrentImage()
+    setShapes(currentData)
+    setImage(currentImage)
+  }
+
+  return (
+    <>
+      <App apiRef={ref} />
+      <button onClick={saveDatas}>Save data</button>
+      <App shapes={shapes} />
+      <img src={image} />
+    </>
+  )
+}
+
+const AutoSaveApp = () => {
+  const ref = useRef<{
+    getCurrentImage: () => string | undefined
+    getCurrentData: () => DrawableShapeJson[]
+  }>()
+  const [shapes, setShapes] = useState<DrawableShapeJson[] | undefined>(undefined)
+  const [image, setImage] = useState<string | undefined>(undefined)
+
+  const refreshDatas = useCallback(() => {
+    const currentData = ref.current?.getCurrentData()
+    const currentImage = ref.current?.getCurrentImage()
+    setShapes(currentData)
+    setImage(currentImage)
+  }, [])
+
+  return (
+    <>
+      <App apiRef={ref} onDataChanged={refreshDatas} />
+      <App shapes={shapes} />
+      <img src={image} />
+    </>
+  )
 }
 
 const CurrentApp = ({ selectedComponent }: CurrentAppType) => {
@@ -176,6 +226,10 @@ const CurrentApp = ({ selectedComponent }: CurrentAppType) => {
           ]}
         />
       )
+    case 3:
+      return <ManualSaveApp />
+    case 4:
+      return <AutoSaveApp />
   }
 }
 

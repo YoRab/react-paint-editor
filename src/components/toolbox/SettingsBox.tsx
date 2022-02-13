@@ -151,7 +151,7 @@ type SettingsBoxType = {
   activeTool: ToolsType
   selectedShape: DrawableShape | undefined
   canvas: HTMLCanvasElement | null
-  updateShape: (shape: DrawableShape) => void
+  updateShape: (shape: DrawableShape, withSave?: boolean) => void
   removeShape: (shape: DrawableShape) => void
   defaultConf: StyledShape
   setDefaultConf: React.Dispatch<React.SetStateAction<StyledShape>>
@@ -180,7 +180,7 @@ const SettingsBox = ({
   ]
   const handleShapeStyleChange = (field: string, value: string | number) => {
     if (selectedShape) {
-      updateShape(_.set(field, value, selectedShape))
+      updateShape(_.set(field, value, selectedShape), true)
     } else {
       setDefaultConf(prevDefaultConf => _.set(field, value, prevDefaultConf))
     }
@@ -202,7 +202,7 @@ const SettingsBox = ({
         fontSize,
         height: fontSize * newShape.value.length
       }
-      updateShape(resizedShape)
+      updateShape(resizedShape, true)
     } else {
       setDefaultConf(prevDefaultConf => _.set(field, value, prevDefaultConf))
     }
@@ -210,7 +210,7 @@ const SettingsBox = ({
 
   const handlePolygonLinesCount = (field: string, value: string | number) => {
     if (selectedShape) {
-      updateShape(updatePolygonLinesCount(selectedShape as DrawablePolygon, value as number))
+      updateShape(updatePolygonLinesCount(selectedShape as DrawablePolygon, value as number), true)
     } else {
       setDefaultConf(prevDefaultConf => _.set(field, value, prevDefaultConf))
     }
