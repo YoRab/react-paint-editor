@@ -27,9 +27,8 @@ const StyledTool = styled.button<{ selected: boolean }>`
   justify-content: center;
   background: none;
   border: none;
-  cursor: pointer;
 
-  ${({ selected }) =>
+  ${({ selected, disabled }) =>
     selected
       ? `
   
@@ -38,16 +37,19 @@ const StyledTool = styled.button<{ selected: boolean }>`
 
   
   `
-      : `
-  &:hover:not(:disabled) {
+      : !disabled &&
+        `
+  &:hover {
     background: var(--btn-hover);
   }
   `}
 
-  &:disabled {
-    opacity: 0.25;
-    cursor: default;
-  }
+  ${({ disabled }) =>
+    disabled
+      ? `  opacity: 0.25;
+    cursor: default;`
+      : ` cursor: pointer;
+`}
 
   input {
     display: none;
@@ -105,18 +107,18 @@ type ToolType = {
   lib: string
   img?: string
   isActive: boolean
-  isDisabled?: boolean
+  disabled?: boolean
   setActive: (marker: ToolsType) => void
 }
 
-const Tool = ({ type, lib, img, isActive, isDisabled = false, setActive }: ToolType) => {
+const Tool = ({ type, lib, img, isActive, disabled = false, setActive }: ToolType) => {
   const handleClick = () => {
     setActive(type)
   }
 
   return (
     <StyledTool
-      disabled={isDisabled}
+      disabled={disabled}
       selected={isActive}
       onClick={handleClick}
       dangerouslySetInnerHTML={{ __html: img ? img : lib }}></StyledTool>
@@ -124,13 +126,14 @@ const Tool = ({ type, lib, img, isActive, isDisabled = false, setActive }: ToolT
 }
 
 type LoadFileToolType = {
+  disabled?: boolean
   loadFile: (file: File) => void
   lib: string
   img?: string
   accept: string
 }
 
-const LoadFileTool = ({ loadFile, lib, img, accept }: LoadFileToolType) => {
+const LoadFileTool = ({ disabled = false, loadFile, lib, img, accept }: LoadFileToolType) => {
   const inputRef = useRef<HTMLInputElement>(null)
 
   const handleClick = () => {
@@ -144,13 +147,14 @@ const LoadFileTool = ({ loadFile, lib, img, accept }: LoadFileToolType) => {
   }
 
   return (
-    <StyledTool as="label" selected={false}>
+    <StyledTool as="label" selected={false} disabled={disabled}>
       <input
         ref={inputRef}
         type="file"
         onClick={handleClick}
         onChange={handleChange}
         accept={accept}
+        disabled={disabled}
       />
       {img ? <span dangerouslySetInnerHTML={{ __html: img }} /> : lib}
     </StyledTool>
@@ -158,6 +162,7 @@ const LoadFileTool = ({ loadFile, lib, img, accept }: LoadFileToolType) => {
 }
 
 type ToolboxType = {
+  disabled?: boolean
   activeTool: React.SetStateAction<ToolsType>
   hasActionToUndo?: boolean
   hasActionToRedo?: boolean
@@ -173,6 +178,7 @@ type ToolboxType = {
 }
 
 const Toolbox = ({
+  disabled = false,
   activeTool,
   hasActionToUndo = false,
   hasActionToRedo = false,
@@ -206,6 +212,7 @@ const Toolbox = ({
     <StyledToolbox ismenuopen={isMenuOpen}>
       <Tool
         type={ToolEnum.selection}
+        disabled={disabled}
         lib="selection"
         img={selectIcon}
         isActive={activeTool === ToolEnum.selection}
@@ -220,7 +227,7 @@ const Toolbox = ({
       /> */}
       <Tool
         type={ToolEnum.undo}
-        isDisabled={!hasActionToUndo}
+        disabled={disabled || !hasActionToUndo}
         lib="Undo"
         img={undoIcon}
         isActive={activeTool === ToolEnum.undo}
@@ -228,7 +235,7 @@ const Toolbox = ({
       />
       <Tool
         type={ToolEnum.redo}
-        isDisabled={!hasActionToRedo}
+        disabled={disabled || !hasActionToRedo}
         lib="Redo"
         img={redoIcon}
         isActive={activeTool === ToolEnum.redo}
@@ -236,7 +243,7 @@ const Toolbox = ({
       />
       <Tool
         type={ToolEnum.clear}
-        isDisabled={!hasActionToClear}
+        disabled={disabled || !hasActionToClear}
         lib="Clear"
         img={clearIcon}
         isActive={activeTool === ToolEnum.clear}
@@ -247,6 +254,7 @@ const Toolbox = ({
           {_.map(
             toolType => (
               <Tool
+                disabled={disabled}
                 key={toolType}
                 type={toolType}
                 lib={toolType}
@@ -258,6 +266,7 @@ const Toolbox = ({
             toolsTypes
           )}
           <LoadFileTool
+            disabled={disabled}
             loadFile={addPicture}
             lib="Image"
             img={pictureIcon}
@@ -265,13 +274,14 @@ const Toolbox = ({
           />
         </StyledShrinkableToolsInner>
         <StyledTool
-          disabled={false}
+          disabled={disabled}
           selected={false}
           onClick={toggleTools}
           dangerouslySetInnerHTML={{ __html: dotsIcon }}></StyledTool>
       </StyledShrinkableTools>
 
       <LoadFileTool
+        disabled={disabled}
         loadFile={loadFile}
         lib="Load file"
         img={openFileIcon}
@@ -279,6 +289,7 @@ const Toolbox = ({
       />
 
       <Tool
+        disabled={disabled}
         type={ToolEnum.saveFile}
         lib="Save file"
         img={saveIcon}
@@ -287,6 +298,7 @@ const Toolbox = ({
       />
 
       <Tool
+        disabled={disabled}
         type={ToolEnum.export}
         lib="Export"
         img={exportFileIcon}

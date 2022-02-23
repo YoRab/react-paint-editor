@@ -48,7 +48,7 @@ const ManualSaveApp = () => {
     <>
       <App apiRef={ref} />
       <button onClick={saveDatas}>Save data</button>
-      <App shapes={shapes} />
+      <App shapes={shapes} disabled />
       <img src={image} />
     </>
   )
@@ -72,7 +72,7 @@ const AutoSaveApp = () => {
   return (
     <>
       <App apiRef={ref} onDataChanged={refreshDatas} />
-      <App shapes={shapes} />
+      <App shapes={shapes} disabled />
       <img src={image} />
     </>
   )

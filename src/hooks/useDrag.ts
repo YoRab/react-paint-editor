@@ -2,6 +2,7 @@ import { RefObject, useEffect, useState } from 'react'
 import { DrawableShape } from 'types/Shapes'
 
 type useDragType = {
+  disabled?: boolean
   ref: RefObject<HTMLDivElement>
   shape: DrawableShape
   layoutDragging: string | undefined
@@ -11,6 +12,7 @@ type useDragType = {
 }
 
 const useDrag = ({
+  disabled = false,
   ref,
   shape,
   layoutDragging,
@@ -64,22 +66,25 @@ const useDrag = ({
       return false
     }
 
-    layoutRef.addEventListener('dragstart', handleDragStart)
-    layoutRef.addEventListener('dragend', handleDragEnd)
-    layoutRef.addEventListener('dragover', handleDragOver)
-    layoutRef.addEventListener('dragenter', handleDragEnter)
-    layoutRef.addEventListener('dragleave', handleDragLeave)
-    layoutRef.addEventListener('drop', handleDrop)
-
-    return () => {
-      layoutRef.removeEventListener('dragstart', handleDragStart)
-      layoutRef.removeEventListener('dragend', handleDragEnd)
-      layoutRef.removeEventListener('dragover', handleDragOver)
-      layoutRef.removeEventListener('dragenter', handleDragEnter)
-      layoutRef.removeEventListener('dragleave', handleDragLeave)
-      layoutRef.removeEventListener('drop', handleDrop)
+    if (!disabled) {
+      layoutRef.addEventListener('dragstart', handleDragStart)
+      layoutRef.addEventListener('dragend', handleDragEnd)
+      layoutRef.addEventListener('dragover', handleDragOver)
+      layoutRef.addEventListener('dragenter', handleDragEnter)
+      layoutRef.addEventListener('dragleave', handleDragLeave)
+      layoutRef.addEventListener('drop', handleDrop)
     }
-  }, [ref, shape, setLayoutDragging, handleSelect, onMoveShapes, layoutDragging])
+    return () => {
+      if (!disabled) {
+        layoutRef.removeEventListener('dragstart', handleDragStart)
+        layoutRef.removeEventListener('dragend', handleDragEnd)
+        layoutRef.removeEventListener('dragover', handleDragOver)
+        layoutRef.removeEventListener('dragenter', handleDragEnter)
+        layoutRef.removeEventListener('dragleave', handleDragLeave)
+        layoutRef.removeEventListener('drop', handleDrop)
+      }
+    }
+  }, [disabled, ref, shape, setLayoutDragging, handleSelect, onMoveShapes, layoutDragging])
 
   return { isOver }
 }

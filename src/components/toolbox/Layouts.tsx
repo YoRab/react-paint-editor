@@ -9,29 +9,41 @@ import { getShapePicture } from 'utils/style'
 const StyledLayouts = styled.div`
   display: inline-block;
   /* background: var(--shrinkedcanvas-bg-color); */
-  background: white;
-  border: 3px solid var(--text-color);
+  background: var(--bg-color);
+  /* border: 3px solid var(--text-color); */
   box-sizing: border-box;
   width: 80px;
   overflow-y: auto;
 `
 
-const StyledLayout = styled.div<{ selected: boolean; isdragging: boolean; isover: boolean }>`
+const StyledLayout = styled.div<{
+  disabled: boolean
+  selected: boolean
+  isdragging: boolean
+  isover: boolean
+}>`
   border-bottom: 1px solid var(--btn-hover);
   padding: 12px;
   padding-right: 24px;
   position: relative;
-  cursor: move;
-  background: white;
-  ${({ selected }) =>
+  background: var(--bg-color);
+  ${({ selected, disabled }) =>
     selected
       ? `    color:var(--text-color-selected);
     background:var(--bg-color-selected);`
-      : `  &:hover:not(:disabled) {
+      : !disabled &&
+        `  &:hover {
     background: var(--btn-hover);
   }`};
   ${({ isdragging }) => isdragging && 'opacity:0.4'};
   ${({ isover }) => isover && '  border: 3px dotted var(--btn-hover);'};
+
+  ${({ disabled }) =>
+    disabled
+      ? `  opacity: 0.25;
+    cursor: default;`
+      : ` cursor: move;
+`}
 
   > span > svg {
     color: #8a8a8a;
@@ -40,7 +52,9 @@ const StyledLayout = styled.div<{ selected: boolean; isdragging: boolean; isover
   }
 `
 
-const StyledRemove = styled.div`
+const StyledRemove = styled.div<{
+  disabled: boolean
+}>`
   position: absolute;
   width: 36px;
   display: inline-block;
@@ -54,11 +68,15 @@ const StyledRemove = styled.div`
   justify-content: center;
   background: none;
   border: none;
-  cursor: pointer;
-
-  &:hover:not(:disabled) {
+  ${({ disabled }) =>
+    disabled
+      ? `  opacity: 0.25;
+    cursor: default;`
+      : ` cursor: pointer;
+      &:hover {
     background: var(--btn-hover);
   }
+`}
 
   svg {
     color: inherit;
@@ -68,6 +86,7 @@ const StyledRemove = styled.div`
 `
 
 type LayoutType = {
+  disabled?: boolean
   shape: DrawableShape
   selected: boolean
   layoutDragging: string | undefined
@@ -78,6 +97,7 @@ type LayoutType = {
 }
 
 const Layout = ({
+  disabled = false,
   shape,
   selected,
   layoutDragging,
@@ -89,18 +109,21 @@ const Layout = ({
   const ref = useRef<HTMLDivElement>(null)
 
   const onRemove = (e: React.MouseEvent<HTMLElement>) => {
+    if (disabled) return
     e.preventDefault()
     e.stopPropagation()
     handleRemove(shape)
   }
 
   const onSelect = (e: React.MouseEvent<HTMLElement>) => {
+    if (disabled) return
     e.preventDefault()
     e.stopPropagation()
     handleSelect(shape)
   }
 
   const { isOver } = useDrag({
+    disabled,
     ref,
     shape,
     layoutDragging,
@@ -111,7 +134,8 @@ const Layout = ({
 
   return (
     <StyledLayout
-      draggable="true"
+      disabled={disabled}
+      draggable={!disabled}
       isdragging={layoutDragging === shape.id}
       isover={isOver}
       onClick={onSelect}
@@ -120,6 +144,7 @@ const Layout = ({
       <span dangerouslySetInnerHTML={{ __html: getShapePicture(shape.type) }} />
 
       <StyledRemove
+        disabled={disabled}
         onClick={onRemove}
         dangerouslySetInnerHTML={{ __html: trashIcon }}></StyledRemove>
     </StyledLayout>
@@ -127,6 +152,7 @@ const Layout = ({
 }
 
 type LayoutsType = {
+  disabled?: boolean
   shapes: DrawableShape[]
   removeShape: (shape: DrawableShape) => void
   selectedShape: DrawableShape | undefined
@@ -134,7 +160,14 @@ type LayoutsType = {
   moveShapes: (firstShapeId: string, lastShapeId: string) => void
 }
 
-const Layouts = ({ shapes, removeShape, selectedShape, moveShapes, selectShape }: LayoutsType) => {
+const Layouts = ({
+  disabled = false,
+  shapes,
+  removeShape,
+  selectedShape,
+  moveShapes,
+  selectShape
+}: LayoutsType) => {
   const [layoutDragging, setLayoutDragging] = useState<string | undefined>(undefined)
 
   return (
@@ -144,6 +177,7 @@ const Layouts = ({ shapes, removeShape, selectedShape, moveShapes, selectShape }
           <Layout
             key={shape.id}
             shape={shape}
+            disabled={disabled}
             layoutDragging={layoutDragging}
             setLayoutDragging={setLayoutDragging}
             selected={selectedShape?.id === shape.id}

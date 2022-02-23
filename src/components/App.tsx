@@ -38,8 +38,8 @@ const StyledApp = styled.div<{
   --btn-hover: #afd8d8;
   --bg-color-selected: #364181;
   --text-color-selected: white;
-  --shrinkedcanvas-bg-color: #364181;
-  /* --shrinkedcanvas-bg-color: #d7ecec; */
+  /* --shrinkedcanvas-bg-color: #364181; */
+  --shrinkedcanvas-bg-color: #d7ecec;
   display: flex;
   width: fit-content;
   color: var(--text-color);
@@ -75,6 +75,7 @@ type AppType = {
   withLayouts?: 'always' | 'never' | 'visible' | 'hidden'
   shapes?: DrawableShapeJson[]
   className?: string
+  disabled?: boolean
   onDataChanged?: () => void
   apiRef?: MutableRefObject<
     | undefined
@@ -91,6 +92,7 @@ const App = ({
   withLayouts = 'hidden',
   shapes: shapesFromProps,
   className: classNameFromProps,
+  disabled = false,
   onDataChanged,
   apiRef
 }: AppType) => {
@@ -98,6 +100,7 @@ const App = ({
   const canvasRef = useRef<HTMLCanvasElement>(null)
 
   const { isInsideComponent } = useComponent({
+    disabled,
     componentRef
   })
 
@@ -288,6 +291,7 @@ const App = ({
   return (
     <StyledApp ref={componentRef} className={className} width={width}>
       <Toolbox
+        disabled={disabled}
         activeTool={activeTool}
         clearCanvas={clearCanvas}
         setActiveTool={selectTool}
@@ -303,6 +307,7 @@ const App = ({
       />
       <StyledRow width={width} height={height}>
         <Canvas
+          disabled={disabled}
           isInsideComponent={isInsideComponent}
           activeTool={activeTool}
           setActiveTool={setActiveTool}
@@ -325,6 +330,7 @@ const App = ({
         />
         {isLayoutPanelShown && (
           <Layouts
+            disabled={disabled}
             shapes={shapesRef.current}
             moveShapes={moveShapes}
             selectedShape={selectedShape}
@@ -333,21 +339,20 @@ const App = ({
           />
         )}
       </StyledRow>
-      {selectedShape && (
-        <SettingsBox
-          activeTool={activeTool}
-          selectedShape={selectedShape}
-          removeShape={removeShape}
-          updateShape={updateShape}
-          defaultConf={defaultConf}
-          setDefaultConf={setDefaultConf}
-          canvas={canvasRef.current}
-          withLayouts={withLayouts}
-          toggleLayoutPanel={() => {
-            setIsLayoutPanelShown(prev => !prev)
-          }}
-        />
-      )}
+      <SettingsBox
+        disabled={disabled}
+        activeTool={activeTool}
+        selectedShape={selectedShape}
+        removeShape={removeShape}
+        updateShape={updateShape}
+        defaultConf={defaultConf}
+        setDefaultConf={setDefaultConf}
+        canvas={canvasRef.current}
+        withLayouts={withLayouts}
+        toggleLayoutPanel={() => {
+          setIsLayoutPanelShown(prev => !prev)
+        }}
+      />
       <SnackbarContainer snackbarList={snackbarList} />
     </StyledApp>
   )

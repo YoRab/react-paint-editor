@@ -30,12 +30,13 @@ const StyledEditBox = styled.div<{
 `
 
 type EditTextBoxType = {
+  disabled?: boolean
   shape: DrawableText
   defaultValue: string[]
   updateValue: (newValue: string[]) => void
 }
 
-const EditTextBox = ({ shape, defaultValue, updateValue }: EditTextBoxType) => {
+const EditTextBox = ({ disabled = false, shape, defaultValue, updateValue }: EditTextBoxType) => {
   const ref = useRef<HTMLDivElement>(null)
 
   const updateContentEditable = (e: React.ChangeEvent<HTMLDivElement>) => {
@@ -67,7 +68,7 @@ const EditTextBox = ({ shape, defaultValue, updateValue }: EditTextBoxType) => {
       fontsize={shape.fontSize}
       color={shape.style?.strokeColor}
       fontfamily={shape.style?.fontFamily ?? STYLE_FONT_DEFAULT}
-      contentEditable={true}
+      contentEditable={!disabled}
       onInput={updateContentEditable}></StyledEditBox>
   )
 }

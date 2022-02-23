@@ -102,6 +102,7 @@ const StyledSelectionCanvas = styled.canvas.attrs<{
 `
 
 type DrawerType = {
+  disabled?: boolean
   width: number
   height: number
   shapes: DrawableShape[]
@@ -125,6 +126,7 @@ type DrawerType = {
 const Canvas = React.forwardRef<HTMLCanvasElement, DrawerType>(
   (
     {
+      disabled = false,
       width,
       height,
       shapes,
@@ -153,6 +155,7 @@ const Canvas = React.forwardRef<HTMLCanvasElement, DrawerType>(
     useImperativeHandle(ref, () => drawCanvasRef.current!)
 
     const { hoverMode } = useDrawableCanvas({
+      disabled,
       addShape,
       drawCanvasRef,
       setActiveTool,
@@ -230,6 +233,7 @@ const Canvas = React.forwardRef<HTMLCanvasElement, DrawerType>(
           {selectionMode.mode === SelectionModeLib.textedition &&
             selectedShape?.type === ShapeEnum.text && (
               <EditTextBox
+                disabled={disabled}
                 shape={selectedShape}
                 defaultValue={selectionMode.defaultValue}
                 updateValue={updateSelectedShapeText}

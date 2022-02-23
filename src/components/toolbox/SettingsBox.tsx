@@ -20,33 +20,42 @@ import {
 import { calculateTextFontSize, updatePolygonLinesCount } from 'utils/transform'
 import { layersIcon, trashIcon } from 'constants/icons'
 
+const StyledSelect = styled.select`
+  // A reset of styles, including removing the default dropdown arrow
+  appearance: none;
+  // Additional resets for further consistency
+  background-color: transparent;
+  color: inherit;
+  border: none;
+  padding: 0 12px 0 0;
+  margin: 0;
+  font-family: inherit;
+  font-size: inherit;
+  line-height: inherit;
+
+  option {
+    background-color: var(--bg-color);
+  }
+
+  &:hover:not(:disabled) {
+    background: var(--btn-hover);
+  }
+
+  ${({ disabled }) =>
+    disabled
+      ? `  opacity: 0.25;
+    cursor: default;`
+      : ` cursor: pointer;
+      &:hover {
+    background: var(--btn-hover);
+  }
+`}
+`
+
 const StyledSettingsBox = styled.div`
   user-select: none;
   display: flex;
   background: var(--bg-color);
-
-  select {
-    // A reset of styles, including removing the default dropdown arrow
-    appearance: none;
-    // Additional resets for further consistency
-    background-color: transparent;
-    color: inherit;
-    border: none;
-    padding: 0 12px 0 0;
-    margin: 0;
-    font-family: inherit;
-    font-size: inherit;
-    cursor: pointer;
-    line-height: inherit;
-
-    &:hover:not(:disabled) {
-      background: var(--btn-hover);
-    }
-
-    option {
-      background-color: var(--bg-color);
-    }
-  }
 `
 
 const StyledSeparator = styled.div`
@@ -65,17 +74,20 @@ const StyleToggleLayoutButton = styled.button`
   cursor: pointer;
   color: var(--text-color);
 
-  &:hover:not(:disabled) {
+  ${({ hidden }) => hidden && ` visibility:hidden;`}
+  ${({ disabled }) =>
+    disabled
+      ? `  opacity: 0.25;
+    cursor: default;`
+      : ` cursor: pointer;
+      &:hover {
     background: var(--btn-hover);
   }
+`}
 
   .layoutPanelOpened & {
     color: var(--text-color-selected);
     background: var(--bg-color-selected);
-
-    &:hover:not(:disabled) {
-      background: var(--bg-color-selected);
-    }
   }
 `
 
@@ -91,9 +103,15 @@ const StyledDeleteButton = styled.button`
   cursor: pointer;
   color: var(--text-color);
 
-  &:hover:not(:disabled) {
+  ${({ disabled }) =>
+    disabled
+      ? `  opacity: 0.25;
+    cursor: default;`
+      : ` cursor: pointer;
+      &:hover {
     background: var(--btn-hover);
   }
+`}
 
   svg {
     color: inherit;
@@ -103,38 +121,50 @@ const StyledDeleteButton = styled.button`
 `
 
 type DeleteShapeButtonType = {
+  disabled?: boolean
   selectedShape: DrawableShape
   removeShape: (shape: DrawableShape) => void
 }
 
-const DeleteShapeButton = ({ selectedShape, removeShape }: DeleteShapeButtonType) => {
+const DeleteShapeButton = ({
+  disabled = false,
+  selectedShape,
+  removeShape
+}: DeleteShapeButtonType) => {
   const handleRemove = () => {
-    console.log('remove')
     removeShape(selectedShape)
   }
 
   return (
     <StyledDeleteButton
+      disabled={disabled}
       onClick={handleRemove}
       dangerouslySetInnerHTML={{ __html: trashIcon }}></StyledDeleteButton>
   )
 }
 
 type ShapeStyleSelectType = {
+  disabled?: boolean
   field: string
   values: (string | number)[]
   defaultValue?: number | string | undefined
   valueChanged: (field: string, value: string | number) => void
 }
 
-const ShapeStyleSelect = ({ field, values, defaultValue, valueChanged }: ShapeStyleSelectType) => {
+const ShapeStyleSelect = ({
+  disabled = false,
+  field,
+  values,
+  defaultValue,
+  valueChanged
+}: ShapeStyleSelectType) => {
   const handleChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
     const parsedValue = _.toNumber(event.target.value)
     valueChanged(field, _.isNaN(parsedValue) ? event.target.value : parsedValue)
   }
 
   return (
-    <select onChange={handleChange}>
+    <StyledSelect onChange={handleChange} disabled={disabled}>
       {values.map(value => {
         return (
           <option key={value} value={value} selected={defaultValue == value}>
@@ -142,11 +172,12 @@ const ShapeStyleSelect = ({ field, values, defaultValue, valueChanged }: ShapeSt
           </option>
         )
       })}
-    </select>
+    </StyledSelect>
   )
 }
 
 type SettingsBoxType = {
+  disabled?: boolean
   withLayouts?: 'always' | 'never' | 'visible' | 'hidden'
   activeTool: ToolsType
   selectedShape: DrawableShape | undefined
@@ -159,6 +190,7 @@ type SettingsBoxType = {
 }
 
 const SettingsBox = ({
+  disabled = false,
   withLayouts,
   toggleLayoutPanel,
   activeTool,
@@ -224,6 +256,7 @@ const SettingsBox = ({
             <>
               {selectedShape.type === ShapeEnum.polygon && (
                 <ShapeStyleSelect
+                  disabled={disabled}
                   field="style.pointsCount"
                   values={POLYGON_POINTS_VALUES}
                   defaultValue={selectedShape.points.length}
@@ -232,6 +265,7 @@ const SettingsBox = ({
               )}
               {selectedShape.type === ShapeEnum.text ? (
                 <ShapeStyleSelect
+                  disabled={disabled}
                   field="style.fontFamily"
                   values={STYLE_FONTS}
                   defaultValue={selectedShape.style?.fontFamily}
@@ -240,12 +274,14 @@ const SettingsBox = ({
               ) : (
                 <>
                   <ShapeStyleSelect
+                    disabled={disabled}
                     field="style.lineWidth"
                     values={STYLE_LINE_WIDTH}
                     defaultValue={selectedShape.style?.lineWidth}
                     valueChanged={handleShapeStyleChange}
                   />
                   <ShapeStyleSelect
+                    disabled={disabled}
                     field="style.lineDash"
                     values={STYLE_LINE_DASH}
                     defaultValue={selectedShape.style?.lineDash}
@@ -256,6 +292,7 @@ const SettingsBox = ({
 
               {selectedShape.type === ShapeEnum.line && (
                 <ShapeStyleSelect
+                  disabled={disabled}
                   field="style.lineArrow"
                   values={STYLE_LINE_WITH_ARROW}
                   defaultValue={selectedShape.style?.lineArrow}
@@ -264,6 +301,7 @@ const SettingsBox = ({
               )}
 
               <ShapeStyleSelect
+                disabled={disabled}
                 field="style.strokeColor"
                 values={STYLE_COLORS}
                 defaultValue={selectedShape.style?.strokeColor}
@@ -274,6 +312,7 @@ const SettingsBox = ({
                 selectedShape.type !== ShapeEnum.brush &&
                 selectedShape.type !== ShapeEnum.line && (
                   <ShapeStyleSelect
+                    disabled={disabled}
                     field="style.fillColor"
                     values={STYLE_COLORS}
                     defaultValue={selectedShape.style?.fillColor}
@@ -282,13 +321,18 @@ const SettingsBox = ({
                 )}
             </>
           )}
-          <DeleteShapeButton selectedShape={selectedShape} removeShape={removeShape} />
+          <DeleteShapeButton
+            disabled={disabled}
+            selectedShape={selectedShape}
+            removeShape={removeShape}
+          />
         </>
       ) : (
         _.includes(activeTool, shapes) && (
           <>
             {activeTool === ShapeEnum.polygon && (
               <ShapeStyleSelect
+                disabled={disabled}
                 field="style.pointsCount"
                 values={POLYGON_POINTS_VALUES}
                 defaultValue={2}
@@ -297,6 +341,7 @@ const SettingsBox = ({
             )}
             {activeTool === ShapeEnum.text ? (
               <ShapeStyleSelect
+                disabled={disabled}
                 field="style.fontFamily"
                 values={STYLE_FONTS}
                 defaultValue={defaultConf.style?.fontFamily}
@@ -305,12 +350,14 @@ const SettingsBox = ({
             ) : (
               <>
                 <ShapeStyleSelect
+                  disabled={disabled}
                   field="style.lineWidth"
                   values={STYLE_LINE_WIDTH}
                   defaultValue={defaultConf.style?.lineWidth}
                   valueChanged={handleShapeStyleChange}
                 />
                 <ShapeStyleSelect
+                  disabled={disabled}
                   field="style.lineDash"
                   values={STYLE_LINE_DASH}
                   defaultValue={defaultConf.style?.lineDash}
@@ -321,6 +368,7 @@ const SettingsBox = ({
 
             {activeTool === ShapeEnum.line && (
               <ShapeStyleSelect
+                disabled={disabled}
                 field="style.lineArrow"
                 values={STYLE_LINE_WITH_ARROW}
                 defaultValue={defaultConf.style?.lineArrow}
@@ -329,6 +377,7 @@ const SettingsBox = ({
             )}
 
             <ShapeStyleSelect
+              disabled={disabled}
               field="style.strokeColor"
               values={STYLE_COLORS}
               defaultValue={defaultConf.style?.strokeColor}
@@ -339,6 +388,7 @@ const SettingsBox = ({
               activeTool !== ShapeEnum.brush &&
               activeTool !== ShapeEnum.line && (
                 <ShapeStyleSelect
+                  disabled={disabled}
                   field="style.fillColor"
                   values={STYLE_COLORS}
                   defaultValue={defaultConf.style?.fillColor}
@@ -349,13 +399,13 @@ const SettingsBox = ({
         )
       )}
       <StyledSeparator />
-      {withLayouts === 'visible' ||
-        (withLayouts === 'hidden' && (
-          <StyleToggleLayoutButton
-            onClick={toggleLayoutPanel}
-            dangerouslySetInnerHTML={{ __html: layersIcon }}
-          />
-        ))}
+
+      <StyleToggleLayoutButton
+        hidden={withLayouts === 'always' || withLayouts === 'never'}
+        disabled={disabled}
+        onClick={toggleLayoutPanel}
+        dangerouslySetInnerHTML={{ __html: layersIcon }}
+      />
     </StyledSettingsBox>
   )
 }

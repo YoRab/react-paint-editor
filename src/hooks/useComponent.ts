@@ -1,10 +1,11 @@
 import { RefObject, useEffect, useState } from 'react'
 
 type UseComponentType = {
+  disabled: boolean
   componentRef: RefObject<HTMLElement>
 }
 
-const useComponent = ({ componentRef }: UseComponentType) => {
+const useComponent = ({ disabled, componentRef }: UseComponentType) => {
   const [isInsideComponent, setIsInsideComponent] = useState(false)
 
   useEffect(() => {
@@ -15,15 +16,20 @@ const useComponent = ({ componentRef }: UseComponentType) => {
           : componentRef.current.contains(event.target)
       )
     }
-
-    document.addEventListener('mousedown', onDetectClick)
-    document.addEventListener('touchstart', onDetectClick)
+    if (disabled) {
+      setIsInsideComponent(false)
+    } else {
+      document.addEventListener('mousedown', onDetectClick)
+      document.addEventListener('touchstart', onDetectClick)
+    }
 
     return () => {
-      document.removeEventListener('mousedown', onDetectClick)
-      document.removeEventListener('touchstart', onDetectClick)
+      if (!disabled) {
+        document.removeEventListener('mousedown', onDetectClick)
+        document.removeEventListener('touchstart', onDetectClick)
+      }
     }
-  }, [componentRef])
+  }, [disabled, componentRef])
 
   return { isInsideComponent }
 }

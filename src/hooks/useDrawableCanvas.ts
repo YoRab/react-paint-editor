@@ -62,6 +62,7 @@ const handleMove = (
 }
 
 type UseCanvasType = {
+  disabled?: boolean
   width: number
   height: number
   shapes: DrawableShape[]
@@ -85,6 +86,7 @@ type UseCanvasType = {
 }
 
 const useDrawableCanvas = ({
+  disabled = false,
   addShape,
   drawCanvasRef,
   setActiveTool,
@@ -210,6 +212,7 @@ const useDrawableCanvas = ({
   useEffect(() => {
     const ref = selectionCanvasRef.current
     if (!ref) return
+    if (disabled) return
 
     const handleMouseDown = (e: MouseEvent | TouchEvent) => {
       e.preventDefault()
@@ -271,6 +274,7 @@ const useDrawableCanvas = ({
       ref.removeEventListener('touchstart', handleMouseDown)
     }
   }, [
+    disabled,
     selectionCanvasRef,
     drawCanvasRef,
     selectedShape,
@@ -305,13 +309,25 @@ const useDrawableCanvas = ({
         }
       }
     }
-
-    ref.addEventListener('dblclick', handleDoubleClick)
+    if (isInsideComponent) {
+      ref.addEventListener('dblclick', handleDoubleClick)
+    }
 
     return () => {
-      ref.removeEventListener('dblclick', handleDoubleClick)
+      if (isInsideComponent) {
+        ref.removeEventListener('dblclick', handleDoubleClick)
+      }
     }
-  }, [selectionCanvasRef, activeTool, selectedShape, width, height, canvasOffset, setSelectionMode])
+  }, [
+    isInsideComponent,
+    selectionCanvasRef,
+    activeTool,
+    selectedShape,
+    width,
+    height,
+    canvasOffset,
+    setSelectionMode
+  ])
 
   return { hoverMode }
 }
