@@ -3,7 +3,6 @@ import React from 'react'
 import styled from 'styled-components'
 import {
   POLYGON_POINTS_VALUES,
-  STYLE_COLORS,
   STYLE_FONTS,
   STYLE_LINE_DASH,
   STYLE_LINE_WITH_ARROW,
@@ -37,6 +36,30 @@ const StyledSelect = styled.select`
     background-color: var(--bg-color);
   }
 
+  &:hover:not(:disabled) {
+    background: var(--btn-hover);
+  }
+
+  ${({ disabled }) =>
+    disabled
+      ? `  opacity: 0.25;
+    cursor: default;`
+      : ` cursor: pointer;
+      &:hover {
+    background: var(--btn-hover);
+  }
+`}
+`
+
+const StyledColorInput = styled.input`
+  border: none;
+  padding: 0;
+  margin: 0;
+  height: 36px;
+  background-color: transparent;
+  font-family: inherit;
+  font-size: inherit;
+  line-height: inherit;
   &:hover:not(:disabled) {
     background: var(--btn-hover);
   }
@@ -176,6 +199,33 @@ const ShapeStyleSelect = ({
   )
 }
 
+type ShapeStyleColorType = {
+  disabled?: boolean
+  field: string
+  defaultValue?: number | string | undefined
+  valueChanged: (field: string, value: string | number) => void
+}
+
+const ShapeStyleColor = ({
+  disabled = false,
+  field,
+  defaultValue,
+  valueChanged
+}: ShapeStyleColorType) => {
+  const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const parsedValue = _.toNumber(event.target.value)
+    valueChanged(field, _.isNaN(parsedValue) ? event.target.value : parsedValue)
+  }
+
+  return (
+    <StyledColorInput
+      type="color"
+      value={defaultValue}
+      onChange={handleChange}
+      disabled={disabled}></StyledColorInput>
+  )
+}
+
 type SettingsBoxType = {
   disabled?: boolean
   withLayouts?: 'always' | 'never' | 'visible' | 'hidden'
@@ -300,10 +350,9 @@ const SettingsBox = ({
                 />
               )}
 
-              <ShapeStyleSelect
+              <ShapeStyleColor
                 disabled={disabled}
                 field="style.strokeColor"
-                values={STYLE_COLORS}
                 defaultValue={selectedShape.style?.strokeColor}
                 valueChanged={handleShapeStyleChange}
               />
@@ -311,10 +360,9 @@ const SettingsBox = ({
               {selectedShape.type !== ShapeEnum.text &&
                 selectedShape.type !== ShapeEnum.brush &&
                 selectedShape.type !== ShapeEnum.line && (
-                  <ShapeStyleSelect
+                  <ShapeStyleColor
                     disabled={disabled}
                     field="style.fillColor"
-                    values={STYLE_COLORS}
                     defaultValue={selectedShape.style?.fillColor}
                     valueChanged={handleShapeStyleChange}
                   />
@@ -376,10 +424,9 @@ const SettingsBox = ({
               />
             )}
 
-            <ShapeStyleSelect
+            <ShapeStyleColor
               disabled={disabled}
               field="style.strokeColor"
-              values={STYLE_COLORS}
               defaultValue={defaultConf.style?.strokeColor}
               valueChanged={handleShapeStyleChange}
             />
@@ -387,10 +434,9 @@ const SettingsBox = ({
             {activeTool !== ShapeEnum.text &&
               activeTool !== ShapeEnum.brush &&
               activeTool !== ShapeEnum.line && (
-                <ShapeStyleSelect
+                <ShapeStyleColor
                   disabled={disabled}
                   field="style.fillColor"
-                  values={STYLE_COLORS}
                   defaultValue={defaultConf.style?.fillColor}
                   valueChanged={handleShapeStyleChange}
                 />
