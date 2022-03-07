@@ -1,36 +1,10 @@
-import {
-  SnackbarTypeEnum,
-  SNACKBAR_ANIMATION_DUURATION as SNACKBAR_ANIMATION_DURATION
-} from 'constants/snackbar'
+import { SNACKBAR_ANIMATION_DUURATION as SNACKBAR_ANIMATION_DURATION } from 'constants/snackbar'
 import { SnackBarType } from 'hooks/useSnackbar'
 import React, { useEffect, useState } from 'react'
 import styled from 'styled-components'
 
-const getSnackbarTheme = (type: SnackbarTypeEnum) => {
-  switch (type) {
-    case SnackbarTypeEnum.Infos:
-    default:
-      return `
-      background: #646464;
-      color:white;`
-    case SnackbarTypeEnum.Warning:
-      return ` background: #c3a200;
-      color:black;`
-    case SnackbarTypeEnum.Error:
-      return ` background: #911717;
-      color:white;`
-    case SnackbarTypeEnum.Success:
-      return ` background: #088900;
-      color:white;`
-  }
-}
-
-const StyledSnackbar = styled.div<{
-  type: SnackbarTypeEnum
-  isshown: boolean
-}>`
+const StyledSnackbar = styled.div`
   display: inline-block;
-
   padding: 12px 48px;
   margin: 4px;
   max-width: calc(100% - 24px);
@@ -40,17 +14,39 @@ const StyledSnackbar = styled.div<{
   opacity: 0;
   transform: translate3d(0px, 40px, 0px);
 
-  ${({ type }) => getSnackbarTheme(type)}
-  ${({ isshown }) =>
-    isshown
-      ? `
-          opacity: 1;
-          transform: translate3d(0px, 0px, 0px);
-        `
-      : `
-          opacity: 0;
-          transform: translate3d(0px, 40px, 0px);
-        `};
+  &[data-type='0'] {
+    /* Infos */
+    background: #646464;
+    color: white;
+  }
+
+  &[data-type='1'] {
+    /*  Warning */
+    background: #c3a200;
+    color: black;
+  }
+
+  &[data-type='2'] {
+    /* Error */
+    background: #911717;
+    color: white;
+  }
+
+  &[data-type='3'] {
+    /* Success */
+    background: #088900;
+    color: white;
+  }
+
+  &[data-is-shown='1'] {
+    opacity: 1;
+    transform: translate3d(0px, 0px, 0px);
+  }
+
+  &[data-is-shown='0'] {
+    opacity: 0;
+    transform: translate3d(0px, 40px, 0px);
+  }
 `
 
 const StyledSnackbarContainer = styled.div`
@@ -85,7 +81,7 @@ const Snackbar = ({ type, text, duration }: SnackBarType) => {
   }, [duration])
 
   return (
-    <StyledSnackbar isshown={isShown} type={type}>
+    <StyledSnackbar data-is-shown={isShown} data-type={type}>
       {text}
     </StyledSnackbar>
   )

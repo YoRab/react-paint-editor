@@ -1,5 +1,5 @@
-import React, { RefObject, useCallback, useEffect, useImperativeHandle, useRef } from 'react'
-import styled from 'styled-components'
+import React, { useCallback, useEffect, useImperativeHandle, useRef } from 'react'
+import { styled } from '@linaria/react'
 import _ from 'lodash/fp'
 import { DrawableShape, Point, ShapeEnum, StyledShape, ToolEnum, ToolsType } from 'types/Shapes'
 import { drawSelection, drawShape } from 'utils/draw'
@@ -53,17 +53,7 @@ const StyledCanvasContainer = styled.div`
   overflow: hidden;
 `
 
-const StyledDrawCanvas = styled.canvas.attrs<{
-  width: number
-  height: number
-  ref: RefObject<HTMLCanvasElement>
-}>(({ width, height }) => ({
-  width: width,
-  height: height
-}))<{
-  width: number
-  height: number
-}>`
+const StyledDrawCanvas = styled.canvas`
   position: absolute;
   user-select: none;
   max-width: 100%;
@@ -71,34 +61,15 @@ const StyledDrawCanvas = styled.canvas.attrs<{
   display: block;
 `
 
-const StyledSelectionCanvas = styled.canvas.attrs<{
-  width: number
-  height: number
-  ref: RefObject<HTMLCanvasElement>
-}>(({ width, height }) => ({
-  width: width,
-  height: height
-}))<{
-  activetool: ToolsType
-  selectionmode: SelectionModeLib
-  width: number
-  height: number
+const StyledSelectionCanvas = styled.canvas<{
+  cursor: string
 }>`
   user-select: none;
   position: relative;
   max-width: 100%;
   touch-action: none; /* prevent scroll on touch */
   display: block;
-
-  ${({ selectionmode, activetool }) =>
-    (activetool !== ToolEnum.selection && activetool !== ToolEnum.move) ||
-    selectionmode === SelectionModeLib.resize
-      ? 'cursor: crosshair'
-      : activetool === ToolEnum.move || selectionmode === SelectionModeLib.translate
-      ? 'cursor:move'
-      : selectionmode === SelectionModeLib.rotate
-      ? 'cursor:grab'
-      : 'cursor:default'}
+  cursor: ${({ cursor }) => cursor};
 `
 
 type DrawerType = {
@@ -224,11 +195,19 @@ const Canvas = React.forwardRef<HTMLCanvasElement, DrawerType>(
         <StyledCanvasContainer>
           <StyledDrawCanvas ref={drawCanvasRef} width={width} height={height} />
           <StyledSelectionCanvas
-            activetool={activeTool}
-            selectionmode={hoverMode.mode}
             ref={selectionCanvasRef}
             width={width}
             height={height}
+            cursor={
+              (activeTool !== ToolEnum.selection && activeTool !== ToolEnum.move) ||
+              hoverMode.mode === SelectionModeLib.resize
+                ? 'cursor: crosshair'
+                : activeTool === ToolEnum.move || hoverMode.mode === SelectionModeLib.translate
+                ? 'cursor:move'
+                : hoverMode.mode === SelectionModeLib.rotate
+                ? 'cursor:grab'
+                : 'cursor:default'
+            }
           />
           {selectionMode.mode === SelectionModeLib.textedition &&
             selectedShape?.type === ShapeEnum.text && (

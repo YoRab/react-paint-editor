@@ -1,28 +1,25 @@
 import { STYLE_FONT_DEFAULT } from 'constants/style'
 import React, { useEffect, useMemo, useRef } from 'react'
-import styled from 'styled-components'
-import { DrawableText, Point } from 'types/Shapes'
+import { styled } from '@linaria/react'
+import { DrawableText } from 'types/Shapes'
 import { getPointPositionBeforeCanvasTransformation } from 'utils/intersect'
 import { getShapeInfos } from 'utils/shapeData'
 import { convertDivContentToStringArray, convertStringArrayToDivContent } from 'utils/string'
 import { radiansToDegrees } from 'utils/transform'
 
 const StyledEditBox = styled.div<{
-  position: Point
-  rotation: number
+  transform: string
   fontsize: number
   fontfamily: string
-  color: string | undefined
+  color: string
 }>`
   position: absolute;
   display: inline-block;
   outline: none;
   left: 0px;
   top: 0px;
-  ${({ rotation, position }) => `
-    transform-origin: left top;
-    transform: translate3D(${position[0]}px, ${position[1]}px, 0) rotate(${rotation}deg);
-  `}
+  transform-origin: left top;
+  transform: ${({ transform }) => transform};
   color: ${({ color }) => color};
   font-size: ${({ fontsize }) => fontsize}px;
   line-height: ${({ fontsize }) => fontsize}px;
@@ -63,10 +60,11 @@ const EditTextBox = ({ disabled = false, shape, defaultValue, updateValue }: Edi
   return (
     <StyledEditBox
       ref={ref}
-      position={position}
-      rotation={radiansToDegrees(shape.rotation)}
+      transform={`translate3D(${position[0]}px, ${position[1]}px, 0) rotate(${radiansToDegrees(
+        shape.rotation
+      )}deg)`}
       fontsize={shape.fontSize}
-      color={shape.style?.strokeColor}
+      color={shape.style?.strokeColor ?? 'inherit'}
       fontfamily={shape.style?.fontFamily ?? STYLE_FONT_DEFAULT}
       contentEditable={!disabled}
       onInput={updateContentEditable}></StyledEditBox>

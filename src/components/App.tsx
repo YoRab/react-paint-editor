@@ -10,7 +10,7 @@ import {
 import Canvas from './Canvas'
 import Layouts from './toolbox/Layouts'
 import Toolbox from './toolbox/Toolbox'
-import styled from 'styled-components'
+import { styled } from '@linaria/react'
 import SettingsBox from './toolbox/SettingsBox'
 import { STYLE_FONT_DEFAULT } from 'constants/style'
 import useKeyboard from 'hooks/useKeyboard'
@@ -31,7 +31,7 @@ import useSnackbar from 'hooks/useSnackbar'
 import { SnackbarTypeEnum } from 'constants/snackbar'
 
 const StyledApp = styled.div<{
-  width: number
+  maxWidth: string
 }>`
   --bg-color: #d7ecec;
   --text-color: #364181;
@@ -44,14 +44,14 @@ const StyledApp = styled.div<{
   width: fit-content;
   color: var(--text-color);
   position: relative;
-  ${({ width }) => `max-width: min(100%, ${width}px);`}
+  max-width: ${({ maxWidth }) => maxWidth};
 
-  flex-direction:column;
+  flex-direction: column;
 `
 
 const StyledRow = styled.div<{
   width: number
-  height: number
+  aspectRatio: string
 }>`
   display: flex;
   flex-direction: row;
@@ -61,12 +61,10 @@ const StyledRow = styled.div<{
   .layoutPanelOpened & {
     background: var(--shrinkedcanvas-bg-color);
   }
-  ${({ width, height }) => `
-    width:${width}px;
-    aspect-ratio:calc(${width} / ${height});
 
-   
-  `}
+  width: ${({ width }) => width}px;
+
+  aspect-ratio: ${({ aspectRatio }) => aspectRatio};
 `
 
 type AppType = {
@@ -289,7 +287,7 @@ const App = ({
   const className = `${classNameFromProps ?? ''} ${isLayoutPanelShown ? 'layoutPanelOpened' : ''}`
 
   return (
-    <StyledApp ref={componentRef} className={className} width={width}>
+    <StyledApp ref={componentRef} className={className} maxWidth={`min(100%, ${width}px)`}>
       <Toolbox
         disabled={disabled}
         activeTool={activeTool}
@@ -305,7 +303,7 @@ const App = ({
         undoAction={undoAction}
         redoAction={redoAction}
       />
-      <StyledRow width={width} height={height}>
+      <StyledRow width={width} aspectRatio={`calc(${width} / ${height})`}>
         <Canvas
           disabled={disabled}
           isInsideComponent={isInsideComponent}
