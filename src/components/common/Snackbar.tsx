@@ -1,7 +1,7 @@
 import { SNACKBAR_ANIMATION_DUURATION as SNACKBAR_ANIMATION_DURATION } from 'constants/snackbar'
 import { SnackBarType } from 'hooks/useSnackbar'
 import React, { useEffect, useState } from 'react'
-import styled from 'styled-components'
+import { styled } from '@linaria/react'
 
 const StyledSnackbar = styled.div`
   display: inline-block;

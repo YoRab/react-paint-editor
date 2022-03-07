@@ -1,6 +1,6 @@
 import _ from 'lodash/fp'
 import React from 'react'
-import styled from 'styled-components'
+import { styled } from '@linaria/react'
 import {
   POLYGON_POINTS_VALUES,
   STYLE_FONTS,
@@ -36,19 +36,17 @@ const StyledSelect = styled.select`
     background-color: var(--bg-color);
   }
 
-  &:hover:not(:disabled) {
-    background: var(--btn-hover);
+  &[data-disabled='1'] {
+    opacity: 0.25;
+    cursor: default;
   }
 
-  ${({ disabled }) =>
-    disabled
-      ? `  opacity: 0.25;
-    cursor: default;`
-      : ` cursor: pointer;
-      &:hover {
-    background: var(--btn-hover);
+  &[data-disabled='0'] {
+    cursor: pointer;
+    &:hover {
+      background: var(--btn-hover);
+    }
   }
-`}
 `
 
 const StyledColorInput = styled.input`
@@ -60,19 +58,17 @@ const StyledColorInput = styled.input`
   font-family: inherit;
   font-size: inherit;
   line-height: inherit;
-  &:hover:not(:disabled) {
-    background: var(--btn-hover);
+  &[data-disabled='1'] {
+    opacity: 0.25;
+    cursor: default;
   }
 
-  ${({ disabled }) =>
-    disabled
-      ? `  opacity: 0.25;
-    cursor: default;`
-      : ` cursor: pointer;
-      &:hover {
-    background: var(--btn-hover);
+  &[data-disabled='0'] {
+    cursor: pointer;
+    &:hover {
+      background: var(--btn-hover);
+    }
   }
-`}
 `
 
 const StyledSettingsBox = styled.div`
@@ -97,16 +93,21 @@ const StyleToggleLayoutButton = styled.button`
   cursor: pointer;
   color: var(--text-color);
 
-  ${({ hidden }) => hidden && ` visibility:hidden;`}
-  ${({ disabled }) =>
-    disabled
-      ? `  opacity: 0.25;
-    cursor: default;`
-      : ` cursor: pointer;
-      &:hover {
-    background: var(--btn-hover);
+  &[data-hidden='1'] {
+    visibility: hidden;
   }
-`}
+
+  &[data-disabled='1'] {
+    opacity: 0.25;
+    cursor: default;
+  }
+
+  &[data-disabled='0'] {
+    cursor: pointer;
+    &:hover {
+      background: var(--btn-hover);
+    }
+  }
 
   .layoutPanelOpened & {
     color: var(--text-color-selected);
@@ -126,15 +127,17 @@ const StyledDeleteButton = styled.button`
   cursor: pointer;
   color: var(--text-color);
 
-  ${({ disabled }) =>
-    disabled
-      ? `  opacity: 0.25;
-    cursor: default;`
-      : ` cursor: pointer;
-      &:hover {
-    background: var(--btn-hover);
+  &[data-disabled='1'] {
+    opacity: 0.25;
+    cursor: default;
   }
-`}
+
+  &[data-disabled='0'] {
+    cursor: pointer;
+    &:hover {
+      background: var(--btn-hover);
+    }
+  }
 
   svg {
     color: inherit;
@@ -161,6 +164,7 @@ const DeleteShapeButton = ({
   return (
     <StyledDeleteButton
       disabled={disabled}
+      data-disabled={+disabled}
       onClick={handleRemove}
       dangerouslySetInnerHTML={{ __html: trashIcon }}></StyledDeleteButton>
   )
@@ -187,7 +191,7 @@ const ShapeStyleSelect = ({
   }
 
   return (
-    <StyledSelect onChange={handleChange} disabled={disabled}>
+    <StyledSelect onChange={handleChange} disabled={disabled} data-disabled={+disabled}>
       {values.map(value => {
         return (
           <option key={value} value={value} selected={defaultValue == value}>
@@ -222,7 +226,8 @@ const ShapeStyleColor = ({
       type="color"
       value={defaultValue}
       onChange={handleChange}
-      disabled={disabled}></StyledColorInput>
+      disabled={disabled}
+      data-disabled={+disabled}></StyledColorInput>
   )
 }
 
@@ -447,8 +452,9 @@ const SettingsBox = ({
       <StyledSeparator />
 
       <StyleToggleLayoutButton
-        hidden={withLayouts === 'always' || withLayouts === 'never'}
+        data-hidden={+(withLayouts === 'always' || withLayouts === 'never')}
         disabled={disabled}
+        data-disabled={+disabled}
         onClick={toggleLayoutPanel}
         dangerouslySetInnerHTML={{ __html: layersIcon }}
       />

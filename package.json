@@ -1,6 +1,6 @@
 {
   "name": "annotationjs",
-  "version": "0.1.0",
+  "version": "0.1.2",
   "private": true,
   "keywords": [],
   "author": "Yohann Rabatel",
@@ -18,8 +18,7 @@
     "@linaria/react": "^3.0.0-beta.15",
     "@linaria/shaker": "^3.0.0-beta.15",
     "ajv": "8.8.2",
-    "lodash": "^4.17.20",
-    "styled-components": "4.4.1"
+    "lodash": "^4.17.20"
   },
   "devDependencies": {
     "@babel/cli": "7.12.8",
@@ -38,7 +37,6 @@
     "@types/node": "^12.0.0",
     "@types/react": "^17.0.0",
     "@types/react-dom": "^17.0.0",
-    "@types/styled-components": "5.1.10",
     "@typescript-eslint/eslint-plugin": "4.28.0",
     "@typescript-eslint/parser": "4.28.0",
     "babel-jest": "^27.4.6",
