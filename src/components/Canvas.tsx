@@ -201,12 +201,12 @@ const Canvas = React.forwardRef<HTMLCanvasElement, DrawerType>(
             cursor={
               (activeTool !== ToolEnum.selection && activeTool !== ToolEnum.move) ||
               hoverMode.mode === SelectionModeLib.resize
-                ? 'cursor: crosshair'
+                ? 'crosshair'
                 : activeTool === ToolEnum.move || hoverMode.mode === SelectionModeLib.translate
-                ? 'cursor:move'
+                ? 'move'
                 : hoverMode.mode === SelectionModeLib.rotate
-                ? 'cursor:grab'
-                : 'cursor:default'
+                ? 'grab'
+                : 'default'
             }
           />
           {selectionMode.mode === SelectionModeLib.textedition &&
