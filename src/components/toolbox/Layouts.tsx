@@ -1,10 +1,10 @@
 import React, { useRef, useState } from 'react'
-import styled from 'styled-components'
 import _ from 'lodash/fp'
 import { DrawableShape } from 'types/Shapes'
 import useDrag from 'hooks/useDrag'
 import { trashIcon } from 'constants/icons'
 import { getShapePicture } from 'utils/style'
+import { styled } from '@linaria/react'
 
 const StyledLayouts = styled.div`
   display: inline-block;
@@ -16,34 +16,40 @@ const StyledLayouts = styled.div`
   overflow-y: auto;
 `
 
-const StyledLayout = styled.div<{
-  disabled: boolean
-  selected: boolean
-  isdragging: boolean
-  isover: boolean
-}>`
+const StyledLayout = styled.div`
   border-bottom: 1px solid var(--btn-hover);
   padding: 12px;
   padding-right: 24px;
   position: relative;
   background: var(--bg-color);
-  ${({ selected, disabled }) =>
-    selected
-      ? `    color:var(--text-color-selected);
-    background:var(--bg-color-selected);`
-      : !disabled &&
-        `  &:hover {
-    background: var(--btn-hover);
-  }`};
-  ${({ isdragging }) => isdragging && 'opacity:0.4'};
-  ${({ isover }) => isover && '  border: 3px dotted var(--btn-hover);'};
 
-  ${({ disabled }) =>
-    disabled
-      ? `  opacity: 0.25;
-    cursor: default;`
-      : ` cursor: move;
-`}
+  &[data-is-over='1'] {
+    border: 3px dotted var(--btn-hover);
+  }
+
+  &[data-is-dragging='1'] {
+    opacity: 0.4;
+  }
+
+  &[data-selected='1'] {
+    color: var(--text-color-selected);
+    background: var(--bg-color-selected);
+  }
+
+  &[data-selected='0'][data-disabled='0'] {
+    &:hover {
+      background: var(--btn-hover);
+    }
+  }
+
+  &[data-disabled='1'] {
+    opacity: 0.25;
+    cursor: default;
+  }
+
+  &[data-disabled='0'] {
+    cursor: move;
+  }
 
   > span > svg {
     color: #8a8a8a;
@@ -52,9 +58,7 @@ const StyledLayout = styled.div<{
   }
 `
 
-const StyledRemove = styled.div<{
-  disabled: boolean
-}>`
+const StyledRemove = styled.div`
   position: absolute;
   width: 36px;
   display: inline-block;
@@ -68,15 +72,18 @@ const StyledRemove = styled.div<{
   justify-content: center;
   background: none;
   border: none;
-  ${({ disabled }) =>
-    disabled
-      ? `  opacity: 0.25;
-    cursor: default;`
-      : ` cursor: pointer;
-      &:hover {
-    background: var(--btn-hover);
+
+  &[data-disabled='1'] {
+    opacity: 0.25;
+    cursor: default;
   }
-`}
+
+  &[data-disabled='0'] {
+    cursor: move;
+    &:hover {
+      background: var(--btn-hover);
+    }
+  }
 
   svg {
     color: inherit;
@@ -134,17 +141,17 @@ const Layout = ({
 
   return (
     <StyledLayout
-      disabled={disabled}
+      data-disabled={+disabled}
       draggable={!disabled}
-      isdragging={layoutDragging === shape.id}
-      isover={isOver}
+      data-is-dragging={+(layoutDragging === shape.id)}
+      data-is-over={+isOver}
       onClick={onSelect}
-      selected={selected}
+      data-selected={+selected}
       ref={ref}>
       <span dangerouslySetInnerHTML={{ __html: getShapePicture(shape.type) }} />
 
       <StyledRemove
-        disabled={disabled}
+        data-disabled={disabled}
         onClick={onRemove}
         dangerouslySetInnerHTML={{ __html: trashIcon }}></StyledRemove>
     </StyledLayout>

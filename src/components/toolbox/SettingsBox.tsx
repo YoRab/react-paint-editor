@@ -1,9 +1,8 @@
 import _ from 'lodash/fp'
 import React from 'react'
-import styled from 'styled-components'
+import { styled } from '@linaria/react'
 import {
   POLYGON_POINTS_VALUES,
-  STYLE_COLORS,
   STYLE_FONTS,
   STYLE_LINE_DASH,
   STYLE_LINE_WITH_ARROW,
@@ -37,19 +36,39 @@ const StyledSelect = styled.select`
     background-color: var(--bg-color);
   }
 
-  &:hover:not(:disabled) {
-    background: var(--btn-hover);
+  &[data-disabled='1'] {
+    opacity: 0.25;
+    cursor: default;
   }
 
-  ${({ disabled }) =>
-    disabled
-      ? `  opacity: 0.25;
-    cursor: default;`
-      : ` cursor: pointer;
-      &:hover {
-    background: var(--btn-hover);
+  &[data-disabled='0'] {
+    cursor: pointer;
+    &:hover {
+      background: var(--btn-hover);
+    }
   }
-`}
+`
+
+const StyledColorInput = styled.input`
+  border: none;
+  padding: 0;
+  margin: 0;
+  height: 36px;
+  background-color: transparent;
+  font-family: inherit;
+  font-size: inherit;
+  line-height: inherit;
+  &[data-disabled='1'] {
+    opacity: 0.25;
+    cursor: default;
+  }
+
+  &[data-disabled='0'] {
+    cursor: pointer;
+    &:hover {
+      background: var(--btn-hover);
+    }
+  }
 `
 
 const StyledSettingsBox = styled.div`
@@ -74,16 +93,21 @@ const StyleToggleLayoutButton = styled.button`
   cursor: pointer;
   color: var(--text-color);
 
-  ${({ hidden }) => hidden && ` visibility:hidden;`}
-  ${({ disabled }) =>
-    disabled
-      ? `  opacity: 0.25;
-    cursor: default;`
-      : ` cursor: pointer;
-      &:hover {
-    background: var(--btn-hover);
+  &[data-hidden='1'] {
+    visibility: hidden;
   }
-`}
+
+  &[data-disabled='1'] {
+    opacity: 0.25;
+    cursor: default;
+  }
+
+  &[data-disabled='0'] {
+    cursor: pointer;
+    &:hover {
+      background: var(--btn-hover);
+    }
+  }
 
   .layoutPanelOpened & {
     color: var(--text-color-selected);
@@ -103,15 +127,17 @@ const StyledDeleteButton = styled.button`
   cursor: pointer;
   color: var(--text-color);
 
-  ${({ disabled }) =>
-    disabled
-      ? `  opacity: 0.25;
-    cursor: default;`
-      : ` cursor: pointer;
-      &:hover {
-    background: var(--btn-hover);
+  &[data-disabled='1'] {
+    opacity: 0.25;
+    cursor: default;
   }
-`}
+
+  &[data-disabled='0'] {
+    cursor: pointer;
+    &:hover {
+      background: var(--btn-hover);
+    }
+  }
 
   svg {
     color: inherit;
@@ -138,6 +164,7 @@ const DeleteShapeButton = ({
   return (
     <StyledDeleteButton
       disabled={disabled}
+      data-disabled={+disabled}
       onClick={handleRemove}
       dangerouslySetInnerHTML={{ __html: trashIcon }}></StyledDeleteButton>
   )
@@ -164,7 +191,7 @@ const ShapeStyleSelect = ({
   }
 
   return (
-    <StyledSelect onChange={handleChange} disabled={disabled}>
+    <StyledSelect onChange={handleChange} disabled={disabled} data-disabled={+disabled}>
       {values.map(value => {
         return (
           <option key={value} value={value} selected={defaultValue == value}>
@@ -173,6 +200,34 @@ const ShapeStyleSelect = ({
         )
       })}
     </StyledSelect>
+  )
+}
+
+type ShapeStyleColorType = {
+  disabled?: boolean
+  field: string
+  defaultValue?: number | string | undefined
+  valueChanged: (field: string, value: string | number) => void
+}
+
+const ShapeStyleColor = ({
+  disabled = false,
+  field,
+  defaultValue,
+  valueChanged
+}: ShapeStyleColorType) => {
+  const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const parsedValue = _.toNumber(event.target.value)
+    valueChanged(field, _.isNaN(parsedValue) ? event.target.value : parsedValue)
+  }
+
+  return (
+    <StyledColorInput
+      type="color"
+      value={defaultValue}
+      onChange={handleChange}
+      disabled={disabled}
+      data-disabled={+disabled}></StyledColorInput>
   )
 }
 
@@ -300,10 +355,9 @@ const SettingsBox = ({
                 />
               )}
 
-              <ShapeStyleSelect
+              <ShapeStyleColor
                 disabled={disabled}
                 field="style.strokeColor"
-                values={STYLE_COLORS}
                 defaultValue={selectedShape.style?.strokeColor}
                 valueChanged={handleShapeStyleChange}
               />
@@ -311,10 +365,9 @@ const SettingsBox = ({
               {selectedShape.type !== ShapeEnum.text &&
                 selectedShape.type !== ShapeEnum.brush &&
                 selectedShape.type !== ShapeEnum.line && (
-                  <ShapeStyleSelect
+                  <ShapeStyleColor
                     disabled={disabled}
                     field="style.fillColor"
-                    values={STYLE_COLORS}
                     defaultValue={selectedShape.style?.fillColor}
                     valueChanged={handleShapeStyleChange}
                   />
@@ -376,10 +429,9 @@ const SettingsBox = ({
               />
             )}
 
-            <ShapeStyleSelect
+            <ShapeStyleColor
               disabled={disabled}
               field="style.strokeColor"
-              values={STYLE_COLORS}
               defaultValue={defaultConf.style?.strokeColor}
               valueChanged={handleShapeStyleChange}
             />
@@ -387,10 +439,9 @@ const SettingsBox = ({
             {activeTool !== ShapeEnum.text &&
               activeTool !== ShapeEnum.brush &&
               activeTool !== ShapeEnum.line && (
-                <ShapeStyleSelect
+                <ShapeStyleColor
                   disabled={disabled}
                   field="style.fillColor"
-                  values={STYLE_COLORS}
                   defaultValue={defaultConf.style?.fillColor}
                   valueChanged={handleShapeStyleChange}
                 />
@@ -401,8 +452,9 @@ const SettingsBox = ({
       <StyledSeparator />
 
       <StyleToggleLayoutButton
-        hidden={withLayouts === 'always' || withLayouts === 'never'}
+        data-hidden={+(withLayouts === 'always' || withLayouts === 'never')}
         disabled={disabled}
+        data-disabled={+disabled}
         onClick={toggleLayoutPanel}
         dangerouslySetInnerHTML={{ __html: layersIcon }}
       />

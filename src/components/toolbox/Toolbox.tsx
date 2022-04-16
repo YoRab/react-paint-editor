@@ -11,11 +11,11 @@ import {
 } from 'constants/icons'
 import _ from 'lodash/fp'
 import React, { useRef, useState } from 'react'
-import styled from 'styled-components'
+import { styled } from '@linaria/react'
 import { ShapeEnum, ToolEnum, ToolsType } from 'types/Shapes'
 import { getShapePicture } from 'utils/style'
 
-const StyledTool = styled.button<{ selected: boolean }>`
+const StyledTool = styled.button`
   width: 36px;
   height: 36px;
 
@@ -28,28 +28,25 @@ const StyledTool = styled.button<{ selected: boolean }>`
   background: none;
   border: none;
 
-  ${({ selected, disabled }) =>
-    selected
-      ? `
-  
-    color:var(--text-color-selected);
-    background:var(--bg-color-selected);
-
-  
-  `
-      : !disabled &&
-        `
-  &:hover {
-    background: var(--btn-hover);
+  &[data-selected='1'] {
+    color: var(--text-color-selected);
+    background: var(--bg-color-selected);
   }
-  `}
 
-  ${({ disabled }) =>
-    disabled
-      ? `  opacity: 0.25;
-    cursor: default;`
-      : ` cursor: pointer;
-`}
+  &[data-selected='0'][data-disabled='0'] {
+    &:hover {
+      background: var(--btn-hover);
+    }
+  }
+
+  &[data-disabled='1'] {
+    opacity: 0.25;
+    cursor: default;
+  }
+
+  &[data-disabled='0'] {
+    cursor: pointer;
+  }
 
   input {
     display: none;
@@ -77,21 +74,16 @@ const StyledShrinkableTools = styled.div`
   }
 `
 
-const StyledToolbox = styled.div<{
-  ismenuopen: boolean
-}>`
+const StyledToolbox = styled.div`
   display: flex;
   max-height: 36px;
   background: var(--bg-color);
 
   z-index: 1;
 
-  ${({ ismenuopen }) =>
-    !ismenuopen &&
-    `
+  &[data-menu-open='0'] {
     overflow: hidden;
-  
-  `}
+  }
 `
 
 const StyledShrinkableToolsInner = styled.div`
@@ -119,7 +111,8 @@ const Tool = ({ type, lib, img, isActive, disabled = false, setActive }: ToolTyp
   return (
     <StyledTool
       disabled={disabled}
-      selected={isActive}
+      data-disabled={+disabled}
+      data-selected={+isActive}
       onClick={handleClick}
       dangerouslySetInnerHTML={{ __html: img ? img : lib }}></StyledTool>
   )
@@ -147,7 +140,7 @@ const LoadFileTool = ({ disabled = false, loadFile, lib, img, accept }: LoadFile
   }
 
   return (
-    <StyledTool as="label" selected={false} disabled={disabled}>
+    <StyledTool as="label" data-selected={0} disabled={disabled} data-disabled={+disabled}>
       <input
         ref={inputRef}
         type="file"
@@ -209,7 +202,7 @@ const Toolbox = ({
   }
 
   return (
-    <StyledToolbox ismenuopen={isMenuOpen}>
+    <StyledToolbox data-menu-open={+isMenuOpen}>
       <Tool
         type={ToolEnum.selection}
         disabled={disabled}
@@ -275,9 +268,11 @@ const Toolbox = ({
         </StyledShrinkableToolsInner>
         <StyledTool
           disabled={disabled}
-          selected={false}
+          data-disabled={+disabled}
+          data-selected={0}
           onClick={toggleTools}
-          dangerouslySetInnerHTML={{ __html: dotsIcon }}></StyledTool>
+          dangerouslySetInnerHTML={{ __html: dotsIcon }}
+        />
       </StyledShrinkableTools>
 
       <LoadFileTool
