@@ -5,12 +5,11 @@ import useDrag from 'hooks/useDrag'
 import { trashIcon } from 'constants/icons'
 import { getShapePicture } from 'utils/style'
 import { styled } from '@linaria/react'
+import Button from 'components/common/Button'
 
 const StyledLayouts = styled.div`
   display: inline-block;
-  /* background: var(--shrinkedcanvas-bg-color); */
   background: var(--bg-color);
-  /* border: 3px solid var(--text-color); */
   box-sizing: border-box;
   width: 80px;
   overflow-y: auto;
@@ -58,38 +57,11 @@ const StyledLayout = styled.div`
   }
 `
 
-const StyledRemove = styled.div`
+const StyledRemove = styled(Button)`
   position: absolute;
-  width: 36px;
-  display: inline-block;
   right: 0;
   top: 0;
   bottom: 0;
-  cursor: pointer;
-  display: flex;
-  box-sizing: border-box;
-  align-items: center;
-  justify-content: center;
-  background: none;
-  border: none;
-
-  &[data-disabled='1'] {
-    opacity: 0.25;
-    cursor: default;
-  }
-
-  &[data-disabled='0'] {
-    cursor: move;
-    &:hover {
-      background: var(--btn-hover);
-    }
-  }
-
-  svg {
-    color: inherit;
-    width: 16px;
-    height: 16px;
-  }
 `
 
 type LayoutType = {
@@ -151,9 +123,10 @@ const Layout = ({
       <span dangerouslySetInnerHTML={{ __html: getShapePicture(shape.type) }} />
 
       <StyledRemove
-        data-disabled={disabled}
+        disabled={disabled}
         onClick={onRemove}
-        dangerouslySetInnerHTML={{ __html: trashIcon }}></StyledRemove>
+        dangerouslySetInnerHTML={{ __html: trashIcon }}
+      />
     </StyledLayout>
   )
 }

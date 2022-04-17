@@ -14,71 +14,20 @@ import React, { useRef, useState } from 'react'
 import { styled } from '@linaria/react'
 import { ShapeEnum, ToolEnum, ToolsType } from 'types/Shapes'
 import { getShapePicture } from 'utils/style'
-
-const StyledTool = styled.button`
-  width: 36px;
-  height: 36px;
-
-  color: var(--text-color);
-  display: inline-flex;
-  vertical-align: middle;
-  box-sizing: border-box;
-  align-items: center;
-  justify-content: center;
-  background: none;
-  border: none;
-
-  &[data-selected='1'] {
-    color: var(--text-color-selected);
-    background: var(--bg-color-selected);
-  }
-
-  &[data-selected='0'][data-disabled='0'] {
-    &:hover {
-      background: var(--btn-hover);
-    }
-  }
-
-  &[data-disabled='1'] {
-    opacity: 0.25;
-    cursor: default;
-  }
-
-  &[data-disabled='0'] {
-    cursor: pointer;
-  }
-
-  input {
-    display: none;
-  }
-
-  svg {
-    color: inherit;
-    width: 16px;
-    height: 16px;
-  }
-`
+import Button from 'components/common/Button'
 
 const StyledShrinkableTools = styled.div`
   flex: 1;
   position: relative;
   height: 100%;
   text-align: center;
-
   max-height: 72px;
-
-  & > ${StyledTool} {
-    position: absolute;
-    right: 0;
-    bottom: 36px;
-  }
 `
 
 const StyledToolbox = styled.div`
   display: flex;
   max-height: 36px;
   background: var(--bg-color);
-
   z-index: 1;
 
   &[data-menu-open='0'] {
@@ -92,6 +41,12 @@ const StyledShrinkableToolsInner = styled.div`
   background: var(--bg-color);
   margin-right: 36px;
   text-align: right;
+
+  & + * {
+    position: absolute;
+    right: 0;
+    bottom: 36px;
+  }
 `
 
 type ToolType = {
@@ -109,12 +64,11 @@ const Tool = ({ type, lib, img, isActive, disabled = false, setActive }: ToolTyp
   }
 
   return (
-    <StyledTool
+    <Button
       disabled={disabled}
-      data-disabled={+disabled}
-      data-selected={+isActive}
+      selected={isActive}
       onClick={handleClick}
-      dangerouslySetInnerHTML={{ __html: img ? img : lib }}></StyledTool>
+      dangerouslySetInnerHTML={{ __html: img ? img : lib }}></Button>
   )
 }
 
@@ -140,17 +94,15 @@ const LoadFileTool = ({ disabled = false, loadFile, lib, img, accept }: LoadFile
   }
 
   return (
-    <StyledTool as="label" data-selected={0} disabled={disabled} data-disabled={+disabled}>
-      <input
-        ref={inputRef}
-        type="file"
-        onClick={handleClick}
-        onChange={handleChange}
-        accept={accept}
-        disabled={disabled}
-      />
+    <Button
+      ref={inputRef}
+      type="file"
+      onClick={handleClick}
+      onChange={handleChange}
+      accept={accept}
+      disabled={disabled}>
       {img ? <span dangerouslySetInnerHTML={{ __html: img }} /> : lib}
-    </StyledTool>
+    </Button>
   )
 }
 
@@ -266,10 +218,8 @@ const Toolbar = ({
             accept="image/png, image/gif, image/jpeg"
           />
         </StyledShrinkableToolsInner>
-        <StyledTool
+        <Button
           disabled={disabled}
-          data-disabled={+disabled}
-          data-selected={0}
           onClick={toggleTools}
           dangerouslySetInnerHTML={{ __html: dotsIcon }}
         />

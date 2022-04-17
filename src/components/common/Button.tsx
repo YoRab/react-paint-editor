@@ -4,7 +4,8 @@ import { styled } from '@linaria/react'
 const StyledButton = styled.button`
   width: 36px;
   height: 36px;
-  display: flex;
+  display: inline-flex;
+  vertical-align: middle;
   box-sizing: border-box;
   align-items: center;
   justify-content: center;
@@ -12,6 +13,11 @@ const StyledButton = styled.button`
   border: none;
   cursor: pointer;
   color: var(--text-color);
+
+  &[data-selected='1'] {
+    color: var(--text-color-selected);
+    background: var(--bg-color-selected);
+  }
 
   &[data-hidden='1'] {
     visibility: hidden;
@@ -22,30 +28,73 @@ const StyledButton = styled.button`
     cursor: default;
   }
 
-  &[data-disabled='0'] {
-    cursor: pointer;
+  &[data-selected='0'][data-disabled='0'] {
     &:hover {
       background: var(--btn-hover);
     }
   }
+
+  &[data-disabled='0'] {
+    cursor: pointer;
+  }
+
+  svg {
+    color: inherit;
+    width: 16px;
+    height: 16px;
+  }
+
+  input {
+    display: none;
+  }
 `
 
-type ButtonType = React.ButtonHTMLAttributes<HTMLButtonElement> & {
+type CommonType = {
   hidden?: boolean
   disabled?: boolean
+  selected?: boolean
 }
 
-const Button = React.forwardRef<HTMLButtonElement, ButtonType>(
-  ({ hidden, disabled, ...props }, ref) => {
-    return (
-      <StyledButton
-        ref={ref}
-        disabled={disabled}
-        data-disabled={+!!disabled}
-        data-hidden={+!!hidden}
-        {...props}
-      />
-    )
+type ButtonType = CommonType & React.ButtonHTMLAttributes<HTMLButtonElement>
+
+type FileInputType = CommonType & {
+  type: 'file'
+  accept?: string
+} & React.InputHTMLAttributes<HTMLInputElement>
+
+const Button = React.forwardRef<HTMLButtonElement | HTMLInputElement, ButtonType | FileInputType>(
+  (props, ref) => {
+    if (props.type === 'file') {
+      const { hidden = false, disabled = false, selected = false, children, ...fileProps } = props
+      return (
+        <StyledButton
+          as="label"
+          data-disabled={+disabled}
+          data-selected={+selected}
+          data-hidden={+hidden}>
+          <input
+            ref={ref as React.ForwardedRef<HTMLInputElement>}
+            disabled={disabled}
+            {...fileProps}
+          />
+          {children}
+        </StyledButton>
+      )
+    } else {
+      const { hidden = false, disabled = false, selected = false, children, ...fileProps } = props
+
+      return (
+        <StyledButton
+          ref={ref as React.ForwardedRef<HTMLButtonElement>}
+          disabled={disabled}
+          data-disabled={+disabled}
+          data-selected={+selected}
+          data-hidden={+hidden}
+          {...fileProps}>
+          {children}
+        </StyledButton>
+      )
+    }
   }
 )
 

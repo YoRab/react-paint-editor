@@ -1,16 +1,7 @@
 import React from 'react'
-import { styled } from '@linaria/react'
 import { trashIcon } from 'constants/icons'
 import { DrawableShape } from 'types/Shapes'
 import Button from 'components/common/Button'
-
-const StyledDeleteButton = styled(Button)`
-  svg {
-    color: inherit;
-    width: 16px;
-    height: 16px;
-  }
-`
 
 type DeleteShapeButtonType = {
   disabled?: boolean
@@ -24,11 +15,12 @@ const DeleteButton = ({ disabled = false, selectedShape, removeShape }: DeleteSh
   }
 
   return (
-    <StyledDeleteButton
+    <Button
       disabled={disabled}
       data-disabled={+disabled}
       onClick={handleRemove}
-      dangerouslySetInnerHTML={{ __html: trashIcon }}></StyledDeleteButton>
+      dangerouslySetInnerHTML={{ __html: trashIcon }}
+    />
   )
 }
 
