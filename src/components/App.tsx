@@ -106,6 +106,7 @@ const App = ({
     style: {
       fillColor: 'transparent',
       strokeColor: 'black',
+      globalAlpha: 100,
       lineWidth: 1,
       lineDash: 0,
       lineArrow: 0,

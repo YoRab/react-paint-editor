@@ -580,6 +580,14 @@ export const resizeShape = (
       originalShape as DrawableRect,
       selectionMode as SelectionModeResize
     )
+    else if (shape.type === 'square')
+    return resizeRect(
+      cursorPosition,
+      canvasOffset,
+      originalShape as DrawableRect,
+      selectionMode as SelectionModeResize,
+      true
+    )
   else if (shape.type === 'text')
     return resizeText(
       ctx,

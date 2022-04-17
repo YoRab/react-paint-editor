@@ -71,13 +71,15 @@ export const createShape = (
         style: defaultConf.style
       }
     case ShapeEnum.rect:
+      case ShapeEnum.square:
+
       return {
-        type: ShapeEnum.rect,
+        type:shape,
         id: _.uniqueId(shape),
         x: cursorPosition[0],
         y: cursorPosition[1],
-        width: 0,
-        height: 0,
+        width: 1,
+        height: 1,
         translation: [0, 0],
         scale: [1, 1],
         rotation: 0,

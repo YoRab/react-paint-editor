@@ -142,6 +142,7 @@ const Toolbar = ({
     ShapeEnum.line,
     ShapeEnum.polygon,
     ShapeEnum.rect,
+    ShapeEnum.square,
     ShapeEnum.circle,
     ShapeEnum.ellipse,
     ShapeEnum.text

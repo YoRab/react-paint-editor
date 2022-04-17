@@ -11,6 +11,7 @@ import {
   DrawableShape,
   Brush,
   Text
+  
 } from 'types/Shapes'
 
 const getLineBorder = (line: Line): Rect => {
@@ -125,6 +126,7 @@ const getShapeBorders = (marker: DrawableShape): Rect => {
     case 'ellipse':
       return getEllipseBorder(marker)
     case 'rect':
+      case 'square':
       return getRectBorder(marker)
     case 'text':
       return getTextBorder(marker)

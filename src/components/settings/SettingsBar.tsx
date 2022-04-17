@@ -5,8 +5,7 @@ import {
   POLYGON_POINTS_VALUES,
   STYLE_FONTS,
   STYLE_LINE_DASH,
-  STYLE_LINE_WITH_ARROW,
-  STYLE_LINE_WIDTH
+  STYLE_LINE_WITH_ARROW
 } from 'constants/style'
 import {
   DrawablePolygon,
@@ -18,14 +17,16 @@ import {
 } from 'types/Shapes'
 import { calculateTextFontSize, updatePolygonLinesCount } from 'utils/transform'
 import ColorField from './ColorField'
-import RangeField from './RangeField'
+import SelectField from './SelectField'
 import DeleteButton from './DeleteButton'
 import LayoutButton from './LayoutButton'
+import RangeField from './RangeField'
 
-const StyledSettingsBox = styled.div`
+const StyledSettingsBar = styled.div`
   user-select: none;
   display: flex;
   background: var(--bg-color);
+  position: relative;
 `
 
 const StyledSeparator = styled.div`
@@ -62,6 +63,7 @@ const SettingsBar = ({
     ShapeEnum.ellipse,
     ShapeEnum.circle,
     ShapeEnum.rect,
+    ShapeEnum.square,
     ShapeEnum.line,
     ShapeEnum.polygon,
     ShapeEnum.text
@@ -105,13 +107,13 @@ const SettingsBar = ({
   }
 
   return (
-    <StyledSettingsBox>
+    <StyledSettingsBar>
       {selectedShape ? (
         <>
           {shapes.includes(selectedShape?.type) && (
             <>
               {selectedShape.type === ShapeEnum.polygon && (
-                <RangeField
+                <SelectField
                   disabled={disabled}
                   field="style.pointsCount"
                   values={POLYGON_POINTS_VALUES}
@@ -120,7 +122,7 @@ const SettingsBar = ({
                 />
               )}
               {selectedShape.type === ShapeEnum.text ? (
-                <RangeField
+                <SelectField
                   disabled={disabled}
                   field="style.fontFamily"
                   values={STYLE_FONTS}
@@ -130,13 +132,13 @@ const SettingsBar = ({
               ) : (
                 <>
                   <RangeField
+                    title="Epaisseur du trait"
                     disabled={disabled}
                     field="style.lineWidth"
-                    values={STYLE_LINE_WIDTH}
-                    defaultValue={selectedShape.style?.lineWidth}
+                    value={selectedShape.style?.lineWidth}
                     valueChanged={handleShapeStyleChange}
                   />
-                  <RangeField
+                  <SelectField
                     disabled={disabled}
                     field="style.lineDash"
                     values={STYLE_LINE_DASH}
@@ -147,7 +149,7 @@ const SettingsBar = ({
               )}
 
               {selectedShape.type === ShapeEnum.line && (
-                <RangeField
+                <SelectField
                   disabled={disabled}
                   field="style.lineArrow"
                   values={STYLE_LINE_WITH_ARROW}
@@ -157,9 +159,10 @@ const SettingsBar = ({
               )}
 
               <ColorField
+                title="Couleur du trait"
                 disabled={disabled}
                 field="style.strokeColor"
-                defaultValue={selectedShape.style?.strokeColor}
+                value={selectedShape.style?.strokeColor}
                 valueChanged={handleShapeStyleChange}
               />
 
@@ -167,14 +170,26 @@ const SettingsBar = ({
                 selectedShape.type !== ShapeEnum.brush &&
                 selectedShape.type !== ShapeEnum.line && (
                   <ColorField
+                    title="Couleur de fond"
                     disabled={disabled}
                     field="style.fillColor"
-                    defaultValue={selectedShape.style?.fillColor}
+                    value={selectedShape.style?.fillColor}
                     valueChanged={handleShapeStyleChange}
                   />
                 )}
             </>
           )}
+          <RangeField
+            title="Opacité"
+            min={0}
+            max={100}
+            step={1}
+            unity="%"
+            disabled={disabled}
+            field="style.globalAlpha"
+            value={selectedShape.style?.globalAlpha ?? 100}
+            valueChanged={handleShapeStyleChange}
+          />
           <DeleteButton
             disabled={disabled}
             selectedShape={selectedShape}
@@ -185,7 +200,7 @@ const SettingsBar = ({
         _.includes(activeTool, shapes) && (
           <>
             {activeTool === ShapeEnum.polygon && (
-              <RangeField
+              <SelectField
                 disabled={disabled}
                 field="style.pointsCount"
                 values={POLYGON_POINTS_VALUES}
@@ -194,7 +209,7 @@ const SettingsBar = ({
               />
             )}
             {activeTool === ShapeEnum.text ? (
-              <RangeField
+              <SelectField
                 disabled={disabled}
                 field="style.fontFamily"
                 values={STYLE_FONTS}
@@ -204,13 +219,13 @@ const SettingsBar = ({
             ) : (
               <>
                 <RangeField
+                  title="Epaisseur du trait"
                   disabled={disabled}
                   field="style.lineWidth"
-                  values={STYLE_LINE_WIDTH}
-                  defaultValue={defaultConf.style?.lineWidth}
+                  value={defaultConf.style?.lineWidth}
                   valueChanged={handleShapeStyleChange}
                 />
-                <RangeField
+                <SelectField
                   disabled={disabled}
                   field="style.lineDash"
                   values={STYLE_LINE_DASH}
@@ -221,7 +236,7 @@ const SettingsBar = ({
             )}
 
             {activeTool === ShapeEnum.line && (
-              <RangeField
+              <SelectField
                 disabled={disabled}
                 field="style.lineArrow"
                 values={STYLE_LINE_WITH_ARROW}
@@ -231,9 +246,10 @@ const SettingsBar = ({
             )}
 
             <ColorField
+              title="Couleur du trait"
               disabled={disabled}
               field="style.strokeColor"
-              defaultValue={defaultConf.style?.strokeColor}
+              value={defaultConf.style?.strokeColor}
               valueChanged={handleShapeStyleChange}
             />
 
@@ -241,12 +257,25 @@ const SettingsBar = ({
               activeTool !== ShapeEnum.brush &&
               activeTool !== ShapeEnum.line && (
                 <ColorField
+                  title="Couleur de fond"
                   disabled={disabled}
                   field="style.fillColor"
-                  defaultValue={defaultConf.style?.fillColor}
+                  value={defaultConf.style?.fillColor}
                   valueChanged={handleShapeStyleChange}
                 />
               )}
+
+            <RangeField
+              title="Opacité"
+              min={0}
+              max={100}
+              step={1}
+              unity="%"
+              disabled={disabled}
+              field="style.globalAlpha"
+              value={defaultConf.style?.globalAlpha}
+              valueChanged={handleShapeStyleChange}
+            />
           </>
         )
       )}
@@ -257,7 +286,7 @@ const SettingsBar = ({
         disabled={disabled}
         toggleLayoutPanel={toggleLayoutPanel}
       />
-    </StyledSettingsBox>
+    </StyledSettingsBar>
   )
 }
 

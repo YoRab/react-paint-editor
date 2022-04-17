@@ -18,8 +18,9 @@ export const getShapePicture = (shape: ShapeEnum) => {
       return lineIcon
     case ShapeEnum.polygon:
       return polygonIcon
-    case ShapeEnum.rect:
-      return squareIcon
+      case ShapeEnum.rect:
+        case ShapeEnum.square:
+          return squareIcon
     case ShapeEnum.circle:
       return circleIcon
     case ShapeEnum.ellipse:

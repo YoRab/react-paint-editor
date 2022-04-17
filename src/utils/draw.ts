@@ -19,6 +19,7 @@ import {
   Text,
   Triangle,
   StyledShape
+  
 } from 'types/Shapes'
 import { applyRotationToVector } from './intersect'
 import { getShapeInfos } from './shapeData'
@@ -47,21 +48,25 @@ const updateDrawStyle = (
   ctx: CanvasRenderingContext2D,
   {
     fillColor,
+    globalAlpha,
     strokeColor,
     lineWidth,
     lineDash
   }: {
     fillColor?: string
+    globalAlpha?: number
     strokeColor?: string
     lineWidth?: number
     lineDash?: number
   } = {
     fillColor: 'transparent',
     strokeColor: 'blue',
+    globalAlpha: 100,
     lineWidth: 1,
     lineDash: 0
   }
 ) => {
+  globalAlpha!==undefined && (ctx.globalAlpha = globalAlpha/100)
   fillColor && (ctx.fillStyle = fillColor)
   strokeColor && (ctx.strokeStyle = strokeColor)
   lineWidth && (ctx.lineWidth = lineWidth)
@@ -78,6 +83,9 @@ export const drawBrush = (ctx: CanvasRenderingContext2D, brush: Brush): void => 
   updateDrawStyle(ctx, brush.style)
   ctx.beginPath()
 
+  if(brush.style?.strokeColor === 'transparent' || ctx.globalAlpha===0)
+    return;
+
   brush.points.map(points => {
     if (points.length === 1) {
       ctx.rect(points[0][0], points[0][1], 1, 1)
@@ -89,11 +97,15 @@ export const drawBrush = (ctx: CanvasRenderingContext2D, brush: Brush): void => 
     }
   })
 
-  brush.style?.strokeColor !== 'transparent' && ctx.stroke()
+   ctx.stroke()
 }
 
 export const drawTriangle = (ctx: CanvasRenderingContext2D, triangle: Triangle): void => {
   updateDrawStyle(ctx, triangle.style)
+
+  if(ctx.globalAlpha===0)
+    return
+
   ctx.beginPath()
   ctx.moveTo(...triangle.points[0])
   ctx.lineTo(...triangle.points[1])
@@ -132,6 +144,9 @@ const buildTriangleOnLine = (center: Point, angle: number, lineStyle: StyledShap
 export const drawLine = (ctx: CanvasRenderingContext2D, line: Line): void => {
   updateDrawStyle(ctx, line.style)
 
+  if(ctx.globalAlpha===0)
+  return
+
   ctx.beginPath()
   ctx.moveTo(...line.points[0])
   ctx.lineTo(...line.points[1])
@@ -155,6 +170,9 @@ export const drawPolygon = (ctx: CanvasRenderingContext2D, polygon: Polygon): vo
   if (polygon.points.length < 1) return
   updateDrawStyle(ctx, polygon.style)
 
+  if(ctx.globalAlpha===0)
+  return
+
   ctx.beginPath()
   ctx.moveTo(...polygon.points[0])
   polygon.points.slice(1).map(point => {
@@ -175,6 +193,10 @@ export const drawCircle = (ctx: CanvasRenderingContext2D, circle: Circle): void 
 
 export const drawEllipse = (ctx: CanvasRenderingContext2D, ellipse: Ellipse): void => {
   updateDrawStyle(ctx, ellipse.style)
+
+  if(ctx.globalAlpha===0)
+  return
+
   ctx.beginPath()
   ctx.ellipse(ellipse.x, ellipse.y, ellipse.radiusX, ellipse.radiusY, 0, 0, 2 * Math.PI)
   ellipse.style?.fillColor !== 'transparent' && ctx.fill()
@@ -183,29 +205,43 @@ export const drawEllipse = (ctx: CanvasRenderingContext2D, ellipse: Ellipse): vo
 
 export const drawRect = (ctx: CanvasRenderingContext2D, rect: Rect): void => {
   updateDrawStyle(ctx, rect.style)
+
+  if(ctx.globalAlpha===0)
+  return
+
   ctx.beginPath()
   ctx.rect(rect.x, rect.y, rect.width, rect.height)
   rect.style?.fillColor !== 'transparent' && ctx.fill()
   rect.style?.strokeColor !== 'transparent' && ctx.stroke()
 }
 
+
 export const drawText = (ctx: CanvasRenderingContext2D, text: Text): void => {
   updateDrawStyle(ctx, text.style)
+
+  if(ctx.globalAlpha===0 || !text.style?.strokeColor || text.style.strokeColor === 'transparent')
+  return
+
   ctx.font = `${text.fontSize}px ${text.style?.fontFamily ?? STYLE_FONT_DEFAULT}`
   ctx.textBaseline = 'hanging'
-  if (text.style?.strokeColor && text.style.strokeColor !== 'transparent') {
     ctx.fillStyle = text.style.strokeColor
     for (let i = 0; i < text.value.length; i++) {
       ctx.fillText(text.value[i], text.x, text.y + i * text.fontSize, text.width)
     }
-  }
 }
 
 export const drawPicture = (
   ctx: CanvasRenderingContext2D,
   picture: Picture<HTMLImageElement>
 ): void => {
+  updateDrawStyle(ctx, picture.style)
+  if(ctx.globalAlpha===0)
+  return
+
   ctx.beginPath()
+
+
+
   ctx.drawImage(picture.img, picture.x, picture.y, picture.width, picture.height)
 }
 
@@ -236,6 +272,7 @@ export const drawShape = (
       drawEllipse(ctx, shape)
       break
     case 'rect':
+      case 'square':
       drawRect(ctx, shape)
       break
     case 'picture':
