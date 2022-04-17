@@ -8,10 +8,10 @@ import {
   ToolsType
 } from 'types/Shapes'
 import Canvas from './Canvas'
-import Layouts from './toolbox/Layouts'
-import Toolbox from './toolbox/Toolbox'
+import Layouts from './settings/Layouts'
+import Toolbar from './toolbox/Toolbar'
 import { styled } from '@linaria/react'
-import SettingsBox from './toolbox/SettingsBox'
+import SettingsBar from './settings/SettingsBar'
 import { STYLE_FONT_DEFAULT } from 'constants/style'
 import useKeyboard from 'hooks/useKeyboard'
 import {
@@ -288,7 +288,7 @@ const App = ({
 
   return (
     <StyledApp ref={componentRef} className={className} maxWidth={`min(100%, ${width}px)`}>
-      <Toolbox
+      <Toolbar
         disabled={disabled}
         activeTool={activeTool}
         clearCanvas={clearCanvas}
@@ -337,7 +337,7 @@ const App = ({
           />
         )}
       </StyledRow>
-      <SettingsBox
+      <SettingsBar
         disabled={disabled}
         activeTool={activeTool}
         selectedShape={selectedShape}

@@ -170,7 +170,7 @@ type ToolboxType = {
   exportCanvasInFile: () => void
 }
 
-const Toolbox = ({
+const Toolbar = ({
   disabled = false,
   activeTool,
   hasActionToUndo = false,
@@ -304,4 +304,4 @@ const Toolbox = ({
   )
 }
 
-export default Toolbox
+export default Toolbar
