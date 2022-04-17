@@ -1,6 +1,8 @@
 import _ from 'lodash/fp'
-import React from 'react'
+import React, { useState } from 'react'
 import { styled } from '@linaria/react'
+import Button from 'components/common/Button'
+import Panel from './Panel'
 
 const StyledSelect = styled.select`
   // A reset of styles, including removing the default dropdown arrow
@@ -33,6 +35,7 @@ const StyledSelect = styled.select`
 `
 
 type ShapeStyleSelectType = {
+  title?: string
   disabled?: boolean
   field: string
   values: (string | number)[]
@@ -41,27 +44,47 @@ type ShapeStyleSelectType = {
 }
 
 const SelectField = ({
+  title = "Choisissez l'option",
   disabled = false,
   field,
   values,
   defaultValue,
   valueChanged
 }: ShapeStyleSelectType) => {
+  const [isPanelVisible, setIsPanelVisible] = useState(false)
+
   const handleChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
     const parsedValue = _.toNumber(event.target.value)
     valueChanged(field, _.isNaN(parsedValue) ? event.target.value : parsedValue)
   }
 
   return (
-    <StyledSelect onChange={handleChange} disabled={disabled} data-disabled={+disabled}>
-      {values.map(value => {
-        return (
-          <option key={value} value={value} selected={defaultValue == value}>
-            {value}
-          </option>
-        )
-      })}
-    </StyledSelect>
+    <>
+      <Button
+        selected={isPanelVisible}
+        disabled={disabled}
+        onClick={() => setIsPanelVisible(prev => !prev)}>
+        <span>{defaultValue}</span>
+      </Button>
+      {isPanelVisible && (
+        <Panel onClose={() => setIsPanelVisible(false)}>
+          <>
+            <div>{title}</div>
+            <div>
+              <StyledSelect onChange={handleChange} disabled={disabled} data-disabled={+disabled}>
+                {values.map(value => {
+                  return (
+                    <option key={value} value={value} selected={defaultValue == value}>
+                      {value}
+                    </option>
+                  )
+                })}
+              </StyledSelect>
+            </div>
+          </>
+        </Panel>
+      )}
+    </>
   )
 }
 

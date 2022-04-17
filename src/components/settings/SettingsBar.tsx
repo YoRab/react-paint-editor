@@ -114,6 +114,7 @@ const SettingsBar = ({
             <>
               {selectedShape.type === ShapeEnum.polygon && (
                 <SelectField
+                  title="Nombre de points"
                   disabled={disabled}
                   field="style.pointsCount"
                   values={POLYGON_POINTS_VALUES}
@@ -123,6 +124,7 @@ const SettingsBar = ({
               )}
               {selectedShape.type === ShapeEnum.text ? (
                 <SelectField
+                  title="Font"
                   disabled={disabled}
                   field="style.fontFamily"
                   values={STYLE_FONTS}
@@ -139,6 +141,7 @@ const SettingsBar = ({
                     valueChanged={handleShapeStyleChange}
                   />
                   <SelectField
+                    title="Type de traits"
                     disabled={disabled}
                     field="style.lineDash"
                     values={STYLE_LINE_DASH}
@@ -150,6 +153,7 @@ const SettingsBar = ({
 
               {selectedShape.type === ShapeEnum.line && (
                 <SelectField
+                  title="Flèches"
                   disabled={disabled}
                   field="style.lineArrow"
                   values={STYLE_LINE_WITH_ARROW}
@@ -201,6 +205,7 @@ const SettingsBar = ({
           <>
             {activeTool === ShapeEnum.polygon && (
               <SelectField
+                title="Nombre de points"
                 disabled={disabled}
                 field="style.pointsCount"
                 values={POLYGON_POINTS_VALUES}
@@ -210,6 +215,7 @@ const SettingsBar = ({
             )}
             {activeTool === ShapeEnum.text ? (
               <SelectField
+                title="Font"
                 disabled={disabled}
                 field="style.fontFamily"
                 values={STYLE_FONTS}
@@ -226,6 +232,7 @@ const SettingsBar = ({
                   valueChanged={handleShapeStyleChange}
                 />
                 <SelectField
+                  title="Type de traits"
                   disabled={disabled}
                   field="style.lineDash"
                   values={STYLE_LINE_DASH}
@@ -237,6 +244,7 @@ const SettingsBar = ({
 
             {activeTool === ShapeEnum.line && (
               <SelectField
+                title="Flèches"
                 disabled={disabled}
                 field="style.lineArrow"
                 values={STYLE_LINE_WITH_ARROW}
