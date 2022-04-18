@@ -5,6 +5,8 @@ import Button from 'components/common/Button'
 import Panel from './Panel'
 
 type ShapeStyleColorType = {
+  selectedSettings: string | undefined
+  setSelectedSettings: React.Dispatch<React.SetStateAction<string | undefined>>
   title?: string
   disabled?: boolean
   field: string
@@ -17,6 +19,8 @@ type ShapeStyleColorType = {
 }
 
 const RangeField = ({
+  selectedSettings,
+  setSelectedSettings,
   title = "Choisissez l'intervalle",
   disabled = false,
   field,
@@ -28,26 +32,31 @@ const RangeField = ({
   valueChanged
 }: ShapeStyleColorType) => {
   const roundValue = Math.round(value)
-  const [isPanelVisible, setIsPanelVisible] = useState(false)
+  const [customKey] = useState(_.uniqueId('settings_'))
 
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const parsedValue = _.toNumber(event.target.value)
     valueChanged(field, _.isNaN(parsedValue) ? event.target.value : parsedValue)
   }
 
+  const togglePanel = () => {
+    setSelectedSettings(prev => {
+      return prev === customKey ? undefined : customKey
+    })
+  }
+
+  const isPanelVisible = selectedSettings === customKey
+
   return (
     <>
-      <Button
-        selected={isPanelVisible}
-        disabled={disabled}
-        onClick={() => setIsPanelVisible(prev => !prev)}>
+      <Button selected={isPanelVisible} disabled={disabled} onClick={togglePanel}>
         <span>
           {roundValue}
           {unity}
         </span>
       </Button>
       {isPanelVisible && (
-        <Panel onClose={() => setIsPanelVisible(false)}>
+        <Panel>
           <>
             <div>{title}</div>
             <div>

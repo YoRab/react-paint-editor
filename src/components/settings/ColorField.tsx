@@ -44,6 +44,8 @@ const StyledColorInput = styled.input`
 `
 
 type ShapeStyleColorType = {
+  selectedSettings: string | undefined
+  setSelectedSettings: React.Dispatch<React.SetStateAction<string | undefined>>
   title?: string
   disabled?: boolean
   field: string
@@ -52,13 +54,15 @@ type ShapeStyleColorType = {
 }
 
 const ColorField = ({
+  selectedSettings,
+  setSelectedSettings,
   title = 'Choisissez une couleur',
   disabled = false,
   field,
   value = '',
   valueChanged
 }: ShapeStyleColorType) => {
-  const [isPanelVisible, setIsPanelVisible] = useState(false)
+  const [customKey] = useState(_.uniqueId('settings_'))
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const parsedValue = _.toNumber(event.target.value)
     valueChanged(field, _.isNaN(parsedValue) ? event.target.value : parsedValue)
@@ -68,21 +72,30 @@ const ColorField = ({
     valueChanged(field, value)
   }
 
+  const togglePanel = () => {
+    setSelectedSettings(prev => {
+      return prev === customKey ? undefined : customKey
+    })
+  }
+
+  const isPanelVisible = selectedSettings === customKey
+
   return (
     <>
-      <Button
-        selected={isPanelVisible}
-        disabled={disabled}
-        onClick={() => setIsPanelVisible(prev => !prev)}>
+      <Button selected={isPanelVisible} disabled={disabled} onClick={togglePanel}>
         <StyledColor color={value} />
       </Button>
       {isPanelVisible && (
-        <Panel onClose={() => setIsPanelVisible(false)}>
+        <Panel>
           <>
             <div>{title}</div>
             <div>
               {STYLE_COLORS.map((color, index) => (
-                <StyledColorButton key={index} color={color} onClick={() => handleClick(color)}>
+                <StyledColorButton
+                  key={index}
+                  selected={color === value}
+                  color={color}
+                  onClick={() => handleClick(color)}>
                   <StyledColor color={color} />
                 </StyledColorButton>
               ))}

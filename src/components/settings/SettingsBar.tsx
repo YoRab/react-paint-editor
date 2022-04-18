@@ -1,5 +1,5 @@
 import _ from 'lodash/fp'
-import React from 'react'
+import React, { useState } from 'react'
 import { styled } from '@linaria/react'
 import {
   POLYGON_POINTS_VALUES,
@@ -68,6 +68,9 @@ const SettingsBar = ({
     ShapeEnum.polygon,
     ShapeEnum.text
   ]
+
+  const [selectedSettings, setSelectedSettings] = useState<string | undefined>(undefined)
+
   const handleShapeStyleChange = (field: string, value: string | number) => {
     if (selectedShape) {
       updateShape(_.set(field, value, selectedShape), true)
@@ -114,6 +117,8 @@ const SettingsBar = ({
             <>
               {selectedShape.type === ShapeEnum.polygon && (
                 <SelectField
+                  selectedSettings={selectedSettings}
+                  setSelectedSettings={setSelectedSettings}
                   title="Nombre de points"
                   disabled={disabled}
                   field="style.pointsCount"
@@ -124,6 +129,8 @@ const SettingsBar = ({
               )}
               {selectedShape.type === ShapeEnum.text ? (
                 <SelectField
+                  selectedSettings={selectedSettings}
+                  setSelectedSettings={setSelectedSettings}
                   title="Font"
                   disabled={disabled}
                   field="style.fontFamily"
@@ -134,6 +141,8 @@ const SettingsBar = ({
               ) : (
                 <>
                   <RangeField
+                    selectedSettings={selectedSettings}
+                    setSelectedSettings={setSelectedSettings}
                     title="Epaisseur du trait"
                     disabled={disabled}
                     field="style.lineWidth"
@@ -141,6 +150,8 @@ const SettingsBar = ({
                     valueChanged={handleShapeStyleChange}
                   />
                   <SelectField
+                    selectedSettings={selectedSettings}
+                    setSelectedSettings={setSelectedSettings}
                     title="Type de traits"
                     disabled={disabled}
                     field="style.lineDash"
@@ -153,6 +164,8 @@ const SettingsBar = ({
 
               {selectedShape.type === ShapeEnum.line && (
                 <SelectField
+                  selectedSettings={selectedSettings}
+                  setSelectedSettings={setSelectedSettings}
                   title="Flèches"
                   disabled={disabled}
                   field="style.lineArrow"
@@ -163,6 +176,8 @@ const SettingsBar = ({
               )}
 
               <ColorField
+                selectedSettings={selectedSettings}
+                setSelectedSettings={setSelectedSettings}
                 title="Couleur du trait"
                 disabled={disabled}
                 field="style.strokeColor"
@@ -174,6 +189,8 @@ const SettingsBar = ({
                 selectedShape.type !== ShapeEnum.brush &&
                 selectedShape.type !== ShapeEnum.line && (
                   <ColorField
+                    selectedSettings={selectedSettings}
+                    setSelectedSettings={setSelectedSettings}
                     title="Couleur de fond"
                     disabled={disabled}
                     field="style.fillColor"
@@ -184,6 +201,8 @@ const SettingsBar = ({
             </>
           )}
           <RangeField
+            selectedSettings={selectedSettings}
+            setSelectedSettings={setSelectedSettings}
             title="Opacité"
             min={0}
             max={100}
@@ -205,6 +224,8 @@ const SettingsBar = ({
           <>
             {activeTool === ShapeEnum.polygon && (
               <SelectField
+                selectedSettings={selectedSettings}
+                setSelectedSettings={setSelectedSettings}
                 title="Nombre de points"
                 disabled={disabled}
                 field="style.pointsCount"
@@ -215,6 +236,8 @@ const SettingsBar = ({
             )}
             {activeTool === ShapeEnum.text ? (
               <SelectField
+                selectedSettings={selectedSettings}
+                setSelectedSettings={setSelectedSettings}
                 title="Font"
                 disabled={disabled}
                 field="style.fontFamily"
@@ -225,6 +248,8 @@ const SettingsBar = ({
             ) : (
               <>
                 <RangeField
+                  selectedSettings={selectedSettings}
+                  setSelectedSettings={setSelectedSettings}
                   title="Epaisseur du trait"
                   disabled={disabled}
                   field="style.lineWidth"
@@ -232,6 +257,8 @@ const SettingsBar = ({
                   valueChanged={handleShapeStyleChange}
                 />
                 <SelectField
+                  selectedSettings={selectedSettings}
+                  setSelectedSettings={setSelectedSettings}
                   title="Type de traits"
                   disabled={disabled}
                   field="style.lineDash"
@@ -244,6 +271,8 @@ const SettingsBar = ({
 
             {activeTool === ShapeEnum.line && (
               <SelectField
+                selectedSettings={selectedSettings}
+                setSelectedSettings={setSelectedSettings}
                 title="Flèches"
                 disabled={disabled}
                 field="style.lineArrow"
@@ -254,6 +283,8 @@ const SettingsBar = ({
             )}
 
             <ColorField
+              selectedSettings={selectedSettings}
+              setSelectedSettings={setSelectedSettings}
               title="Couleur du trait"
               disabled={disabled}
               field="style.strokeColor"
@@ -265,6 +296,8 @@ const SettingsBar = ({
               activeTool !== ShapeEnum.brush &&
               activeTool !== ShapeEnum.line && (
                 <ColorField
+                  selectedSettings={selectedSettings}
+                  setSelectedSettings={setSelectedSettings}
                   title="Couleur de fond"
                   disabled={disabled}
                   field="style.fillColor"
@@ -274,6 +307,8 @@ const SettingsBar = ({
               )}
 
             <RangeField
+              selectedSettings={selectedSettings}
+              setSelectedSettings={setSelectedSettings}
               title="Opacité"
               min={0}
               max={100}

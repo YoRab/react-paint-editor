@@ -12,10 +12,10 @@ const StyledPanel = styled.div`
 
 type PanelType = {
   children: JSX.Element
-  onClose: () => void
+  onClose?: () => void
 }
 
-const Panel = ({ children, onClose }: PanelType) => {
+const Panel = ({ children, onClose = _.noop }: PanelType) => {
   const componentRef = useRef<HTMLDivElement>(null)
   return <StyledPanel ref={componentRef}>{children}</StyledPanel>
 }
