@@ -167,8 +167,8 @@ const App = ({
   }, [selectTool, forwardShape])
 
   const clearCanvas = useCallback(
-    (shapesToInit: DrawableShape[] = []) => {
-      clearShapes(shapesToInit)
+    (shapesToInit: DrawableShape[] = [], clearHistory = false) => {
+      clearShapes(shapesToInit, clearHistory)
       selectTool(ToolEnum.selection)
       setCanvasOffset([0, 0])
     },
@@ -218,7 +218,7 @@ const App = ({
       const isValidated = validateJson(json)
       if (!isValidated) throw new Error('Le fichier est corrompu')
       const shapes = await decodePicturesInShapes(json as DrawableShapeJson[])
-      clearCanvas(shapes)
+      clearCanvas(shapes, true)
     },
     [clearCanvas]
   )

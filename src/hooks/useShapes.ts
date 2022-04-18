@@ -107,12 +107,25 @@ const useShapes = (onDataChanged: () => void = _.noop) => {
     })
   }, [])
 
-  const clearShapes = useCallback((shapesToInit: DrawableShape[] = []) => {
+  const clearShapes = useCallback((shapesToInit: DrawableShape[] = [], clearHistory = false) => {
     setSelectedShape(undefined)
     shapesRef.current = shapesToInit
-    setSavedShapes({
-      states: [{ shapes: shapesToInit, selectedShape: undefined }],
-      cursor: 0
+    setSavedShapes(prevSavedShaped => {
+      return clearHistory
+        ? {
+            states: [{ shapes: shapesToInit, selectedShape: undefined }],
+            cursor: 0
+          }
+        : {
+            states: [
+              ...prevSavedShaped.states.slice(0, prevSavedShaped.cursor + 1),
+              {
+                shapes: shapesToInit,
+                selectedShape: undefined
+              }
+            ],
+            cursor: prevSavedShaped.cursor + 1
+          }
     })
   }, [])
 
