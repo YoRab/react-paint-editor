@@ -4,6 +4,7 @@ import { styled } from '@linaria/react'
 import Button from 'components/common/Button'
 import Panel from './Panel'
 import { STYLE_COLORS } from 'constants/style'
+import { encodedTransparentIcon } from 'constants/icons'
 
 const StyledColor = styled.div<{
   color: string
@@ -14,33 +15,30 @@ const StyledColor = styled.div<{
   border-radius: 50%;
   border: 1px solid gray;
   background: ${({ color }) => color};
+  background-repeat: repeat;
+  background-size: 16px;
+`
+
+const StyledCustomColor = styled.div<{
+  color: string
+}>`
+  width: 36px;
+  height: 36px;
+  box-sizing: border-box;
+  border-radius: 50%;
+  color: ${({ color }) => color};
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  font-size: 48px;
+  line-height: 36px;
+  position: relative;
+  bottom: 6px;
+  font-weight: bold;
 `
 
 const StyledColorButton = styled(Button)`
   border-radius: 50%;
-`
-
-const StyledColorInput = styled.input`
-  border-radius: 50%;
-  border: none;
-  padding: 0;
-  margin: 0;
-  width: 24px;
-  height: 24px;
-  background-color: transparent;
-  font-size: inherit;
-  line-height: inherit;
-  &[data-disabled='1'] {
-    opacity: 0.25;
-    cursor: default;
-  }
-
-  &[data-disabled='0'] {
-    cursor: pointer;
-    &:hover {
-      background: var(--btn-hover);
-    }
-  }
 `
 
 type ShapeStyleColorType = {
@@ -83,28 +81,40 @@ const ColorField = ({
   return (
     <>
       <Button selected={isPanelVisible} disabled={disabled} onClick={togglePanel}>
-        <StyledColor color={value} />
+        <StyledColor
+          color={
+            value === 'transparent' ? `url('data:image/svg+xml,${encodedTransparentIcon}')` : value
+          }
+        />
       </Button>
       {isPanelVisible && (
-        <Panel>
-          <>
-            <div>{title}</div>
-            <div>
-              {STYLE_COLORS.map((color, index) => (
-                <StyledColorButton
-                  key={index}
-                  selected={color === value}
-                  color={color}
-                  onClick={() => handleClick(color)}>
-                  <StyledColor color={color} />
-                </StyledColorButton>
-              ))}
-              <StyledColorInput
-                type="color"
-                value={value}
-                onChange={handleChange}></StyledColorInput>
-            </div>
-          </>
+        <Panel title={title}>
+          <div>
+            {STYLE_COLORS.map((color, index) => (
+              <StyledColorButton
+                key={index}
+                selected={color === value}
+                color={color}
+                onClick={() => handleClick(color)}>
+                <StyledColor
+                  color={
+                    color === 'transparent'
+                      ? `url('data:image/svg+xml,${encodedTransparentIcon}')`
+                      : color
+                  }
+                />
+              </StyledColorButton>
+            ))}
+            <StyledColorButton
+              type="color"
+              selected={!_.includes(value, STYLE_COLORS)}
+              value={value}
+              onChange={handleChange}>
+              <StyledCustomColor color={_.includes(value, STYLE_COLORS) ? 'black' : value}>
+                +
+              </StyledCustomColor>
+            </StyledColorButton>
+          </div>
         </Panel>
       )}
     </>

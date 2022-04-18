@@ -2,12 +2,6 @@ import _ from 'lodash/fp'
 import React, { useState } from 'react'
 import { styled } from '@linaria/react'
 import {
-  POLYGON_POINTS_VALUES,
-  STYLE_FONTS,
-  STYLE_LINE_DASH,
-  STYLE_LINE_WITH_ARROW
-} from 'constants/style'
-import {
   DrawablePolygon,
   DrawableShape,
   DrawableText,
@@ -17,10 +11,13 @@ import {
 } from 'types/Shapes'
 import { calculateTextFontSize, updatePolygonLinesCount } from 'utils/transform'
 import ColorField from './ColorField'
-import SelectField from './SelectField'
 import DeleteButton from './DeleteButton'
 import LayoutButton from './LayoutButton'
 import RangeField from './RangeField'
+import FontFamilyField from './FontFamilyField'
+import PointsNumberField from './PointsNumberField'
+import LineTypeField from './LineTypeField'
+import LineArrowField from './LineArrowField'
 
 const StyledSettingsBar = styled.div`
   user-select: none;
@@ -116,25 +113,19 @@ const SettingsBar = ({
           {shapes.includes(selectedShape?.type) && (
             <>
               {selectedShape.type === ShapeEnum.polygon && (
-                <SelectField
+                <PointsNumberField
                   selectedSettings={selectedSettings}
                   setSelectedSettings={setSelectedSettings}
-                  title="Nombre de points"
                   disabled={disabled}
-                  field="style.pointsCount"
-                  values={POLYGON_POINTS_VALUES}
                   defaultValue={selectedShape.points.length}
                   valueChanged={handlePolygonLinesCount}
                 />
               )}
               {selectedShape.type === ShapeEnum.text ? (
-                <SelectField
+                <FontFamilyField
                   selectedSettings={selectedSettings}
                   setSelectedSettings={setSelectedSettings}
-                  title="Font"
                   disabled={disabled}
-                  field="style.fontFamily"
-                  values={STYLE_FONTS}
                   defaultValue={selectedShape.style?.fontFamily}
                   valueChanged={handleShapeFontFamilyChange}
                 />
@@ -148,14 +139,12 @@ const SettingsBar = ({
                     field="style.lineWidth"
                     value={selectedShape.style?.lineWidth}
                     valueChanged={handleShapeStyleChange}
+                    unity="px"
                   />
-                  <SelectField
+                  <LineTypeField
                     selectedSettings={selectedSettings}
                     setSelectedSettings={setSelectedSettings}
-                    title="Type de traits"
                     disabled={disabled}
-                    field="style.lineDash"
-                    values={STYLE_LINE_DASH}
                     defaultValue={selectedShape.style?.lineDash}
                     valueChanged={handleShapeStyleChange}
                   />
@@ -163,13 +152,10 @@ const SettingsBar = ({
               )}
 
               {selectedShape.type === ShapeEnum.line && (
-                <SelectField
+                <LineArrowField
                   selectedSettings={selectedSettings}
                   setSelectedSettings={setSelectedSettings}
-                  title="Flèches"
                   disabled={disabled}
-                  field="style.lineArrow"
-                  values={STYLE_LINE_WITH_ARROW}
                   defaultValue={selectedShape.style?.lineArrow}
                   valueChanged={handleShapeStyleChange}
                 />
@@ -223,25 +209,19 @@ const SettingsBar = ({
         _.includes(activeTool, shapes) && (
           <>
             {activeTool === ShapeEnum.polygon && (
-              <SelectField
+              <PointsNumberField
                 selectedSettings={selectedSettings}
                 setSelectedSettings={setSelectedSettings}
-                title="Nombre de points"
                 disabled={disabled}
-                field="style.pointsCount"
-                values={POLYGON_POINTS_VALUES}
                 defaultValue={2}
                 valueChanged={handlePolygonLinesCount}
               />
             )}
             {activeTool === ShapeEnum.text ? (
-              <SelectField
+              <FontFamilyField
                 selectedSettings={selectedSettings}
                 setSelectedSettings={setSelectedSettings}
-                title="Font"
                 disabled={disabled}
-                field="style.fontFamily"
-                values={STYLE_FONTS}
                 defaultValue={defaultConf.style?.fontFamily}
                 valueChanged={handleShapeStyleChange}
               />
@@ -255,14 +235,12 @@ const SettingsBar = ({
                   field="style.lineWidth"
                   value={defaultConf.style?.lineWidth}
                   valueChanged={handleShapeStyleChange}
+                  unity="px"
                 />
-                <SelectField
+                <LineTypeField
                   selectedSettings={selectedSettings}
                   setSelectedSettings={setSelectedSettings}
-                  title="Type de traits"
                   disabled={disabled}
-                  field="style.lineDash"
-                  values={STYLE_LINE_DASH}
                   defaultValue={defaultConf.style?.lineDash}
                   valueChanged={handleShapeStyleChange}
                 />
@@ -270,13 +248,10 @@ const SettingsBar = ({
             )}
 
             {activeTool === ShapeEnum.line && (
-              <SelectField
+              <LineArrowField
                 selectedSettings={selectedSettings}
                 setSelectedSettings={setSelectedSettings}
-                title="Flèches"
                 disabled={disabled}
-                field="style.lineArrow"
-                values={STYLE_LINE_WITH_ARROW}
                 defaultValue={defaultConf.style?.lineArrow}
                 valueChanged={handleShapeStyleChange}
               />

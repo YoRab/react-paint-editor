@@ -1,10 +1,15 @@
 import _ from 'lodash/fp'
 import React, { useState } from 'react'
-import { styled } from '@linaria/react'
 import Button from 'components/common/Button'
 import Panel from './Panel'
+import { styled } from '@linaria/react'
 
-type ShapeStyleSelectType = {
+const StyledButton = styled(Button)`
+  padding: 16px;
+`
+
+type ShapeStyleSelectType<T> = {
+  CustomOption: React.FC<T>
   selectedSettings: string | undefined
   setSelectedSettings: React.Dispatch<React.SetStateAction<string | undefined>>
   title?: string
@@ -16,6 +21,7 @@ type ShapeStyleSelectType = {
 }
 
 const SelectField = ({
+  CustomOption,
   selectedSettings,
   setSelectedSettings,
   title = "Choisissez l'option",
@@ -24,7 +30,7 @@ const SelectField = ({
   values,
   defaultValue,
   valueChanged
-}: ShapeStyleSelectType) => {
+}: ShapeStyleSelectType<unknown>) => {
   const [customKey] = useState(_.uniqueId('settings_'))
 
   const handleClick = (value: string | number) => {
@@ -42,25 +48,22 @@ const SelectField = ({
   return (
     <>
       <Button selected={isPanelVisible} disabled={disabled} onClick={togglePanel}>
-        <span>{defaultValue}</span>
+        <CustomOption>{defaultValue}</CustomOption>
       </Button>
       {isPanelVisible && (
-        <Panel>
-          <>
-            <div>{title}</div>
-            <div>
-              {values.map(value => {
-                return (
-                  <Button
-                    key={value}
-                    onClick={() => handleClick(value)}
-                    selected={defaultValue == value}>
-                    {value}
-                  </Button>
-                )
-              })}
-            </div>
-          </>
+        <Panel title={title}>
+          <div>
+            {values.map(value => {
+              return (
+                <StyledButton
+                  key={value}
+                  onClick={() => handleClick(value)}
+                  selected={defaultValue == value}>
+                  <CustomOption>{value}</CustomOption>
+                </StyledButton>
+              )
+            })}
+          </div>
         </Panel>
       )}
     </>

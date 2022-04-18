@@ -33,13 +33,15 @@ import { SnackbarTypeEnum } from 'constants/snackbar'
 const StyledApp = styled.div<{
   maxWidth: string
 }>`
-  --bg-color: #d7ecec;
+  /* --bg-color: #d7ecec; */
+  --bg-color: white;
   --text-color: #364181;
   --btn-hover: #afd8d8;
   --bg-color-selected: #364181;
   --text-color-selected: white;
   /* --shrinkedcanvas-bg-color: #364181; */
-  --shrinkedcanvas-bg-color: #d7ecec;
+  /* --shrinkedcanvas-bg-color: #d7ecec; */
+  --shrinkedcanvas-bg-color: white;
   display: flex;
   width: fit-content;
   color: var(--text-color);

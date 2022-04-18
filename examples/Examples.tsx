@@ -84,7 +84,7 @@ const CurrentApp = ({ selectedComponent }: CurrentAppType) => {
     default:
       return <App />
     case 1:
-      return <App width={300} height={200} />
+      return <App width={320} height={200} />
     case 2:
       return (
         <App

@@ -1,23 +1,35 @@
 import _ from 'lodash/fp'
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useRef } from 'react'
 import { styled } from '@linaria/react'
-import Button from 'components/common/Button'
 
 const StyledPanel = styled.div`
   position: absolute;
   background: var(--bg-color);
   left: 0;
   bottom: 100%;
+  box-shadow: 0 3px 8px rgb(0 0 0 / 24%);
+  padding: 12px;
+  margin: 8px;
+`
+const StyledTitle = styled.h3`
+  margin-bottom: 8px;
+  margin-top: 4px;
+  font-size: 18px;
 `
 
 type PanelType = {
   children: JSX.Element
-  onClose?: () => void
+  title?: string
 }
 
-const Panel = ({ children, onClose = _.noop }: PanelType) => {
+const Panel = ({ children, title = '' }: PanelType) => {
   const componentRef = useRef<HTMLDivElement>(null)
-  return <StyledPanel ref={componentRef}>{children}</StyledPanel>
+  return (
+    <StyledPanel ref={componentRef}>
+      {title && <StyledTitle>{title}</StyledTitle>}
+      {children}
+    </StyledPanel>
+  )
 }
 
 export default Panel

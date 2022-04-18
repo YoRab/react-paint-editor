@@ -2,7 +2,7 @@ import React from 'react'
 import { styled } from '@linaria/react'
 
 const StyledButton = styled.button`
-  width: 36px;
+  min-width: 36px;
   height: 36px;
   display: inline-flex;
   vertical-align: middle;
@@ -45,7 +45,8 @@ const StyledButton = styled.button`
   }
 
   input {
-    display: none;
+    position: absolute;
+    visibility: hidden;
   }
 `
 
@@ -58,17 +59,25 @@ type CommonType = {
 type ButtonType = CommonType & React.ButtonHTMLAttributes<HTMLButtonElement>
 
 type FileInputType = CommonType & {
-  type: 'file'
+  type: 'file' | 'color'
   accept?: string
 } & React.InputHTMLAttributes<HTMLInputElement>
 
 const Button = React.forwardRef<HTMLButtonElement | HTMLInputElement, ButtonType | FileInputType>(
   (props, ref) => {
-    if (props.type === 'file') {
-      const { hidden = false, disabled = false, selected = false, children, ...fileProps } = props
+    if (props.type === 'file' || props.type === 'color') {
+      const {
+        hidden = false,
+        disabled = false,
+        selected = false,
+        children,
+        className,
+        ...fileProps
+      } = props
       return (
         <StyledButton
           as="label"
+          className={className}
           data-disabled={+disabled}
           data-selected={+selected}
           data-hidden={+hidden}>
@@ -81,7 +90,13 @@ const Button = React.forwardRef<HTMLButtonElement | HTMLInputElement, ButtonType
         </StyledButton>
       )
     } else {
-      const { hidden = false, disabled = false, selected = false, children, ...fileProps } = props
+      const {
+        hidden = false,
+        disabled = false,
+        selected = false,
+        children,
+        ...fileProps
+      } = props as ButtonType
 
       return (
         <StyledButton

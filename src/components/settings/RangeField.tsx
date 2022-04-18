@@ -4,6 +4,11 @@ import { styled } from '@linaria/react'
 import Button from 'components/common/Button'
 import Panel from './Panel'
 
+const StyledLabel = styled.label`
+  display: inline-flex;
+  align-items: center;
+`
+
 type ShapeStyleColorType = {
   selectedSettings: string | undefined
   setSelectedSettings: React.Dispatch<React.SetStateAction<string | undefined>>
@@ -56,26 +61,23 @@ const RangeField = ({
         </span>
       </Button>
       {isPanelVisible && (
-        <Panel>
-          <>
-            <div>{title}</div>
-            <div>
-              <label>
-                <input
-                  type="range"
-                  min={min}
-                  max={max}
-                  step={step}
-                  value={value}
-                  onChange={handleChange}
-                />
-                <span>
-                  {roundValue}
-                  {unity}
-                </span>
-              </label>
-            </div>
-          </>
+        <Panel title={title}>
+          <div>
+            <StyledLabel>
+              <input
+                type="range"
+                min={min}
+                max={max}
+                step={step}
+                value={value}
+                onChange={handleChange}
+              />
+              <span>
+                {roundValue}
+                {unity}
+              </span>
+            </StyledLabel>
+          </div>
         </Panel>
       )}
     </>
