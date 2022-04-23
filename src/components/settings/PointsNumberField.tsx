@@ -18,6 +18,7 @@ type PointsNumberFieldType = {
   setSelectedSettings: React.Dispatch<React.SetStateAction<string | undefined>>
   disabled?: boolean
   defaultValue?: number | string | undefined
+  values?: number[]
   valueChanged: (field: string, value: string | number) => void
 }
 
@@ -26,6 +27,7 @@ const PointsNumberField = ({
   setSelectedSettings,
   disabled = false,
   defaultValue,
+  values = POLYGON_POINTS_VALUES,
   valueChanged
 }: PointsNumberFieldType) => {
   return (
@@ -36,7 +38,7 @@ const PointsNumberField = ({
       title="Nombre de points"
       disabled={disabled}
       field="style.pointsCount"
-      values={POLYGON_POINTS_VALUES}
+      values={values}
       defaultValue={defaultValue}
       valueChanged={valueChanged}></SelectField>
   )

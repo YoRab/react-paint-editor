@@ -120,7 +120,11 @@ export const checkPositionIntersection = (
   )
 
   if (checkAnchors) {
-    if (shape.type === ShapeEnum.line || shape.type === ShapeEnum.polygon) {
+    if (
+      shape.type === ShapeEnum.line ||
+      shape.type === ShapeEnum.polygon ||
+      shape.type === ShapeEnum.curve
+    ) {
       for (let i = 0; i < shape.points.length; i++) {
         if (
           isPointInsideRect(

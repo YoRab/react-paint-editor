@@ -17,7 +17,8 @@ import {
   DrawablePolygon,
   DrawableBrush,
   DrawableText,
-  Text
+  Text,
+  DrawableCurve
 } from 'types/Shapes'
 import {
   getPointPositionAfterCanvasTransformation,
@@ -169,9 +170,9 @@ export const resizeBrush = (
 export const resizeLine = (
   cursorPosition: Point,
   canvasOffset: Point,
-  originalShape: DrawableLine | DrawablePolygon,
+  originalShape: DrawableLine | DrawablePolygon | DrawableCurve,
   selectionMode: SelectionModeResize<number>
-): DrawableLine | DrawablePolygon => {
+): DrawableLine | DrawablePolygon | DrawableCurve => {
   const { center } = getShapeInfos(originalShape)
 
   const cursorPositionBeforeResize = getPointPositionAfterCanvasTransformation(
@@ -545,7 +546,7 @@ export const resizeShape = (
   originalShape: DrawableShape,
   selectionMode: SelectionModeData<Point | number>
 ): DrawableShape => {
-  if (shape.type === 'line' || shape.type === 'polygon')
+  if (shape.type === 'line' || shape.type === 'polygon' || shape.type === 'curve')
     return resizeLine(
       cursorPosition,
       canvasOffset,
@@ -580,7 +581,7 @@ export const resizeShape = (
       originalShape as DrawableRect,
       selectionMode as SelectionModeResize
     )
-    else if (shape.type === 'square')
+  else if (shape.type === 'square')
     return resizeRect(
       cursorPosition,
       canvasOffset,

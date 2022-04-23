@@ -11,7 +11,6 @@ import {
   DrawableShape,
   Brush,
   Text
-  
 } from 'types/Shapes'
 
 const getLineBorder = (line: Line): Rect => {
@@ -73,6 +72,8 @@ const getPolygonBorder = (polygon: Polygon): Rect => {
   return { x: minX, width: maxX - minX, y: minY, height: maxY - minY }
 }
 
+const getCurveBorder = getPolygonBorder
+
 const getRectBorder = (rect: Rect): Rect => {
   return {
     x: rect.x - SELECTION_PADDING,
@@ -121,12 +122,14 @@ const getShapeBorders = (marker: DrawableShape): Rect => {
       return getLineBorder(marker)
     case 'polygon':
       return getPolygonBorder(marker)
+    case 'curve':
+      return getCurveBorder(marker)
     case 'circle':
       return getCircleBorder(marker)
     case 'ellipse':
       return getEllipseBorder(marker)
     case 'rect':
-      case 'square':
+    case 'square':
       return getRectBorder(marker)
     case 'text':
       return getTextBorder(marker)

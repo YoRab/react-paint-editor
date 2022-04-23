@@ -64,17 +64,29 @@ export const createShape = (
         points: _.flow(
           _.range(0),
           _.map(() => cursorPosition)
-        )(defaultConf.style?.pointsCount ?? 2),
+        )(defaultConf.style?.pointsCount ?? 3),
+        translation: [0, 0],
+        scale: [1, 1],
+        rotation: 0,
+        style: defaultConf.style
+      }
+    case ShapeEnum.curve:
+      return {
+        type: ShapeEnum.curve,
+        id: _.uniqueId(shape),
+        points: _.flow(
+          _.range(0),
+          _.map(() => cursorPosition)
+        )(defaultConf.style?.pointsCount ?? 3),
         translation: [0, 0],
         scale: [1, 1],
         rotation: 0,
         style: defaultConf.style
       }
     case ShapeEnum.rect:
-      case ShapeEnum.square:
-
+    case ShapeEnum.square:
       return {
-        type:shape,
+        type: shape,
         id: _.uniqueId(shape),
         x: cursorPosition[0],
         y: cursorPosition[1],

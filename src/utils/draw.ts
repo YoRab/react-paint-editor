@@ -18,8 +18,9 @@ import {
   Brush,
   Text,
   Triangle,
-  StyledShape
-  
+  StyledShape,
+  Curve,
+  DrawableCurve
 } from 'types/Shapes'
 import { applyRotationToVector } from './intersect'
 import { getShapeInfos } from './shapeData'
@@ -66,7 +67,7 @@ const updateDrawStyle = (
     lineDash: 0
   }
 ) => {
-  globalAlpha!==undefined && (ctx.globalAlpha = globalAlpha/100)
+  globalAlpha !== undefined && (ctx.globalAlpha = globalAlpha / 100)
   fillColor && (ctx.fillStyle = fillColor)
   strokeColor && (ctx.strokeStyle = strokeColor)
   lineWidth && (ctx.lineWidth = lineWidth)
@@ -83,28 +84,26 @@ export const drawBrush = (ctx: CanvasRenderingContext2D, brush: Brush): void => 
   updateDrawStyle(ctx, brush.style)
   ctx.beginPath()
 
-  if(brush.style?.strokeColor === 'transparent' || ctx.globalAlpha===0)
-    return;
+  if (brush.style?.strokeColor === 'transparent' || ctx.globalAlpha === 0) return
 
-  brush.points.map(points => {
+  brush.points.forEach(points => {
     if (points.length === 1) {
       ctx.rect(points[0][0], points[0][1], 1, 1)
     } else {
       ctx.moveTo(...points[0])
-      points.slice(1).map(point => {
+      points.slice(1).forEach(point => {
         ctx.lineTo(...point)
       })
     }
   })
 
-   ctx.stroke()
+  ctx.stroke()
 }
 
 export const drawTriangle = (ctx: CanvasRenderingContext2D, triangle: Triangle): void => {
   updateDrawStyle(ctx, triangle.style)
 
-  if(ctx.globalAlpha===0)
-    return
+  if (ctx.globalAlpha === 0) return
 
   ctx.beginPath()
   ctx.moveTo(...triangle.points[0])
@@ -144,8 +143,7 @@ const buildTriangleOnLine = (center: Point, angle: number, lineStyle: StyledShap
 export const drawLine = (ctx: CanvasRenderingContext2D, line: Line): void => {
   updateDrawStyle(ctx, line.style)
 
-  if(ctx.globalAlpha===0)
-  return
+  if (ctx.globalAlpha === 0) return
 
   ctx.beginPath()
   ctx.moveTo(...line.points[0])
@@ -170,17 +168,39 @@ export const drawPolygon = (ctx: CanvasRenderingContext2D, polygon: Polygon): vo
   if (polygon.points.length < 1) return
   updateDrawStyle(ctx, polygon.style)
 
-  if(ctx.globalAlpha===0)
-  return
+  if (ctx.globalAlpha === 0) return
 
   ctx.beginPath()
   ctx.moveTo(...polygon.points[0])
-  polygon.points.slice(1).map(point => {
+  polygon.points.slice(1).forEach(point => {
     ctx.lineTo(...point)
   })
   ctx.lineTo(...polygon.points[0])
   polygon.style?.fillColor !== 'transparent' && ctx.fill()
   polygon.style?.strokeColor !== 'transparent' && ctx.stroke()
+}
+
+export const drawCurve = (ctx: CanvasRenderingContext2D, curve: Curve): void => {
+  if (curve.points.length < 3) return
+  updateDrawStyle(ctx, curve.style)
+
+  if (ctx.globalAlpha === 0) return
+
+  ctx.beginPath()
+  ctx.moveTo(...curve.points[0])
+  for (let i = 1; i < curve.points.length - 1; i++) {
+    ctx.quadraticCurveTo(
+      ...curve.points[i],
+      curve.points.length - 2 === i
+        ? curve.points[i + 1][0]
+        : (curve.points[i + 1][0] - curve.points[i][0]) / 2 + curve.points[i][0],
+      curve.points.length - 2 === i
+        ? curve.points[i + 1][1]
+        : (curve.points[i + 1][1] - curve.points[i][1]) / 2 + curve.points[i][1]
+    )
+  }
+  curve.style?.fillColor !== 'transparent' && ctx.fill()
+  curve.style?.strokeColor !== 'transparent' && ctx.stroke()
 }
 
 export const drawCircle = (ctx: CanvasRenderingContext2D, circle: Circle): void => {
@@ -194,8 +214,7 @@ export const drawCircle = (ctx: CanvasRenderingContext2D, circle: Circle): void 
 export const drawEllipse = (ctx: CanvasRenderingContext2D, ellipse: Ellipse): void => {
   updateDrawStyle(ctx, ellipse.style)
 
-  if(ctx.globalAlpha===0)
-  return
+  if (ctx.globalAlpha === 0) return
 
   ctx.beginPath()
   ctx.ellipse(ellipse.x, ellipse.y, ellipse.radiusX, ellipse.radiusY, 0, 0, 2 * Math.PI)
@@ -206,8 +225,7 @@ export const drawEllipse = (ctx: CanvasRenderingContext2D, ellipse: Ellipse): vo
 export const drawRect = (ctx: CanvasRenderingContext2D, rect: Rect): void => {
   updateDrawStyle(ctx, rect.style)
 
-  if(ctx.globalAlpha===0)
-  return
+  if (ctx.globalAlpha === 0) return
 
   ctx.beginPath()
   ctx.rect(rect.x, rect.y, rect.width, rect.height)
@@ -215,19 +233,18 @@ export const drawRect = (ctx: CanvasRenderingContext2D, rect: Rect): void => {
   rect.style?.strokeColor !== 'transparent' && ctx.stroke()
 }
 
-
 export const drawText = (ctx: CanvasRenderingContext2D, text: Text): void => {
   updateDrawStyle(ctx, text.style)
 
-  if(ctx.globalAlpha===0 || !text.style?.strokeColor || text.style.strokeColor === 'transparent')
-  return
+  if (ctx.globalAlpha === 0 || !text.style?.strokeColor || text.style.strokeColor === 'transparent')
+    return
 
   ctx.font = `${text.fontSize}px ${text.style?.fontFamily ?? STYLE_FONT_DEFAULT}`
   ctx.textBaseline = 'hanging'
-    ctx.fillStyle = text.style.strokeColor
-    for (let i = 0; i < text.value.length; i++) {
-      ctx.fillText(text.value[i], text.x, text.y + i * text.fontSize, text.width)
-    }
+  ctx.fillStyle = text.style.strokeColor
+  for (let i = 0; i < text.value.length; i++) {
+    ctx.fillText(text.value[i], text.x, text.y + i * text.fontSize, text.width)
+  }
 }
 
 export const drawPicture = (
@@ -235,12 +252,9 @@ export const drawPicture = (
   picture: Picture<HTMLImageElement>
 ): void => {
   updateDrawStyle(ctx, picture.style)
-  if(ctx.globalAlpha===0)
-  return
+  if (ctx.globalAlpha === 0) return
 
   ctx.beginPath()
-
-
 
   ctx.drawImage(picture.img, picture.x, picture.y, picture.width, picture.height)
 }
@@ -265,6 +279,9 @@ export const drawShape = (
     case 'polygon':
       drawPolygon(ctx, shape)
       break
+    case 'curve':
+      drawCurve(ctx, shape)
+      break
     case 'circle':
       drawCircle(ctx, shape)
       break
@@ -272,7 +289,7 @@ export const drawShape = (
       drawEllipse(ctx, shape)
       break
     case 'rect':
-      case 'square':
+    case 'square':
       drawRect(ctx, shape)
       break
     case 'picture':
@@ -335,7 +352,7 @@ const drawLineSelection = ({
   withAnchors
 }: {
   ctx: CanvasRenderingContext2D
-  shape: DrawableLine | DrawablePolygon
+  shape: DrawableLine | DrawablePolygon | DrawableCurve
   withAnchors: boolean
 }) => {
   const { borders } = getShapeInfos(shape)
@@ -370,6 +387,7 @@ export const drawSelection = ({
   switch (shape.type) {
     case 'polygon':
     case 'line':
+    case 'curve':
       drawLineSelection({ ctx, shape, withAnchors })
       break
     default:

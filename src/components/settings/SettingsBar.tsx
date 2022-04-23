@@ -18,6 +18,7 @@ import FontFamilyField from './FontFamilyField'
 import PointsNumberField from './PointsNumberField'
 import LineTypeField from './LineTypeField'
 import LineArrowField from './LineArrowField'
+import { CURVE_POINTS_VALUES, POLYGON_POINTS_VALUES } from 'constants/style'
 
 const StyledSettingsBar = styled.div`
   user-select: none;
@@ -63,6 +64,7 @@ const SettingsBar = ({
     ShapeEnum.square,
     ShapeEnum.line,
     ShapeEnum.polygon,
+    ShapeEnum.curve,
     ShapeEnum.text
   ]
 
@@ -112,13 +114,19 @@ const SettingsBar = ({
         <>
           {shapes.includes(selectedShape?.type) && (
             <>
-              {selectedShape.type === ShapeEnum.polygon && (
+              {(selectedShape.type === ShapeEnum.polygon ||
+                selectedShape.type === ShapeEnum.curve) && (
                 <PointsNumberField
                   selectedSettings={selectedSettings}
                   setSelectedSettings={setSelectedSettings}
                   disabled={disabled}
                   defaultValue={selectedShape.points.length}
                   valueChanged={handlePolygonLinesCount}
+                  values={
+                    selectedShape.type === ShapeEnum.curve
+                      ? CURVE_POINTS_VALUES
+                      : POLYGON_POINTS_VALUES
+                  }
                 />
               )}
               {selectedShape.type === ShapeEnum.text ? (
@@ -208,13 +216,16 @@ const SettingsBar = ({
       ) : (
         _.includes(activeTool, shapes) && (
           <>
-            {activeTool === ShapeEnum.polygon && (
+            {(activeTool === ShapeEnum.polygon || activeTool === ShapeEnum.curve) && (
               <PointsNumberField
                 selectedSettings={selectedSettings}
                 setSelectedSettings={setSelectedSettings}
                 disabled={disabled}
-                defaultValue={2}
+                defaultValue={3}
                 valueChanged={handlePolygonLinesCount}
+                values={
+                  activeTool === ShapeEnum.curve ? CURVE_POINTS_VALUES : POLYGON_POINTS_VALUES
+                }
               />
             )}
             {activeTool === ShapeEnum.text ? (

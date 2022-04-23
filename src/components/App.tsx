@@ -112,7 +112,7 @@ const App = ({
       lineWidth: 1,
       lineDash: 0,
       lineArrow: 0,
-      pointsCount: 2,
+      pointsCount: 3,
       fontFamily: STYLE_FONT_DEFAULT
     }
   })

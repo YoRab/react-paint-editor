@@ -260,7 +260,12 @@ const useDrawableCanvas = ({
             mode: SelectionModeLib.resize,
             cursorStartPosition: cursorPosition,
             originalShape: newShape,
-            anchor: activeTool === ShapeEnum.line || activeTool === ShapeEnum.polygon ? 0 : [1, 1]
+            anchor:
+              activeTool === ShapeEnum.line ||
+              activeTool === ShapeEnum.polygon ||
+              activeTool === ShapeEnum.curve
+                ? 0
+                : [1, 1]
           })
         }
       }

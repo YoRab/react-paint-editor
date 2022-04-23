@@ -5,6 +5,7 @@ export enum ShapeEnum {
   'line' = 'line',
   'polygon' = 'polygon',
   'circle' = 'circle',
+  'curve' = 'curve',
   'ellipse' = 'ellipse',
   'picture' = 'picture',
   'text' = 'text'
@@ -75,6 +76,10 @@ export type Polygon = StyledShape & {
   points: Point[]
 }
 
+export type Curve = StyledShape & {
+  points: Point[]
+}
+
 export type Brush = StyledShape & {
   points: Point[][]
 }
@@ -98,17 +103,19 @@ export type DrawablePicture<T extends HTMLImageElement | string> = Picture<T> &
 export type DrawableText = Text & Drawable & { type: ShapeEnum.text }
 export type DrawableLine = Line & Drawable & { type: ShapeEnum.line }
 export type DrawablePolygon = Polygon & Drawable & { type: ShapeEnum.polygon }
+export type DrawableCurve = Curve & Drawable & { type: ShapeEnum.curve }
 export type DrawableBrush = Brush & Drawable & { type: ShapeEnum.brush }
 export type DrawableCircle = Circle & Drawable & { type: ShapeEnum.circle }
 export type DrawableEllipse = Ellipse & Drawable & { type: ShapeEnum.ellipse }
 
 export type DrawableShape =
-| DrawableRect
-| DrawableSquare
-| DrawablePicture<HTMLImageElement>
+  | DrawableRect
+  | DrawableSquare
+  | DrawablePicture<HTMLImageElement>
   | DrawableText
   | DrawableLine
   | DrawablePolygon
+  | DrawableCurve
   | DrawableBrush
   | DrawableCircle
   | DrawableEllipse
@@ -119,6 +126,7 @@ export type DrawableShapeJson =
   | DrawablePicture<string>
   | DrawableText
   | DrawableLine
+  | DrawableCurve
   | DrawablePolygon
   | DrawableBrush
   | DrawableCircle
