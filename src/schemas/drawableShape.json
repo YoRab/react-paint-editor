@@ -13,6 +13,9 @@
                                 "fontFamily": {
                                     "type": "string"
                                 },
+                                "globalAlpha": {
+                                    "type": "number"
+                                },
                                 "lineArrow": {
                                     "type": "number"
                                 },
@@ -112,6 +115,112 @@
                                 },
                                 "fontFamily": {
                                     "type": "string"
+                                },
+                                "globalAlpha": {
+                                    "type": "number"
+                                },
+                                "lineArrow": {
+                                    "type": "number"
+                                },
+                                "lineDash": {
+                                    "type": "number"
+                                },
+                                "lineWidth": {
+                                    "type": "number"
+                                },
+                                "pointsCount": {
+                                    "type": "number"
+                                },
+                                "strokeColor": {
+                                    "type": "string"
+                                }
+                            },
+                            "type": "object"
+                        }
+                    },
+                    "type": "object"
+                },
+                {
+                    "properties": {
+                        "height": {
+                            "type": "number"
+                        },
+                        "width": {
+                            "type": "number"
+                        },
+                        "x": {
+                            "type": "number"
+                        },
+                        "y": {
+                            "type": "number"
+                        }
+                    },
+                    "type": "object"
+                },
+                {
+                    "properties": {
+                        "id": {
+                            "type": "string"
+                        },
+                        "rotation": {
+                            "type": "number"
+                        },
+                        "scale": {
+                            "items": [
+                                {
+                                    "type": "number"
+                                },
+                                {
+                                    "type": "number"
+                                }
+                            ],
+                            "maxItems": 2,
+                            "minItems": 2,
+                            "type": "array"
+                        },
+                        "translation": {
+                            "items": [
+                                {
+                                    "type": "number"
+                                },
+                                {
+                                    "type": "number"
+                                }
+                            ],
+                            "maxItems": 2,
+                            "minItems": 2,
+                            "type": "array"
+                        }
+                    },
+                    "type": "object"
+                },
+                {
+                    "properties": {
+                        "type": {
+                            "enum": [
+                                "square"
+                            ],
+                            "type": "string"
+                        }
+                    },
+                    "type": "object"
+                }
+            ]
+        },
+        {
+            "allOf": [
+                {
+                    "properties": {
+                        "style": {
+                            "properties": {
+                                "fillColor": {
+                                    "type": "string"
+                                },
+                                "fontFamily": {
+                                    "type": "string"
+                                },
+                                "globalAlpha": {
+                                    "type": "number"
                                 },
                                 "lineArrow": {
                                     "type": "number"
@@ -226,6 +335,9 @@
                                 },
                                 "fontFamily": {
                                     "type": "string"
+                                },
+                                "globalAlpha": {
+                                    "type": "number"
                                 },
                                 "lineArrow": {
                                     "type": "number"
@@ -348,6 +460,9 @@
                                 "fontFamily": {
                                     "type": "string"
                                 },
+                                "globalAlpha": {
+                                    "type": "number"
+                                },
                                 "lineArrow": {
                                     "type": "number"
                                 },
@@ -451,6 +566,116 @@
                                 },
                                 "fontFamily": {
                                     "type": "string"
+                                },
+                                "globalAlpha": {
+                                    "type": "number"
+                                },
+                                "lineArrow": {
+                                    "type": "number"
+                                },
+                                "lineDash": {
+                                    "type": "number"
+                                },
+                                "lineWidth": {
+                                    "type": "number"
+                                },
+                                "pointsCount": {
+                                    "type": "number"
+                                },
+                                "strokeColor": {
+                                    "type": "string"
+                                }
+                            },
+                            "type": "object"
+                        }
+                    },
+                    "type": "object"
+                },
+                {
+                    "properties": {
+                        "points": {
+                            "items": {
+                                "items": [
+                                    {
+                                        "type": "number"
+                                    },
+                                    {
+                                        "type": "number"
+                                    }
+                                ],
+                                "maxItems": 2,
+                                "minItems": 2,
+                                "type": "array"
+                            },
+                            "type": "array"
+                        }
+                    },
+                    "type": "object"
+                },
+                {
+                    "properties": {
+                        "id": {
+                            "type": "string"
+                        },
+                        "rotation": {
+                            "type": "number"
+                        },
+                        "scale": {
+                            "items": [
+                                {
+                                    "type": "number"
+                                },
+                                {
+                                    "type": "number"
+                                }
+                            ],
+                            "maxItems": 2,
+                            "minItems": 2,
+                            "type": "array"
+                        },
+                        "translation": {
+                            "items": [
+                                {
+                                    "type": "number"
+                                },
+                                {
+                                    "type": "number"
+                                }
+                            ],
+                            "maxItems": 2,
+                            "minItems": 2,
+                            "type": "array"
+                        }
+                    },
+                    "type": "object"
+                },
+                {
+                    "properties": {
+                        "type": {
+                            "enum": [
+                                "curve"
+                            ],
+                            "type": "string"
+                        }
+                    },
+                    "type": "object"
+                }
+            ]
+        },
+        {
+            "allOf": [
+                {
+                    "properties": {
+                        "style": {
+                            "properties": {
+                                "fillColor": {
+                                    "type": "string"
+                                },
+                                "fontFamily": {
+                                    "type": "string"
+                                },
+                                "globalAlpha": {
+                                    "type": "number"
                                 },
                                 "lineArrow": {
                                     "type": "number"
@@ -559,6 +784,9 @@
                                 "fontFamily": {
                                     "type": "string"
                                 },
+                                "globalAlpha": {
+                                    "type": "number"
+                                },
                                 "lineArrow": {
                                     "type": "number"
                                 },
@@ -655,6 +883,9 @@
                                 },
                                 "fontFamily": {
                                     "type": "string"
+                                },
+                                "globalAlpha": {
+                                    "type": "number"
                                 },
                                 "lineArrow": {
                                     "type": "number"
@@ -755,6 +986,9 @@
                                 },
                                 "fontFamily": {
                                     "type": "string"
+                                },
+                                "globalAlpha": {
+                                    "type": "number"
                                 },
                                 "lineArrow": {
                                     "type": "number"

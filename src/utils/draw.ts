@@ -358,17 +358,32 @@ const drawLineSelection = ({
   const { borders } = getShapeInfos(shape)
   drawRect(ctx, borders)
   if (!withAnchors) return
-  for (const coordinate of shape.points) {
-    drawCircle(ctx, {
-      x: coordinate[0],
-      y: coordinate[1],
-      radius: SELECTION_ANCHOR_SIZE / 2,
-      style: {
-        fillColor: 'rgb(255,255,255)',
-        strokeColor: 'rgb(150,150,150)',
-        lineWidth: 2
-      }
-    })
+  for (let i = 0; i < shape.points.length; i++) {
+    const coordinate = shape.points[i]
+    if (shape.type === 'curve' && i > 0 && i < shape.points.length - 1) {
+      drawRect(ctx, {
+        x: coordinate[0] - SELECTION_ANCHOR_SIZE / 2,
+        y: coordinate[1] - SELECTION_ANCHOR_SIZE / 2,
+        width: SELECTION_ANCHOR_SIZE,
+        height: SELECTION_ANCHOR_SIZE,
+        style: {
+          fillColor: 'rgb(255,255,255)',
+          strokeColor: 'rgb(150,150,150)',
+          lineWidth: 2
+        }
+      })
+    } else {
+      drawCircle(ctx, {
+        x: coordinate[0],
+        y: coordinate[1],
+        radius: SELECTION_ANCHOR_SIZE / 2,
+        style: {
+          fillColor: 'rgb(255,255,255)',
+          strokeColor: 'rgb(150,150,150)',
+          lineWidth: 2
+        }
+      })
+    }
   }
 }
 
