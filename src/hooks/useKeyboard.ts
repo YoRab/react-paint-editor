@@ -105,6 +105,7 @@ const useKeyboard = ({
           )
           break
         case KeyboardCode.Delete:
+        case KeyboardCode.Backspace:
           removeShape(selectedShape)
           break
       }
