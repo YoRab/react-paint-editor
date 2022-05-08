@@ -8,6 +8,10 @@ const StyleToggleLayoutButton = styled(Button)`
     color: var(--text-color-selected);
     background: var(--bg-color-selected);
   }
+
+  &[data-hidden='1'] {
+    display: none;
+  }
 `
 
 type LayoutButtonType = {
@@ -19,9 +23,9 @@ type LayoutButtonType = {
 const LayoutButton = ({ withLayouts, disabled, toggleLayoutPanel }: LayoutButtonType) => {
   return (
     <StyleToggleLayoutButton
+      title="Toggle layout"
       data-hidden={+(withLayouts === 'always' || withLayouts === 'never')}
       disabled={disabled}
-      data-disabled={+disabled}
       onClick={toggleLayoutPanel}
       dangerouslySetInnerHTML={{ __html: layersIcon }}
     />

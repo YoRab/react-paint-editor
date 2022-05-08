@@ -16,6 +16,7 @@ const DeleteButton = ({ disabled = false, selectedShape, removeShape }: DeleteSh
 
   return (
     <Button
+      title="Delete"
       disabled={disabled}
       data-disabled={+disabled}
       onClick={handleRemove}

@@ -155,6 +155,20 @@ const useShapes = (onDataChanged: () => void = _.noop) => {
     [updateShapes]
   )
 
+  const toggleShapeVisibility = useCallback(
+    (shape: DrawableShape) => {
+      const shapes = shapesRef.current
+      const shapeIndex = _.findIndex({ id: shape.id }, shapes)
+      if (shapeIndex < 0) return
+      const newShape = _.set('visible', shape.visible === false, shape)
+      setSelectedShape(prevSelectedShape =>
+        prevSelectedShape?.id === newShape.id ? newShape : prevSelectedShape
+      )
+      updateShapes(_.set(shapeIndex, newShape, shapes))
+    },
+    [updateShapes]
+  )
+
   useEffect(() => {
     onDataChanged()
   }, [onDataChanged, savedShapes])
@@ -167,6 +181,7 @@ const useShapes = (onDataChanged: () => void = _.noop) => {
     moveShapes,
     saveShapes,
     setSelectedShape,
+    toggleShapeVisibility,
     removeShape,
     updateShape,
     backwardShape,

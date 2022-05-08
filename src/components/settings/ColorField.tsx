@@ -4,7 +4,8 @@ import { styled } from '@linaria/react'
 import Button from 'components/common/Button'
 import Panel from './Panel'
 import { STYLE_COLORS } from 'constants/style'
-import { encodedTransparentIcon } from 'constants/icons'
+import { encodedTransparentIcon, paletteIcon } from 'constants/icons'
+import { getShapePicture } from 'utils/style'
 
 const StyledColor = styled.div<{
   color: string
@@ -80,7 +81,7 @@ const ColorField = ({
 
   return (
     <>
-      <Button selected={isPanelVisible} disabled={disabled} onClick={togglePanel}>
+      <Button selected={isPanelVisible} title={title} disabled={disabled} onClick={togglePanel}>
         <StyledColor
           color={
             value === 'transparent' ? `url('data:image/svg+xml,${encodedTransparentIcon}')` : value
@@ -92,6 +93,7 @@ const ColorField = ({
           <div>
             {STYLE_COLORS.map((color, index) => (
               <StyledColorButton
+                title={color}
                 key={index}
                 selected={color === value}
                 color={color}
@@ -107,11 +109,12 @@ const ColorField = ({
             ))}
             <StyledColorButton
               type="color"
+              title="Custom color"
               selected={!_.includes(value, STYLE_COLORS)}
               value={value}
               onChange={handleChange}>
               <StyledCustomColor color={_.includes(value, STYLE_COLORS) ? 'black' : value}>
-                +
+                <span dangerouslySetInnerHTML={{ __html: paletteIcon }} />
               </StyledCustomColor>
             </StyledColorButton>
           </div>

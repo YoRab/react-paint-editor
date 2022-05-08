@@ -47,7 +47,7 @@ const SelectField = ({
 
   return (
     <>
-      <Button selected={isPanelVisible} disabled={disabled} onClick={togglePanel}>
+      <Button selected={isPanelVisible} title={title} disabled={disabled} onClick={togglePanel}>
         <CustomOption>{defaultValue}</CustomOption>
       </Button>
       {isPanelVisible && (
@@ -57,6 +57,7 @@ const SelectField = ({
               return (
                 <StyledButton
                   key={value}
+                  title={`${value}`}
                   onClick={() => handleClick(value)}
                   selected={defaultValue == value}>
                   <CustomOption>{value}</CustomOption>

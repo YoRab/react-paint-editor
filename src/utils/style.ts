@@ -6,7 +6,9 @@ import {
   lineIcon,
   pictureIcon,
   polygonIcon,
+  curveIcon,
   squareIcon,
+  recIcon,
   textIcon
 } from 'constants/icons'
 
@@ -19,8 +21,9 @@ export const getShapePicture = (shape: ShapeEnum) => {
     case ShapeEnum.polygon:
       return polygonIcon
     case ShapeEnum.curve:
-      return polygonIcon
+      return curveIcon
     case ShapeEnum.rect:
+      return recIcon
     case ShapeEnum.square:
       return squareIcon
     case ShapeEnum.circle:

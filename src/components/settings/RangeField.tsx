@@ -31,7 +31,7 @@ const RangeField = ({
   field,
   value = 1,
   min = 1,
-  max = 10,
+  max = 20,
   step = 1,
   unity = '',
   valueChanged
@@ -54,7 +54,7 @@ const RangeField = ({
 
   return (
     <>
-      <Button selected={isPanelVisible} disabled={disabled} onClick={togglePanel}>
+      <Button selected={isPanelVisible} title={title} disabled={disabled} onClick={togglePanel}>
         <span>
           {roundValue}
           {unity}

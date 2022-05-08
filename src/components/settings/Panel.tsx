@@ -1,4 +1,3 @@
-import _ from 'lodash/fp'
 import React, { useRef } from 'react'
 import { styled } from '@linaria/react'
 
@@ -20,12 +19,13 @@ const StyledTitle = styled.h3`
 type PanelType = {
   children: JSX.Element
   title?: string
+  className?: string
 }
 
-const Panel = ({ children, title = '' }: PanelType) => {
+const Panel = ({ children, title = '', className }: PanelType) => {
   const componentRef = useRef<HTMLDivElement>(null)
   return (
-    <StyledPanel ref={componentRef}>
+    <StyledPanel ref={componentRef} className={className}>
       {title && <StyledTitle>{title}</StyledTitle>}
       {children}
     </StyledPanel>

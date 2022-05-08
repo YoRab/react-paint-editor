@@ -2,25 +2,28 @@ import React, { useRef, useState } from 'react'
 import _ from 'lodash/fp'
 import { DrawableShape } from 'types/Shapes'
 import useDrag from 'hooks/useDrag'
-import { trashIcon } from 'constants/icons'
+import { trashIcon, visibilityIcon, visibilityOffIcon } from 'constants/icons'
 import { getShapePicture } from 'utils/style'
 import { styled } from '@linaria/react'
 import Button from 'components/common/Button'
+import Panel from './Panel'
 
 const StyledLayouts = styled.div`
   display: inline-block;
   background: var(--bg-color);
   box-sizing: border-box;
-  width: 80px;
   overflow-y: auto;
 `
 
 const StyledLayout = styled.div`
-  border-bottom: 1px solid var(--btn-hover);
-  padding: 12px;
-  padding-right: 24px;
+  border: 3px solid transparent;
+  padding: 4px 0px;
   position: relative;
   background: var(--bg-color);
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 
   &[data-is-over='1'] {
     border: 3px dotted var(--btn-hover);
@@ -32,7 +35,7 @@ const StyledLayout = styled.div`
 
   &[data-selected='1'] {
     color: var(--text-color-selected);
-    background: var(--bg-color-selected);
+    border: 3px solid var(--bg-color-selected);
   }
 
   &[data-selected='0'][data-disabled='0'] {
@@ -50,18 +53,29 @@ const StyledLayout = styled.div`
     cursor: move;
   }
 
-  > span > svg {
-    color: #8a8a8a;
-    width: 16px;
-    height: 16px;
+  > span {
+    height: 20px;
+
+    > svg {
+      fill: #8a8a8a;
+      width: 20px;
+      height: 20px;
+      padding: 0 16px;
+    }
   }
 `
 
-const StyledRemove = styled(Button)`
-  position: absolute;
-  right: 0;
-  top: 0;
+const StyledVisibleButton = styled(Button)`
+  &[data-visible='0'] {
+    opacity: 0.2;
+  }
+`
+
+const StyledPanelLayouts = styled(Panel)`
   bottom: 0;
+  right: 0;
+  left: unset;
+  top: unset;
 `
 
 type LayoutType = {
@@ -72,6 +86,7 @@ type LayoutType = {
   setLayoutDragging: (shapeId: string | undefined) => void
   handleRemove: (shape: DrawableShape) => void
   handleSelect: (shape: DrawableShape) => void
+  toggleShapeVisibility: (shape: DrawableShape) => void
   onMoveShapes: (firstShapeId: string, lastShapeId: string) => void
 }
 
@@ -80,6 +95,7 @@ const Layout = ({
   shape,
   selected,
   layoutDragging,
+  toggleShapeVisibility,
   setLayoutDragging,
   handleRemove,
   handleSelect,
@@ -101,6 +117,13 @@ const Layout = ({
     handleSelect(shape)
   }
 
+  const onToggleShapeVisibility = (e: React.MouseEvent<HTMLElement>) => {
+    if (disabled) return
+    e.preventDefault()
+    e.stopPropagation()
+    toggleShapeVisibility(shape)
+  }
+
   const { isOver } = useDrag({
     disabled,
     ref,
@@ -120,9 +143,18 @@ const Layout = ({
       onClick={onSelect}
       data-selected={+selected}
       ref={ref}>
+      <StyledVisibleButton
+        title={shape.visible ? 'Hide' : 'Show'}
+        data-visible={+(shape.visible !== false)}
+        disabled={disabled}
+        onClick={onToggleShapeVisibility}
+        dangerouslySetInnerHTML={{
+          __html: shape.visible === false ? visibilityOffIcon : visibilityIcon
+        }}
+      />
       <span dangerouslySetInnerHTML={{ __html: getShapePicture(shape.type) }} />
-
-      <StyledRemove
+      <Button
+        title="Remove"
         disabled={disabled}
         onClick={onRemove}
         dangerouslySetInnerHTML={{ __html: trashIcon }}
@@ -135,41 +167,72 @@ type LayoutsType = {
   disabled?: boolean
   shapes: DrawableShape[]
   removeShape: (shape: DrawableShape) => void
+  toggleShapeVisibility: (shape: DrawableShape) => void
   selectedShape: DrawableShape | undefined
   selectShape: (shape: DrawableShape) => void
   moveShapes: (firstShapeId: string, lastShapeId: string) => void
+  withLayouts?: 'always' | 'never' | 'visible' | 'hidden'
+  isLayoutPanelShown: boolean
 }
 
 const Layouts = ({
   disabled = false,
   shapes,
   removeShape,
+  toggleShapeVisibility,
   selectedShape,
   moveShapes,
-  selectShape
+  selectShape,
+  withLayouts,
+  isLayoutPanelShown
 }: LayoutsType) => {
   const [layoutDragging, setLayoutDragging] = useState<string | undefined>(undefined)
 
-  return (
-    <StyledLayouts>
-      {_.map(
-        shape => (
-          <Layout
-            key={shape.id}
-            shape={shape}
-            disabled={disabled}
-            layoutDragging={layoutDragging}
-            setLayoutDragging={setLayoutDragging}
-            selected={selectedShape?.id === shape.id}
-            handleSelect={selectShape}
-            handleRemove={removeShape}
-            onMoveShapes={moveShapes}
-          />
-        ),
-        shapes
-      )}
-    </StyledLayouts>
-  )
+  return isLayoutPanelShown ? (
+    withLayouts === 'always' ? (
+      <StyledLayouts>
+        {_.map(
+          shape => (
+            <Layout
+              key={shape.id}
+              shape={shape}
+              disabled={disabled}
+              layoutDragging={layoutDragging}
+              setLayoutDragging={setLayoutDragging}
+              selected={selectedShape?.id === shape.id}
+              handleSelect={selectShape}
+              handleRemove={removeShape}
+              onMoveShapes={moveShapes}
+              toggleShapeVisibility={toggleShapeVisibility}
+            />
+          ),
+          shapes
+        )}
+      </StyledLayouts>
+    ) : (
+      <StyledPanelLayouts title="Layouts">
+        <StyledLayouts>
+          {_.map(
+            shape => (
+              <Layout
+                key={shape.id}
+                shape={shape}
+                disabled={disabled}
+                layoutDragging={layoutDragging}
+                setLayoutDragging={setLayoutDragging}
+                selected={selectedShape?.id === shape.id}
+                handleSelect={selectShape}
+                handleRemove={removeShape}
+                onMoveShapes={moveShapes}
+                toggleShapeVisibility={toggleShapeVisibility}
+              />
+            ),
+            shapes
+          )}
+        </StyledLayouts>
+      </StyledPanelLayouts>
+    )
+  ) : null
 }
 
 export default Layouts

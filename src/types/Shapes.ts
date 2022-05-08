@@ -27,6 +27,7 @@ export type ToolsType = ShapeEnum | ToolEnum
 export type Point = [number, number]
 
 export type StyledShape = {
+  visible?: boolean
   style?: {
     fillColor?: string
     globalAlpha?: number

@@ -2,8 +2,8 @@ import React from 'react'
 import { styled } from '@linaria/react'
 
 const StyledButton = styled.button`
-  min-width: 36px;
-  height: 36px;
+  min-width: 32px;
+  height: 32px;
   display: inline-flex;
   vertical-align: middle;
   box-sizing: border-box;
@@ -12,8 +12,9 @@ const StyledButton = styled.button`
   background: none;
   border: none;
   cursor: pointer;
+  border-radius: 8px;
   color: var(--text-color);
-
+  margin: 2px 4px;
   &[data-selected='1'] {
     color: var(--text-color-selected);
     background: var(--bg-color-selected);
@@ -39,9 +40,9 @@ const StyledButton = styled.button`
   }
 
   svg {
-    color: inherit;
-    width: 16px;
-    height: 16px;
+    fill: currentColor;
+    width: 20px;
+    height: 20px;
   }
 
   input {
@@ -72,12 +73,14 @@ const Button = React.forwardRef<HTMLButtonElement | HTMLInputElement, ButtonType
         selected = false,
         children,
         className,
+        title,
         ...fileProps
       } = props
       return (
         <StyledButton
           as="label"
           className={className}
+          title={title}
           data-disabled={+disabled}
           data-selected={+selected}
           data-hidden={+hidden}>

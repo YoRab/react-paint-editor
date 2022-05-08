@@ -68,6 +68,7 @@ const Tool = ({ type, lib, img, isActive, disabled = false, setActive }: ToolTyp
       disabled={disabled}
       selected={isActive}
       onClick={handleClick}
+      title={lib}
       dangerouslySetInnerHTML={{ __html: img ? img : lib }}></Button>
   )
 }
@@ -100,6 +101,7 @@ const LoadFileTool = ({ disabled = false, loadFile, lib, img, accept }: LoadFile
       onClick={handleClick}
       onChange={handleChange}
       accept={accept}
+      title={lib}
       disabled={disabled}>
       {img ? <span dangerouslySetInnerHTML={{ __html: img }} /> : lib}
     </Button>
@@ -223,6 +225,7 @@ const Toolbar = ({
         <Button
           disabled={disabled}
           onClick={toggleTools}
+          title="Toggle tools"
           dangerouslySetInnerHTML={{ __html: dotsIcon }}
         />
       </StyledShrinkableTools>

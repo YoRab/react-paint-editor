@@ -264,6 +264,7 @@ export const drawShape = (
   shape: DrawableShape,
   canvasOffset: Point
 ): void => {
+  if (shape.visible === false) return
   applyShapeTransformations(ctx, shape, canvasOffset)
 
   switch (shape.type) {

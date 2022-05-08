@@ -29,6 +29,7 @@ import useShapes from 'hooks/useShapes'
 import SnackbarContainer from './common/Snackbar'
 import useSnackbar from 'hooks/useSnackbar'
 import { SnackbarTypeEnum } from 'constants/snackbar'
+import Panel from './settings/Panel'
 
 const StyledApp = styled.div<{
   maxWidth: string
@@ -143,6 +144,7 @@ const App = ({
     forwardShape,
     clearShapes,
     saveShapes,
+    toggleShapeVisibility,
     canGoBackward,
     canGoForward,
     canClear
@@ -329,16 +331,17 @@ const App = ({
           selectionMode={selectionMode}
           setSelectionMode={setSelectionMode}
         />
-        {isLayoutPanelShown && (
-          <Layouts
-            disabled={disabled}
-            shapes={shapesRef.current}
-            moveShapes={moveShapes}
-            selectedShape={selectedShape}
-            removeShape={removeShape}
-            selectShape={selectShape}
-          />
-        )}
+        <Layouts
+          disabled={disabled}
+          shapes={shapesRef.current}
+          moveShapes={moveShapes}
+          selectedShape={selectedShape}
+          removeShape={removeShape}
+          selectShape={selectShape}
+          toggleShapeVisibility={toggleShapeVisibility}
+          withLayouts={withLayouts}
+          isLayoutPanelShown={isLayoutPanelShown}
+        />
       </StyledRow>
       <SettingsBar
         disabled={disabled}
