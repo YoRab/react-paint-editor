@@ -1,4 +1,4 @@
-import { SNACKBAR_ANIMATION_DUURATION as SNACKBAR_ANIMATION_DURATION } from 'constants/snackbar'
+import { SNACKBAR_ANIMATION_DURATION } from 'constants/snackbar'
 import { SnackBarType } from 'hooks/useSnackbar'
 import React, { useEffect, useState } from 'react'
 import { styled } from '@linaria/react'
@@ -81,7 +81,7 @@ const Snackbar = ({ type, text, duration }: SnackBarType) => {
   }, [duration])
 
   return (
-    <StyledSnackbar data-is-shown={isShown} data-type={type}>
+    <StyledSnackbar data-is-shown={+isShown} data-type={type}>
       {text}
     </StyledSnackbar>
   )

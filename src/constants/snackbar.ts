@@ -10,4 +10,4 @@ export const SNACKBAR_DEFAULT_SETTINGS = {
   duration: 4000
 }
 
-export const SNACKBAR_ANIMATION_DUURATION = 500
+export const SNACKBAR_ANIMATION_DURATION = 500
