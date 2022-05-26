@@ -118,7 +118,7 @@ export const resizeBrush = (
 
   const scaledWidth =
     selectionMode.anchor[0] === 0.5
-      ? originalShape.scale[0]
+      ? 1
       : selectionMode.anchor[0] === 0
       ? (borders.x + borders.width - cursorPositionBeforeResize[0] + SELECTION_PADDING * -2) /
         (borders.width + SELECTION_PADDING * -2)
@@ -127,7 +127,7 @@ export const resizeBrush = (
 
   const scaledHeight =
     selectionMode.anchor[1] === 0.5
-      ? originalShape.scale[1]
+      ? 1
       : selectionMode.anchor[1] === 0
       ? (borders.y + borders.height - cursorPositionBeforeResize[1] + SELECTION_PADDING * -2) /
         (borders.height + SELECTION_PADDING * -2)
@@ -136,37 +136,42 @@ export const resizeBrush = (
 
   const shapeWithNewDimensions = {
     ...originalShape,
+    points: originalShape.points.map(points => {
+      return points.map(
+        point =>
+          [
+            (point[0] - borders.x) * scaledWidth + borders.x,
+            (point[1] - borders.y) * scaledHeight + borders.y
+          ] as Point
+      )
+    })
+  }
+
+  const { center: shapeWithNewDimensionsCenter, borders: shapeWithNewDimensionsBorders } =
+    getShapeInfos(shapeWithNewDimensions)
+
+  const [oppTrueX, oppTrueY] = getRectOppositeAnchorAbsolutePosition(selectionMode.anchor, center, {
+    ...originalShape,
+    ...borders
+  })
+
+  const [newOppTrueX, newOppTrueY] = getRectOppositeAnchorAbsolutePosition(
+    selectionMode.anchor,
+    shapeWithNewDimensionsCenter,
+    { ...shapeWithNewDimensions, ...shapeWithNewDimensionsBorders },
+    [scaledWidth < 0, scaledHeight < 0]
+  )
+
+  return {
+    ...shapeWithNewDimensions,
     ...{
-      scale: [scaledWidth, scaledHeight] as Point
+      translation: [
+        originalShape.translation[0] - (newOppTrueX - oppTrueX),
+        originalShape.translation[1] - (newOppTrueY - oppTrueY)
+      ]
     }
   }
-  // const { center: shapeWithNewDimensionsCenter } = getShapeInfos(shapeWithNewDimensions)
-
-  return shapeWithNewDimensions
-  // const [oppTrueX, oppTrueY] = getRectOppositeAnchorAbsolutePosition(
-  //   selectionMode.anchor,
-  //   center,
-  //   originalShape
-  // )
-
-  // const [newOppTrueX, newOppTrueY] = getRectOppositeAnchorAbsolutePosition(
-  //   selectionMode.anchor,
-  //   shapeWithNewDimensionsCenter,
-  //   shapeWithNewDimensions,
-  //   [widthWithRatio < 0, heightWithRatio < 0]
-  // )
-
-  // return {
-  //   ...shapeWithNewDimensions,
-  //   ...{
-  //     translation: [
-  //       originalShape.translation[0] - (newOppTrueX - oppTrueX),
-  //       originalShape.translation[1] - (newOppTrueY - oppTrueY)
-  //     ]
-  //   }
-  // }
 }
-
 export const resizeLine = (
   cursorPosition: Point,
   canvasOffset: Point,
@@ -377,7 +382,6 @@ export const resizeRect = <T extends DrawableShape & Rect>(
   const cursorPositionBeforeResize = getPointPositionAfterCanvasTransformation(
     cursorPosition,
     canvasOffset,
-
     originalShape.translation,
     originalShape.rotation,
     center
@@ -403,10 +407,8 @@ export const resizeRect = <T extends DrawableShape & Rect>(
 
   const shapeWithNewDimensions = {
     ...originalShape,
-    ...{
-      width: Math.abs(widthWithRatio),
-      height: Math.abs(heightWithRatio)
-    }
+    width: Math.abs(widthWithRatio),
+    height: Math.abs(heightWithRatio)
   }
   const { center: shapeWithNewDimensionsCenter } = getShapeInfos(shapeWithNewDimensions)
 

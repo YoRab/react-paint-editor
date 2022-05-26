@@ -18,7 +18,6 @@ export const createPicture = (file: File, maxPictureSize: number) => {
         height: imgRatio > 1 ? maxSize / imgRatio : maxSize,
         img,
         translation: [0, 0],
-        scale: [1, 1],
         rotation: 0
       }
       resolve(pictureShape)
@@ -43,7 +42,6 @@ export const createShape = (
         id: _.uniqueId(shape),
         points: [[cursorPosition]],
         translation: [0, 0],
-        scale: [1, 1],
         rotation: 0,
         style: defaultConf.style
       }
@@ -53,7 +51,6 @@ export const createShape = (
         id: _.uniqueId(shape),
         points: [cursorPosition, cursorPosition],
         translation: [0, 0],
-        scale: [1, 1],
         rotation: 0,
         style: defaultConf.style
       }
@@ -66,7 +63,6 @@ export const createShape = (
           _.map(() => cursorPosition)
         )(defaultConf.style?.pointsCount ?? 3),
         translation: [0, 0],
-        scale: [1, 1],
         rotation: 0,
         style: defaultConf.style
       }
@@ -79,7 +75,6 @@ export const createShape = (
           _.map(() => cursorPosition)
         )(defaultConf.style?.pointsCount ?? 3),
         translation: [0, 0],
-        scale: [1, 1],
         rotation: 0,
         style: defaultConf.style
       }
@@ -93,7 +88,6 @@ export const createShape = (
         width: 1,
         height: 1,
         translation: [0, 0],
-        scale: [1, 1],
         rotation: 0,
         style: defaultConf.style
       }
@@ -110,7 +104,6 @@ export const createShape = (
         width: 50,
         height: fontSize * (defaultValue.length || 1),
         translation: [0, 0],
-        scale: [1, 1],
         rotation: 0,
         style: defaultConf.style
       }
@@ -123,7 +116,6 @@ export const createShape = (
         radiusX: 0,
         radiusY: 0,
         translation: [0, 0],
-        scale: [1, 1],
         rotation: 0,
         style: defaultConf.style
       }
@@ -136,7 +128,6 @@ export const createShape = (
         y: cursorPosition[1],
         radius: 0,
         translation: [0, 0],
-        scale: [1, 1],
         rotation: 0,
         style: defaultConf.style
       }

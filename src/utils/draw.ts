@@ -38,7 +38,6 @@ const applyShapeTransformations = (
     ctx.rotate(marker.rotation)
     ctx.translate(-center[0], -center[1])
   }
-  ctx.scale(marker.scale[0], marker.scale[1])
 }
 
 const restoreShapeTransformations = (ctx: CanvasRenderingContext2D) => {

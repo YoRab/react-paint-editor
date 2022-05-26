@@ -2157,7 +2157,6 @@ const CurrentApp = ({ selectedComponent }: CurrentAppType) => {
                 ]
               ],
               translation: [-13.043478260869563, 29.34782608695656],
-              scale: [1, 1],
               rotation: 0,
               style: {
                 fillColor: 'transparent',
@@ -2185,7 +2184,6 @@ const CurrentApp = ({ selectedComponent }: CurrentAppType) => {
                 [154, 60]
               ],
               translation: [651, 194],
-              scale: [1, 1],
               rotation: 0,
               style: {
                 fillColor: 'white',
@@ -2213,7 +2211,6 @@ const CurrentApp = ({ selectedComponent }: CurrentAppType) => {
                 [145, 84]
               ],
               translation: [314, -20],
-              scale: [1, 1],
               rotation: 0,
               style: {
                 fillColor: 'white',
@@ -2241,7 +2238,6 @@ const CurrentApp = ({ selectedComponent }: CurrentAppType) => {
                 [145, 84]
               ],
               translation: [-48, 33],
-              scale: [1, 1],
               rotation: 0,
               style: {
                 fillColor: 'white',
@@ -2261,7 +2257,6 @@ const CurrentApp = ({ selectedComponent }: CurrentAppType) => {
               y: 139.1304347826087,
               radius: 118.43478260869564,
               translation: [212.6521739130435, -144.56521739130434],
-              scale: [1, 1],
               rotation: 0,
               style: {
                 fillColor: 'yellow',
@@ -2286,7 +2281,6 @@ const CurrentApp = ({ selectedComponent }: CurrentAppType) => {
                 [-81, 330]
               ],
               translation: [50, 377],
-              scale: [1, 1],
               rotation: 0,
               style: {
                 fillColor: 'green',
@@ -2307,7 +2301,6 @@ const CurrentApp = ({ selectedComponent }: CurrentAppType) => {
               width: 65,
               height: 194,
               translation: [-290.6521739130435, -135.73913043478268],
-              scale: [1, 1],
               rotation: 0,
               style: {
                 fillColor: '#6a4e01',
@@ -2328,7 +2321,6 @@ const CurrentApp = ({ selectedComponent }: CurrentAppType) => {
               width: 1206,
               height: 643,
               translation: [-294, -90],
-              scale: [1, 1],
               rotation: 0,
               style: {
                 fillColor: '#23ace7',
