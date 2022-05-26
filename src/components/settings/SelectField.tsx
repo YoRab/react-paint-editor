@@ -1,7 +1,7 @@
 import _ from 'lodash/fp'
 import React, { useState } from 'react'
 import Button from 'components/common/Button'
-import Panel from './Panel'
+import Panel from 'components/common/Panel'
 import { styled } from '@linaria/react'
 
 const StyledButton = styled(Button)`
@@ -51,7 +51,7 @@ const SelectField = ({
         <CustomOption>{defaultValue}</CustomOption>
       </Button>
       {isPanelVisible && (
-        <Panel title={title}>
+        <Panel title={title} alignment="left">
           <div>
             {values.map(value => {
               return (

@@ -4,6 +4,7 @@ import { styled } from '@linaria/react'
 const StyledButton = styled.button`
   min-width: 32px;
   height: 32px;
+  font-size: 14px;
   display: inline-flex;
   vertical-align: middle;
   box-sizing: border-box;

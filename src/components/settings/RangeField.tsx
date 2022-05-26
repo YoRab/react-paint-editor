@@ -2,7 +2,7 @@ import _ from 'lodash/fp'
 import React, { useState } from 'react'
 import { styled } from '@linaria/react'
 import Button from 'components/common/Button'
-import Panel from './Panel'
+import Panel from 'components/common/Panel'
 
 const StyledLabel = styled.label`
   display: inline-flex;
@@ -61,7 +61,7 @@ const RangeField = ({
         </span>
       </Button>
       {isPanelVisible && (
-        <Panel title={title}>
+        <Panel title={title} alignment="left">
           <div>
             <StyledLabel>
               <input

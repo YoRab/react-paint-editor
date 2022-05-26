@@ -1,8 +1,10 @@
 import React, { MutableRefObject, useCallback, useEffect, useRef, useState } from 'react'
+import _ from 'lodash/fp'
 import {
   DrawableShape,
   DrawableShapeJson,
   Point,
+  ShapeEnum,
   StyledShape,
   ToolEnum,
   ToolsType
@@ -29,7 +31,6 @@ import useShapes from 'hooks/useShapes'
 import SnackbarContainer from './common/Snackbar'
 import useSnackbar from 'hooks/useSnackbar'
 import { SnackbarTypeEnum } from 'constants/snackbar'
-import Panel from './settings/Panel'
 
 const StyledApp = styled.div<{
   maxWidth: string
@@ -70,6 +71,19 @@ const StyledRow = styled.div<{
   aspect-ratio: ${({ aspectRatio }) => aspectRatio};
 `
 
+const DEFAULT_TOOLS = [
+  ShapeEnum.brush,
+  ShapeEnum.line,
+  ShapeEnum.polygon,
+  ShapeEnum.curve,
+  ShapeEnum.rect,
+  ShapeEnum.square,
+  ShapeEnum.circle,
+  ShapeEnum.ellipse,
+  ShapeEnum.text,
+  ShapeEnum.picture
+]
+
 type AppType = {
   width?: number
   height?: number
@@ -78,6 +92,7 @@ type AppType = {
   className?: string
   disabled?: boolean
   onDataChanged?: () => void
+  availableTools?: ShapeEnum[]
   apiRef?: MutableRefObject<
     | undefined
     | {
@@ -95,10 +110,13 @@ const App = ({
   className: classNameFromProps,
   disabled = false,
   onDataChanged,
+  availableTools: availableToolsFromProps = DEFAULT_TOOLS,
   apiRef
 }: AppType) => {
   const componentRef = useRef<HTMLDivElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
+
+  const availableTools = _.intersection(DEFAULT_TOOLS, availableToolsFromProps)
 
   const { isInsideComponent } = useComponent({
     disabled,
@@ -307,6 +325,7 @@ const App = ({
         hasActionToClear={canClear}
         undoAction={undoAction}
         redoAction={redoAction}
+        availableTools={availableTools}
       />
       <StyledRow width={width} aspectRatio={`calc(${width} / ${height})`}>
         <Canvas

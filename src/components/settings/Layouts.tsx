@@ -6,7 +6,7 @@ import { trashIcon, visibilityIcon, visibilityOffIcon } from 'constants/icons'
 import { getShapePicture } from 'utils/style'
 import { styled } from '@linaria/react'
 import Button from 'components/common/Button'
-import Panel from './Panel'
+import Panel from 'components/common/Panel'
 
 const StyledLayouts = styled.div`
   display: inline-block;
@@ -73,7 +73,6 @@ const StyledVisibleButton = styled(Button)`
 
 const StyledPanelLayouts = styled(Panel)`
   bottom: 0;
-  right: 0;
   left: unset;
   top: unset;
 `
@@ -210,7 +209,7 @@ const Layouts = ({
         )}
       </StyledLayouts>
     ) : (
-      <StyledPanelLayouts title="Layouts">
+      <StyledPanelLayouts title="Layouts" alignment="right">
         <StyledLayouts>
           {_.map(
             shape => (

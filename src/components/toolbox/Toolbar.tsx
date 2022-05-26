@@ -2,19 +2,26 @@ import {
   clearIcon,
   dotsIcon,
   exportFileIcon,
+  gestureIcon,
+  lineIcon,
+  menuIcon,
   openFileIcon,
   pictureIcon,
   redoIcon,
   saveIcon,
   selectIcon,
+  shapesIcon,
   undoIcon
 } from 'constants/icons'
 import _ from 'lodash/fp'
 import React, { useRef, useState } from 'react'
 import { styled } from '@linaria/react'
 import { ShapeEnum, ToolEnum, ToolsType } from 'types/Shapes'
-import { getShapePicture } from 'utils/style'
 import Button from 'components/common/Button'
+import { getCurrentStructure } from 'utils/toolbar'
+import ToolbarGroup from './ToolbarGroup'
+import MenuGroup from './MenuGroup'
+import Tool from './Tool'
 
 const StyledShrinkableTools = styled.div`
   flex: 1;
@@ -29,10 +36,6 @@ const StyledToolbox = styled.div`
   max-height: 36px;
   background: var(--bg-color);
   z-index: 1;
-
-  &[data-menu-open='0'] {
-    overflow: hidden;
-  }
 `
 
 const StyledShrinkableToolsInner = styled.div`
@@ -49,29 +52,9 @@ const StyledShrinkableToolsInner = styled.div`
   }
 `
 
-type ToolType = {
-  type: ToolsType
-  lib: string
-  img?: string
-  isActive: boolean
-  disabled?: boolean
-  setActive: (marker: ToolsType) => void
-}
-
-const Tool = ({ type, lib, img, isActive, disabled = false, setActive }: ToolType) => {
-  const handleClick = () => {
-    setActive(type)
-  }
-
-  return (
-    <Button
-      disabled={disabled}
-      selected={isActive}
-      onClick={handleClick}
-      title={lib}
-      dangerouslySetInnerHTML={{ __html: img ? img : lib }}></Button>
-  )
-}
+const StyledSpan = styled.span`
+  display: inline-flex;
+`
 
 type LoadFileToolType = {
   disabled?: boolean
@@ -79,9 +62,17 @@ type LoadFileToolType = {
   lib: string
   img?: string
   accept: string
+  withText?: boolean
 }
 
-const LoadFileTool = ({ disabled = false, loadFile, lib, img, accept }: LoadFileToolType) => {
+const LoadFileTool = ({
+  disabled = false,
+  withText = false,
+  loadFile,
+  lib,
+  img,
+  accept
+}: LoadFileToolType) => {
   const inputRef = useRef<HTMLInputElement>(null)
 
   const handleClick = () => {
@@ -103,10 +94,38 @@ const LoadFileTool = ({ disabled = false, loadFile, lib, img, accept }: LoadFile
       accept={accept}
       title={lib}
       disabled={disabled}>
-      {img ? <span dangerouslySetInnerHTML={{ __html: img }} /> : lib}
+      {img ? (
+        <StyledSpan
+          dangerouslySetInnerHTML={{ __html: img ? (withText ? lib + img : img) : lib }}
+        />
+      ) : (
+        lib
+      )}
     </Button>
   )
 }
+
+const TOOLBAR_STRUCTURE = [
+  {
+    title: 'brush',
+    img: gestureIcon,
+    tools: [ShapeEnum.brush],
+    vertical: false
+  },
+  {
+    title: 'lines',
+    img: lineIcon,
+    tools: [ShapeEnum.line, ShapeEnum.curve, ShapeEnum.polygon],
+    vertical: false
+  },
+  {
+    title: 'shapes',
+    img: shapesIcon,
+    tools: [ShapeEnum.rect, ShapeEnum.square, ShapeEnum.circle, ShapeEnum.ellipse],
+    vertical: false
+  },
+  ShapeEnum.text
+]
 
 type ToolboxType = {
   disabled?: boolean
@@ -122,6 +141,7 @@ type ToolboxType = {
   addPicture: (file: File) => void
   saveFile: () => void
   exportCanvasInFile: () => void
+  availableTools: ShapeEnum[]
 }
 
 const Toolbar = ({
@@ -137,28 +157,19 @@ const Toolbar = ({
   addPicture,
   loadFile,
   saveFile,
-  exportCanvasInFile
+  exportCanvasInFile,
+  availableTools
 }: ToolboxType) => {
-  const toolsTypes: ShapeEnum[] = [
-    ShapeEnum.brush,
-    ShapeEnum.line,
-    ShapeEnum.polygon,
-    ShapeEnum.curve,
-    ShapeEnum.rect,
-    ShapeEnum.square,
-    ShapeEnum.circle,
-    ShapeEnum.ellipse,
-    ShapeEnum.text
-  ]
-
   const [isMenuOpen, setIsMenuOpen] = useState(false)
 
   const toggleTools = () => {
     setIsMenuOpen(prev => !prev)
   }
 
+  const currentStructure = getCurrentStructure(availableTools, TOOLBAR_STRUCTURE)
+
   return (
-    <StyledToolbox data-menu-open={+isMenuOpen}>
+    <StyledToolbox>
       <Tool
         type={ToolEnum.selection}
         disabled={disabled}
@@ -200,27 +211,15 @@ const Toolbar = ({
       />
       <StyledShrinkableTools>
         <StyledShrinkableToolsInner>
-          {_.map(
-            toolType => (
-              <Tool
-                disabled={disabled}
-                key={toolType}
-                type={toolType}
-                lib={toolType}
-                img={getShapePicture(toolType)}
-                isActive={activeTool === toolType}
-                setActive={setActiveTool}
-              />
-            ),
-            toolsTypes
-          )}
-          <LoadFileTool
-            disabled={disabled}
-            loadFile={addPicture}
-            lib="Image"
-            img={pictureIcon}
-            accept="image/png, image/gif, image/jpeg"
-          />
+          {currentStructure.map((group, i) => (
+            <ToolbarGroup
+              disabled={disabled}
+              key={i}
+              activeTool={activeTool}
+              group={group}
+              setActiveTool={setActiveTool}
+            />
+          ))}
         </StyledShrinkableToolsInner>
         <Button
           disabled={disabled}
@@ -230,31 +229,51 @@ const Toolbar = ({
         />
       </StyledShrinkableTools>
 
-      <LoadFileTool
+      <MenuGroup
         disabled={disabled}
-        loadFile={loadFile}
-        lib="Load file"
-        img={openFileIcon}
-        accept="application/JSON"
-      />
+        vertical={true}
+        alignment="right"
+        group={{ title: '', img: menuIcon }}
+        activeTool={activeTool}>
+        {_.includes(ShapeEnum.picture, availableTools) && (
+          <LoadFileTool
+            withText={true}
+            disabled={disabled}
+            loadFile={addPicture}
+            lib="Upload picture..."
+            img={pictureIcon}
+            accept="image/png, image/gif, image/jpeg"
+          />
+        )}
+        <LoadFileTool
+          withText={true}
+          disabled={disabled}
+          loadFile={loadFile}
+          lib="Load file"
+          img={openFileIcon}
+          accept="application/JSON"
+        />
 
-      <Tool
-        disabled={disabled}
-        type={ToolEnum.saveFile}
-        lib="Save file"
-        img={saveIcon}
-        isActive={activeTool === ToolEnum.saveFile}
-        setActive={saveFile}
-      />
+        <Tool
+          withText={true}
+          disabled={disabled}
+          type={ToolEnum.saveFile}
+          lib="Save file"
+          img={saveIcon}
+          isActive={activeTool === ToolEnum.saveFile}
+          setActive={saveFile}
+        />
 
-      <Tool
-        disabled={disabled}
-        type={ToolEnum.export}
-        lib="Export"
-        img={exportFileIcon}
-        isActive={activeTool === ToolEnum.export}
-        setActive={exportCanvasInFile}
-      />
+        <Tool
+          withText={true}
+          disabled={disabled}
+          type={ToolEnum.export}
+          lib="Export"
+          img={exportFileIcon}
+          isActive={activeTool === ToolEnum.export}
+          setActive={exportCanvasInFile}
+        />
+      </MenuGroup>
     </StyledToolbox>
   )
 }

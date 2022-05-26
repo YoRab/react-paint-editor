@@ -2,10 +2,9 @@ import _ from 'lodash/fp'
 import React, { useState } from 'react'
 import { styled } from '@linaria/react'
 import Button from 'components/common/Button'
-import Panel from './Panel'
+import Panel from 'components/common/Panel'
 import { STYLE_COLORS } from 'constants/style'
 import { encodedTransparentIcon, paletteIcon } from 'constants/icons'
-import { getShapePicture } from 'utils/style'
 
 const StyledColor = styled.div<{
   color: string
@@ -89,7 +88,7 @@ const ColorField = ({
         />
       </Button>
       {isPanelVisible && (
-        <Panel title={title}>
+        <Panel title={title} alignment="left">
           <div>
             {STYLE_COLORS.map((color, index) => (
               <StyledColorButton
