@@ -147,17 +147,10 @@ const Layout = ({
         data-visible={+(shape.visible !== false)}
         disabled={disabled}
         onClick={onToggleShapeVisibility}
-        dangerouslySetInnerHTML={{
-          __html: shape.visible === false ? visibilityOffIcon : visibilityIcon
-        }}
+        icon={shape.visible === false ? visibilityOffIcon : visibilityIcon}
       />
       <span dangerouslySetInnerHTML={{ __html: getShapePicture(shape.type) }} />
-      <Button
-        title="Remove"
-        disabled={disabled}
-        onClick={onRemove}
-        dangerouslySetInnerHTML={{ __html: trashIcon }}
-      />
+      <Button title="Remove" disabled={disabled} onClick={onRemove} icon={trashIcon} />
     </StyledLayout>
   )
 }

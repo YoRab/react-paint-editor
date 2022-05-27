@@ -111,7 +111,8 @@ const ToolbarGroup = ({
         title={group.title}
         disabled={disabled}
         onClick={openPanel}
-        dangerouslySetInnerHTML={{ __html: groupIcon }}></Button>
+        icon={groupIcon}
+      />
       {isOpen && (
         <StyledPanel vertical={group.vertical} alignment={alignment}>
           {_.map(

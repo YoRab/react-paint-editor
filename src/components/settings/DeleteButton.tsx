@@ -20,7 +20,7 @@ const DeleteButton = ({ disabled = false, selectedShape, removeShape }: DeleteSh
       disabled={disabled}
       data-disabled={+disabled}
       onClick={handleRemove}
-      dangerouslySetInnerHTML={{ __html: trashIcon }}
+      icon={trashIcon}
     />
   )
 }

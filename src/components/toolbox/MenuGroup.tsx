@@ -3,9 +3,11 @@ import React, { useEffect, useState } from 'react'
 import Button from 'components/common/Button'
 import Panel from 'components/common/Panel'
 import { styled } from '@linaria/react'
-import { ShapeEnum, ToolsType } from 'types/Shapes'
+import { ShapeEnum, ToolEnum, ToolsType } from 'types/Shapes'
 import { getShapePicture } from 'utils/style'
-
+import Tool from './Tool'
+import LoadFileTool from './LoadFileTool'
+import { exportFileIcon, openFileIcon, pictureIcon, saveIcon } from 'constants/icons'
 const StyledPanel = styled(Panel)`
   display: flex;
   bottom: unset;
@@ -33,7 +35,11 @@ type ToolbarGroupType = {
   title?: string
   disabled?: boolean
   img?: string
-  children: React.ReactNode
+  loadFile: (file: File) => void
+  addPicture: (file: File) => void
+  saveFile: () => void
+  exportCanvasInFile: () => void
+  availableTools: ShapeEnum[]
 }
 
 const MenuGroup = ({
@@ -42,9 +48,23 @@ const MenuGroup = ({
   group,
   vertical = false,
   disabled = false,
-  children
+  addPicture: addPictureFromProps,
+  loadFile: loadFileFromProps,
+  saveFile,
+  exportCanvasInFile,
+  availableTools
 }: ToolbarGroupType) => {
   const [isOpen, setIsOpen] = useState(false)
+
+  const loadFile = (file: File) => {
+    setIsOpen(false)
+    loadFileFromProps(file)
+  }
+
+  const addPicture = (file: File) => {
+    setIsOpen(false)
+    addPictureFromProps(file)
+  }
 
   const openPanel = () => {
     setIsOpen(true)
@@ -67,17 +87,55 @@ const MenuGroup = ({
     }
   }, [isOpen])
 
-  return _.isEmpty(children) ? null : (
+  return (
     <StyledRelative>
       <Button
         selected={isActive}
         title={group.title}
         disabled={disabled}
         onClick={openPanel}
-        dangerouslySetInnerHTML={{ __html: groupIcon }}></Button>
+        icon={groupIcon}
+      />
       {isOpen && (
         <StyledPanel vertical={vertical} alignment={alignment}>
-          {children}
+          {_.includes(ShapeEnum.picture, availableTools) && (
+            <LoadFileTool
+              withText={true}
+              disabled={disabled}
+              loadFile={addPicture}
+              lib="Upload picture..."
+              img={pictureIcon}
+              accept="image/png, image/gif, image/jpeg"
+            />
+          )}
+          <LoadFileTool
+            withText={true}
+            disabled={disabled}
+            loadFile={loadFile}
+            lib="Load file"
+            img={openFileIcon}
+            accept="application/JSON"
+          />
+
+          <Tool
+            withText={true}
+            disabled={disabled}
+            type={ToolEnum.saveFile}
+            lib="Save file"
+            img={saveIcon}
+            isActive={activeTool === ToolEnum.saveFile}
+            setActive={saveFile}
+          />
+
+          <Tool
+            withText={true}
+            disabled={disabled}
+            type={ToolEnum.export}
+            lib="Export"
+            img={exportFileIcon}
+            isActive={activeTool === ToolEnum.export}
+            setActive={exportCanvasInFile}
+          />
         </StyledPanel>
       )}
     </StyledRelative>

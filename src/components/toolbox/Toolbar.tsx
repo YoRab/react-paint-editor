@@ -1,20 +1,15 @@
 import {
   clearIcon,
   dotsIcon,
-  exportFileIcon,
   gestureIcon,
   lineIcon,
   menuIcon,
-  openFileIcon,
-  pictureIcon,
   redoIcon,
-  saveIcon,
   selectIcon,
   shapesIcon,
   undoIcon
 } from 'constants/icons'
-import _ from 'lodash/fp'
-import React, { useRef, useState } from 'react'
+import React, { useState } from 'react'
 import { styled } from '@linaria/react'
 import { ShapeEnum, ToolEnum, ToolsType } from 'types/Shapes'
 import Button from 'components/common/Button'
@@ -51,59 +46,6 @@ const StyledShrinkableToolsInner = styled.div`
     bottom: 36px;
   }
 `
-
-const StyledSpan = styled.span`
-  display: inline-flex;
-`
-
-type LoadFileToolType = {
-  disabled?: boolean
-  loadFile: (file: File) => void
-  lib: string
-  img?: string
-  accept: string
-  withText?: boolean
-}
-
-const LoadFileTool = ({
-  disabled = false,
-  withText = false,
-  loadFile,
-  lib,
-  img,
-  accept
-}: LoadFileToolType) => {
-  const inputRef = useRef<HTMLInputElement>(null)
-
-  const handleClick = () => {
-    if (inputRef.current) inputRef.current.value = ''
-  }
-
-  const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.item(0)
-    if (!file) return
-    loadFile(file)
-  }
-
-  return (
-    <Button
-      ref={inputRef}
-      type="file"
-      onClick={handleClick}
-      onChange={handleChange}
-      accept={accept}
-      title={lib}
-      disabled={disabled}>
-      {img ? (
-        <StyledSpan
-          dangerouslySetInnerHTML={{ __html: img ? (withText ? lib + img : img) : lib }}
-        />
-      ) : (
-        lib
-      )}
-    </Button>
-  )
-}
 
 const TOOLBAR_STRUCTURE = [
   {
@@ -221,12 +163,7 @@ const Toolbar = ({
             />
           ))}
         </StyledShrinkableToolsInner>
-        <Button
-          disabled={disabled}
-          onClick={toggleTools}
-          title="Toggle tools"
-          dangerouslySetInnerHTML={{ __html: dotsIcon }}
-        />
+        <Button disabled={disabled} onClick={toggleTools} title="Toggle tools" icon={dotsIcon} />
       </StyledShrinkableTools>
 
       <MenuGroup
@@ -234,46 +171,13 @@ const Toolbar = ({
         vertical={true}
         alignment="right"
         group={{ title: '', img: menuIcon }}
-        activeTool={activeTool}>
-        {_.includes(ShapeEnum.picture, availableTools) && (
-          <LoadFileTool
-            withText={true}
-            disabled={disabled}
-            loadFile={addPicture}
-            lib="Upload picture..."
-            img={pictureIcon}
-            accept="image/png, image/gif, image/jpeg"
-          />
-        )}
-        <LoadFileTool
-          withText={true}
-          disabled={disabled}
-          loadFile={loadFile}
-          lib="Load file"
-          img={openFileIcon}
-          accept="application/JSON"
-        />
-
-        <Tool
-          withText={true}
-          disabled={disabled}
-          type={ToolEnum.saveFile}
-          lib="Save file"
-          img={saveIcon}
-          isActive={activeTool === ToolEnum.saveFile}
-          setActive={saveFile}
-        />
-
-        <Tool
-          withText={true}
-          disabled={disabled}
-          type={ToolEnum.export}
-          lib="Export"
-          img={exportFileIcon}
-          isActive={activeTool === ToolEnum.export}
-          setActive={exportCanvasInFile}
-        />
-      </MenuGroup>
+        activeTool={activeTool}
+        addPicture={addPicture}
+        loadFile={loadFile}
+        saveFile={saveFile}
+        exportCanvasInFile={exportCanvasInFile}
+        availableTools={availableTools}
+      />
     </StyledToolbox>
   )
 }

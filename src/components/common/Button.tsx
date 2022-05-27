@@ -16,6 +16,7 @@ const StyledButton = styled.button`
   border-radius: 8px;
   color: var(--text-color);
   margin: 2px 4px;
+  padding: 0;
   &[data-selected='1'] {
     color: var(--text-color-selected);
     background: var(--bg-color-selected);
@@ -52,10 +53,34 @@ const StyledButton = styled.button`
   }
 `
 
+const StyledButtonContent = styled.span`
+  width: 100%;
+  box-sizing: border-box;
+  display: flex;
+  padding: 2px 6px;
+`
+
+const StyledIcon = styled.span`
+  display: flex;
+  align-items: center;
+`
+
+const StyledChildren = styled.span`
+  flex: 1;
+  text-align: left;
+  display: flex;
+  align-items: center;
+
+  & + ${StyledIcon} {
+    margin-left: 12px;
+  }
+`
+
 type CommonType = {
   hidden?: boolean
   disabled?: boolean
   selected?: boolean
+  icon?: string
 }
 
 type ButtonType = CommonType & React.ButtonHTMLAttributes<HTMLButtonElement>
@@ -63,7 +88,7 @@ type ButtonType = CommonType & React.ButtonHTMLAttributes<HTMLButtonElement>
 type FileInputType = CommonType & {
   type: 'file' | 'color'
   accept?: string
-} & React.InputHTMLAttributes<HTMLInputElement>
+} & React.InputHTMLAttributes<HTMLInputElement | HTMLButtonElement>
 
 const Button = React.forwardRef<HTMLButtonElement | HTMLInputElement, ButtonType | FileInputType>(
   (props, ref) => {
@@ -72,9 +97,11 @@ const Button = React.forwardRef<HTMLButtonElement | HTMLInputElement, ButtonType
         hidden = false,
         disabled = false,
         selected = false,
+        icon,
         children,
         className,
         title,
+        onClick,
         ...fileProps
       } = props
       return (
@@ -82,6 +109,7 @@ const Button = React.forwardRef<HTMLButtonElement | HTMLInputElement, ButtonType
           as="label"
           className={className}
           title={title}
+          onClick={onClick}
           data-disabled={+disabled}
           data-selected={+selected}
           data-hidden={+hidden}>
@@ -90,7 +118,10 @@ const Button = React.forwardRef<HTMLButtonElement | HTMLInputElement, ButtonType
             disabled={disabled}
             {...fileProps}
           />
-          {children}
+          <StyledButtonContent>
+            {children && <StyledChildren>{children}</StyledChildren>}
+            {icon && <StyledIcon dangerouslySetInnerHTML={{ __html: icon }} />}
+          </StyledButtonContent>
         </StyledButton>
       )
     } else {
@@ -98,6 +129,7 @@ const Button = React.forwardRef<HTMLButtonElement | HTMLInputElement, ButtonType
         hidden = false,
         disabled = false,
         selected = false,
+        icon,
         children,
         ...fileProps
       } = props as ButtonType
@@ -110,7 +142,10 @@ const Button = React.forwardRef<HTMLButtonElement | HTMLInputElement, ButtonType
           data-selected={+selected}
           data-hidden={+hidden}
           {...fileProps}>
-          {children}
+          <StyledButtonContent>
+            {children && <StyledChildren>{children}</StyledChildren>}
+            {icon && <StyledIcon dangerouslySetInnerHTML={{ __html: icon }} />}
+          </StyledButtonContent>
         </StyledButton>
       )
     }

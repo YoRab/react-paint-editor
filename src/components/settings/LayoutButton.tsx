@@ -27,7 +27,7 @@ const LayoutButton = ({ withLayouts, disabled, toggleLayoutPanel }: LayoutButton
       data-hidden={+(withLayouts === 'always' || withLayouts === 'never')}
       disabled={disabled}
       onClick={toggleLayoutPanel}
-      dangerouslySetInnerHTML={{ __html: layersIcon }}
+      icon={layersIcon}
     />
   )
 }

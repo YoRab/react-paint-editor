@@ -31,7 +31,9 @@ const Tool = ({
       selected={isActive}
       onClick={handleClick}
       title={lib}
-      dangerouslySetInnerHTML={{ __html: img ? (withText ? lib + img : img) : lib }}></Button>
+      icon={img}
+      children={withText ? lib : undefined}
+    />
   )
 }
 
