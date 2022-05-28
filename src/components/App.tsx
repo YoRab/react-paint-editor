@@ -49,7 +49,7 @@ const StyledApp = styled.div<{
   color: var(--text-color);
   position: relative;
   max-width: ${({ maxWidth }) => maxWidth};
-
+  overflow: hidden;
   flex-direction: column;
 `
 
