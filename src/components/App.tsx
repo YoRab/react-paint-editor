@@ -61,6 +61,7 @@ const StyledRow = styled.div<{
   flex-direction: row;
   position: relative;
   max-width: 100%;
+  z-index: 1;
 
   .layoutPanelOpened & {
     background: var(--shrinkedcanvas-bg-color);

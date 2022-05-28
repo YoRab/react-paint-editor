@@ -30,7 +30,6 @@ const StyledToolbox = styled.div`
   display: flex;
   max-height: 36px;
   background: var(--bg-color);
-  z-index: 1;
 `
 
 const StyledShrinkableToolsInner = styled.div`

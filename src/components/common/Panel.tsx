@@ -3,6 +3,8 @@ import { styled } from '@linaria/react'
 
 const StyledPanel = styled.div`
   position: absolute;
+  z-index: 2;
+
   background: var(--bg-color);
   bottom: 100%;
   box-shadow: 0 3px 8px rgb(0 0 0 / 24%);
