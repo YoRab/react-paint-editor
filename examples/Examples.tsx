@@ -10,8 +10,8 @@ type MenuType = {
 const MenuItems = [
   'Default',
   'Mini',
-  'With custom available tools',
-  'With default shapes',
+  'Limited tools',
+  'From saved file',
   'Manual saves',
   'Auto saves'
 ]
