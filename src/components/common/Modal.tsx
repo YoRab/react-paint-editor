@@ -15,7 +15,6 @@ const StyledModal = styled.div`
 
 const StyledPanel = styled.div`
   display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
   background: var(--bg-color);
   box-shadow: 0 3px 8px rgb(0 0 0 / 24%);
   padding: 4px;
@@ -36,13 +35,14 @@ const StyledMask = styled.div`
 type ModalType = {
   children: ReactNode
   onClose: () => void
+  className?: string
 }
 
-const Modal = ({ children, onClose }: ModalType) => {
+const Modal = ({ children, onClose, className }: ModalType) => {
   return (
     <StyledModal>
       <StyledMask onClick={onClose} />
-      <StyledPanel>{children}</StyledPanel>
+      <StyledPanel className={className}>{children}</StyledPanel>
     </StyledModal>
   )
 }

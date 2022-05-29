@@ -55,8 +55,8 @@ export type Rect = StyledShape & {
 
 export type Square = Rect
 
-export type Picture<T extends HTMLImageElement | string> = Rect & {
-  img: T
+export type Picture = Rect & {
+  src: string
 }
 
 export type Text = Rect & {
@@ -98,8 +98,8 @@ export type Ellipse = StyledShape & {
 }
 export type DrawableRect = Rect & Drawable & { type: ShapeEnum.rect }
 export type DrawableSquare = Square & Drawable & { type: ShapeEnum.square }
-export type DrawablePicture<T extends HTMLImageElement | string> = Picture<T> &
-  Drawable & { type: ShapeEnum.picture }
+export type DrawablePictureJson = Picture & Drawable & { type: ShapeEnum.picture }
+export type DrawablePicture = DrawablePictureJson & { img: HTMLImageElement }
 export type DrawableText = Text & Drawable & { type: ShapeEnum.text }
 export type DrawableLine = Line & Drawable & { type: ShapeEnum.line }
 export type DrawablePolygon = Polygon & Drawable & { type: ShapeEnum.polygon }
@@ -111,7 +111,7 @@ export type DrawableEllipse = Ellipse & Drawable & { type: ShapeEnum.ellipse }
 export type DrawableShape =
   | DrawableRect
   | DrawableSquare
-  | DrawablePicture<HTMLImageElement>
+  | DrawablePicture
   | DrawableText
   | DrawableLine
   | DrawablePolygon
@@ -123,7 +123,7 @@ export type DrawableShape =
 export type DrawableShapeJson =
   | DrawableRect
   | DrawableSquare
-  | DrawablePicture<string>
+  | DrawablePictureJson
   | DrawableText
   | DrawableLine
   | DrawableCurve

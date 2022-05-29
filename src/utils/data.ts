@@ -2,29 +2,38 @@ import _ from 'lodash/fp'
 import { calculateTextFontSize } from './transform'
 import { DrawablePicture, Point, DrawableShape, ShapeEnum, StyledShape } from 'types/Shapes'
 
-export const createPicture = (file: File, maxPictureSize: number) => {
-  return new Promise<DrawablePicture<HTMLImageElement>>((resolve, reject) => {
+export const createPicture = (fileOrUrl: File | string, maxPictureSize: number) => {
+  return new Promise<DrawablePicture>((resolve, reject) => {
     const img = new Image()
     img.onload = () => {
       const maxSize = Math.min(Math.max(img.width, img.height), maxPictureSize)
       const imgRatio = img.width / img.height
 
-      const pictureShape: DrawablePicture<HTMLImageElement> = {
+      const pictureShape: DrawablePicture = {
         type: ShapeEnum.picture,
         id: _.uniqueId(ShapeEnum.picture),
         x: 0,
         y: 0,
         width: imgRatio < 1 ? imgRatio * maxSize : maxSize,
         height: imgRatio > 1 ? maxSize / imgRatio : maxSize,
+        src: img.src,
         img,
         translation: [0, 0],
         rotation: 0
       }
       resolve(pictureShape)
     }
-    img.src = URL.createObjectURL(file)
+    if (fileOrUrl instanceof File) {
+      img.src = URL.createObjectURL(fileOrUrl)
+    } else {
+      img.src = fileOrUrl
+    }
+
+    img.onerror = () => {
+      reject(new Error('Error while loading the src'))
+    }
     setTimeout(() => {
-      reject('timeout')
+      reject(new Error('Timeout while loading the src'))
     }, 4000)
   })
 }

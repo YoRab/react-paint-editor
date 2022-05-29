@@ -2,7 +2,7 @@ import {
   clearIcon,
   dotsIcon,
   gestureIcon,
-  lineIcon,
+  arrowIcon,
   menuIcon,
   redoIcon,
   selectIcon,
@@ -19,6 +19,7 @@ import MenuGroup from './MenuGroup'
 import Tool from './Tool'
 import { getShapePicture } from 'utils/style'
 import Modal from 'components/common/Modal'
+import PictureUrlModal from './PictureUrlInput'
 
 const StyledShrinkableTools = styled.div`
   flex: 1;
@@ -48,6 +49,10 @@ const StyledShrinkableToolsInner = styled.div`
   }
 `
 
+const StyledToolsModal = styled(Modal)`
+  grid-template-columns: 1fr 1fr 1fr;
+`
+
 const TOOLBAR_STRUCTURE = [
   {
     title: 'brush',
@@ -57,7 +62,7 @@ const TOOLBAR_STRUCTURE = [
   },
   {
     title: 'lines',
-    img: lineIcon,
+    img: arrowIcon,
     tools: [ShapeEnum.line, ShapeEnum.curve, ShapeEnum.polygon],
     vertical: false
   },
@@ -81,7 +86,7 @@ type ToolboxType = {
   clearCanvas: () => void
   setActiveTool: (tool: ToolsType) => void
   loadFile: (file: File) => void
-  addPicture: (file: File) => void
+  addPicture: (file: File | string) => Promise<void>
   saveFile: () => void
   exportCanvasInFile: () => void
   availableTools: ShapeEnum[]
@@ -104,9 +109,18 @@ const Toolbar = ({
   availableTools
 }: ToolboxType) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
+  const [isPictureUrlModalOpen, setIsPictureUrlModalOpen] = useState(false)
 
   const toggleTools = () => {
     setIsMenuOpen(prev => !prev)
+  }
+
+  const openPictureUrlModal = () => {
+    setIsPictureUrlModalOpen(true)
+  }
+
+  const togglePictureUrlModal = () => {
+    setIsPictureUrlModalOpen(prev => !prev)
   }
 
   const setActiveTool = (tool: ToolsType) => {
@@ -177,17 +191,18 @@ const Toolbar = ({
           disabled={disabled}
           vertical={true}
           alignment="right"
-          group={{ title: '', img: menuIcon }}
+          group={{ title: 'Menu', img: menuIcon }}
           activeTool={activeTool}
           addPicture={addPicture}
           loadFile={loadFile}
           saveFile={saveFile}
+          togglePictureUrlModal={openPictureUrlModal}
           exportCanvasInFile={exportCanvasInFile}
           availableTools={availableTools}
         />
       </StyledToolbox>
       {isMenuOpen && (
-        <Modal onClose={toggleTools}>
+        <StyledToolsModal onClose={toggleTools}>
           {availableTools.map(toolType => (
             <Tool
               disabled={disabled}
@@ -200,7 +215,10 @@ const Toolbar = ({
               setActive={setActiveTool}
             />
           ))}
-        </Modal>
+        </StyledToolsModal>
+      )}
+      {isPictureUrlModalOpen && (
+        <PictureUrlModal togglePictureUrlModal={togglePictureUrlModal} addPicture={addPicture} />
       )}
     </>
   )

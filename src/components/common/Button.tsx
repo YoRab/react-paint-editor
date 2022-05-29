@@ -131,6 +131,7 @@ const Button = React.forwardRef<HTMLButtonElement | HTMLInputElement, ButtonType
         selected = false,
         icon,
         children,
+        type = 'button',
         ...fileProps
       } = props as ButtonType
 
@@ -141,6 +142,7 @@ const Button = React.forwardRef<HTMLButtonElement | HTMLInputElement, ButtonType
           data-disabled={+disabled}
           data-selected={+selected}
           data-hidden={+hidden}
+          type={type}
           {...fileProps}>
           <StyledButtonContent>
             {children && <StyledChildren>{children}</StyledChildren>}

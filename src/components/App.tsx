@@ -266,11 +266,20 @@ const App = ({
   )
 
   const addPicture = useCallback(
-    async (file: File) => {
-      const pictureShape = await addPictureShape(file)
-      selectShape(pictureShape)
+    async (fileOrUrl: File | string) => {
+      addSnackbar({ type: SnackbarTypeEnum.Infos, text: 'Chargement...' })
+      try {
+        const pictureShape = await addPictureShape(fileOrUrl)
+        selectShape(pictureShape)
+      } catch (e) {
+        if (e instanceof Error) {
+          addSnackbar({ type: SnackbarTypeEnum.Error, text: e.message })
+        } else {
+          console.warn(e)
+        }
+      }
     },
-    [addPictureShape, selectShape]
+    [addPictureShape, selectShape, addSnackbar]
   )
 
   useKeyboard({

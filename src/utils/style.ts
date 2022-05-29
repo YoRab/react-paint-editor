@@ -3,7 +3,7 @@ import {
   brushIcon,
   circleIcon,
   ellipseIcon,
-  lineIcon,
+  arrowIcon,
   pictureIcon,
   polygonIcon,
   curveIcon,
@@ -17,7 +17,7 @@ export const getShapePicture = (shape: ShapeEnum) => {
     case ShapeEnum.brush:
       return brushIcon
     case ShapeEnum.line:
-      return lineIcon
+      return arrowIcon
     case ShapeEnum.polygon:
       return polygonIcon
     case ShapeEnum.curve:

@@ -3,6 +3,12 @@ import _ from 'lodash/fp'
 import schema from 'schemas/drawableShape.json'
 import { DrawableShape, DrawableShapeJson, ShapeEnum } from 'types/Shapes'
 
+export const fetchAndStringify = (url: string) => {
+  return fetch(url)
+    .then(response => response.blob())
+    .then(myBlob => URL.createObjectURL(myBlob))
+}
+
 export const downloadFile = (content: string, fileName: string) => {
   const a = document.createElement('a')
   a.href = content
@@ -34,9 +40,14 @@ export const getCanvasImage = (canvas: HTMLCanvasElement) => {
 export const encodePicturesInShapes = (shapes: DrawableShape[]) => {
   return shapes.map(shape => {
     if (shape.type === ShapeEnum.picture) {
-      return {
-        ...shape,
-        img: getBase64Image(shape.img)
+      if (shape.src.startsWith('http')) {
+        return _.omit('img', shape)
+      } else {
+        return {
+          ...shape,
+          src: getBase64Image(shape.img),
+          img: undefined
+        }
       }
     }
     return shape
@@ -66,14 +77,28 @@ export const decodePicturesInShapes = async (shapesForJson: DrawableShapeJson[])
   const shapes: DrawableShape[] = shapesForJson.map(shape => {
     if (shape.type === ShapeEnum.picture) {
       const img = new Image()
-      const newPromise = new Promise<void>(resolve => {
+      const newPromise = new Promise<void>((resolve, reject) => {
         img.onload = () => {
           resolve()
+        }
+
+        img.onerror = () => {
+          reject(new Error('Some images could not be loaded'))
         }
       })
       promisesArray.push(newPromise)
 
-      img.src = shape.img
+      if (shape.src.startsWith('http')) {
+        fetchAndStringify(shape.src)
+          .then(picData => {
+            img.src = picData
+          })
+          .catch(() => {
+            img.src = '' // to trigger onerror
+          })
+      } else {
+        img.src = shape.src
+      }
 
       return {
         ...shape,
