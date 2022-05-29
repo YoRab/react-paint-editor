@@ -245,6 +245,107 @@
                 },
                 {
                     "properties": {
+                        "src": {
+                            "type": "string"
+                        }
+                    },
+                    "type": "object"
+                },
+                {
+                    "properties": {
+                        "id": {
+                            "type": "string"
+                        },
+                        "rotation": {
+                            "type": "number"
+                        },
+                        "translation": {
+                            "items": [
+                                {
+                                    "type": "number"
+                                },
+                                {
+                                    "type": "number"
+                                }
+                            ],
+                            "maxItems": 2,
+                            "minItems": 2,
+                            "type": "array"
+                        }
+                    },
+                    "type": "object"
+                },
+                {
+                    "properties": {
+                        "type": {
+                            "enum": [
+                                "picture"
+                            ],
+                            "type": "string"
+                        }
+                    },
+                    "type": "object"
+                }
+            ]
+        },
+        {
+            "allOf": [
+                {
+                    "properties": {
+                        "style": {
+                            "properties": {
+                                "fillColor": {
+                                    "type": "string"
+                                },
+                                "fontFamily": {
+                                    "type": "string"
+                                },
+                                "globalAlpha": {
+                                    "type": "number"
+                                },
+                                "lineArrow": {
+                                    "type": "number"
+                                },
+                                "lineDash": {
+                                    "type": "number"
+                                },
+                                "lineWidth": {
+                                    "type": "number"
+                                },
+                                "pointsCount": {
+                                    "type": "number"
+                                },
+                                "strokeColor": {
+                                    "type": "string"
+                                }
+                            },
+                            "type": "object"
+                        },
+                        "visible": {
+                            "type": "boolean"
+                        }
+                    },
+                    "type": "object"
+                },
+                {
+                    "properties": {
+                        "height": {
+                            "type": "number"
+                        },
+                        "width": {
+                            "type": "number"
+                        },
+                        "x": {
+                            "type": "number"
+                        },
+                        "y": {
+                            "type": "number"
+                        }
+                    },
+                    "type": "object"
+                },
+                {
+                    "properties": {
                         "fontSize": {
                             "type": "number"
                         },
@@ -877,107 +978,6 @@
                         "type": {
                             "enum": [
                                 "ellipse"
-                            ],
-                            "type": "string"
-                        }
-                    },
-                    "type": "object"
-                }
-            ]
-        },
-        {
-            "allOf": [
-                {
-                    "properties": {
-                        "style": {
-                            "properties": {
-                                "fillColor": {
-                                    "type": "string"
-                                },
-                                "fontFamily": {
-                                    "type": "string"
-                                },
-                                "globalAlpha": {
-                                    "type": "number"
-                                },
-                                "lineArrow": {
-                                    "type": "number"
-                                },
-                                "lineDash": {
-                                    "type": "number"
-                                },
-                                "lineWidth": {
-                                    "type": "number"
-                                },
-                                "pointsCount": {
-                                    "type": "number"
-                                },
-                                "strokeColor": {
-                                    "type": "string"
-                                }
-                            },
-                            "type": "object"
-                        },
-                        "visible": {
-                            "type": "boolean"
-                        }
-                    },
-                    "type": "object"
-                },
-                {
-                    "properties": {
-                        "height": {
-                            "type": "number"
-                        },
-                        "width": {
-                            "type": "number"
-                        },
-                        "x": {
-                            "type": "number"
-                        },
-                        "y": {
-                            "type": "number"
-                        }
-                    },
-                    "type": "object"
-                },
-                {
-                    "properties": {
-                        "img": {
-                            "type": "string"
-                        }
-                    },
-                    "type": "object"
-                },
-                {
-                    "properties": {
-                        "id": {
-                            "type": "string"
-                        },
-                        "rotation": {
-                            "type": "number"
-                        },
-                        "translation": {
-                            "items": [
-                                {
-                                    "type": "number"
-                                },
-                                {
-                                    "type": "number"
-                                }
-                            ],
-                            "maxItems": 2,
-                            "minItems": 2,
-                            "type": "array"
-                        }
-                    },
-                    "type": "object"
-                },
-                {
-                    "properties": {
-                        "type": {
-                            "enum": [
-                                "picture"
                             ],
                             "type": "string"
                         }
