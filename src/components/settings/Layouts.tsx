@@ -3,6 +3,8 @@ import _ from 'lodash/fp'
 import { DrawableShape } from 'types/Shapes'
 import useDrag from 'hooks/useDrag'
 import {
+  gridOffIcon,
+  gridOnIcon,
   lockedIcon,
   trashIcon,
   unlockedIcon,
@@ -19,6 +21,7 @@ const StyledLayouts = styled.div`
   background: var(--bg-color);
   box-sizing: border-box;
   overflow-y: auto;
+  min-width: 200px;
 `
 
 const StyledLayout = styled.div`
@@ -83,10 +86,31 @@ const StyledLockedButton = styled(Button)`
   }
 `
 
+const StyledGridButton = styled(Button)`
+  &[data-grid='false'] {
+    svg {
+      opacity: 0.2;
+    }
+  }
+`
+
+const StyledSeparator = styled.div`
+  flex: 1;
+`
+
 const StyledPanelLayouts = styled(Panel)`
   bottom: 0;
   left: unset;
   top: unset;
+  max-height: 100%;
+  display: flex;
+  flex-direction: column;
+`
+
+const StyledScrollingContent = styled.div`
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
 `
 
 type LayoutType = {
@@ -165,6 +189,8 @@ const Layout = ({
       ref={ref}>
       <span dangerouslySetInnerHTML={{ __html: getShapePicture(shape.type) }} />
 
+      <StyledSeparator />
+
       <StyledVisibleButton
         title={shape.visible ? 'Hide' : 'Show'}
         data-visible={shape.visible !== false}
@@ -180,12 +206,14 @@ const Layout = ({
         onClick={onToggleShapeLock}
         icon={shape.locked ? lockedIcon : unlockedIcon}
       />
-      <Button title="Remove" disabled={disabled} onClick={onRemove} icon={trashIcon} />
+      {/* <Button title="Remove" disabled={disabled} onClick={onRemove} icon={trashIcon} /> */}
     </StyledLayout>
   )
 }
 
 type LayoutsType = {
+  withGrid: boolean
+  setWithGrid: React.Dispatch<React.SetStateAction<boolean>>
   disabled?: boolean
   shapes: DrawableShape[]
   removeShape: (shape: DrawableShape) => void
@@ -199,6 +227,8 @@ type LayoutsType = {
 }
 
 const Layouts = ({
+  withGrid,
+  setWithGrid,
   disabled = false,
   shapes,
   removeShape,
@@ -212,6 +242,9 @@ const Layouts = ({
 }: LayoutsType) => {
   const [layoutDragging, setLayoutDragging] = useState<string | undefined>(undefined)
 
+  const onToggleGrid = () => {
+    setWithGrid(prev => !prev)
+  }
   return isLayoutPanelShown ? (
     withLayouts === 'always' ? (
       <StyledLayouts>
@@ -236,26 +269,37 @@ const Layouts = ({
       </StyledLayouts>
     ) : (
       <StyledPanelLayouts title="Layouts" alignment="right">
-        <StyledLayouts>
-          {_.map(
-            shape => (
-              <Layout
-                key={shape.id}
-                shape={shape}
-                disabled={disabled}
-                layoutDragging={layoutDragging}
-                setLayoutDragging={setLayoutDragging}
-                selected={selectedShape?.id === shape.id}
-                handleSelect={selectShape}
-                handleRemove={removeShape}
-                onMoveShapes={moveShapes}
-                toggleShapeVisibility={toggleShapeVisibility}
-                toggleShapeLock={toggleShapeLock}
-              />
-            ),
-            shapes
-          )}
-        </StyledLayouts>
+        <StyledScrollingContent>
+          <StyledGridButton
+            title={withGrid ? 'Grid on' : 'Grid off'}
+            data-grid={withGrid}
+            disabled={disabled}
+            onClick={onToggleGrid}
+            icon={withGrid ? gridOnIcon : gridOffIcon}>
+            Toggle grid
+          </StyledGridButton>
+
+          <StyledLayouts>
+            {_.map(
+              shape => (
+                <Layout
+                  key={shape.id}
+                  shape={shape}
+                  disabled={disabled}
+                  layoutDragging={layoutDragging}
+                  setLayoutDragging={setLayoutDragging}
+                  selected={selectedShape?.id === shape.id}
+                  handleSelect={selectShape}
+                  handleRemove={removeShape}
+                  onMoveShapes={moveShapes}
+                  toggleShapeVisibility={toggleShapeVisibility}
+                  toggleShapeLock={toggleShapeLock}
+                />
+              ),
+              shapes
+            )}
+          </StyledLayouts>
+        </StyledScrollingContent>
       </StyledPanelLayouts>
     )
   ) : null

@@ -150,6 +150,8 @@ const App = ({
     mode: SelectionModeLib.default
   })
 
+  const [withGrid, setWithGrid] = useState(true)
+
   const {
     shapesRef,
     selectedShape,
@@ -340,6 +342,7 @@ const App = ({
       />
       <StyledRow width={width} aspectRatio={`calc(${width} / ${height})`}>
         <Canvas
+          withGrid={withGrid}
           disabled={disabled}
           isInsideComponent={isInsideComponent}
           activeTool={activeTool}
@@ -362,6 +365,8 @@ const App = ({
           setSelectionMode={setSelectionMode}
         />
         <Layouts
+          withGrid={withGrid}
+          setWithGrid={setWithGrid}
           disabled={disabled}
           shapes={shapesRef.current}
           moveShapes={moveShapes}

@@ -47,10 +47,14 @@ const StyledCanvasBox = styled.div`
 
 const StyledCanvasContainer = styled.div`
   position: relative;
-  background: white url('data:image/svg+xml,${encodedTransparentIcon}');
+  background-color: white;
   background-repeat: repeat;
   background-size: 16px;
   overflow: hidden;
+
+  &[data-grid='true'] {
+    background-image: url('data:image/svg+xml,${encodedTransparentIcon}');
+  }
 `
 
 const StyledDrawCanvas = styled.canvas`
@@ -73,6 +77,7 @@ const StyledSelectionCanvas = styled.canvas<{
 `
 
 type DrawerType = {
+  withGrid: boolean
   disabled?: boolean
   width: number
   height: number
@@ -97,6 +102,7 @@ type DrawerType = {
 const Canvas = React.forwardRef<HTMLCanvasElement, DrawerType>(
   (
     {
+      withGrid,
       disabled = false,
       width,
       height,
@@ -192,7 +198,7 @@ const Canvas = React.forwardRef<HTMLCanvasElement, DrawerType>(
 
     return (
       <StyledCanvasBox>
-        <StyledCanvasContainer>
+        <StyledCanvasContainer data-grid={withGrid}>
           <StyledDrawCanvas ref={drawCanvasRef} width={width} height={height} />
           <StyledSelectionCanvas
             ref={selectionCanvasRef}
