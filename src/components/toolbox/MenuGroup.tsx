@@ -21,6 +21,7 @@ const StyledPanel = styled(Panel)`
     width: 100%;
     border: none;
     border-top: 1px solid var(--text-color);
+    opacity: 0.6;
   }
 `
 

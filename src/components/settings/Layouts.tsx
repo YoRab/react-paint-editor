@@ -111,6 +111,19 @@ const StyledScrollingContent = styled.div`
   display: flex;
   flex-direction: column;
   overflow-y: auto;
+
+  hr {
+    opacity: 0.6;
+    width: 100%;
+    border: none;
+    border-top: 1px solid var(--text-color);
+  }
+`
+
+const StyledPlaceholder = styled.div`
+  opacity: 0.6;
+  text-align: center;
+  padding: 12px 0px;
 `
 
 type LayoutType = {
@@ -278,25 +291,29 @@ const Layouts = ({
             icon={withGrid ? gridOnIcon : gridOffIcon}>
             Toggle grid
           </StyledGridButton>
-
+          <hr />
           <StyledLayouts>
-            {_.map(
-              shape => (
-                <Layout
-                  key={shape.id}
-                  shape={shape}
-                  disabled={disabled}
-                  layoutDragging={layoutDragging}
-                  setLayoutDragging={setLayoutDragging}
-                  selected={selectedShape?.id === shape.id}
-                  handleSelect={selectShape}
-                  handleRemove={removeShape}
-                  onMoveShapes={moveShapes}
-                  toggleShapeVisibility={toggleShapeVisibility}
-                  toggleShapeLock={toggleShapeLock}
-                />
-              ),
-              shapes
+            {shapes.length === 0 ? (
+              <StyledPlaceholder>No layout yet</StyledPlaceholder>
+            ) : (
+              _.map(
+                shape => (
+                  <Layout
+                    key={shape.id}
+                    shape={shape}
+                    disabled={disabled}
+                    layoutDragging={layoutDragging}
+                    setLayoutDragging={setLayoutDragging}
+                    selected={selectedShape?.id === shape.id}
+                    handleSelect={selectShape}
+                    handleRemove={removeShape}
+                    onMoveShapes={moveShapes}
+                    toggleShapeVisibility={toggleShapeVisibility}
+                    toggleShapeLock={toggleShapeLock}
+                  />
+                ),
+                shapes
+              )
             )}
           </StyledLayouts>
         </StyledScrollingContent>
