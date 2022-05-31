@@ -92,7 +92,7 @@ const getTextBorder = (text: Text): Rect => {
   }
 }
 
-const getPictureBorder = (picture: Picture<HTMLImageElement>): Rect => {
+const getPictureBorder = (picture: Picture): Rect => {
   return getRectBorder(picture)
 }
 

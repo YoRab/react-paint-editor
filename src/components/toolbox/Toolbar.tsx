@@ -203,18 +203,20 @@ const Toolbar = ({
       </StyledToolbox>
       {isMenuOpen && (
         <StyledToolsModal onClose={toggleTools}>
-          {availableTools.map(toolType => (
-            <Tool
-              disabled={disabled}
-              key={toolType}
-              type={toolType}
-              lib={toolType}
-              withText={false}
-              img={getShapePicture(toolType)}
-              isActive={activeTool === toolType}
-              setActive={setActiveTool}
-            />
-          ))}
+          {availableTools.map(toolType =>
+            toolType === ShapeEnum.picture ? null : (
+              <Tool
+                disabled={disabled}
+                key={toolType}
+                type={toolType}
+                lib={toolType}
+                withText={false}
+                img={getShapePicture(toolType)}
+                isActive={activeTool === toolType}
+                setActive={setActiveTool}
+              />
+            )
+          )}
         </StyledToolsModal>
       )}
       {isPictureUrlModalOpen && (

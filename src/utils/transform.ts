@@ -534,9 +534,9 @@ const getCircleOppositeAnchorAbsolutePosition = <T extends DrawableShape & Circl
 export const resizePicture = (
   cursorPosition: Point,
   canvasOffset: Point,
-  originalShape: DrawablePicture<HTMLImageElement>,
+  originalShape: DrawablePicture,
   selectionMode: SelectionModeResize
-): DrawablePicture<HTMLImageElement> => {
+): DrawablePicture => {
   return resizeRect(cursorPosition, canvasOffset, originalShape, selectionMode, true)
 }
 
@@ -603,7 +603,7 @@ export const resizeShape = (
     return resizePicture(
       cursorPosition,
       canvasOffset,
-      originalShape as DrawablePicture<HTMLImageElement>,
+      originalShape as DrawablePicture,
       selectionMode as SelectionModeResize
     )
   return shape

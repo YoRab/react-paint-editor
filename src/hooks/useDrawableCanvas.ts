@@ -40,6 +40,8 @@ const handleMove = (
     ])
   }
   if (selectedShape == undefined) return
+  if (selectedShape.locked) return
+
   const cursorPosition = getCursorPosition(e, canvasRef.current, width, height)
 
   if (selectionMode.mode === SelectionModeLib.default) {

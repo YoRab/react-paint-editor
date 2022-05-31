@@ -246,10 +246,7 @@ export const drawText = (ctx: CanvasRenderingContext2D, text: Text): void => {
   }
 }
 
-export const drawPicture = (
-  ctx: CanvasRenderingContext2D,
-  picture: Picture<HTMLImageElement>
-): void => {
+export const drawPicture = (ctx: CanvasRenderingContext2D, picture: Picture): void => {
   updateDrawStyle(ctx, picture.style)
   if (ctx.globalAlpha === 0) return
 
@@ -311,7 +308,7 @@ const drawSelectionDefault = ({
   const { borders } = getShapeInfos(shape)
   drawRect(ctx, borders)
 
-  if (!withAnchors) return
+  if (!withAnchors || shape.locked) return
 
   drawLine(ctx, {
     points: [
@@ -357,7 +354,7 @@ const drawLineSelection = ({
 }) => {
   const { borders } = getShapeInfos(shape)
   drawRect(ctx, borders)
-  if (!withAnchors) return
+  if (!withAnchors || shape.locked) return
   for (let i = 0; i < shape.points.length; i++) {
     const coordinate = shape.points[i]
     if (shape.type === 'curve' && i > 0 && i < shape.points.length - 1) {

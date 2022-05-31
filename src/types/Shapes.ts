@@ -28,6 +28,7 @@ export type Point = [number, number]
 
 export type StyledShape = {
   visible?: boolean
+  locked?: boolean
   style?: {
     fillColor?: string
     globalAlpha?: number

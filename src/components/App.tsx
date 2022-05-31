@@ -164,6 +164,7 @@ const App = ({
     clearShapes,
     saveShapes,
     toggleShapeVisibility,
+    toggleShapeLock,
     canGoBackward,
     canGoForward,
     canClear
@@ -368,6 +369,7 @@ const App = ({
           removeShape={removeShape}
           selectShape={selectShape}
           toggleShapeVisibility={toggleShapeVisibility}
+          toggleShapeLock={toggleShapeLock}
           withLayouts={withLayouts}
           isLayoutPanelShown={isLayoutPanelShown}
         />

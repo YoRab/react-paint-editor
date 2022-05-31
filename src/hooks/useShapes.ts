@@ -169,6 +169,20 @@ const useShapes = (onDataChanged: () => void = _.noop) => {
     [updateShapes]
   )
 
+  const toggleShapeLock = useCallback(
+    (shape: DrawableShape) => {
+      const shapes = shapesRef.current
+      const shapeIndex = _.findIndex({ id: shape.id }, shapes)
+      if (shapeIndex < 0) return
+      const newShape = _.set('locked', !shape.locked, shape)
+      setSelectedShape(prevSelectedShape =>
+        prevSelectedShape?.id === newShape.id ? newShape : prevSelectedShape
+      )
+      updateShapes(_.set(shapeIndex, newShape, shapes))
+    },
+    [updateShapes]
+  )
+
   useEffect(() => {
     onDataChanged()
   }, [onDataChanged, savedShapes])
@@ -182,6 +196,7 @@ const useShapes = (onDataChanged: () => void = _.noop) => {
     saveShapes,
     setSelectedShape,
     toggleShapeVisibility,
+    toggleShapeLock,
     removeShape,
     updateShape,
     backwardShape,

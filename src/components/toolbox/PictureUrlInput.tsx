@@ -41,11 +41,13 @@ const PictureUrlModal = ({ togglePictureUrlModal, addPicture }: PictureUrlModalT
     <StyledInputModal onClose={togglePictureUrlModal}>
       <form onSubmit={addPictureFromUrl}>
         <label>
-          URL
+          URL&nbsp;
           <input type="text" ref={pictureUrlInputRef} />
         </label>
         <Button onClick={togglePictureUrlModal}>Annuler</Button>
-        <Button type="submit">Ajouter</Button>
+        <Button type="submit" selected>
+          Ajouter
+        </Button>
       </form>
     </StyledInputModal>
   )

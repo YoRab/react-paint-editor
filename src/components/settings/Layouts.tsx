@@ -2,7 +2,13 @@ import React, { useRef, useState } from 'react'
 import _ from 'lodash/fp'
 import { DrawableShape } from 'types/Shapes'
 import useDrag from 'hooks/useDrag'
-import { trashIcon, visibilityIcon, visibilityOffIcon } from 'constants/icons'
+import {
+  lockedIcon,
+  trashIcon,
+  unlockedIcon,
+  visibilityIcon,
+  visibilityOffIcon
+} from 'constants/icons'
 import { getShapePicture } from 'utils/style'
 import { styled } from '@linaria/react'
 import Button from 'components/common/Button'
@@ -66,7 +72,13 @@ const StyledLayout = styled.div`
 `
 
 const StyledVisibleButton = styled(Button)`
-  &[data-visible='0'] {
+  &[data-visible='false'] {
+    opacity: 0.2;
+  }
+`
+
+const StyledLockedButton = styled(Button)`
+  &[data-locked='false'] {
     opacity: 0.2;
   }
 `
@@ -86,6 +98,7 @@ type LayoutType = {
   handleRemove: (shape: DrawableShape) => void
   handleSelect: (shape: DrawableShape) => void
   toggleShapeVisibility: (shape: DrawableShape) => void
+  toggleShapeLock: (shape: DrawableShape) => void
   onMoveShapes: (firstShapeId: string, lastShapeId: string) => void
 }
 
@@ -95,6 +108,7 @@ const Layout = ({
   selected,
   layoutDragging,
   toggleShapeVisibility,
+  toggleShapeLock,
   setLayoutDragging,
   handleRemove,
   handleSelect,
@@ -123,6 +137,13 @@ const Layout = ({
     toggleShapeVisibility(shape)
   }
 
+  const onToggleShapeLock = (e: React.MouseEvent<HTMLElement>) => {
+    if (disabled) return
+    e.preventDefault()
+    e.stopPropagation()
+    toggleShapeLock(shape)
+  }
+
   const { isOver } = useDrag({
     disabled,
     ref,
@@ -142,14 +163,23 @@ const Layout = ({
       onClick={onSelect}
       data-selected={+selected}
       ref={ref}>
+      <span dangerouslySetInnerHTML={{ __html: getShapePicture(shape.type) }} />
+
       <StyledVisibleButton
         title={shape.visible ? 'Hide' : 'Show'}
-        data-visible={+(shape.visible !== false)}
+        data-visible={shape.visible !== false}
         disabled={disabled}
         onClick={onToggleShapeVisibility}
         icon={shape.visible === false ? visibilityOffIcon : visibilityIcon}
       />
-      <span dangerouslySetInnerHTML={{ __html: getShapePicture(shape.type) }} />
+
+      <StyledLockedButton
+        title={shape.locked ? 'Locked' : 'Unlocked'}
+        data-locked={!!shape.locked}
+        disabled={disabled}
+        onClick={onToggleShapeLock}
+        icon={shape.locked ? lockedIcon : unlockedIcon}
+      />
       <Button title="Remove" disabled={disabled} onClick={onRemove} icon={trashIcon} />
     </StyledLayout>
   )
@@ -160,6 +190,7 @@ type LayoutsType = {
   shapes: DrawableShape[]
   removeShape: (shape: DrawableShape) => void
   toggleShapeVisibility: (shape: DrawableShape) => void
+  toggleShapeLock: (shape: DrawableShape) => void
   selectedShape: DrawableShape | undefined
   selectShape: (shape: DrawableShape) => void
   moveShapes: (firstShapeId: string, lastShapeId: string) => void
@@ -172,6 +203,7 @@ const Layouts = ({
   shapes,
   removeShape,
   toggleShapeVisibility,
+  toggleShapeLock,
   selectedShape,
   moveShapes,
   selectShape,
@@ -196,6 +228,7 @@ const Layouts = ({
               handleRemove={removeShape}
               onMoveShapes={moveShapes}
               toggleShapeVisibility={toggleShapeVisibility}
+              toggleShapeLock={toggleShapeLock}
             />
           ),
           shapes
@@ -217,6 +250,7 @@ const Layouts = ({
                 handleRemove={removeShape}
                 onMoveShapes={moveShapes}
                 toggleShapeVisibility={toggleShapeVisibility}
+                toggleShapeLock={toggleShapeLock}
               />
             ),
             shapes
