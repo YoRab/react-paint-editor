@@ -5,6 +5,9 @@
             "allOf": [
                 {
                     "properties": {
+                        "locked": {
+                            "type": "boolean"
+                        },
                         "style": {
                             "properties": {
                                 "fillColor": {
@@ -98,6 +101,9 @@
             "allOf": [
                 {
                     "properties": {
+                        "locked": {
+                            "type": "boolean"
+                        },
                         "style": {
                             "properties": {
                                 "fillColor": {
@@ -191,6 +197,9 @@
             "allOf": [
                 {
                     "properties": {
+                        "locked": {
+                            "type": "boolean"
+                        },
                         "style": {
                             "properties": {
                                 "fillColor": {
@@ -292,6 +301,9 @@
             "allOf": [
                 {
                     "properties": {
+                        "locked": {
+                            "type": "boolean"
+                        },
                         "style": {
                             "properties": {
                                 "fillColor": {
@@ -399,6 +411,9 @@
             "allOf": [
                 {
                     "properties": {
+                        "locked": {
+                            "type": "boolean"
+                        },
                         "style": {
                             "properties": {
                                 "fillColor": {
@@ -513,6 +528,9 @@
             "allOf": [
                 {
                     "properties": {
+                        "locked": {
+                            "type": "boolean"
+                        },
                         "style": {
                             "properties": {
                                 "fillColor": {
@@ -610,6 +628,9 @@
             "allOf": [
                 {
                     "properties": {
+                        "locked": {
+                            "type": "boolean"
+                        },
                         "style": {
                             "properties": {
                                 "fillColor": {
@@ -707,6 +728,9 @@
             "allOf": [
                 {
                     "properties": {
+                        "locked": {
+                            "type": "boolean"
+                        },
                         "style": {
                             "properties": {
                                 "fillColor": {
@@ -807,6 +831,9 @@
             "allOf": [
                 {
                     "properties": {
+                        "locked": {
+                            "type": "boolean"
+                        },
                         "style": {
                             "properties": {
                                 "fillColor": {
@@ -897,6 +924,9 @@
             "allOf": [
                 {
                     "properties": {
+                        "locked": {
+                            "type": "boolean"
+                        },
                         "style": {
                             "properties": {
                                 "fillColor": {
