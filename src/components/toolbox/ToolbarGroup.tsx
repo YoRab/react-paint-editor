@@ -60,10 +60,13 @@ const ToolbarGroup = ({
     const closePanel = () => {
       setIsOpen(false)
     }
-
-    document.addEventListener('click', closePanel)
+    const timeoutId = setTimeout(() => {
+      //TODO find a better fix than settimeout for react18
+      document.addEventListener('click', closePanel)
+    }, 0)
 
     return () => {
+      clearTimeout(timeoutId)
       document.removeEventListener('click', closePanel)
     }
   }, [isOpen])

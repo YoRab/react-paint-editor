@@ -88,9 +88,10 @@ const MenuGroup = ({
     const closePanel = () => {
       setIsOpen(false)
     }
-
-    document.addEventListener('click', closePanel)
-
+    const timeoutId = setTimeout(() => {
+      //TODO find a better fix than settimeout for react18
+      document.addEventListener('click', closePanel)
+    }, 0)
     return () => {
       document.removeEventListener('click', closePanel)
     }
