@@ -66,6 +66,8 @@ const updateDrawStyle = (
     lineDash: 0
   }
 ) => {
+  ctx.lineCap = 'round'
+  ctx.lineJoin = 'round'
   globalAlpha !== undefined && (ctx.globalAlpha = globalAlpha / 100)
   fillColor && (ctx.fillStyle = fillColor)
   strokeColor && (ctx.strokeStyle = strokeColor)
