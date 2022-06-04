@@ -4,7 +4,7 @@ import {
   Circle,
   Ellipse,
   Line,
-  Picture,
+  StoredPicture,
   Point,
   Polygon,
   Rect,
@@ -92,7 +92,7 @@ const getTextBorder = (text: Text): Rect => {
   }
 }
 
-const getPictureBorder = (picture: Picture): Rect => {
+const getPictureBorder = (picture: StoredPicture): Rect => {
   return getRectBorder(picture)
 }
 
