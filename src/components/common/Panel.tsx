@@ -1,9 +1,10 @@
 import React, { useRef } from 'react'
 import { styled } from '@linaria/react'
+import { STYLE_ZINDEX_PANEL } from 'constants/style'
 
 const StyledPanel = styled.div`
   position: absolute;
-  z-index: 2;
+  z-index: ${STYLE_ZINDEX_PANEL};
 
   background: var(--bg-color);
   bottom: 100%;

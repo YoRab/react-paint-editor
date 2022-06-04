@@ -2,6 +2,7 @@ import { SNACKBAR_ANIMATION_DURATION } from 'constants/snackbar'
 import { SnackBarType } from 'hooks/useSnackbar'
 import React, { useEffect, useState } from 'react'
 import { styled } from '@linaria/react'
+import { STYLE_ZINDEX_SNACKBAR } from 'constants/style'
 
 const StyledSnackbar = styled.div`
   display: inline-block;
@@ -53,7 +54,7 @@ const StyledSnackbarContainer = styled.div`
   display: flex;
   flex-direction: column-reverse;
   position: absolute;
-  z-index: 3;
+  z-index: ${STYLE_ZINDEX_SNACKBAR};
   bottom: 0;
   left: 0;
   right: 0;

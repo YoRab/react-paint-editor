@@ -1,8 +1,9 @@
 import React, { ReactNode } from 'react'
 import { styled } from '@linaria/react'
+import { STYLE_ZINDEX_PANEL } from 'constants/style'
 
 const StyledModal = styled.div`
-  z-index: 2;
+  z-index: ${STYLE_ZINDEX_PANEL};
   position: absolute;
   display: flex;
   align-items: center;

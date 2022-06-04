@@ -14,7 +14,7 @@ import Layouts from './settings/Layouts'
 import Toolbar from './toolbox/Toolbar'
 import { styled } from '@linaria/react'
 import SettingsBar from './settings/SettingsBar'
-import { STYLE_FONT_DEFAULT } from 'constants/style'
+import { STYLE_FONT_DEFAULT, STYLE_ZINDEX_APP } from 'constants/style'
 import useKeyboard from 'hooks/useKeyboard'
 import {
   decodeJson,
@@ -31,6 +31,7 @@ import useShapes from 'hooks/useShapes'
 import SnackbarContainer from './common/Snackbar'
 import useSnackbar from 'hooks/useSnackbar'
 import { SnackbarTypeEnum } from 'constants/snackbar'
+import Loading from 'components/common/Loading'
 
 const StyledApp = styled.div<{
   maxWidth: string
@@ -61,7 +62,7 @@ const StyledRow = styled.div<{
   flex-direction: row;
   position: relative;
   max-width: 100%;
-  z-index: 1;
+  z-index: ${STYLE_ZINDEX_APP};
 
   .layoutPanelOpened & {
     background: var(--shrinkedcanvas-bg-color);
@@ -136,6 +137,8 @@ const App = ({
       fontFamily: STYLE_FONT_DEFAULT
     }
   })
+
+  const [isLoading, setIsLoading] = useState(false)
 
   const [isLayoutPanelShown, setIsLayoutPanelShown] = useState(
     withLayouts === 'always' || withLayouts === 'visible'
@@ -218,25 +221,45 @@ const App = ({
   )
 
   const exportCanvasInFile = useCallback(() => {
-    addSnackbar({ type: SnackbarTypeEnum.Infos, text: 'Export en cours...' })
-    const dataURL = canvasRef.current && getCanvasImage(canvasRef.current)
-    if (!dataURL) {
-      addSnackbar({ type: SnackbarTypeEnum.Error, text: "L'export a échoué" })
-      return
+    setIsLoading(true)
+    try {
+      const dataURL = canvasRef.current && getCanvasImage(canvasRef.current)
+      if (!dataURL) {
+        throw new Error()
+      }
+      downloadFile(dataURL, 'drawing.png')
+      addSnackbar({ type: SnackbarTypeEnum.Success, text: 'Export terminé !' })
+      setIsLoading(false)
+    } catch (e) {
+      if (e instanceof Error) {
+        addSnackbar({ type: SnackbarTypeEnum.Error, text: "L'export a échoué" })
+      } else {
+        console.warn(e)
+      }
+    } finally {
+      setIsLoading(false)
     }
-    downloadFile(dataURL, 'drawing.png')
-    addSnackbar({ type: SnackbarTypeEnum.Success, text: 'Export terminé !' })
   }, [addSnackbar])
 
   const saveFile = useCallback(() => {
-    addSnackbar({ type: SnackbarTypeEnum.Infos, text: 'Enregistrement...' })
-    const content = encodeShapesInString(shapesRef.current)
-    if (!content) {
-      addSnackbar({ type: SnackbarTypeEnum.Error, text: "L'enregistrement a échoué" })
-      return
+    setIsLoading(true)
+    try {
+      const content = encodeShapesInString(shapesRef.current)
+      if (!content) {
+        throw new Error("L'enregistrement a échoué")
+      }
+      downloadFile(content, 'drawing.json')
+      addSnackbar({ type: SnackbarTypeEnum.Success, text: 'Fichier enregistré !' })
+      setIsLoading(false)
+    } catch (e) {
+      if (e instanceof Error) {
+        addSnackbar({ type: SnackbarTypeEnum.Error, text: e.message })
+      } else {
+        console.warn(e)
+      }
+    } finally {
+      setIsLoading(false)
     }
-    downloadFile(content, 'drawing.json')
-    addSnackbar({ type: SnackbarTypeEnum.Success, text: 'Fichier enregistré !' })
   }, [shapesRef, addSnackbar])
 
   const loadJson = useCallback(
@@ -251,8 +274,7 @@ const App = ({
 
   const loadFile = useCallback(
     async (file: File) => {
-      addSnackbar({ type: SnackbarTypeEnum.Infos, text: 'Chargement...' })
-
+      setIsLoading(true)
       try {
         const json = await decodeJson(file)
         await loadJson(json)
@@ -263,6 +285,8 @@ const App = ({
         } else {
           console.warn(e)
         }
+      } finally {
+        setIsLoading(false)
       }
     },
     [loadJson, addSnackbar]
@@ -270,7 +294,7 @@ const App = ({
 
   const addPicture = useCallback(
     async (fileOrUrl: File | string) => {
-      addSnackbar({ type: SnackbarTypeEnum.Infos, text: 'Chargement...' })
+      setIsLoading(true)
       try {
         const pictureShape = await addPictureShape(fileOrUrl)
         selectShape(pictureShape)
@@ -280,6 +304,8 @@ const App = ({
         } else {
           console.warn(e)
         }
+      } finally {
+        setIsLoading(false)
       }
     },
     [addPictureShape, selectShape, addSnackbar]
@@ -393,6 +419,7 @@ const App = ({
           setIsLayoutPanelShown(prev => !prev)
         }}
       />
+      <Loading isLoading={isLoading} />
       <SnackbarContainer snackbarList={snackbarList} />
     </StyledApp>
   )
