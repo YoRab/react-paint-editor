@@ -34,7 +34,7 @@ import { SnackbarTypeEnum } from 'constants/snackbar'
 import Loading from 'components/common/Loading'
 
 const StyledApp = styled.div<{
-  maxWidth: string
+  width: number
 }>`
   /* --bg-color: #d7ecec; */
   --bg-color: white;
@@ -46,16 +46,23 @@ const StyledApp = styled.div<{
   /* --shrinkedcanvas-bg-color: #d7ecec; */
   --shrinkedcanvas-bg-color: white;
   display: flex;
-  width: fit-content;
   color: var(--text-color);
   position: relative;
-  max-width: ${({ maxWidth }) => maxWidth};
   overflow: hidden;
   flex-direction: column;
+
+  &[data-grow='false'] {
+    width: fit-content;
+    max-width: ${({ width }) => `min(100%, ${width}px)`};
+  }
+
+  &[data-shrink='false'] {
+    min-width: ${({ width }) => width}px;
+  }
 `
 
 const StyledRow = styled.div<{
-  width: number
+  width: number | string
   aspectRatio: string
 }>`
   display: flex;
@@ -68,7 +75,13 @@ const StyledRow = styled.div<{
     background: var(--shrinkedcanvas-bg-color);
   }
 
-  width: ${({ width }) => width}px;
+  &[data-grow='true'] {
+    width: 100%;
+  }
+
+  &[data-grow='false'] {
+    width: ${({ width }) => width}px;
+  }
 
   aspect-ratio: ${({ aspectRatio }) => aspectRatio};
 `
@@ -89,6 +102,8 @@ const DEFAULT_TOOLS = [
 type AppType = {
   width?: number
   height?: number
+  canGrow?: boolean
+  canShrink?: boolean
   withLayouts?: 'always' | 'never' | 'visible' | 'hidden'
   shapes?: DrawableShapeJson[]
   className?: string
@@ -107,6 +122,8 @@ type AppType = {
 const App = ({
   width = 1000,
   height = 600,
+  canGrow = false,
+  canShrink = true,
   withLayouts = 'hidden',
   shapes: shapesFromProps,
   className: classNameFromProps,
@@ -349,7 +366,12 @@ const App = ({
   const className = `${classNameFromProps ?? ''} ${isLayoutPanelShown ? 'layoutPanelOpened' : ''}`
 
   return (
-    <StyledApp ref={componentRef} className={className} maxWidth={`min(100%, ${width}px)`}>
+    <StyledApp
+      ref={componentRef}
+      className={className}
+      width={width}
+      data-grow={canGrow}
+      data-shrink={canShrink}>
       <Toolbar
         disabled={disabled}
         activeTool={activeTool}
@@ -366,8 +388,9 @@ const App = ({
         redoAction={redoAction}
         availableTools={availableTools}
       />
-      <StyledRow width={width} aspectRatio={`calc(${width} / ${height})`}>
+      <StyledRow data-grow={canGrow} width={width} aspectRatio={`calc(${width} / ${height})`}>
         <Canvas
+          canGrow={canGrow}
           withGrid={withGrid}
           disabled={disabled}
           isInsideComponent={isInsideComponent}

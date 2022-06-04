@@ -55,6 +55,11 @@ const StyledCanvasContainer = styled.div`
   &[data-grid='true'] {
     background-image: url('data:image/svg+xml,${encodedTransparentIcon}');
   }
+
+  &[data-grow='true'] {
+    width: 100%;
+    height: 100%;
+  }
 `
 
 const StyledDrawCanvas = styled.canvas`
@@ -63,6 +68,10 @@ const StyledDrawCanvas = styled.canvas`
   max-width: 100%;
   touch-action: none; /* prevent scroll on touch */
   display: block;
+
+  &[data-grow='true'] {
+    width: 100%;
+  }
 `
 
 const StyledSelectionCanvas = styled.canvas<{
@@ -74,11 +83,16 @@ const StyledSelectionCanvas = styled.canvas<{
   touch-action: none; /* prevent scroll on touch */
   display: block;
   cursor: ${({ cursor }) => cursor};
+
+  &[data-grow='true'] {
+    width: 100%;
+  }
 `
 
 type DrawerType = {
   withGrid: boolean
   disabled?: boolean
+  canGrow?: boolean
   width: number
   height: number
   shapes: DrawableShape[]
@@ -103,6 +117,7 @@ const Canvas = React.forwardRef<HTMLCanvasElement, DrawerType>(
   (
     {
       withGrid,
+      canGrow,
       disabled = false,
       width,
       height,
@@ -198,12 +213,13 @@ const Canvas = React.forwardRef<HTMLCanvasElement, DrawerType>(
 
     return (
       <StyledCanvasBox>
-        <StyledCanvasContainer data-grid={withGrid}>
-          <StyledDrawCanvas ref={drawCanvasRef} width={width} height={height} />
+        <StyledCanvasContainer data-grid={withGrid} data-grow={canGrow}>
+          <StyledDrawCanvas ref={drawCanvasRef} data-grow={canGrow} width={width} height={height} />
           <StyledSelectionCanvas
             ref={selectionCanvasRef}
             width={width}
             height={height}
+            data-grow={canGrow}
             cursor={
               (activeTool !== ToolEnum.selection && activeTool !== ToolEnum.move) ||
               hoverMode.mode === SelectionModeLib.resize

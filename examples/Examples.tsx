@@ -9,7 +9,7 @@ type MenuType = {
 
 const MenuItems = [
   'Default',
-  'Mini',
+  'Custom size',
   'Limited tools',
   'From saved file',
   'Manual saves',
@@ -86,12 +86,54 @@ const AutoSaveApp = () => {
 }
 
 const CurrentApp = ({ selectedComponent }: CurrentAppType) => {
+  const widthRef = useRef<HTMLInputElement>(null)
+  const heightRef = useRef<HTMLInputElement>(null)
+  const [width, setWidth] = useState(500)
+  const [height, setHeight] = useState(250)
+  const [isShrinkable, setIsShrinkable] = useState(true)
+  const [isGrowing, setisGrowing] = useState(false)
+
+  const updateSize = () => {
+    widthRef.current && setWidth(+widthRef.current.value)
+    heightRef.current && setHeight(+heightRef.current.value)
+  }
   switch (selectedComponent) {
     case 0:
     default:
       return <App />
     case 1:
-      return <App width={320} height={200} />
+      return (
+        <>
+          <div>
+            <label>
+              Canvas Width : <input type="number" defaultValue={width} ref={widthRef} />
+            </label>
+            <label>
+              Canvas Height : <input type="number" defaultValue={height} ref={heightRef} />
+            </label>
+            <button onClick={updateSize}>Update</button>
+          </div>
+          <div>
+            <label>
+              Can container shrink :
+              <input
+                type="checkbox"
+                checked={isShrinkable}
+                onChange={e => setIsShrinkable(e.currentTarget.checked)}
+              />
+            </label>
+            <label>
+              Can container grow :
+              <input
+                type="checkbox"
+                checked={isGrowing}
+                onChange={e => setisGrowing(e.currentTarget.checked)}
+              />
+            </label>
+          </div>
+          <App width={width} height={height} canGrow={isGrowing} canShrink={isShrinkable} />
+        </>
+      )
     case 2:
       return <App availableTools={['circle', 'brush', undefined, 'not existing tool']} />
     case 3:
