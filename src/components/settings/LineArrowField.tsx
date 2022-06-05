@@ -52,7 +52,9 @@ const StyledOption = styled.span`
   }
 `
 
-const LineArrowOption: React.FC = ({ children }) => {
+const LineArrowOption: React.FC<{
+  children?: React.ReactNode
+}> = ({ children }) => {
   return (
     <StyledOption data-type={children}>
       <StyledLeftTriangle />

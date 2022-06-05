@@ -8,8 +8,10 @@ const StyledButton = styled(Button)`
   padding: 16px;
 `
 
-type ShapeStyleSelectType<T> = {
-  CustomOption: React.FC<T>
+type ShapeStyleSelectType = {
+  CustomOption: React.FC<{
+    children?: React.ReactNode
+  }>
   selectedSettings: string | undefined
   setSelectedSettings: React.Dispatch<React.SetStateAction<string | undefined>>
   title?: string
@@ -30,7 +32,7 @@ const SelectField = ({
   values,
   defaultValue,
   valueChanged
-}: ShapeStyleSelectType<unknown>) => {
+}: ShapeStyleSelectType) => {
   const [customKey] = useState(_.uniqueId('settings_'))
 
   const handleClick = (value: string | number) => {

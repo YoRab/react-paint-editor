@@ -24,7 +24,7 @@ const StyledLoading = styled.div`
 `
 
 const StyledLoader = styled.div`
-  @keyframes react-paint-editor-rotation {
+  @keyframes react-paint-rotation {
     from {
       transform: rotate(0deg);
     }
@@ -37,7 +37,7 @@ const StyledLoader = styled.div`
   height: 40px;
   position: relative;
   transform: rotate(10deg);
-  animation: react-paint-editor-rotation 1s infinite;
+  animation: react-paint-rotation 1s infinite;
 `
 
 const StyledShape = styled.div`

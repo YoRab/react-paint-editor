@@ -1,7 +1,6 @@
 {
-  "name": "annotationjs",
-  "version": "0.2.1",
-  "private": true,
+  "name": "@yorab/react-paint",
+  "version": "0.2.2",
   "keywords": [],
   "author": "Yohann Rabatel",
   "license": "MIT",
@@ -17,7 +16,7 @@
     "@linaria/core": "^3.0.0-beta.15",
     "@linaria/react": "^3.0.0-beta.15",
     "@linaria/shaker": "^3.0.0-beta.15",
-    "ajv": "8.8.2",
+    "ajv": "8.11.0",
     "lodash": "^4.17.20"
   },
   "devDependencies": {
@@ -69,7 +68,8 @@
     "start": "webpack serve --config webpack.config.js --open",
     "test": "echo \"Error: no test specified\" && exit 1",
     "buildexamples": "webpack --config webpack.prod.config.js",
-    "build": "npx babel src/ --extensions '.js,.ts,.tsx,.jsx' --copy-files --delete-dir-on-start -d dist && npm run declarationfiles"
+    "build": "npx babel src/ --extensions '.js,.ts,.tsx,.jsx' --copy-files --delete-dir-on-start -d dist && npm run declarationfiles",
+    "buildwithcss" : "npm run build && npm run buildexamples && mv build/styles.css dist/styles.css"
   },
   "jest": {
     "transform": {

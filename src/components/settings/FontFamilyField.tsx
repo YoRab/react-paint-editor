@@ -9,7 +9,9 @@ const StyledOption = styled.span<{
   font-family: ${({ family }) => family};
 `
 
-const FontFamilyOption: React.FC = ({ children }) => {
+const FontFamilyOption: React.FC<{
+  children?: React.ReactNode
+}> = ({ children }) => {
   return <StyledOption family={children as string}>{children}</StyledOption>
 }
 
