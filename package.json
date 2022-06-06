@@ -70,7 +70,7 @@
     "buildexamples": "webpack --config webpack.prod.config.js",
     "build": "npx babel src/ --extensions '.js,.ts,.tsx,.jsx' --copy-files --delete-dir-on-start -d dist && npm run declarationfiles",
     "buildwithcss" : "npm run build && npm run buildexamples && mv build/styles.css dist/styles.css",
-    "publish" : "npm run buildwithcss && npm publish"
+    "publish" : "npm run buildwithcss && npm publish --access public"
   },
   "jest": {
     "transform": {
