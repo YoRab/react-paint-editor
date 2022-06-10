@@ -16,15 +16,15 @@ const StyleToggleLayoutButton = styled(Button)`
 
 type LayoutButtonType = {
   disabled: boolean
-  withLayouts?: 'always' | 'never' | 'visible' | 'hidden'
+  layersManipulation?: boolean
   toggleLayoutPanel: () => void
 }
 
-const LayoutButton = ({ withLayouts, disabled, toggleLayoutPanel }: LayoutButtonType) => {
+const LayoutButton = ({ layersManipulation, disabled, toggleLayoutPanel }: LayoutButtonType) => {
   return (
     <StyleToggleLayoutButton
       title="Toggle layout"
-      data-hidden={+(withLayouts === 'always' || withLayouts === 'never')}
+      data-hidden={!layersManipulation}
       disabled={disabled}
       onClick={toggleLayoutPanel}
       icon={layersIcon}

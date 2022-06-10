@@ -1,6 +1,9 @@
 # V.0.3.0 :
 
 - prevent picture from url submit to reload page
+- add gridVisible prop and default to false
+- rename withLayouts to layersManipulation and reduce possible values
+- move every options inside options prop
 
 # V.0.2.2 :
 

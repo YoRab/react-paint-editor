@@ -86,6 +86,15 @@ const StyledRow = styled.div<{
   aspect-ratio: ${({ aspectRatio }) => aspectRatio};
 `
 
+type AppOptionsType = {
+  layersManipulation: boolean
+  gridVisible: boolean
+}
+
+type OptionalAppOptionsType = {
+  [K in keyof AppOptionsType]?: AppOptionsType[K]
+}
+
 const DEFAULT_TOOLS = [
   ShapeEnum.brush,
   ShapeEnum.line,
@@ -99,12 +108,16 @@ const DEFAULT_TOOLS = [
   ShapeEnum.picture
 ]
 
+const DEFAULT_OPTIONS: AppOptionsType = {
+  layersManipulation: true,
+  gridVisible: false
+}
+
 type AppType = {
   width?: number
   height?: number
   canGrow?: boolean
   canShrink?: boolean
-  withLayouts?: 'always' | 'never' | 'visible' | 'hidden'
   shapes?: DrawableShapeJson[]
   className?: string
   disabled?: boolean
@@ -117,6 +130,7 @@ type AppType = {
         getCurrentData: () => DrawableShapeJson[]
       }
   >
+  options?: OptionalAppOptionsType
 }
 
 const App = ({
@@ -124,14 +138,19 @@ const App = ({
   height = 600,
   canGrow = false,
   canShrink = true,
-  withLayouts = 'hidden',
   shapes: shapesFromProps,
   className: classNameFromProps,
   disabled = false,
   onDataChanged,
   availableTools: availableToolsFromProps = DEFAULT_TOOLS,
-  apiRef
+  apiRef,
+  options
 }: AppType) => {
+  const { layersManipulation, gridVisible } = {
+    ...DEFAULT_OPTIONS,
+    ...options
+  }
+
   const componentRef = useRef<HTMLDivElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
 
@@ -157,9 +176,7 @@ const App = ({
 
   const [isLoading, setIsLoading] = useState(false)
 
-  const [isLayoutPanelShown, setIsLayoutPanelShown] = useState(
-    withLayouts === 'always' || withLayouts === 'visible'
-  )
+  const [isLayoutPanelShown, setIsLayoutPanelShown] = useState(false)
   const [canvasOffset, setCanvasOffset] = useState<Point>([0, 0])
   const [canvasOffsetStartPosition, setCanvasOffsetStartPosition] = useState<Point | undefined>(
     undefined
@@ -170,7 +187,7 @@ const App = ({
     mode: SelectionModeLib.default
   })
 
-  const [withGrid, setWithGrid] = useState(true)
+  const [withGrid, setWithGrid] = useState(gridVisible)
 
   const {
     shapesRef,
@@ -413,20 +430,23 @@ const App = ({
           selectionMode={selectionMode}
           setSelectionMode={setSelectionMode}
         />
-        <Layouts
-          withGrid={withGrid}
-          setWithGrid={setWithGrid}
-          disabled={disabled}
-          shapes={shapesRef.current}
-          moveShapes={moveShapes}
-          selectedShape={selectedShape}
-          removeShape={removeShape}
-          selectShape={selectShape}
-          toggleShapeVisibility={toggleShapeVisibility}
-          toggleShapeLock={toggleShapeLock}
-          withLayouts={withLayouts}
-          isLayoutPanelShown={isLayoutPanelShown}
-        />
+        {layersManipulation && (
+          <>
+            <Layouts
+              withGrid={withGrid}
+              setWithGrid={setWithGrid}
+              disabled={disabled}
+              shapes={shapesRef.current}
+              moveShapes={moveShapes}
+              selectedShape={selectedShape}
+              removeShape={removeShape}
+              selectShape={selectShape}
+              toggleShapeVisibility={toggleShapeVisibility}
+              toggleShapeLock={toggleShapeLock}
+              isLayoutPanelShown={isLayoutPanelShown}
+            />
+          </>
+        )}
       </StyledRow>
       <SettingsBar
         disabled={disabled}
@@ -437,7 +457,7 @@ const App = ({
         defaultConf={defaultConf}
         setDefaultConf={setDefaultConf}
         canvas={canvasRef.current}
-        withLayouts={withLayouts}
+        layersManipulation={layersManipulation}
         toggleLayoutPanel={() => {
           setIsLayoutPanelShown(prev => !prev)
         }}

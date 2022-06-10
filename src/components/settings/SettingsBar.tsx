@@ -25,6 +25,7 @@ const StyledSettingsBar = styled.div`
   display: flex;
   background: var(--bg-color);
   position: relative;
+  min-height: 36px;
 `
 
 const StyledSeparator = styled.div`
@@ -33,7 +34,7 @@ const StyledSeparator = styled.div`
 
 type SettingsBoxType = {
   disabled?: boolean
-  withLayouts?: 'always' | 'never' | 'visible' | 'hidden'
+  layersManipulation?: boolean
   activeTool: ToolsType
   selectedShape: DrawableShape | undefined
   canvas: HTMLCanvasElement | null
@@ -46,7 +47,7 @@ type SettingsBoxType = {
 
 const SettingsBar = ({
   disabled = false,
-  withLayouts,
+  layersManipulation,
   toggleLayoutPanel,
   activeTool,
   selectedShape,
@@ -309,12 +310,13 @@ const SettingsBar = ({
         )
       )}
       <StyledSeparator />
-
-      <LayoutButton
-        withLayouts={withLayouts}
-        disabled={disabled}
-        toggleLayoutPanel={toggleLayoutPanel}
-      />
+      {layersManipulation && (
+        <LayoutButton
+          layersManipulation={layersManipulation}
+          disabled={disabled}
+          toggleLayoutPanel={toggleLayoutPanel}
+        />
+      )}
     </StyledSettingsBar>
   )
 }

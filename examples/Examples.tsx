@@ -10,7 +10,7 @@ type MenuType = {
 const MenuItems = [
   'Default',
   'Custom size',
-  'Limited tools',
+  'Limited tools and customization',
   'From saved file',
   'Manual saves',
   'Auto saves'
@@ -135,7 +135,12 @@ const CurrentApp = ({ selectedComponent }: CurrentAppType) => {
         </>
       )
     case 2:
-      return <App availableTools={['circle', 'brush', undefined, 'not existing tool']} />
+      return (
+        <App
+          options={{ gridVisible: true, layersManipulation: false }}
+          availableTools={['circle', 'brush', undefined, 'not existing tool']}
+        />
+      )
     case 3:
       return (
         <App

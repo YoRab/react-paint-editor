@@ -235,7 +235,6 @@ type LayoutsType = {
   selectedShape: DrawableShape | undefined
   selectShape: (shape: DrawableShape) => void
   moveShapes: (firstShapeId: string, lastShapeId: string) => void
-  withLayouts?: 'always' | 'never' | 'visible' | 'hidden'
   isLayoutPanelShown: boolean
 }
 
@@ -250,7 +249,6 @@ const Layouts = ({
   selectedShape,
   moveShapes,
   selectShape,
-  withLayouts,
   isLayoutPanelShown
 }: LayoutsType) => {
   const [layoutDragging, setLayoutDragging] = useState<string | undefined>(undefined)
@@ -259,66 +257,43 @@ const Layouts = ({
     setWithGrid(prev => !prev)
   }
   return isLayoutPanelShown ? (
-    withLayouts === 'always' ? (
-      <StyledLayouts>
-        {_.map(
-          shape => (
-            <Layout
-              key={shape.id}
-              shape={shape}
-              disabled={disabled}
-              layoutDragging={layoutDragging}
-              setLayoutDragging={setLayoutDragging}
-              selected={selectedShape?.id === shape.id}
-              handleSelect={selectShape}
-              handleRemove={removeShape}
-              onMoveShapes={moveShapes}
-              toggleShapeVisibility={toggleShapeVisibility}
-              toggleShapeLock={toggleShapeLock}
-            />
-          ),
-          shapes
-        )}
-      </StyledLayouts>
-    ) : (
-      <StyledPanelLayouts title="Layouts" alignment="right">
-        <StyledScrollingContent>
-          <StyledGridButton
-            title={withGrid ? 'Grid on' : 'Grid off'}
-            data-grid={withGrid}
-            disabled={disabled}
-            onClick={onToggleGrid}
-            icon={withGrid ? gridOnIcon : gridOffIcon}>
-            Toggle grid
-          </StyledGridButton>
-          <hr />
-          <StyledLayouts>
-            {shapes.length === 0 ? (
-              <StyledPlaceholder>No layout yet</StyledPlaceholder>
-            ) : (
-              _.map(
-                shape => (
-                  <Layout
-                    key={shape.id}
-                    shape={shape}
-                    disabled={disabled}
-                    layoutDragging={layoutDragging}
-                    setLayoutDragging={setLayoutDragging}
-                    selected={selectedShape?.id === shape.id}
-                    handleSelect={selectShape}
-                    handleRemove={removeShape}
-                    onMoveShapes={moveShapes}
-                    toggleShapeVisibility={toggleShapeVisibility}
-                    toggleShapeLock={toggleShapeLock}
-                  />
-                ),
-                shapes
-              )
-            )}
-          </StyledLayouts>
-        </StyledScrollingContent>
-      </StyledPanelLayouts>
-    )
+    <StyledPanelLayouts title="Layouts" alignment="right">
+      <StyledScrollingContent>
+        <StyledGridButton
+          title={withGrid ? 'Grid on' : 'Grid off'}
+          data-grid={withGrid}
+          disabled={disabled}
+          onClick={onToggleGrid}
+          icon={withGrid ? gridOnIcon : gridOffIcon}>
+          Toggle grid
+        </StyledGridButton>
+        <hr />
+        <StyledLayouts>
+          {shapes.length === 0 ? (
+            <StyledPlaceholder>No layout yet</StyledPlaceholder>
+          ) : (
+            _.map(
+              shape => (
+                <Layout
+                  key={shape.id}
+                  shape={shape}
+                  disabled={disabled}
+                  layoutDragging={layoutDragging}
+                  setLayoutDragging={setLayoutDragging}
+                  selected={selectedShape?.id === shape.id}
+                  handleSelect={selectShape}
+                  handleRemove={removeShape}
+                  onMoveShapes={moveShapes}
+                  toggleShapeVisibility={toggleShapeVisibility}
+                  toggleShapeLock={toggleShapeLock}
+                />
+              ),
+              shapes
+            )
+          )}
+        </StyledLayouts>
+      </StyledScrollingContent>
+    </StyledPanelLayouts>
   ) : null
 }
 
