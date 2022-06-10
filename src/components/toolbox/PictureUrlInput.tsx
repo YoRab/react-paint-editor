@@ -23,7 +23,8 @@ type PictureUrlModalType = {
 const PictureUrlModal = ({ togglePictureUrlModal, addPicture }: PictureUrlModalType) => {
   const pictureUrlInputRef = useRef<HTMLInputElement>(null)
 
-  const addPictureFromUrl = async () => {
+  const addPictureFromUrl = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
     const url = pictureUrlInputRef.current?.value
     if (url) {
       await addPicture(url)
