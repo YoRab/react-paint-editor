@@ -4,6 +4,8 @@
 - add gridVisible prop and default to false
 - rename withLayouts to layersManipulation and reduce possible values
 - move every options inside options prop
+- remove ajv and any kind of json validation
+- limit snackbar use on success and always log errors
 
 # V.0.2.2 :
 

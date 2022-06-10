@@ -1,6 +1,4 @@
-import Ajv from 'ajv'
 import _ from 'lodash/fp'
-import schema from 'schemas/drawableShape.json'
 import { DrawableShape, DrawableShapeJson, ShapeEnum } from 'types/Shapes'
 
 export const fetchAndStringify = (url: string) => {
@@ -110,14 +108,4 @@ export const decodePicturesInShapes = async (shapesForJson: DrawableShapeJson[])
 
   await Promise.all(promisesArray)
   return shapes
-}
-
-export const validateJson = (json: unknown) => {
-  const ajv = new Ajv()
-  const validate = ajv.compile(schema)
-  if (!_.isArray(json)) return false
-  for (const shape of json) {
-    if (!validate(shape)) return false
-  }
-  return true
 }

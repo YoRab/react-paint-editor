@@ -22,8 +22,7 @@ import {
   downloadFile,
   encodePicturesInShapes,
   encodeShapesInString,
-  getCanvasImage,
-  validateJson
+  getCanvasImage
 } from 'utils/file'
 import { SelectionModeData, SelectionModeLib } from 'types/Mode'
 import useComponent from 'hooks/useComponent'
@@ -262,14 +261,12 @@ const App = ({
         throw new Error()
       }
       downloadFile(dataURL, 'drawing.png')
-      addSnackbar({ type: SnackbarTypeEnum.Success, text: 'Export terminé !' })
       setIsLoading(false)
     } catch (e) {
       if (e instanceof Error) {
         addSnackbar({ type: SnackbarTypeEnum.Error, text: "L'export a échoué" })
-      } else {
-        console.warn(e)
       }
+      console.warn(e)
     } finally {
       setIsLoading(false)
     }
@@ -280,17 +277,15 @@ const App = ({
     try {
       const content = encodeShapesInString(shapesRef.current)
       if (!content) {
-        throw new Error("L'enregistrement a échoué")
+        throw new Error("L'encodage a échoué")
       }
       downloadFile(content, 'drawing.json')
-      addSnackbar({ type: SnackbarTypeEnum.Success, text: 'Fichier enregistré !' })
       setIsLoading(false)
     } catch (e) {
       if (e instanceof Error) {
-        addSnackbar({ type: SnackbarTypeEnum.Error, text: e.message })
-      } else {
-        console.warn(e)
+        addSnackbar({ type: SnackbarTypeEnum.Error, text: "L'enregistrement a échoué" })
       }
+      console.warn(e)
     } finally {
       setIsLoading(false)
     }
@@ -298,8 +293,6 @@ const App = ({
 
   const loadJson = useCallback(
     async (json: unknown) => {
-      const isValidated = validateJson(json)
-      if (!isValidated) throw new Error('Le fichier est corrompu')
       const shapes = await decodePicturesInShapes(json as DrawableShapeJson[])
       clearCanvas(shapes, true)
     },
@@ -315,10 +308,9 @@ const App = ({
         addSnackbar({ type: SnackbarTypeEnum.Success, text: 'Fichier chargé !' })
       } catch (e) {
         if (e instanceof Error) {
-          addSnackbar({ type: SnackbarTypeEnum.Error, text: e.message })
-        } else {
-          console.warn(e)
+          addSnackbar({ type: SnackbarTypeEnum.Error, text: 'Le chargement a échoué' })
         }
+        console.warn(e)
       } finally {
         setIsLoading(false)
       }
@@ -334,10 +326,9 @@ const App = ({
         selectShape(pictureShape)
       } catch (e) {
         if (e instanceof Error) {
-          addSnackbar({ type: SnackbarTypeEnum.Error, text: e.message })
-        } else {
-          console.warn(e)
+          addSnackbar({ type: SnackbarTypeEnum.Error, text: 'Le chargement a échoué' })
         }
+        console.warn(e)
       } finally {
         setIsLoading(false)
       }
