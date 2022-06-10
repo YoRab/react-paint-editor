@@ -93,6 +93,7 @@ const MenuGroup = ({
       document.addEventListener('click', closePanel)
     }, 0)
     return () => {
+      clearTimeout(timeoutId)
       document.removeEventListener('click', closePanel)
     }
   }, [isOpen])

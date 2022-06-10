@@ -1,3 +1,7 @@
+# V.0.3.0 :
+
+- prevent picture from url submit to reload page
+
 # V.0.2.2 :
 
 - Migrate to react 18
