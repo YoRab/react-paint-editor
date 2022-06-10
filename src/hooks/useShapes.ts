@@ -48,8 +48,8 @@ const useShapes = (onDataChanged: () => void = _.noop) => {
   }, [])
 
   const addPictureShape = useCallback(
-    async (fileOrUrl: File | string, maxSize = 300) => {
-      const pictureShape = await createPicture(fileOrUrl, maxSize)
+    async (fileOrUrl: File | string, maxWidth = 300, maxHeight = 300) => {
+      const pictureShape = await createPicture(fileOrUrl, maxWidth, maxHeight)
       addShape(pictureShape)
       return pictureShape
     },

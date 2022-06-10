@@ -322,7 +322,7 @@ const App = ({
     async (fileOrUrl: File | string) => {
       setIsLoading(true)
       try {
-        const pictureShape = await addPictureShape(fileOrUrl)
+        const pictureShape = await addPictureShape(fileOrUrl, width, height)
         selectShape(pictureShape)
       } catch (e) {
         if (e instanceof Error) {
@@ -333,7 +333,7 @@ const App = ({
         setIsLoading(false)
       }
     },
-    [addPictureShape, selectShape, addSnackbar]
+    [addPictureShape, selectShape, addSnackbar, width, height]
   )
 
   useKeyboard({

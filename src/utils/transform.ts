@@ -679,3 +679,23 @@ export const calculateTextWidth = (
 export const degreesToRadians = (degrees: number) => degrees * (Math.PI / 180)
 
 export const radiansToDegrees = (radians: number) => (radians * 180) / Math.PI
+
+export const fitContentInsideContainer = (
+  contentWidth: number,
+  contentHeight: number,
+  containerWidth: number,
+  containerHeight: number,
+  shouldFillContainer = false
+) => {
+  const contentRatio = contentWidth / contentHeight
+  const containerRatio = containerWidth / containerHeight
+  if (contentRatio > containerRatio) {
+    const newWidth = shouldFillContainer ? containerWidth : Math.min(contentWidth, containerWidth)
+    return [newWidth, newWidth / contentRatio]
+  } else {
+    const newHeight = shouldFillContainer
+      ? containerHeight
+      : Math.min(contentHeight, containerHeight)
+    return [newHeight * contentRatio, newHeight]
+  }
+}

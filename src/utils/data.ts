@@ -1,21 +1,29 @@
 import _ from 'lodash/fp'
-import { calculateTextFontSize } from './transform'
+import { calculateTextFontSize, fitContentInsideContainer } from './transform'
 import { DrawablePicture, Point, DrawableShape, ShapeEnum, StyledShape } from 'types/Shapes'
 
-export const createPicture = (fileOrUrl: File | string, maxPictureSize: number) => {
+export const createPicture = (
+  fileOrUrl: File | string,
+  maxPictureWidth: number,
+  maxPictureHeight: number
+) => {
   return new Promise<DrawablePicture>((resolve, reject) => {
     const img = new Image()
     img.onload = () => {
-      const maxSize = Math.min(Math.max(img.width, img.height), maxPictureSize)
-      const imgRatio = img.width / img.height
+      const [width, height] = fitContentInsideContainer(
+        img.width,
+        img.height,
+        maxPictureWidth,
+        maxPictureHeight
+      )
 
       const pictureShape: DrawablePicture = {
         type: ShapeEnum.picture,
         id: _.uniqueId(ShapeEnum.picture),
-        x: 0,
-        y: 0,
-        width: imgRatio < 1 ? imgRatio * maxSize : maxSize,
-        height: imgRatio > 1 ? maxSize / imgRatio : maxSize,
+        x: (maxPictureWidth - width) / 2,
+        y: (maxPictureHeight - height) / 2,
+        width,
+        height,
         src: img.src,
         img,
         translation: [0, 0],
