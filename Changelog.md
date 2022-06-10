@@ -7,6 +7,7 @@
 - remove ajv and any kind of json validation
 - limit snackbar use on success and always log errors
 - fit size and center uploaded picture
+- Add new viewer mode
 
 # V.0.2.2 :
 

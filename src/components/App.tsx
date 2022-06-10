@@ -119,6 +119,7 @@ type AppType = {
   canShrink?: boolean
   shapes?: DrawableShapeJson[]
   className?: string
+  mode?: 'editor' | 'viewer'
   disabled?: boolean
   onDataChanged?: () => void
   availableTools?: ShapeEnum[]
@@ -139,7 +140,8 @@ const App = ({
   canShrink = true,
   shapes: shapesFromProps,
   className: classNameFromProps,
-  disabled = false,
+  mode = 'editor',
+  disabled: disabledFromProps = false,
   onDataChanged,
   availableTools: availableToolsFromProps = DEFAULT_TOOLS,
   apiRef,
@@ -149,7 +151,8 @@ const App = ({
     ...DEFAULT_OPTIONS,
     ...options
   }
-
+  const isEditMode = mode !== 'viewer'
+  const disabled = disabledFromProps || !isEditMode
   const componentRef = useRef<HTMLDivElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
 
@@ -380,22 +383,24 @@ const App = ({
       width={width}
       data-grow={canGrow}
       data-shrink={canShrink}>
-      <Toolbar
-        disabled={disabled}
-        activeTool={activeTool}
-        clearCanvas={clearCanvas}
-        setActiveTool={selectTool}
-        exportCanvasInFile={exportCanvasInFile}
-        saveFile={saveFile}
-        loadFile={loadFile}
-        addPicture={addPicture}
-        hasActionToUndo={canGoBackward}
-        hasActionToRedo={canGoForward}
-        hasActionToClear={canClear}
-        undoAction={undoAction}
-        redoAction={redoAction}
-        availableTools={availableTools}
-      />
+      {isEditMode && (
+        <Toolbar
+          disabled={disabled}
+          activeTool={activeTool}
+          clearCanvas={clearCanvas}
+          setActiveTool={selectTool}
+          exportCanvasInFile={exportCanvasInFile}
+          saveFile={saveFile}
+          loadFile={loadFile}
+          addPicture={addPicture}
+          hasActionToUndo={canGoBackward}
+          hasActionToRedo={canGoForward}
+          hasActionToClear={canClear}
+          undoAction={undoAction}
+          redoAction={redoAction}
+          availableTools={availableTools}
+        />
+      )}
       <StyledRow data-grow={canGrow} width={width} aspectRatio={`calc(${width} / ${height})`}>
         <Canvas
           canGrow={canGrow}
@@ -421,40 +426,42 @@ const App = ({
           selectionMode={selectionMode}
           setSelectionMode={setSelectionMode}
         />
-        {layersManipulation && (
-          <>
-            <Layouts
-              withGrid={withGrid}
-              setWithGrid={setWithGrid}
-              disabled={disabled}
-              shapes={shapesRef.current}
-              moveShapes={moveShapes}
-              selectedShape={selectedShape}
-              removeShape={removeShape}
-              selectShape={selectShape}
-              toggleShapeVisibility={toggleShapeVisibility}
-              toggleShapeLock={toggleShapeLock}
-              isLayoutPanelShown={isLayoutPanelShown}
-            />
-          </>
+        {isEditMode && layersManipulation && (
+          <Layouts
+            withGrid={withGrid}
+            setWithGrid={setWithGrid}
+            disabled={disabled}
+            shapes={shapesRef.current}
+            moveShapes={moveShapes}
+            selectedShape={selectedShape}
+            removeShape={removeShape}
+            selectShape={selectShape}
+            toggleShapeVisibility={toggleShapeVisibility}
+            toggleShapeLock={toggleShapeLock}
+            isLayoutPanelShown={isLayoutPanelShown}
+          />
         )}
       </StyledRow>
-      <SettingsBar
-        disabled={disabled}
-        activeTool={activeTool}
-        selectedShape={selectedShape}
-        removeShape={removeShape}
-        updateShape={updateShape}
-        defaultConf={defaultConf}
-        setDefaultConf={setDefaultConf}
-        canvas={canvasRef.current}
-        layersManipulation={layersManipulation}
-        toggleLayoutPanel={() => {
-          setIsLayoutPanelShown(prev => !prev)
-        }}
-      />
-      <Loading isLoading={isLoading} />
-      <SnackbarContainer snackbarList={snackbarList} />
+      {isEditMode && (
+        <>
+          <SettingsBar
+            disabled={disabled}
+            activeTool={activeTool}
+            selectedShape={selectedShape}
+            removeShape={removeShape}
+            updateShape={updateShape}
+            defaultConf={defaultConf}
+            setDefaultConf={setDefaultConf}
+            canvas={canvasRef.current}
+            layersManipulation={layersManipulation}
+            toggleLayoutPanel={() => {
+              setIsLayoutPanelShown(prev => !prev)
+            }}
+          />
+          <Loading isLoading={isLoading} />
+          <SnackbarContainer snackbarList={snackbarList} />
+        </>
+      )}
     </StyledApp>
   )
 }
