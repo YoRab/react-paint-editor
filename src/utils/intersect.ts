@@ -12,7 +12,8 @@ export const getCursorPosition = (
   e: MouseEvent | TouchEvent,
   canvas: HTMLCanvasElement | null,
   givenWidth: number,
-  givenHeight: number
+  givenHeight: number,
+  scaleRatio = 1
 ): Point => {
   const { clientX, clientY } = _.getOr(_.getOr(e, 'changedTouches[0]', e), 'touches[0]', e)
   const canvasBoundingRect = canvas?.getBoundingClientRect() ?? {
@@ -22,8 +23,8 @@ export const getCursorPosition = (
     height: givenHeight
   }
   return [
-    (clientX - canvasBoundingRect.left) * (givenWidth / canvasBoundingRect.width),
-    (clientY - canvasBoundingRect.top) * (givenHeight / canvasBoundingRect.height)
+    ((clientX - canvasBoundingRect.left) * (givenWidth / canvasBoundingRect.width)) / scaleRatio,
+    ((clientY - canvasBoundingRect.top) * (givenHeight / canvasBoundingRect.height)) / scaleRatio
   ]
 }
 

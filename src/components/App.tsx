@@ -31,6 +31,7 @@ import useSnackbar from 'hooks/useSnackbar'
 import { SnackbarTypeEnum } from 'constants/snackbar'
 import Loading from 'components/common/Loading'
 import { cleanShapesBeforeExport } from 'utils/data'
+import useResizeObserver from 'hooks/useResizeObserver'
 
 const StyledApp = styled.div<{
   width: number
@@ -59,7 +60,6 @@ const StyledApp = styled.div<{
   }
 
   &[data-grow='false'] {
-    width: fit-content;
     max-width: ${({ width }) => `min(100%, ${width}px)`};
   }
 
@@ -142,8 +142,8 @@ type AppType = {
 }
 
 const App = ({
-  width = 1000,
-  height = 600,
+  width: finalWidth = 1000,
+  height: finalHeight = 600,
   canGrow = false,
   canShrink = true,
   shapes: shapesFromProps,
@@ -163,6 +163,11 @@ const App = ({
   const disabled = disabledFromProps || !isEditMode
   const componentRef = useRef<HTMLDivElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
+  const [canvasSize, setCanvasSize] = useState({
+    width: finalWidth,
+    height: finalHeight,
+    scaleRatio: 1
+  })
 
   const availableTools = _.intersection(DEFAULT_TOOLS, availableToolsFromProps)
 
@@ -333,7 +338,7 @@ const App = ({
     async (fileOrUrl: File | string) => {
       setIsLoading(true)
       try {
-        const pictureShape = await addPictureShape(fileOrUrl, width, height)
+        const pictureShape = await addPictureShape(fileOrUrl, canvasSize.width, canvasSize.height)
         selectShape(pictureShape)
       } catch (e) {
         if (e instanceof Error) {
@@ -344,7 +349,15 @@ const App = ({
         setIsLoading(false)
       }
     },
-    [addPictureShape, selectShape, addSnackbar, width, height]
+    [addPictureShape, selectShape, addSnackbar, canvasSize]
+  )
+
+  const onResized = useCallback(
+    (measuredWidth: number, measuredHeight: number) => {
+      const scaleRatio = measuredWidth / finalWidth
+      setCanvasSize({ width: measuredWidth, height: finalHeight * scaleRatio, scaleRatio })
+    },
+    [finalWidth, finalHeight]
   )
 
   useKeyboard({
@@ -358,6 +371,8 @@ const App = ({
     backwardShape,
     forwardShape
   })
+
+  useResizeObserver({ element: componentRef, onResized })
 
   useEffect(() => {
     if (!isInsideComponent) setSelectedShape(undefined)
@@ -388,7 +403,7 @@ const App = ({
     <StyledApp
       ref={componentRef}
       className={className}
-      width={width}
+      width={finalWidth}
       data-grow={canGrow}
       data-shrink={canShrink}>
       {isEditMode && (
@@ -409,7 +424,10 @@ const App = ({
           availableTools={availableTools}
         />
       )}
-      <StyledRow data-grow={canGrow} width={width} aspectRatio={`calc(${width} / ${height})`}>
+      <StyledRow
+        data-grow={canGrow}
+        width={canvasSize.width}
+        aspectRatio={`calc(${canvasSize.width} / ${canvasSize.height})`}>
         <Canvas
           canGrow={canGrow}
           withGrid={withGrid}
@@ -429,8 +447,7 @@ const App = ({
           defaultConf={defaultConf}
           saveShapes={saveShapes}
           ref={canvasRef}
-          width={width}
-          height={height}
+          canvasSize={canvasSize}
           selectionMode={selectionMode}
           setSelectionMode={setSelectionMode}
         />

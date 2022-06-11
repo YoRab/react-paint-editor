@@ -5,7 +5,6 @@ import { DrawableShape, Point, ShapeEnum, StyledShape, ToolEnum, ToolsType } fro
 import { drawSelection, drawShape } from 'utils/draw'
 import { SelectionModeData, SelectionModeLib } from 'types/Mode'
 import { calculateTextWidth } from 'utils/transform'
-import { FRAMERATE_DRAW } from 'constants/draw'
 import EditTextBox from './toolbox/EditTextBox'
 import useDrawableCanvas from 'hooks/useDrawableCanvas'
 import { encodedTransparentIcon } from 'constants/icons'
@@ -14,18 +13,22 @@ const drawCanvas = (
   drawCtx: CanvasRenderingContext2D,
   selectionCtx: CanvasRenderingContext2D,
   selectionMode: SelectionModeData<number | Point>,
-  width: number,
-  height: number,
+  canvasSize: {
+    width: number
+    height: number
+    scaleRatio: number
+  },
   activeTool: ToolsType,
   canvasOffset: Point,
   shapes: DrawableShape[],
   selectedShape: DrawableShape | undefined
 ) => {
+  const { width, height, scaleRatio } = canvasSize
   drawCtx.clearRect(0, 0, width, height)
   selectionCtx.clearRect(0, 0, width, height)
   for (let i = shapes.length - 1; i >= 0; i--) {
     if (selectionMode.mode !== SelectionModeLib.textedition || shapes[i] !== selectedShape) {
-      drawShape(drawCtx, shapes[i], canvasOffset)
+      drawShape(drawCtx, shapes[i], scaleRatio, canvasOffset)
     }
   }
   selectedShape &&
@@ -33,6 +36,7 @@ const drawCanvas = (
     drawSelection({
       ctx: selectionCtx,
       shape: selectedShape,
+      scaleRatio,
       canvasOffset,
       withAnchors: selectionMode.mode !== SelectionModeLib.textedition
     })
@@ -93,8 +97,11 @@ type DrawerType = {
   withGrid: boolean
   disabled?: boolean
   canGrow?: boolean
-  width: number
-  height: number
+  canvasSize: {
+    width: number
+    height: number
+    scaleRatio: number
+  }
   shapes: DrawableShape[]
   saveShapes: () => void
   addShape: (newShape: DrawableShape) => void
@@ -119,8 +126,7 @@ const Canvas = React.forwardRef<HTMLCanvasElement, DrawerType>(
       withGrid,
       canGrow,
       disabled = false,
-      width,
-      height,
+      canvasSize,
       shapes,
       addShape,
       updateSingleShape,
@@ -149,13 +155,12 @@ const Canvas = React.forwardRef<HTMLCanvasElement, DrawerType>(
     const { hoverMode } = useDrawableCanvas({
       disabled,
       addShape,
+      canvasSize,
       drawCanvasRef,
       setActiveTool,
       shapes,
       defaultConf,
       selectionMode,
-      width,
-      height,
       activeTool,
       isInsideComponent,
       setCanvasOffset,
@@ -196,29 +201,36 @@ const Canvas = React.forwardRef<HTMLCanvasElement, DrawerType>(
     useEffect(() => {
       const drawCtx = drawCanvasRef.current?.getContext('2d')
       const selectionCtx = selectionCanvasRef.current?.getContext('2d')
+
       drawCtx &&
         selectionCtx &&
-        _.throttle(FRAMERATE_DRAW, drawCanvas)(
-          drawCtx,
-          selectionCtx,
-          selectionMode,
-          width,
-          height,
-          activeTool,
-          canvasOffset,
-          shapes,
-          selectedShape
+        window.requestAnimationFrame(() =>
+          drawCanvas(
+            drawCtx,
+            selectionCtx,
+            selectionMode,
+            canvasSize,
+            activeTool,
+            canvasOffset,
+            shapes,
+            selectedShape
+          )
         )
-    }, [shapes, selectionMode, selectedShape, activeTool, canvasOffset, width, height])
+    }, [shapes, selectionMode, selectedShape, activeTool, canvasOffset, canvasSize])
 
     return (
       <StyledCanvasBox>
         <StyledCanvasContainer data-grid={withGrid} data-grow={canGrow}>
-          <StyledDrawCanvas ref={drawCanvasRef} data-grow={canGrow} width={width} height={height} />
+          <StyledDrawCanvas
+            ref={drawCanvasRef}
+            data-grow={canGrow}
+            width={canvasSize.width}
+            height={canvasSize.height}
+          />
           <StyledSelectionCanvas
             ref={selectionCanvasRef}
-            width={width}
-            height={height}
+            width={canvasSize.width}
+            height={canvasSize.height}
             data-grow={canGrow}
             cursor={
               (activeTool !== ToolEnum.selection && activeTool !== ToolEnum.move) ||

@@ -14,6 +14,8 @@
 - Export and import : remove temporary values (id) from stored file
 - Clean unknown shape format from imported data
 - Use ref for onDataChanged prop to avoid rerender if callback changes
+- Calculate container size to resize canvas instead of CSS
+- use requestAnimationFrame to improve perf
 - other minor fixes
 - minor design improvements
 
