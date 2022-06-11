@@ -25,7 +25,9 @@ const StyledSettingsBar = styled.div`
   display: flex;
   background: var(--bg-color);
   position: relative;
-  min-height: 36px;
+  height: 36px;
+  border-top: 1px solid var(--border-color);
+  box-sizing: border-box;
 `
 
 const StyledSeparator = styled.div`

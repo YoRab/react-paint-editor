@@ -44,11 +44,19 @@ const StyledApp = styled.div<{
   /* --shrinkedcanvas-bg-color: #364181; */
   /* --shrinkedcanvas-bg-color: #d7ecec; */
   --shrinkedcanvas-bg-color: white;
+  --border-color: #36418129;
+
   display: flex;
   color: var(--text-color);
   position: relative;
   overflow: hidden;
   flex-direction: column;
+
+  hr {
+    width: 100%;
+    border: none;
+    border-top: 1px solid var(--border-color);
+  }
 
   &[data-grow='false'] {
     width: fit-content;

@@ -33,12 +33,13 @@ const StyledToolbox = styled.div`
   display: flex;
   max-height: 36px;
   background: var(--bg-color);
+  border-bottom: 1px solid var(--border-color);
+  box-sizing: border-box;
 `
 
 const StyledShrinkableToolsInner = styled.div`
   display: inline-block;
   text-align: left;
-  background: var(--bg-color);
   margin-right: 36px;
   text-align: right;
 

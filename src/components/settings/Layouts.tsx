@@ -111,13 +111,6 @@ const StyledScrollingContent = styled.div`
   display: flex;
   flex-direction: column;
   overflow-y: auto;
-
-  hr {
-    opacity: 0.6;
-    width: 100%;
-    border: none;
-    border-top: 1px solid var(--text-color);
-  }
 `
 
 const StyledPlaceholder = styled.div`
@@ -257,7 +250,7 @@ const Layouts = ({
     setWithGrid(prev => !prev)
   }
   return isLayoutPanelShown ? (
-    <StyledPanelLayouts title="Layouts" alignment="right">
+    <StyledPanelLayouts title="Layers" alignment="right">
       <StyledScrollingContent>
         <StyledGridButton
           title={withGrid ? 'Grid on' : 'Grid off'}
@@ -270,7 +263,7 @@ const Layouts = ({
         <hr />
         <StyledLayouts>
           {shapes.length === 0 ? (
-            <StyledPlaceholder>No layout yet</StyledPlaceholder>
+            <StyledPlaceholder>No layer yet</StyledPlaceholder>
           ) : (
             _.map(
               shape => (

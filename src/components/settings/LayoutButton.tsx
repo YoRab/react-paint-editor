@@ -23,7 +23,7 @@ type LayoutButtonType = {
 const LayoutButton = ({ layersManipulation, disabled, toggleLayoutPanel }: LayoutButtonType) => {
   return (
     <StyleToggleLayoutButton
-      title="Toggle layout"
+      title="Toggle layers panel"
       data-hidden={!layersManipulation}
       disabled={disabled}
       onClick={toggleLayoutPanel}

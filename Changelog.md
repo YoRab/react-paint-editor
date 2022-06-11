@@ -8,6 +8,7 @@
 - limit snackbar use on success and always log errors
 - fit size and center uploaded picture
 - Add new viewer mode
+- add borders on bars
 
 # V.0.2.2 :
 
