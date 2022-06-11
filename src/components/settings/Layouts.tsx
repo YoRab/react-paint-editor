@@ -44,7 +44,7 @@ const StyledLayout = styled.div`
 
   &[data-selected='1'] {
     color: var(--text-color-selected);
-    border: 3px solid var(--bg-color-selected);
+    background: var(--bg-color-selected);
   }
 
   &[data-selected='0'][data-disabled='0'] {
@@ -194,13 +194,14 @@ const Layout = ({
       data-selected={+selected}
       ref={ref}>
       <span dangerouslySetInnerHTML={{ __html: getShapePicture(shape.type) }} />
-
+      <span>{shape.id}</span>
       <StyledSeparator />
 
       <StyledVisibleButton
         title={shape.visible ? 'Hide' : 'Show'}
         data-visible={shape.visible !== false}
         disabled={disabled}
+        selected={selected}
         onClick={onToggleShapeVisibility}
         icon={shape.visible === false ? visibilityOffIcon : visibilityIcon}
       />
@@ -209,6 +210,7 @@ const Layout = ({
         title={shape.locked ? 'Locked' : 'Unlocked'}
         data-locked={!!shape.locked}
         disabled={disabled}
+        selected={selected}
         onClick={onToggleShapeLock}
         icon={shape.locked ? lockedIcon : unlockedIcon}
       />

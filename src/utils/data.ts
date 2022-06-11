@@ -19,7 +19,7 @@ export const createPicture = (
 
       const pictureShape: DrawablePicture = {
         type: ShapeEnum.picture,
-        id: _.uniqueId(ShapeEnum.picture),
+        id: _.uniqueId(`${ShapeEnum.picture}_`),
         x: (maxPictureWidth - width) / 2,
         y: (maxPictureHeight - height) / 2,
         width,
@@ -56,7 +56,7 @@ export const createShape = (
     case ShapeEnum.brush:
       return {
         type: ShapeEnum.brush,
-        id: _.uniqueId(shape),
+        id: _.uniqueId(`${shape}_`),
         points: [[cursorPosition]],
         translation: [0, 0],
         rotation: 0,
@@ -65,7 +65,7 @@ export const createShape = (
     case ShapeEnum.line:
       return {
         type: ShapeEnum.line,
-        id: _.uniqueId(shape),
+        id: _.uniqueId(`${shape}_`),
         points: [cursorPosition, cursorPosition],
         translation: [0, 0],
         rotation: 0,
@@ -74,7 +74,7 @@ export const createShape = (
     case ShapeEnum.polygon:
       return {
         type: ShapeEnum.polygon,
-        id: _.uniqueId(shape),
+        id: _.uniqueId(`${shape}_`),
         points: _.flow(
           _.range(0),
           _.map(() => cursorPosition)
@@ -86,7 +86,7 @@ export const createShape = (
     case ShapeEnum.curve:
       return {
         type: ShapeEnum.curve,
-        id: _.uniqueId(shape),
+        id: _.uniqueId(`${shape}_`),
         points: _.flow(
           _.range(0),
           _.map(() => cursorPosition)
@@ -99,7 +99,7 @@ export const createShape = (
     case ShapeEnum.square:
       return {
         type: shape,
-        id: _.uniqueId(shape),
+        id: _.uniqueId(`${shape}_`),
         x: cursorPosition[0],
         y: cursorPosition[1],
         width: 1,
@@ -113,7 +113,7 @@ export const createShape = (
       const fontSize = calculateTextFontSize(ctx, defaultValue, 50, defaultConf.style?.fontFamily)
       return {
         type: ShapeEnum.text,
-        id: _.uniqueId(shape),
+        id: _.uniqueId(`${shape}_`),
         x: cursorPosition[0],
         y: cursorPosition[1],
         value: defaultValue,
@@ -127,7 +127,7 @@ export const createShape = (
     case ShapeEnum.ellipse:
       return {
         type: ShapeEnum.ellipse,
-        id: _.uniqueId(shape),
+        id: _.uniqueId(`${shape}_`),
         x: cursorPosition[0],
         y: cursorPosition[1],
         radiusX: 0,
@@ -140,7 +140,7 @@ export const createShape = (
     default:
       return {
         type: ShapeEnum.circle,
-        id: _.uniqueId(shape),
+        id: _.uniqueId(`${shape}_`),
         x: cursorPosition[0],
         y: cursorPosition[1],
         radius: 0,
@@ -154,7 +154,7 @@ export const createShape = (
 export const copyShape = (shape: DrawableShape) => {
   return {
     ...shape,
-    id: _.uniqueId(shape.type),
+    id: _.uniqueId(`${shape.type}_`),
     translation: [shape.translation[0] + 20, shape.translation[1] + 20]
   } as DrawableShape
 }

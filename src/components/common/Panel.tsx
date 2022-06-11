@@ -9,7 +9,7 @@ const StyledPanel = styled.div`
   background: var(--bg-color);
   bottom: 100%;
   box-shadow: 0 3px 8px rgb(0 0 0 / 24%);
-  padding: 4px;
+  padding: 8px;
   border-radius: 8px;
   white-space: nowrap;
 

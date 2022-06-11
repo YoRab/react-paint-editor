@@ -9,6 +9,9 @@
 - fit size and center uploaded picture
 - Add new viewer mode
 - add borders on bars
+- display shape id in layer panel
+- other minor fixes
+- minor design improvements
 
 # V.0.2.2 :
 
