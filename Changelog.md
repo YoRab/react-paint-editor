@@ -13,6 +13,7 @@
 - Export : round values to 2 decimal points
 - Export and import : remove temporary values (id) from stored file
 - Clean unknown shape format from imported data
+- Use ref for onDataChanged prop to avoid rerender if callback changes
 - other minor fixes
 - minor design improvements
 

@@ -5,6 +5,8 @@ import { createPicture } from 'utils/data'
 
 const useShapes = (onDataChanged: () => void = _.noop) => {
   const shapesRef = useRef<DrawableShape[]>([])
+  const onDataChangedRef = useRef<() => void>(onDataChanged)
+  onDataChangedRef.current = onDataChanged
 
   const [selectedShape, setSelectedShape] = useState<DrawableShape | undefined>(undefined)
 
@@ -184,8 +186,8 @@ const useShapes = (onDataChanged: () => void = _.noop) => {
   )
 
   useEffect(() => {
-    onDataChanged()
-  }, [onDataChanged, savedShapes])
+    onDataChangedRef.current()
+  }, [savedShapes])
 
   return {
     shapesRef,
