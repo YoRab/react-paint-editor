@@ -12,6 +12,7 @@
 - display shape id in layer panel
 - Export : round values to 2 decimal points
 - Export and import : remove temporary values (id) from stored file
+- Clean unknown shape format from imported data
 - other minor fixes
 - minor design improvements
 

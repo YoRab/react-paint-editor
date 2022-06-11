@@ -377,7 +377,7 @@ const App = ({
       },
 
       getCurrentData: () => {
-        return cleanShapesBeforeExport(shapesRef.current)
+        return cleanShapesBeforeExport(shapesRef.current) as DrawableShape[] //TODO : create different types for stored shapes
       }
     }
   }, [apiRef, shapesRef])

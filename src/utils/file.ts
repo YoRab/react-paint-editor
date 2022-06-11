@@ -57,39 +57,43 @@ export const decodeJson = async (file: File) => {
 export const decodePicturesInShapes = async (shapesForJson: DrawableShapeJson[]) => {
   const promisesArray: Promise<void>[] = []
 
-  const shapes: DrawableShape[] = shapesForJson.map(shape => {
-    if (shape.type === ShapeEnum.picture) {
-      const img = new Image()
-      const newPromise = new Promise<void>((resolve, reject) => {
-        img.onload = () => {
-          resolve()
+  const shapes: DrawableShape[] = _.flow(
+    _.map((shape: DrawableShapeJson) => {
+      if (!_.includes(shape.type, ShapeEnum)) return null
+      if (shape.type === ShapeEnum.picture) {
+        const img = new Image()
+        const newPromise = new Promise<void>((resolve, reject) => {
+          img.onload = () => {
+            resolve()
+          }
+
+          img.onerror = () => {
+            reject(new Error('Some images could not be loaded'))
+          }
+        })
+        promisesArray.push(newPromise)
+
+        if (shape.src.startsWith('http')) {
+          fetchAndStringify(shape.src)
+            .then(picData => {
+              img.src = picData
+            })
+            .catch(() => {
+              img.src = '' // to trigger onerror
+            })
+        } else {
+          img.src = shape.src
         }
 
-        img.onerror = () => {
-          reject(new Error('Some images could not be loaded'))
+        return {
+          ...shape,
+          img
         }
-      })
-      promisesArray.push(newPromise)
-
-      if (shape.src.startsWith('http')) {
-        fetchAndStringify(shape.src)
-          .then(picData => {
-            img.src = picData
-          })
-          .catch(() => {
-            img.src = '' // to trigger onerror
-          })
-      } else {
-        img.src = shape.src
       }
-
-      return {
-        ...shape,
-        img
-      }
-    }
-    return addDefaultAndTempShapeProps(shape)
-  })
+      return addDefaultAndTempShapeProps(shape)
+    }),
+    _.compact
+  )(shapesForJson)
 
   await Promise.all(promisesArray)
   return shapes
