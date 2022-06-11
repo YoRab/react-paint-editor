@@ -16,6 +16,7 @@
 - Use ref for onDataChanged prop to avoid rerender if callback changes
 - Calculate container size to resize canvas instead of CSS
 - use requestAnimationFrame to improve perf
+- fix TextEdit position and size not working with canvas resized
 - other minor fixes
 - minor design improvements
 

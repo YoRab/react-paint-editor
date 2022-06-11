@@ -246,6 +246,7 @@ const Canvas = React.forwardRef<HTMLCanvasElement, DrawerType>(
           {selectionMode.mode === SelectionModeLib.textedition &&
             selectedShape?.type === ShapeEnum.text && (
               <EditTextBox
+                scaleRatio={canvasSize.scaleRatio}
                 disabled={disabled}
                 shape={selectedShape}
                 defaultValue={selectionMode.defaultValue}
