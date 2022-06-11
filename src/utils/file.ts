@@ -1,5 +1,6 @@
 import _ from 'lodash/fp'
 import { DrawableShape, DrawableShapeJson, ShapeEnum } from 'types/Shapes'
+import { addDefaultAndTempShapeProps, cleanShapesBeforeExport } from './data'
 
 export const fetchAndStringify = (url: string) => {
   return fetch(url)
@@ -16,7 +17,7 @@ export const downloadFile = (content: string, fileName: string) => {
   document.body.removeChild(a)
 }
 
-const getBase64Image = (img: HTMLImageElement) => {
+export const getBase64Image = (img: HTMLImageElement) => {
   const canvas = document.createElement('canvas')
   canvas.width = img.width
   canvas.height = img.height
@@ -35,25 +36,9 @@ export const getCanvasImage = (canvas: HTMLCanvasElement) => {
   return canvas.toDataURL('image/png')
 }
 
-export const encodePicturesInShapes = (shapes: DrawableShape[]) => {
-  return shapes.map(shape => {
-    if (shape.type === ShapeEnum.picture) {
-      if (shape.src.startsWith('http')) {
-        return _.omit('img', shape)
-      } else {
-        return {
-          ...shape,
-          src: getBase64Image(shape.img),
-          img: undefined
-        }
-      }
-    }
-    return shape
-  })
-}
 export const encodeShapesInString = (shapes: DrawableShape[]) => {
-  const shapesWithStringifyPictures = encodePicturesInShapes(shapes)
-  return encodeObjectToString(shapesWithStringifyPictures)
+  const cleanShapes = cleanShapesBeforeExport(shapes)
+  return encodeObjectToString(cleanShapes)
 }
 
 export const decodeJson = async (file: File) => {
@@ -103,7 +88,7 @@ export const decodePicturesInShapes = async (shapesForJson: DrawableShapeJson[])
         img
       }
     }
-    return shape
+    return addDefaultAndTempShapeProps(shape)
   })
 
   await Promise.all(promisesArray)

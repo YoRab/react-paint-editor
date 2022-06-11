@@ -10,6 +10,8 @@
 - Add new viewer mode
 - add borders on bars
 - display shape id in layer panel
+- Export : round values to 2 decimal points
+- Export and import : remove temporary values (id) from stored file
 - other minor fixes
 - minor design improvements
 

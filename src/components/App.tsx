@@ -20,7 +20,6 @@ import {
   decodeJson,
   decodePicturesInShapes,
   downloadFile,
-  encodePicturesInShapes,
   encodeShapesInString,
   getCanvasImage
 } from 'utils/file'
@@ -31,6 +30,7 @@ import SnackbarContainer from './common/Snackbar'
 import useSnackbar from 'hooks/useSnackbar'
 import { SnackbarTypeEnum } from 'constants/snackbar'
 import Loading from 'components/common/Loading'
+import { cleanShapesBeforeExport } from 'utils/data'
 
 const StyledApp = styled.div<{
   width: number
@@ -377,7 +377,7 @@ const App = ({
       },
 
       getCurrentData: () => {
-        return encodePicturesInShapes(shapesRef.current)
+        return cleanShapesBeforeExport(shapesRef.current)
       }
     }
   }, [apiRef, shapesRef])

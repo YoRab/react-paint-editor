@@ -1,6 +1,7 @@
 import _ from 'lodash/fp'
 import { calculateTextFontSize, fitContentInsideContainer } from './transform'
 import { DrawablePicture, Point, DrawableShape, ShapeEnum, StyledShape } from 'types/Shapes'
+import { getBase64Image } from './file'
 
 export const createPicture = (
   fileOrUrl: File | string,
@@ -157,4 +158,33 @@ export const copyShape = (shape: DrawableShape) => {
     id: _.uniqueId(`${shape.type}_`),
     translation: [shape.translation[0] + 20, shape.translation[1] + 20]
   } as DrawableShape
+}
+
+export const roundValues = <T extends unknown>(prop: T, precision = 2): T => {
+  if (_.isArray(prop)) {
+    return prop.map(roundValues) as T
+  }
+  if (_.isObject(prop)) {
+    return _.mapValues(roundValues, prop) as T
+  }
+  if (_.isNumber(prop)) {
+    return +prop.toFixed(precision) as T
+  }
+  return prop
+}
+
+export const cleanShapesBeforeExport = (shapes: DrawableShape[]) => {
+  const propsToOmit = ['img', 'id']
+  return shapes.map(shape => {
+    if (shape.type === ShapeEnum.picture) {
+      if (!shape.src.startsWith('http')) {
+        return roundValues(_.omit(propsToOmit, { ...shape, src: getBase64Image(shape.img) }))
+      }
+    }
+    return roundValues(_.omit(propsToOmit, shape))
+  })
+}
+
+export const addDefaultAndTempShapeProps = (shape: DrawableShape) => {
+  return { ...shape, id: _.uniqueId(`${shape.type}_`) }
 }
