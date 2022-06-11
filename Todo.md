@@ -48,23 +48,22 @@
 
 # En prévision / Future MAJ
 
-- fix text
-
-- Migrer sous Vite +
-
-- configurer npm publish
-
 - possibility to have presets
 - possibility to provide presets in props
-- add presets
-
-- add more settings
-- settings ui
+- add default presets
 - add settings customization
 
-# A prévoir
+- settings ui
+- UI customization
 
+- internationalization
+- fix remaining issues
+
+# Pour plus tard
+
+- add more settings
 - ladle (wait for windows support https://github.com/tajo/ladle/issues/67)
+- Migrer sous Vite
 - get rid of enum for better typescript
 - add shortcuts (for tools) and show it in titles
 - Menu contextuel au clic droit (changement de plan, supprimer, duplicate, copy, lock)
@@ -72,7 +71,5 @@
 - améliorer perfs avec précalculs + usage de path
 - lissage de traits
 - Move + zoom functionnality
-- UI customization
 - Tests !
-- fix remaining issues
 - fullscreen mode ?

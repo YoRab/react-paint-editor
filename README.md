@@ -14,4 +14,5 @@
 ## other
 
 - TextEdit cursor overflow MINOR (quick fix : edit on modale)
+- TextEdit copy/paste contains html and breaks display
 - circle resizing only goes one direction
