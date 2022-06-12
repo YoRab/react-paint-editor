@@ -1,6 +1,6 @@
 {
   "name": "@yorab/react-paint",
-  "version": "0.2.2",
+  "version": "0.3.0",
   "keywords": [],
   "author": "Yohann Rabatel",
   "license": "MIT",
@@ -66,7 +66,7 @@
     "start": "webpack serve --config webpack.config.js --open",
     "test": "echo \"Error: no test specified\" && exit 1",
     "buildexamples": "webpack --config webpack.prod.config.js",
-    "build": "npx babel src/ --extensions '.js,.ts,.tsx,.jsx' --copy-files --delete-dir-on-start -d dist && npm run declarationfiles",
+    "build": "npx babel src/ --extensions '.js,.ts,.tsx,.jsx' --copy-files --delete-dir-on-start -d dist",
     "buildwithcss": "npm run build && npm run buildexamples && mv build/styles.css dist/styles.css",
     "publish": "npm run buildwithcss && npm publish --access public"
   },
