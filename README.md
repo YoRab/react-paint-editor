@@ -2,8 +2,6 @@
 
 ## critical
 
-- anchors become too small MAJOR (possible fix : increase size with current canvas ratio )
-
 - Text tool broken since 0.2.2
 - double click not working with touch (fix: fake it countinng delay between touch)
 

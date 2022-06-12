@@ -39,6 +39,7 @@ export const getNewSelectionData = (
 export const selectShape = (
   shapes: DrawableShape[],
   cursorPosition: Point,
+  currentScale: number,
   canvasOffset: Point,
   selectedShape: DrawableShape | undefined
 ): { mode: SelectionModeData<Point | number>; shape: DrawableShape | undefined } => {
@@ -47,6 +48,7 @@ export const selectShape = (
       selectedShape,
       cursorPosition,
       canvasOffset,
+      currentScale,
       true
     ) || {
       mode: SelectionModeLib.default
@@ -62,7 +64,7 @@ export const selectShape = (
     }
   }
   const foundShape = _.find(shape => {
-    return !!checkPositionIntersection(shape, cursorPosition, canvasOffset, false)
+    return !!checkPositionIntersection(shape, cursorPosition, canvasOffset, currentScale, false)
   }, shapes)
   if (!!foundShape) {
     return {

@@ -17,6 +17,7 @@
 - Calculate container size to resize canvas instead of CSS
 - use requestAnimationFrame to improve perf
 - fix TextEdit position and size not working with canvas resized
+- fix anchors area becoming too small after rezsize
 - add MIT license to project
 - other minor fixes
 - minor design improvements

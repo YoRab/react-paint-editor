@@ -49,6 +49,7 @@ const handleMove = (
       selectedShape,
       cursorPosition,
       canvasOffset,
+      scaleRatio,
       true
     ) || {
       mode: SelectionModeLib.default
@@ -241,7 +242,13 @@ const useDrawableCanvas = ({
       )
 
       if (activeTool === ToolEnum.selection) {
-        const { shape, mode } = selectShape(shapes, cursorPosition, canvasOffset, selectedShape)
+        const { shape, mode } = selectShape(
+          shapes,
+          cursorPosition,
+          scaleRatio,
+          canvasOffset,
+          selectedShape
+        )
         setSelectedShape(shape)
         setSelectionMode(mode)
       } else if (activeTool === ToolEnum.move) {

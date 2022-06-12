@@ -48,26 +48,21 @@ const restoreShapeTransformations = (ctx: CanvasRenderingContext2D) => {
 
 const updateDrawStyle = (
   ctx: CanvasRenderingContext2D,
-  {
-    fillColor,
-    globalAlpha,
-    strokeColor,
-    lineWidth,
-    lineDash
-  }: {
+  style: {
     fillColor?: string
     globalAlpha?: number
     strokeColor?: string
     lineWidth?: number
     lineDash?: number
-  } = {
-    fillColor: 'transparent',
-    strokeColor: 'blue',
-    globalAlpha: 100,
-    lineWidth: 1,
-    lineDash: 0
-  }
+  } = {}
 ) => {
+  const {
+    fillColor = 'transparent',
+    globalAlpha = 100,
+    strokeColor = 'blue',
+    lineWidth = 1,
+    lineDash = 0
+  } = style
   ctx.lineCap = 'round'
   ctx.lineJoin = 'round'
   globalAlpha !== undefined && (ctx.globalAlpha = globalAlpha / 100)
@@ -305,14 +300,16 @@ const drawSelectionDefault = ({
   ctx,
   shape,
   withAnchors,
-  scale = 1
+  currentScale = 1
 }: {
   ctx: CanvasRenderingContext2D
   shape: DrawableShape
   withAnchors: boolean
-  scale?: number
+  currentScale?: number
 }) => {
+  const scaleWithMinCap = Math.min(1, currentScale)
   const { borders } = getShapeInfos(shape)
+
   drawRect(ctx, borders)
 
   if (!withAnchors || shape.locked) return
@@ -322,7 +319,7 @@ const drawSelectionDefault = ({
       [borders.x + borders.width / 2, borders.y],
       [
         borders.x + borders.width / 2,
-        borders.y - SELECTION_ANCHOR_SIZE / 2 - SELECTION_ROTATED_ANCHOR_POSITION
+        borders.y - SELECTION_ANCHOR_SIZE / 2 - SELECTION_ROTATED_ANCHOR_POSITION / scaleWithMinCap
       ]
     ]
   })
@@ -331,22 +328,22 @@ const drawSelectionDefault = ({
     drawCircle(ctx, {
       x: borders.x + borders.width * anchorPosition[0],
       y: borders.y + borders.height * anchorPosition[1],
-      radius: (SELECTION_ANCHOR_SIZE / 2) * scale,
+      radius: SELECTION_ANCHOR_SIZE / 2 / scaleWithMinCap,
       style: {
         fillColor: 'rgb(255,255,255)',
         strokeColor: 'rgb(150,150,150)',
-        lineWidth: 2
+        lineWidth: 2 / scaleWithMinCap
       }
     })
   }
   drawCircle(ctx, {
     x: borders.x + borders.width / 2,
-    y: borders.y - SELECTION_ANCHOR_SIZE / 2 - SELECTION_ROTATED_ANCHOR_POSITION,
-    radius: (SELECTION_ANCHOR_SIZE / 2) * scale,
+    y: borders.y - SELECTION_ANCHOR_SIZE / 2 - SELECTION_ROTATED_ANCHOR_POSITION / scaleWithMinCap,
+    radius: SELECTION_ANCHOR_SIZE / 2 / scaleWithMinCap,
     style: {
       fillColor: 'rgb(255,255,255)',
       strokeColor: 'rgb(150,150,150)',
-      lineWidth: 2
+      lineWidth: 2 / scaleWithMinCap
     }
   })
 }
@@ -354,13 +351,15 @@ const drawLineSelection = ({
   ctx,
   shape,
   withAnchors,
-  scale = 1
+  currentScale = 1
 }: {
   ctx: CanvasRenderingContext2D
   shape: DrawableLine | DrawablePolygon | DrawableCurve
   withAnchors: boolean
-  scale?: number
+  currentScale?: number
 }) => {
+  const scaleWithMinCap = Math.min(1, currentScale)
+
   const { borders } = getShapeInfos(shape)
   drawRect(ctx, borders)
   if (!withAnchors || shape.locked) return
@@ -370,23 +369,23 @@ const drawLineSelection = ({
       drawRect(ctx, {
         x: coordinate[0] - SELECTION_ANCHOR_SIZE / 2,
         y: coordinate[1] - SELECTION_ANCHOR_SIZE / 2,
-        width: SELECTION_ANCHOR_SIZE,
-        height: SELECTION_ANCHOR_SIZE,
+        width: SELECTION_ANCHOR_SIZE / scaleWithMinCap,
+        height: SELECTION_ANCHOR_SIZE / scaleWithMinCap,
         style: {
           fillColor: 'rgb(255,255,255)',
           strokeColor: 'rgb(150,150,150)',
-          lineWidth: 2
+          lineWidth: 2 / scaleWithMinCap
         }
       })
     } else {
       drawCircle(ctx, {
         x: coordinate[0],
         y: coordinate[1],
-        radius: (SELECTION_ANCHOR_SIZE / 2) * scale,
+        radius: SELECTION_ANCHOR_SIZE / 2 / scaleWithMinCap,
         style: {
           fillColor: 'rgb(255,255,255)',
           strokeColor: 'rgb(150,150,150)',
-          lineWidth: 2
+          lineWidth: 2 / scaleWithMinCap
         }
       })
     }
@@ -411,10 +410,10 @@ export const drawSelection = ({
     case 'polygon':
     case 'line':
     case 'curve':
-      drawLineSelection({ ctx, shape, withAnchors, scale: 1 / scaleRatio })
+      drawLineSelection({ ctx, shape, withAnchors, currentScale: scaleRatio })
       break
     default:
-      drawSelectionDefault({ ctx, shape, withAnchors, scale: 1 / scaleRatio })
+      drawSelectionDefault({ ctx, shape, withAnchors, currentScale: scaleRatio })
       break
   }
   restoreShapeTransformations(ctx)
