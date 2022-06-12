@@ -34,7 +34,7 @@ import { cleanShapesBeforeExport } from 'utils/data'
 import useResizeObserver from 'hooks/useResizeObserver'
 
 const StyledApp = styled.div<{
-  width: number
+  canvaswidth: number
 }>`
   /* --bg-color: #d7ecec; */
   --bg-color: white;
@@ -60,11 +60,11 @@ const StyledApp = styled.div<{
   }
 
   &[data-grow='false'] {
-    max-width: ${({ width }) => `min(100%, ${width}px)`};
+    max-width: ${({ canvaswidth }) => `min(100%, ${canvaswidth}px)`};
   }
 
   &[data-shrink='false'] {
-    min-width: ${({ width }) => width}px;
+    min-width: ${({ canvaswidth }) => canvaswidth}px;
   }
 `
 
@@ -142,8 +142,8 @@ type AppType = {
 }
 
 const App = ({
-  width: finalWidth = 1000,
-  height: finalHeight = 600,
+  width: canvasWidth = 1000,
+  height: canvasHeight = 600,
   canGrow = false,
   canShrink = true,
   shapes: shapesFromProps,
@@ -164,8 +164,8 @@ const App = ({
   const componentRef = useRef<HTMLDivElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const [canvasSize, setCanvasSize] = useState({
-    width: finalWidth,
-    height: finalHeight,
+    width: canvasWidth,
+    height: canvasHeight,
     scaleRatio: 1
   })
 
@@ -338,7 +338,7 @@ const App = ({
     async (fileOrUrl: File | string) => {
       setIsLoading(true)
       try {
-        const pictureShape = await addPictureShape(fileOrUrl, canvasSize.width, canvasSize.height)
+        const pictureShape = await addPictureShape(fileOrUrl, canvasWidth, canvasHeight)
         selectShape(pictureShape)
       } catch (e) {
         if (e instanceof Error) {
@@ -349,15 +349,15 @@ const App = ({
         setIsLoading(false)
       }
     },
-    [addPictureShape, selectShape, addSnackbar, canvasSize]
+    [addPictureShape, selectShape, addSnackbar, canvasWidth, canvasHeight]
   )
 
   const onResized = useCallback(
     (measuredWidth: number, measuredHeight: number) => {
-      const scaleRatio = measuredWidth / finalWidth
-      setCanvasSize({ width: measuredWidth, height: finalHeight * scaleRatio, scaleRatio })
+      const scaleRatio = measuredWidth / canvasWidth
+      setCanvasSize({ width: measuredWidth, height: canvasHeight * scaleRatio, scaleRatio })
     },
-    [finalWidth, finalHeight]
+    [canvasWidth, canvasHeight]
   )
 
   useKeyboard({
@@ -403,7 +403,7 @@ const App = ({
     <StyledApp
       ref={componentRef}
       className={className}
-      width={finalWidth}
+      canvaswidth={canvasWidth}
       data-grow={canGrow}
       data-shrink={canShrink}>
       {isEditMode && (
