@@ -272,7 +272,9 @@ const App = ({
   const exportCanvasInFile = useCallback(() => {
     setIsLoading(true)
     try {
-      const dataURL = canvasRef.current && getCanvasImage(canvasRef.current)
+      const dataURL =
+        canvasRef.current &&
+        getCanvasImage(shapesRef.current, canvasOffset, canvasWidth, canvasHeight)
       if (!dataURL) {
         throw new Error()
       }
@@ -286,7 +288,7 @@ const App = ({
     } finally {
       setIsLoading(false)
     }
-  }, [addSnackbar])
+  }, [addSnackbar, shapesRef, canvasOffset, canvasWidth, canvasHeight])
 
   const saveFile = useCallback(() => {
     setIsLoading(true)
@@ -388,14 +390,16 @@ const App = ({
     if (!apiRef) return
     apiRef.current = {
       getCurrentImage: () => {
-        return canvasRef.current ? getCanvasImage(canvasRef.current) : undefined
+        return canvasRef.current
+          ? getCanvasImage(shapesRef.current, canvasOffset, canvasWidth, canvasHeight)
+          : undefined
       },
 
       getCurrentData: () => {
         return cleanShapesBeforeExport(shapesRef.current) as DrawableShape[] //TODO : create different types for stored shapes
       }
     }
-  }, [apiRef, shapesRef])
+  }, [apiRef, shapesRef, canvasOffset, canvasWidth, canvasHeight])
 
   const className = `${classNameFromProps ?? ''} ${isLayoutPanelShown ? 'layoutPanelOpened' : ''}`
 

@@ -1,6 +1,7 @@
 import _ from 'lodash/fp'
-import { DrawableShape, DrawableShapeJson, ShapeEnum } from 'types/Shapes'
+import { DrawableShape, DrawableShapeJson, Point, ShapeEnum } from 'types/Shapes'
 import { addDefaultAndTempShapeProps, cleanShapesBeforeExport } from './data'
+import { drawShape } from './draw'
 
 export const fetchAndStringify = (url: string) => {
   return fetch(url)
@@ -32,8 +33,22 @@ const encodeObjectToString = (objectToEncode: unknown) => {
   return 'data:text/plain;charset=utf-8,' + encodeURIComponent(JSON.stringify(objectToEncode))
 }
 
-export const getCanvasImage = (canvas: HTMLCanvasElement) => {
-  return canvas.toDataURL('image/png')
+export const getCanvasImage = (
+  shapes: DrawableShape[],
+  canvasOffset: Point,
+  width: number,
+  height: number
+) => {
+  const newCanvas = document.createElement('canvas')
+  newCanvas.width = width
+  newCanvas.height = height
+  const ctx = newCanvas.getContext('2d')
+  if (!ctx) return ''
+  ctx.clearRect(0, 0, width, height)
+  for (let i = shapes.length - 1; i >= 0; i--) {
+    drawShape(ctx, shapes[i], 1, canvasOffset)
+  }
+  return newCanvas.toDataURL('image/png')
 }
 
 export const encodeShapesInString = (shapes: DrawableShape[]) => {
