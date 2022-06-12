@@ -4,7 +4,7 @@ import './index.css'
 import Examples from './Examples'
 
 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-const container = document.getElementById('root')!
+const container = document.getElementById('react-paint-root')!
 // eslint-disable-next-line @typescript-eslint/no-unsafe-call
 const root = createRoot(container)
 
