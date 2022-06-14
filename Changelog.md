@@ -1,3 +1,7 @@
+# V.0.3.1
+
+- Add prop to change canvas background color
+
 # V.0.3.0 :
 
 - prevent picture from url submit to reload page
