@@ -1,3 +1,7 @@
+# V.0.4.1
+
+- prevent mounting selection canvas when viewer mode
+
 # V.0.4.0
 
 - Add possibility to customize UI from props

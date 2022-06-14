@@ -564,6 +564,7 @@ const App = ({
           selectionColor={canvasSelectionColor}
           selectionWidth={canvasSelectionWidth}
           selectionPadding={canvasSelectionPadding}
+          isEditMode={isEditMode}
         />
         {isEditMode && layersManipulation && (
           <Layouts

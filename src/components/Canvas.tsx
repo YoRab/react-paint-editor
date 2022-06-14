@@ -111,6 +111,7 @@ type DrawerType = {
   selectionColor: string
   selectionWidth: number
   selectionPadding: number
+  isEditMode: boolean
   shapes: DrawableShape[]
   saveShapes: () => void
   addShape: (newShape: DrawableShape) => void
@@ -154,7 +155,8 @@ const Canvas = React.forwardRef<HTMLCanvasElement, DrawerType>(
       setSelectionMode,
       selectionWidth,
       selectionColor,
-      selectionPadding
+      selectionPadding,
+      isEditMode
     },
     ref
   ) => {
@@ -253,23 +255,26 @@ const Canvas = React.forwardRef<HTMLCanvasElement, DrawerType>(
             width={canvasSize.width}
             height={canvasSize.height}
           />
-          <StyledSelectionCanvas
-            ref={selectionCanvasRef}
-            width={canvasSize.width}
-            height={canvasSize.height}
-            data-grow={canGrow}
-            cursor={
-              (activeTool !== ToolEnum.selection && activeTool !== ToolEnum.move) ||
-              hoverMode.mode === SelectionModeLib.resize
-                ? 'crosshair'
-                : activeTool === ToolEnum.move || hoverMode.mode === SelectionModeLib.translate
-                ? 'move'
-                : hoverMode.mode === SelectionModeLib.rotate
-                ? 'grab'
-                : 'default'
-            }
-          />
-          {selectionMode.mode === SelectionModeLib.textedition &&
+          {isEditMode && (
+            <StyledSelectionCanvas
+              ref={selectionCanvasRef}
+              width={canvasSize.width}
+              height={canvasSize.height}
+              data-grow={canGrow}
+              cursor={
+                (activeTool !== ToolEnum.selection && activeTool !== ToolEnum.move) ||
+                hoverMode.mode === SelectionModeLib.resize
+                  ? 'crosshair'
+                  : activeTool === ToolEnum.move || hoverMode.mode === SelectionModeLib.translate
+                  ? 'move'
+                  : hoverMode.mode === SelectionModeLib.rotate
+                  ? 'grab'
+                  : 'default'
+              }
+            />
+          )}
+          {isEditMode &&
+            selectionMode.mode === SelectionModeLib.textedition &&
             selectedShape?.type === ShapeEnum.text && (
               <EditTextBox
                 scaleRatio={canvasSize.scaleRatio}
