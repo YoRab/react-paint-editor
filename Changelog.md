@@ -3,6 +3,7 @@
 - Add prop to change canvas background color
 - Move some props to options
 - fix Picture shape not being saved and not triggering onDataChanged
+- small picture are upscaled to fit container when imported
 
 # V.0.3.0 :
 
