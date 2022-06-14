@@ -1,6 +1,7 @@
 # V.0.3.1
 
 - Add prop to change canvas background color
+- Move some props to options
 
 # V.0.3.0 :
 

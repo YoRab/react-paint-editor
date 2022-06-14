@@ -97,13 +97,13 @@ const StyledRow = styled.div<{
 type AppOptionsType = {
   layersManipulation: boolean
   gridVisible: boolean
-  uiStyle : {
+  canGrow: boolean
+  canShrink: boolean
+  availableTools: ShapeEnum[]
+  uiStyle: {
     canvasBackgroundColor: string
   }
-  
 }
-
-
 
 type OptionalAppOptionsType = RecursivePartial<AppOptionsType>
 
@@ -123,22 +123,22 @@ const DEFAULT_TOOLS = [
 const DEFAULT_OPTIONS: AppOptionsType = {
   layersManipulation: true,
   gridVisible: false,
+  canGrow: false,
+  canShrink: true,
+  availableTools: DEFAULT_TOOLS,
   uiStyle: {
     canvasBackgroundColor: 'white'
   }
 }
 
 type AppType = {
+  className?: string
   width?: number
   height?: number
-  canGrow?: boolean
-  canShrink?: boolean
   shapes?: DrawableShapeJson[]
-  className?: string
+  onDataChanged?: () => void
   mode?: 'editor' | 'viewer'
   disabled?: boolean
-  onDataChanged?: () => void
-  availableTools?: ShapeEnum[]
   apiRef?: MutableRefObject<
     | undefined
     | {
@@ -152,25 +152,28 @@ type AppType = {
 const App = ({
   width: canvasWidth = 1000,
   height: canvasHeight = 600,
-  canGrow = false,
-  canShrink = true,
   shapes: shapesFromProps,
   className: classNameFromProps,
   mode = 'editor',
   disabled: disabledFromProps = false,
   onDataChanged,
-  availableTools: availableToolsFromProps = DEFAULT_TOOLS,
   apiRef,
   options
 }: AppType) => {
-  const { layersManipulation, gridVisible } = {
+  const {
+    layersManipulation,
+    gridVisible,
+    canGrow,
+    canShrink,
+    availableTools: availableToolsFromProps
+  } = {
     ...DEFAULT_OPTIONS,
     ...options
   }
 
   const uiStyle = {
     ...DEFAULT_OPTIONS.uiStyle,
-    ...options?.uiStyle ?? {}
+    ...(options?.uiStyle ?? {})
   }
   const isEditMode = mode !== 'viewer'
   const disabled = disabledFromProps || !isEditMode
