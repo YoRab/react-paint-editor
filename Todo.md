@@ -54,7 +54,6 @@
 - add settings customization
 
 - settings ui
-- UI customization
 
 - internationalization
 - fix remaining issues
