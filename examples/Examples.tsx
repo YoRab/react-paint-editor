@@ -169,6 +169,8 @@ const CurrentApp = ({ selectedComponent }: CurrentAppType) => {
           options={{
             gridVisible: true,
             layersManipulation: false,
+            withLoadAndSave: false,
+            withExport: false,
             availableTools: ['circle', 'brush', undefined, 'not existing tool']
           }}
         />

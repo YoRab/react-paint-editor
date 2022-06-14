@@ -91,6 +91,8 @@ type ToolboxType = {
   saveFile: () => void
   exportCanvasInFile: () => void
   availableTools: ShapeEnum[]
+  withLoadAndSave: boolean
+  withExport: boolean
 }
 
 const Toolbar = ({
@@ -99,6 +101,8 @@ const Toolbar = ({
   hasActionToUndo = false,
   hasActionToRedo = false,
   hasActionToClear = false,
+  withLoadAndSave,
+  withExport,
   clearCanvas,
   setActiveTool: setActiveToolFromProps,
   undoAction,
@@ -200,6 +204,8 @@ const Toolbar = ({
           togglePictureUrlModal={openPictureUrlModal}
           exportCanvasInFile={exportCanvasInFile}
           availableTools={availableTools}
+          withLoadAndSave={withLoadAndSave}
+          withExport={withExport}
         />
       </StyledToolbox>
       {isMenuOpen && (

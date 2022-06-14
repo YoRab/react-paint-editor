@@ -4,6 +4,7 @@
 - Move some props to options
 - fix Picture shape not being saved and not triggering onDataChanged
 - small picture are upscaled to fit container when imported
+- Add prop to choose to display save/load/export button
 
 # V.0.3.0 :
 

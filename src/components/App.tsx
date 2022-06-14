@@ -100,6 +100,8 @@ type AppOptionsType = {
   canGrow: boolean
   canShrink: boolean
   availableTools: ShapeEnum[]
+  withExport: boolean
+  withLoadAndSave: boolean
   uiStyle: {
     canvasBackgroundColor: string
   }
@@ -125,6 +127,8 @@ const DEFAULT_OPTIONS: AppOptionsType = {
   gridVisible: false,
   canGrow: false,
   canShrink: true,
+  withExport: true,
+  withLoadAndSave: true,
   availableTools: DEFAULT_TOOLS,
   uiStyle: {
     canvasBackgroundColor: 'white'
@@ -165,6 +169,8 @@ const App = ({
     gridVisible,
     canGrow,
     canShrink,
+    withExport,
+    withLoadAndSave,
     availableTools: availableToolsFromProps
   } = {
     ...DEFAULT_OPTIONS,
@@ -442,6 +448,8 @@ const App = ({
           undoAction={undoAction}
           redoAction={redoAction}
           availableTools={availableTools}
+          withExport={withExport}
+          withLoadAndSave={withLoadAndSave}
         />
       )}
       <StyledRow
