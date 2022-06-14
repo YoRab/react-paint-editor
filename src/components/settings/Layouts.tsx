@@ -18,7 +18,7 @@ import Panel from 'components/common/Panel'
 
 const StyledLayouts = styled.div`
   display: inline-block;
-  background: var(--bg-color);
+  background: var(--toolbar-bg);
   box-sizing: border-box;
   overflow-y: auto;
   min-width: 200px;
@@ -28,14 +28,14 @@ const StyledLayout = styled.div`
   border: 3px solid transparent;
   padding: 4px 0px;
   position: relative;
-  background: var(--bg-color);
+  background: var(--toolbar-bg);
   box-sizing: border-box;
   display: flex;
   align-items: center;
   justify-content: space-between;
 
   &[data-is-over='1'] {
-    border: 3px dotted var(--btn-hover);
+    border: 3px dotted var(--font-hover-bg);
   }
 
   &[data-is-dragging='1'] {
@@ -43,19 +43,23 @@ const StyledLayout = styled.div`
   }
 
   &[data-selected='1'] {
-    color: var(--text-color-selected);
-    background: var(--bg-color-selected);
+    color: var(--font-selected-color);
+    background: var(--font-selected-bg);
   }
 
   &[data-selected='0'][data-disabled='0'] {
+    background: var(--font-bg);
+    color: var(--font-color);
     &:hover {
-      background: var(--btn-hover);
+      color: var(--font-hover-color);
+      background: var(--font-hover-bg);
     }
   }
 
   &[data-disabled='1'] {
-    opacity: 0.25;
     cursor: default;
+    color: var(--font-disabled-color);
+    background: var(--font-disabled-bg);
   }
 
   &[data-disabled='0'] {

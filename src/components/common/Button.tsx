@@ -13,13 +13,13 @@ const StyledButton = styled.button`
   background: none;
   border: none;
   cursor: pointer;
-  border-radius: 8px;
-  color: var(--text-color);
+  border-radius: var(--font-radius);
+  color: var(--font-color);
   margin: 2px 4px;
   padding: 0;
   &[data-selected='1'] {
-    color: var(--text-color-selected);
-    background: var(--bg-color-selected);
+    color: var(--font-selected-color);
+    background: var(--font-selected-bg);
   }
 
   &[data-hidden='1'] {
@@ -27,13 +27,17 @@ const StyledButton = styled.button`
   }
 
   &[data-disabled='1'] {
-    opacity: 0.25;
     cursor: default;
+    color: var(--font-disabled-color);
+    background: var(--font-disabled-bg);
   }
 
   &[data-selected='0'][data-disabled='0'] {
+    background: var(--font-bg);
+    color: var(--font-color);
     &:hover {
-      background: var(--btn-hover);
+      color: var(--font-hover-color);
+      background: var(--font-hover-bg);
     }
   }
 

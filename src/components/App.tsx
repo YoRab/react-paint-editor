@@ -33,23 +33,42 @@ import Loading from 'components/common/Loading'
 import { cleanShapesBeforeExport } from 'utils/data'
 import useResizeObserver from 'hooks/useResizeObserver'
 import { RecursivePartial } from 'types/utils'
+import {
+  SELECTION_DEFAULT_COLOR,
+  SELECTION_DEFAULT_PADDING,
+  SELECTION_DEFAULT_WIDTH
+} from 'constants/shapes'
 
 const StyledApp = styled.div<{
-  canvaswidth: number
+  canvasWidth: number
+  toolbarBackgroundColor: string
+  dividerColor: string
+  fontRadius: number
+  fontDisabledColor: string
+  fontDisabledBackgroundColor: string
+  fontColor: string
+  fontBackgroundColor: string
+  fontSelectedColor: string
+  fontSelectedBackgroundColor: string
+  fontHoverColor: string
+  fontHoverBackgroundColor: string
+  canvasBackgroundColor: string
 }>`
-  /* --bg-color: #d7ecec; */
-  --bg-color: white;
-  --text-color: #364181;
-  --btn-hover: #afd8d8;
-  --bg-color-selected: #364181;
-  --text-color-selected: white;
-  /* --shrinkedcanvas-bg-color: #364181; */
-  /* --shrinkedcanvas-bg-color: #d7ecec; */
-  --shrinkedcanvas-bg-color: white;
-  --border-color: #36418129;
+  --toolbar-bg: ${props => props.toolbarBackgroundColor};
+  --divider-color: ${props => props.dividerColor};
+  --font-radius: ${props => props.fontRadius}px;
+  --font-disabled-color: ${props => props.fontDisabledColor};
+  --font-disabled-bg: ${props => props.fontDisabledBackgroundColor};
+  --font-color: ${props => props.fontColor};
+  --font-bg: ${props => props.fontBackgroundColor};
+  --font-selected-color: ${props => props.fontSelectedColor};
+  --font-selected-bg: ${props => props.fontSelectedBackgroundColor};
+  --font-hover-color: ${props => props.fontHoverColor};
+  --font-hover-bg: ${props => props.fontHoverBackgroundColor};
+  --canvas-bg: ${props => props.canvasBackgroundColor};
 
   display: flex;
-  color: var(--text-color);
+  color: var(--font-color);
   position: relative;
   overflow: hidden;
   flex-direction: column;
@@ -57,15 +76,15 @@ const StyledApp = styled.div<{
   hr {
     width: 100%;
     border: none;
-    border-top: 1px solid var(--border-color);
+    border-top: 1px solid var(--divider-color);
   }
 
   &[data-grow='false'] {
-    max-width: ${({ canvaswidth }) => `min(100%, ${canvaswidth}px)`};
+    max-width: ${({ canvasWidth }) => `min(100%, ${canvasWidth}px)`};
   }
 
   &[data-shrink='false'] {
-    min-width: ${({ canvaswidth }) => canvaswidth}px;
+    min-width: ${({ canvasWidth }) => canvasWidth}px;
   }
 `
 
@@ -78,10 +97,6 @@ const StyledRow = styled.div<{
   position: relative;
   max-width: 100%;
   z-index: ${STYLE_ZINDEX_APP};
-
-  .layoutPanelOpened & {
-    background: var(--shrinkedcanvas-bg-color);
-  }
 
   &[data-grow='true'] {
     width: 100%;
@@ -103,7 +118,21 @@ type AppOptionsType = {
   withExport: boolean
   withLoadAndSave: boolean
   uiStyle: {
+    toolbarBackgroundColor: string
+    dividerColor: string
+    fontRadius: number
+    fontDisabledColor: string
+    fontDisabledBackgroundColor: string
+    fontColor: string
+    fontBackgroundColor: string
+    fontSelectedColor: string
+    fontSelectedBackgroundColor: string
+    fontHoverColor: string
+    fontHoverBackgroundColor: string
     canvasBackgroundColor: string
+    canvasSelectionColor: string
+    canvasSelectionWidth: number
+    canvasSelectionPadding: number
   }
 }
 
@@ -131,7 +160,21 @@ const DEFAULT_OPTIONS: AppOptionsType = {
   withLoadAndSave: true,
   availableTools: DEFAULT_TOOLS,
   uiStyle: {
-    canvasBackgroundColor: 'white'
+    toolbarBackgroundColor: 'white',
+    dividerColor: '#36418129',
+    fontRadius: 8,
+    fontDisabledColor: '#3641812b',
+    fontDisabledBackgroundColor: 'transparent',
+    fontColor: '#364181',
+    fontBackgroundColor: 'transparent',
+    fontSelectedColor: 'white',
+    fontSelectedBackgroundColor: '#364181',
+    fontHoverColor: '#364181',
+    fontHoverBackgroundColor: '#afd8d8',
+    canvasBackgroundColor: 'white',
+    canvasSelectionColor: SELECTION_DEFAULT_COLOR,
+    canvasSelectionWidth: SELECTION_DEFAULT_WIDTH,
+    canvasSelectionPadding: SELECTION_DEFAULT_PADDING
   }
 }
 
@@ -177,7 +220,23 @@ const App = ({
     ...options
   }
 
-  const uiStyle = {
+  const {
+    toolbarBackgroundColor,
+    dividerColor,
+    fontRadius,
+    fontDisabledColor,
+    fontDisabledBackgroundColor,
+    fontColor,
+    fontBackgroundColor,
+    fontSelectedColor,
+    fontSelectedBackgroundColor,
+    fontHoverColor,
+    fontHoverBackgroundColor,
+    canvasBackgroundColor,
+    canvasSelectionColor,
+    canvasSelectionWidth,
+    canvasSelectionPadding
+  } = {
     ...DEFAULT_OPTIONS.uiStyle,
     ...(options?.uiStyle ?? {})
   }
@@ -296,7 +355,13 @@ const App = ({
     try {
       const dataURL =
         canvasRef.current &&
-        getCanvasImage(shapesRef.current, canvasOffset, canvasWidth, canvasHeight)
+        getCanvasImage(
+          shapesRef.current,
+          canvasOffset,
+          canvasWidth,
+          canvasHeight,
+          canvasSelectionPadding
+        )
       if (!dataURL) {
         throw new Error()
       }
@@ -310,7 +375,7 @@ const App = ({
     } finally {
       setIsLoading(false)
     }
-  }, [addSnackbar, shapesRef, canvasOffset, canvasWidth, canvasHeight])
+  }, [addSnackbar, shapesRef, canvasOffset, canvasWidth, canvasHeight, canvasSelectionPadding])
 
   const saveFile = useCallback(() => {
     setIsLoading(true)
@@ -413,7 +478,13 @@ const App = ({
     apiRef.current = {
       getCurrentImage: () => {
         return canvasRef.current
-          ? getCanvasImage(shapesRef.current, canvasOffset, canvasWidth, canvasHeight)
+          ? getCanvasImage(
+              shapesRef.current,
+              canvasOffset,
+              canvasWidth,
+              canvasHeight,
+              canvasSelectionPadding
+            )
           : undefined
       },
 
@@ -421,7 +492,7 @@ const App = ({
         return cleanShapesBeforeExport(shapesRef.current) as DrawableShapeJson[] //TODO : create different types for stored shapes
       }
     }
-  }, [apiRef, shapesRef, canvasOffset, canvasWidth, canvasHeight])
+  }, [apiRef, shapesRef, canvasOffset, canvasWidth, canvasHeight, canvasSelectionPadding])
 
   const className = `${classNameFromProps ?? ''} ${isLayoutPanelShown ? 'layoutPanelOpened' : ''}`
 
@@ -429,9 +500,21 @@ const App = ({
     <StyledApp
       ref={componentRef}
       className={className}
-      canvaswidth={canvasWidth}
       data-grow={canGrow}
-      data-shrink={canShrink}>
+      data-shrink={canShrink}
+      canvasWidth={canvasWidth}
+      toolbarBackgroundColor={toolbarBackgroundColor}
+      dividerColor={dividerColor}
+      fontRadius={fontRadius}
+      fontDisabledColor={fontDisabledColor}
+      fontDisabledBackgroundColor={fontDisabledBackgroundColor}
+      fontColor={fontColor}
+      fontBackgroundColor={fontBackgroundColor}
+      fontSelectedColor={fontSelectedColor}
+      fontSelectedBackgroundColor={fontSelectedBackgroundColor}
+      fontHoverColor={fontHoverColor}
+      fontHoverBackgroundColor={fontHoverBackgroundColor}
+      canvasBackgroundColor={canvasBackgroundColor}>
       {isEditMode && (
         <Toolbar
           disabled={disabled}
@@ -460,7 +543,6 @@ const App = ({
           canGrow={canGrow}
           withGrid={withGrid}
           disabled={disabled}
-          backgroundColor={uiStyle.canvasBackgroundColor}
           isInsideComponent={isInsideComponent}
           activeTool={activeTool}
           setActiveTool={setActiveTool}
@@ -479,6 +561,9 @@ const App = ({
           canvasSize={canvasSize}
           selectionMode={selectionMode}
           setSelectionMode={setSelectionMode}
+          selectionColor={canvasSelectionColor}
+          selectionWidth={canvasSelectionWidth}
+          selectionPadding={canvasSelectionPadding}
         />
         {isEditMode && layersManipulation && (
           <Layouts

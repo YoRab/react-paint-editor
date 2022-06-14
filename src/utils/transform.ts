@@ -1,7 +1,6 @@
 import _ from 'lodash/fp'
 
 import { getShapeInfos } from './shapeData'
-import { SELECTION_PADDING } from 'constants/shapes'
 import { SelectionModeData, SelectionModeLib, SelectionModeResize } from 'types/Mode'
 import {
   DrawableCircle,
@@ -104,9 +103,10 @@ export const resizeBrush = (
   cursorPosition: Point,
   canvasOffset: Point,
   originalShape: DrawableBrush,
-  selectionMode: SelectionModeResize
+  selectionMode: SelectionModeResize,
+  selectionPadding: number
 ): DrawableBrush => {
-  const { center, borders } = getShapeInfos(originalShape)
+  const { center, borders } = getShapeInfos(originalShape, selectionPadding)
 
   const cursorPositionBeforeResize = getPointPositionAfterCanvasTransformation(
     cursorPosition,
@@ -120,19 +120,19 @@ export const resizeBrush = (
     selectionMode.anchor[0] === 0.5
       ? 1
       : selectionMode.anchor[0] === 0
-      ? (borders.x + borders.width - cursorPositionBeforeResize[0] + SELECTION_PADDING * -2) /
-        (borders.width + SELECTION_PADDING * -2)
-      : (cursorPositionBeforeResize[0] - borders.x - SELECTION_PADDING * 2) /
-        (borders.width - SELECTION_PADDING * 2)
+      ? (borders.x + borders.width - cursorPositionBeforeResize[0] + selectionPadding * -2) /
+        (borders.width + selectionPadding * -2)
+      : (cursorPositionBeforeResize[0] - borders.x - selectionPadding * 2) /
+        (borders.width - selectionPadding * 2)
 
   const scaledHeight =
     selectionMode.anchor[1] === 0.5
       ? 1
       : selectionMode.anchor[1] === 0
-      ? (borders.y + borders.height - cursorPositionBeforeResize[1] + SELECTION_PADDING * -2) /
-        (borders.height + SELECTION_PADDING * -2)
-      : (cursorPositionBeforeResize[1] - borders.y - SELECTION_PADDING * 2) /
-        (borders.height - SELECTION_PADDING * 2)
+      ? (borders.y + borders.height - cursorPositionBeforeResize[1] + selectionPadding * -2) /
+        (borders.height + selectionPadding * -2)
+      : (cursorPositionBeforeResize[1] - borders.y - selectionPadding * 2) /
+        (borders.height - selectionPadding * 2)
 
   const shapeWithNewDimensions = {
     ...originalShape,
@@ -148,7 +148,7 @@ export const resizeBrush = (
   }
 
   const { center: shapeWithNewDimensionsCenter, borders: shapeWithNewDimensionsBorders } =
-    getShapeInfos(shapeWithNewDimensions)
+    getShapeInfos(shapeWithNewDimensions, selectionPadding)
 
   const [oppTrueX, oppTrueY] = getRectOppositeAnchorAbsolutePosition(selectionMode.anchor, center, {
     ...originalShape,
@@ -176,9 +176,10 @@ export const resizeLine = (
   cursorPosition: Point,
   canvasOffset: Point,
   originalShape: DrawableLine | DrawablePolygon | DrawableCurve,
-  selectionMode: SelectionModeResize<number>
+  selectionMode: SelectionModeResize<number>,
+  selectionPadding: number
 ): DrawableLine | DrawablePolygon | DrawableCurve => {
-  const { center } = getShapeInfos(originalShape)
+  const { center } = getShapeInfos(originalShape, selectionPadding)
 
   const cursorPositionBeforeResize = getPointPositionAfterCanvasTransformation(
     cursorPosition,
@@ -229,9 +230,10 @@ export const resizeCircle = (
   cursorPosition: Point,
   canvasOffset: Point,
   originalShape: DrawableCircle,
-  selectionMode: SelectionModeResize
+  selectionMode: SelectionModeResize,
+  selectionPadding: number
 ): DrawableCircle => {
-  const { center, borders } = getShapeInfos(originalShape)
+  const { center, borders } = getShapeInfos(originalShape, selectionPadding)
 
   const cursorPositionBeforeResize = getPointPositionAfterCanvasTransformation(
     cursorPosition,
@@ -249,18 +251,18 @@ export const resizeCircle = (
           ? borders.x +
             borders.width -
             newCursorPosition[0] +
-            SELECTION_PADDING * (selectionMode.anchor[0] === 0 ? -2 : 2)
+            selectionPadding * (selectionMode.anchor[0] === 0 ? -2 : 2)
           : newCursorPosition[0] -
             borders.x -
-            SELECTION_PADDING * (selectionMode.anchor[0] === 0 ? -2 : 2)) / 2
+            selectionPadding * (selectionMode.anchor[0] === 0 ? -2 : 2)) / 2
       : (selectionMode.anchor[1] === 0
           ? borders.y +
             borders.height -
             newCursorPosition[1] +
-            SELECTION_PADDING * (selectionMode.anchor[1] === 0 ? -2 : 2)
+            selectionPadding * (selectionMode.anchor[1] === 0 ? -2 : 2)
           : newCursorPosition[1] -
             borders.y -
-            SELECTION_PADDING * (selectionMode.anchor[1] === 0 ? -2 : 2)) / 2
+            selectionPadding * (selectionMode.anchor[1] === 0 ? -2 : 2)) / 2
 
   const shapeWithNewDimensions = {
     ...originalShape,
@@ -268,7 +270,10 @@ export const resizeCircle = (
       radius: Math.abs(scaledRadius)
     }
   }
-  const { center: shapeWithNewDimensionsCenter } = getShapeInfos(shapeWithNewDimensions)
+  const { center: shapeWithNewDimensionsCenter } = getShapeInfos(
+    shapeWithNewDimensions,
+    selectionPadding
+  )
 
   const [oppTrueX, oppTrueY] = getCircleOppositeAnchorAbsolutePosition(
     selectionMode.anchor,
@@ -297,11 +302,11 @@ export const resizeCircle = (
 export const resizeEllipse = (
   cursorPosition: Point,
   canvasOffset: Point,
-
   originalShape: DrawableEllipse,
-  selectionMode: SelectionModeResize
+  selectionMode: SelectionModeResize,
+  selectionPadding: number
 ): DrawableEllipse => {
-  const { center, borders } = getShapeInfos(originalShape)
+  const { center, borders } = getShapeInfos(originalShape, selectionPadding)
 
   const cursorPositionBeforeResize = getPointPositionAfterCanvasTransformation(
     cursorPosition,
@@ -320,10 +325,10 @@ export const resizeEllipse = (
           ? borders.x +
             borders.width -
             newCursorPosition[0] +
-            SELECTION_PADDING * (selectionMode.anchor[0] === 0 ? -2 : 2)
+            selectionPadding * (selectionMode.anchor[0] === 0 ? -2 : 2)
           : newCursorPosition[0] -
             borders.x -
-            SELECTION_PADDING * (selectionMode.anchor[0] === 0 ? -2 : 2)) / 2
+            selectionPadding * (selectionMode.anchor[0] === 0 ? -2 : 2)) / 2
 
   const scaledRadiusY =
     selectionMode.anchor[1] === 0.5
@@ -332,10 +337,10 @@ export const resizeEllipse = (
           ? borders.y +
             borders.height -
             newCursorPosition[1] +
-            SELECTION_PADDING * (selectionMode.anchor[1] === 0 ? -2 : 2)
+            selectionPadding * (selectionMode.anchor[1] === 0 ? -2 : 2)
           : newCursorPosition[1] -
             borders.y -
-            SELECTION_PADDING * (selectionMode.anchor[1] === 0 ? -2 : 2)) / 2
+            selectionPadding * (selectionMode.anchor[1] === 0 ? -2 : 2)) / 2
 
   const shapeWithNewDimensions = {
     ...originalShape,
@@ -344,7 +349,10 @@ export const resizeEllipse = (
       radiusY: Math.abs(scaledRadiusY)
     }
   }
-  const { center: shapeWithNewDimensionsCenter } = getShapeInfos(shapeWithNewDimensions)
+  const { center: shapeWithNewDimensionsCenter } = getShapeInfos(
+    shapeWithNewDimensions,
+    selectionPadding
+  )
 
   const [oppTrueX, oppTrueY] = getEllipseOppositeAnchorAbsolutePosition(
     selectionMode.anchor,
@@ -375,9 +383,10 @@ export const resizeRect = <T extends DrawableShape & Rect>(
   canvasOffset: Point,
   originalShape: T,
   selectionMode: SelectionModeResize,
+  selectionPadding: number,
   keepRatio = false
 ): T => {
-  const { center, borders } = getShapeInfos(originalShape)
+  const { center, borders } = getShapeInfos(originalShape, selectionPadding)
 
   const cursorPositionBeforeResize = getPointPositionAfterCanvasTransformation(
     cursorPosition,
@@ -391,15 +400,15 @@ export const resizeRect = <T extends DrawableShape & Rect>(
     selectionMode.anchor[0] === 0.5
       ? originalShape.width
       : selectionMode.anchor[0] === 0
-      ? borders.x + borders.width - cursorPositionBeforeResize[0] + SELECTION_PADDING * -2
-      : cursorPositionBeforeResize[0] - borders.x - SELECTION_PADDING * 2
+      ? borders.x + borders.width - cursorPositionBeforeResize[0] + selectionPadding * -2
+      : cursorPositionBeforeResize[0] - borders.x - selectionPadding * 2
 
   const scaledHeight =
     selectionMode.anchor[1] === 0.5
       ? originalShape.height
       : selectionMode.anchor[1] === 0
-      ? borders.y + borders.height - cursorPositionBeforeResize[1] + SELECTION_PADDING * -2
-      : cursorPositionBeforeResize[1] - borders.y - SELECTION_PADDING * 2
+      ? borders.y + borders.height - cursorPositionBeforeResize[1] + selectionPadding * -2
+      : cursorPositionBeforeResize[1] - borders.y - selectionPadding * 2
 
   const [widthWithRatio, heightWithRatio] = keepRatio
     ? getNormalizedSize(originalShape, scaledWidth, scaledHeight)
@@ -410,7 +419,10 @@ export const resizeRect = <T extends DrawableShape & Rect>(
     width: Math.abs(widthWithRatio),
     height: Math.abs(heightWithRatio)
   }
-  const { center: shapeWithNewDimensionsCenter } = getShapeInfos(shapeWithNewDimensions)
+  const { center: shapeWithNewDimensionsCenter } = getShapeInfos(
+    shapeWithNewDimensions,
+    selectionPadding
+  )
 
   const [oppTrueX, oppTrueY] = getRectOppositeAnchorAbsolutePosition(
     selectionMode.anchor,
@@ -441,9 +453,17 @@ export const resizeText = <T extends DrawableShape & Text>(
   cursorPosition: Point,
   canvasOffset: Point,
   originalShape: T,
-  selectionMode: SelectionModeResize
+  selectionMode: SelectionModeResize,
+  selectionPadding: number
 ): T => {
-  const newRect = resizeRect(cursorPosition, canvasOffset, originalShape, selectionMode, true)
+  const newRect = resizeRect(
+    cursorPosition,
+    canvasOffset,
+    originalShape,
+    selectionMode,
+    selectionPadding,
+    true
+  )
   return {
     ...newRect,
     fontSize: calculateTextFontSize(ctx, newRect.value, newRect.width, newRect.style?.fontFamily)
@@ -535,9 +555,17 @@ export const resizePicture = (
   cursorPosition: Point,
   canvasOffset: Point,
   originalShape: DrawablePicture,
-  selectionMode: SelectionModeResize
+  selectionMode: SelectionModeResize,
+  selectionPadding: number
 ): DrawablePicture => {
-  return resizeRect(cursorPosition, canvasOffset, originalShape, selectionMode, true)
+  return resizeRect(
+    cursorPosition,
+    canvasOffset,
+    originalShape,
+    selectionMode,
+    selectionPadding,
+    true
+  )
 }
 
 export const resizeShape = (
@@ -546,42 +574,48 @@ export const resizeShape = (
   cursorPosition: Point,
   canvasOffset: Point,
   originalShape: DrawableShape,
-  selectionMode: SelectionModeData<Point | number>
+  selectionMode: SelectionModeData<Point | number>,
+  selectionPadding: number
 ): DrawableShape => {
   if (shape.type === 'line' || shape.type === 'polygon' || shape.type === 'curve')
     return resizeLine(
       cursorPosition,
       canvasOffset,
       originalShape as DrawableLine,
-      selectionMode as SelectionModeResize<number>
+      selectionMode as SelectionModeResize<number>,
+      selectionPadding
     )
   else if (shape.type === 'brush')
     return resizeBrush(
       cursorPosition,
       canvasOffset,
       originalShape as DrawableBrush,
-      selectionMode as SelectionModeResize
+      selectionMode as SelectionModeResize,
+      selectionPadding
     )
   else if (shape.type === 'circle')
     return resizeCircle(
       cursorPosition,
       canvasOffset,
       originalShape as DrawableCircle,
-      selectionMode as SelectionModeResize
+      selectionMode as SelectionModeResize,
+      selectionPadding
     )
   else if (shape.type === 'ellipse')
     return resizeEllipse(
       cursorPosition,
       canvasOffset,
       originalShape as DrawableEllipse,
-      selectionMode as SelectionModeResize
+      selectionMode as SelectionModeResize,
+      selectionPadding
     )
   else if (shape.type === 'rect')
     return resizeRect(
       cursorPosition,
       canvasOffset,
       originalShape as DrawableRect,
-      selectionMode as SelectionModeResize
+      selectionMode as SelectionModeResize,
+      selectionPadding
     )
   else if (shape.type === 'square')
     return resizeRect(
@@ -589,6 +623,7 @@ export const resizeShape = (
       canvasOffset,
       originalShape as DrawableRect,
       selectionMode as SelectionModeResize,
+      selectionPadding,
       true
     )
   else if (shape.type === 'text')
@@ -597,14 +632,16 @@ export const resizeShape = (
       cursorPosition,
       canvasOffset,
       originalShape as DrawableText,
-      selectionMode as SelectionModeResize
+      selectionMode as SelectionModeResize,
+      selectionPadding
     )
   else if (shape.type === 'picture')
     return resizePicture(
       cursorPosition,
       canvasOffset,
       originalShape as DrawablePicture,
-      selectionMode as SelectionModeResize
+      selectionMode as SelectionModeResize,
+      selectionPadding
     )
   return shape
 }
@@ -614,7 +651,8 @@ export const transformShape = (
   shape: DrawableShape,
   cursorPosition: Point,
   canvasOffset: Point,
-  selectionMode: SelectionModeData<Point | number>
+  selectionMode: SelectionModeData<Point | number>,
+  selectionPadding: number
 ) => {
   if (selectionMode.mode === SelectionModeLib.brush) {
     return paintNewPointToShape(shape as DrawableBrush, cursorPosition)
@@ -640,7 +678,8 @@ export const transformShape = (
       cursorPosition,
       canvasOffset,
       selectionMode.originalShape,
-      selectionMode
+      selectionMode,
+      selectionPadding
     )
   }
   return shape

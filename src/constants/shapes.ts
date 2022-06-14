@@ -1,6 +1,8 @@
 import { Point } from 'types/Shapes'
 
-export const SELECTION_PADDING = 0
+export const SELECTION_DEFAULT_PADDING = 0
+export const SELECTION_DEFAULT_WIDTH = 2
+export const SELECTION_DEFAULT_COLOR = 'blue'
 export const SELECTION_ANCHOR_SIZE = 14
 export const SELECTION_ROTATED_ANCHOR_POSITION = 16
 export const SELECTION_RESIZE_ANCHOR_POSITIONS: Point[] = [

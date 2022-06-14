@@ -21,6 +21,9 @@ const drawCanvas = (
   activeTool: ToolsType,
   canvasOffset: Point,
   shapes: DrawableShape[],
+  selectionPadding: number,
+  selectionWidth: number,
+  selectionColor: string,
   selectedShape: DrawableShape | undefined
 ) => {
   const { width, height, scaleRatio } = canvasSize
@@ -28,7 +31,7 @@ const drawCanvas = (
   selectionCtx.clearRect(0, 0, width, height)
   for (let i = shapes.length - 1; i >= 0; i--) {
     if (selectionMode.mode !== SelectionModeLib.textedition || shapes[i] !== selectedShape) {
-      drawShape(drawCtx, shapes[i], scaleRatio, canvasOffset)
+      drawShape(drawCtx, shapes[i], scaleRatio, canvasOffset, selectionPadding)
     }
   }
   selectedShape &&
@@ -38,6 +41,9 @@ const drawCanvas = (
       shape: selectedShape,
       scaleRatio,
       canvasOffset,
+      selectionPadding,
+      selectionWidth,
+      selectionColor,
       withAnchors: selectionMode.mode !== SelectionModeLib.textedition
     })
 }
@@ -49,11 +55,9 @@ const StyledCanvasBox = styled.div`
   justify-content: center;
 `
 
-const StyledCanvasContainer = styled.div<{
-  backgroundcolor: string
-}>`
+const StyledCanvasContainer = styled.div`
   position: relative;
-  background-color: ${({backgroundcolor}) => backgroundcolor};
+  background-color: var(--canvas-bg);
   background-repeat: repeat;
   background-size: 16px;
   overflow: hidden;
@@ -99,12 +103,14 @@ type DrawerType = {
   withGrid: boolean
   disabled?: boolean
   canGrow?: boolean
-  backgroundColor: string
   canvasSize: {
     width: number
     height: number
     scaleRatio: number
   }
+  selectionColor: string
+  selectionWidth: number
+  selectionPadding: number
   shapes: DrawableShape[]
   saveShapes: () => void
   addShape: (newShape: DrawableShape) => void
@@ -129,7 +135,6 @@ const Canvas = React.forwardRef<HTMLCanvasElement, DrawerType>(
       withGrid,
       canGrow,
       disabled = false,
-      backgroundColor,
       canvasSize,
       shapes,
       addShape,
@@ -146,7 +151,10 @@ const Canvas = React.forwardRef<HTMLCanvasElement, DrawerType>(
       defaultConf,
       isInsideComponent,
       selectionMode,
-      setSelectionMode
+      setSelectionMode,
+      selectionWidth,
+      selectionColor,
+      selectionPadding
     },
     ref
   ) => {
@@ -176,7 +184,8 @@ const Canvas = React.forwardRef<HTMLCanvasElement, DrawerType>(
       updateSingleShape,
       canvasOffset,
       saveShapes,
-      setSelectionMode
+      setSelectionMode,
+      selectionPadding
     })
 
     const updateSelectedShapeText = useCallback(
@@ -217,14 +226,27 @@ const Canvas = React.forwardRef<HTMLCanvasElement, DrawerType>(
             activeTool,
             canvasOffset,
             shapes,
+            selectionPadding,
+            selectionWidth,
+            selectionColor,
             selectedShape
           )
         )
-    }, [shapes, selectionMode, selectedShape, activeTool, canvasOffset, canvasSize])
+    }, [
+      shapes,
+      selectionMode,
+      selectedShape,
+      activeTool,
+      canvasOffset,
+      canvasSize,
+      selectionPadding,
+      selectionWidth,
+      selectionColor
+    ])
 
     return (
       <StyledCanvasBox>
-        <StyledCanvasContainer data-grid={withGrid} data-grow={canGrow} backgroundcolor={backgroundColor}>
+        <StyledCanvasContainer data-grid={withGrid} data-grow={canGrow}>
           <StyledDrawCanvas
             ref={drawCanvasRef}
             data-grow={canGrow}
@@ -255,6 +277,7 @@ const Canvas = React.forwardRef<HTMLCanvasElement, DrawerType>(
                 shape={selectedShape}
                 defaultValue={selectionMode.defaultValue}
                 updateValue={updateSelectedShapeText}
+                selectionPadding={selectionPadding}
               />
             )}
         </StyledCanvasContainer>

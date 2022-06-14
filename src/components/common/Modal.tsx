@@ -16,7 +16,7 @@ const StyledModal = styled.div`
 
 const StyledPanel = styled.div`
   display: grid;
-  background: var(--bg-color);
+  background: var(--toolbar-bg);
   box-shadow: 0 3px 8px rgb(0 0 0 / 24%);
   padding: 12px;
   border-radius: 8px;

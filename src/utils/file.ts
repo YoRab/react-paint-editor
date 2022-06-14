@@ -37,7 +37,8 @@ export const getCanvasImage = (
   shapes: DrawableShape[],
   canvasOffset: Point,
   width: number,
-  height: number
+  height: number,
+  selectionPadding: number
 ) => {
   const newCanvas = document.createElement('canvas')
   newCanvas.width = width
@@ -46,7 +47,7 @@ export const getCanvasImage = (
   if (!ctx) return ''
   ctx.clearRect(0, 0, width, height)
   for (let i = shapes.length - 1; i >= 0; i--) {
-    drawShape(ctx, shapes[i], 1, canvasOffset)
+    drawShape(ctx, shapes[i], 1, canvasOffset, selectionPadding)
   }
   return newCanvas.toDataURL('image/png')
 }

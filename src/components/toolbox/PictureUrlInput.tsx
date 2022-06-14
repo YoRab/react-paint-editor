@@ -8,8 +8,8 @@ const StyledInputModal = styled(Modal)`
     grid-template-columns: 3fr 1fr 1fr;
 
     input {
-      color: var(--text-color);
-      border: 2px solid var(--text-color);
+      color: var(--font-color);
+      border: 1px solid var(--font-color);
       outline: none;
     }
   }

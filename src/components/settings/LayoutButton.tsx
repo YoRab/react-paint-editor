@@ -4,9 +4,9 @@ import { layersIcon } from 'constants/icons'
 import Button from 'components/common/Button'
 
 const StyleToggleLayoutButton = styled(Button)`
-  .layoutPanelOpened & {
-    color: var(--text-color-selected);
-    background: var(--bg-color-selected);
+  .layoutPanelOpened && {
+    color: var(--font-selected-color);
+    background: var(--font-selected-bg);
   }
 
   &[data-hidden='1'] {

@@ -16,13 +16,6 @@ const StyledPanel = styled(Panel)`
   &[data-vertical='1'] {
     flex-direction: column;
   }
-
-  hr {
-    width: 100%;
-    border: none;
-    border-top: 1px solid var(--text-color);
-    opacity: 0.6;
-  }
 `
 
 const StyledRelative = styled.div`

@@ -32,9 +32,10 @@ export const getSettingsPosition = (
   shape: DrawableShape,
   canvas: HTMLCanvasElement | null,
   givenWidth: number,
-  givenHeight: number
+  givenHeight: number,
+  selectionPadding: number
 ) => {
-  const shapeInfos = getShapeInfos(shape)
+  const shapeInfos = getShapeInfos(shape, selectionPadding)
 
   const positionInCanvas = getPointPositionBeforeCanvasTransformation(
     shapeInfos.center,
@@ -108,12 +109,13 @@ export const checkPositionIntersection = (
   shape: DrawableShape,
   position: Point,
   canvasOffset: Point,
+  selectionPadding: number,
   currentScale = 1,
   checkAnchors = false
 ): false | HoverModeData => {
   const scaleWithMinCap = Math.min(1, currentScale)
 
-  const { borders, center } = getShapeInfos(shape)
+  const { borders, center } = getShapeInfos(shape, selectionPadding)
 
   const newPosition = getPointPositionAfterCanvasTransformation(
     position,

@@ -32,8 +32,8 @@ const StyledShrinkableTools = styled.div`
 const StyledToolbox = styled.div`
   display: flex;
   max-height: 36px;
-  background: var(--bg-color);
-  border-bottom: 1px solid var(--border-color);
+  background: var(--toolbar-bg);
+  border-bottom: 1px solid var(--divider-color);
   box-sizing: border-box;
 `
 

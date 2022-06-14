@@ -12,6 +12,7 @@ const StyledEditBox = styled.div<{
   fontsize: number
   fontfamily: string
   color: string
+  padding: number
 }>`
   position: absolute;
   display: inline-block;
@@ -19,8 +20,10 @@ const StyledEditBox = styled.div<{
   left: 0px;
   top: 0px;
   transform-origin: left top;
+  box-sizing: border-box;
   transform: ${({ transform }) => transform};
   color: ${({ color }) => color};
+  padding: ${({ padding }) => padding}px;
   font-size: ${({ fontsize }) => fontsize}px;
   line-height: ${({ fontsize }) => fontsize}px;
   font-family: ${({ fontfamily }) => fontfamily};
@@ -31,6 +34,7 @@ type EditTextBoxType = {
   disabled?: boolean
   shape: DrawableText
   defaultValue: string[]
+  selectionPadding: number
   updateValue: (newValue: string[]) => void
 }
 
@@ -39,7 +43,8 @@ const EditTextBox = ({
   scaleRatio,
   shape,
   defaultValue,
-  updateValue
+  updateValue,
+  selectionPadding
 }: EditTextBoxType) => {
   const ref = useRef<HTMLDivElement>(null)
 
@@ -54,7 +59,7 @@ const EditTextBox = ({
   }, [defaultValue])
 
   const position = useMemo(() => {
-    const { borders, center } = getShapeInfos(shape)
+    const { borders, center } = getShapeInfos(shape, selectionPadding)
 
     return getPointPositionBeforeCanvasTransformation(
       [borders.x, borders.y],
@@ -62,7 +67,7 @@ const EditTextBox = ({
       shape.rotation,
       center
     )
-  }, [shape])
+  }, [shape, selectionPadding])
 
   return (
     <StyledEditBox
@@ -71,6 +76,7 @@ const EditTextBox = ({
         position[1] * scaleRatio
       }px, 0) rotate(${radiansToDegrees(shape.rotation)}deg)`}
       fontsize={shape.fontSize * scaleRatio}
+      padding={selectionPadding * scaleRatio}
       color={shape.style?.strokeColor ?? 'inherit'}
       fontfamily={shape.style?.fontFamily ?? STYLE_FONT_DEFAULT}
       contentEditable={!disabled}

@@ -8,7 +8,8 @@ import { getShapeInfos } from './shapeData'
 export const getNewSelectionData = (
   hoverMode: HoverModeData,
   selectedShape: DrawableShape,
-  cursorPosition: Point
+  cursorPosition: Point,
+  selectionPadding: number
 ): SelectionModeData<Point | number> | undefined => {
   if (hoverMode.mode === 'translate') {
     return {
@@ -17,7 +18,7 @@ export const getNewSelectionData = (
       originalShape: selectedShape
     }
   } else if (hoverMode.mode === 'rotate') {
-    const { center: centerBeforeResize } = getShapeInfos(selectedShape)
+    const { center: centerBeforeResize } = getShapeInfos(selectedShape, selectionPadding)
     const center: Point = [centerBeforeResize[0], centerBeforeResize[1]]
     return {
       mode: SelectionModeLib.rotate,
@@ -41,13 +42,15 @@ export const selectShape = (
   cursorPosition: Point,
   currentScale: number,
   canvasOffset: Point,
-  selectedShape: DrawableShape | undefined
+  selectedShape: DrawableShape | undefined,
+  selectionPadding: number
 ): { mode: SelectionModeData<Point | number>; shape: DrawableShape | undefined } => {
   if (selectedShape) {
     const positionIntersection = checkPositionIntersection(
       selectedShape,
       cursorPosition,
       canvasOffset,
+      selectionPadding,
       currentScale,
       true
     ) || {
@@ -57,14 +60,22 @@ export const selectShape = (
     const newSelectionMode = getNewSelectionData(
       positionIntersection,
       selectedShape,
-      cursorPosition
+      cursorPosition,
+      selectionPadding
     )
     if (newSelectionMode) {
       return { shape: selectedShape, mode: newSelectionMode }
     }
   }
   const foundShape = _.find(shape => {
-    return !!checkPositionIntersection(shape, cursorPosition, canvasOffset, currentScale, false)
+    return !!checkPositionIntersection(
+      shape,
+      cursorPosition,
+      canvasOffset,
+      selectionPadding,
+      currentScale,
+      false
+    )
   }, shapes)
   if (!!foundShape) {
     return {

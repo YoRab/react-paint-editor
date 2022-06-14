@@ -23,10 +23,10 @@ import { CURVE_POINTS_VALUES, POLYGON_POINTS_VALUES } from 'constants/style'
 const StyledSettingsBar = styled.div`
   user-select: none;
   display: flex;
-  background: var(--bg-color);
+  background: var(--toolbar-bg);
   position: relative;
   height: 36px;
-  border-top: 1px solid var(--border-color);
+  border-top: 1px solid var(--divider-color);
   box-sizing: border-box;
 `
 

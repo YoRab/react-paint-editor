@@ -6,7 +6,7 @@ const StyledPanel = styled.div`
   position: absolute;
   z-index: ${STYLE_ZINDEX_PANEL};
 
-  background: var(--bg-color);
+  background: var(--toolbar-bg);
   bottom: 100%;
   box-shadow: 0 3px 8px rgb(0 0 0 / 24%);
   padding: 8px;

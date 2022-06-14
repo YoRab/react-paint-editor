@@ -1,5 +1,7 @@
 import {
   SELECTION_ANCHOR_SIZE,
+  SELECTION_DEFAULT_COLOR,
+  SELECTION_DEFAULT_WIDTH,
   SELECTION_RESIZE_ANCHOR_POSITIONS,
   SELECTION_ROTATED_ANCHOR_POSITION
 } from 'constants/shapes'
@@ -29,13 +31,14 @@ const applyShapeTransformations = (
   ctx: CanvasRenderingContext2D,
   marker: DrawableShape,
   responsiveScale: number,
-  canvasOffset: Point
+  canvasOffset: Point,
+  selectionPadding: number
 ) => {
   ctx.save()
   ctx.scale(responsiveScale, responsiveScale)
   ctx.translate(marker.translation[0] + canvasOffset[0], marker.translation[1] + canvasOffset[1])
   if (marker.rotation !== 0) {
-    const { center } = getShapeInfos(marker)
+    const { center } = getShapeInfos(marker, selectionPadding)
     ctx.translate(center[0], center[1])
     ctx.rotate(marker.rotation)
     ctx.translate(-center[0], -center[1])
@@ -59,8 +62,8 @@ const updateDrawStyle = (
   const {
     fillColor = 'transparent',
     globalAlpha = 100,
-    strokeColor = 'blue',
-    lineWidth = 1,
+    strokeColor = SELECTION_DEFAULT_COLOR,
+    lineWidth = SELECTION_DEFAULT_WIDTH,
     lineDash = 0
   } = style
   ctx.lineCap = 'round'
@@ -258,10 +261,11 @@ export const drawShape = (
   ctx: CanvasRenderingContext2D,
   shape: DrawableShape,
   responsiveScale: number,
-  canvasOffset: Point
+  canvasOffset: Point,
+  selectionPadding: number
 ): void => {
   if (shape.visible === false) return
-  applyShapeTransformations(ctx, shape, responsiveScale, canvasOffset)
+  applyShapeTransformations(ctx, shape, responsiveScale, canvasOffset, selectionPadding)
 
   switch (shape.type) {
     case 'brush':
@@ -300,17 +304,29 @@ const drawSelectionDefault = ({
   ctx,
   shape,
   withAnchors,
+  selectionPadding,
+  selectionWidth,
+  selectionColor,
   currentScale = 1
 }: {
   ctx: CanvasRenderingContext2D
   shape: DrawableShape
   withAnchors: boolean
+  selectionPadding: number
+  selectionWidth: number
+  selectionColor: string
   currentScale?: number
 }) => {
-  const scaleWithMinCap = Math.min(1, currentScale)
-  const { borders } = getShapeInfos(shape)
+  const { borders } = getShapeInfos(shape, selectionPadding / currentScale)
 
-  drawRect(ctx, borders)
+  drawRect(ctx, {
+    ...borders,
+    style: {
+      fillColor: 'transparent',
+      strokeColor: selectionColor,
+      lineWidth: selectionWidth / currentScale
+    }
+  })
 
   if (!withAnchors || shape.locked) return
 
@@ -319,31 +335,36 @@ const drawSelectionDefault = ({
       [borders.x + borders.width / 2, borders.y],
       [
         borders.x + borders.width / 2,
-        borders.y - SELECTION_ANCHOR_SIZE / 2 - SELECTION_ROTATED_ANCHOR_POSITION / scaleWithMinCap
+        borders.y - SELECTION_ANCHOR_SIZE / 2 - SELECTION_ROTATED_ANCHOR_POSITION / currentScale
       ]
-    ]
+    ],
+    style: {
+      fillColor: 'transparent',
+      strokeColor: selectionColor,
+      lineWidth: selectionWidth / currentScale
+    }
   })
 
   for (const anchorPosition of SELECTION_RESIZE_ANCHOR_POSITIONS) {
     drawCircle(ctx, {
       x: borders.x + borders.width * anchorPosition[0],
       y: borders.y + borders.height * anchorPosition[1],
-      radius: SELECTION_ANCHOR_SIZE / 2 / scaleWithMinCap,
+      radius: SELECTION_ANCHOR_SIZE / 2 / currentScale,
       style: {
         fillColor: 'rgb(255,255,255)',
         strokeColor: 'rgb(150,150,150)',
-        lineWidth: 2 / scaleWithMinCap
+        lineWidth: selectionWidth / currentScale
       }
     })
   }
   drawCircle(ctx, {
     x: borders.x + borders.width / 2,
-    y: borders.y - SELECTION_ANCHOR_SIZE / 2 - SELECTION_ROTATED_ANCHOR_POSITION / scaleWithMinCap,
-    radius: SELECTION_ANCHOR_SIZE / 2 / scaleWithMinCap,
+    y: borders.y - SELECTION_ANCHOR_SIZE / 2 - SELECTION_ROTATED_ANCHOR_POSITION / currentScale,
+    radius: SELECTION_ANCHOR_SIZE / 2 / currentScale,
     style: {
       fillColor: 'rgb(255,255,255)',
       strokeColor: 'rgb(150,150,150)',
-      lineWidth: 2 / scaleWithMinCap
+      lineWidth: selectionWidth / currentScale
     }
   })
 }
@@ -351,17 +372,28 @@ const drawLineSelection = ({
   ctx,
   shape,
   withAnchors,
+  selectionPadding,
+  selectionWidth,
+  selectionColor,
   currentScale = 1
 }: {
   ctx: CanvasRenderingContext2D
   shape: DrawableLine | DrawablePolygon | DrawableCurve
   withAnchors: boolean
+  selectionPadding: number
+  selectionWidth: number
+  selectionColor: string
   currentScale?: number
 }) => {
-  const scaleWithMinCap = Math.min(1, currentScale)
-
-  const { borders } = getShapeInfos(shape)
-  drawRect(ctx, borders)
+  const { borders } = getShapeInfos(shape, selectionPadding)
+  drawRect(ctx, {
+    ...borders,
+    style: {
+      fillColor: 'transparent',
+      strokeColor: selectionColor,
+      lineWidth: selectionWidth / currentScale
+    }
+  })
   if (!withAnchors || shape.locked) return
   for (let i = 0; i < shape.points.length; i++) {
     const coordinate = shape.points[i]
@@ -369,23 +401,23 @@ const drawLineSelection = ({
       drawRect(ctx, {
         x: coordinate[0] - SELECTION_ANCHOR_SIZE / 2,
         y: coordinate[1] - SELECTION_ANCHOR_SIZE / 2,
-        width: SELECTION_ANCHOR_SIZE / scaleWithMinCap,
-        height: SELECTION_ANCHOR_SIZE / scaleWithMinCap,
+        width: SELECTION_ANCHOR_SIZE / currentScale,
+        height: SELECTION_ANCHOR_SIZE / currentScale,
         style: {
           fillColor: 'rgb(255,255,255)',
           strokeColor: 'rgb(150,150,150)',
-          lineWidth: 2 / scaleWithMinCap
+          lineWidth: selectionWidth / currentScale
         }
       })
     } else {
       drawCircle(ctx, {
         x: coordinate[0],
         y: coordinate[1],
-        radius: SELECTION_ANCHOR_SIZE / 2 / scaleWithMinCap,
+        radius: SELECTION_ANCHOR_SIZE / 2 / currentScale,
         style: {
           fillColor: 'rgb(255,255,255)',
           strokeColor: 'rgb(150,150,150)',
-          lineWidth: 2 / scaleWithMinCap
+          lineWidth: selectionWidth / currentScale
         }
       })
     }
@@ -397,23 +429,45 @@ export const drawSelection = ({
   shape,
   scaleRatio = 1,
   canvasOffset,
+  selectionPadding,
+  selectionWidth,
+  selectionColor,
   withAnchors = true
 }: {
   ctx: CanvasRenderingContext2D
   shape: DrawableShape
   scaleRatio: number
   canvasOffset: Point
+  selectionPadding: number
+  selectionWidth: number
+  selectionColor: string
   withAnchors?: boolean
 }) => {
-  applyShapeTransformations(ctx, shape, scaleRatio, canvasOffset)
+  applyShapeTransformations(ctx, shape, scaleRatio, canvasOffset, selectionPadding)
   switch (shape.type) {
     case 'polygon':
     case 'line':
     case 'curve':
-      drawLineSelection({ ctx, shape, withAnchors, currentScale: scaleRatio })
+      drawLineSelection({
+        ctx,
+        shape,
+        withAnchors,
+        selectionPadding,
+        selectionWidth,
+        selectionColor,
+        currentScale: scaleRatio
+      })
       break
     default:
-      drawSelectionDefault({ ctx, shape, withAnchors, currentScale: scaleRatio })
+      drawSelectionDefault({
+        ctx,
+        shape,
+        withAnchors,
+        selectionPadding,
+        selectionWidth,
+        selectionColor,
+        currentScale: scaleRatio
+      })
       break
   }
   restoreShapeTransformations(ctx)
