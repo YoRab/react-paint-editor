@@ -32,6 +32,7 @@ import { SnackbarTypeEnum } from 'constants/snackbar'
 import Loading from 'components/common/Loading'
 import { cleanShapesBeforeExport } from 'utils/data'
 import useResizeObserver from 'hooks/useResizeObserver'
+import { RecursivePartial } from 'types/utils'
 
 const StyledApp = styled.div<{
   canvaswidth: number
@@ -96,11 +97,17 @@ const StyledRow = styled.div<{
 type AppOptionsType = {
   layersManipulation: boolean
   gridVisible: boolean
+  canGrow: boolean
+  canShrink: boolean
+  availableTools: ShapeEnum[]
+  withExport: boolean
+  withLoadAndSave: boolean
+  uiStyle: {
+    canvasBackgroundColor: string
+  }
 }
 
-type OptionalAppOptionsType = {
-  [K in keyof AppOptionsType]?: AppOptionsType[K]
-}
+type OptionalAppOptionsType = RecursivePartial<AppOptionsType>
 
 const DEFAULT_TOOLS = [
   ShapeEnum.brush,
@@ -117,20 +124,25 @@ const DEFAULT_TOOLS = [
 
 const DEFAULT_OPTIONS: AppOptionsType = {
   layersManipulation: true,
-  gridVisible: false
+  gridVisible: false,
+  canGrow: false,
+  canShrink: true,
+  withExport: true,
+  withLoadAndSave: true,
+  availableTools: DEFAULT_TOOLS,
+  uiStyle: {
+    canvasBackgroundColor: 'white'
+  }
 }
 
 type AppType = {
+  className?: string
   width?: number
   height?: number
-  canGrow?: boolean
-  canShrink?: boolean
   shapes?: DrawableShapeJson[]
-  className?: string
+  onDataChanged?: () => void
   mode?: 'editor' | 'viewer'
   disabled?: boolean
-  onDataChanged?: () => void
-  availableTools?: ShapeEnum[]
   apiRef?: MutableRefObject<
     | undefined
     | {
@@ -144,20 +156,30 @@ type AppType = {
 const App = ({
   width: canvasWidth = 1000,
   height: canvasHeight = 600,
-  canGrow = false,
-  canShrink = true,
   shapes: shapesFromProps,
   className: classNameFromProps,
   mode = 'editor',
   disabled: disabledFromProps = false,
   onDataChanged,
-  availableTools: availableToolsFromProps = DEFAULT_TOOLS,
   apiRef,
   options
 }: AppType) => {
-  const { layersManipulation, gridVisible } = {
+  const {
+    layersManipulation,
+    gridVisible,
+    canGrow,
+    canShrink,
+    withExport,
+    withLoadAndSave,
+    availableTools: availableToolsFromProps
+  } = {
     ...DEFAULT_OPTIONS,
     ...options
+  }
+
+  const uiStyle = {
+    ...DEFAULT_OPTIONS.uiStyle,
+    ...(options?.uiStyle ?? {})
   }
   const isEditMode = mode !== 'viewer'
   const disabled = disabledFromProps || !isEditMode
@@ -396,7 +418,7 @@ const App = ({
       },
 
       getCurrentData: () => {
-        return cleanShapesBeforeExport(shapesRef.current) as DrawableShape[] //TODO : create different types for stored shapes
+        return cleanShapesBeforeExport(shapesRef.current) as DrawableShapeJson[] //TODO : create different types for stored shapes
       }
     }
   }, [apiRef, shapesRef, canvasOffset, canvasWidth, canvasHeight])
@@ -426,6 +448,8 @@ const App = ({
           undoAction={undoAction}
           redoAction={redoAction}
           availableTools={availableTools}
+          withExport={withExport}
+          withLoadAndSave={withLoadAndSave}
         />
       )}
       <StyledRow
@@ -436,6 +460,7 @@ const App = ({
           canGrow={canGrow}
           withGrid={withGrid}
           disabled={disabled}
+          backgroundColor={uiStyle.canvasBackgroundColor}
           isInsideComponent={isInsideComponent}
           activeTool={activeTool}
           setActiveTool={setActiveTool}

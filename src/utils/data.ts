@@ -15,7 +15,8 @@ export const createPicture = (
         img.width,
         img.height,
         maxPictureWidth,
-        maxPictureHeight
+        maxPictureHeight,
+        true
       )
 
       const pictureShape: DrawablePicture = {

@@ -10,7 +10,7 @@ type MenuType = {
 
 const MenuItems = [
   'Default',
-  'Custom size',
+  'Custom size and style',
   'Limited tools and customization',
   'From saved file',
   'Manual saves',
@@ -90,15 +90,23 @@ const AutoSaveApp = () => {
 const CurrentApp = ({ selectedComponent }: CurrentAppType) => {
   const widthRef = useRef<HTMLInputElement>(null)
   const heightRef = useRef<HTMLInputElement>(null)
+  const canvasBackgroundColorRef = useRef<HTMLInputElement>(null)
   const [width, setWidth] = useState(500)
   const [height, setHeight] = useState(250)
   const [isShrinkable, setIsShrinkable] = useState(true)
   const [isGrowing, setisGrowing] = useState(false)
+  const [canvasBackgroundColor, setCanvasBackgroundColor] = useState<string>('white')
 
   const updateSize = () => {
     widthRef.current && setWidth(+widthRef.current.value)
     heightRef.current && setHeight(+heightRef.current.value)
   }
+
+  const updateStyle = () => {
+    canvasBackgroundColorRef.current &&
+      setCanvasBackgroundColor(canvasBackgroundColorRef.current.value)
+  }
+
   switch (selectedComponent) {
     case 0:
     default:
@@ -113,7 +121,7 @@ const CurrentApp = ({ selectedComponent }: CurrentAppType) => {
             <label>
               Canvas Height : <input type="number" defaultValue={height} ref={heightRef} />
             </label>
-            <button onClick={updateSize}>Update</button>
+            <button onClick={updateSize}>Update size</button>
           </div>
           <div>
             <label>
@@ -133,14 +141,38 @@ const CurrentApp = ({ selectedComponent }: CurrentAppType) => {
               />
             </label>
           </div>
-          <App width={width} height={height} canGrow={isGrowing} canShrink={isShrinkable} />
+          <div>
+            <label>
+              Canvas background color :
+              <input
+                type="color"
+                defaultValue={canvasBackgroundColor}
+                ref={canvasBackgroundColorRef}
+              />
+            </label>
+            <button onClick={updateStyle}>Update style</button>
+          </div>
+          <App
+            width={width}
+            height={height}
+            options={{
+              canGrow: isGrowing,
+              canShrink: isShrinkable,
+              uiStyle: { canvasBackgroundColor: canvasBackgroundColor }
+            }}
+          />
         </>
       )
     case 2:
       return (
         <App
-          options={{ gridVisible: true, layersManipulation: false }}
-          availableTools={['circle', 'brush', undefined, 'not existing tool']}
+          options={{
+            gridVisible: true,
+            layersManipulation: false,
+            withLoadAndSave: false,
+            withExport: false,
+            availableTools: ['circle', 'brush', undefined, 'not existing tool']
+          }}
         />
       )
     case 3:

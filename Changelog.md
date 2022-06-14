@@ -1,3 +1,11 @@
+# V.0.3.1
+
+- Add prop to change canvas background color
+- Move some props to options
+- fix Picture shape not being saved and not triggering onDataChanged
+- small picture are upscaled to fit container when imported
+- Add prop to choose to display save/load/export button
+
 # V.0.3.0 :
 
 - prevent picture from url submit to reload page

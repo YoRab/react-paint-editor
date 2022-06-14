@@ -48,6 +48,8 @@ type ToolbarGroupType = {
   exportCanvasInFile: () => void
   availableTools: ShapeEnum[]
   togglePictureUrlModal: () => void
+  withLoadAndSave: boolean
+  withExport: boolean
 }
 
 const MenuGroup = ({
@@ -56,6 +58,8 @@ const MenuGroup = ({
   group,
   vertical = false,
   disabled = false,
+  withLoadAndSave,
+  withExport,
   addPicture: addPictureFromProps,
   loadFile: loadFileFromProps,
   togglePictureUrlModal,
@@ -98,7 +102,11 @@ const MenuGroup = ({
     }
   }, [isOpen])
 
-  return (
+  const withPicture = _.includes(ShapeEnum.picture, availableTools)
+  const withDivider = withPicture && (withLoadAndSave || withExport)
+  const withMenu = withPicture || withLoadAndSave || withExport
+
+  return withMenu ? (
     <StyledRelative>
       <Button
         selected={isActive}
@@ -109,7 +117,7 @@ const MenuGroup = ({
       />
       {isOpen && (
         <StyledPanel vertical={vertical} alignment={alignment}>
-          {_.includes(ShapeEnum.picture, availableTools) && (
+          {withPicture && (
             <>
               <LoadFileTool
                 withText={true}
@@ -127,42 +135,46 @@ const MenuGroup = ({
                 icon={publicIcon}
                 children="Add picture from URL"
               />
-              <hr />
             </>
           )}
+          {withDivider && <hr />}
+          {withLoadAndSave && (
+            <>
+              <LoadFileTool
+                withText={true}
+                disabled={disabled}
+                loadFile={loadFile}
+                lib="Load project"
+                img={openFileIcon}
+                accept="application/JSON"
+              />
 
-          <LoadFileTool
-            withText={true}
-            disabled={disabled}
-            loadFile={loadFile}
-            lib="Load project"
-            img={openFileIcon}
-            accept="application/JSON"
-          />
-
-          <Tool
-            withText={true}
-            disabled={disabled}
-            type={ToolEnum.saveFile}
-            lib="Save project"
-            img={saveIcon}
-            isActive={activeTool === ToolEnum.saveFile}
-            setActive={saveFile}
-          />
-
-          <Tool
-            withText={true}
-            disabled={disabled}
-            type={ToolEnum.export}
-            lib="Export PNG"
-            img={exportFileIcon}
-            isActive={activeTool === ToolEnum.export}
-            setActive={exportCanvasInFile}
-          />
+              <Tool
+                withText={true}
+                disabled={disabled}
+                type={ToolEnum.saveFile}
+                lib="Save project"
+                img={saveIcon}
+                isActive={activeTool === ToolEnum.saveFile}
+                setActive={saveFile}
+              />
+            </>
+          )}
+          {withExport && (
+            <Tool
+              withText={true}
+              disabled={disabled}
+              type={ToolEnum.export}
+              lib="Export PNG"
+              img={exportFileIcon}
+              isActive={activeTool === ToolEnum.export}
+              setActive={exportCanvasInFile}
+            />
+          )}
         </StyledPanel>
       )}
     </StyledRelative>
-  )
+  ) : null
 }
 
 export default MenuGroup
