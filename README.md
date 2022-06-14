@@ -1,9 +1,9 @@
 # known issues :
 
-## critical
+## To resolve before beta release
 
 - Text tool broken since 0.2.2
-- double click not working with touch (fix: fake it countinng delay between touch)
+- double click not working with touch (fix: fake it counting delay between touch)
 
 ## mobile/touch
 
@@ -11,6 +11,7 @@
 
 ## other
 
-- TextEdit cursor overflow MINOR (quick fix : edit on modale)
-- TextEdit copy/paste contains html and breaks display
+- TextEdit cursor overflow MINOR (quick fix : edit on modale ?)
+- TextEdit copy/paste containing html breaks display
 - circle resizing only goes one direction
+- New text component opacity range is dancing

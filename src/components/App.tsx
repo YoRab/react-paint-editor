@@ -32,6 +32,7 @@ import { SnackbarTypeEnum } from 'constants/snackbar'
 import Loading from 'components/common/Loading'
 import { cleanShapesBeforeExport } from 'utils/data'
 import useResizeObserver from 'hooks/useResizeObserver'
+import { RecursivePartial } from 'types/utils'
 
 const StyledApp = styled.div<{
   canvaswidth: number
@@ -96,11 +97,15 @@ const StyledRow = styled.div<{
 type AppOptionsType = {
   layersManipulation: boolean
   gridVisible: boolean
+  uiStyle : {
+    canvasBackgroundColor: string
+  }
+  
 }
 
-type OptionalAppOptionsType = {
-  [K in keyof AppOptionsType]?: AppOptionsType[K]
-}
+
+
+type OptionalAppOptionsType = RecursivePartial<AppOptionsType>
 
 const DEFAULT_TOOLS = [
   ShapeEnum.brush,
@@ -117,7 +122,10 @@ const DEFAULT_TOOLS = [
 
 const DEFAULT_OPTIONS: AppOptionsType = {
   layersManipulation: true,
-  gridVisible: false
+  gridVisible: false,
+  uiStyle: {
+    canvasBackgroundColor: 'white'
+  }
 }
 
 type AppType = {
@@ -158,6 +166,11 @@ const App = ({
   const { layersManipulation, gridVisible } = {
     ...DEFAULT_OPTIONS,
     ...options
+  }
+
+  const uiStyle = {
+    ...DEFAULT_OPTIONS.uiStyle,
+    ...options?.uiStyle ?? {}
   }
   const isEditMode = mode !== 'viewer'
   const disabled = disabledFromProps || !isEditMode
@@ -396,7 +409,7 @@ const App = ({
       },
 
       getCurrentData: () => {
-        return cleanShapesBeforeExport(shapesRef.current) as DrawableShape[] //TODO : create different types for stored shapes
+        return cleanShapesBeforeExport(shapesRef.current) as DrawableShapeJson[] //TODO : create different types for stored shapes
       }
     }
   }, [apiRef, shapesRef, canvasOffset, canvasWidth, canvasHeight])
@@ -436,6 +449,7 @@ const App = ({
           canGrow={canGrow}
           withGrid={withGrid}
           disabled={disabled}
+          backgroundColor={uiStyle.canvasBackgroundColor}
           isInsideComponent={isInsideComponent}
           activeTool={activeTool}
           setActiveTool={setActiveTool}

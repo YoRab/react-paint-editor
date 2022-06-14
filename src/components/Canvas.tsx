@@ -49,9 +49,11 @@ const StyledCanvasBox = styled.div`
   justify-content: center;
 `
 
-const StyledCanvasContainer = styled.div`
+const StyledCanvasContainer = styled.div<{
+  backgroundcolor: string
+}>`
   position: relative;
-  background-color: white;
+  background-color: ${({backgroundcolor}) => backgroundcolor};
   background-repeat: repeat;
   background-size: 16px;
   overflow: hidden;
@@ -97,6 +99,7 @@ type DrawerType = {
   withGrid: boolean
   disabled?: boolean
   canGrow?: boolean
+  backgroundColor: string
   canvasSize: {
     width: number
     height: number
@@ -126,6 +129,7 @@ const Canvas = React.forwardRef<HTMLCanvasElement, DrawerType>(
       withGrid,
       canGrow,
       disabled = false,
+      backgroundColor,
       canvasSize,
       shapes,
       addShape,
@@ -220,7 +224,7 @@ const Canvas = React.forwardRef<HTMLCanvasElement, DrawerType>(
 
     return (
       <StyledCanvasBox>
-        <StyledCanvasContainer data-grid={withGrid} data-grow={canGrow}>
+        <StyledCanvasContainer data-grid={withGrid} data-grow={canGrow} backgroundcolor={backgroundColor}>
           <StyledDrawCanvas
             ref={drawCanvasRef}
             data-grow={canGrow}
