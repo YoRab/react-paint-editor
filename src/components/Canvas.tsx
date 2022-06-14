@@ -9,8 +9,29 @@ import EditTextBox from './toolbox/EditTextBox'
 import useDrawableCanvas from 'hooks/useDrawableCanvas'
 import { encodedTransparentIcon } from 'constants/icons'
 
-const drawCanvas = (
+const renderDrawCanvas = (
   drawCtx: CanvasRenderingContext2D,
+  selectionMode: SelectionModeData<number | Point>,
+  canvasSize: {
+    width: number
+    height: number
+    scaleRatio: number
+  },
+  canvasOffset: Point,
+  shapes: DrawableShape[],
+  selectionPadding: number,
+  selectedShape: DrawableShape | undefined
+) => {
+  const { width, height, scaleRatio } = canvasSize
+  drawCtx.clearRect(0, 0, width, height)
+  for (let i = shapes.length - 1; i >= 0; i--) {
+    if (selectionMode.mode !== SelectionModeLib.textedition || shapes[i] !== selectedShape) {
+      drawShape(drawCtx, shapes[i], scaleRatio, canvasOffset, selectionPadding)
+    }
+  }
+}
+
+const renderSelectionCanvas = (
   selectionCtx: CanvasRenderingContext2D,
   selectionMode: SelectionModeData<number | Point>,
   canvasSize: {
@@ -20,20 +41,13 @@ const drawCanvas = (
   },
   activeTool: ToolsType,
   canvasOffset: Point,
-  shapes: DrawableShape[],
   selectionPadding: number,
   selectionWidth: number,
   selectionColor: string,
   selectedShape: DrawableShape | undefined
 ) => {
   const { width, height, scaleRatio } = canvasSize
-  drawCtx.clearRect(0, 0, width, height)
   selectionCtx.clearRect(0, 0, width, height)
-  for (let i = shapes.length - 1; i >= 0; i--) {
-    if (selectionMode.mode !== SelectionModeLib.textedition || shapes[i] !== selectedShape) {
-      drawShape(drawCtx, shapes[i], scaleRatio, canvasOffset, selectionPadding)
-    }
-  }
   selectedShape &&
     activeTool !== ShapeEnum.brush &&
     drawSelection({
@@ -61,6 +75,7 @@ const StyledCanvasContainer = styled.div`
   background-repeat: repeat;
   background-size: 16px;
   overflow: hidden;
+  display: grid;
 
   &[data-grid='true'] {
     background-image: url('data:image/svg+xml,${encodedTransparentIcon}');
@@ -73,11 +88,11 @@ const StyledCanvasContainer = styled.div`
 `
 
 const StyledDrawCanvas = styled.canvas`
-  position: absolute;
   user-select: none;
   max-width: 100%;
   touch-action: none; /* prevent scroll on touch */
   display: block;
+  grid-area: 1 / 1;
 
   &[data-grow='true'] {
     width: 100%;
@@ -92,6 +107,7 @@ const StyledSelectionCanvas = styled.canvas<{
   max-width: 100%;
   touch-action: none; /* prevent scroll on touch */
   display: block;
+  grid-area: 1 / 1;
   cursor: ${({ cursor }) => cursor};
 
   &[data-grow='true'] {
@@ -215,19 +231,32 @@ const Canvas = React.forwardRef<HTMLCanvasElement, DrawerType>(
 
     useEffect(() => {
       const drawCtx = drawCanvasRef.current?.getContext('2d')
-      const selectionCtx = selectionCanvasRef.current?.getContext('2d')
 
       drawCtx &&
-        selectionCtx &&
         window.requestAnimationFrame(() =>
-          drawCanvas(
+          renderDrawCanvas(
             drawCtx,
+            selectionMode,
+            canvasSize,
+            canvasOffset,
+            shapes,
+            selectionPadding,
+            selectedShape
+          )
+        )
+    }, [shapes, selectionMode, selectedShape, canvasOffset, canvasSize, selectionPadding])
+
+    useEffect(() => {
+      const selectionCtx = selectionCanvasRef.current?.getContext('2d')
+
+      selectionCtx &&
+        window.requestAnimationFrame(() =>
+          renderSelectionCanvas(
             selectionCtx,
             selectionMode,
             canvasSize,
             activeTool,
             canvasOffset,
-            shapes,
             selectionPadding,
             selectionWidth,
             selectionColor,
@@ -235,7 +264,6 @@ const Canvas = React.forwardRef<HTMLCanvasElement, DrawerType>(
           )
         )
     }, [
-      shapes,
       selectionMode,
       selectedShape,
       activeTool,
