@@ -1,6 +1,7 @@
 # V.0.4.1
 
 - prevent mounting selection canvas when viewer mode
+- prevent drawing selection when not needed
 
 # V.0.4.0
 
