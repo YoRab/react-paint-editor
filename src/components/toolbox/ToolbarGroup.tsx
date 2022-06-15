@@ -30,7 +30,6 @@ type ToolbarGroupType = {
         vertical: boolean
         tools?: ShapeEnum[]
         title: string
-        img: string
       }
   alignment?: 'left' | 'center' | 'right'
   title?: string
@@ -100,11 +99,15 @@ const ToolbarGroup = ({
 
   const isActive = _.includes(activeTool, group?.tools)
   const groupIcon =
-    (localActiveTool ? getShapePicture(localActiveTool as ShapeEnum) : group.img) ?? group.title
+    (localActiveTool
+      ? getShapePicture(localActiveTool as ShapeEnum)
+      : group.tools && group.tools[0] && getShapePicture(group.tools[0])) ?? group.title
 
   const openPanel = () => {
     if (localActiveTool) setActiveToolFromProps(localActiveTool)
+    else group.tools && group.tools[0] && setActiveTool(group.tools[0])
     setIsOpen(true)
+    // group.tools && group.tools[0] && setActiveTool(group.tools[0])
   }
 
   return (

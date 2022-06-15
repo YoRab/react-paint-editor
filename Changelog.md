@@ -2,6 +2,7 @@
 
 - prevent mounting selection canvas when viewer mode
 - prevent drawing selection when not needed
+- Click on toolbar tool group always enable a tool
 
 # V.0.4.0
 

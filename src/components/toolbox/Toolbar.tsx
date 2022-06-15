@@ -1,8 +1,6 @@
 import {
   clearIcon,
   dotsIcon,
-  gestureIcon,
-  arrowIcon,
   menuIcon,
   redoIcon,
   selectIcon,
@@ -57,19 +55,16 @@ const StyledToolsModal = styled(Modal)`
 const TOOLBAR_STRUCTURE = [
   {
     title: 'brush',
-    img: gestureIcon,
     tools: [ShapeEnum.brush],
     vertical: false
   },
   {
     title: 'lines',
-    img: arrowIcon,
     tools: [ShapeEnum.line, ShapeEnum.curve, ShapeEnum.polygon],
     vertical: false
   },
   {
     title: 'shapes',
-    img: shapesIcon,
     tools: [ShapeEnum.rect, ShapeEnum.square, ShapeEnum.circle, ShapeEnum.ellipse],
     vertical: false
   },
@@ -189,7 +184,12 @@ const Toolbar = ({
               />
             ))}
           </StyledShrinkableToolsInner>
-          <Button disabled={disabled} onClick={toggleTools} title="Toggle tools" icon={dotsIcon} />
+          <Button
+            disabled={disabled}
+            onClick={toggleTools}
+            title="Toggle tools"
+            icon={shapesIcon}
+          />
         </StyledShrinkableTools>
 
         <MenuGroup
