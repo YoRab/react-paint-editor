@@ -10,6 +10,8 @@ import Tool from './Tool'
 import { getShapePicture } from 'utils/style'
 import Modal from 'components/common/Modal'
 import PictureUrlModal from './PictureUrlInput'
+import { CustomTool } from 'types/tools'
+import _ from 'lodash/fp'
 
 const ACTIONS_MENU_BREAKPOINT = 400
 const TOOLS_MENU_BREAKPOINT = 240
@@ -37,17 +39,17 @@ const StyledToolsModal = styled(Modal)`
 const TOOLBAR_STRUCTURE = [
   {
     title: 'brush',
-    tools: [ShapeEnum.brush],
+    toolsType: [ShapeEnum.brush],
     vertical: false
   },
   {
     title: 'lines',
-    tools: [ShapeEnum.line, ShapeEnum.curve, ShapeEnum.polygon],
+    toolsType: [ShapeEnum.line, ShapeEnum.curve, ShapeEnum.polygon],
     vertical: false
   },
   {
     title: 'shapes',
-    tools: [ShapeEnum.rect, ShapeEnum.square, ShapeEnum.circle, ShapeEnum.ellipse],
+    toolsType: [ShapeEnum.rect, ShapeEnum.square, ShapeEnum.circle, ShapeEnum.ellipse],
     vertical: false
   },
   ShapeEnum.text
@@ -68,7 +70,7 @@ type ToolboxType = {
   addPicture: (file: File | string) => Promise<void>
   saveFile: () => void
   exportCanvasInFile: () => void
-  availableTools: ShapeEnum[]
+  availableTools: CustomTool<ShapeEnum>[]
   withLoadAndSave: boolean
   withExport: boolean
 }
@@ -121,7 +123,7 @@ const Toolbar = ({
 
   const currentStructure = getCurrentStructure(availableTools, TOOLBAR_STRUCTURE)
 
-  const isAnyToolSelected = availableTools.includes(activeTool as ShapeEnum)
+  const isAnyToolSelected = _.find({ type: activeTool }, availableTools) !== undefined
   return (
     <>
       <StyledToolbox>
@@ -214,16 +216,16 @@ const Toolbar = ({
       </StyledToolbox>
       {isMenuOpen && (
         <StyledToolsModal onClose={toggleTools}>
-          {availableTools.map(toolType =>
-            toolType === ShapeEnum.picture ? null : (
+          {availableTools.map((toolType, index) =>
+            toolType.type === ShapeEnum.picture ? null : (
               <Tool
                 disabled={disabled}
-                key={toolType}
-                type={toolType}
-                lib={toolType}
+                key={index}
+                type={toolType.type}
+                lib={toolType.lib ?? toolType.type}
                 withText={false}
-                img={getShapePicture(toolType)}
-                isActive={activeTool === toolType}
+                img={getShapePicture(toolType.type)}
+                isActive={activeTool === toolType.type}
                 setActive={setActiveTool}
               />
             )

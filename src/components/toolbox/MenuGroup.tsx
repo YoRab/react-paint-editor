@@ -17,6 +17,7 @@ import {
   saveIcon,
   undoIcon
 } from 'constants/icons'
+import { CustomTool } from 'types/tools'
 const StyledPanel = styled(Panel)`
   display: flex;
   bottom: unset;
@@ -49,7 +50,7 @@ type ToolbarGroupType = {
   addPicture: (file: File) => Promise<void>
   saveFile: () => void
   exportCanvasInFile: () => void
-  availableTools: ShapeEnum[]
+  availableTools: CustomTool<ShapeEnum>[]
   togglePictureUrlModal: () => void
   withLoadAndSave: boolean
   withExport: boolean
@@ -118,7 +119,8 @@ const MenuGroup = ({
     }
   }, [isOpen])
 
-  const withPicture = _.includes(ShapeEnum.picture, availableTools)
+  const withPicture = _.find({ type: ShapeEnum.picture }, availableTools) !== undefined
+
   const withMenu = withActionsInMenu || withPicture || withLoadAndSave || withExport
 
   return withMenu ? (

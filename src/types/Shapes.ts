@@ -26,6 +26,142 @@ export type ToolsType = ShapeEnum | ToolEnum
 
 export type Point = [number, number]
 
+export type SettingsOpacity = {
+  opacity: {
+    min: number
+    max: number
+    step: number
+    default: number
+  }
+}
+
+export type SettingsStrokeColor = {
+  strokeColor: {
+    values: string[]
+    default: string
+  }
+}
+
+export type SettingsFillColor = {
+  fillColor: {
+    values: string[]
+    default: string
+  }
+}
+
+export type SettingsLineWidth = {
+  lineWidth: {
+    min: number
+    max: number
+    step: number
+    default: number
+  }
+}
+
+export type SettingsLineDash = {
+  lineDash: {
+    values: number[]
+    default: number
+  }
+}
+
+export type SettingsLineArrow = {
+  lineArrow: {
+    values: number[]
+    default: number
+  }
+}
+
+export type SettingsFontFamily = {
+  fontFamily: {
+    values: string[]
+    default: string
+  }
+}
+
+export type SettingsPointsCount = {
+  pointsCount: {
+    min: number
+    max: number
+    step: number
+    default: number
+  }
+}
+
+export type ToolsRectSettings = SettingsStrokeColor &
+  SettingsFillColor &
+  SettingsOpacity &
+  SettingsLineWidth &
+  SettingsLineDash
+
+export type ToolsSquareSettings = SettingsStrokeColor &
+  SettingsFillColor &
+  SettingsOpacity &
+  SettingsLineWidth &
+  SettingsLineDash
+
+export type ToolsCircleSettings = SettingsStrokeColor &
+  SettingsFillColor &
+  SettingsOpacity &
+  SettingsLineWidth &
+  SettingsLineDash
+
+export type ToolsEllipseSettings = SettingsStrokeColor &
+  SettingsFillColor &
+  SettingsOpacity &
+  SettingsLineWidth &
+  SettingsLineDash
+
+export type ToolsTextSettings = SettingsOpacity & SettingsStrokeColor & SettingsFontFamily
+export type ToolsLineSettings = SettingsOpacity &
+  SettingsStrokeColor &
+  SettingsLineWidth &
+  SettingsLineDash &
+  SettingsLineArrow
+
+export type ToolsBrushSettings = SettingsOpacity &
+  SettingsStrokeColor &
+  SettingsLineWidth &
+  SettingsLineDash
+
+export type ToolsPolygonSettings = SettingsOpacity &
+  SettingsStrokeColor &
+  SettingsFillColor &
+  SettingsLineWidth &
+  SettingsLineDash &
+  SettingsPointsCount
+
+export type ToolsCurveSettings = SettingsOpacity &
+  SettingsStrokeColor &
+  SettingsFillColor &
+  SettingsLineWidth &
+  SettingsLineDash &
+  SettingsPointsCount
+
+export type ToolsPictureSettings = SettingsOpacity
+
+export type ToolsSettingsType<T extends ShapeEnum> = T extends ShapeEnum.rect
+  ? ToolsRectSettings
+  : T extends ShapeEnum.square
+  ? ToolsSquareSettings
+  : T extends ShapeEnum.circle
+  ? ToolsCircleSettings
+  : T extends ShapeEnum.ellipse
+  ? ToolsEllipseSettings
+  : T extends ShapeEnum.text
+  ? ToolsTextSettings
+  : T extends ShapeEnum.line
+  ? ToolsLineSettings
+  : T extends ShapeEnum.brush
+  ? ToolsBrushSettings
+  : T extends ShapeEnum.polygon
+  ? ToolsPolygonSettings
+  : T extends ShapeEnum.curve
+  ? ToolsCurveSettings
+  : T extends ShapeEnum.picture
+  ? ToolsPictureSettings
+  : unknown // default
+
 export type StyledShape = {
   visible?: boolean
   locked?: boolean

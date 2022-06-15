@@ -34,10 +34,13 @@ import { cleanShapesBeforeExport } from 'utils/data'
 import useResizeObserver from 'hooks/useResizeObserver'
 import { RecursivePartial } from 'types/utils'
 import {
+  DEFAULT_TOOLS,
   SELECTION_DEFAULT_COLOR,
   SELECTION_DEFAULT_PADDING,
   SELECTION_DEFAULT_WIDTH
 } from 'constants/shapes'
+import { CustomTool } from 'types/tools'
+import { sanitizeTools } from 'utils/toolbar'
 
 const StyledApp = styled.div<{
   canvasWidth: number
@@ -113,7 +116,7 @@ type AppOptionsType = {
   gridVisible: boolean
   canGrow: boolean
   canShrink: boolean
-  availableTools: ShapeEnum[]
+  availableTools: CustomTool<ShapeEnum>[]
   withExport: boolean
   withLoadAndSave: boolean
   uiStyle: {
@@ -136,19 +139,6 @@ type AppOptionsType = {
 }
 
 type OptionalAppOptionsType = RecursivePartial<AppOptionsType>
-
-const DEFAULT_TOOLS = [
-  ShapeEnum.brush,
-  ShapeEnum.line,
-  ShapeEnum.polygon,
-  ShapeEnum.curve,
-  ShapeEnum.rect,
-  ShapeEnum.square,
-  ShapeEnum.circle,
-  ShapeEnum.ellipse,
-  ShapeEnum.text,
-  ShapeEnum.picture
-]
 
 const DEFAULT_OPTIONS: AppOptionsType = {
   layersManipulation: true,
@@ -249,7 +239,7 @@ const App = ({
     scaleRatio: 1
   })
 
-  const availableTools = _.intersection(DEFAULT_TOOLS, availableToolsFromProps)
+  const availableTools = sanitizeTools(availableToolsFromProps)
 
   const { isInsideComponent } = useComponent({
     disabled,

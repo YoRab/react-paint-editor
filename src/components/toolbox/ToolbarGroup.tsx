@@ -6,6 +6,7 @@ import { styled } from '@linaria/react'
 import { ShapeEnum, ToolsType } from 'types/Shapes'
 import { getShapePicture } from 'utils/style'
 import Tool from './Tool'
+import { CustomTool } from 'types/tools'
 
 const StyledPanel = styled(Panel)`
   display: flex;
@@ -25,11 +26,11 @@ const StyledRelative = styled.div`
 type ToolbarGroupType = {
   activeTool: React.SetStateAction<ToolsType>
   group:
-    | ShapeEnum
+    | CustomTool<ShapeEnum>
     | {
-        vertical: boolean
-        tools?: ShapeEnum[]
         title: string
+        toolsType: CustomTool<ShapeEnum>[]
+        vertical: boolean
       }
   alignment?: 'left' | 'center' | 'right'
   title?: string
@@ -70,44 +71,45 @@ const ToolbarGroup = ({
     }
   }, [isOpen])
 
-  if (!_.isObject(group)) {
+  if ('type' in group) {
     return (
       <Tool
         disabled={disabled}
-        type={group}
-        lib={group}
-        img={getShapePicture(group)}
-        isActive={activeTool === group}
+        type={group.type}
+        lib={group.lib ?? group.type}
+        img={getShapePicture(group.type)}
+        isActive={activeTool === group.type}
         setActive={setActiveTool}
       />
     )
   }
-  if (_.isEmpty(group.tools)) return null
+  if (_.isEmpty(group.toolsType)) return null
 
-  if (group.tools?.length === 1) {
+  if (group.toolsType?.length === 1) {
     return (
       <Tool
         disabled={disabled}
-        type={group.tools[0]}
-        lib={group.tools[0]}
-        img={getShapePicture(group.tools[0])}
-        isActive={activeTool === group.tools[0]}
+        type={group.toolsType[0].type}
+        lib={group.toolsType[0].lib ?? group.toolsType[0].type}
+        img={getShapePicture(group.toolsType[0].type)}
+        isActive={activeTool === group.toolsType[0].type}
         setActive={setActiveTool}
       />
     )
   }
 
-  const isActive = _.includes(activeTool, group?.tools)
+  const isActive = _.find({ type: activeTool }, group?.toolsType) !== undefined
+
   const groupIcon =
     (localActiveTool
       ? getShapePicture(localActiveTool as ShapeEnum)
-      : group.tools && group.tools[0] && getShapePicture(group.tools[0])) ?? group.title
+      : group.toolsType && group.toolsType[0] && getShapePicture(group.toolsType[0].type)) ??
+    group.title
 
   const openPanel = () => {
     if (localActiveTool) setActiveToolFromProps(localActiveTool)
-    else group.tools && group.tools[0] && setActiveTool(group.tools[0])
+    else group.toolsType && group.toolsType[0] && setActiveTool(group.toolsType[0].type)
     setIsOpen(true)
-    // group.tools && group.tools[0] && setActiveTool(group.tools[0])
   }
 
   return (
@@ -121,20 +123,17 @@ const ToolbarGroup = ({
       />
       {isOpen && (
         <StyledPanel vertical={group.vertical} alignment={alignment}>
-          {_.map(
-            toolType => (
-              <Tool
-                disabled={disabled}
-                key={toolType}
-                type={toolType}
-                lib={toolType}
-                img={getShapePicture(toolType)}
-                isActive={activeTool === toolType}
-                setActive={setActiveTool}
-              />
-            ),
-            group.tools
-          )}
+          {group.toolsType.map((toolType, i) => (
+            <Tool
+              disabled={disabled}
+              key={i}
+              type={toolType.type}
+              lib={toolType.lib ?? toolType.type}
+              img={getShapePicture(toolType.type)}
+              isActive={activeTool === toolType.type}
+              setActive={setActiveTool}
+            />
+          ))}
         </StyledPanel>
       )}
     </StyledRelative>
