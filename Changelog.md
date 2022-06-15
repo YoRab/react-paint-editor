@@ -1,6 +1,7 @@
 # V.0.4.2
 
 - fix toolgroup not displayed
+- add passive prop to event listener
 
 # V.0.4.1
 

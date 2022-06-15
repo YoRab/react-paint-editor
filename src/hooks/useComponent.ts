@@ -19,8 +19,8 @@ const useComponent = ({ disabled, componentRef }: UseComponentType) => {
     if (disabled) {
       setIsInsideComponent(false)
     } else {
-      document.addEventListener('mousedown', onDetectClick)
-      document.addEventListener('touchstart', onDetectClick)
+      document.addEventListener('mousedown', onDetectClick, { passive: true })
+      document.addEventListener('touchstart', onDetectClick, { passive: true })
     }
 
     return () => {

@@ -314,8 +314,8 @@ const useDrawableCanvas = ({
       }
     }
 
-    ref.addEventListener('mousedown', handleMouseDown)
-    ref.addEventListener('touchstart', handleMouseDown)
+    ref.addEventListener('mousedown', handleMouseDown, { passive: false })
+    ref.addEventListener('touchstart', handleMouseDown, { passive: false })
 
     return () => {
       ref.removeEventListener('mousedown', handleMouseDown)
