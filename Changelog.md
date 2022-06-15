@@ -1,3 +1,7 @@
+# V.0.4.2
+
+- fix toolgroup not displayed
+
 # V.0.4.1
 
 - prevent mounting selection canvas when viewer mode

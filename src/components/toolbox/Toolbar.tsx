@@ -12,15 +12,14 @@ import Modal from 'components/common/Modal'
 import PictureUrlModal from './PictureUrlInput'
 
 const ACTIONS_MENU_BREAKPOINT = 400
-const TOOLS_MENU_BREAKPOINT = 280
+const TOOLS_MENU_BREAKPOINT = 240
 
 const StyledShrinkableTools = styled.div`
   flex: 1;
   position: relative;
   height: 100%;
   text-align: center;
-  max-height: 36px;
-  overflow: hidden;
+  height: 36px;
 `
 
 const StyledToolbox = styled.div`
