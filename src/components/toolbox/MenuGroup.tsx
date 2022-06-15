@@ -7,7 +7,16 @@ import { ShapeEnum, ToolEnum, ToolsType } from 'types/Shapes'
 import { getShapePicture } from 'utils/style'
 import Tool from './Tool'
 import LoadFileTool from './LoadFileTool'
-import { exportFileIcon, openFileIcon, pictureIcon, publicIcon, saveIcon } from 'constants/icons'
+import {
+  clearIcon,
+  exportFileIcon,
+  openFileIcon,
+  pictureIcon,
+  publicIcon,
+  redoIcon,
+  saveIcon,
+  undoIcon
+} from 'constants/icons'
 const StyledPanel = styled(Panel)`
   display: flex;
   bottom: unset;
@@ -25,6 +34,7 @@ const StyledRelative = styled.div`
 
 type ToolbarGroupType = {
   activeTool: React.SetStateAction<ToolsType>
+  withActionsInMenu: boolean
   group: {
     tools?: ShapeEnum[]
     title: string
@@ -43,10 +53,23 @@ type ToolbarGroupType = {
   togglePictureUrlModal: () => void
   withLoadAndSave: boolean
   withExport: boolean
+  hasActionToUndo?: boolean
+  hasActionToRedo?: boolean
+  hasActionToClear?: boolean
+  undoAction: () => void
+  redoAction: () => void
+  clearCanvas: () => void
 }
 
 const MenuGroup = ({
   activeTool,
+  withActionsInMenu,
+  hasActionToUndo = false,
+  hasActionToRedo = false,
+  hasActionToClear = false,
+  undoAction,
+  redoAction,
+  clearCanvas,
   alignment,
   group,
   vertical = false,
@@ -96,8 +119,7 @@ const MenuGroup = ({
   }, [isOpen])
 
   const withPicture = _.includes(ShapeEnum.picture, availableTools)
-  const withDivider = withPicture && (withLoadAndSave || withExport)
-  const withMenu = withPicture || withLoadAndSave || withExport
+  const withMenu = withActionsInMenu || withPicture || withLoadAndSave || withExport
 
   return withMenu ? (
     <StyledRelative>
@@ -110,6 +132,39 @@ const MenuGroup = ({
       />
       {isOpen && (
         <StyledPanel vertical={vertical} alignment={alignment}>
+          {withActionsInMenu && (
+            <>
+              <Tool
+                withText={true}
+                type={ToolEnum.undo}
+                disabled={disabled || !hasActionToUndo}
+                lib="Undo"
+                img={undoIcon}
+                isActive={activeTool === ToolEnum.undo}
+                setActive={undoAction}
+              />
+              <Tool
+                withText={true}
+                type={ToolEnum.redo}
+                disabled={disabled || !hasActionToRedo}
+                lib="Redo"
+                img={redoIcon}
+                isActive={activeTool === ToolEnum.redo}
+                setActive={redoAction}
+              />
+              <Tool
+                withText={true}
+                type={ToolEnum.clear}
+                disabled={disabled || !hasActionToClear}
+                lib="Clear"
+                img={clearIcon}
+                isActive={activeTool === ToolEnum.clear}
+                setActive={() => clearCanvas()}
+              />
+              {(withPicture || withLoadAndSave) && <hr />}
+            </>
+          )}
+
           {withPicture && (
             <>
               <LoadFileTool
@@ -128,9 +183,10 @@ const MenuGroup = ({
                 icon={publicIcon}
                 children="Add picture from URL"
               />
+              {withLoadAndSave && <hr />}
             </>
           )}
-          {withDivider && <hr />}
+
           {withLoadAndSave && (
             <>
               <LoadFileTool

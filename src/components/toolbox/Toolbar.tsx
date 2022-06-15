@@ -1,13 +1,5 @@
-import {
-  clearIcon,
-  dotsIcon,
-  menuIcon,
-  redoIcon,
-  selectIcon,
-  shapesIcon,
-  undoIcon
-} from 'constants/icons'
-import React, { useState } from 'react'
+import { clearIcon, menuIcon, redoIcon, selectIcon, shapesIcon, undoIcon } from 'constants/icons'
+import React, { useEffect, useState } from 'react'
 import { styled } from '@linaria/react'
 import { ShapeEnum, ToolEnum, ToolsType } from 'types/Shapes'
 import Button from 'components/common/Button'
@@ -19,12 +11,16 @@ import { getShapePicture } from 'utils/style'
 import Modal from 'components/common/Modal'
 import PictureUrlModal from './PictureUrlInput'
 
+const ACTIONS_MENU_BREAKPOINT = 400
+const TOOLS_MENU_BREAKPOINT = 280
+
 const StyledShrinkableTools = styled.div`
   flex: 1;
   position: relative;
   height: 100%;
   text-align: center;
-  max-height: 72px;
+  max-height: 36px;
+  overflow: hidden;
 `
 
 const StyledToolbox = styled.div`
@@ -33,19 +29,6 @@ const StyledToolbox = styled.div`
   background: var(--toolbar-bg);
   border-bottom: 1px solid var(--divider-color);
   box-sizing: border-box;
-`
-
-const StyledShrinkableToolsInner = styled.div`
-  display: inline-block;
-  text-align: left;
-  margin-right: 36px;
-  text-align: right;
-
-  & + * {
-    position: absolute;
-    right: 0;
-    bottom: 36px;
-  }
 `
 
 const StyledToolsModal = styled(Modal)`
@@ -72,6 +55,7 @@ const TOOLBAR_STRUCTURE = [
 ]
 
 type ToolboxType = {
+  width: number
   disabled?: boolean
   activeTool: React.SetStateAction<ToolsType>
   hasActionToUndo?: boolean
@@ -91,6 +75,7 @@ type ToolboxType = {
 }
 
 const Toolbar = ({
+  width,
   disabled = false,
   activeTool,
   hasActionToUndo = false,
@@ -110,6 +95,8 @@ const Toolbar = ({
 }: ToolboxType) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [isPictureUrlModalOpen, setIsPictureUrlModalOpen] = useState(false)
+  const [actionsInMenu, setActionsInMenu] = useState(width < ACTIONS_MENU_BREAKPOINT)
+  const [toolsInMenu, setToolsInMenu] = useState(width < TOOLS_MENU_BREAKPOINT)
 
   const toggleTools = () => {
     setIsMenuOpen(prev => !prev)
@@ -128,19 +115,17 @@ const Toolbar = ({
     setIsMenuOpen(false)
   }
 
+  useEffect(() => {
+    setActionsInMenu(width < ACTIONS_MENU_BREAKPOINT)
+    setToolsInMenu(width < TOOLS_MENU_BREAKPOINT)
+  }, [width])
+
   const currentStructure = getCurrentStructure(availableTools, TOOLBAR_STRUCTURE)
 
+  const isAnyToolSelected = availableTools.includes(activeTool as ShapeEnum)
   return (
     <>
       <StyledToolbox>
-        <Tool
-          type={ToolEnum.selection}
-          disabled={disabled}
-          lib="selection"
-          img={selectIcon}
-          isActive={activeTool === ToolEnum.selection}
-          setActive={setActiveTool}
-        />
         {/* <Tool
         type={ToolEnum.move}
         lib="move"
@@ -148,54 +133,11 @@ const Toolbar = ({
         isActive={activeTool === ToolEnum.move}
         setActive={setActiveTool}
       /> */}
-        <Tool
-          type={ToolEnum.undo}
-          disabled={disabled || !hasActionToUndo}
-          lib="Undo"
-          img={undoIcon}
-          isActive={activeTool === ToolEnum.undo}
-          setActive={undoAction}
-        />
-        <Tool
-          type={ToolEnum.redo}
-          disabled={disabled || !hasActionToRedo}
-          lib="Redo"
-          img={redoIcon}
-          isActive={activeTool === ToolEnum.redo}
-          setActive={redoAction}
-        />
-        <Tool
-          type={ToolEnum.clear}
-          disabled={disabled || !hasActionToClear}
-          lib="Clear"
-          img={clearIcon}
-          isActive={activeTool === ToolEnum.clear}
-          setActive={() => clearCanvas()}
-        />
-        <StyledShrinkableTools>
-          <StyledShrinkableToolsInner>
-            {currentStructure.map((group, i) => (
-              <ToolbarGroup
-                disabled={disabled}
-                key={i}
-                activeTool={activeTool}
-                group={group}
-                setActiveTool={setActiveTool}
-              />
-            ))}
-          </StyledShrinkableToolsInner>
-          <Button
-            disabled={disabled}
-            onClick={toggleTools}
-            title="Toggle tools"
-            icon={shapesIcon}
-          />
-        </StyledShrinkableTools>
-
         <MenuGroup
+          withActionsInMenu={actionsInMenu}
           disabled={disabled}
           vertical={true}
-          alignment="right"
+          alignment="left"
           group={{ title: 'Menu', img: menuIcon }}
           activeTool={activeTool}
           addPicture={addPicture}
@@ -206,7 +148,70 @@ const Toolbar = ({
           availableTools={availableTools}
           withLoadAndSave={withLoadAndSave}
           withExport={withExport}
+          hasActionToUndo={hasActionToUndo}
+          hasActionToRedo={hasActionToRedo}
+          hasActionToClear={hasActionToClear}
+          undoAction={undoAction}
+          redoAction={redoAction}
+          clearCanvas={clearCanvas}
         />
+        <Tool
+          type={ToolEnum.selection}
+          disabled={disabled}
+          lib="selection"
+          img={selectIcon}
+          isActive={activeTool === ToolEnum.selection}
+          setActive={setActiveTool}
+        />
+        {!actionsInMenu && (
+          <>
+            <Tool
+              type={ToolEnum.undo}
+              disabled={disabled || !hasActionToUndo}
+              lib="Undo"
+              img={undoIcon}
+              isActive={activeTool === ToolEnum.undo}
+              setActive={undoAction}
+            />
+            <Tool
+              type={ToolEnum.redo}
+              disabled={disabled || !hasActionToRedo}
+              lib="Redo"
+              img={redoIcon}
+              isActive={activeTool === ToolEnum.redo}
+              setActive={redoAction}
+            />
+            <Tool
+              type={ToolEnum.clear}
+              disabled={disabled || !hasActionToClear}
+              lib="Clear"
+              img={clearIcon}
+              isActive={activeTool === ToolEnum.clear}
+              setActive={() => clearCanvas()}
+            />
+          </>
+        )}
+        <StyledShrinkableTools>
+          {toolsInMenu ? (
+            <Button
+              disabled={disabled}
+              onClick={toggleTools}
+              title="Toggle tools"
+              icon={shapesIcon}
+              selected={isAnyToolSelected}
+            />
+          ) : (
+            currentStructure.map((group, i) => (
+              <ToolbarGroup
+                disabled={disabled}
+                key={i}
+                activeTool={activeTool}
+                group={group}
+                setActiveTool={setActiveTool}
+              />
+            ))
+          )}
+        </StyledShrinkableTools>
       </StyledToolbox>
       {isMenuOpen && (
         <StyledToolsModal onClose={toggleTools}>

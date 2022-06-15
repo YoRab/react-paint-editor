@@ -1,4 +1,3 @@
-import _ from 'lodash/fp'
 import { styled } from '@linaria/react'
 import { STYLE_ZINDEX_LOADING } from 'constants/style'
 import React, { useEffect, useState } from 'react'

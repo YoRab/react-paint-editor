@@ -70,7 +70,6 @@ const StyledApp = styled.div<{
   display: flex;
   color: var(--font-color);
   position: relative;
-  overflow: hidden;
   flex-direction: column;
 
   hr {
@@ -517,6 +516,7 @@ const App = ({
       canvasBackgroundColor={canvasBackgroundColor}>
       {isEditMode && (
         <Toolbar
+          width={canvasSize.width}
           disabled={disabled}
           activeTool={activeTool}
           clearCanvas={clearCanvas}

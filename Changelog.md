@@ -3,7 +3,8 @@
 - prevent mounting selection canvas when viewer mode
 - prevent drawing selection when not needed
 - Click on toolbar tool group always enable a tool
-- fix input and select options not being impacted by theme
+- fix input and select options not being impacted by
+- new reponsive for toolbar
 
 # V.0.4.0
 
