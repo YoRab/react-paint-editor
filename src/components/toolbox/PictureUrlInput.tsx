@@ -10,6 +10,7 @@ const StyledInputModal = styled(Modal)`
     input {
       color: var(--font-color);
       border: 1px solid var(--font-color);
+      background: var(--toolbar-bg);
       outline: none;
     }
   }

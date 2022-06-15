@@ -22,23 +22,16 @@ const StyledColor = styled.div<{
 const StyledCustomColor = styled.div<{
   color: string
 }>`
-  width: 36px;
-  height: 36px;
+  width: 24px;
+  height: 24px;
   box-sizing: border-box;
   border-radius: 50%;
   color: ${({ color }) => color};
   display: flex;
   align-items: baseline;
   justify-content: center;
-  font-size: 48px;
   line-height: 36px;
-  position: relative;
-  bottom: 6px;
   font-weight: bold;
-`
-
-const StyledColorButton = styled(Button)`
-  border-radius: 50%;
 `
 
 type ShapeStyleColorType = {
@@ -91,7 +84,7 @@ const ColorField = ({
         <Panel title={title} alignment="left">
           <div>
             {STYLE_COLORS.map((color, index) => (
-              <StyledColorButton
+              <Button
                 title={color}
                 key={index}
                 selected={color === value}
@@ -104,18 +97,19 @@ const ColorField = ({
                       : color
                   }
                 />
-              </StyledColorButton>
+              </Button>
             ))}
-            <StyledColorButton
+            <Button
               type="color"
               title="Custom color"
               selected={!_.includes(value, STYLE_COLORS)}
               value={value}
               onChange={handleChange}>
-              <StyledCustomColor color={_.includes(value, STYLE_COLORS) ? 'black' : value}>
+              <StyledCustomColor
+                color={_.includes(value, STYLE_COLORS) ? 'var(--font-color)' : value}>
                 <span dangerouslySetInnerHTML={{ __html: paletteIcon }} />
               </StyledCustomColor>
-            </StyledColorButton>
+            </Button>
           </div>
         </Panel>
       )}

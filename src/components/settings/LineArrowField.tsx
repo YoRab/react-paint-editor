@@ -13,7 +13,7 @@ const StyledLeftTriangle = styled.span`
   height: 0;
   border-top: 5px solid transparent;
   border-bottom: 5px solid transparent;
-  border-right: 15px solid black;
+  border-right: 15px solid currentColor;
 `
 
 const StyledRightTriangle = styled.span`
@@ -26,7 +26,7 @@ const StyledRightTriangle = styled.span`
   height: 0;
   border-top: 5px solid transparent;
   border-bottom: 5px solid transparent;
-  border-left: 15px solid black;
+  border-left: 15px solid currentColor;
 `
 
 const StyledOption = styled.span`
@@ -34,7 +34,7 @@ const StyledOption = styled.span`
   display: inline-block;
   width: 60px;
   height: 2px;
-  background: black;
+  background: currentColor;
   vertical-align: middle;
 
   &[data-type='0'],
