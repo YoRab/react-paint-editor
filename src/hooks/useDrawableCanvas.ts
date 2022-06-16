@@ -1,20 +1,13 @@
 import React, { useEffect, useState } from 'react'
 import _ from 'lodash/fp'
 import { selectShape } from 'utils/selection'
-import {
-  DrawableBrush,
-  DrawableShape,
-  DrawableText,
-  Point,
-  ShapeEnum,
-  StyledShape,
-  ToolEnum,
-  ToolsType
-} from 'types/Shapes'
+import { DrawableBrush, DrawableShape, DrawableText, Point, ShapeEnum } from 'types/Shapes'
 import { checkPositionIntersection, getCursorPosition } from 'utils/intersect'
 import { HoverModeData, SelectionModeData, SelectionModeLib } from 'types/Mode'
 import { createNewPointGroupToShape, transformShape } from 'utils/transform'
 import { createShape } from 'utils/data'
+import { ActionsEnum, CustomTool, ToolsType } from 'types/tools'
+import { SELECTION_TOOL } from 'constants/tools'
 
 const handleMove = (
   e: MouseEvent | TouchEvent,
@@ -33,7 +26,7 @@ const handleMove = (
   setSelectedShape: React.Dispatch<React.SetStateAction<DrawableShape | undefined>>,
   selectionPadding: number
 ) => {
-  if (activeTool === ToolEnum.move && canvasOffsetStartPosition !== undefined) {
+  if (activeTool.type === ActionsEnum.move && canvasOffsetStartPosition !== undefined) {
     const cursorPosition = getCursorPosition(e, canvasRef.current, width, height, scaleRatio)
     setCanvasOffset([
       cursorPosition[0] - canvasOffsetStartPosition[0],
@@ -92,7 +85,6 @@ type UseCanvasType = {
   setCanvasOffsetStartPosition: React.Dispatch<React.SetStateAction<Point | undefined>>
   canvasOffset: Point
   setCanvasOffset: React.Dispatch<React.SetStateAction<Point>>
-  defaultConf: StyledShape
   isInsideComponent: boolean
   selectionMode: SelectionModeData<number | Point>
   setSelectionMode: React.Dispatch<React.SetStateAction<SelectionModeData<number | Point>>>
@@ -108,7 +100,6 @@ const useDrawableCanvas = ({
   drawCanvasRef,
   setActiveTool,
   shapes,
-  defaultConf,
   selectionMode,
   activeTool,
   isInsideComponent,
@@ -180,7 +171,7 @@ const useDrawableCanvas = ({
   useEffect(() => {
     const handleMouseUp = (e: MouseEvent | TouchEvent) => {
       if (selectionMode.mode === SelectionModeLib.textedition) return
-      if (activeTool === ShapeEnum.text) {
+      if (activeTool.type === ShapeEnum.text) {
         const cursorPosition = getCursorPosition(
           e,
           selectionCanvasRef.current,
@@ -190,14 +181,9 @@ const useDrawableCanvas = ({
         )
         const drawCtx = drawCanvasRef.current?.getContext('2d')
         if (!drawCtx) return
-        const newShape = createShape(
-          drawCtx,
-          activeTool,
-          cursorPosition,
-          defaultConf
-        ) as DrawableText
+        const newShape = createShape(drawCtx, activeTool, cursorPosition) as DrawableText
         addShape(newShape)
-        setActiveTool(ToolEnum.selection)
+        setActiveTool(SELECTION_TOOL)
         setSelectedShape(newShape)
         setSelectionMode({
           mode: SelectionModeLib.textedition,
@@ -230,7 +216,6 @@ const useDrawableCanvas = ({
     saveShapes,
     activeTool,
     addShape,
-    defaultConf,
     width,
     height,
     scaleRatio,
@@ -254,7 +239,7 @@ const useDrawableCanvas = ({
         scaleRatio
       )
 
-      if (activeTool === ToolEnum.selection) {
+      if (activeTool.type === ActionsEnum.selection) {
         const { shape, mode } = selectShape(
           shapes,
           cursorPosition,
@@ -265,13 +250,14 @@ const useDrawableCanvas = ({
         )
         setSelectedShape(shape)
         setSelectionMode(mode)
-      } else if (activeTool === ToolEnum.move) {
+      } else if (activeTool.type === ActionsEnum.move) {
         setCanvasOffsetStartPosition(cursorPosition)
       }
-      if (_.includes(activeTool, ShapeEnum)) {
+
+      if (_.includes(activeTool.type, ShapeEnum)) {
         const drawCtx = drawCanvasRef.current?.getContext('2d')
         if (!drawCtx) return
-        if (activeTool === ShapeEnum.brush) {
+        if (activeTool.type === ShapeEnum.brush) {
           if (!!selectedShape) {
             const newShape = createNewPointGroupToShape(
               selectedShape as DrawableBrush,
@@ -280,7 +266,8 @@ const useDrawableCanvas = ({
             updateSingleShape(newShape)
             setSelectedShape(newShape)
           } else {
-            const newShape = createShape(drawCtx, activeTool, cursorPosition, defaultConf)
+            const newShape = createShape(drawCtx, activeTool, cursorPosition)
+            if (!newShape) return
             addShape(newShape)
             setSelectedShape(newShape)
           }
@@ -288,15 +275,11 @@ const useDrawableCanvas = ({
           setSelectionMode({
             mode: SelectionModeLib.brush
           })
-        } else if (activeTool !== ShapeEnum.text) {
-          const newShape = createShape(
-            drawCtx,
-            activeTool as ShapeEnum,
-            cursorPosition,
-            defaultConf
-          )
+        } else if (activeTool.type !== ShapeEnum.text) {
+          const newShape = createShape(drawCtx, activeTool as CustomTool, cursorPosition)
+          if (!newShape) return
           addShape(newShape)
-          setActiveTool(ToolEnum.selection)
+          setActiveTool(SELECTION_TOOL)
           setSelectedShape(newShape)
 
           setSelectionMode({
@@ -304,9 +287,9 @@ const useDrawableCanvas = ({
             cursorStartPosition: cursorPosition,
             originalShape: newShape,
             anchor:
-              activeTool === ShapeEnum.line ||
-              activeTool === ShapeEnum.polygon ||
-              activeTool === ShapeEnum.curve
+              activeTool.type === ShapeEnum.line ||
+              activeTool.type === ShapeEnum.polygon ||
+              activeTool.type === ShapeEnum.curve
                 ? 0
                 : [1, 1]
           })
@@ -330,7 +313,6 @@ const useDrawableCanvas = ({
     canvasOffset,
     setCanvasOffsetStartPosition,
     shapes,
-    defaultConf,
     width,
     height,
     scaleRatio,
@@ -347,7 +329,7 @@ const useDrawableCanvas = ({
     if (!ref) return
 
     const handleDoubleClick = (e: MouseEvent | TouchEvent) => {
-      if (activeTool === ToolEnum.selection) {
+      if (activeTool.type === ActionsEnum.selection) {
         if (selectedShape?.type === ShapeEnum.text) {
           const cursorPosition = getCursorPosition(
             e,

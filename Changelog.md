@@ -1,3 +1,7 @@
+# V0.5.0
+
+- Add tool presets feature
+
 # V.0.4.2
 
 - fix toolgroup not displayed

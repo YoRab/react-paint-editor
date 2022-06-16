@@ -1,13 +1,14 @@
 import React, { useCallback, useEffect, useImperativeHandle, useRef } from 'react'
 import { styled } from '@linaria/react'
 import _ from 'lodash/fp'
-import { DrawableShape, Point, ShapeEnum, StyledShape, ToolEnum, ToolsType } from 'types/Shapes'
+import { DrawableShape, Point, ShapeEnum, StyledShape } from 'types/Shapes'
 import { drawSelection, drawShape } from 'utils/draw'
 import { SelectionModeData, SelectionModeLib } from 'types/Mode'
 import { calculateTextWidth } from 'utils/transform'
 import EditTextBox from './toolbox/EditTextBox'
 import useDrawableCanvas from 'hooks/useDrawableCanvas'
 import { encodedTransparentIcon } from 'constants/icons'
+import { ActionsEnum, ToolsType } from 'types/tools'
 
 const renderDrawCanvas = (
   drawCtx: CanvasRenderingContext2D,
@@ -49,7 +50,7 @@ const renderSelectionCanvas = (
   const { width, height, scaleRatio } = canvasSize
   selectionCtx.clearRect(0, 0, width, height)
   selectedShape &&
-    activeTool !== ShapeEnum.brush &&
+    activeTool.type !== ShapeEnum.brush &&
     drawSelection({
       ctx: selectionCtx,
       shape: selectedShape,
@@ -140,7 +141,6 @@ type DrawerType = {
   setCanvasOffsetStartPosition: React.Dispatch<React.SetStateAction<Point | undefined>>
   canvasOffset: Point
   setCanvasOffset: React.Dispatch<React.SetStateAction<Point>>
-  defaultConf: StyledShape
   isInsideComponent: boolean
   selectionMode: SelectionModeData<number | Point>
   setSelectionMode: React.Dispatch<React.SetStateAction<SelectionModeData<number | Point>>>
@@ -165,7 +165,6 @@ const Canvas = React.forwardRef<HTMLCanvasElement, DrawerType>(
       setCanvasOffsetStartPosition,
       canvasOffset,
       setCanvasOffset,
-      defaultConf,
       isInsideComponent,
       selectionMode,
       setSelectionMode,
@@ -189,7 +188,6 @@ const Canvas = React.forwardRef<HTMLCanvasElement, DrawerType>(
       drawCanvasRef,
       setActiveTool,
       shapes,
-      defaultConf,
       selectionMode,
       activeTool,
       isInsideComponent,
@@ -290,10 +288,10 @@ const Canvas = React.forwardRef<HTMLCanvasElement, DrawerType>(
               height={canvasSize.height}
               data-grow={canGrow}
               cursor={
-                (activeTool !== ToolEnum.selection && activeTool !== ToolEnum.move) ||
+                (activeTool.type !== ActionsEnum.selection && activeTool.type !== ActionsEnum.move) ||
                 hoverMode.mode === SelectionModeLib.resize
                   ? 'crosshair'
-                  : activeTool === ToolEnum.move || hoverMode.mode === SelectionModeLib.translate
+                  : activeTool.type === ActionsEnum.move || hoverMode.mode === SelectionModeLib.translate
                   ? 'move'
                   : hoverMode.mode === SelectionModeLib.rotate
                   ? 'grab'

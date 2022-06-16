@@ -11,156 +11,7 @@ export enum ShapeEnum {
   'text' = 'text'
 }
 
-export enum ToolEnum {
-  selection = 'selection',
-  undo = 'undo',
-  redo = 'redo',
-  clear = 'clear',
-  export = 'export',
-  loadFile = 'loadfile',
-  saveFile = 'savefile',
-  move = 'move'
-}
-
-export type ToolsType = ShapeEnum | ToolEnum
-
 export type Point = [number, number]
-
-export type SettingsOpacity = {
-  opacity: {
-    min: number
-    max: number
-    step: number
-    default: number
-  }
-}
-
-export type SettingsStrokeColor = {
-  strokeColor: {
-    values: string[]
-    default: string
-  }
-}
-
-export type SettingsFillColor = {
-  fillColor: {
-    values: string[]
-    default: string
-  }
-}
-
-export type SettingsLineWidth = {
-  lineWidth: {
-    min: number
-    max: number
-    step: number
-    default: number
-  }
-}
-
-export type SettingsLineDash = {
-  lineDash: {
-    values: number[]
-    default: number
-  }
-}
-
-export type SettingsLineArrow = {
-  lineArrow: {
-    values: number[]
-    default: number
-  }
-}
-
-export type SettingsFontFamily = {
-  fontFamily: {
-    values: string[]
-    default: string
-  }
-}
-
-export type SettingsPointsCount = {
-  pointsCount: {
-    min: number
-    max: number
-    step: number
-    default: number
-  }
-}
-
-export type ToolsRectSettings = SettingsStrokeColor &
-  SettingsFillColor &
-  SettingsOpacity &
-  SettingsLineWidth &
-  SettingsLineDash
-
-export type ToolsSquareSettings = SettingsStrokeColor &
-  SettingsFillColor &
-  SettingsOpacity &
-  SettingsLineWidth &
-  SettingsLineDash
-
-export type ToolsCircleSettings = SettingsStrokeColor &
-  SettingsFillColor &
-  SettingsOpacity &
-  SettingsLineWidth &
-  SettingsLineDash
-
-export type ToolsEllipseSettings = SettingsStrokeColor &
-  SettingsFillColor &
-  SettingsOpacity &
-  SettingsLineWidth &
-  SettingsLineDash
-
-export type ToolsTextSettings = SettingsOpacity & SettingsStrokeColor & SettingsFontFamily
-export type ToolsLineSettings = SettingsOpacity &
-  SettingsStrokeColor &
-  SettingsLineWidth &
-  SettingsLineDash &
-  SettingsLineArrow
-
-export type ToolsBrushSettings = SettingsOpacity &
-  SettingsStrokeColor &
-  SettingsLineWidth &
-  SettingsLineDash
-
-export type ToolsPolygonSettings = SettingsOpacity &
-  SettingsStrokeColor &
-  SettingsFillColor &
-  SettingsLineWidth &
-  SettingsLineDash &
-  SettingsPointsCount
-
-export type ToolsCurveSettings = SettingsOpacity &
-  SettingsStrokeColor &
-  SettingsFillColor &
-  SettingsLineWidth &
-  SettingsLineDash &
-  SettingsPointsCount
-
-export type ToolsPictureSettings = SettingsOpacity
-
-export type ToolsSettingsType<T extends ShapeEnum> = T extends ShapeEnum.rect
-  ? ToolsRectSettings
-  : T extends ShapeEnum.square
-  ? ToolsSquareSettings
-  : T extends ShapeEnum.circle
-  ? ToolsCircleSettings
-  : T extends ShapeEnum.ellipse
-  ? ToolsEllipseSettings
-  : T extends ShapeEnum.text
-  ? ToolsTextSettings
-  : T extends ShapeEnum.line
-  ? ToolsLineSettings
-  : T extends ShapeEnum.brush
-  ? ToolsBrushSettings
-  : T extends ShapeEnum.polygon
-  ? ToolsPolygonSettings
-  : T extends ShapeEnum.curve
-  ? ToolsCurveSettings
-  : T extends ShapeEnum.picture
-  ? ToolsPictureSettings
-  : unknown // default
 
 export type StyledShape = {
   visible?: boolean
@@ -237,17 +88,18 @@ export type Ellipse = StyledShape & {
   radiusX: number
   radiusY: number
 }
-export type DrawableRect = Rect & Drawable & { type: ShapeEnum.rect }
-export type DrawableSquare = Square & Drawable & { type: ShapeEnum.square }
-export type DrawablePictureJson = StoredPicture & Drawable & { type: ShapeEnum.picture }
-export type DrawablePicture = Picture & Drawable & { type: ShapeEnum.picture }
-export type DrawableText = Text & Drawable & { type: ShapeEnum.text }
-export type DrawableLine = Line & Drawable & { type: ShapeEnum.line }
-export type DrawablePolygon = Polygon & Drawable & { type: ShapeEnum.polygon }
-export type DrawableCurve = Curve & Drawable & { type: ShapeEnum.curve }
-export type DrawableBrush = Brush & Drawable & { type: ShapeEnum.brush }
-export type DrawableCircle = Circle & Drawable & { type: ShapeEnum.circle }
-export type DrawableEllipse = Ellipse & Drawable & { type: ShapeEnum.ellipse }
+export type DrawableRect = Rect & Drawable & { toolId: string; type: ShapeEnum.rect }
+export type DrawableSquare = Square & Drawable & { toolId: string; type: ShapeEnum.square }
+export type DrawablePictureJson = StoredPicture &
+  Drawable & { toolId: string; type: ShapeEnum.picture }
+export type DrawablePicture = Picture & Drawable & { toolId: string; type: ShapeEnum.picture }
+export type DrawableText = Text & Drawable & { toolId: string; type: ShapeEnum.text }
+export type DrawableLine = Line & Drawable & { toolId: string; type: ShapeEnum.line }
+export type DrawablePolygon = Polygon & Drawable & { toolId: string; type: ShapeEnum.polygon }
+export type DrawableCurve = Curve & Drawable & { toolId: string; type: ShapeEnum.curve }
+export type DrawableBrush = Brush & Drawable & { toolId: string; type: ShapeEnum.brush }
+export type DrawableCircle = Circle & Drawable & { toolId: string; type: ShapeEnum.circle }
+export type DrawableEllipse = Ellipse & Drawable & { toolId: string; type: ShapeEnum.ellipse }
 
 export type DrawableShape =
   | DrawableRect

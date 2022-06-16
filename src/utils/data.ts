@@ -1,7 +1,9 @@
 import _ from 'lodash/fp'
 import { calculateTextFontSize, fitContentInsideContainer } from './transform'
-import { DrawablePicture, Point, DrawableShape, ShapeEnum, StyledShape } from 'types/Shapes'
+import { DrawablePicture, Point, DrawableShape, ShapeEnum } from 'types/Shapes'
 import { getBase64Image } from './file'
+import { CustomTool } from 'types/tools'
+import { DEFAULT_SHAPE_PICTURE } from 'constants/tools'
 
 export const createPicture = (
   fileOrUrl: File | string,
@@ -20,6 +22,7 @@ export const createPicture = (
       )
 
       const pictureShape: DrawablePicture = {
+        toolId: DEFAULT_SHAPE_PICTURE.id,
         type: ShapeEnum.picture,
         id: _.uniqueId(`${ShapeEnum.picture}_`),
         x: (maxPictureWidth - width) / 2,
@@ -50,72 +53,114 @@ export const createPicture = (
 
 export const createShape = (
   ctx: CanvasRenderingContext2D,
-  shape: ShapeEnum,
-  cursorPosition: Point,
-  defaultConf: StyledShape
-): DrawableShape => {
-  switch (shape) {
+  shape: CustomTool,
+  cursorPosition: Point
+): DrawableShape | undefined => {
+  switch (shape.type) {
     case ShapeEnum.brush:
+      shape.settings
       return {
+        toolId: shape.id,
         type: ShapeEnum.brush,
-        id: _.uniqueId(`${shape}_`),
+        id: _.uniqueId(`${shape.type}_`),
         points: [[cursorPosition]],
         translation: [0, 0],
         rotation: 0,
-        style: defaultConf.style
+        style: {
+          globalAlpha: shape.settings.opacity.default,
+          strokeColor: shape.settings.strokeColor.default,
+          lineWidth: shape.settings.lineWidth.default,
+          lineDash: shape.settings.lineDash.default
+        }
       }
     case ShapeEnum.line:
       return {
+        toolId: shape.id,
         type: ShapeEnum.line,
-        id: _.uniqueId(`${shape}_`),
+        id: _.uniqueId(`${shape.type}_`),
         points: [cursorPosition, cursorPosition],
         translation: [0, 0],
         rotation: 0,
-        style: defaultConf.style
+        style: {
+          globalAlpha: shape.settings.opacity.default,
+          strokeColor: shape.settings.strokeColor.default,
+          lineWidth: shape.settings.lineWidth.default,
+          lineDash: shape.settings.lineDash.default,
+          lineArrow: shape.settings.lineArrow.default
+        }
       }
     case ShapeEnum.polygon:
       return {
+        toolId: shape.id,
         type: ShapeEnum.polygon,
-        id: _.uniqueId(`${shape}_`),
+        id: _.uniqueId(`${shape.type}_`),
         points: _.flow(
           _.range(0),
           _.map(() => cursorPosition)
-        )(defaultConf.style?.pointsCount ?? 3),
+        )(shape.settings.pointsCount.default),
         translation: [0, 0],
         rotation: 0,
-        style: defaultConf.style
+        style: {
+          globalAlpha: shape.settings.opacity.default,
+          fillColor: shape.settings.fillColor.default,
+          strokeColor: shape.settings.strokeColor.default,
+          lineWidth: shape.settings.lineWidth.default,
+          lineDash: shape.settings.lineDash.default,
+          pointsCount: shape.settings.pointsCount.default
+        }
       }
     case ShapeEnum.curve:
       return {
+        toolId: shape.id,
         type: ShapeEnum.curve,
-        id: _.uniqueId(`${shape}_`),
+        id: _.uniqueId(`${shape.type}_`),
         points: _.flow(
           _.range(0),
           _.map(() => cursorPosition)
-        )(defaultConf.style?.pointsCount ?? 3),
+        )(shape.settings.pointsCount.default),
         translation: [0, 0],
         rotation: 0,
-        style: defaultConf.style
+        style: {
+          globalAlpha: shape.settings.opacity.default,
+          fillColor: shape.settings.fillColor.default,
+          strokeColor: shape.settings.strokeColor.default,
+          lineWidth: shape.settings.lineWidth.default,
+          lineDash: shape.settings.lineDash.default,
+          pointsCount: shape.settings.pointsCount.default
+        }
       }
     case ShapeEnum.rect:
     case ShapeEnum.square:
       return {
-        type: shape,
-        id: _.uniqueId(`${shape}_`),
+        toolId: shape.id,
+        type: shape.type,
+        id: _.uniqueId(`${shape.type}_`),
         x: cursorPosition[0],
         y: cursorPosition[1],
         width: 1,
         height: 1,
         translation: [0, 0],
         rotation: 0,
-        style: defaultConf.style
+        style: {
+          globalAlpha: shape.settings.opacity.default,
+          fillColor: shape.settings.fillColor.default,
+          strokeColor: shape.settings.strokeColor.default,
+          lineWidth: shape.settings.lineWidth.default,
+          lineDash: shape.settings.lineDash.default
+        }
       }
     case ShapeEnum.text:
       const defaultValue: string[] = []
-      const fontSize = calculateTextFontSize(ctx, defaultValue, 50, defaultConf.style?.fontFamily)
+      const fontSize = calculateTextFontSize(
+        ctx,
+        defaultValue,
+        50,
+        shape.settings.fontFamily.default
+      )
       return {
+        toolId: shape.id,
         type: ShapeEnum.text,
-        id: _.uniqueId(`${shape}_`),
+        id: _.uniqueId(`${shape.type}_`),
         x: cursorPosition[0],
         y: cursorPosition[1],
         value: defaultValue,
@@ -124,31 +169,48 @@ export const createShape = (
         height: fontSize * (defaultValue.length || 1),
         translation: [0, 0],
         rotation: 0,
-        style: defaultConf.style
+        style: {
+          globalAlpha: shape.settings.opacity.default,
+          strokeColor: shape.settings.strokeColor.default,
+          fontFamily: shape.settings.fontFamily.default
+        }
       }
     case ShapeEnum.ellipse:
       return {
+        toolId: shape.id,
         type: ShapeEnum.ellipse,
-        id: _.uniqueId(`${shape}_`),
+        id: _.uniqueId(`${shape.type}_`),
         x: cursorPosition[0],
         y: cursorPosition[1],
         radiusX: 0,
         radiusY: 0,
         translation: [0, 0],
         rotation: 0,
-        style: defaultConf.style
+        style: {
+          globalAlpha: shape.settings.opacity.default,
+          fillColor: shape.settings.fillColor.default,
+          strokeColor: shape.settings.strokeColor.default,
+          lineWidth: shape.settings.lineWidth.default,
+          lineDash: shape.settings.lineDash.default
+        }
       }
     case ShapeEnum.circle:
-    default:
       return {
+        toolId: shape.id,
         type: ShapeEnum.circle,
-        id: _.uniqueId(`${shape}_`),
+        id: _.uniqueId(`${shape.type}_`),
         x: cursorPosition[0],
         y: cursorPosition[1],
         radius: 0,
         translation: [0, 0],
         rotation: 0,
-        style: defaultConf.style
+        style: {
+          globalAlpha: shape.settings.opacity.default,
+          fillColor: shape.settings.fillColor.default,
+          strokeColor: shape.settings.strokeColor.default,
+          lineWidth: shape.settings.lineWidth.default,
+          lineDash: shape.settings.lineDash.default
+        }
       }
   }
 }

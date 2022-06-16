@@ -1,10 +1,11 @@
 import React, { useRef } from 'react'
 import Button from 'components/common/Button'
+import { ToolsType } from 'types/tools'
 
 type LoadFileToolType = {
   disabled?: boolean
   loadFile: (file: File) => void
-  lib: string
+  type: ToolsType
   img?: string
   accept: string
   withText?: boolean
@@ -14,7 +15,7 @@ const LoadFileTool = ({
   disabled = false,
   withText = false,
   loadFile,
-  lib,
+  type,
   img,
   accept
 }: LoadFileToolType) => {
@@ -38,9 +39,9 @@ const LoadFileTool = ({
       onClick={handleClick}
       onChange={handleChange}
       accept={accept}
-      title={lib}
+      title={type.lib ?? type.type}
       icon={img}
-      children={withText ? lib : undefined}
+      children={withText ? type.lib : undefined}
       disabled={disabled}
     />
   )

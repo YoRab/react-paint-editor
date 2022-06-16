@@ -1,22 +1,22 @@
 import { ShapeEnum } from 'types/Shapes'
 import _ from 'lodash/fp'
-import { CustomTool } from 'types/tools'
+import { CustomTool, CustomToolInput } from 'types/tools'
 import { RecursivePartial } from 'types/utils'
 import {
-  SETTINGS_DEFAULT_CIRCLE,
-  SETTINGS_DEFAULT_CURVE,
-  SETTINGS_DEFAULT_ELLIPSE,
-  SETTINGS_DEFAULT_LINE,
-  SETTINGS_DEFAULT_PEN,
-  SETTINGS_DEFAULT_PICTURE,
-  SETTINGS_DEFAULT_POLYGON,
-  SETTINGS_DEFAULT_RECT,
-  SETTINGS_DEFAULT_SQUARE,
-  SETTINGS_DEFAULT_TEXT
-} from 'constants/shapes'
+  DEFAULT_SHAPE_BRUSH,
+  DEFAULT_SHAPE_CIRCLE,
+  DEFAULT_SHAPE_CURVE,
+  DEFAULT_SHAPE_ELLIPSE,
+  DEFAULT_SHAPE_LINE,
+  DEFAULT_SHAPE_POLYGON,
+  DEFAULT_SHAPE_RECT,
+  DEFAULT_SHAPE_SQUARE,
+  DEFAULT_SHAPE_TEXT,
+  DEFAULT_SHAPE_PICTURE
+} from 'constants/tools'
 
 export const getCurrentStructure = (
-  availableTools: CustomTool<ShapeEnum>[],
+  availableTools: CustomTool[],
   defaultStructure: (
     | ShapeEnum
     | {
@@ -37,43 +37,48 @@ export const getCurrentStructure = (
     }),
     _.compact
   )(defaultStructure) as unknown as (
-    | CustomTool<ShapeEnum>
+    | CustomTool
     | {
         title: string
-        toolsType: CustomTool<ShapeEnum>[]
+        toolsType: CustomTool[]
         vertical: boolean
       }
   )[]
 }
 
-export const sanitizeTools = (tools: RecursivePartial<CustomTool<ShapeEnum>>[]) => {
+export const sanitizeTools = (tools: RecursivePartial<CustomToolInput>[], withPicture = false) => {
+  const customizer = (objValue: unknown, srcValue: unknown) => {
+    if (_.isArray(objValue)) {
+      return srcValue
+    }
+  }
+
   return _.flow(
-    _.map(tool => {
+    _.map((tool: RecursivePartial<CustomToolInput>) => {
       if (!_.isObject(tool)) return null
       switch (_.get('type', tool)) {
         case ShapeEnum.brush:
-          return _.merge(SETTINGS_DEFAULT_PEN, tool)
+          return _.mergeWith(customizer, DEFAULT_SHAPE_BRUSH, tool)
         case ShapeEnum.circle:
-          return _.merge(SETTINGS_DEFAULT_CIRCLE, tool)
+          return _.mergeWith(customizer, DEFAULT_SHAPE_CIRCLE, tool)
         case ShapeEnum.curve:
-          return _.merge(SETTINGS_DEFAULT_CURVE, tool)
+          return _.mergeWith(customizer, DEFAULT_SHAPE_CURVE, tool)
         case ShapeEnum.ellipse:
-          return _.merge(SETTINGS_DEFAULT_ELLIPSE, tool)
+          return _.mergeWith(customizer, DEFAULT_SHAPE_ELLIPSE, tool)
         case ShapeEnum.line:
-          return _.merge(SETTINGS_DEFAULT_LINE, tool)
-        case ShapeEnum.picture:
-          return _.merge(SETTINGS_DEFAULT_PICTURE, tool)
+          return _.mergeWith(customizer, DEFAULT_SHAPE_LINE, tool)
         case ShapeEnum.polygon:
-          return _.merge(SETTINGS_DEFAULT_POLYGON, tool)
+          return _.mergeWith(customizer, DEFAULT_SHAPE_POLYGON, tool)
         case ShapeEnum.rect:
-          return _.merge(SETTINGS_DEFAULT_RECT, tool)
+          return _.mergeWith(customizer, DEFAULT_SHAPE_RECT, tool)
         case ShapeEnum.square:
-          return _.merge(SETTINGS_DEFAULT_SQUARE, tool)
+          return _.mergeWith(customizer, DEFAULT_SHAPE_SQUARE, tool)
         case ShapeEnum.text:
-          return _.merge(SETTINGS_DEFAULT_TEXT, tool)
+          return _.mergeWith(customizer, DEFAULT_SHAPE_TEXT, tool)
       }
       return null
     }),
+    tools => (withPicture ? [...tools, DEFAULT_SHAPE_PICTURE] : tools),
     _.compact
-  )(tools) as unknown as CustomTool<ShapeEnum>[]
+  )(tools) as CustomTool[]
 }

@@ -3,21 +3,20 @@ import React, { useEffect, useState } from 'react'
 import Button from 'components/common/Button'
 import Panel from 'components/common/Panel'
 import { styled } from '@linaria/react'
-import { ShapeEnum, ToolEnum, ToolsType } from 'types/Shapes'
-import { getShapePicture } from 'utils/style'
+import { ShapeEnum } from 'types/Shapes'
 import Tool from './Tool'
 import LoadFileTool from './LoadFileTool'
+import { publicIcon } from 'constants/icons'
+import { ToolsType } from 'types/tools'
 import {
-  clearIcon,
-  exportFileIcon,
-  openFileIcon,
-  pictureIcon,
-  publicIcon,
-  redoIcon,
-  saveIcon,
-  undoIcon
-} from 'constants/icons'
-import { CustomTool } from 'types/tools'
+  CLEAR_TOOL,
+  EXPORT_TOOL,
+  LOAD_TOOL,
+  REDO_TOOL,
+  SAVE_TOOL,
+  UNDO_TOOL,
+  UPLOAD_PICTURE_TOOL
+} from 'constants/tools'
 const StyledPanel = styled(Panel)`
   display: flex;
   bottom: unset;
@@ -34,7 +33,7 @@ const StyledRelative = styled.div`
 `
 
 type ToolbarGroupType = {
-  activeTool: React.SetStateAction<ToolsType>
+  activeTool: ToolsType
   withActionsInMenu: boolean
   group: {
     tools?: ShapeEnum[]
@@ -50,13 +49,14 @@ type ToolbarGroupType = {
   addPicture: (file: File) => Promise<void>
   saveFile: () => void
   exportCanvasInFile: () => void
-  availableTools: CustomTool<ShapeEnum>[]
   togglePictureUrlModal: () => void
   withLoadAndSave: boolean
   withExport: boolean
   hasActionToUndo?: boolean
   hasActionToRedo?: boolean
   hasActionToClear?: boolean
+  withUploadPicture: boolean
+  withUrlPicture: boolean
   undoAction: () => void
   redoAction: () => void
   clearCanvas: () => void
@@ -82,7 +82,8 @@ const MenuGroup = ({
   togglePictureUrlModal,
   saveFile,
   exportCanvasInFile,
-  availableTools
+  withUploadPicture,
+  withUrlPicture
 }: ToolbarGroupType) => {
   const [isOpen, setIsOpen] = useState(false)
 
@@ -100,8 +101,9 @@ const MenuGroup = ({
     setIsOpen(true)
   }
 
-  const isActive = _.includes(activeTool, group?.tools)
-  const groupIcon = (isActive ? getShapePicture(activeTool as ShapeEnum) : group.img) ?? group.title
+  const isActive = _.includes(activeTool.type, group?.tools)
+  const groupIcon =
+    (isActive ? activeTool.icon : group.img) ?? group.title
 
   useEffect(() => {
     if (!isOpen) return
@@ -119,9 +121,8 @@ const MenuGroup = ({
     }
   }, [isOpen])
 
-  const withPicture = _.find({ type: ShapeEnum.picture }, availableTools) !== undefined
-
-  const withMenu = withActionsInMenu || withPicture || withLoadAndSave || withExport
+  const withMenu =
+    withActionsInMenu || withUploadPicture || withUrlPicture || withLoadAndSave || withExport
 
   return withMenu ? (
     <StyledRelative>
@@ -138,75 +139,71 @@ const MenuGroup = ({
             <>
               <Tool
                 withText={true}
-                type={ToolEnum.undo}
+                type={UNDO_TOOL}
                 disabled={disabled || !hasActionToUndo}
-                lib="Undo"
-                img={undoIcon}
-                isActive={activeTool === ToolEnum.undo}
+                img={UNDO_TOOL.icon}
+                isActive={activeTool.id === UNDO_TOOL.id}
                 setActive={undoAction}
               />
               <Tool
                 withText={true}
-                type={ToolEnum.redo}
+                type={REDO_TOOL}
                 disabled={disabled || !hasActionToRedo}
-                lib="Redo"
-                img={redoIcon}
-                isActive={activeTool === ToolEnum.redo}
+                img={REDO_TOOL.icon}
+                isActive={activeTool.id === REDO_TOOL.id}
                 setActive={redoAction}
               />
               <Tool
                 withText={true}
-                type={ToolEnum.clear}
+                type={CLEAR_TOOL}
                 disabled={disabled || !hasActionToClear}
-                lib="Clear"
-                img={clearIcon}
-                isActive={activeTool === ToolEnum.clear}
+                img={CLEAR_TOOL.icon}
+                isActive={activeTool.id === CLEAR_TOOL.id}
                 setActive={() => clearCanvas()}
               />
-              {(withPicture || withLoadAndSave) && <hr />}
+              {(withUploadPicture || withUrlPicture || withLoadAndSave) && <hr />}
             </>
           )}
 
-          {withPicture && (
-            <>
-              <LoadFileTool
-                withText={true}
-                disabled={disabled}
-                loadFile={addPicture}
-                lib="Upload picture"
-                img={pictureIcon}
-                accept="image/png, image/gif, image/jpeg"
-              />
-              <Button
-                disabled={disabled}
-                selected={false}
-                onClick={togglePictureUrlModal}
-                title="Add picture from URL"
-                icon={publicIcon}
-                children="Add picture from URL"
-              />
-              {withLoadAndSave && <hr />}
-            </>
+          {withUploadPicture && (
+            <LoadFileTool
+              withText={true}
+              type={UPLOAD_PICTURE_TOOL}
+              disabled={disabled}
+              loadFile={addPicture}
+              img={UPLOAD_PICTURE_TOOL.icon}
+              accept="image/png, image/gif, image/jpeg"
+            />
           )}
+          {withUrlPicture && (
+            <Button
+              disabled={disabled}
+              selected={false}
+              onClick={togglePictureUrlModal}
+              title="Add picture from URL"
+              icon={publicIcon}
+              children="Add picture from URL"
+            />
+          )}
+          {(withUploadPicture || withUrlPicture) && withLoadAndSave && <hr />}
 
           {withLoadAndSave && (
             <>
               <LoadFileTool
                 withText={true}
+                type={LOAD_TOOL}
                 disabled={disabled}
                 loadFile={loadFile}
-                lib="Load project"
-                img={openFileIcon}
+                img={LOAD_TOOL.icon}
                 accept="application/JSON"
               />
 
               <Tool
                 withText={true}
                 disabled={disabled}
-                type={ToolEnum.saveFile}
-                lib="Save project"
-                img={saveIcon}
-                isActive={activeTool === ToolEnum.saveFile}
+                type={SAVE_TOOL}
+                img={SAVE_TOOL.icon}
+                isActive={activeTool.id === SAVE_TOOL.id}
                 setActive={saveFile}
               />
             </>
@@ -215,10 +212,9 @@ const MenuGroup = ({
             <Tool
               withText={true}
               disabled={disabled}
-              type={ToolEnum.export}
-              lib="Export PNG"
-              img={exportFileIcon}
-              isActive={activeTool === ToolEnum.export}
+              type={EXPORT_TOOL}
+              img={EXPORT_TOOL.icon}
+              isActive={activeTool.id === EXPORT_TOOL.id}
               setActive={exportCanvasInFile}
             />
           )}

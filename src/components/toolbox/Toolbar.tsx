@@ -1,20 +1,20 @@
-import { clearIcon, menuIcon, redoIcon, selectIcon, shapesIcon, undoIcon } from 'constants/icons'
+import {  menuIcon,shapesIcon } from 'constants/icons'
 import React, { useEffect, useState } from 'react'
 import { styled } from '@linaria/react'
-import { ShapeEnum, ToolEnum, ToolsType } from 'types/Shapes'
+import { ShapeEnum } from 'types/Shapes'
+import {   ToolsType } from 'types/tools'
 import Button from 'components/common/Button'
 import { getCurrentStructure } from 'utils/toolbar'
 import ToolbarGroup from './ToolbarGroup'
 import MenuGroup from './MenuGroup'
 import Tool from './Tool'
-import { getShapePicture } from 'utils/style'
 import Modal from 'components/common/Modal'
 import PictureUrlModal from './PictureUrlInput'
 import { CustomTool } from 'types/tools'
 import _ from 'lodash/fp'
+import { CLEAR_TOOL, REDO_TOOL, SELECTION_TOOL, UNDO_TOOL } from 'constants/tools'
 
-const ACTIONS_MENU_BREAKPOINT = 400
-const TOOLS_MENU_BREAKPOINT = 240
+const TOOL_WIDTH = 40
 
 const StyledShrinkableTools = styled.div`
   flex: 1;
@@ -58,7 +58,7 @@ const TOOLBAR_STRUCTURE = [
 type ToolboxType = {
   width: number
   disabled?: boolean
-  activeTool: React.SetStateAction<ToolsType>
+  activeTool: ToolsType
   hasActionToUndo?: boolean
   hasActionToRedo?: boolean
   hasActionToClear?: boolean
@@ -70,9 +70,11 @@ type ToolboxType = {
   addPicture: (file: File | string) => Promise<void>
   saveFile: () => void
   exportCanvasInFile: () => void
-  availableTools: CustomTool<ShapeEnum>[]
+  availableTools: CustomTool[]
   withLoadAndSave: boolean
   withExport: boolean
+  withUrlPicture: boolean
+  withUploadPicture: boolean
 }
 
 const Toolbar = ({
@@ -92,12 +94,20 @@ const Toolbar = ({
   loadFile,
   saveFile,
   exportCanvasInFile,
-  availableTools
+  availableTools,
+  withUrlPicture,
+  withUploadPicture
 }: ToolboxType) => {
+
+  const currentStructure = getCurrentStructure(availableTools, TOOLBAR_STRUCTURE)
+
+  const fullToolbarSize = ((5  + currentStructure.length) * TOOL_WIDTH)
+  const withMenuToolbarSize = ((2  + currentStructure.length) * TOOL_WIDTH)
+
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [isPictureUrlModalOpen, setIsPictureUrlModalOpen] = useState(false)
-  const [actionsInMenu, setActionsInMenu] = useState(width < ACTIONS_MENU_BREAKPOINT)
-  const [toolsInMenu, setToolsInMenu] = useState(width < TOOLS_MENU_BREAKPOINT)
+  const [actionsInMenu, setActionsInMenu] = useState(width < fullToolbarSize)
+  const [toolsInMenu, setToolsInMenu] = useState(width < withMenuToolbarSize)
 
   const toggleTools = () => {
     setIsMenuOpen(prev => !prev)
@@ -115,15 +125,17 @@ const Toolbar = ({
     setActiveToolFromProps(tool)
     setIsMenuOpen(false)
   }
+  //360 240
 
   useEffect(() => {
-    setActionsInMenu(width < ACTIONS_MENU_BREAKPOINT)
-    setToolsInMenu(width < TOOLS_MENU_BREAKPOINT)
-  }, [width])
+    setActionsInMenu(width < fullToolbarSize)
+    setToolsInMenu(width < withMenuToolbarSize)
+  }, [width, fullToolbarSize, withMenuToolbarSize])
 
-  const currentStructure = getCurrentStructure(availableTools, TOOLBAR_STRUCTURE)
+
 
   const isAnyToolSelected = _.find({ type: activeTool }, availableTools) !== undefined
+
   return (
     <>
       <StyledToolbox>
@@ -134,65 +146,14 @@ const Toolbar = ({
         isActive={activeTool === ToolEnum.move}
         setActive={setActiveTool}
       /> */}
-        <MenuGroup
-          withActionsInMenu={actionsInMenu}
-          disabled={disabled}
-          vertical={true}
-          alignment="left"
-          group={{ title: 'Menu', img: menuIcon }}
-          activeTool={activeTool}
-          addPicture={addPicture}
-          loadFile={loadFile}
-          saveFile={saveFile}
-          togglePictureUrlModal={openPictureUrlModal}
-          exportCanvasInFile={exportCanvasInFile}
-          availableTools={availableTools}
-          withLoadAndSave={withLoadAndSave}
-          withExport={withExport}
-          hasActionToUndo={hasActionToUndo}
-          hasActionToRedo={hasActionToRedo}
-          hasActionToClear={hasActionToClear}
-          undoAction={undoAction}
-          redoAction={redoAction}
-          clearCanvas={clearCanvas}
-        />
+        <StyledShrinkableTools>
         <Tool
-          type={ToolEnum.selection}
+          type={SELECTION_TOOL}
           disabled={disabled}
-          lib="selection"
-          img={selectIcon}
-          isActive={activeTool === ToolEnum.selection}
+          img={SELECTION_TOOL.icon}
+          isActive={activeTool.id === SELECTION_TOOL.id}
           setActive={setActiveTool}
         />
-        {!actionsInMenu && (
-          <>
-            <Tool
-              type={ToolEnum.undo}
-              disabled={disabled || !hasActionToUndo}
-              lib="Undo"
-              img={undoIcon}
-              isActive={activeTool === ToolEnum.undo}
-              setActive={undoAction}
-            />
-            <Tool
-              type={ToolEnum.redo}
-              disabled={disabled || !hasActionToRedo}
-              lib="Redo"
-              img={redoIcon}
-              isActive={activeTool === ToolEnum.redo}
-              setActive={redoAction}
-            />
-            <Tool
-              type={ToolEnum.clear}
-              disabled={disabled || !hasActionToClear}
-              lib="Clear"
-              img={clearIcon}
-              isActive={activeTool === ToolEnum.clear}
-              setActive={() => clearCanvas()}
-            />
-          </>
-        )}
-        <StyledShrinkableTools>
           {toolsInMenu ? (
             <Button
               disabled={disabled}
@@ -213,6 +174,56 @@ const Toolbar = ({
             ))
           )}
         </StyledShrinkableTools>
+       
+       
+        {!actionsInMenu && (
+          <>
+            <Tool
+              type={UNDO_TOOL}
+              disabled={disabled || !hasActionToUndo}
+              img={UNDO_TOOL.icon}
+              isActive={activeTool.id === UNDO_TOOL.id}
+              setActive={undoAction}
+            />
+            <Tool
+              type={REDO_TOOL}
+              disabled={disabled || !hasActionToRedo}
+              img={REDO_TOOL.icon}
+              isActive={activeTool.id === REDO_TOOL.id}
+              setActive={redoAction}
+            />
+            <Tool
+              type={CLEAR_TOOL}
+              disabled={disabled || !hasActionToClear}
+              img={CLEAR_TOOL.icon}
+              isActive={activeTool.id === CLEAR_TOOL.id}
+              setActive={() => clearCanvas()}
+            />
+          </>
+        )}
+         <MenuGroup
+          withActionsInMenu={actionsInMenu}
+          disabled={disabled}
+          vertical={true}
+          alignment="right"
+          group={{ title: 'Menu', img: menuIcon }}
+          activeTool={activeTool}
+          addPicture={addPicture}
+          loadFile={loadFile}
+          saveFile={saveFile}
+          togglePictureUrlModal={openPictureUrlModal}
+          exportCanvasInFile={exportCanvasInFile}
+          withUploadPicture={withUploadPicture}
+          withUrlPicture={withUrlPicture}
+          withLoadAndSave={withLoadAndSave}
+          withExport={withExport}
+          hasActionToUndo={hasActionToUndo}
+          hasActionToRedo={hasActionToRedo}
+          hasActionToClear={hasActionToClear}
+          undoAction={undoAction}
+          redoAction={redoAction}
+          clearCanvas={clearCanvas}
+        />
       </StyledToolbox>
       {isMenuOpen && (
         <StyledToolsModal onClose={toggleTools}>
@@ -221,11 +232,10 @@ const Toolbar = ({
               <Tool
                 disabled={disabled}
                 key={index}
-                type={toolType.type}
-                lib={toolType.lib ?? toolType.type}
+                type={toolType}
+                img={toolType.icon}
                 withText={false}
-                img={getShapePicture(toolType.type)}
-                isActive={activeTool === toolType.type}
+                isActive={activeTool.id === toolType.id}
                 setActive={setActiveTool}
               />
             )

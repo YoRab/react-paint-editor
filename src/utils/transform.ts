@@ -23,7 +23,7 @@ import {
   getPointPositionAfterCanvasTransformation,
   getPointPositionBeforeCanvasTransformation
 } from './intersect'
-import { STYLE_FONT_DEFAULT } from 'constants/style'
+import { STYLE_FONT_DEFAULT, STYLE_FONT_SIZE_DEFAULT } from 'constants/style'
 
 export const getNormalizedSize = (originalShape: Rect, width: number, height: number) => {
   const originalRatio = originalShape.width / originalShape.height
@@ -204,7 +204,7 @@ export const updatePolygonLinesCount = (
   const currentPointsCount = shape.points.length
   if (currentPointsCount === newPointsCount) return shape
   if (currentPointsCount > newPointsCount) {
-    return _.set('points', shape.points.slice(0, newPointsCount), shape)
+    return _.set('style.pointsCount', shape.points.slice(0, newPointsCount), shape)
   } else {
     //TODO : better distribution for new points
     const nbPointsToAdd = newPointsCount - currentPointsCount
@@ -219,7 +219,7 @@ export const updatePolygonLinesCount = (
     )(nbPointsToAdd) as Point[]
 
     return _.set(
-      'points',
+      'style.pointsCount',
       [shape.points[0], ...newPoints, ...shape.points.slice(1, shape.points.length)],
       shape
     )
@@ -696,7 +696,7 @@ export const calculateTextFontSize = (
     _.flow(
       _.map((value: string) => maxWidth / ctx.measureText(value).width),
       _.min
-    )(text) ?? 12
+    )(text) ?? STYLE_FONT_SIZE_DEFAULT
   )
 }
 

@@ -52,6 +52,9 @@ const RangeField = ({
 
   const isPanelVisible = selectedSettings === customKey
 
+  if(min===max) return null
+
+
   return (
     <>
       <Button selected={isPanelVisible} title={title} disabled={disabled} onClick={togglePanel}>

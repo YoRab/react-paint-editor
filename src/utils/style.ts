@@ -23,13 +23,13 @@ export const getShapePicture = (shape: ShapeEnum) => {
     case ShapeEnum.curve:
       return curveIcon
     case ShapeEnum.rect:
-      return recIcon
+      return squareIcon // temporary
     case ShapeEnum.square:
       return squareIcon
     case ShapeEnum.circle:
       return circleIcon
     case ShapeEnum.ellipse:
-      return ellipseIcon
+      return circleIcon // temporary
     case ShapeEnum.text:
       return textIcon
     case ShapeEnum.picture:

@@ -321,9 +321,242 @@ const CurrentApp = ({ selectedComponent }: CurrentAppType) => {
           options={{
             gridVisible: true,
             layersManipulation: false,
-            withLoadAndSave: false,
+            withLoadAndSave: true,
             withExport: false,
-            availableTools: ['circle', 'brush', undefined, 'not existing tool']
+            withUrlPicture: false,
+            availableTools: [
+              'circle',
+              'brush',
+              undefined,
+              'not existing tool',
+              {
+                id: 'brush1',
+                lib: 'test with not existing type; should not appear',
+                type: 'sgg'
+              },
+              {
+                id: 'brush2',
+                lib: 'test without any type should not appear'
+              },
+              {
+                id: 'brush3',
+                lib: 'classic brush',
+                type: 'brush',
+                settings: {
+                  lineWidth: {
+                    min: 2,
+                    max: 20,
+                    step: 2,
+                    default: 4
+                  },
+                  strokeColor: {
+                    values: [
+                      'transparent',
+                      '#FFFFFF',
+                      '#002E4D',
+                      '#21BFEF',
+                      '#FFA800',
+                      '#135BEB',
+                      '#FF5C93',
+                      '#FF6D24',
+                      '#00C79F',
+                      '#9580FF',
+                      '#55779E',
+                      '#000000'
+                    ],
+                    default: '#002E4D'
+                  },
+                  opacity: {
+                    min: 0,
+                    max: 100,
+                    step: 5,
+                    default: 100
+                  }
+                }
+              },
+              {
+                id: 'line',
+                lib: 'classic line',
+                type: 'line',
+                settings: {
+                  lineWidth: {
+                    min: 2,
+                    max: 20,
+                    step: 2,
+                    default: 4
+                  },
+                  lineArrow: {
+                    values: [0, 1, 2, 3],
+                    default: 1
+                  },
+                  strokeColor: {
+                    values: [
+                      'transparent',
+                      '#FFFFFF',
+                      '#002E4D',
+                      '#21BFEF',
+                      '#FFA800',
+                      '#135BEB',
+                      '#FF5C93',
+                      '#FF6D24',
+                      '#00C79F',
+                      '#9580FF',
+                      '#55779E',
+                      '#000000'
+                    ],
+                    default: '#002E4D'
+                  },
+                  opacity: {
+                    min: 0,
+                    max: 100,
+                    step: 5,
+                    default: 100
+                  }
+                }
+              },
+              {
+                id: 'rectangle',
+                lib: 'classic rectangle',
+                type: 'rect',
+                settings: {
+                  lineWidth: {
+                    min: 2,
+                    max: 20,
+                    step: 2,
+                    default: 4
+                  },
+                  strokeColor: {
+                    values: [
+                      'transparent',
+                      '#FFFFFF',
+                      '#002E4D',
+                      '#21BFEF',
+                      '#FFA800',
+                      '#135BEB',
+                      '#FF5C93',
+                      '#FF6D24',
+                      '#00C79F',
+                      '#9580FF',
+                      '#55779E',
+                      '#000000'
+                    ],
+                    default: '#002E4D'
+                  },
+                  fillColor: {
+                    values: [
+                      'transparent',
+                      '#FFFFFF',
+                      '#002E4D',
+                      '#21BFEF',
+                      '#FFA800',
+                      '#135BEB',
+                      '#FF5C93',
+                      '#FF6D24',
+                      '#00C79F',
+                      '#9580FF',
+                      '#55779E',
+                      '#000000'
+                    ],
+                    default: 'transparent'
+                  },
+                  opacity: {
+                    min: 0,
+                    max: 100,
+                    step: 5,
+                    default: 100
+                  }
+                }
+              },
+              {
+                id: 'ellipse',
+                lib: 'classic ellipse',
+                type: 'ellipse',
+                settings: {
+                  lineWidth: {
+                    min: 2,
+                    max: 20,
+                    step: 2,
+                    default: 4
+                  },
+
+                  strokeColor: {
+                    values: [
+                      'transparent',
+                      '#FFFFFF',
+                      '#002E4D',
+                      '#21BFEF',
+                      '#FFA800',
+                      '#135BEB',
+                      '#FF5C93',
+                      '#FF6D24',
+                      '#00C79F',
+                      '#9580FF',
+                      '#55779E',
+                      '#000000'
+                    ],
+                    default: '#002E4D'
+                  },
+                  fillColor: {
+                    values: [
+                      'transparent',
+                      '#FFFFFF',
+                      '#002E4D',
+                      '#21BFEF',
+                      '#FFA800',
+                      '#135BEB',
+                      '#FF5C93',
+                      '#FF6D24',
+                      '#00C79F',
+                      '#9580FF',
+                      '#55779E',
+                      '#000000'
+                    ],
+                    default: 'transparent'
+                  },
+                  opacity: {
+                    min: 0,
+                    max: 100,
+                    step: 5,
+                    default: 100
+                  }
+                }
+              },
+              {
+                id: 'text',
+                lib: 'classic text',
+                type: 'text',
+                settings: {
+                  fontFamily: {
+                    values: ['ProximaNova', 'Sabon', 'Fira Mono'],
+                    default: 'ProximaNova'
+                  },
+                  strokeColor: {
+                    values: [
+                      'transparent',
+                      '#FFFFFF',
+                      '#002E4D',
+                      '#21BFEF',
+                      '#FFA800',
+                      '#135BEB',
+                      '#FF5C93',
+                      '#FF6D24',
+                      '#00C79F',
+                      '#9580FF',
+                      '#55779E',
+                      '#000000'
+                    ],
+                    default: '#002E4D'
+                  },
+
+                  opacity: {
+                    min: 0,
+                    max: 100,
+                    step: 5,
+                    default: 100
+                  }
+                }
+              }
+            ]
           }}
         />
       )

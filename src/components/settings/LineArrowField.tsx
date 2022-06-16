@@ -1,7 +1,7 @@
 import React from 'react'
 import SelectField from './SelectField'
-import { STYLE_LINE_WITH_ARROW } from 'constants/style'
 import { styled } from '@linaria/react'
+import _ from 'lodash/fp'
 
 const StyledLeftTriangle = styled.span`
   position: absolute;
@@ -67,6 +67,7 @@ type LineArrowType = {
   selectedSettings: string | undefined
   setSelectedSettings: React.Dispatch<React.SetStateAction<string | undefined>>
   disabled?: boolean
+  values: number[]
   defaultValue?: number | string | undefined
   valueChanged: (field: string, value: string | number) => void
 }
@@ -75,9 +76,14 @@ const LineArrowField = ({
   selectedSettings,
   setSelectedSettings,
   disabled = false,
+  values,
   defaultValue,
   valueChanged
 }: LineArrowType) => {
+
+  if(_.isEmpty(values)) return null
+
+
   return (
     <SelectField
       selectedSettings={selectedSettings}
@@ -86,7 +92,7 @@ const LineArrowField = ({
       title="Flèches"
       disabled={disabled}
       field="style.lineArrow"
-      values={STYLE_LINE_WITH_ARROW}
+      values={values}
       defaultValue={defaultValue}
       valueChanged={valueChanged}></SelectField>
   )

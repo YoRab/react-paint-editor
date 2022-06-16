@@ -1,20 +1,12 @@
 import React, { MutableRefObject, useCallback, useEffect, useRef, useState } from 'react'
-import _ from 'lodash/fp'
-import {
-  DrawableShape,
-  DrawableShapeJson,
-  Point,
-  ShapeEnum,
-  StyledShape,
-  ToolEnum,
-  ToolsType
-} from 'types/Shapes'
+import { DrawableShape, DrawableShapeJson, Point } from 'types/Shapes'
+import { CustomToolInput, ToolsType } from 'types/tools'
 import Canvas from './Canvas'
 import Layouts from './settings/Layouts'
 import Toolbar from './toolbox/Toolbar'
 import { styled } from '@linaria/react'
 import SettingsBar from './settings/SettingsBar'
-import { STYLE_FONT_DEFAULT, STYLE_ZINDEX_APP } from 'constants/style'
+import { STYLE_ZINDEX_APP } from 'constants/style'
 import useKeyboard from 'hooks/useKeyboard'
 import {
   decodeJson,
@@ -34,13 +26,12 @@ import { cleanShapesBeforeExport } from 'utils/data'
 import useResizeObserver from 'hooks/useResizeObserver'
 import { RecursivePartial } from 'types/utils'
 import {
-  DEFAULT_TOOLS,
   SELECTION_DEFAULT_COLOR,
   SELECTION_DEFAULT_PADDING,
   SELECTION_DEFAULT_WIDTH
 } from 'constants/shapes'
-import { CustomTool } from 'types/tools'
 import { sanitizeTools } from 'utils/toolbar'
+import { DEFAULT_SHAPE_TOOLS, SELECTION_TOOL } from 'constants/tools'
 
 const StyledApp = styled.div<{
   canvasWidth: number
@@ -116,9 +107,11 @@ type AppOptionsType = {
   gridVisible: boolean
   canGrow: boolean
   canShrink: boolean
-  availableTools: CustomTool<ShapeEnum>[]
+  availableTools: CustomToolInput[]
   withExport: boolean
   withLoadAndSave: boolean
+  withUploadPicture: boolean
+  withUrlPicture: boolean
   uiStyle: {
     toolbarBackgroundColor: string
     dividerColor: string
@@ -147,7 +140,9 @@ const DEFAULT_OPTIONS: AppOptionsType = {
   canShrink: true,
   withExport: true,
   withLoadAndSave: true,
-  availableTools: DEFAULT_TOOLS,
+  withUploadPicture: true,
+  withUrlPicture: false,
+  availableTools: DEFAULT_SHAPE_TOOLS,
   uiStyle: {
     toolbarBackgroundColor: 'white',
     dividerColor: '#36418129',
@@ -203,6 +198,8 @@ const App = ({
     canShrink,
     withExport,
     withLoadAndSave,
+    withUploadPicture,
+    withUrlPicture,
     availableTools: availableToolsFromProps
   } = {
     ...DEFAULT_OPTIONS,
@@ -239,24 +236,11 @@ const App = ({
     scaleRatio: 1
   })
 
-  const availableTools = sanitizeTools(availableToolsFromProps)
+  const availableTools = sanitizeTools(availableToolsFromProps, withUploadPicture || withUrlPicture)
 
   const { isInsideComponent } = useComponent({
     disabled,
     componentRef
-  })
-
-  const [defaultConf, setDefaultConf] = useState<StyledShape>({
-    style: {
-      fillColor: 'transparent',
-      strokeColor: 'black',
-      globalAlpha: 100,
-      lineWidth: 1,
-      lineDash: 0,
-      lineArrow: 0,
-      pointsCount: 3,
-      fontFamily: STYLE_FONT_DEFAULT
-    }
   })
 
   const [isLoading, setIsLoading] = useState(false)
@@ -266,7 +250,7 @@ const App = ({
   const [canvasOffsetStartPosition, setCanvasOffsetStartPosition] = useState<Point | undefined>(
     undefined
   )
-  const [activeTool, setActiveTool] = useState<ToolsType>(ToolEnum.selection)
+  const [activeTool, setActiveTool] = useState<ToolsType>(SELECTION_TOOL)
 
   const [selectionMode, setSelectionMode] = useState<SelectionModeData<Point | number>>({
     mode: SelectionModeLib.default
@@ -305,19 +289,19 @@ const App = ({
   )
 
   const undoAction = useCallback(() => {
-    selectTool(ToolEnum.selection)
+    selectTool(SELECTION_TOOL)
     backwardShape()
   }, [selectTool, backwardShape])
 
   const redoAction = useCallback(() => {
-    selectTool(ToolEnum.selection)
+    selectTool(SELECTION_TOOL)
     forwardShape()
   }, [selectTool, forwardShape])
 
   const clearCanvas = useCallback(
     (shapesToInit: DrawableShape[] = [], clearHistory = false) => {
       clearShapes(shapesToInit, clearHistory)
-      selectTool(ToolEnum.selection)
+      selectTool(SELECTION_TOOL)
       setCanvasOffset([0, 0])
     },
     [selectTool, clearShapes]
@@ -325,7 +309,7 @@ const App = ({
 
   const selectShape = useCallback(
     (shape: DrawableShape) => {
-      setActiveTool(ToolEnum.selection)
+      setActiveTool(SELECTION_TOOL)
       setSelectedShape(shape)
     },
     [setSelectedShape]
@@ -523,6 +507,8 @@ const App = ({
           availableTools={availableTools}
           withExport={withExport}
           withLoadAndSave={withLoadAndSave}
+          withUploadPicture={withUploadPicture}
+          withUrlPicture={withUrlPicture}
         />
       )}
       <StyledRow
@@ -545,7 +531,6 @@ const App = ({
           setSelectedShape={setSelectedShape}
           canvasOffset={canvasOffset}
           setCanvasOffset={setCanvasOffset}
-          defaultConf={defaultConf}
           saveShapes={saveShapes}
           ref={canvasRef}
           canvasSize={canvasSize}
@@ -577,11 +562,10 @@ const App = ({
           <SettingsBar
             disabled={disabled}
             activeTool={activeTool}
+            availableTools={availableTools}
             selectedShape={selectedShape}
             removeShape={removeShape}
             updateShape={updateShape}
-            defaultConf={defaultConf}
-            setDefaultConf={setDefaultConf}
             canvas={canvasRef.current}
             layersManipulation={layersManipulation}
             toggleLayoutPanel={() => {

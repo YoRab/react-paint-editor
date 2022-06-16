@@ -1,7 +1,7 @@
 import React from 'react'
 import SelectField from './SelectField'
-import { STYLE_LINE_DASH } from 'constants/style'
 import { styled } from '@linaria/react'
+import _ from 'lodash/fp'
 
 const StyledLine = styled.span`
   display: inline-block;
@@ -67,6 +67,7 @@ type LineTypeType = {
   selectedSettings: string | undefined
   setSelectedSettings: React.Dispatch<React.SetStateAction<string | undefined>>
   disabled?: boolean
+  values: number[]
   defaultValue?: number | string | undefined
   valueChanged: (field: string, value: string | number) => void
 }
@@ -75,9 +76,14 @@ const LineTypeField = ({
   selectedSettings,
   setSelectedSettings,
   disabled = false,
+  values,
   defaultValue,
   valueChanged
 }: LineTypeType) => {
+
+  if(_.isEmpty(values)) return null
+
+
   return (
     <SelectField
       selectedSettings={selectedSettings}
@@ -86,7 +92,7 @@ const LineTypeField = ({
       title="Type de traits"
       disabled={disabled}
       field="style.lineDash"
-      values={STYLE_LINE_DASH}
+      values={values}
       defaultValue={defaultValue}
       valueChanged={valueChanged}></SelectField>
   )

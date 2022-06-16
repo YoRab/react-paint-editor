@@ -47,6 +47,9 @@ const SelectField = ({
 
   const isPanelVisible = selectedSettings === customKey
 
+  if(_.isEmpty(values)) return null
+
+
   return (
     <>
       <Button selected={isPanelVisible} title={title} disabled={disabled} onClick={togglePanel}>

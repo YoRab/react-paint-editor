@@ -1,10 +1,9 @@
 import React from 'react'
 import Button from 'components/common/Button'
-import { ToolsType } from 'types/Shapes'
+import { ToolsType } from 'types/tools'
 
 type ToolType = {
   type: ToolsType
-  lib: string
   img?: string
   withText?: boolean
   isActive: boolean
@@ -14,7 +13,6 @@ type ToolType = {
 
 const Tool = ({
   type,
-  lib = '',
   img,
   isActive,
   withText = false,
@@ -25,14 +23,15 @@ const Tool = ({
     setActive(type)
   }
 
+
   return (
     <Button
       disabled={disabled}
       selected={isActive}
       onClick={handleClick}
-      title={lib}
+      title={type.lib ?? type.type}
       icon={img}
-      children={withText ? lib : undefined}
+      children={withText ? type.lib : undefined}
     />
   )
 }

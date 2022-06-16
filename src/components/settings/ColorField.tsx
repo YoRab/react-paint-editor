@@ -3,7 +3,6 @@ import React, { useState } from 'react'
 import { styled } from '@linaria/react'
 import Button from 'components/common/Button'
 import Panel from 'components/common/Panel'
-import { STYLE_COLORS } from 'constants/style'
 import { encodedTransparentIcon, paletteIcon } from 'constants/icons'
 
 const StyledColor = styled.div<{
@@ -41,6 +40,7 @@ type ShapeStyleColorType = {
   disabled?: boolean
   field: string
   value?: string | undefined
+  values: string[]
   valueChanged: (field: string, value: string | number) => void
 }
 
@@ -49,6 +49,7 @@ const ColorField = ({
   setSelectedSettings,
   title = 'Choisissez une couleur',
   disabled = false,
+  values,
   field,
   value = '',
   valueChanged
@@ -71,6 +72,8 @@ const ColorField = ({
 
   const isPanelVisible = selectedSettings === customKey
 
+  if(_.isEmpty(values)) return null
+
   return (
     <>
       <Button selected={isPanelVisible} title={title} disabled={disabled} onClick={togglePanel}>
@@ -83,7 +86,7 @@ const ColorField = ({
       {isPanelVisible && (
         <Panel title={title} alignment="left">
           <div>
-            {STYLE_COLORS.map((color, index) => (
+            {values.map((color, index) => (
               <Button
                 title={color}
                 key={index}
@@ -102,11 +105,11 @@ const ColorField = ({
             <Button
               type="color"
               title="Custom color"
-              selected={!_.includes(value, STYLE_COLORS)}
+              selected={!_.includes(value, values)}
               value={value}
               onChange={handleChange}>
               <StyledCustomColor
-                color={_.includes(value, STYLE_COLORS) ? 'var(--font-color)' : value}>
+                color={_.includes(value, values) ? 'var(--font-color)' : value}>
                 <span dangerouslySetInnerHTML={{ __html: paletteIcon }} />
               </StyledCustomColor>
             </Button>
