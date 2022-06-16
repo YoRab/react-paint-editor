@@ -4,6 +4,7 @@
 
 - Text tool broken since 0.2.2
 - double click not working with touch (fix: fake it counting delay between touch)
+- selected style not saved when changing tool (since presets)
 
 ## mobile/touch
 
