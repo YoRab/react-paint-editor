@@ -1,3 +1,6 @@
+# V0.5.1
+- add possibility to set default settings for a tool
+
 # V0.5.0
 
 - Add tool presets feature

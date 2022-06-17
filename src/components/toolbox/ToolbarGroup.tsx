@@ -34,7 +34,7 @@ type ToolbarGroupType = {
   title?: string
   disabled?: boolean
   img?: string
-  setActiveTool: (tool: ToolsType) => void
+  setActiveToolFromId: (id: string) => void
 }
 
 const ToolbarGroup = ({
@@ -42,15 +42,20 @@ const ToolbarGroup = ({
   alignment,
   group,
   disabled = false,
-  setActiveTool: setActiveToolFromProps
+  setActiveToolFromId
 }: ToolbarGroupType) => {
   const [isOpen, setIsOpen] = useState(false)
   const [localActiveTool, setLocalActiveTool] = useState<ToolsType | undefined>(undefined)
 
   const setActiveTool = (tool: ToolsType) => {
-    setLocalActiveTool(tool)
-    setActiveToolFromProps(tool)
+     setLocalActiveTool(tool)
+    setActiveToolFromId(tool.id)
   }
+
+  // useEffect(() => {
+  //   console.log("new active tool")
+  //   setLocalActiveTool(group.)
+  // }, [activeTool])
 
   useEffect(() => {
     if (!isOpen) return
@@ -103,7 +108,7 @@ const ToolbarGroup = ({
     group.title
 
   const openPanel = () => {
-    if (localActiveTool) setActiveToolFromProps(localActiveTool)
+    if (localActiveTool) setActiveToolFromId(localActiveTool.id)
     else group.toolsType && group.toolsType[0] && setActiveTool(group.toolsType[0])
     setIsOpen(true)
   }

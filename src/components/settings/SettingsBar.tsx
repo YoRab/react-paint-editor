@@ -30,6 +30,7 @@ const StyledSeparator = styled.div`
 type SettingsBoxType = {
   disabled?: boolean
   availableTools: CustomTool[]
+  updateToolSettings : (toolId: string, field: string, value: string|number) => void
   layersManipulation?: boolean
   activeTool: ToolsType
   selectedShape: DrawableShape | undefined
@@ -42,6 +43,7 @@ type SettingsBoxType = {
 const SettingsBar = ({
   disabled = false,
   availableTools,
+  updateToolSettings,
   layersManipulation,
   toggleLayoutPanel,
   activeTool,
@@ -50,34 +52,23 @@ const SettingsBar = ({
   updateShape,
   removeShape
 }: SettingsBoxType) => {
-  // const shapes = [
-  //   ShapeEnum.brush,
-  //   ShapeEnum.ellipse,
-  //   ShapeEnum.circle,
-  //   ShapeEnum.rect,
-  //   ShapeEnum.square,
-  //   ShapeEnum.line,
-  //   ShapeEnum.polygon,
-  //   ShapeEnum.curve,
-  //   ShapeEnum.text
-  // ]
 
   const [selectedSettings, setSelectedSettings] = useState<string | undefined>(undefined)
 
   const handleShapeStyleChange = (field: string, value: string | number) => {
     if (selectedShape) {
-      updateShape(_.set(field, value, selectedShape), true)
+      updateShape(_.set(['style', field], value, selectedShape), true)
+      updateToolSettings(selectedShape.toolId,  field, value)
+    } else {
+      updateToolSettings(activeTool.id, field, value)
     }
-    // } else {
-    //   setDefaultConf(prevDefaultConf => _.set(field, value, prevDefaultConf))
-    // }
   }
 
   const handleShapeFontFamilyChange = (field: string, value: string | number) => {
     if (selectedShape) {
       const ctx = canvas?.getContext('2d')
       if (!ctx) return
-      const newShape = _.set(field, value, selectedShape) as DrawableText
+      const newShape = _.set(['style', field], value, selectedShape) as DrawableText
       const fontSize = calculateTextFontSize(
         ctx,
         newShape.value,
@@ -90,19 +81,20 @@ const SettingsBar = ({
         height: fontSize * newShape.value.length
       }
       updateShape(resizedShape, true)
-    }
-    // else {
-    //   setDefaultConf(prevDefaultConf => _.set(field, value, prevDefaultConf))
-    // }
+      updateToolSettings(selectedShape.toolId, field, value)
+    
+  } else {
+    updateToolSettings(activeTool.id, field, value)
+  }
   }
 
   const handlePolygonLinesCount = (field: string, value: string | number) => {
     if (selectedShape) {
       updateShape(updatePolygonLinesCount(selectedShape as DrawablePolygon, value as number), true)
+      updateToolSettings(selectedShape.toolId, field, value)
+    } else {
+      updateToolSettings(activeTool.id, field, value)
     }
-    // else {
-    //   setDefaultConf(prevDefaultConf => _.set(field, value, prevDefaultConf))
-    // }
   }
 
   const selectedShapeTool = selectedShape
@@ -145,7 +137,7 @@ const SettingsBar = ({
               setSelectedSettings={setSelectedSettings}
               title="Epaisseur du trait"
               disabled={disabled}
-              field="style.lineWidth"
+              field="lineWidth"
               value={selectedShape.style?.lineWidth}
               valueChanged={handleShapeStyleChange}
               unity="px"
@@ -183,7 +175,7 @@ const SettingsBar = ({
               setSelectedSettings={setSelectedSettings}
               title="Couleur du trait"
               disabled={disabled}
-              field="style.strokeColor"
+              field="strokeColor"
               value={selectedShape.style?.strokeColor}
               valueChanged={handleShapeStyleChange}
               values={selectedShapeTool.settings.strokeColor.values}
@@ -196,7 +188,7 @@ const SettingsBar = ({
               setSelectedSettings={setSelectedSettings}
               title="Couleur de fond"
               disabled={disabled}
-              field="style.fillColor"
+              field="fillColor"
               value={selectedShape.style?.fillColor}
               valueChanged={handleShapeStyleChange}
               values={selectedShapeTool.settings.fillColor.values}
@@ -213,7 +205,7 @@ const SettingsBar = ({
               step={selectedShapeTool.settings.opacity.step}
               unity="%"
               disabled={disabled}
-              field="style.globalAlpha"
+              field="globalAlpha"
               value={selectedShape.style?.globalAlpha ?? 100}
               valueChanged={handleShapeStyleChange}
             />
@@ -260,7 +252,7 @@ const SettingsBar = ({
                 setSelectedSettings={setSelectedSettings}
                 title="Epaisseur du trait"
                 disabled={disabled}
-                field="style.lineWidth"
+                field="lineWidth"
                 value={activeTool.settings.lineWidth.default}
                 valueChanged={handleShapeStyleChange}
                 unity="px"
@@ -298,7 +290,7 @@ const SettingsBar = ({
                 setSelectedSettings={setSelectedSettings}
                 title="Couleur du trait"
                 disabled={disabled}
-                field="style.strokeColor"
+                field="strokeColor"
                 value={activeTool.settings.strokeColor.default}
                 valueChanged={handleShapeStyleChange}
                 values={activeTool.settings.strokeColor.values}
@@ -311,7 +303,7 @@ const SettingsBar = ({
                 setSelectedSettings={setSelectedSettings}
                 title="Couleur de fond"
                 disabled={disabled}
-                field="style.fillColor"
+                field="fillColor"
                 value={activeTool.settings.fillColor.default}
                 valueChanged={handleShapeStyleChange}
                 values={activeTool.settings.fillColor.values}
@@ -328,7 +320,7 @@ const SettingsBar = ({
                 step={activeTool.settings.opacity.step}
                 unity="%"
                 disabled={disabled}
-                field="style.globalAlpha"
+                field="globalAlpha"
                 value={activeTool.settings.opacity.default}
                 valueChanged={handleShapeStyleChange}
               />
