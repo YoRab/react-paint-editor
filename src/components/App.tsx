@@ -237,13 +237,13 @@ const App = ({
     scaleRatio: 1
   })
 
-  const [availableTools, setAvailableTools] = useState(sanitizeTools(availableToolsFromProps, withUploadPicture || withUrlPicture))
-
+  const [availableTools, setAvailableTools] = useState(
+    sanitizeTools(availableToolsFromProps, withUploadPicture || withUrlPicture)
+  )
 
   useEffect(() => {
     setAvailableTools(sanitizeTools(availableToolsFromProps, withUploadPicture || withUrlPicture))
   }, [availableToolsFromProps, withUploadPicture, withUrlPicture])
-
 
   const { isInsideComponent } = useComponent({
     disabled,
@@ -295,10 +295,21 @@ const App = ({
     [setSelectedShape]
   )
 
-  const updateToolSettings = useCallback((toolId: string, field: string, value: string|number) => {
-    setAvailableTools(availableTools => availableTools.map(tool => tool.id === toolId ? _.set(['settings', field, 'default'], value, tool) : tool))
-    setActiveTool(activeTool =>activeTool.id ===toolId ? _.set(['settings', field, 'default'], value, activeTool) : activeTool)
-  }, [])
+  const updateToolSettings = useCallback(
+    (toolId: string, field: string, value: string | number | boolean) => {
+      setAvailableTools(availableTools =>
+        availableTools.map(tool =>
+          tool.id === toolId ? _.set(['settings', field, 'default'], value, tool) : tool
+        )
+      )
+      setActiveTool(activeTool =>
+        activeTool.id === toolId
+          ? _.set(['settings', field, 'default'], value, activeTool)
+          : activeTool
+      )
+    },
+    []
+  )
 
   const undoAction = useCallback(() => {
     selectTool(SELECTION_TOOL)
@@ -584,7 +595,6 @@ const App = ({
               setIsLayoutPanelShown(prev => !prev)
             }}
             updateToolSettings={updateToolSettings}
-
           />
           <Loading isLoading={isLoading} />
           <SnackbarContainer snackbarList={snackbarList} />

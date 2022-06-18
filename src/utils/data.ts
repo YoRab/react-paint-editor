@@ -165,6 +165,8 @@ export const createShape = (
         ctx,
         defaultValue,
         50,
+        shape.settings?.fontBold.default ?? false,
+        shape.settings?.fontItalic.default ?? false,
         shape.settings.fontFamily.default
       )
       return {

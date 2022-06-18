@@ -9,6 +9,7 @@
 - pas de possibilité de setter l'opacité des objets, dommage je pense qu'il y a une vraie utilité à ça
 - croix qui efface le canvas
   il faut une confirmation ! :D
+- texte: options trop limitée, il faudrait à minima pouvoir changer la taille de la police, choisir plus de police, et faire un peu de mise en forme (i, b, u)
 
 ## remaining
 
@@ -32,10 +33,6 @@
   c'est pas du tout évident
   ça donne des formes qui ne sont pas des polygones (genre un noeuf papillon)
   idéalement, il faudrait démarrer avec un pentagone parfait -5 côtés de même longueur- (en dessous se sont des polygones trop communs) et quand on change le nombre de côté ça reset la forme sur un polygone parfait de X côtés
-
-### Texte
-
-- options trop limitée, il faudrait à minima pouvoir changer la taille de la police, choisir plus de police, et faire un peu de mise en forme (i, b, u)
 
 ## bof
 

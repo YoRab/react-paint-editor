@@ -174,6 +174,14 @@ export const SETTINGS_DEFAULT_TEXT: ToolsTextSettings = {
   fontFamily: {
     values: STYLE_FONTS,
     default: STYLE_FONT_DEFAULT
+  },
+  fontBold: {
+    values: [false, true],
+    default: false
+  },
+  fontItalic: {
+    values: [false, true],
+    default: false
   }
 }
 

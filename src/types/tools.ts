@@ -101,10 +101,18 @@ export type SettingsLineArrow = {
   }
 }
 
-export type SettingsFontFamily = {
+export type SettingsFont = {
   fontFamily: {
     values: string[]
     default: string
+  }
+  fontBold: {
+    values: boolean[]
+    default: boolean
+  }
+  fontItalic: {
+    values: boolean[]
+    default: boolean
   }
 }
 
@@ -141,7 +149,7 @@ export type ToolsEllipseSettings = SettingsStrokeColor &
   SettingsLineWidth &
   SettingsLineDash
 
-export type ToolsTextSettings = SettingsOpacity & SettingsStrokeColor & SettingsFontFamily
+export type ToolsTextSettings = SettingsOpacity & SettingsStrokeColor & SettingsFont
 export type ToolsLineSettings = SettingsOpacity &
   SettingsStrokeColor &
   SettingsLineWidth &

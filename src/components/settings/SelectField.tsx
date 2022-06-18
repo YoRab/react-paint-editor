@@ -8,7 +8,7 @@ const StyledButton = styled(Button)`
   padding: 16px;
 `
 
-type ShapeStyleSelectType = {
+type SelectFieldType = {
   CustomOption: React.FC<{
     children?: React.ReactNode
   }>
@@ -32,7 +32,7 @@ const SelectField = ({
   values,
   defaultValue,
   valueChanged
-}: ShapeStyleSelectType) => {
+}: SelectFieldType) => {
   const [customKey] = useState(_.uniqueId('settings_'))
 
   const handleClick = (value: string | number) => {
@@ -47,8 +47,7 @@ const SelectField = ({
 
   const isPanelVisible = selectedSettings === customKey
 
-  if(_.isEmpty(values)) return null
-
+  if (_.isEmpty(values)) return null
 
   return (
     <>

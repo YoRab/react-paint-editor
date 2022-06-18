@@ -482,7 +482,14 @@ export const resizeText = <T extends DrawableShape & Text>(
   )
   return {
     ...newRect,
-    fontSize: calculateTextFontSize(ctx, newRect.value, newRect.width, newRect.style?.fontFamily)
+    fontSize: calculateTextFontSize(
+      ctx,
+      newRect.value,
+      newRect.width,
+      newRect.style?.fontBold ?? false,
+      newRect.style?.fontItalic ?? false,
+      newRect.style?.fontFamily
+    )
   }
 }
 
@@ -705,9 +712,11 @@ export const calculateTextFontSize = (
   ctx: CanvasRenderingContext2D,
   text: string[],
   maxWidth: number,
+  fontBold: boolean,
+  fontItalic: boolean,
   fontFamily: string | undefined = STYLE_FONT_DEFAULT
 ) => {
-  ctx.font = `1px ${fontFamily}`
+  ctx.font = `${fontItalic ? 'italic' : ''} ${fontBold ? 'bold' : ''} 1px ${fontFamily}`
   return (
     _.flow(
       _.map((value: string) => maxWidth / ctx.measureText(value).width),
@@ -720,9 +729,11 @@ export const calculateTextWidth = (
   ctx: CanvasRenderingContext2D,
   text: string[],
   fontSize: number,
+  fontBold: boolean,
+  fontItalic: boolean,
   fontFamily: string | undefined = STYLE_FONT_DEFAULT
 ) => {
-  ctx.font = `${fontSize}px ${fontFamily}`
+  ctx.font = `${fontItalic ? 'italic' : ''} ${fontBold ? 'bold' : ''} ${fontSize}px ${fontFamily}`
   return (
     _.flow(
       _.map((value: string) => ctx.measureText(value).width),

@@ -12,6 +12,8 @@ import PointsNumberField from './PointsNumberField'
 import LineTypeField from './LineTypeField'
 import LineArrowField from './LineArrowField'
 import { CustomTool, ToolsType } from 'types/tools'
+import ToggleField from './ToggleField'
+import { boldIcon, italicIcon } from 'constants/icons'
 
 const StyledSettingsBar = styled.div`
   user-select: none;
@@ -30,7 +32,7 @@ const StyledSeparator = styled.div`
 type SettingsBoxType = {
   disabled?: boolean
   availableTools: CustomTool[]
-  updateToolSettings: (toolId: string, field: string, value: string | number) => void
+  updateToolSettings: (toolId: string, field: string, value: string | number | boolean) => void
   layersManipulation?: boolean
   activeTool: ToolsType
   selectedShape: DrawableShape | undefined
@@ -54,7 +56,7 @@ const SettingsBar = ({
 }: SettingsBoxType) => {
   const [selectedSettings, setSelectedSettings] = useState<string | undefined>(undefined)
 
-  const handleShapeStyleChange = (field: string, value: string | number) => {
+  const handleShapeStyleChange = (field: string, value: string | number | boolean) => {
     if (selectedShape) {
       updateShape(_.set(['style', field], value, selectedShape), true)
       updateToolSettings(selectedShape.toolId, field, value)
@@ -63,7 +65,7 @@ const SettingsBar = ({
     }
   }
 
-  const handleShapeFontFamilyChange = (field: string, value: string | number) => {
+  const handleShapeFontFamilyChange = (field: string, value: string | number | boolean) => {
     if (selectedShape) {
       const ctx = canvas?.getContext('2d')
       if (!ctx) return
@@ -72,6 +74,8 @@ const SettingsBar = ({
         ctx,
         newShape.value,
         newShape.width,
+        newShape.style?.fontBold ?? false,
+        newShape.style?.fontItalic ?? false,
         newShape.style?.fontFamily
       )
       const resizedShape = {
@@ -193,6 +197,30 @@ const SettingsBar = ({
                 />
               )}
 
+              {'fontBold' in selectedShapeTool.settings && (
+                <ToggleField
+                  setSelectedSettings={setSelectedSettings}
+                  disabled={disabled}
+                  field="fontBold"
+                  icon={boldIcon}
+                  valueChanged={handleShapeFontFamilyChange}
+                  values={selectedShapeTool.settings.fontBold.values}
+                  value={selectedShape.style?.fontBold}
+                />
+              )}
+
+              {'fontItalic' in selectedShapeTool.settings && (
+                <ToggleField
+                  setSelectedSettings={setSelectedSettings}
+                  disabled={disabled}
+                  field="fontItalic"
+                  icon={italicIcon}
+                  valueChanged={handleShapeFontFamilyChange}
+                  values={selectedShapeTool.settings.fontItalic.values}
+                  value={selectedShape.style?.fontItalic}
+                />
+              )}
+
               {'opacity' in selectedShapeTool.settings && (
                 <RangeField
                   selectedSettings={selectedSettings}
@@ -304,6 +332,30 @@ const SettingsBar = ({
                 valueChanged={handleShapeFontFamilyChange}
                 values={activeTool.settings.fontFamily.values}
                 defaultValue={activeTool.settings.fontFamily.default}
+              />
+            )}
+
+            {'fontBold' in activeTool.settings && (
+              <ToggleField
+                setSelectedSettings={setSelectedSettings}
+                disabled={disabled}
+                field="fontBold"
+                icon={boldIcon}
+                valueChanged={handleShapeFontFamilyChange}
+                values={activeTool.settings.fontBold.values}
+                value={activeTool.settings.fontBold.default}
+              />
+            )}
+
+            {'fontItalic' in activeTool.settings && (
+              <ToggleField
+                setSelectedSettings={setSelectedSettings}
+                disabled={disabled}
+                field="fontItalic"
+                icon={italicIcon}
+                valueChanged={handleShapeFontFamilyChange}
+                values={activeTool.settings.fontItalic.values}
+                value={activeTool.settings.fontItalic.default}
               />
             )}
 

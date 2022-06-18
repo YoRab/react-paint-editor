@@ -25,6 +25,8 @@ export type StyledShape = {
     lineArrow?: number
     pointsCount?: number
     fontFamily?: string
+    fontItalic?: boolean
+    fontBold?: boolean
   }
 }
 

@@ -12,7 +12,6 @@ const useDoubleClick = () => {
       lastClickTimestampRef.current &&
       currentTimestamp < lastClickTimestampRef.current + DELTA_TIME_THRESHOLD_MS
     ) {
-      console.log('db click')
       callbackRef.current?.(e)
     }
     lastClickTimestampRef.current = new Date().getTime()
