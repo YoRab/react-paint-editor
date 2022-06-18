@@ -1,5 +1,8 @@
 # V0.5.1
+
 - add possibility to set default settings for a tool
+- fix text tool
+- double click for editing text is now working on mobile
 
 # V0.5.0
 

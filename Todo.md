@@ -48,15 +48,8 @@
 
 # En prévision / Future MAJ
 
-- possibility to have presets
-- possibility to provide presets in props
-- add default presets
-- add settings customization
-
 - settings ui
-
 - internationalization
-- fix remaining issues
 
 # Pour plus tard
 

@@ -160,7 +160,7 @@ export const createShape = (
         }
       }
     case ShapeEnum.text:
-      const defaultValue: string[] = []
+      const defaultValue: string[] = ['Texte']
       const fontSize = calculateTextFontSize(
         ctx,
         defaultValue,
