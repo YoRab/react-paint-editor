@@ -322,8 +322,9 @@ const CurrentApp = ({ selectedComponent }: CurrentAppType) => {
             gridVisible: true,
             layersManipulation: false,
             withLoadAndSave: true,
-            withExport: false,
-            withUrlPicture: false,
+            withExport: true,
+            withUrlPicture: true,
+            withUploadPicture: false,
             availableTools: [
               'circle',
               'brush',

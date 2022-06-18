@@ -1,7 +1,7 @@
 import _ from 'lodash/fp'
 import { calculateTextFontSize, fitContentInsideContainer } from './transform'
 import { DrawablePicture, Point, DrawableShape, ShapeEnum } from 'types/Shapes'
-import { getBase64Image } from './file'
+import { fetchAndStringify, getBase64Image } from './file'
 import { CustomTool } from 'types/tools'
 import { DEFAULT_SHAPE_PICTURE } from 'constants/tools'
 
@@ -29,17 +29,27 @@ export const createPicture = (
         y: (maxPictureHeight - height) / 2,
         width,
         height,
-        src: img.src,
+        src: fileOrUrl instanceof File ? img.src : fileOrUrl,
         img,
         translation: [0, 0],
         rotation: 0
       }
       resolve(pictureShape)
     }
+
+    img.onerror = () => {
+      reject(new Error('Some images could not be loaded'))
+    }
     if (fileOrUrl instanceof File) {
       img.src = URL.createObjectURL(fileOrUrl)
     } else {
-      img.src = fileOrUrl
+      fetchAndStringify(fileOrUrl)
+        .then(picData => {
+          img.src = picData
+        })
+        .catch(() => {
+          img.src = '' // to trigger onerror
+        })
     }
 
     img.onerror = () => {
