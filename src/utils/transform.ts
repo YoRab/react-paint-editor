@@ -204,7 +204,15 @@ export const updatePolygonLinesCount = (
   const currentPointsCount = shape.points.length
   if (currentPointsCount === newPointsCount) return shape
   if (currentPointsCount > newPointsCount) {
-    return _.set('style.pointsCount', shape.points.slice(0, newPointsCount), shape)
+    const totalPoints = shape.points.slice(0, newPointsCount)
+    return {
+      ...shape,
+      points: totalPoints,
+      style: {
+        ...shape.style,
+        pointsCount: totalPoints.length
+      }
+    }
   } else {
     //TODO : better distribution for new points
     const nbPointsToAdd = newPointsCount - currentPointsCount
@@ -217,12 +225,20 @@ export const updatePolygonLinesCount = (
           ((shape.points[1][1] - shape.points[0][1]) * (index + 1)) / (nbPointsToAdd + 1)
       ])
     )(nbPointsToAdd) as Point[]
+    const totalPoints = [
+      shape.points[0],
+      ...newPoints,
+      ...shape.points.slice(1, shape.points.length)
+    ]
 
-    return _.set(
-      'style.pointsCount',
-      [shape.points[0], ...newPoints, ...shape.points.slice(1, shape.points.length)],
-      shape
-    )
+    return {
+      ...shape,
+      points: totalPoints,
+      style: {
+        ...shape.style,
+        pointsCount: totalPoints.length
+      }
+    }
   }
 }
 
