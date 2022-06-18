@@ -1,5 +1,5 @@
 import _ from 'lodash/fp'
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useTransition } from 'react'
 import Button from 'components/common/Button'
 import Panel from 'components/common/Panel'
 import { styled } from '@linaria/react'
@@ -86,6 +86,7 @@ const MenuGroup = ({
   withUrlPicture
 }: ToolbarGroupType) => {
   const [isOpen, setIsOpen] = useState(false)
+  const [, startTransition] = useTransition()
 
   const loadFile = (file: File) => {
     setIsOpen(false)
@@ -98,12 +99,13 @@ const MenuGroup = ({
   }
 
   const openPanel = () => {
-    setIsOpen(true)
+    startTransition(() => {
+      setIsOpen(true)
+    })
   }
 
   const isActive = _.includes(activeTool.type, group?.tools)
-  const groupIcon =
-    (isActive ? activeTool.icon : group.img) ?? group.title
+  const groupIcon = (isActive ? activeTool.icon : group.img) ?? group.title
 
   useEffect(() => {
     if (!isOpen) return
@@ -111,12 +113,8 @@ const MenuGroup = ({
     const closePanel = () => {
       setIsOpen(false)
     }
-    const timeoutId = setTimeout(() => {
-      //TODO find a better fix than settimeout for react18
-      document.addEventListener('click', closePanel)
-    }, 0)
+    document.addEventListener('click', closePanel)
     return () => {
-      clearTimeout(timeoutId)
       document.removeEventListener('click', closePanel)
     }
   }, [isOpen])
