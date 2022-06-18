@@ -215,6 +215,8 @@ const Canvas = React.forwardRef<HTMLCanvasElement, DrawerType>(
           ctx,
           newShape.value,
           newShape.fontSize,
+          newShape.style?.fontBold ?? false,
+          newShape.style?.fontItalic ?? false,
           newShape.style?.fontFamily
         )
         const resizedShape = {
@@ -288,10 +290,12 @@ const Canvas = React.forwardRef<HTMLCanvasElement, DrawerType>(
               height={canvasSize.height}
               data-grow={canGrow}
               cursor={
-                (activeTool.type !== ActionsEnum.selection && activeTool.type !== ActionsEnum.move) ||
+                (activeTool.type !== ActionsEnum.selection &&
+                  activeTool.type !== ActionsEnum.move) ||
                 hoverMode.mode === SelectionModeLib.resize
                   ? 'crosshair'
-                  : activeTool.type === ActionsEnum.move || hoverMode.mode === SelectionModeLib.translate
+                  : activeTool.type === ActionsEnum.move ||
+                    hoverMode.mode === SelectionModeLib.translate
                   ? 'move'
                   : hoverMode.mode === SelectionModeLib.rotate
                   ? 'grab'

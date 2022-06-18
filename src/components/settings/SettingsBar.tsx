@@ -12,6 +12,8 @@ import PointsNumberField from './PointsNumberField'
 import LineTypeField from './LineTypeField'
 import LineArrowField from './LineArrowField'
 import { CustomTool, ToolsType } from 'types/tools'
+import ToggleField from './ToggleField'
+import { boldIcon, italicIcon } from 'constants/icons'
 
 const StyledSettingsBar = styled.div`
   user-select: none;
@@ -30,6 +32,7 @@ const StyledSeparator = styled.div`
 type SettingsBoxType = {
   disabled?: boolean
   availableTools: CustomTool[]
+  updateToolSettings: (toolId: string, field: string, value: string | number | boolean) => void
   layersManipulation?: boolean
   activeTool: ToolsType
   selectedShape: DrawableShape | undefined
@@ -42,6 +45,7 @@ type SettingsBoxType = {
 const SettingsBar = ({
   disabled = false,
   availableTools,
+  updateToolSettings,
   layersManipulation,
   toggleLayoutPanel,
   activeTool,
@@ -50,38 +54,28 @@ const SettingsBar = ({
   updateShape,
   removeShape
 }: SettingsBoxType) => {
-  // const shapes = [
-  //   ShapeEnum.brush,
-  //   ShapeEnum.ellipse,
-  //   ShapeEnum.circle,
-  //   ShapeEnum.rect,
-  //   ShapeEnum.square,
-  //   ShapeEnum.line,
-  //   ShapeEnum.polygon,
-  //   ShapeEnum.curve,
-  //   ShapeEnum.text
-  // ]
-
   const [selectedSettings, setSelectedSettings] = useState<string | undefined>(undefined)
 
-  const handleShapeStyleChange = (field: string, value: string | number) => {
+  const handleShapeStyleChange = (field: string, value: string | number | boolean) => {
     if (selectedShape) {
-      updateShape(_.set(field, value, selectedShape), true)
+      updateShape(_.set(['style', field], value, selectedShape), true)
+      updateToolSettings(selectedShape.toolId, field, value)
+    } else {
+      updateToolSettings(activeTool.id, field, value)
     }
-    // } else {
-    //   setDefaultConf(prevDefaultConf => _.set(field, value, prevDefaultConf))
-    // }
   }
 
-  const handleShapeFontFamilyChange = (field: string, value: string | number) => {
+  const handleShapeFontFamilyChange = (field: string, value: string | number | boolean) => {
     if (selectedShape) {
       const ctx = canvas?.getContext('2d')
       if (!ctx) return
-      const newShape = _.set(field, value, selectedShape) as DrawableText
+      const newShape = _.set(['style', field], value, selectedShape) as DrawableText
       const fontSize = calculateTextFontSize(
         ctx,
         newShape.value,
         newShape.width,
+        newShape.style?.fontBold ?? false,
+        newShape.style?.fontItalic ?? false,
         newShape.style?.fontFamily
       )
       const resizedShape = {
@@ -90,136 +84,160 @@ const SettingsBar = ({
         height: fontSize * newShape.value.length
       }
       updateShape(resizedShape, true)
+      updateToolSettings(selectedShape.toolId, field, value)
+    } else {
+      updateToolSettings(activeTool.id, field, value)
     }
-    // else {
-    //   setDefaultConf(prevDefaultConf => _.set(field, value, prevDefaultConf))
-    // }
   }
 
   const handlePolygonLinesCount = (field: string, value: string | number) => {
     if (selectedShape) {
       updateShape(updatePolygonLinesCount(selectedShape as DrawablePolygon, value as number), true)
+      updateToolSettings(selectedShape.toolId, field, value)
+    } else {
+      updateToolSettings(activeTool.id, field, value)
     }
-    // else {
-    //   setDefaultConf(prevDefaultConf => _.set(field, value, prevDefaultConf))
-    // }
   }
 
   const selectedShapeTool = selectedShape
-    ? (_.find({ id: selectedShape.toolId }, availableTools) || _.find({ type: selectedShape.type }, availableTools))
+    ? _.find({ id: selectedShape.toolId }, availableTools) ||
+      _.find({ type: selectedShape.type }, availableTools)
     : undefined
-
   return (
     <StyledSettingsBar>
       {selectedShape ? (
         <>
-        {selectedShapeTool && (
-          <>
-          {'pointsCount' in selectedShapeTool.settings && (
-            <PointsNumberField
-              selectedSettings={selectedSettings}
-              setSelectedSettings={setSelectedSettings}
-              disabled={disabled}
-              valueChanged={handlePolygonLinesCount}
-              min={selectedShapeTool.settings.pointsCount.min}
-              max={selectedShapeTool.settings.pointsCount.max}
-              step={selectedShapeTool.settings.pointsCount.step}
-              value={selectedShape.style?.pointsCount}
-            />
-          )}
+          {selectedShapeTool && (
+            <>
+              {'strokeColor' in selectedShapeTool.settings && (
+                <ColorField
+                  selectedSettings={selectedSettings}
+                  setSelectedSettings={setSelectedSettings}
+                  title="Couleur du trait"
+                  disabled={disabled}
+                  field="strokeColor"
+                  value={selectedShape.style?.strokeColor}
+                  valueChanged={handleShapeStyleChange}
+                  values={selectedShapeTool.settings.strokeColor.values}
+                />
+              )}
 
-          {'fontFamily' in selectedShapeTool.settings && (
-            <FontFamilyField
-              selectedSettings={selectedSettings}
-              setSelectedSettings={setSelectedSettings}
-              disabled={disabled}
-              valueChanged={handleShapeFontFamilyChange}
-              values={selectedShapeTool.settings.fontFamily.values}
-              defaultValue={selectedShape.style?.fontFamily}
-            />
-          )}
+              {'fillColor' in selectedShapeTool.settings && (
+                <ColorField
+                  selectedSettings={selectedSettings}
+                  setSelectedSettings={setSelectedSettings}
+                  title="Couleur de fond"
+                  disabled={disabled}
+                  field="fillColor"
+                  value={selectedShape.style?.fillColor}
+                  valueChanged={handleShapeStyleChange}
+                  values={selectedShapeTool.settings.fillColor.values}
+                />
+              )}
 
-          {'lineWidth' in selectedShapeTool.settings && (
-            <RangeField
-              selectedSettings={selectedSettings}
-              setSelectedSettings={setSelectedSettings}
-              title="Epaisseur du trait"
-              disabled={disabled}
-              field="style.lineWidth"
-              value={selectedShape.style?.lineWidth}
-              valueChanged={handleShapeStyleChange}
-              unity="px"
-              min={selectedShapeTool.settings.lineWidth.min}
-              max={selectedShapeTool.settings.lineWidth.max}
-              step={selectedShapeTool.settings.lineWidth.step}
-            />
-          )}
+              {'lineWidth' in selectedShapeTool.settings && (
+                <RangeField
+                  selectedSettings={selectedSettings}
+                  setSelectedSettings={setSelectedSettings}
+                  title="Epaisseur du trait"
+                  disabled={disabled}
+                  field="lineWidth"
+                  value={selectedShape.style?.lineWidth}
+                  valueChanged={handleShapeStyleChange}
+                  unity="px"
+                  min={selectedShapeTool.settings.lineWidth.min}
+                  max={selectedShapeTool.settings.lineWidth.max}
+                  step={selectedShapeTool.settings.lineWidth.step}
+                />
+              )}
 
-          {'lineDash' in selectedShapeTool.settings && (
-            <LineTypeField
-              selectedSettings={selectedSettings}
-              setSelectedSettings={setSelectedSettings}
-              disabled={disabled}
-              defaultValue={selectedShape.style?.lineDash}
-              valueChanged={handleShapeStyleChange}
-              values={selectedShapeTool.settings.lineDash.values}
-            />
-          )}
+              {'lineDash' in selectedShapeTool.settings && (
+                <LineTypeField
+                  selectedSettings={selectedSettings}
+                  setSelectedSettings={setSelectedSettings}
+                  disabled={disabled}
+                  defaultValue={selectedShape.style?.lineDash}
+                  valueChanged={handleShapeStyleChange}
+                  values={selectedShapeTool.settings.lineDash.values}
+                />
+              )}
 
-          {'lineArrow' in selectedShapeTool.settings && (
-            <LineArrowField
-              selectedSettings={selectedSettings}
-              setSelectedSettings={setSelectedSettings}
-              disabled={disabled}
-              defaultValue={selectedShape.style?.lineArrow}
-              valueChanged={handleShapeStyleChange}
-              values={selectedShapeTool.settings.lineArrow.values}
-            />
-          )}
+              {'lineArrow' in selectedShapeTool.settings && (
+                <LineArrowField
+                  selectedSettings={selectedSettings}
+                  setSelectedSettings={setSelectedSettings}
+                  disabled={disabled}
+                  defaultValue={selectedShape.style?.lineArrow}
+                  valueChanged={handleShapeStyleChange}
+                  values={selectedShapeTool.settings.lineArrow.values}
+                />
+              )}
 
-          {'strokeColor' in selectedShapeTool.settings && (
-            <ColorField
-              selectedSettings={selectedSettings}
-              setSelectedSettings={setSelectedSettings}
-              title="Couleur du trait"
-              disabled={disabled}
-              field="style.strokeColor"
-              value={selectedShape.style?.strokeColor}
-              valueChanged={handleShapeStyleChange}
-              values={selectedShapeTool.settings.strokeColor.values}
-            />
-          )}
+              {'pointsCount' in selectedShapeTool.settings && (
+                <PointsNumberField
+                  selectedSettings={selectedSettings}
+                  setSelectedSettings={setSelectedSettings}
+                  disabled={disabled}
+                  valueChanged={handlePolygonLinesCount}
+                  min={selectedShapeTool.settings.pointsCount.min}
+                  max={selectedShapeTool.settings.pointsCount.max}
+                  step={selectedShapeTool.settings.pointsCount.step}
+                  value={selectedShape.style?.pointsCount}
+                />
+              )}
 
-          {'fillColor' in selectedShapeTool.settings && (
-            <ColorField
-              selectedSettings={selectedSettings}
-              setSelectedSettings={setSelectedSettings}
-              title="Couleur de fond"
-              disabled={disabled}
-              field="style.fillColor"
-              value={selectedShape.style?.fillColor}
-              valueChanged={handleShapeStyleChange}
-              values={selectedShapeTool.settings.fillColor.values}
-            />
-          )}
+              {'fontFamily' in selectedShapeTool.settings && (
+                <FontFamilyField
+                  selectedSettings={selectedSettings}
+                  setSelectedSettings={setSelectedSettings}
+                  disabled={disabled}
+                  valueChanged={handleShapeFontFamilyChange}
+                  values={selectedShapeTool.settings.fontFamily.values}
+                  defaultValue={selectedShape.style?.fontFamily}
+                />
+              )}
 
-          {'opacity' in selectedShapeTool.settings && (
-            <RangeField
-              selectedSettings={selectedSettings}
-              setSelectedSettings={setSelectedSettings}
-              title="Opacité"
-              min={selectedShapeTool.settings.opacity.min}
-              max={selectedShapeTool.settings.opacity.max}
-              step={selectedShapeTool.settings.opacity.step}
-              unity="%"
-              disabled={disabled}
-              field="style.globalAlpha"
-              value={selectedShape.style?.globalAlpha ?? 100}
-              valueChanged={handleShapeStyleChange}
-            />
+              {'fontBold' in selectedShapeTool.settings && (
+                <ToggleField
+                  setSelectedSettings={setSelectedSettings}
+                  disabled={disabled}
+                  field="fontBold"
+                  icon={boldIcon}
+                  valueChanged={handleShapeFontFamilyChange}
+                  values={selectedShapeTool.settings.fontBold.values}
+                  value={selectedShape.style?.fontBold}
+                />
+              )}
+
+              {'fontItalic' in selectedShapeTool.settings && (
+                <ToggleField
+                  setSelectedSettings={setSelectedSettings}
+                  disabled={disabled}
+                  field="fontItalic"
+                  icon={italicIcon}
+                  valueChanged={handleShapeFontFamilyChange}
+                  values={selectedShapeTool.settings.fontItalic.values}
+                  value={selectedShape.style?.fontItalic}
+                />
+              )}
+
+              {'opacity' in selectedShapeTool.settings && (
+                <RangeField
+                  selectedSettings={selectedSettings}
+                  setSelectedSettings={setSelectedSettings}
+                  title="Opacité"
+                  min={selectedShapeTool.settings.opacity.min}
+                  max={selectedShapeTool.settings.opacity.max}
+                  step={selectedShapeTool.settings.opacity.step}
+                  unity="%"
+                  disabled={disabled}
+                  field="globalAlpha"
+                  value={selectedShape.style?.globalAlpha ?? 100}
+                  valueChanged={handleShapeStyleChange}
+                />
+              )}
+            </>
           )}
-          </>
-        )}
 
           <DeleteButton
             disabled={disabled}
@@ -230,27 +248,29 @@ const SettingsBar = ({
       ) : (
         'settings' in activeTool && (
           <>
-            {'pointsCount' in activeTool.settings && (
-              <PointsNumberField
+            {'strokeColor' in activeTool.settings && (
+              <ColorField
                 selectedSettings={selectedSettings}
                 setSelectedSettings={setSelectedSettings}
+                title="Couleur du trait"
                 disabled={disabled}
-                valueChanged={handlePolygonLinesCount}
-                min={activeTool.settings.pointsCount.min}
-                max={activeTool.settings.pointsCount.max}
-                step={activeTool.settings.pointsCount.step}
-                value={activeTool.settings.pointsCount.default}
+                field="strokeColor"
+                value={activeTool.settings.strokeColor.default}
+                valueChanged={handleShapeStyleChange}
+                values={activeTool.settings.strokeColor.values}
               />
             )}
 
-            {'fontFamily' in activeTool.settings && (
-              <FontFamilyField
+            {'fillColor' in activeTool.settings && (
+              <ColorField
                 selectedSettings={selectedSettings}
                 setSelectedSettings={setSelectedSettings}
+                title="Couleur de fond"
                 disabled={disabled}
-                valueChanged={handleShapeFontFamilyChange}
-                values={activeTool.settings.fontFamily.values}
-                defaultValue={activeTool.settings.fontFamily.default}
+                field="fillColor"
+                value={activeTool.settings.fillColor.default}
+                valueChanged={handleShapeStyleChange}
+                values={activeTool.settings.fillColor.values}
               />
             )}
 
@@ -260,7 +280,7 @@ const SettingsBar = ({
                 setSelectedSettings={setSelectedSettings}
                 title="Epaisseur du trait"
                 disabled={disabled}
-                field="style.lineWidth"
+                field="lineWidth"
                 value={activeTool.settings.lineWidth.default}
                 valueChanged={handleShapeStyleChange}
                 unity="px"
@@ -291,30 +311,51 @@ const SettingsBar = ({
                 values={activeTool.settings.lineArrow.values}
               />
             )}
-
-            {'strokeColor' in activeTool.settings && (
-              <ColorField
+            {'pointsCount' in activeTool.settings && (
+              <PointsNumberField
                 selectedSettings={selectedSettings}
                 setSelectedSettings={setSelectedSettings}
-                title="Couleur du trait"
                 disabled={disabled}
-                field="style.strokeColor"
-                value={activeTool.settings.strokeColor.default}
-                valueChanged={handleShapeStyleChange}
-                values={activeTool.settings.strokeColor.values}
+                valueChanged={handlePolygonLinesCount}
+                min={activeTool.settings.pointsCount.min}
+                max={activeTool.settings.pointsCount.max}
+                step={activeTool.settings.pointsCount.step}
+                value={activeTool.settings.pointsCount.default}
               />
             )}
 
-            {'fillColor' in activeTool.settings && (
-              <ColorField
+            {'fontFamily' in activeTool.settings && (
+              <FontFamilyField
                 selectedSettings={selectedSettings}
                 setSelectedSettings={setSelectedSettings}
-                title="Couleur de fond"
                 disabled={disabled}
-                field="style.fillColor"
-                value={activeTool.settings.fillColor.default}
-                valueChanged={handleShapeStyleChange}
-                values={activeTool.settings.fillColor.values}
+                valueChanged={handleShapeFontFamilyChange}
+                values={activeTool.settings.fontFamily.values}
+                defaultValue={activeTool.settings.fontFamily.default}
+              />
+            )}
+
+            {'fontBold' in activeTool.settings && (
+              <ToggleField
+                setSelectedSettings={setSelectedSettings}
+                disabled={disabled}
+                field="fontBold"
+                icon={boldIcon}
+                valueChanged={handleShapeFontFamilyChange}
+                values={activeTool.settings.fontBold.values}
+                value={activeTool.settings.fontBold.default}
+              />
+            )}
+
+            {'fontItalic' in activeTool.settings && (
+              <ToggleField
+                setSelectedSettings={setSelectedSettings}
+                disabled={disabled}
+                field="fontItalic"
+                icon={italicIcon}
+                valueChanged={handleShapeFontFamilyChange}
+                values={activeTool.settings.fontItalic.values}
+                value={activeTool.settings.fontItalic.default}
               />
             )}
 
@@ -328,12 +369,11 @@ const SettingsBar = ({
                 step={activeTool.settings.opacity.step}
                 unity="%"
                 disabled={disabled}
-                field="style.globalAlpha"
+                field="globalAlpha"
                 value={activeTool.settings.opacity.default}
                 valueChanged={handleShapeStyleChange}
               />
             )}
-
           </>
         )
       )}

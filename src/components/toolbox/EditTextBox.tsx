@@ -27,6 +27,14 @@ const StyledEditBox = styled.div<{
   font-size: ${({ fontsize }) => fontsize}px;
   line-height: ${({ fontsize }) => fontsize}px;
   font-family: ${({ fontfamily }) => fontfamily};
+
+  &[data-fontbold='true'] {
+    font-weight: bold;
+  }
+
+  &[data-fontitalic='true'] {
+    font-style: italic;
+  }
 `
 
 type EditTextBoxType = {
@@ -79,6 +87,8 @@ const EditTextBox = ({
       padding={selectionPadding * scaleRatio}
       color={shape.style?.strokeColor ?? 'inherit'}
       fontfamily={shape.style?.fontFamily ?? STYLE_FONT_DEFAULT}
+      data-fontbold={shape.style?.fontBold ?? false}
+      data-fontitalic={shape.style?.fontItalic ?? false}
       contentEditable={!disabled}
       onInput={updateContentEditable}></StyledEditBox>
   )

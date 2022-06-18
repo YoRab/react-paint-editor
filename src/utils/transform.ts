@@ -204,7 +204,15 @@ export const updatePolygonLinesCount = (
   const currentPointsCount = shape.points.length
   if (currentPointsCount === newPointsCount) return shape
   if (currentPointsCount > newPointsCount) {
-    return _.set('style.pointsCount', shape.points.slice(0, newPointsCount), shape)
+    const totalPoints = shape.points.slice(0, newPointsCount)
+    return {
+      ...shape,
+      points: totalPoints,
+      style: {
+        ...shape.style,
+        pointsCount: totalPoints.length
+      }
+    }
   } else {
     //TODO : better distribution for new points
     const nbPointsToAdd = newPointsCount - currentPointsCount
@@ -217,12 +225,20 @@ export const updatePolygonLinesCount = (
           ((shape.points[1][1] - shape.points[0][1]) * (index + 1)) / (nbPointsToAdd + 1)
       ])
     )(nbPointsToAdd) as Point[]
+    const totalPoints = [
+      shape.points[0],
+      ...newPoints,
+      ...shape.points.slice(1, shape.points.length)
+    ]
 
-    return _.set(
-      'style.pointsCount',
-      [shape.points[0], ...newPoints, ...shape.points.slice(1, shape.points.length)],
-      shape
-    )
+    return {
+      ...shape,
+      points: totalPoints,
+      style: {
+        ...shape.style,
+        pointsCount: totalPoints.length
+      }
+    }
   }
 }
 
@@ -466,7 +482,14 @@ export const resizeText = <T extends DrawableShape & Text>(
   )
   return {
     ...newRect,
-    fontSize: calculateTextFontSize(ctx, newRect.value, newRect.width, newRect.style?.fontFamily)
+    fontSize: calculateTextFontSize(
+      ctx,
+      newRect.value,
+      newRect.width,
+      newRect.style?.fontBold ?? false,
+      newRect.style?.fontItalic ?? false,
+      newRect.style?.fontFamily
+    )
   }
 }
 
@@ -689,9 +712,11 @@ export const calculateTextFontSize = (
   ctx: CanvasRenderingContext2D,
   text: string[],
   maxWidth: number,
+  fontBold: boolean,
+  fontItalic: boolean,
   fontFamily: string | undefined = STYLE_FONT_DEFAULT
 ) => {
-  ctx.font = `1px ${fontFamily}`
+  ctx.font = `${fontItalic ? 'italic' : ''} ${fontBold ? 'bold' : ''} 1px ${fontFamily}`
   return (
     _.flow(
       _.map((value: string) => maxWidth / ctx.measureText(value).width),
@@ -704,9 +729,11 @@ export const calculateTextWidth = (
   ctx: CanvasRenderingContext2D,
   text: string[],
   fontSize: number,
+  fontBold: boolean,
+  fontItalic: boolean,
   fontFamily: string | undefined = STYLE_FONT_DEFAULT
 ) => {
-  ctx.font = `${fontSize}px ${fontFamily}`
+  ctx.font = `${fontItalic ? 'italic' : ''} ${fontBold ? 'bold' : ''} ${fontSize}px ${fontFamily}`
   return (
     _.flow(
       _.map((value: string) => ctx.measureText(value).width),

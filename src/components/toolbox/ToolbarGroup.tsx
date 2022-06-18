@@ -1,5 +1,5 @@
 import _ from 'lodash/fp'
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useTransition } from 'react'
 import Button from 'components/common/Button'
 import Panel from 'components/common/Panel'
 import { styled } from '@linaria/react'
@@ -22,7 +22,7 @@ const StyledRelative = styled.div`
 `
 
 type ToolbarGroupType = {
-  activeTool:ToolsType
+  activeTool: ToolsType
   group:
     | CustomTool
     | {
@@ -34,7 +34,7 @@ type ToolbarGroupType = {
   title?: string
   disabled?: boolean
   img?: string
-  setActiveTool: (tool: ToolsType) => void
+  setActiveToolFromId: (id: string) => void
 }
 
 const ToolbarGroup = ({
@@ -42,14 +42,15 @@ const ToolbarGroup = ({
   alignment,
   group,
   disabled = false,
-  setActiveTool: setActiveToolFromProps
+  setActiveToolFromId
 }: ToolbarGroupType) => {
   const [isOpen, setIsOpen] = useState(false)
+  const [, startTransition] = useTransition()
   const [localActiveTool, setLocalActiveTool] = useState<ToolsType | undefined>(undefined)
 
   const setActiveTool = (tool: ToolsType) => {
     setLocalActiveTool(tool)
-    setActiveToolFromProps(tool)
+    setActiveToolFromId(tool.id)
   }
 
   useEffect(() => {
@@ -58,13 +59,10 @@ const ToolbarGroup = ({
     const closePanel = () => {
       setIsOpen(false)
     }
-    const timeoutId = setTimeout(() => {
-      //TODO find a better fix than settimeout for react18
-      document.addEventListener('click', closePanel)
-    }, 0)
+
+    document.addEventListener('click', closePanel)
 
     return () => {
-      clearTimeout(timeoutId)
       document.removeEventListener('click', closePanel)
     }
   }, [isOpen])
@@ -99,13 +97,14 @@ const ToolbarGroup = ({
   const groupIcon =
     (localActiveTool
       ? localActiveTool.icon
-      : group.toolsType && group.toolsType[0] && group.toolsType[0].icon) ??
-    group.title
+      : group.toolsType && group.toolsType[0] && group.toolsType[0].icon) ?? group.title
 
   const openPanel = () => {
-    if (localActiveTool) setActiveToolFromProps(localActiveTool)
+    if (localActiveTool) setActiveToolFromId(localActiveTool.id)
     else group.toolsType && group.toolsType[0] && setActiveTool(group.toolsType[0])
-    setIsOpen(true)
+    startTransition(() => {
+      setIsOpen(true)
+    })
   }
 
   return (

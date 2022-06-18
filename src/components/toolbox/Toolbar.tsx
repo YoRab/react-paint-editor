@@ -125,6 +125,11 @@ const Toolbar = ({
     setActiveToolFromProps(tool)
     setIsMenuOpen(false)
   }
+
+  const setActiveToolFromId = (toolId: string) => {
+    setActiveTool(availableTools.find(tool => tool.id===toolId) ?? activeTool)
+    
+  }
   //360 240
 
   useEffect(() => {
@@ -169,7 +174,7 @@ const Toolbar = ({
                 key={i}
                 activeTool={activeTool}
                 group={group}
-                setActiveTool={setActiveTool}
+                setActiveToolFromId={setActiveToolFromId}
               />
             ))
           )}

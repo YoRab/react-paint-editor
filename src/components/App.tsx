@@ -12,7 +12,7 @@ import {
   decodeJson,
   decodePicturesInShapes,
   downloadFile,
-  encodeShapesInString,
+  encodeShapesInString as encodeProjectDataInString,
   getCanvasImage
 } from 'utils/file'
 import { SelectionModeData, SelectionModeLib } from 'types/Mode'
@@ -32,6 +32,7 @@ import {
 } from 'constants/shapes'
 import { sanitizeTools } from 'utils/toolbar'
 import { DEFAULT_SHAPE_TOOLS, SELECTION_TOOL } from 'constants/tools'
+import _ from 'lodash/fp'
 
 const StyledApp = styled.div<{
   canvasWidth: number
@@ -236,7 +237,13 @@ const App = ({
     scaleRatio: 1
   })
 
-  const availableTools = sanitizeTools(availableToolsFromProps, withUploadPicture || withUrlPicture)
+  const [availableTools, setAvailableTools] = useState(
+    sanitizeTools(availableToolsFromProps, withUploadPicture || withUrlPicture)
+  )
+
+  useEffect(() => {
+    setAvailableTools(sanitizeTools(availableToolsFromProps, withUploadPicture || withUrlPicture))
+  }, [availableToolsFromProps, withUploadPicture, withUrlPicture])
 
   const { isInsideComponent } = useComponent({
     disabled,
@@ -286,6 +293,22 @@ const App = ({
       setActiveTool(tool)
     },
     [setSelectedShape]
+  )
+
+  const updateToolSettings = useCallback(
+    (toolId: string, field: string, value: string | number | boolean) => {
+      setAvailableTools(availableTools =>
+        availableTools.map(tool =>
+          tool.id === toolId ? _.set(['settings', field, 'default'], value, tool) : tool
+        )
+      )
+      setActiveTool(activeTool =>
+        activeTool.id === toolId
+          ? _.set(['settings', field, 'default'], value, activeTool)
+          : activeTool
+      )
+    },
+    []
   )
 
   const undoAction = useCallback(() => {
@@ -353,7 +376,7 @@ const App = ({
   const saveFile = useCallback(() => {
     setIsLoading(true)
     try {
-      const content = encodeShapesInString(shapesRef.current)
+      const content = encodeProjectDataInString(shapesRef.current)
       if (!content) {
         throw new Error("L'encodage a échoué")
       }
@@ -571,6 +594,7 @@ const App = ({
             toggleLayoutPanel={() => {
               setIsLayoutPanelShown(prev => !prev)
             }}
+            updateToolSettings={updateToolSettings}
           />
           <Loading isLoading={isLoading} />
           <SnackbarContainer snackbarList={snackbarList} />

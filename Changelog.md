@@ -1,3 +1,12 @@
+# V0.5.1
+
+- add possibility to update default settings for a tool
+- fix png export not working with url pic
+- fix pictures missing id
+- fix text tool
+- double click for editing text is now working on mobile
+- add bold and italic for text
+
 # V0.5.0
 
 - Add tool presets feature

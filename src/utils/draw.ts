@@ -240,8 +240,10 @@ export const drawText = (ctx: CanvasRenderingContext2D, text: Text): void => {
   if (ctx.globalAlpha === 0 || !text.style?.strokeColor || text.style.strokeColor === 'transparent')
     return
 
-  ctx.font = `${text.fontSize}px ${text.style?.fontFamily ?? STYLE_FONT_DEFAULT}`
-  ctx.textBaseline = 'hanging'
+  ctx.font = `${text.style?.fontItalic ? 'italic' : ''} ${text.style?.fontBold ? 'bold' : ''} ${
+    text.fontSize
+  }px ${text.style?.fontFamily ?? STYLE_FONT_DEFAULT}`
+  ctx.textBaseline = 'top'
   ctx.fillStyle = text.style.strokeColor
   for (let i = 0; i < text.value.length; i++) {
     ctx.fillText(text.value[i], text.x, text.y + i * text.fontSize, text.width)

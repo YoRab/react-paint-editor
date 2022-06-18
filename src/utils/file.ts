@@ -101,10 +101,10 @@ export const decodePicturesInShapes = async (shapesForJson: DrawableShapeJson[])
           img.src = shape.src
         }
 
-        return {
+        return addDefaultAndTempShapeProps({
           ...shape,
           img
-        }
+        })
       }
       return addDefaultAndTempShapeProps(shape)
     }),

@@ -1,13 +1,14 @@
 import React, { useEffect, useState } from 'react'
 import _ from 'lodash/fp'
 import { selectShape } from 'utils/selection'
-import { DrawableBrush, DrawableShape, DrawableText, Point, ShapeEnum } from 'types/Shapes'
+import { DrawableBrush, DrawableShape, Point, ShapeEnum } from 'types/Shapes'
 import { checkPositionIntersection, getCursorPosition } from 'utils/intersect'
 import { HoverModeData, SelectionModeData, SelectionModeLib } from 'types/Mode'
 import { createNewPointGroupToShape, transformShape } from 'utils/transform'
 import { createShape } from 'utils/data'
 import { ActionsEnum, CustomTool, ToolsType } from 'types/tools'
 import { SELECTION_TOOL } from 'constants/tools'
+import useDoubleClick from 'hooks/useDoubleClick'
 
 const handleMove = (
   e: MouseEvent | TouchEvent,
@@ -117,6 +118,7 @@ const useDrawableCanvas = ({
 }: UseCanvasType) => {
   const { width, height, scaleRatio } = canvasSize
   const [hoverMode, setHoverMode] = useState<HoverModeData>({ mode: SelectionModeLib.default })
+  const { registerDoubleClickEvent, unRegisterDoubleClickEvent } = useDoubleClick()
 
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent | TouchEvent) =>
@@ -169,28 +171,8 @@ const useDrawableCanvas = ({
   ])
 
   useEffect(() => {
-    const handleMouseUp = (e: MouseEvent | TouchEvent) => {
+    const handleMouseUp = () => {
       if (selectionMode.mode === SelectionModeLib.textedition) return
-      if (activeTool.type === ShapeEnum.text) {
-        const cursorPosition = getCursorPosition(
-          e,
-          selectionCanvasRef.current,
-          width,
-          height,
-          scaleRatio
-        )
-        const drawCtx = drawCanvasRef.current?.getContext('2d')
-        if (!drawCtx) return
-        const newShape = createShape(drawCtx, activeTool, cursorPosition) as DrawableText
-        addShape(newShape)
-        setActiveTool(SELECTION_TOOL)
-        setSelectedShape(newShape)
-        setSelectionMode({
-          mode: SelectionModeLib.textedition,
-          defaultValue: newShape.value
-        })
-        return
-      }
       if (selectionMode.mode !== SelectionModeLib.default) {
         setSelectionMode({ mode: SelectionModeLib.default })
         saveShapes()
@@ -208,21 +190,7 @@ const useDrawableCanvas = ({
         document.removeEventListener('touchend', handleMouseUp)
       }
     }
-  }, [
-    isInsideComponent,
-    selectionCanvasRef,
-    drawCanvasRef,
-    selectionMode,
-    saveShapes,
-    activeTool,
-    addShape,
-    width,
-    height,
-    scaleRatio,
-    setActiveTool,
-    setSelectedShape,
-    setSelectionMode
-  ])
+  }, [isInsideComponent, selectionMode, saveShapes, setSelectionMode])
 
   useEffect(() => {
     const ref = selectionCanvasRef.current
@@ -275,7 +243,7 @@ const useDrawableCanvas = ({
           setSelectionMode({
             mode: SelectionModeLib.brush
           })
-        } else if (activeTool.type !== ShapeEnum.text) {
+        } else {
           const newShape = createShape(drawCtx, activeTool as CustomTool, cursorPosition)
           if (!newShape) return
           addShape(newShape)
@@ -350,15 +318,14 @@ const useDrawableCanvas = ({
       }
     }
     if (isInsideComponent) {
-      ref.addEventListener('dblclick', handleDoubleClick)
-    }
-
-    return () => {
-      if (isInsideComponent) {
-        ref.removeEventListener('dblclick', handleDoubleClick)
+      registerDoubleClickEvent(ref, handleDoubleClick)
+      return () => {
+        unRegisterDoubleClickEvent(ref)
       }
     }
   }, [
+    registerDoubleClickEvent,
+    unRegisterDoubleClickEvent,
     isInsideComponent,
     selectionCanvasRef,
     activeTool,

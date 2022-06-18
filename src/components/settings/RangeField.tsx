@@ -52,8 +52,7 @@ const RangeField = ({
 
   const isPanelVisible = selectedSettings === customKey
 
-  if(min===max) return null
-
+  if (min === max) return null
 
   return (
     <>
