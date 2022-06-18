@@ -88,7 +88,6 @@ const SettingsBar = ({
 
   const handlePolygonLinesCount = (field: string, value: string | number) => {
     if (selectedShape) {
-      console.log(value)
       updateShape(updatePolygonLinesCount(selectedShape as DrawablePolygon, value as number), true)
       updateToolSettings(selectedShape.toolId, field, value)
     } else {
@@ -100,7 +99,6 @@ const SettingsBar = ({
     ? _.find({ id: selectedShape.toolId }, availableTools) ||
       _.find({ type: selectedShape.type }, availableTools)
     : undefined
-  console.log(selectedShape?.style?.pointsCount)
   return (
     <StyledSettingsBar>
       {selectedShape ? (
