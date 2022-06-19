@@ -1,3 +1,7 @@
+# V0.6.1
+
+- Fix shapes prop not refreshing component (introduced by 0.6.0)
+
 # V0.6.0
 
 - Fix text opacity range dancing in edit mode

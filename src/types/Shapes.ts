@@ -129,7 +129,7 @@ export type DrawableShapeJson =
 
 export type ExportDataType = {
   shapes: DrawableShapeJson[]
-  config: {
+  config?: {
     width: number
     height: number
   }

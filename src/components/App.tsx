@@ -392,9 +392,9 @@ const App = ({
     }
   }, [shapesRef, addSnackbar, canvasWidth, canvasHeight])
 
-  const loadJson = useCallback(
-    async (json: unknown) => {
-      const shapes = await decodeImportedData(json as ExportDataType)
+  const loadImportedData = useCallback(
+    async (json: ExportDataType) => {
+      const shapes = await decodeImportedData(json)
       clearCanvas(shapes, true)
     },
     [clearCanvas]
@@ -405,7 +405,7 @@ const App = ({
       setIsLoading(true)
       try {
         const json = await decodeJson(file)
-        await loadJson(json)
+        await loadImportedData(json as ExportDataType)
         addSnackbar({ type: SnackbarTypeEnum.Success, text: 'Fichier chargé !' })
       } catch (e) {
         if (e instanceof Error) {
@@ -416,7 +416,7 @@ const App = ({
         setIsLoading(false)
       }
     },
-    [loadJson, addSnackbar]
+    [loadImportedData, addSnackbar]
   )
 
   const addPicture = useCallback(
@@ -465,9 +465,9 @@ const App = ({
 
   useEffect(() => {
     if (shapesFromProps !== undefined) {
-      void loadJson(shapesFromProps)
+      void loadImportedData({ shapes: shapesFromProps } as ExportDataType)
     }
-  }, [loadJson, shapesFromProps])
+  }, [loadImportedData, shapesFromProps])
 
   useEffect(() => {
     if (!apiRef) return
