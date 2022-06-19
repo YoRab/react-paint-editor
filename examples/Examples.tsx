@@ -1,5 +1,5 @@
-import React, { useCallback, useRef, useState } from 'react'
-import { DrawableShapeJson } from 'types/Shapes'
+import React, { useRef, useState } from 'react'
+import { DrawableShapeJson, ExportDataType } from 'types/Shapes'
 import App from '../src/components/App'
 import { EXAMPLE_DEFAULT } from './fixture'
 
@@ -41,7 +41,7 @@ type CurrentAppType = {
 const ManualSaveApp = () => {
   const ref = useRef<{
     getCurrentImage: () => string | undefined
-    getCurrentData: () => DrawableShapeJson[]
+    getCurrentData: () => ExportDataType
   }>()
   const [shapes, setShapes] = useState<DrawableShapeJson[] | undefined>(undefined)
   const [image, setImage] = useState<string | undefined>(undefined)
@@ -49,8 +49,8 @@ const ManualSaveApp = () => {
   const saveDatas = () => {
     const currentData = ref.current?.getCurrentData()
     const currentImage = ref.current?.getCurrentImage()
-    setShapes(currentData)
-    setImage(currentImage)
+    currentData && setShapes(currentData.shapes)
+    currentImage && setImage(currentImage)
   }
 
   return (
@@ -66,17 +66,17 @@ const ManualSaveApp = () => {
 const AutoSaveApp = () => {
   const ref = useRef<{
     getCurrentImage: () => string | undefined
-    getCurrentData: () => DrawableShapeJson[]
+    getCurrentData: () => ExportDataType
   }>()
   const [shapes, setShapes] = useState<DrawableShapeJson[] | undefined>(undefined)
   const [image, setImage] = useState<string | undefined>(undefined)
 
-  const refreshDatas = useCallback(() => {
+  const refreshDatas = () => {
     const currentData = ref.current?.getCurrentData()
     const currentImage = ref.current?.getCurrentImage()
-    setShapes(currentData)
-    setImage(currentImage)
-  }, [])
+    currentData && setShapes(currentData.shapes)
+    currentImage && setImage(currentImage)
+  }
 
   return (
     <>

@@ -39,7 +39,10 @@ const handleMove = (
 
   const cursorPosition = getCursorPosition(e, canvasRef.current, width, height, scaleRatio)
 
-  if (selectionMode.mode === SelectionModeLib.default) {
+  if (
+    selectionMode.mode === SelectionModeLib.default ||
+    selectionMode.mode === SelectionModeLib.textedition
+  ) {
     const positionIntersection = checkPositionIntersection(
       selectedShape,
       cursorPosition,

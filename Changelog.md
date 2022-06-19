@@ -1,3 +1,11 @@
+# V0.6.0
+
+- Fix text opacity range dancing in edit mode
+- Fix opacity not visually shown in edit mode
+- add delete button in layouts panel and update style
+- update shape selection priority : use layers order, unless an anchor is
+- stored data format updated
+
 # V0.5.1
 
 - add possibility to update default settings for a tool

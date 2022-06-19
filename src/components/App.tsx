@@ -1,5 +1,5 @@
 import React, { MutableRefObject, useCallback, useEffect, useRef, useState } from 'react'
-import { DrawableShape, DrawableShapeJson, Point } from 'types/Shapes'
+import { DrawableShape, DrawableShapeJson, ExportDataType, Point } from 'types/Shapes'
 import { CustomToolInput, ToolsType } from 'types/tools'
 import Canvas from './Canvas'
 import Layouts from './settings/Layouts'
@@ -10,7 +10,7 @@ import { STYLE_ZINDEX_APP } from 'constants/style'
 import useKeyboard from 'hooks/useKeyboard'
 import {
   decodeJson,
-  decodePicturesInShapes,
+  decodeImportedData,
   downloadFile,
   encodeShapesInString as encodeProjectDataInString,
   getCanvasImage
@@ -22,7 +22,7 @@ import SnackbarContainer from './common/Snackbar'
 import useSnackbar from 'hooks/useSnackbar'
 import { SnackbarTypeEnum } from 'constants/snackbar'
 import Loading from 'components/common/Loading'
-import { cleanShapesBeforeExport } from 'utils/data'
+import { buildDataToExport } from 'utils/data'
 import useResizeObserver from 'hooks/useResizeObserver'
 import { RecursivePartial } from 'types/utils'
 import {
@@ -175,7 +175,7 @@ type AppType = {
     | undefined
     | {
         getCurrentImage: () => string | undefined
-        getCurrentData: () => DrawableShapeJson[]
+        getCurrentData: () => ExportDataType
       }
   >
   options?: OptionalAppOptionsType
@@ -376,7 +376,7 @@ const App = ({
   const saveFile = useCallback(() => {
     setIsLoading(true)
     try {
-      const content = encodeProjectDataInString(shapesRef.current)
+      const content = encodeProjectDataInString(shapesRef.current, canvasWidth, canvasHeight)
       if (!content) {
         throw new Error("L'encodage a échoué")
       }
@@ -390,11 +390,11 @@ const App = ({
     } finally {
       setIsLoading(false)
     }
-  }, [shapesRef, addSnackbar])
+  }, [shapesRef, addSnackbar, canvasWidth, canvasHeight])
 
   const loadJson = useCallback(
     async (json: unknown) => {
-      const shapes = await decodePicturesInShapes(json as DrawableShapeJson[])
+      const shapes = await decodeImportedData(json as ExportDataType)
       clearCanvas(shapes, true)
     },
     [clearCanvas]
@@ -438,7 +438,7 @@ const App = ({
   )
 
   const onResized = useCallback(
-    (measuredWidth: number, measuredHeight: number) => {
+    (measuredWidth: number) => {
       const scaleRatio = measuredWidth / canvasWidth
       setCanvasSize({ width: measuredWidth, height: canvasHeight * scaleRatio, scaleRatio })
     },
@@ -485,7 +485,7 @@ const App = ({
       },
 
       getCurrentData: () => {
-        return cleanShapesBeforeExport(shapesRef.current) as DrawableShapeJson[] //TODO : create different types for stored shapes
+        return buildDataToExport(shapesRef.current, canvasWidth, canvasHeight)
       }
     }
   }, [apiRef, shapesRef, canvasOffset, canvasWidth, canvasHeight, canvasSelectionPadding])
