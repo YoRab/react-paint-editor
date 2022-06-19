@@ -1,3 +1,8 @@
+# V0.5.2
+
+- Fix text opacity range dancing in edit mode
+- Fix opacity not visually shown in edit mode
+
 # V0.5.1
 
 - add possibility to update default settings for a tool

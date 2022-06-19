@@ -13,6 +13,7 @@ const StyledEditBox = styled.div<{
   fontfamily: string
   color: string
   padding: number
+  opacity: number
 }>`
   position: absolute;
   display: inline-block;
@@ -27,6 +28,7 @@ const StyledEditBox = styled.div<{
   font-size: ${({ fontsize }) => fontsize}px;
   line-height: ${({ fontsize }) => fontsize}px;
   font-family: ${({ fontfamily }) => fontfamily};
+  opacity: ${({ opacity }) => opacity};
 
   &[data-fontbold='true'] {
     font-weight: bold;
@@ -86,6 +88,7 @@ const EditTextBox = ({
       fontsize={shape.fontSize * scaleRatio}
       padding={selectionPadding * scaleRatio}
       color={shape.style?.strokeColor ?? 'inherit'}
+      opacity={(shape.style?.globalAlpha ?? 100) / 100}
       fontfamily={shape.style?.fontFamily ?? STYLE_FONT_DEFAULT}
       data-fontbold={shape.style?.fontBold ?? false}
       data-fontitalic={shape.style?.fontItalic ?? false}
