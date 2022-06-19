@@ -24,6 +24,14 @@ const StyledLayouts = styled.div`
   min-width: 200px;
 `
 
+const StyledRemoveButton = styled(Button)`
+  margin: 2px 0;
+
+  &:not(:hover) {
+    opacity: 0.2;
+  }
+`
+
 const StyledLayout = styled.div`
   border: 3px solid transparent;
   padding: 4px 0px;
@@ -45,6 +53,10 @@ const StyledLayout = styled.div`
   &[data-selected='1'] {
     color: var(--font-selected-color);
     background: var(--font-selected-bg);
+
+    ${StyledRemoveButton} {
+      color: white;
+    }
   }
 
   &[data-selected='0'][data-disabled='0'] {
@@ -68,23 +80,28 @@ const StyledLayout = styled.div`
 
   > span {
     height: 20px;
-
+    line-height: 1;
+    color: #8a8a8a;
     > svg {
       fill: #8a8a8a;
       width: 20px;
       height: 20px;
-      padding: 0 16px;
+      padding: 0 4px;
+      transform: scale(0.75);
     }
   }
 `
 
 const StyledVisibleButton = styled(Button)`
+  margin: 2px 0;
   &[data-visible='false'] {
     opacity: 0.2;
   }
 `
 
 const StyledLockedButton = styled(Button)`
+  margin: 2px 0;
+
   &[data-locked='false'] {
     opacity: 0.2;
   }
@@ -218,7 +235,7 @@ const Layout = ({
         onClick={onToggleShapeLock}
         icon={shape.locked ? lockedIcon : unlockedIcon}
       />
-      {/* <Button title="Remove" disabled={disabled} onClick={onRemove} icon={trashIcon} /> */}
+      <StyledRemoveButton title="Remove" disabled={disabled} onClick={onRemove} icon={trashIcon} />
     </StyledLayout>
   )
 }

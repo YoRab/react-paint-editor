@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useImperativeHandle, useRef } from 'react'
 import { styled } from '@linaria/react'
 import _ from 'lodash/fp'
-import { DrawableShape, Point, ShapeEnum, StyledShape } from 'types/Shapes'
+import { DrawableShape, Point, ShapeEnum } from 'types/Shapes'
 import { drawSelection, drawShape } from 'utils/draw'
 import { SelectionModeData, SelectionModeLib } from 'types/Mode'
 import { calculateTextWidth } from 'utils/transform'
