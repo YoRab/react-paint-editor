@@ -3,6 +3,7 @@
 - Fix text opacity range dancing in edit mode
 - Fix opacity not visually shown in edit mode
 - add delete button in layouts panel and update style
+- update shape selection priority : use layers order, unless an anchor is targeted
 
 # V0.5.1
 

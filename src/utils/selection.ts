@@ -63,7 +63,10 @@ export const selectShape = (
       cursorPosition,
       selectionPadding
     )
-    if (newSelectionMode) {
+    if (
+      newSelectionMode?.mode === SelectionModeLib.resize ||
+      newSelectionMode?.mode === SelectionModeLib.rotate
+    ) {
       return { shape: selectedShape, mode: newSelectionMode }
     }
   }
