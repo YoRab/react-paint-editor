@@ -2,6 +2,7 @@
 
 - Fix text opacity range dancing in edit mode
 - Fix opacity not visually shown in edit mode
+- add delete button in layouts panel and update style
 
 # V0.5.1
 

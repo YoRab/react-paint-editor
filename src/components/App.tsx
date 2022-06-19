@@ -438,7 +438,7 @@ const App = ({
   )
 
   const onResized = useCallback(
-    (measuredWidth: number, measuredHeight: number) => {
+    (measuredWidth: number) => {
       const scaleRatio = measuredWidth / canvasWidth
       setCanvasSize({ width: measuredWidth, height: canvasHeight * scaleRatio, scaleRatio })
     },
