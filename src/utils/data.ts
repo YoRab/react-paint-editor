@@ -1,6 +1,13 @@
 import _ from 'lodash/fp'
 import { calculateTextFontSize, fitContentInsideContainer } from './transform'
-import { DrawablePicture, Point, DrawableShape, ShapeEnum } from 'types/Shapes'
+import {
+  DrawablePicture,
+  Point,
+  DrawableShape,
+  ShapeEnum,
+  DrawableShapeJson,
+  ExportDataType
+} from 'types/Shapes'
 import { fetchAndStringify, getBase64Image } from './file'
 import { CustomTool } from 'types/tools'
 import { DEFAULT_SHAPE_PICTURE } from 'constants/tools'
@@ -257,7 +264,17 @@ export const cleanShapesBeforeExport = (shapes: DrawableShape[]) => {
       }
     }
     return roundValues(_.omit(propsToOmit, shape))
-  })
+  }) as DrawableShapeJson[]
+}
+
+export const buildDataToExport = (shapes: DrawableShape[], width: number, height: number) => {
+  return {
+    shapes: cleanShapesBeforeExport(shapes),
+    config: {
+      width,
+      height
+    }
+  } as ExportDataType
 }
 
 export const addDefaultAndTempShapeProps = (shape: DrawableShape) => {
