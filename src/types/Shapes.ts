@@ -126,3 +126,11 @@ export type DrawableShapeJson =
   | DrawableBrush
   | DrawableCircle
   | DrawableEllipse
+
+export type ExportDataType = {
+  shapes: DrawableShapeJson[]
+  config: {
+    width: number
+    height: number
+  }
+}

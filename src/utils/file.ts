@@ -1,6 +1,6 @@
 import _ from 'lodash/fp'
-import { DrawableShape, DrawableShapeJson, Point, ShapeEnum } from 'types/Shapes'
-import { addDefaultAndTempShapeProps, cleanShapesBeforeExport } from './data'
+import { DrawableShape, DrawableShapeJson, ExportDataType, Point, ShapeEnum } from 'types/Shapes'
+import { addDefaultAndTempShapeProps, buildDataToExport } from './data'
 import { drawShape } from './draw'
 
 export const fetchAndStringify = (url: string) => {
@@ -52,9 +52,9 @@ export const getCanvasImage = (
   return newCanvas.toDataURL('image/png')
 }
 
-export const encodeShapesInString = (shapes: DrawableShape[]) => {
-  const cleanShapes = cleanShapesBeforeExport(shapes)
-  return encodeObjectToString(cleanShapes)
+export const encodeShapesInString = (shapes: DrawableShape[], width: number, height: number) => {
+  const dataToExport = buildDataToExport(shapes, width, height)
+  return encodeObjectToString(dataToExport)
 }
 
 export const decodeJson = async (file: File) => {
@@ -70,9 +70,9 @@ export const decodeJson = async (file: File) => {
   })
 }
 
-export const decodePicturesInShapes = async (shapesForJson: DrawableShapeJson[]) => {
+export const decodeImportedData = async (shapesForJson: ExportDataType) => {
   const promisesArray: Promise<void>[] = []
-
+  const jsonShapes = shapesForJson.shapes
   const shapes: DrawableShape[] = _.flow(
     _.map((shape: DrawableShapeJson) => {
       if (!_.includes(shape.type, ShapeEnum)) return null
@@ -109,7 +109,7 @@ export const decodePicturesInShapes = async (shapesForJson: DrawableShapeJson[])
       return addDefaultAndTempShapeProps(shape)
     }),
     _.compact
-  )(shapesForJson)
+  )(jsonShapes)
 
   await Promise.all(promisesArray)
   return shapes

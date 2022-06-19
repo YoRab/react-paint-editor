@@ -1,8 +1,8 @@
-import {  menuIcon,shapesIcon } from 'constants/icons'
+import { menuIcon, shapesIcon } from 'constants/icons'
 import React, { useEffect, useState } from 'react'
 import { styled } from '@linaria/react'
 import { ShapeEnum } from 'types/Shapes'
-import {   ToolsType } from 'types/tools'
+import { ToolsType } from 'types/tools'
 import Button from 'components/common/Button'
 import { getCurrentStructure } from 'utils/toolbar'
 import ToolbarGroup from './ToolbarGroup'
@@ -98,11 +98,10 @@ const Toolbar = ({
   withUrlPicture,
   withUploadPicture
 }: ToolboxType) => {
-
   const currentStructure = getCurrentStructure(availableTools, TOOLBAR_STRUCTURE)
 
-  const fullToolbarSize = ((5  + currentStructure.length) * TOOL_WIDTH)
-  const withMenuToolbarSize = ((2  + currentStructure.length) * TOOL_WIDTH)
+  const fullToolbarSize = (5 + currentStructure.length) * TOOL_WIDTH
+  const withMenuToolbarSize = (2 + currentStructure.length) * TOOL_WIDTH
 
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [isPictureUrlModalOpen, setIsPictureUrlModalOpen] = useState(false)
@@ -127,8 +126,7 @@ const Toolbar = ({
   }
 
   const setActiveToolFromId = (toolId: string) => {
-    setActiveTool(availableTools.find(tool => tool.id===toolId) ?? activeTool)
-    
+    setActiveTool(availableTools.find(tool => tool.id === toolId) ?? activeTool)
   }
   //360 240
 
@@ -136,8 +134,6 @@ const Toolbar = ({
     setActionsInMenu(width < fullToolbarSize)
     setToolsInMenu(width < withMenuToolbarSize)
   }, [width, fullToolbarSize, withMenuToolbarSize])
-
-
 
   const isAnyToolSelected = _.find({ type: activeTool }, availableTools) !== undefined
 
@@ -152,13 +148,13 @@ const Toolbar = ({
         setActive={setActiveTool}
       /> */}
         <StyledShrinkableTools>
-        <Tool
-          type={SELECTION_TOOL}
-          disabled={disabled}
-          img={SELECTION_TOOL.icon}
-          isActive={activeTool.id === SELECTION_TOOL.id}
-          setActive={setActiveTool}
-        />
+          <Tool
+            type={SELECTION_TOOL}
+            disabled={disabled}
+            img={SELECTION_TOOL.icon}
+            isActive={activeTool.id === SELECTION_TOOL.id}
+            setActive={setActiveTool}
+          />
           {toolsInMenu ? (
             <Button
               disabled={disabled}
@@ -179,8 +175,7 @@ const Toolbar = ({
             ))
           )}
         </StyledShrinkableTools>
-       
-       
+
         {!actionsInMenu && (
           <>
             <Tool
@@ -206,7 +201,7 @@ const Toolbar = ({
             />
           </>
         )}
-         <MenuGroup
+        <MenuGroup
           withActionsInMenu={actionsInMenu}
           disabled={disabled}
           vertical={true}
