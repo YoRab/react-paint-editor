@@ -1,3 +1,8 @@
+# V0.6.2
+
+- Lock : can't select shape by click on it (only via layers panel)
+- Clear : reset state to shapes prop by default if not undefined
+
 # V0.6.1
 
 - Fix shapes prop not refreshing component (introduced by 0.6.0)
