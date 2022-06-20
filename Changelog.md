@@ -2,6 +2,8 @@
 
 - Lock : can't select shape by click on it (only via layers panel)
 - Clear : reset state to shapes prop by default if not undefined
+- update icons
+- Add responsive to settings UI
 
 # V0.6.1
 
