@@ -12,13 +12,20 @@ const StyledModal = styled.div`
   right: 0;
   bottom: 0;
   top: 0;
+  &[data-position='center'] {
+    align-items: center;
+  }
+
+  &[data-position='bottom'] {
+    align-items: end;
+  }
 `
 
 const StyledPanel = styled.div`
   display: grid;
   background: var(--toolbar-bg);
   box-shadow: 0 3px 8px rgb(0 0 0 / 24%);
-  padding: 12px;
+  padding: 4px;
   border-radius: 8px;
   white-space: nowrap;
   position: relative;
@@ -36,12 +43,13 @@ const StyledMask = styled.div`
 type ModalType = {
   children: ReactNode
   onClose: () => void
+  position?: 'center' | 'bottom'
   className?: string
 }
 
-const Modal = ({ children, onClose, className }: ModalType) => {
+const Modal = ({ children, onClose, position = 'center', className }: ModalType) => {
   return (
-    <StyledModal>
+    <StyledModal data-position={position}>
       <StyledMask onClick={onClose} />
       <StyledPanel className={className}>{children}</StyledPanel>
     </StyledModal>

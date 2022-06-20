@@ -1,6 +1,6 @@
+import { polygonIcon } from 'constants/icons'
 import React from 'react'
 import RangeField from './RangeField'
-
 
 type PointsNumberFieldType = {
   selectedSettings: string | undefined
@@ -23,14 +23,13 @@ const PointsNumberField = ({
   value,
   valueChanged
 }: PointsNumberFieldType) => {
+  if (min === max) return null
 
-  if(min===max) return null
-
-  
   return (
     <RangeField
       selectedSettings={selectedSettings}
       setSelectedSettings={setSelectedSettings}
+      icon={polygonIcon}
       title="Nombre de points"
       disabled={disabled}
       field="pointsCount"
@@ -39,7 +38,8 @@ const PointsNumberField = ({
       step={step}
       unity=""
       value={value}
-      valueChanged={valueChanged} />
+      valueChanged={valueChanged}
+    />
   )
 }
 

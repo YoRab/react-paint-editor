@@ -7,6 +7,8 @@ import Panel from 'components/common/Panel'
 const StyledLabel = styled.label`
   display: inline-flex;
   align-items: center;
+  max-width: 100%;
+  flex-wrap: wrap;
 `
 
 type ShapeStyleColorType = {
@@ -15,6 +17,7 @@ type ShapeStyleColorType = {
   title?: string
   disabled?: boolean
   field: string
+  icon: string
   min?: number
   max?: number
   step?: number
@@ -27,6 +30,7 @@ const RangeField = ({
   selectedSettings,
   setSelectedSettings,
   title = "Choisissez l'intervalle",
+  icon,
   disabled = false,
   field,
   value = 1,
@@ -56,14 +60,15 @@ const RangeField = ({
 
   return (
     <>
-      <Button selected={isPanelVisible} title={title} disabled={disabled} onClick={togglePanel}>
-        <span>
-          {roundValue}
-          {unity}
-        </span>
-      </Button>
+      <Button
+        selected={isPanelVisible}
+        title={title}
+        disabled={disabled}
+        icon={icon}
+        onClick={togglePanel}
+      />
       {isPanelVisible && (
-        <Panel title={title} alignment="left">
+        <Panel title={title} alignment="left" fitContainer={true}>
           <div>
             <StyledLabel>
               <input

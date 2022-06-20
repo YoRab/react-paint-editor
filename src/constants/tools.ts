@@ -19,16 +19,14 @@ import {
   brushIcon,
   circleIcon,
   clearIcon,
+  cursorIcon,
   curveIcon,
-  ellipseIcon,
   exportFileIcon,
   openFileIcon,
   pictureIcon,
   polygonIcon,
-  recIcon,
   redoIcon,
   saveIcon,
-  selectIcon,
   squareIcon,
   textIcon,
   undoIcon
@@ -396,7 +394,7 @@ export const DEFAULT_SHAPE_TOOLS: CustomTool[] = [
 export const SELECTION_TOOL: ActionsTool = {
   id: `${PREFIX_ID}selection`,
   type: ActionsEnum.selection,
-  icon: selectIcon,
+  icon: cursorIcon,
   lib: 'Sélection'
 }
 
@@ -445,7 +443,7 @@ export const SAVE_TOOL: ActionsTool = {
 export const MOVE_TOOL: ActionsTool = {
   id: `${PREFIX_ID}move`,
   type: ActionsEnum.move,
-  icon: selectIcon,
+  icon: cursorIcon,
   lib: 'Move'
 }
 

@@ -2,6 +2,7 @@ import React from 'react'
 import SelectField from './SelectField'
 import { styled } from '@linaria/react'
 import _ from 'lodash/fp'
+import { lineEndIcon } from 'constants/icons'
 
 const StyledLeftTriangle = styled.span`
   position: absolute;
@@ -80,9 +81,7 @@ const LineArrowField = ({
   defaultValue,
   valueChanged
 }: LineArrowType) => {
-
-  if(_.isEmpty(values)) return null
-
+  if (_.isEmpty(values)) return null
 
   return (
     <SelectField
@@ -90,6 +89,7 @@ const LineArrowField = ({
       setSelectedSettings={setSelectedSettings}
       CustomOption={LineArrowOption}
       title="Flèches"
+      icon={lineEndIcon}
       disabled={disabled}
       field="lineArrow"
       values={values}
