@@ -591,6 +591,7 @@ const App = ({
       {isEditMode && (
         <>
           <SettingsBar
+            width={canvasSize.width}
             disabled={disabled}
             activeTool={activeTool}
             availableTools={availableTools}

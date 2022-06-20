@@ -2,6 +2,7 @@ import React from 'react'
 import SelectField from './SelectField'
 import { styled } from '@linaria/react'
 import _ from 'lodash/fp'
+import { fontIcon } from 'constants/icons'
 
 const StyledOption = styled.span<{
   family: string
@@ -32,8 +33,7 @@ const FontFamilyField = ({
   defaultValue,
   valueChanged
 }: FontFamilyFieldType) => {
-
-  if(_.isEmpty(values)) return null
+  if (_.isEmpty(values)) return null
 
   return (
     <SelectField
@@ -41,6 +41,7 @@ const FontFamilyField = ({
       setSelectedSettings={setSelectedSettings}
       CustomOption={FontFamilyOption}
       title="Font"
+      icon={fontIcon}
       disabled={disabled}
       field="fontFamily"
       values={values}

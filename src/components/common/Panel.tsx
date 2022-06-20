@@ -12,6 +12,7 @@ const StyledPanel = styled.div`
   padding: 8px;
   border-radius: 8px;
   white-space: nowrap;
+  box-sizing: border-box;
 
   &[data-alignment='left'] {
     left: 0;
@@ -28,6 +29,10 @@ const StyledPanel = styled.div`
     right: 0;
     margin: 4px;
   }
+
+  &[data-fitcontainer='true'] {
+    max-width: 100%;
+  }
 `
 const StyledTitle = styled.h3`
   margin-bottom: 8px;
@@ -40,6 +45,7 @@ type PanelType = {
   children: React.ReactNode
   title?: string
   className?: string
+  fitContainer?: boolean
   alignment?: 'left' | 'right' | 'center'
 }
 
@@ -48,6 +54,7 @@ const Panel = ({
   vertical = false,
   title = '',
   className,
+  fitContainer = false,
   alignment = 'center'
 }: PanelType) => {
   const componentRef = useRef<HTMLDivElement>(null)
@@ -55,6 +62,7 @@ const Panel = ({
     <StyledPanel
       ref={componentRef}
       className={className}
+      data-fitcontainer={fitContainer}
       data-vertical={+vertical}
       data-alignment={alignment}>
       {title && <StyledTitle>{title}</StyledTitle>}
