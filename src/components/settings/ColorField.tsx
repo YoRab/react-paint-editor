@@ -18,6 +18,11 @@ const StyledColor = styled.div<{
   background-size: 16px;
 `
 
+const StyleWrapper = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+`
+
 const StyledCustomColor = styled.div<{
   color: string
 }>`
@@ -39,6 +44,7 @@ type ShapeStyleColorType = {
   title?: string
   disabled?: boolean
   field: string
+  mode?: 'fill' | 'stroke'
   value?: string | undefined
   values: string[]
   valueChanged: (field: string, value: string | number) => void
@@ -48,6 +54,7 @@ const ColorField = ({
   selectedSettings,
   setSelectedSettings,
   title = 'Choisissez une couleur',
+  mode = 'fill',
   disabled = false,
   values,
   field,
@@ -72,7 +79,7 @@ const ColorField = ({
 
   const isPanelVisible = selectedSettings === customKey
 
-  if(_.isEmpty(values)) return null
+  if (_.isEmpty(values)) return null
 
   return (
     <>
@@ -85,7 +92,7 @@ const ColorField = ({
       </Button>
       {isPanelVisible && (
         <Panel title={title} alignment="left">
-          <div>
+          <StyleWrapper>
             {values.map((color, index) => (
               <Button
                 title={color}
@@ -108,12 +115,11 @@ const ColorField = ({
               selected={!_.includes(value, values)}
               value={value}
               onChange={handleChange}>
-              <StyledCustomColor
-                color={_.includes(value, values) ? 'var(--font-color)' : value}>
+              <StyledCustomColor color={_.includes(value, values) ? 'var(--font-color)' : value}>
                 <span dangerouslySetInnerHTML={{ __html: paletteIcon }} />
               </StyledCustomColor>
             </Button>
-          </div>
+          </StyleWrapper>
         </Panel>
       )}
     </>

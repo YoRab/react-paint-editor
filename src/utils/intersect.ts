@@ -113,6 +113,8 @@ export const checkPositionIntersection = (
   currentScale = 1,
   checkAnchors = false
 ): false | HoverModeData => {
+  if (shape.locked) return false
+
   const scaleWithMinCap = Math.min(1, currentScale)
 
   const { borders, center } = getShapeInfos(shape, selectionPadding)

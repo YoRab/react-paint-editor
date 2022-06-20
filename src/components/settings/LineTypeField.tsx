@@ -2,6 +2,7 @@ import React from 'react'
 import SelectField from './SelectField'
 import { styled } from '@linaria/react'
 import _ from 'lodash/fp'
+import { lineTypeIcon } from 'constants/icons'
 
 const StyledLine = styled.span`
   display: inline-block;
@@ -53,12 +54,6 @@ export const LineTypeOption = ({ children }: LineTypeOptionType) => {
       <StyledLine />
       <StyledLine />
       <StyledLine />
-      <StyledLine />
-      <StyledLine />
-      <StyledLine />
-      <StyledLine />
-      <StyledLine />
-      <StyledLine />
     </StyledOption>
   )
 }
@@ -80,21 +75,21 @@ const LineTypeField = ({
   defaultValue,
   valueChanged
 }: LineTypeType) => {
-
-  if(_.isEmpty(values)) return null
-
+  if (_.isEmpty(values)) return null
 
   return (
     <SelectField
       selectedSettings={selectedSettings}
       setSelectedSettings={setSelectedSettings}
       CustomOption={LineTypeOption as React.FC}
+      icon={lineTypeIcon}
       title="Type de traits"
       disabled={disabled}
       field="lineDash"
       values={values}
       defaultValue={defaultValue}
-      valueChanged={valueChanged}></SelectField>
+      valueChanged={valueChanged}
+    />
   )
 }
 

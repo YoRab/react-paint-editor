@@ -8,6 +8,11 @@ const StyledButton = styled(Button)`
   padding: 16px;
 `
 
+const StyleWrapper = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+`
+
 type SelectFieldType = {
   CustomOption: React.FC<{
     children?: React.ReactNode
@@ -16,6 +21,7 @@ type SelectFieldType = {
   setSelectedSettings: React.Dispatch<React.SetStateAction<string | undefined>>
   title?: string
   disabled?: boolean
+  icon: string
   field: string
   values: (string | number)[]
   defaultValue?: number | string | undefined
@@ -29,6 +35,7 @@ const SelectField = ({
   title = "Choisissez l'option",
   disabled = false,
   field,
+  icon,
   values,
   defaultValue,
   valueChanged
@@ -51,12 +58,16 @@ const SelectField = ({
 
   return (
     <>
-      <Button selected={isPanelVisible} title={title} disabled={disabled} onClick={togglePanel}>
-        <CustomOption>{defaultValue}</CustomOption>
-      </Button>
+      <Button
+        selected={isPanelVisible}
+        title={title}
+        icon={icon}
+        disabled={disabled}
+        onClick={togglePanel}
+      />
       {isPanelVisible && (
-        <Panel title={title} alignment="left">
-          <div>
+        <Panel title={title} alignment="left" fitContainer={true}>
+          <StyleWrapper>
             {values.map(value => {
               return (
                 <StyledButton
@@ -68,7 +79,7 @@ const SelectField = ({
                 </StyledButton>
               )
             })}
-          </div>
+          </StyleWrapper>
         </Panel>
       )}
     </>

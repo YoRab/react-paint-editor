@@ -157,7 +157,7 @@ const MenuGroup = ({
                 disabled={disabled || !hasActionToClear}
                 img={CLEAR_TOOL.icon}
                 isActive={activeTool.id === CLEAR_TOOL.id}
-                setActive={() => clearCanvas()}
+                setActive={clearCanvas}
               />
               {(withUploadPicture || withUrlPicture || withLoadAndSave) && <hr />}
             </>

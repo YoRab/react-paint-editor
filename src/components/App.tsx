@@ -321,7 +321,7 @@ const App = ({
     forwardShape()
   }, [selectTool, forwardShape])
 
-  const clearCanvas = useCallback(
+  const resetCanvas = useCallback(
     (shapesToInit: DrawableShape[] = [], clearHistory = false) => {
       clearShapes(shapesToInit, clearHistory)
       selectTool(SELECTION_TOOL)
@@ -329,6 +329,22 @@ const App = ({
     },
     [selectTool, clearShapes]
   )
+
+  const loadImportedData = useCallback(
+    async (json: ExportDataType, clearHistory = true) => {
+      const shapes = await decodeImportedData(json)
+      resetCanvas(shapes, clearHistory)
+    },
+    [resetCanvas]
+  )
+
+  const clearCanvas = useCallback(() => {
+    if (shapesFromProps !== undefined) {
+      void loadImportedData({ shapes: shapesFromProps } as ExportDataType, false)
+    } else {
+      resetCanvas()
+    }
+  }, [resetCanvas, loadImportedData, shapesFromProps])
 
   const selectShape = useCallback(
     (shape: DrawableShape) => {
@@ -391,14 +407,6 @@ const App = ({
       setIsLoading(false)
     }
   }, [shapesRef, addSnackbar, canvasWidth, canvasHeight])
-
-  const loadImportedData = useCallback(
-    async (json: ExportDataType) => {
-      const shapes = await decodeImportedData(json)
-      clearCanvas(shapes, true)
-    },
-    [clearCanvas]
-  )
 
   const loadFile = useCallback(
     async (file: File) => {
@@ -583,6 +591,7 @@ const App = ({
       {isEditMode && (
         <>
           <SettingsBar
+            width={canvasSize.width}
             disabled={disabled}
             activeTool={activeTool}
             availableTools={availableTools}
