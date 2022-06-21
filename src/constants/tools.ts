@@ -303,7 +303,7 @@ export const DEFAULT_SHAPE_PICTURE: CustomTool = {
   type: ShapeEnum.picture,
   id: `${PREFIX_ID}picture`,
   icon: pictureIcon,
-  lib: 'Image',
+  label: 'Image',
   settings: SETTINGS_DEFAULT_PICTURE
 }
 
@@ -311,7 +311,7 @@ export const DEFAULT_SHAPE_BRUSH: CustomTool = {
   type: ShapeEnum.brush,
   id: `${PREFIX_ID}brush`,
   icon: brushIcon,
-  lib: 'Brosse',
+  label: 'Brosse',
   settings: SETTINGS_DEFAULT_BRUSH
 }
 
@@ -319,7 +319,7 @@ export const DEFAULT_SHAPE_LINE: CustomTool = {
   type: ShapeEnum.line,
   id: `${PREFIX_ID}line`,
   icon: arrowIcon,
-  lib: 'Ligne',
+  label: 'Ligne',
   settings: SETTINGS_DEFAULT_LINE
 }
 
@@ -327,7 +327,7 @@ export const DEFAULT_SHAPE_POLYGON: CustomTool = {
   type: ShapeEnum.polygon,
   id: `${PREFIX_ID}polygon`,
   icon: polygonIcon,
-  lib: 'Polygone',
+  label: 'Polygone',
   settings: SETTINGS_DEFAULT_POLYGON
 }
 
@@ -335,7 +335,7 @@ export const DEFAULT_SHAPE_CURVE: CustomTool = {
   type: ShapeEnum.curve,
   id: `${PREFIX_ID}curve`,
   icon: curveIcon,
-  lib: 'Courbe',
+  label: 'Courbe',
   settings: SETTINGS_DEFAULT_CURVE
 }
 
@@ -343,7 +343,7 @@ export const DEFAULT_SHAPE_RECT: CustomTool = {
   type: ShapeEnum.rect,
   id: `${PREFIX_ID}rect`,
   icon: squareIcon, // temporary
-  lib: 'Rectangle',
+  label: 'Rectangle',
   settings: SETTINGS_DEFAULT_RECT
 }
 
@@ -351,7 +351,7 @@ export const DEFAULT_SHAPE_SQUARE: CustomTool = {
   type: ShapeEnum.square,
   id: `${PREFIX_ID}square`,
   icon: squareIcon,
-  lib: 'Carré',
+  label: 'Carré',
   settings: SETTINGS_DEFAULT_SQUARE
 }
 
@@ -359,7 +359,7 @@ export const DEFAULT_SHAPE_CIRCLE: CustomTool = {
   type: ShapeEnum.circle,
   id: `${PREFIX_ID}circle`,
   icon: circleIcon,
-  lib: 'Cercle',
+  label: 'Cercle',
   settings: SETTINGS_DEFAULT_CIRCLE
 }
 
@@ -367,14 +367,14 @@ export const DEFAULT_SHAPE_ELLIPSE: CustomTool = {
   type: ShapeEnum.ellipse,
   id: `${PREFIX_ID}ellipse`,
   icon: circleIcon, // temporary
-  lib: 'Ellipse',
+  label: 'Ellipse',
   settings: SETTINGS_DEFAULT_ELLIPSE
 }
 export const DEFAULT_SHAPE_TEXT: CustomTool = {
   type: ShapeEnum.text,
   id: `${PREFIX_ID}text`,
   icon: textIcon,
-  lib: 'Texte',
+  label: 'Texte',
   settings: SETTINGS_DEFAULT_TEXT
 }
 
@@ -395,68 +395,68 @@ export const SELECTION_TOOL: ActionsTool = {
   id: `${PREFIX_ID}selection`,
   type: ActionsEnum.selection,
   icon: cursorIcon,
-  lib: 'Sélection'
+  label: 'Sélection'
 }
 
 export const UNDO_TOOL: ActionsTool = {
   id: `${PREFIX_ID}undo`,
   type: ActionsEnum.undo,
   icon: undoIcon,
-  lib: 'Undo'
+  label: 'Undo'
 }
 
 export const REDO_TOOL: ActionsTool = {
   id: `${PREFIX_ID}redo`,
   type: ActionsEnum.redo,
   icon: redoIcon,
-  lib: 'Redo'
+  label: 'Redo'
 }
 
 export const CLEAR_TOOL: ActionsTool = {
   id: `${PREFIX_ID}clear`,
   type: ActionsEnum.clear,
   icon: clearIcon,
-  lib: 'Clear'
+  label: 'Clear'
 }
 
 export const EXPORT_TOOL: ActionsTool = {
   id: `${PREFIX_ID}export`,
   type: ActionsEnum.export,
   icon: exportFileIcon,
-  lib: 'Export PNG'
+  label: 'Export PNG'
 }
 
 export const LOAD_TOOL: ActionsTool = {
   id: `${PREFIX_ID}load`,
   type: ActionsEnum.loadFile,
   icon: openFileIcon,
-  lib: 'Load project'
+  label: 'Load project'
 }
 
 export const SAVE_TOOL: ActionsTool = {
   id: `${PREFIX_ID}save`,
   type: ActionsEnum.saveFile,
   icon: saveIcon,
-  lib: 'Save project'
+  label: 'Save project'
 }
 
 export const MOVE_TOOL: ActionsTool = {
   id: `${PREFIX_ID}move`,
   type: ActionsEnum.move,
   icon: cursorIcon,
-  lib: 'Move'
+  label: 'Move'
 }
 
 export const UPLOAD_PICTURE_TOOL: ActionsTool = {
   id: `${PREFIX_ID}upload-picture`,
   type: ActionsEnum.uploadPicture,
   icon: pictureIcon,
-  lib: 'Upload picture'
+  label: 'Upload picture'
 }
 
 export const ADD_URL_PICTURE_TOOL: ActionsTool = {
   id: `${PREFIX_ID}upload-picture`,
   type: ActionsEnum.addUrlPicture,
   icon: pictureIcon,
-  lib: 'Add picture from URL'
+  label: 'Add picture from URL'
 }

@@ -4,14 +4,14 @@ export type CustomToolInput = {
   id: string
   type: ShapeEnum
   icon?: string
-  lib?: string
+  label?: string
   settings?: ToolsSettingsType<ShapeEnum>
 }
 
 export type CustomTool = {
   id: string
   icon: string
-  lib: string
+  label: string
 } & (
   | {
       type: ShapeEnum.brush
@@ -216,7 +216,7 @@ export type ActionsTool = {
   id: string
   type: ActionsEnum
   icon: string
-  lib: string
+  label: string
 }
 
 export type ToolsType = CustomTool | ActionsTool

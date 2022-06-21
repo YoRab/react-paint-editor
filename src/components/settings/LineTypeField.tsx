@@ -21,7 +21,7 @@ const StyledOption = styled.span`
     }
   }
 
-  &[data-type='1'] {
+  &[data-type='2'] {
     position: relative;
     left: 3px;
     ${StyledLine}:nth-child(3n-1) {
@@ -33,7 +33,7 @@ const StyledOption = styled.span`
     }
   }
 
-  &[data-type='2'] {
+  &[data-type='1'] {
     ${StyledLine}:nth-child(2n+1) {
       background: currentColor;
     }

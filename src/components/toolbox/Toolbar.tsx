@@ -128,7 +128,6 @@ const Toolbar = ({
   const setActiveToolFromId = (toolId: string) => {
     setActiveTool(availableTools.find(tool => tool.id === toolId) ?? activeTool)
   }
-  //360 240
 
   useEffect(() => {
     setActionsInMenu(width < fullToolbarSize)
@@ -142,7 +141,7 @@ const Toolbar = ({
       <StyledToolbox>
         {/* <Tool
         type={ToolEnum.move}
-        lib="move"
+        label="move"
         imgSrc={moveIcon}
         isActive={activeTool === ToolEnum.move}
         setActive={setActiveTool}
