@@ -1,3 +1,10 @@
+# V0.6.3
+
+- Rename 'lib' prop in 'label'
+- update dash settings
+- update clear icon
+- update color settings UI
+
 # V0.6.2
 
 - Lock : can't select shape by click on it (only via layers panel)

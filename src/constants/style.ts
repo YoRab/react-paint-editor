@@ -6,8 +6,8 @@ export const STYLE_LINE_WITH_ARROW = [0, 1, 2, 3]
 
 export const LINE_DASH_DATA = [
   [1, 0],
-  [5, 10],
-  [2, 2]
+  [1, 2],
+  [4, 6]
 ]
 
 export const STYLE_FONTS = ['arial', 'serif', 'monospace']

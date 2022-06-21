@@ -332,16 +332,16 @@ const CurrentApp = ({ selectedComponent }: CurrentAppType) => {
               'not existing tool',
               {
                 id: 'brush1',
-                lib: 'test with not existing type; should not appear',
+                label: 'test with not existing type; should not appear',
                 type: 'sgg'
               },
               {
                 id: 'brush2',
-                lib: 'test without any type should not appear'
+                label: 'test without any type should not appear'
               },
               {
                 id: 'brush3',
-                lib: 'classic brush',
+                label: 'classic brush',
                 type: 'brush',
                 settings: {
                   lineWidth: {
@@ -377,7 +377,7 @@ const CurrentApp = ({ selectedComponent }: CurrentAppType) => {
               },
               {
                 id: 'line',
-                lib: 'classic line',
+                label: 'classic line',
                 type: 'line',
                 settings: {
                   lineWidth: {
@@ -417,7 +417,7 @@ const CurrentApp = ({ selectedComponent }: CurrentAppType) => {
               },
               {
                 id: 'rectangle',
-                lib: 'classic rectangle',
+                label: 'classic rectangle',
                 type: 'rect',
                 settings: {
                   lineWidth: {
@@ -470,7 +470,7 @@ const CurrentApp = ({ selectedComponent }: CurrentAppType) => {
               },
               {
                 id: 'ellipse',
-                lib: 'classic ellipse',
+                label: 'classic ellipse',
                 type: 'ellipse',
                 settings: {
                   lineWidth: {
@@ -524,7 +524,7 @@ const CurrentApp = ({ selectedComponent }: CurrentAppType) => {
               },
               {
                 id: 'text',
-                lib: 'classic text',
+                label: 'classic text',
                 type: 'text',
                 settings: {
                   fontFamily: {

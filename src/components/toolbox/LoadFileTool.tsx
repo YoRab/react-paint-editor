@@ -39,9 +39,9 @@ const LoadFileTool = ({
       onClick={handleClick}
       onChange={handleChange}
       accept={accept}
-      title={type.lib ?? type.type}
+      title={type.label ?? type.type}
       icon={img}
-      children={withText ? type.lib : undefined}
+      children={withText ? type.label : undefined}
       disabled={disabled}
     />
   )
