@@ -11,27 +11,19 @@ type ToolType = {
   setActive: (marker: ToolsType) => void
 }
 
-const Tool = ({
-  type,
-  img,
-  isActive,
-  withText = false,
-  disabled = false,
-  setActive
-}: ToolType) => {
+const Tool = ({ type, img, isActive, withText = false, disabled = false, setActive }: ToolType) => {
   const handleClick = () => {
     setActive(type)
   }
-
 
   return (
     <Button
       disabled={disabled}
       selected={isActive}
       onClick={handleClick}
-      title={type.lib ?? type.type}
+      title={type.label ?? type.type}
       icon={img}
-      children={withText ? type.lib : undefined}
+      children={withText ? type.label : undefined}
     />
   )
 }
