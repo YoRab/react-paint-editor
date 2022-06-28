@@ -29,6 +29,7 @@ const StyledEditBox = styled.div<{
   line-height: ${({ fontsize }) => fontsize}px;
   font-family: ${({ fontfamily }) => fontfamily};
   opacity: ${({ opacity }) => opacity};
+  width: max-content;
 
   &[data-fontbold='true'] {
     font-weight: bold;
@@ -64,8 +65,21 @@ const EditTextBox = ({
 
   useEffect(() => {
     if (!ref.current) return
-    ref.current.innerHTML = convertStringArrayToDivContent(defaultValue)
-    ref.current.focus()
+    const currentNode = ref.current
+
+    const handlePaste = (e: ClipboardEvent) => {
+      e.preventDefault()
+      const text = e.clipboardData?.getData('text/plain')
+      document.execCommand('insertText', false, text) //TODO use Clipboard API when ready
+    }
+
+    currentNode.addEventListener('paste', handlePaste)
+    currentNode.innerHTML = convertStringArrayToDivContent(defaultValue)
+    currentNode.focus()
+
+    return () => {
+      currentNode.removeEventListener('paste', handlePaste)
+    }
   }, [defaultValue])
 
   const position = useMemo(() => {

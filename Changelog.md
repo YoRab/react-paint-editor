@@ -1,3 +1,7 @@
+# V0.6.4
+
+- fix TextEdit copy/paste containing html
+
 # V0.6.3
 
 - Rename 'lib' prop in 'label'
