@@ -7,6 +7,5 @@
 ## other
 
 - TextEdit cursor overflow MINOR (quick fix : edit on modale ?)
-- TextEdit copy/paste containing html breaks display
 - circle resizing only goes one direction
 - adding padding to selection result in wrong intersection calculs
