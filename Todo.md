@@ -10,6 +10,7 @@
 - croix qui efface le canvas
   il faut une confirmation ! :D
 - texte: options trop limitée, il faudrait à minima pouvoir changer la taille de la police, choisir plus de police, et faire un peu de mise en forme (i, b, u)
+- avoir plusieurs style de pinceau (mode surligneur par exemple). ca serait utile sur des exo et techniquement c'est peut-être juste des preset de taille/couleur/opacité de l'outil actuel
 
 ## remaining
 
@@ -19,7 +20,6 @@
 ### pinceau
 
 - certains outils lisse le trait une fois que tu valides le tracé, et ça donne un rendu plus naturel et propre que ce qu'on trace au pad/souris. Du nice to have loin d'être prioritaire
-- avoir plusieurs style de pinceau (mode surligneur par exemple). ca serait utile sur des exo et techniquement c'est peut-être juste des preset de taille/couleur/opacité de l'outil actuel
 - je ne sais pas pourquoi, mais il a l'air moins fluide/smooth au tracé que marker.js (peut-être une illusion)
 
 ### trait
@@ -45,8 +45,10 @@
 
 # En prévision / Future MAJ
 
-- settings ui
+- better settings ui
+- better ui customization
 - internationalization
+- big clean (composants, style, utils, types)
 
 # Pour plus tard
 
