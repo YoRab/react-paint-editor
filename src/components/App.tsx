@@ -113,6 +113,7 @@ type AppOptionsType = {
   withLoadAndSave: boolean
   withUploadPicture: boolean
   withUrlPicture: boolean
+  clearCallback: 'empty' | 'defaultShapes' | (() => DrawableShapeJson[])
   uiStyle: {
     toolbarBackgroundColor: string
     dividerColor: string
@@ -144,6 +145,7 @@ const DEFAULT_OPTIONS: AppOptionsType = {
   withUploadPicture: true,
   withUrlPicture: false,
   availableTools: DEFAULT_SHAPE_TOOLS,
+  clearCallback: 'empty',
   uiStyle: {
     toolbarBackgroundColor: 'white',
     dividerColor: '#36418129',
@@ -201,6 +203,7 @@ const App = ({
     withLoadAndSave,
     withUploadPicture,
     withUrlPicture,
+    clearCallback,
     availableTools: availableToolsFromProps
   } = {
     ...DEFAULT_OPTIONS,
@@ -339,12 +342,16 @@ const App = ({
   )
 
   const clearCanvas = useCallback(() => {
-    if (shapesFromProps !== undefined) {
-      void loadImportedData({ shapes: shapesFromProps } as ExportDataType, false)
+    if (typeof clearCallback !== 'string') {
+      void loadImportedData({ shapes: clearCallback() } as ExportDataType, false)
     } else {
-      resetCanvas()
+      if (clearCallback === 'defaultShapes' && shapesFromProps !== undefined) {
+        void loadImportedData({ shapes: shapesFromProps } as ExportDataType, false)
+      } else {
+        resetCanvas()
+      }
     }
-  }, [resetCanvas, loadImportedData, shapesFromProps])
+  }, [resetCanvas, loadImportedData, shapesFromProps, clearCallback])
 
   const selectShape = useCallback(
     (shape: DrawableShape) => {

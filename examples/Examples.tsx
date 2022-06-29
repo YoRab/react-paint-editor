@@ -562,7 +562,14 @@ const CurrentApp = ({ selectedComponent }: CurrentAppType) => {
         />
       )
     case 3:
-      return <App shapes={EXAMPLE_DEFAULT} />
+      return (
+        <App
+          shapes={EXAMPLE_DEFAULT}
+          options={{
+            clearCallback: 'defaultShapes'
+          }}
+        />
+      )
     case 4:
       return <ManualSaveApp />
     case 5:

@@ -1,6 +1,7 @@
 # V0.6.4
 
 - fix TextEdit copy/paste containing html
+- add clearCallback in opts to override clear button behavior
 
 # V0.6.3
 
