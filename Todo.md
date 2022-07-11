@@ -45,14 +45,20 @@
 
 # En prévision / Future MAJ
 
-- better settings ui
+- get rid of translation prop
+- true grid
+
+- improve settings ui
 - better ui customization
-- internationalization
+- better UI for curves and polygons
+- make selection padding works
+
 - big clean (composants, style, utils, types)
 
 # Pour plus tard
 
 - add more settings
+- internationalization
 - ladle (wait for windows support https://github.com/tajo/ladle/issues/67)
 - Migrer sous Vite
 - get rid of enum for better typescript
