@@ -1,13 +1,7 @@
-import { SnackbarTypeEnum, SNACKBAR_DEFAULT_SETTINGS } from 'constants/snackbar'
+import { SNACKBAR_DEFAULT_SETTINGS } from 'constants/snackbar'
 import _ from 'lodash/fp'
 import { useEffect, useRef, useState } from 'react'
-
-export type SnackBarType = {
-  id: string
-  type: SnackbarTypeEnum
-  text: string
-  duration: number
-}
+import type { SnackBarType, SnackbarTypeType } from 'types/snackbar'
 
 const useSnackbar = () => {
   const timers = useRef<NodeJS.Timeout[]>([])
@@ -22,7 +16,7 @@ const useSnackbar = () => {
     duration = SNACKBAR_DEFAULT_SETTINGS.duration,
     text
   }: {
-    type?: SnackbarTypeEnum
+    type?: SnackbarTypeType
     duration?: number
     text: string
   }) => {

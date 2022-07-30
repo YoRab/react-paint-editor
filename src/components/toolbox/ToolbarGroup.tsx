@@ -6,10 +6,8 @@ import { styled } from '@linaria/react'
 import Tool from './Tool'
 import { CustomTool, ToolsType } from 'types/tools'
 
-const StyledPanel = styled(Panel)`
+const StyledPanelContent = styled.div`
   display: flex;
-  bottom: unset;
-  top: 100%;
 
   &[data-vertical='1'] {
     flex-direction: column;
@@ -117,18 +115,20 @@ const ToolbarGroup = ({
         icon={groupIcon}
       />
       {isOpen && (
-        <StyledPanel vertical={group.vertical} alignment={alignment}>
-          {group.toolsType.map((toolType, i) => (
-            <Tool
-              disabled={disabled}
-              key={i}
-              type={toolType}
-              img={toolType.icon}
-              isActive={activeTool.id === toolType.id}
-              setActive={setActiveTool}
-            />
-          ))}
-        </StyledPanel>
+        <Panel alignment={alignment} position="top">
+          <StyledPanelContent data-vertical={+group.vertical}>
+            {group.toolsType.map((toolType, i) => (
+              <Tool
+                disabled={disabled}
+                key={i}
+                type={toolType}
+                img={toolType.icon}
+                isActive={activeTool.id === toolType.id}
+                setActive={setActiveTool}
+              />
+            ))}
+          </StyledPanelContent>
+        </Panel>
       )}
     </StyledRelative>
   )

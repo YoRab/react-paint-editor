@@ -1,13 +1,13 @@
 import { styled } from '@linaria/react'
-import { STYLE_ZINDEX_LOADING } from 'constants/style'
+import { APP_NAME } from 'constants/app'
+import { LOADING_TRANSITION_DURATION } from 'constants/loading'
+import { STYLE_ZINDEX } from 'constants/style'
 import React, { useEffect, useState } from 'react'
-
-const TRANSITION_DURATION = 300
 
 const StyledLoading = styled.div`
   display: flex;
   position: absolute;
-  z-index: ${STYLE_ZINDEX_LOADING};
+  z-index: ${STYLE_ZINDEX.LOADING};
   top: 0;
   bottom: 0;
   left: 0;
@@ -15,7 +15,7 @@ const StyledLoading = styled.div`
   justify-content: center;
   align-items: center;
   background: #00000050;
-  transition: opacity ${TRANSITION_DURATION}ms linear;
+  transition: opacity ${LOADING_TRANSITION_DURATION}ms linear;
   opacity: 0;
   &[data-loading='visible'] {
     opacity: 1;
@@ -23,7 +23,7 @@ const StyledLoading = styled.div`
 `
 
 const StyledLoader = styled.div`
-  @keyframes react-paint-rotation {
+  @keyframes ${APP_NAME}-rotation {
     from {
       transform: rotate(0deg);
     }
@@ -36,7 +36,7 @@ const StyledLoader = styled.div`
   height: 40px;
   position: relative;
   transform: rotate(10deg);
-  animation: react-paint-rotation 1s infinite;
+  animation: ${APP_NAME}-rotation 1s infinite;
 `
 
 const StyledShape = styled.div`
@@ -68,16 +68,17 @@ export type LoadingType = {
   isLoading: boolean
 }
 
-type LoadingStateType = 'hidden' | 'visible' | 'fadeOut'
-
 const Loading = ({ isLoading = false }: LoadingType) => {
-  const [loadingState, setLoadingState] = useState<LoadingStateType>('hidden')
+  const [loadingState, setLoadingState] = useState<'hidden' | 'visible' | 'fadeOut'>('hidden')
   useEffect(() => {
     if (isLoading) {
       setLoadingState('visible')
     } else {
       setLoadingState('fadeOut')
-      const fadeOutTimeout = setTimeout(() => setLoadingState('hidden'), TRANSITION_DURATION)
+      const fadeOutTimeout = setTimeout(
+        () => setLoadingState('hidden'),
+        LOADING_TRANSITION_DURATION
+      )
       return () => {
         clearTimeout(fadeOutTimeout)
       }

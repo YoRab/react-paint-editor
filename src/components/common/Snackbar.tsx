@@ -1,8 +1,8 @@
-import { SNACKBAR_ANIMATION_DURATION } from 'constants/snackbar'
-import { SnackBarType } from 'hooks/useSnackbar'
 import React, { useEffect, useState } from 'react'
 import { styled } from '@linaria/react'
-import { STYLE_ZINDEX_SNACKBAR } from 'constants/style'
+import { STYLE_ZINDEX } from 'constants/style'
+import { SNACKBAR_DURATION, SNACKBAR_TOGGLE_ANIMATION_DURATION } from 'constants/snackbar'
+import type { SnackBarType } from 'types/snackbar'
 
 const StyledSnackbar = styled.div`
   display: inline-block;
@@ -11,29 +11,23 @@ const StyledSnackbar = styled.div`
   max-width: calc(100% - 24px);
   overflow-wrap: break-word;
   box-sizing: border-box;
-  transition: all ${SNACKBAR_ANIMATION_DURATION}ms;
+  transition: all ${SNACKBAR_DURATION}ms;
   opacity: 0;
   transform: translate3d(0px, 40px, 0px);
 
-  &[data-type='0'] {
+  &[data-type='Infos'] {
     /* Infos */
     background: #646464;
     color: white;
   }
 
-  &[data-type='1'] {
-    /*  Warning */
-    background: #c3a200;
-    color: black;
-  }
-
-  &[data-type='2'] {
+  &[data-type='Error'] {
     /* Error */
     background: #911717;
     color: white;
   }
 
-  &[data-type='3'] {
+  &[data-type='Success'] {
     /* Success */
     background: #088900;
     color: white;
@@ -54,11 +48,11 @@ const StyledSnackbarContainer = styled.div`
   display: flex;
   flex-direction: column-reverse;
   position: absolute;
-  z-index: ${STYLE_ZINDEX_SNACKBAR};
+  z-index: ${STYLE_ZINDEX.SNACKBAR};
   bottom: 0;
   left: 0;
   right: 0;
-  height: 0px;
+  height: 0;
   align-items: center;
 `
 
@@ -71,10 +65,10 @@ const Snackbar = ({ type, text, duration }: SnackBarType) => {
   useEffect(() => {
     const timeoutShowId = setTimeout(() => {
       setIsShown(true)
-    }, 100)
+    }, SNACKBAR_TOGGLE_ANIMATION_DURATION)
     const timeoutHideId = setTimeout(() => {
       setIsShown(false)
-    }, duration - SNACKBAR_ANIMATION_DURATION - 100)
+    }, duration - SNACKBAR_DURATION - SNACKBAR_TOGGLE_ANIMATION_DURATION)
     return () => {
       clearTimeout(timeoutShowId)
       clearTimeout(timeoutHideId)

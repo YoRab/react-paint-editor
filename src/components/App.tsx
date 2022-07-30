@@ -6,7 +6,7 @@ import Layouts from './settings/Layouts'
 import Toolbar from './toolbox/Toolbar'
 import { styled } from '@linaria/react'
 import SettingsBar from './settings/SettingsBar'
-import { STYLE_ZINDEX_APP } from 'constants/style'
+import { STYLE_ZINDEX } from 'constants/style'
 import useKeyboard from 'hooks/useKeyboard'
 import {
   decodeJson,
@@ -20,7 +20,6 @@ import useComponent from 'hooks/useComponent'
 import useShapes from 'hooks/useShapes'
 import SnackbarContainer from './common/Snackbar'
 import useSnackbar from 'hooks/useSnackbar'
-import { SnackbarTypeEnum } from 'constants/snackbar'
 import Loading from 'components/common/Loading'
 import { buildDataToExport } from 'utils/data'
 import useResizeObserver from 'hooks/useResizeObserver'
@@ -90,7 +89,7 @@ const StyledRow = styled.div<{
   flex-direction: row;
   position: relative;
   max-width: 100%;
-  z-index: ${STYLE_ZINDEX_APP};
+  z-index: ${STYLE_ZINDEX.APP};
 
   &[data-grow='true'] {
     width: 100%;
@@ -388,7 +387,7 @@ const App = ({
       setIsLoading(false)
     } catch (e) {
       if (e instanceof Error) {
-        addSnackbar({ type: SnackbarTypeEnum.Error, text: "L'export a échoué" })
+        addSnackbar({ type: 'Error', text: "L'export a échoué" })
       }
       console.warn(e)
     } finally {
@@ -407,7 +406,7 @@ const App = ({
       setIsLoading(false)
     } catch (e) {
       if (e instanceof Error) {
-        addSnackbar({ type: SnackbarTypeEnum.Error, text: "L'enregistrement a échoué" })
+        addSnackbar({ type: 'Error', text: "L'enregistrement a échoué" })
       }
       console.warn(e)
     } finally {
@@ -421,10 +420,10 @@ const App = ({
       try {
         const json = await decodeJson(file)
         await loadImportedData(json as ExportDataType)
-        addSnackbar({ type: SnackbarTypeEnum.Success, text: 'Fichier chargé !' })
+        addSnackbar({ type: 'Success', text: 'Fichier chargé !' })
       } catch (e) {
         if (e instanceof Error) {
-          addSnackbar({ type: SnackbarTypeEnum.Error, text: 'Le chargement a échoué' })
+          addSnackbar({ type: 'Error', text: 'Le chargement a échoué' })
         }
         console.warn(e)
       } finally {
@@ -442,7 +441,7 @@ const App = ({
         selectShape(pictureShape)
       } catch (e) {
         if (e instanceof Error) {
-          addSnackbar({ type: SnackbarTypeEnum.Error, text: 'Le chargement a échoué' })
+          addSnackbar({ type: 'Error', text: 'Le chargement a échoué' })
         }
         console.warn(e)
       } finally {

@@ -1,13 +1,11 @@
-import React, { useRef } from 'react'
+import React from 'react'
 import { styled } from '@linaria/react'
-import { STYLE_ZINDEX_PANEL } from 'constants/style'
+import { STYLE_ZINDEX } from 'constants/style'
 
 const StyledPanel = styled.div`
   position: absolute;
-  z-index: ${STYLE_ZINDEX_PANEL};
-
+  z-index: ${STYLE_ZINDEX.PANEL};
   background: var(--toolbar-bg);
-  bottom: 100%;
   box-shadow: 0 3px 8px rgb(0 0 0 / 24%);
   padding: 8px;
   border-radius: 8px;
@@ -30,6 +28,14 @@ const StyledPanel = styled.div`
     margin: 4px;
   }
 
+  &[data-position='bottom'] {
+    bottom: 100%;
+  }
+
+  &[data-position='top'] {
+    top: 100%;
+  }
+
   &[data-fitcontainer='true'] {
     max-width: 100%;
   }
@@ -46,24 +52,23 @@ type PanelType = {
   title?: string
   className?: string
   fitContainer?: boolean
+  position?: 'bottom' | 'top'
   alignment?: 'left' | 'right' | 'center'
 }
 
 const Panel = ({
   children,
-  vertical = false,
   title = '',
   className,
+  position = 'bottom',
   fitContainer = false,
   alignment = 'center'
 }: PanelType) => {
-  const componentRef = useRef<HTMLDivElement>(null)
   return (
     <StyledPanel
-      ref={componentRef}
       className={className}
       data-fitcontainer={fitContainer}
-      data-vertical={+vertical}
+      data-position={position}
       data-alignment={alignment}>
       {title && <StyledTitle>{title}</StyledTitle>}
       {children}
