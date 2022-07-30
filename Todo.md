@@ -1,3 +1,46 @@
+# TODO
+
+## build
+
+- ladle
+- Migrer sous Vite
+
+## structure
+
+- get rid of enum for better typescript
+- big clean (composants, style, utils, types)
+- Tests !
+
+## core
+
+- get rid of translation prop (support previous save format by migrating it if import)
+- améliorer perfs avec précalculs + usage de path
+
+## features
+
+- true grid
+- add more settings
+- internationalization
+- add shortcuts (for tools) and show it in titles
+- Menu contextuel au clic droit (changement de plan, supprimer, duplicate, copy, lock)
+- lissage de traits
+- Move + zoom functionnality
+- fullscreen mode ?
+
+## fixes
+
+- impossible de changer opacité si clic sur tool sans selectionner de shape
+- le sous menu des tool ne se cache pas tout le temps quand il faut
+- make selection padding works
+
+## improvements
+
+- improve settings ui
+- better ui customization (with classname too)
+- better UI for curves and polygons
+- text tool : create automatically text shape when clicking on tool
+- bordure des traits à revoir
+
 # Remarques de thomas :
 
 ## done
@@ -42,31 +85,3 @@
 - cercle/elipse
   redondant, la diff des outils me parait too much et pas clair
   bloqué en ratio cercle avec maj ou une option de forme (cf rectangle/carré) ?
-
-# En prévision / Future MAJ
-
-- get rid of translation prop
-- true grid
-
-- improve settings ui
-- better ui customization
-- better UI for curves and polygons
-- make selection padding works
-
-- big clean (composants, style, utils, types)
-
-# Pour plus tard
-
-- add more settings
-- internationalization
-- ladle (wait for windows support https://github.com/tajo/ladle/issues/67)
-- Migrer sous Vite
-- get rid of enum for better typescript
-- add shortcuts (for tools) and show it in titles
-- Menu contextuel au clic droit (changement de plan, supprimer, duplicate, copy, lock)
-- bordure des traits à revoir
-- améliorer perfs avec précalculs + usage de path
-- lissage de traits
-- Move + zoom functionnality
-- Tests !
-- fullscreen mode ?
