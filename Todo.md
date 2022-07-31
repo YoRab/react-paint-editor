@@ -29,7 +29,6 @@
 
 ## fixes
 
-- **impossible de changer opacité si clic sur tool sans selectionner de shape**
 - **le sous menu des tool ne se cache pas tout le temps quand il faut**
 - make selection padding works
 
