@@ -22,6 +22,7 @@ export type StyledShape = {
 
 type Drawable = {
   id: string
+  toolId?: string
   translation: Point
   rotation: number
 }
@@ -80,17 +81,17 @@ export type Ellipse = StyledShape & {
   radiusX: number
   radiusY: number
 }
-export type DrawableRect = Rect & Drawable & { toolId: string; type: 'rect' }
-export type DrawableSquare = Square & Drawable & { toolId: string; type: 'square' }
-export type DrawablePictureJson = StoredPicture & Drawable & { toolId: string; type: 'picture' }
-export type DrawablePicture = Picture & Drawable & { toolId: string; type: 'picture' }
-export type DrawableText = Text & Drawable & { toolId: string; type: 'text' }
-export type DrawableLine = Line & Drawable & { toolId: string; type: 'line' }
-export type DrawablePolygon = Polygon & Drawable & { toolId: string; type: 'polygon' }
-export type DrawableCurve = Curve & Drawable & { toolId: string; type: 'curve' }
-export type DrawableBrush = Brush & Drawable & { toolId: string; type: 'brush' }
-export type DrawableCircle = Circle & Drawable & { toolId: string; type: 'circle' }
-export type DrawableEllipse = Ellipse & Drawable & { toolId: string; type: 'ellipse' }
+export type DrawableRect = Rect & Drawable & { type: 'rect' }
+export type DrawableSquare = Square & Drawable & { type: 'square' }
+export type DrawablePictureJson = StoredPicture & Drawable & { type: 'picture' }
+export type DrawablePicture = Picture & Drawable & { type: 'picture' }
+export type DrawableText = Text & Drawable & { type: 'text' }
+export type DrawableLine = Line & Drawable & { type: 'line' }
+export type DrawablePolygon = Polygon & Drawable & { type: 'polygon' }
+export type DrawableCurve = Curve & Drawable & { type: 'curve' }
+export type DrawableBrush = Brush & Drawable & { type: 'brush' }
+export type DrawableCircle = Circle & Drawable & { type: 'circle' }
+export type DrawableEllipse = Ellipse & Drawable & { type: 'ellipse' }
 
 export type DrawableShape =
   | DrawableRect

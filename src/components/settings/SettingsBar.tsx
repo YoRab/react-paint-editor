@@ -386,7 +386,7 @@ const SettingsBar = ({
   const handleShapeStyleChange = (field: string, value: string | number | boolean) => {
     if (selectedShape) {
       updateShape(_.set(['style', field], value, selectedShape), true)
-      updateToolSettings(selectedShape.toolId, field, value)
+      updateToolSettings(selectedShape.toolId || activeTool.id, field, value)
     } else {
       updateToolSettings(activeTool.id, field, value)
     }
@@ -411,7 +411,7 @@ const SettingsBar = ({
         height: fontSize * newShape.value.length
       }
       updateShape(resizedShape, true)
-      updateToolSettings(selectedShape.toolId, field, value)
+      updateToolSettings(selectedShape.toolId || activeTool.id, field, value)
     } else {
       updateToolSettings(activeTool.id, field, value)
     }
@@ -420,7 +420,7 @@ const SettingsBar = ({
   const handlePolygonLinesCount = (field: string, value: string | number) => {
     if (selectedShape) {
       updateShape(updatePolygonLinesCount(selectedShape as DrawablePolygon, value as number), true)
-      updateToolSettings(selectedShape.toolId, field, value)
+      updateToolSettings(selectedShape.toolId || activeTool.id, field, value)
     } else {
       updateToolSettings(activeTool.id, field, value)
     }
