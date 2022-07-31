@@ -1,4 +1,4 @@
-import { ShapeEnum } from 'types/Shapes'
+import type { ShapeType } from 'types/Shapes'
 import {
   brushIcon,
   circleIcon,
@@ -12,27 +12,27 @@ import {
   textIcon
 } from 'constants/icons'
 
-export const getShapePicture = (shape: ShapeEnum) => {
+export const getShapePicture = (shape: ShapeType) => {
   switch (shape) {
-    case ShapeEnum.brush:
+    case 'brush':
       return brushIcon
-    case ShapeEnum.line:
+    case 'line':
       return arrowIcon
-    case ShapeEnum.polygon:
+    case 'polygon':
       return polygonIcon
-    case ShapeEnum.curve:
+    case 'curve':
       return curveIcon
-    case ShapeEnum.rect:
+    case 'rect':
       return squareIcon // temporary
-    case ShapeEnum.square:
+    case 'square':
       return squareIcon
-    case ShapeEnum.circle:
+    case 'circle':
       return circleIcon
-    case ShapeEnum.ellipse:
+    case 'ellipse':
       return circleIcon // temporary
-    case ShapeEnum.text:
+    case 'text':
       return textIcon
-    case ShapeEnum.picture:
+    case 'picture':
       return pictureIcon
   }
 }

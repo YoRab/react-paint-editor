@@ -1,3 +1,8 @@
+# Next
+
+- rewrite types and get rid of enum
+- fix optional prop toolId in storage file
+
 # V0.6.5
 
 - add babel/runtime to dep to fix build

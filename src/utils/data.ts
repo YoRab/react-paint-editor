@@ -1,15 +1,14 @@
 import _ from 'lodash/fp'
 import { calculateTextFontSize, fitContentInsideContainer } from './transform'
-import {
+import type {
   DrawablePicture,
   Point,
   DrawableShape,
-  ShapeEnum,
   DrawableShapeJson,
   ExportDataType
 } from 'types/Shapes'
 import { fetchAndStringify, getBase64Image } from './file'
-import { CustomTool } from 'types/tools'
+import type { CustomTool } from 'types/tools'
 import { DEFAULT_SHAPE_PICTURE } from 'constants/tools'
 
 export const createPicture = (
@@ -30,8 +29,8 @@ export const createPicture = (
 
       const pictureShape: DrawablePicture = {
         toolId: DEFAULT_SHAPE_PICTURE.id,
-        type: ShapeEnum.picture,
-        id: _.uniqueId(`${ShapeEnum.picture}_`),
+        type: 'picture',
+        id: _.uniqueId(`${'picture'}_`),
         x: (maxPictureWidth - width) / 2,
         y: (maxPictureHeight - height) / 2,
         width,
@@ -74,11 +73,11 @@ export const createShape = (
   cursorPosition: Point
 ): DrawableShape | undefined => {
   switch (shape.type) {
-    case ShapeEnum.brush:
+    case 'brush':
       shape.settings
       return {
         toolId: shape.id,
-        type: ShapeEnum.brush,
+        type: shape.type,
         id: _.uniqueId(`${shape.type}_`),
         points: [[cursorPosition]],
         translation: [0, 0],
@@ -90,10 +89,10 @@ export const createShape = (
           lineDash: shape.settings.lineDash.default
         }
       }
-    case ShapeEnum.line:
+    case 'line':
       return {
         toolId: shape.id,
-        type: ShapeEnum.line,
+        type: shape.type,
         id: _.uniqueId(`${shape.type}_`),
         points: [cursorPosition, cursorPosition],
         translation: [0, 0],
@@ -106,10 +105,10 @@ export const createShape = (
           lineArrow: shape.settings.lineArrow.default
         }
       }
-    case ShapeEnum.polygon:
+    case 'polygon':
       return {
         toolId: shape.id,
-        type: ShapeEnum.polygon,
+        type: shape.type,
         id: _.uniqueId(`${shape.type}_`),
         points: _.flow(
           _.range(0),
@@ -126,10 +125,10 @@ export const createShape = (
           pointsCount: shape.settings.pointsCount.default
         }
       }
-    case ShapeEnum.curve:
+    case 'curve':
       return {
         toolId: shape.id,
-        type: ShapeEnum.curve,
+        type: shape.type,
         id: _.uniqueId(`${shape.type}_`),
         points: _.flow(
           _.range(0),
@@ -146,8 +145,8 @@ export const createShape = (
           pointsCount: shape.settings.pointsCount.default
         }
       }
-    case ShapeEnum.rect:
-    case ShapeEnum.square:
+    case 'rect':
+    case 'square':
       return {
         toolId: shape.id,
         type: shape.type,
@@ -166,7 +165,7 @@ export const createShape = (
           lineDash: shape.settings.lineDash.default
         }
       }
-    case ShapeEnum.text:
+    case 'text':
       const defaultValue: string[] = ['Texte']
       const fontSize = calculateTextFontSize(
         ctx,
@@ -178,7 +177,7 @@ export const createShape = (
       )
       return {
         toolId: shape.id,
-        type: ShapeEnum.text,
+        type: shape.type,
         id: _.uniqueId(`${shape.type}_`),
         x: cursorPosition[0],
         y: cursorPosition[1],
@@ -194,10 +193,10 @@ export const createShape = (
           fontFamily: shape.settings.fontFamily.default
         }
       }
-    case ShapeEnum.ellipse:
+    case 'ellipse':
       return {
         toolId: shape.id,
-        type: ShapeEnum.ellipse,
+        type: shape.type,
         id: _.uniqueId(`${shape.type}_`),
         x: cursorPosition[0],
         y: cursorPosition[1],
@@ -213,10 +212,10 @@ export const createShape = (
           lineDash: shape.settings.lineDash.default
         }
       }
-    case ShapeEnum.circle:
+    case 'circle':
       return {
         toolId: shape.id,
-        type: ShapeEnum.circle,
+        type: shape.type,
         id: _.uniqueId(`${shape.type}_`),
         x: cursorPosition[0],
         y: cursorPosition[1],
@@ -258,7 +257,7 @@ export const roundValues = <T extends unknown>(prop: T, precision = 2): T => {
 export const cleanShapesBeforeExport = (shapes: DrawableShape[]) => {
   const propsToOmit = ['img', 'id']
   return shapes.map(shape => {
-    if (shape.type === ShapeEnum.picture) {
+    if (shape.type === 'picture') {
       if (!shape.src.startsWith('http')) {
         return roundValues(_.omit(propsToOmit, { ...shape, src: getBase64Image(shape.img) }))
       }

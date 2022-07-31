@@ -1,4 +1,6 @@
-export const EXAMPLE_DEFAULT = [
+import { DrawableShapeJson } from 'types/Shapes'
+
+export const EXAMPLE_DEFAULT: DrawableShapeJson[] = [
   {
     type: 'brush',
     id: 'brush46060',

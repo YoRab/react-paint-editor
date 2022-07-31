@@ -1,7 +1,7 @@
 import _ from 'lodash/fp'
 import React, { useEffect, useState } from 'react'
 import { styled } from '@linaria/react'
-import { DrawablePolygon, DrawableShape, DrawableText } from 'types/Shapes'
+import type { DrawablePolygon, DrawableShape, DrawableText } from 'types/Shapes'
 import { calculateTextFontSize, updatePolygonLinesCount } from 'utils/transform'
 import ColorField from './ColorField'
 import DeleteButton from './DeleteButton'
@@ -11,7 +11,7 @@ import FontFamilyField from './FontFamilyField'
 import PointsNumberField from './PointsNumberField'
 import LineTypeField from './LineTypeField'
 import LineArrowField from './LineArrowField'
-import { CustomTool, ToolsType } from 'types/tools'
+import type { CustomTool, ToolsType } from 'types/tools'
 import ToggleField from './ToggleField'
 import { boldIcon, italicIcon, lineWidthIcon, opacityIcon, settingsIcon } from 'constants/icons'
 import Button from 'components/common/Button'
@@ -386,7 +386,7 @@ const SettingsBar = ({
   const handleShapeStyleChange = (field: string, value: string | number | boolean) => {
     if (selectedShape) {
       updateShape(_.set(['style', field], value, selectedShape), true)
-      updateToolSettings(selectedShape.toolId, field, value)
+      updateToolSettings(selectedShape.toolId || activeTool.id, field, value)
     } else {
       updateToolSettings(activeTool.id, field, value)
     }
@@ -411,7 +411,7 @@ const SettingsBar = ({
         height: fontSize * newShape.value.length
       }
       updateShape(resizedShape, true)
-      updateToolSettings(selectedShape.toolId, field, value)
+      updateToolSettings(selectedShape.toolId || activeTool.id, field, value)
     } else {
       updateToolSettings(activeTool.id, field, value)
     }
@@ -420,7 +420,7 @@ const SettingsBar = ({
   const handlePolygonLinesCount = (field: string, value: string | number) => {
     if (selectedShape) {
       updateShape(updatePolygonLinesCount(selectedShape as DrawablePolygon, value as number), true)
-      updateToolSettings(selectedShape.toolId, field, value)
+      updateToolSettings(selectedShape.toolId || activeTool.id, field, value)
     } else {
       updateToolSettings(activeTool.id, field, value)
     }

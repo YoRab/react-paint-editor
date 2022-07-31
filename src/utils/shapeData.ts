@@ -1,5 +1,5 @@
 import _ from 'lodash/fp'
-import {
+import type {
   Circle,
   Ellipse,
   Line,
@@ -129,13 +129,13 @@ const getShapeBorders = (marker: DrawableShape, selectionPadding: number): Rect 
       return getEllipseBorder(marker, selectionPadding)
     case 'rect':
     case 'square':
+    default:
       return getRectBorder(marker, selectionPadding)
     case 'text':
       return getTextBorder(marker, selectionPadding)
     case 'picture':
       return getPictureBorder(marker, selectionPadding)
   }
-  return { x: 0, y: 0, width: 0, height: 0 }
 }
 
 const getShapeCenter = (borders: Rect): Point => {

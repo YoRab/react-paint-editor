@@ -1,5 +1,6 @@
+import { ShapeTypeArray } from 'constants/shapes'
 import _ from 'lodash/fp'
-import { DrawableShape, DrawableShapeJson, ExportDataType, Point, ShapeEnum } from 'types/Shapes'
+import type { DrawableShape, DrawableShapeJson, ExportDataType, Point } from 'types/Shapes'
 import { addDefaultAndTempShapeProps, buildDataToExport } from './data'
 import { drawShape } from './draw'
 
@@ -75,8 +76,8 @@ export const decodeImportedData = async (shapesForJson: ExportDataType) => {
   const jsonShapes = shapesForJson.shapes
   const shapes: DrawableShape[] = _.flow(
     _.map((shape: DrawableShapeJson) => {
-      if (!_.includes(shape.type, ShapeEnum)) return null
-      if (shape.type === ShapeEnum.picture) {
+      if (!ShapeTypeArray.includes(shape.type)) return null
+      if (shape.type === 'picture') {
         const img = new Image()
         const newPromise = new Promise<void>((resolve, reject) => {
           img.onload = () => {

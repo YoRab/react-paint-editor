@@ -1,5 +1,5 @@
 import { RefObject, useEffect, useState } from 'react'
-import { DrawableShape } from 'types/Shapes'
+import type { DrawableShape } from 'types/Shapes'
 
 type useDragType = {
   disabled?: boolean

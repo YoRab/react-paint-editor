@@ -3,11 +3,11 @@ import React, { useEffect, useState, useTransition } from 'react'
 import Button from 'components/common/Button'
 import Panel from 'components/common/Panel'
 import { styled } from '@linaria/react'
-import { ShapeEnum } from 'types/Shapes'
+import type { ShapeType } from 'types/Shapes'
 import Tool from './Tool'
 import LoadFileTool from './LoadFileTool'
 import { publicIcon } from 'constants/icons'
-import { ToolsType } from 'types/tools'
+import type { ToolsType } from 'types/tools'
 import {
   CLEAR_TOOL,
   EXPORT_TOOL,
@@ -17,10 +17,9 @@ import {
   UNDO_TOOL,
   UPLOAD_PICTURE_TOOL
 } from 'constants/tools'
-const StyledPanel = styled(Panel)`
+
+const StyledPanelContent = styled.div`
   display: flex;
-  bottom: unset;
-  top: 100%;
 
   &[data-vertical='1'] {
     flex-direction: column;
@@ -36,7 +35,7 @@ type ToolbarGroupType = {
   activeTool: ToolsType
   withActionsInMenu: boolean
   group: {
-    tools?: ShapeEnum[]
+    tools?: ShapeType[]
     title: string
     img: string
   }
@@ -132,91 +131,93 @@ const MenuGroup = ({
         icon={groupIcon}
       />
       {isOpen && (
-        <StyledPanel vertical={vertical} alignment={alignment}>
-          {withActionsInMenu && (
-            <>
-              <Tool
-                withText={true}
-                type={UNDO_TOOL}
-                disabled={disabled || !hasActionToUndo}
-                img={UNDO_TOOL.icon}
-                isActive={activeTool.id === UNDO_TOOL.id}
-                setActive={undoAction}
-              />
-              <Tool
-                withText={true}
-                type={REDO_TOOL}
-                disabled={disabled || !hasActionToRedo}
-                img={REDO_TOOL.icon}
-                isActive={activeTool.id === REDO_TOOL.id}
-                setActive={redoAction}
-              />
-              <Tool
-                withText={true}
-                type={CLEAR_TOOL}
-                disabled={disabled || !hasActionToClear}
-                img={CLEAR_TOOL.icon}
-                isActive={activeTool.id === CLEAR_TOOL.id}
-                setActive={clearCanvas}
-              />
-              {(withUploadPicture || withUrlPicture || withLoadAndSave) && <hr />}
-            </>
-          )}
+        <Panel alignment={alignment} position="top">
+          <StyledPanelContent data-vertical={+vertical}>
+            {withActionsInMenu && (
+              <>
+                <Tool
+                  withText={true}
+                  type={UNDO_TOOL}
+                  disabled={disabled || !hasActionToUndo}
+                  img={UNDO_TOOL.icon}
+                  isActive={activeTool.id === UNDO_TOOL.id}
+                  setActive={undoAction}
+                />
+                <Tool
+                  withText={true}
+                  type={REDO_TOOL}
+                  disabled={disabled || !hasActionToRedo}
+                  img={REDO_TOOL.icon}
+                  isActive={activeTool.id === REDO_TOOL.id}
+                  setActive={redoAction}
+                />
+                <Tool
+                  withText={true}
+                  type={CLEAR_TOOL}
+                  disabled={disabled || !hasActionToClear}
+                  img={CLEAR_TOOL.icon}
+                  isActive={activeTool.id === CLEAR_TOOL.id}
+                  setActive={clearCanvas}
+                />
+                {(withUploadPicture || withUrlPicture || withLoadAndSave) && <hr />}
+              </>
+            )}
 
-          {withUploadPicture && (
-            <LoadFileTool
-              withText={true}
-              type={UPLOAD_PICTURE_TOOL}
-              disabled={disabled}
-              loadFile={addPicture}
-              img={UPLOAD_PICTURE_TOOL.icon}
-              accept="image/png, image/gif, image/jpeg"
-            />
-          )}
-          {withUrlPicture && (
-            <Button
-              disabled={disabled}
-              selected={false}
-              onClick={togglePictureUrlModal}
-              title="Add picture from URL"
-              icon={publicIcon}
-              children="Add picture from URL"
-            />
-          )}
-          {(withUploadPicture || withUrlPicture) && withLoadAndSave && <hr />}
-
-          {withLoadAndSave && (
-            <>
+            {withUploadPicture && (
               <LoadFileTool
                 withText={true}
-                type={LOAD_TOOL}
+                type={UPLOAD_PICTURE_TOOL}
                 disabled={disabled}
-                loadFile={loadFile}
-                img={LOAD_TOOL.icon}
-                accept="application/JSON"
+                loadFile={addPicture}
+                img={UPLOAD_PICTURE_TOOL.icon}
+                accept="image/png, image/gif, image/jpeg"
               />
+            )}
+            {withUrlPicture && (
+              <Button
+                disabled={disabled}
+                selected={false}
+                onClick={togglePictureUrlModal}
+                title="Add picture from URL"
+                icon={publicIcon}
+                children="Add picture from URL"
+              />
+            )}
+            {(withUploadPicture || withUrlPicture) && withLoadAndSave && <hr />}
 
+            {withLoadAndSave && (
+              <>
+                <LoadFileTool
+                  withText={true}
+                  type={LOAD_TOOL}
+                  disabled={disabled}
+                  loadFile={loadFile}
+                  img={LOAD_TOOL.icon}
+                  accept="application/JSON"
+                />
+
+                <Tool
+                  withText={true}
+                  disabled={disabled}
+                  type={SAVE_TOOL}
+                  img={SAVE_TOOL.icon}
+                  isActive={activeTool.id === SAVE_TOOL.id}
+                  setActive={saveFile}
+                />
+              </>
+            )}
+            {withExport && (
               <Tool
                 withText={true}
                 disabled={disabled}
-                type={SAVE_TOOL}
-                img={SAVE_TOOL.icon}
-                isActive={activeTool.id === SAVE_TOOL.id}
-                setActive={saveFile}
+                type={EXPORT_TOOL}
+                img={EXPORT_TOOL.icon}
+                isActive={activeTool.id === EXPORT_TOOL.id}
+                setActive={exportCanvasInFile}
               />
-            </>
-          )}
-          {withExport && (
-            <Tool
-              withText={true}
-              disabled={disabled}
-              type={EXPORT_TOOL}
-              img={EXPORT_TOOL.icon}
-              isActive={activeTool.id === EXPORT_TOOL.id}
-              setActive={exportCanvasInFile}
-            />
-          )}
-        </StyledPanel>
+            )}
+          </StyledPanelContent>
+        </Panel>
       )}
     </StyledRelative>
   ) : null

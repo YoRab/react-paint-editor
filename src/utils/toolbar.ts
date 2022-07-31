@@ -1,7 +1,7 @@
-import { ShapeEnum } from 'types/Shapes'
+import type { ShapeType } from 'types/Shapes'
 import _ from 'lodash/fp'
-import { CustomTool, CustomToolInput } from 'types/tools'
-import { RecursivePartial } from 'types/utils'
+import type { CustomTool, CustomToolInput } from 'types/tools'
+import type { RecursivePartial } from 'types/utils'
 import {
   DEFAULT_SHAPE_BRUSH,
   DEFAULT_SHAPE_CIRCLE,
@@ -18,16 +18,16 @@ import {
 export const getCurrentStructure = (
   availableTools: CustomTool[],
   defaultStructure: (
-    | ShapeEnum
+    | ShapeType
     | {
         title: string
-        toolsType: ShapeEnum[]
+        toolsType: ShapeType[]
         vertical: boolean
       }
   )[]
 ) => {
   return _.flow(
-    _.flatMap((group: ShapeEnum | { title: string; vertical: boolean; toolsType: ShapeEnum[] }) => {
+    _.flatMap((group: ShapeType | { title: string; vertical: boolean; toolsType: ShapeType[] }) => {
       if (!_.isObject(group)) {
         return _.filter({ type: group }, availableTools)
       }
@@ -57,23 +57,23 @@ export const sanitizeTools = (tools: RecursivePartial<CustomToolInput>[], withPi
     _.map((tool: RecursivePartial<CustomToolInput>) => {
       if (!_.isObject(tool)) return null
       switch (_.get('type', tool)) {
-        case ShapeEnum.brush:
+        case 'brush':
           return _.mergeWith(customizer, DEFAULT_SHAPE_BRUSH, tool)
-        case ShapeEnum.circle:
+        case 'circle':
           return _.mergeWith(customizer, DEFAULT_SHAPE_CIRCLE, tool)
-        case ShapeEnum.curve:
+        case 'curve':
           return _.mergeWith(customizer, DEFAULT_SHAPE_CURVE, tool)
-        case ShapeEnum.ellipse:
+        case 'ellipse':
           return _.mergeWith(customizer, DEFAULT_SHAPE_ELLIPSE, tool)
-        case ShapeEnum.line:
+        case 'line':
           return _.mergeWith(customizer, DEFAULT_SHAPE_LINE, tool)
-        case ShapeEnum.polygon:
+        case 'polygon':
           return _.mergeWith(customizer, DEFAULT_SHAPE_POLYGON, tool)
-        case ShapeEnum.rect:
+        case 'rect':
           return _.mergeWith(customizer, DEFAULT_SHAPE_RECT, tool)
-        case ShapeEnum.square:
+        case 'square':
           return _.mergeWith(customizer, DEFAULT_SHAPE_SQUARE, tool)
-        case ShapeEnum.text:
+        case 'text':
           return _.mergeWith(customizer, DEFAULT_SHAPE_TEXT, tool)
       }
       return null

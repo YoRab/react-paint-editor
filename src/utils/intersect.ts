@@ -4,8 +4,8 @@ import {
   SELECTION_ROTATED_ANCHOR_POSITION
 } from 'constants/shapes'
 import _ from 'lodash/fp'
-import { HoverModeData, SelectionModeLib } from 'types/Mode'
-import { Point, Rect, DrawableShape, ShapeEnum } from 'types/Shapes'
+import type { HoverModeData } from 'types/Mode'
+import type { Point, Rect, DrawableShape } from 'types/Shapes'
 import { getShapeInfos } from './shapeData'
 
 export const getCursorPosition = (
@@ -128,11 +128,7 @@ export const checkPositionIntersection = (
   )
 
   if (checkAnchors) {
-    if (
-      shape.type === ShapeEnum.line ||
-      shape.type === ShapeEnum.polygon ||
-      shape.type === ShapeEnum.curve
-    ) {
+    if (shape.type === 'line' || shape.type === 'polygon' || shape.type === 'curve') {
       for (let i = 0; i < shape.points.length; i++) {
         if (
           isPointInsideRect(
@@ -145,7 +141,7 @@ export const checkPositionIntersection = (
             newPosition
           )
         ) {
-          return { mode: SelectionModeLib.resize, anchor: i }
+          return { mode: 'resize', anchor: i }
         }
       }
     } else {
@@ -163,7 +159,7 @@ export const checkPositionIntersection = (
           newPosition
         )
       ) {
-        return { mode: SelectionModeLib.rotate }
+        return { mode: 'rotate' }
       }
 
       for (const anchorPosition of SELECTION_RESIZE_ANCHOR_POSITIONS) {
@@ -184,11 +180,11 @@ export const checkPositionIntersection = (
             newPosition
           )
         ) {
-          return { mode: SelectionModeLib.resize, anchor: anchorPosition }
+          return { mode: 'resize', anchor: anchorPosition }
         }
       }
     }
   }
 
-  return isPointInsideRect(borders, newPosition) ? { mode: SelectionModeLib.translate } : false
+  return isPointInsideRect(borders, newPosition) ? { mode: 'translate' } : false
 }
