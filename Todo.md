@@ -7,7 +7,6 @@
 
 ## structure
 
-- **get rid of enum for better typescript**
 - **big clean (composants, style, types)**
 - Clean and harmonize props
 - Utils + Tests !
