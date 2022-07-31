@@ -87,7 +87,6 @@ const EditTextBox = ({
 
     return getPointPositionBeforeCanvasTransformation(
       [borders.x, borders.y],
-      [-shape.translation[0], -shape.translation[1]],
       shape.rotation,
       center
     )

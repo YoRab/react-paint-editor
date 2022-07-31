@@ -1,13 +1,5 @@
 import type { Point, DrawableShape } from './Shapes'
 
-export type SelectionModeType =
-  | 'default'
-  | 'brush'
-  | 'resize'
-  | 'rotate'
-  | 'translate'
-  | 'textedition'
-
 export type SelectionModeDefault = {
   mode: 'default'
 }

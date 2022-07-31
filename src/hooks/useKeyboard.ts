@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import type { DrawableShape } from 'types/Shapes'
 import _ from 'lodash/fp'
 import { copyShape } from 'utils/data'
+import { translateShape } from 'utils/transform'
 
 const KeyboardCode = {
   ArrowUp: 'ArrowUp',
@@ -85,40 +86,16 @@ const useKeyboard = ({
       if (isEditingText) return
       switch (e.key) {
         case KeyboardCode.ArrowLeft:
-          updateShape(
-            _.set(
-              'translation',
-              [selectedShape.translation[0] - 1, selectedShape.translation[1]],
-              selectedShape
-            )
-          )
+          updateShape(translateShape([-1, 0], selectedShape, [0, 0]))
           break
         case KeyboardCode.ArrowRight:
-          updateShape(
-            _.set(
-              'translation',
-              [selectedShape.translation[0] + 1, selectedShape.translation[1]],
-              selectedShape
-            )
-          )
+          updateShape(translateShape([1, 0], selectedShape, [0, 0]))
           break
         case KeyboardCode.ArrowDown:
-          updateShape(
-            _.set(
-              'translation',
-              [selectedShape.translation[0], selectedShape.translation[1] + 1],
-              selectedShape
-            )
-          )
+          updateShape(translateShape([0, 1], selectedShape, [0, 0]))
           break
         case KeyboardCode.ArrowUp:
-          updateShape(
-            _.set(
-              'translation',
-              [selectedShape.translation[0], selectedShape.translation[1] - 1],
-              selectedShape
-            )
-          )
+          updateShape(translateShape([0, -1], selectedShape, [0, 0]))
           break
         case KeyboardCode.Delete:
         case KeyboardCode.Backspace:

@@ -23,7 +23,6 @@ export type StyledShape = {
 type Drawable = {
   id: string
   toolId?: string
-  translation: Point
   rotation: number
 }
 

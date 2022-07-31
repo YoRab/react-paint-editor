@@ -1,5 +1,5 @@
 import _ from 'lodash/fp'
-import { calculateTextFontSize, fitContentInsideContainer } from './transform'
+import { calculateTextFontSize, fitContentInsideContainer, translateShape } from './transform'
 import type {
   DrawablePicture,
   Point,
@@ -37,7 +37,6 @@ export const createPicture = (
         height,
         src: fileOrUrl instanceof File ? img.src : fileOrUrl,
         img,
-        translation: [0, 0],
         rotation: 0
       }
       resolve(pictureShape)
@@ -80,7 +79,6 @@ export const createShape = (
         type: shape.type,
         id: _.uniqueId(`${shape.type}_`),
         points: [[cursorPosition]],
-        translation: [0, 0],
         rotation: 0,
         style: {
           globalAlpha: shape.settings.opacity.default,
@@ -95,7 +93,6 @@ export const createShape = (
         type: shape.type,
         id: _.uniqueId(`${shape.type}_`),
         points: [cursorPosition, cursorPosition],
-        translation: [0, 0],
         rotation: 0,
         style: {
           globalAlpha: shape.settings.opacity.default,
@@ -114,7 +111,6 @@ export const createShape = (
           _.range(0),
           _.map(() => cursorPosition)
         )(shape.settings.pointsCount.default),
-        translation: [0, 0],
         rotation: 0,
         style: {
           globalAlpha: shape.settings.opacity.default,
@@ -134,7 +130,6 @@ export const createShape = (
           _.range(0),
           _.map(() => cursorPosition)
         )(shape.settings.pointsCount.default),
-        translation: [0, 0],
         rotation: 0,
         style: {
           globalAlpha: shape.settings.opacity.default,
@@ -155,7 +150,6 @@ export const createShape = (
         y: cursorPosition[1],
         width: 1,
         height: 1,
-        translation: [0, 0],
         rotation: 0,
         style: {
           globalAlpha: shape.settings.opacity.default,
@@ -185,7 +179,6 @@ export const createShape = (
         fontSize,
         width: 50,
         height: fontSize * (defaultValue.length || 1),
-        translation: [0, 0],
         rotation: 0,
         style: {
           globalAlpha: shape.settings.opacity.default,
@@ -202,7 +195,6 @@ export const createShape = (
         y: cursorPosition[1],
         radiusX: 0,
         radiusY: 0,
-        translation: [0, 0],
         rotation: 0,
         style: {
           globalAlpha: shape.settings.opacity.default,
@@ -220,7 +212,6 @@ export const createShape = (
         x: cursorPosition[0],
         y: cursorPosition[1],
         radius: 0,
-        translation: [0, 0],
         rotation: 0,
         style: {
           globalAlpha: shape.settings.opacity.default,
@@ -235,9 +226,8 @@ export const createShape = (
 
 export const copyShape = (shape: DrawableShape) => {
   return {
-    ...shape,
-    id: _.uniqueId(`${shape.type}_`),
-    translation: [shape.translation[0] + 20, shape.translation[1] + 20]
+    ...translateShape([20, 20], shape, [0, 0]),
+    id: _.uniqueId(`${shape.type}_`)
   } as DrawableShape
 }
 

@@ -36,7 +36,7 @@ const applyShapeTransformations = (
 ) => {
   ctx.save()
   ctx.scale(responsiveScale, responsiveScale)
-  ctx.translate(marker.translation[0] + canvasOffset[0], marker.translation[1] + canvasOffset[1])
+  ctx.translate(canvasOffset[0], canvasOffset[1])
   if (marker.rotation !== 0) {
     const { center } = getShapeInfos(marker, selectionPadding)
     ctx.translate(center[0], center[1])
