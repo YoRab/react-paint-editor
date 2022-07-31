@@ -3,11 +3,11 @@ import React, { useEffect, useState, useTransition } from 'react'
 import Button from 'components/common/Button'
 import Panel from 'components/common/Panel'
 import { styled } from '@linaria/react'
-import { ShapeEnum } from 'types/Shapes'
+import type { ShapeType } from 'types/Shapes'
 import Tool from './Tool'
 import LoadFileTool from './LoadFileTool'
 import { publicIcon } from 'constants/icons'
-import { ToolsType } from 'types/tools'
+import type { ToolsType } from 'types/tools'
 import {
   CLEAR_TOOL,
   EXPORT_TOOL,
@@ -35,7 +35,7 @@ type ToolbarGroupType = {
   activeTool: ToolsType
   withActionsInMenu: boolean
   group: {
-    tools?: ShapeEnum[]
+    tools?: ShapeType[]
     title: string
     img: string
   }

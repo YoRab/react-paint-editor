@@ -1,8 +1,24 @@
 import { useEffect, useState } from 'react'
-import { DrawableShape } from 'types/Shapes'
+import type { DrawableShape } from 'types/Shapes'
 import _ from 'lodash/fp'
 import { copyShape } from 'utils/data'
-import { KeyboardCode, KeyboardCommand } from 'types/keyboard'
+
+const KeyboardCode = {
+  ArrowUp: 'ArrowUp',
+  ArrowDown: 'ArrowDown',
+  ArrowLeft: 'ArrowLeft',
+  ArrowRight: 'ArrowRight',
+  Delete: 'Delete',
+  Backspace: 'Backspace',
+  Escape: 'Escape',
+  Z: 'z',
+  Y: 'y'
+} as const
+
+const KeyboardCommand = {
+  Copy: 'copy',
+  Paste: 'paste'
+} as const
 
 type UseKeyboardType = {
   isInsideComponent: boolean

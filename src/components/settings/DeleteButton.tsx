@@ -1,6 +1,6 @@
 import React from 'react'
 import { trashIcon } from 'constants/icons'
-import { DrawableShape } from 'types/Shapes'
+import type { DrawableShape } from 'types/Shapes'
 import Button from 'components/common/Button'
 
 type DeleteShapeButtonType = {

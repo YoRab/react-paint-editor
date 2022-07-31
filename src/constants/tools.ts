@@ -1,6 +1,4 @@
-import { ShapeEnum } from 'types/Shapes'
-import {
-  ActionsEnum,
+import type {
   ActionsTool,
   CustomTool,
   ToolsBrushSettings,
@@ -300,7 +298,7 @@ export const SETTINGS_DEFAULT_CURVE: ToolsCurveSettings = {
 }
 
 export const DEFAULT_SHAPE_PICTURE: CustomTool = {
-  type: ShapeEnum.picture,
+  type: 'picture',
   id: `${PREFIX_ID}picture`,
   icon: pictureIcon,
   label: 'Image',
@@ -308,7 +306,7 @@ export const DEFAULT_SHAPE_PICTURE: CustomTool = {
 }
 
 export const DEFAULT_SHAPE_BRUSH: CustomTool = {
-  type: ShapeEnum.brush,
+  type: 'brush',
   id: `${PREFIX_ID}brush`,
   icon: brushIcon,
   label: 'Brosse',
@@ -316,7 +314,7 @@ export const DEFAULT_SHAPE_BRUSH: CustomTool = {
 }
 
 export const DEFAULT_SHAPE_LINE: CustomTool = {
-  type: ShapeEnum.line,
+  type: 'line',
   id: `${PREFIX_ID}line`,
   icon: arrowIcon,
   label: 'Ligne',
@@ -324,7 +322,7 @@ export const DEFAULT_SHAPE_LINE: CustomTool = {
 }
 
 export const DEFAULT_SHAPE_POLYGON: CustomTool = {
-  type: ShapeEnum.polygon,
+  type: 'polygon',
   id: `${PREFIX_ID}polygon`,
   icon: polygonIcon,
   label: 'Polygone',
@@ -332,7 +330,7 @@ export const DEFAULT_SHAPE_POLYGON: CustomTool = {
 }
 
 export const DEFAULT_SHAPE_CURVE: CustomTool = {
-  type: ShapeEnum.curve,
+  type: 'curve',
   id: `${PREFIX_ID}curve`,
   icon: curveIcon,
   label: 'Courbe',
@@ -340,7 +338,7 @@ export const DEFAULT_SHAPE_CURVE: CustomTool = {
 }
 
 export const DEFAULT_SHAPE_RECT: CustomTool = {
-  type: ShapeEnum.rect,
+  type: 'rect',
   id: `${PREFIX_ID}rect`,
   icon: squareIcon, // temporary
   label: 'Rectangle',
@@ -348,7 +346,7 @@ export const DEFAULT_SHAPE_RECT: CustomTool = {
 }
 
 export const DEFAULT_SHAPE_SQUARE: CustomTool = {
-  type: ShapeEnum.square,
+  type: 'square',
   id: `${PREFIX_ID}square`,
   icon: squareIcon,
   label: 'Carré',
@@ -356,7 +354,7 @@ export const DEFAULT_SHAPE_SQUARE: CustomTool = {
 }
 
 export const DEFAULT_SHAPE_CIRCLE: CustomTool = {
-  type: ShapeEnum.circle,
+  type: 'circle',
   id: `${PREFIX_ID}circle`,
   icon: circleIcon,
   label: 'Cercle',
@@ -364,14 +362,14 @@ export const DEFAULT_SHAPE_CIRCLE: CustomTool = {
 }
 
 export const DEFAULT_SHAPE_ELLIPSE: CustomTool = {
-  type: ShapeEnum.ellipse,
+  type: 'ellipse',
   id: `${PREFIX_ID}ellipse`,
   icon: circleIcon, // temporary
   label: 'Ellipse',
   settings: SETTINGS_DEFAULT_ELLIPSE
 }
 export const DEFAULT_SHAPE_TEXT: CustomTool = {
-  type: ShapeEnum.text,
+  type: 'text',
   id: `${PREFIX_ID}text`,
   icon: textIcon,
   label: 'Texte',
@@ -393,70 +391,70 @@ export const DEFAULT_SHAPE_TOOLS: CustomTool[] = [
 
 export const SELECTION_TOOL: ActionsTool = {
   id: `${PREFIX_ID}selection`,
-  type: ActionsEnum.selection,
+  type: 'selection',
   icon: cursorIcon,
   label: 'Sélection'
 }
 
 export const UNDO_TOOL: ActionsTool = {
   id: `${PREFIX_ID}undo`,
-  type: ActionsEnum.undo,
+  type: 'undo',
   icon: undoIcon,
   label: 'Undo'
 }
 
 export const REDO_TOOL: ActionsTool = {
   id: `${PREFIX_ID}redo`,
-  type: ActionsEnum.redo,
+  type: 'redo',
   icon: redoIcon,
   label: 'Redo'
 }
 
 export const CLEAR_TOOL: ActionsTool = {
   id: `${PREFIX_ID}clear`,
-  type: ActionsEnum.clear,
+  type: 'clear',
   icon: clearIcon,
   label: 'Clear'
 }
 
 export const EXPORT_TOOL: ActionsTool = {
   id: `${PREFIX_ID}export`,
-  type: ActionsEnum.export,
+  type: 'export',
   icon: exportFileIcon,
   label: 'Export PNG'
 }
 
 export const LOAD_TOOL: ActionsTool = {
   id: `${PREFIX_ID}load`,
-  type: ActionsEnum.loadFile,
+  type: 'loadfile',
   icon: openFileIcon,
   label: 'Load project'
 }
 
 export const SAVE_TOOL: ActionsTool = {
   id: `${PREFIX_ID}save`,
-  type: ActionsEnum.saveFile,
+  type: 'savefile',
   icon: saveIcon,
   label: 'Save project'
 }
 
 export const MOVE_TOOL: ActionsTool = {
   id: `${PREFIX_ID}move`,
-  type: ActionsEnum.move,
+  type: 'move',
   icon: cursorIcon,
   label: 'Move'
 }
 
 export const UPLOAD_PICTURE_TOOL: ActionsTool = {
   id: `${PREFIX_ID}upload-picture`,
-  type: ActionsEnum.uploadPicture,
+  type: 'uploadpicture',
   icon: pictureIcon,
   label: 'Upload picture'
 }
 
 export const ADD_URL_PICTURE_TOOL: ActionsTool = {
   id: `${PREFIX_ID}upload-picture`,
-  type: ActionsEnum.addUrlPicture,
+  type: 'addurlpicture',
   icon: pictureIcon,
   label: 'Add picture from URL'
 }

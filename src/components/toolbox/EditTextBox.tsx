@@ -1,7 +1,7 @@
 import { STYLE_FONT_DEFAULT } from 'constants/style'
 import React, { useEffect, useMemo, useRef } from 'react'
 import { styled } from '@linaria/react'
-import { DrawableText } from 'types/Shapes'
+import type { DrawableText } from 'types/Shapes'
 import { getPointPositionBeforeCanvasTransformation } from 'utils/intersect'
 import { getShapeInfos } from 'utils/shapeData'
 import { convertDivContentToStringArray, convertStringArrayToDivContent } from 'utils/string'

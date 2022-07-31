@@ -1,8 +1,7 @@
 import { menuIcon, shapesIcon } from 'constants/icons'
 import React, { useEffect, useState } from 'react'
 import { styled } from '@linaria/react'
-import { ShapeEnum } from 'types/Shapes'
-import { ToolsType } from 'types/tools'
+import type { ToolsType } from 'types/tools'
 import Button from 'components/common/Button'
 import { getCurrentStructure } from 'utils/toolbar'
 import ToolbarGroup from './ToolbarGroup'
@@ -10,9 +9,10 @@ import MenuGroup from './MenuGroup'
 import Tool from './Tool'
 import Modal from 'components/common/Modal'
 import PictureUrlModal from './PictureUrlInput'
-import { CustomTool } from 'types/tools'
+import type { CustomTool } from 'types/tools'
 import _ from 'lodash/fp'
 import { CLEAR_TOOL, REDO_TOOL, SELECTION_TOOL, UNDO_TOOL } from 'constants/tools'
+import type { ShapeType } from 'types/Shapes'
 
 const TOOL_WIDTH = 40
 
@@ -36,23 +36,30 @@ const StyledToolsModal = styled(Modal)`
   grid-template-columns: 1fr 1fr 1fr;
 `
 
-const TOOLBAR_STRUCTURE = [
+const TOOLBAR_STRUCTURE: (
+  | ShapeType
+  | {
+      title: string
+      toolsType: ShapeType[]
+      vertical: boolean
+    }
+)[] = [
   {
     title: 'brush',
-    toolsType: [ShapeEnum.brush],
+    toolsType: ['brush'],
     vertical: false
   },
   {
     title: 'lines',
-    toolsType: [ShapeEnum.line, ShapeEnum.curve, ShapeEnum.polygon],
+    toolsType: ['line', 'curve', 'polygon'],
     vertical: false
   },
   {
     title: 'shapes',
-    toolsType: [ShapeEnum.rect, ShapeEnum.square, ShapeEnum.circle, ShapeEnum.ellipse],
+    toolsType: ['rect', 'square', 'circle', 'ellipse'],
     vertical: false
   },
-  ShapeEnum.text
+  'text'
 ]
 
 type ToolboxType = {
@@ -140,10 +147,10 @@ const Toolbar = ({
     <>
       <StyledToolbox>
         {/* <Tool
-        type={ToolEnum.move}
+        type="move"
         label="move"
         imgSrc={moveIcon}
-        isActive={activeTool === ToolEnum.move}
+        isActive={activeTool === "move"}
         setActive={setActiveTool}
       /> */}
         <StyledShrinkableTools>
@@ -227,7 +234,7 @@ const Toolbar = ({
       {isMenuOpen && (
         <StyledToolsModal onClose={toggleTools}>
           {availableTools.map((toolType, index) =>
-            toolType.type === ShapeEnum.picture ? null : (
+            toolType.type === 'picture' ? null : (
               <Tool
                 disabled={disabled}
                 key={index}

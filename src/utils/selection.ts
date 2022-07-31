@@ -1,7 +1,7 @@
 import _ from 'lodash/fp'
 
-import { HoverModeData, SelectionModeData, SelectionModeLib } from 'types/Mode'
-import { Point, DrawableShape } from 'types/Shapes'
+import type { HoverModeData, SelectionModeData } from 'types/Mode'
+import type { Point, DrawableShape } from 'types/Shapes'
 import { checkPositionIntersection } from './intersect'
 import { getShapeInfos } from './shapeData'
 
@@ -13,7 +13,7 @@ export const getNewSelectionData = (
 ): SelectionModeData<Point | number> | undefined => {
   if (hoverMode.mode === 'translate') {
     return {
-      mode: SelectionModeLib.translate,
+      mode: 'translate',
       cursorStartPosition: cursorPosition,
       originalShape: selectedShape
     }
@@ -21,14 +21,14 @@ export const getNewSelectionData = (
     const { center: centerBeforeResize } = getShapeInfos(selectedShape, selectionPadding)
     const center: Point = [centerBeforeResize[0], centerBeforeResize[1]]
     return {
-      mode: SelectionModeLib.rotate,
+      mode: 'rotate',
       cursorStartPosition: cursorPosition,
       originalShape: selectedShape,
       center
     }
   } else if (hoverMode.mode === 'resize') {
     return {
-      mode: SelectionModeLib.resize,
+      mode: 'resize',
       cursorStartPosition: cursorPosition,
       originalShape: selectedShape,
       anchor: hoverMode.anchor
@@ -54,7 +54,7 @@ export const selectShape = (
       currentScale,
       true
     ) || {
-      mode: SelectionModeLib.default
+      mode: 'default'
     }
 
     const newSelectionMode = getNewSelectionData(
@@ -63,10 +63,7 @@ export const selectShape = (
       cursorPosition,
       selectionPadding
     )
-    if (
-      newSelectionMode?.mode === SelectionModeLib.resize ||
-      newSelectionMode?.mode === SelectionModeLib.rotate
-    ) {
+    if (newSelectionMode?.mode === 'resize' || newSelectionMode?.mode === 'rotate') {
       return { shape: selectedShape, mode: newSelectionMode }
     }
   }
@@ -84,7 +81,7 @@ export const selectShape = (
     return {
       shape: foundShape,
       mode: {
-        mode: SelectionModeLib.translate,
+        mode: 'translate',
         cursorStartPosition: cursorPosition,
         originalShape: foundShape
       }
@@ -93,7 +90,7 @@ export const selectShape = (
     return {
       shape: undefined,
       mode: {
-        mode: SelectionModeLib.default
+        mode: 'default'
       }
     }
   }

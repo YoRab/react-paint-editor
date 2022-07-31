@@ -1,8 +1,8 @@
 import _ from 'lodash/fp'
 
 import { getShapeInfos } from './shapeData'
-import { SelectionModeData, SelectionModeLib, SelectionModeResize } from 'types/Mode'
-import {
+import type { SelectionModeData, SelectionModeResize } from 'types/Mode'
+import type {
   DrawableCircle,
   DrawableEllipse,
   Point,
@@ -677,16 +677,16 @@ export const transformShape = (
   selectionMode: SelectionModeData<Point | number>,
   selectionPadding: number
 ) => {
-  if (selectionMode.mode === SelectionModeLib.brush) {
+  if (selectionMode.mode === 'brush') {
     return paintNewPointToShape(shape as DrawableBrush, cursorPosition)
-  } else if (selectionMode.mode === SelectionModeLib.translate) {
+  } else if (selectionMode.mode === 'translate') {
     return translateShape(
       shape,
       cursorPosition,
       selectionMode.originalShape,
       selectionMode.cursorStartPosition
     )
-  } else if (selectionMode.mode === SelectionModeLib.rotate) {
+  } else if (selectionMode.mode === 'rotate') {
     return rotateShape(
       shape,
       cursorPosition,
@@ -694,7 +694,7 @@ export const transformShape = (
       selectionMode.cursorStartPosition,
       selectionMode.center
     )
-  } else if (selectionMode.mode === SelectionModeLib.resize) {
+  } else if (selectionMode.mode === 'resize') {
     return resizeShape(
       ctx,
       shape,

@@ -1,6 +1,6 @@
 import React from 'react'
 import Button from 'components/common/Button'
-import { ToolsType } from 'types/tools'
+import type { ToolsType } from 'types/tools'
 
 type ToolType = {
   type: ToolsType

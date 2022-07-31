@@ -1,6 +1,6 @@
 import React, { MutableRefObject, useCallback, useEffect, useRef, useState } from 'react'
-import { DrawableShape, DrawableShapeJson, ExportDataType, Point } from 'types/Shapes'
-import { CustomToolInput, ToolsType } from 'types/tools'
+import type { DrawableShape, DrawableShapeJson, ExportDataType, Point } from 'types/Shapes'
+import type { CustomToolInput, ToolsType } from 'types/tools'
 import Canvas from './Canvas'
 import Layouts from './settings/Layouts'
 import Toolbar from './toolbox/Toolbar'
@@ -15,7 +15,7 @@ import {
   encodeShapesInString as encodeProjectDataInString,
   getCanvasImage
 } from 'utils/file'
-import { SelectionModeData, SelectionModeLib } from 'types/Mode'
+import type { SelectionModeData } from 'types/Mode'
 import useComponent from 'hooks/useComponent'
 import useShapes from 'hooks/useShapes'
 import SnackbarContainer from './common/Snackbar'
@@ -23,7 +23,7 @@ import useSnackbar from 'hooks/useSnackbar'
 import Loading from 'components/common/Loading'
 import { buildDataToExport } from 'utils/data'
 import useResizeObserver from 'hooks/useResizeObserver'
-import { RecursivePartial } from 'types/utils'
+import type { RecursivePartial } from 'types/utils'
 import {
   SELECTION_DEFAULT_COLOR,
   SELECTION_DEFAULT_PADDING,
@@ -262,7 +262,7 @@ const App = ({
   const [activeTool, setActiveTool] = useState<ToolsType>(SELECTION_TOOL)
 
   const [selectionMode, setSelectionMode] = useState<SelectionModeData<Point | number>>({
-    mode: SelectionModeLib.default
+    mode: 'default'
   })
 
   const [withGrid, setWithGrid] = useState(gridVisible)
@@ -461,7 +461,7 @@ const App = ({
 
   useKeyboard({
     isInsideComponent,
-    isEditingText: selectionMode.mode === SelectionModeLib.textedition,
+    isEditingText: selectionMode.mode === 'textedition',
     selectedShape,
     setSelectedShape,
     removeShape,

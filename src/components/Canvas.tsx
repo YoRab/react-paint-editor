@@ -1,14 +1,14 @@
 import React, { useCallback, useEffect, useImperativeHandle, useRef } from 'react'
 import { styled } from '@linaria/react'
 import _ from 'lodash/fp'
-import { DrawableShape, Point, ShapeEnum } from 'types/Shapes'
+import type { DrawableShape, Point } from 'types/Shapes'
 import { drawSelection, drawShape } from 'utils/draw'
-import { SelectionModeData, SelectionModeLib } from 'types/Mode'
+import type { SelectionModeData } from 'types/Mode'
 import { calculateTextWidth } from 'utils/transform'
 import EditTextBox from './toolbox/EditTextBox'
 import useDrawableCanvas from 'hooks/useDrawableCanvas'
 import { encodedTransparentIcon } from 'constants/icons'
-import { ActionsEnum, ToolsType } from 'types/tools'
+import type { ToolsType } from 'types/tools'
 
 const renderDrawCanvas = (
   drawCtx: CanvasRenderingContext2D,
@@ -26,7 +26,7 @@ const renderDrawCanvas = (
   const { width, height, scaleRatio } = canvasSize
   drawCtx.clearRect(0, 0, width, height)
   for (let i = shapes.length - 1; i >= 0; i--) {
-    if (selectionMode.mode !== SelectionModeLib.textedition || shapes[i] !== selectedShape) {
+    if (selectionMode.mode !== 'textedition' || shapes[i] !== selectedShape) {
       drawShape(drawCtx, shapes[i], scaleRatio, canvasOffset, selectionPadding)
     }
   }
@@ -50,7 +50,7 @@ const renderSelectionCanvas = (
   const { width, height, scaleRatio } = canvasSize
   selectionCtx.clearRect(0, 0, width, height)
   selectedShape &&
-    activeTool.type !== ShapeEnum.brush &&
+    activeTool.type !== 'brush' &&
     drawSelection({
       ctx: selectionCtx,
       shape: selectedShape,
@@ -59,7 +59,7 @@ const renderSelectionCanvas = (
       selectionPadding,
       selectionWidth,
       selectionColor,
-      withAnchors: selectionMode.mode !== SelectionModeLib.textedition
+      withAnchors: selectionMode.mode !== 'textedition'
     })
 }
 
@@ -206,7 +206,7 @@ const Canvas = React.forwardRef<HTMLCanvasElement, DrawerType>(
 
     const updateSelectedShapeText = useCallback(
       (newText: string[]) => {
-        if (selectedShape?.type !== ShapeEnum.text) return
+        if (selectedShape?.type !== 'text') return
 
         const ctx = drawCanvasRef.current?.getContext('2d')
         if (!ctx) return
@@ -290,31 +290,27 @@ const Canvas = React.forwardRef<HTMLCanvasElement, DrawerType>(
               height={canvasSize.height}
               data-grow={canGrow}
               cursor={
-                (activeTool.type !== ActionsEnum.selection &&
-                  activeTool.type !== ActionsEnum.move) ||
-                hoverMode.mode === SelectionModeLib.resize
+                (activeTool.type !== 'selection' && activeTool.type !== 'move') ||
+                hoverMode.mode === 'resize'
                   ? 'crosshair'
-                  : activeTool.type === ActionsEnum.move ||
-                    hoverMode.mode === SelectionModeLib.translate
+                  : activeTool.type === 'move' || hoverMode.mode === 'translate'
                   ? 'move'
-                  : hoverMode.mode === SelectionModeLib.rotate
+                  : hoverMode.mode === 'rotate'
                   ? 'grab'
                   : 'default'
               }
             />
           )}
-          {isEditMode &&
-            selectionMode.mode === SelectionModeLib.textedition &&
-            selectedShape?.type === ShapeEnum.text && (
-              <EditTextBox
-                scaleRatio={canvasSize.scaleRatio}
-                disabled={disabled}
-                shape={selectedShape}
-                defaultValue={selectionMode.defaultValue}
-                updateValue={updateSelectedShapeText}
-                selectionPadding={selectionPadding}
-              />
-            )}
+          {isEditMode && selectionMode.mode === 'textedition' && selectedShape?.type === 'text' && (
+            <EditTextBox
+              scaleRatio={canvasSize.scaleRatio}
+              disabled={disabled}
+              shape={selectedShape}
+              defaultValue={selectionMode.defaultValue}
+              updateValue={updateSelectedShapeText}
+              selectionPadding={selectionPadding}
+            />
+          )}
         </StyledCanvasContainer>
       </StyledCanvasBox>
     )

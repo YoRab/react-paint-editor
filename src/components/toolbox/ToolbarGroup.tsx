@@ -4,7 +4,7 @@ import Button from 'components/common/Button'
 import Panel from 'components/common/Panel'
 import { styled } from '@linaria/react'
 import Tool from './Tool'
-import { CustomTool, ToolsType } from 'types/tools'
+import type { CustomTool, ToolsType } from 'types/tools'
 
 const StyledPanelContent = styled.div`
   display: flex;

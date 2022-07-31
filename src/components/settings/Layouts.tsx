@@ -1,6 +1,6 @@
 import React, { useRef, useState } from 'react'
 import _ from 'lodash/fp'
-import { DrawableShape } from 'types/Shapes'
+import type { DrawableShape } from 'types/Shapes'
 import useDrag from 'hooks/useDrag'
 import {
   gridOffIcon,

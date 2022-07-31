@@ -1,16 +1,6 @@
-export enum ShapeEnum {
-  'brush' = 'brush',
-  'rect' = 'rect',
-  'square' = 'square',
-  'line' = 'line',
-  'polygon' = 'polygon',
-  'circle' = 'circle',
-  'curve' = 'curve',
-  'ellipse' = 'ellipse',
-  'picture' = 'picture',
-  'text' = 'text'
-}
+import { ShapeTypeArray } from 'constants/shapes'
 
+export type ShapeType = typeof ShapeTypeArray[number]
 export type Point = [number, number]
 
 export type StyledShape = {
@@ -90,18 +80,17 @@ export type Ellipse = StyledShape & {
   radiusX: number
   radiusY: number
 }
-export type DrawableRect = Rect & Drawable & { toolId: string; type: ShapeEnum.rect }
-export type DrawableSquare = Square & Drawable & { toolId: string; type: ShapeEnum.square }
-export type DrawablePictureJson = StoredPicture &
-  Drawable & { toolId: string; type: ShapeEnum.picture }
-export type DrawablePicture = Picture & Drawable & { toolId: string; type: ShapeEnum.picture }
-export type DrawableText = Text & Drawable & { toolId: string; type: ShapeEnum.text }
-export type DrawableLine = Line & Drawable & { toolId: string; type: ShapeEnum.line }
-export type DrawablePolygon = Polygon & Drawable & { toolId: string; type: ShapeEnum.polygon }
-export type DrawableCurve = Curve & Drawable & { toolId: string; type: ShapeEnum.curve }
-export type DrawableBrush = Brush & Drawable & { toolId: string; type: ShapeEnum.brush }
-export type DrawableCircle = Circle & Drawable & { toolId: string; type: ShapeEnum.circle }
-export type DrawableEllipse = Ellipse & Drawable & { toolId: string; type: ShapeEnum.ellipse }
+export type DrawableRect = Rect & Drawable & { toolId: string; type: 'rect' }
+export type DrawableSquare = Square & Drawable & { toolId: string; type: 'square' }
+export type DrawablePictureJson = StoredPicture & Drawable & { toolId: string; type: 'picture' }
+export type DrawablePicture = Picture & Drawable & { toolId: string; type: 'picture' }
+export type DrawableText = Text & Drawable & { toolId: string; type: 'text' }
+export type DrawableLine = Line & Drawable & { toolId: string; type: 'line' }
+export type DrawablePolygon = Polygon & Drawable & { toolId: string; type: 'polygon' }
+export type DrawableCurve = Curve & Drawable & { toolId: string; type: 'curve' }
+export type DrawableBrush = Brush & Drawable & { toolId: string; type: 'brush' }
+export type DrawableCircle = Circle & Drawable & { toolId: string; type: 'circle' }
+export type DrawableEllipse = Ellipse & Drawable & { toolId: string; type: 'ellipse' }
 
 export type DrawableShape =
   | DrawableRect

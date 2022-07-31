@@ -1,11 +1,11 @@
-import { ShapeEnum } from './Shapes'
+import type { ShapeType } from './Shapes'
 
 export type CustomToolInput = {
   id: string
-  type: ShapeEnum
+  type: ShapeType
   icon?: string
   label?: string
-  settings?: ToolsSettingsType<ShapeEnum>
+  settings?: ToolsSettingsType<ShapeType>
 }
 
 export type CustomTool = {
@@ -14,44 +14,44 @@ export type CustomTool = {
   label: string
 } & (
   | {
-      type: ShapeEnum.brush
-      settings: ToolsSettingsType<ShapeEnum.brush>
+      type: 'brush'
+      settings: ToolsSettingsType<'brush'>
     }
   | {
-      type: ShapeEnum.circle
-      settings: ToolsSettingsType<ShapeEnum.circle>
+      type: 'circle'
+      settings: ToolsSettingsType<'circle'>
     }
   | {
-      type: ShapeEnum.ellipse
-      settings: ToolsSettingsType<ShapeEnum.ellipse>
+      type: 'ellipse'
+      settings: ToolsSettingsType<'ellipse'>
     }
   | {
-      type: ShapeEnum.rect
-      settings: ToolsSettingsType<ShapeEnum.rect>
+      type: 'rect'
+      settings: ToolsSettingsType<'rect'>
     }
   | {
-      type: ShapeEnum.square
-      settings: ToolsSettingsType<ShapeEnum.square>
+      type: 'square'
+      settings: ToolsSettingsType<'square'>
     }
   | {
-      type: ShapeEnum.line
-      settings: ToolsSettingsType<ShapeEnum.line>
+      type: 'line'
+      settings: ToolsSettingsType<'line'>
     }
   | {
-      type: ShapeEnum.polygon
-      settings: ToolsSettingsType<ShapeEnum.polygon>
+      type: 'polygon'
+      settings: ToolsSettingsType<'polygon'>
     }
   | {
-      type: ShapeEnum.curve
-      settings: ToolsSettingsType<ShapeEnum.curve>
+      type: 'curve'
+      settings: ToolsSettingsType<'curve'>
     }
   | {
-      type: ShapeEnum.text
-      settings: ToolsSettingsType<ShapeEnum.text>
+      type: 'text'
+      settings: ToolsSettingsType<'text'>
     }
   | {
-      type: ShapeEnum.picture
-      settings: ToolsSettingsType<ShapeEnum.picture>
+      type: 'picture'
+      settings: ToolsSettingsType<'picture'>
     }
 )
 
@@ -177,44 +177,43 @@ export type ToolsCurveSettings = SettingsOpacity &
 
 export type ToolsPictureSettings = SettingsOpacity
 
-export type ToolsSettingsType<T extends ShapeEnum> = T extends ShapeEnum.rect
+export type ToolsSettingsType<T extends ShapeType> = T extends 'rect'
   ? ToolsRectSettings
-  : T extends ShapeEnum.square
+  : T extends 'square'
   ? ToolsSquareSettings
-  : T extends ShapeEnum.circle
+  : T extends 'circle'
   ? ToolsCircleSettings
-  : T extends ShapeEnum.ellipse
+  : T extends 'ellipse'
   ? ToolsEllipseSettings
-  : T extends ShapeEnum.text
+  : T extends 'text'
   ? ToolsTextSettings
-  : T extends ShapeEnum.line
+  : T extends 'line'
   ? ToolsLineSettings
-  : T extends ShapeEnum.brush
+  : T extends 'brush'
   ? ToolsBrushSettings
-  : T extends ShapeEnum.polygon
+  : T extends 'polygon'
   ? ToolsPolygonSettings
-  : T extends ShapeEnum.curve
+  : T extends 'curve'
   ? ToolsCurveSettings
-  : T extends ShapeEnum.picture
+  : T extends 'picture'
   ? ToolsPictureSettings
   : unknown // default
 
-export enum ActionsEnum {
-  selection = 'selection',
-  undo = 'undo',
-  redo = 'redo',
-  clear = 'clear',
-  export = 'export',
-  loadFile = 'loadfile',
-  saveFile = 'savefile',
-  move = 'move',
-  uploadPicture = 'uploadpicture',
-  addUrlPicture = 'addurlpicture'
-}
+export type ActionsType =
+  | 'selection'
+  | 'undo'
+  | 'redo'
+  | 'clear'
+  | 'export'
+  | 'loadfile'
+  | 'savefile'
+  | 'move'
+  | 'uploadpicture'
+  | 'addurlpicture'
 
 export type ActionsTool = {
   id: string
-  type: ActionsEnum
+  type: ActionsType
   icon: string
   label: string
 }

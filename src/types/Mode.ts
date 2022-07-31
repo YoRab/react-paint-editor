@@ -1,42 +1,41 @@
-import { Point, DrawableShape } from './Shapes'
+import type { Point, DrawableShape } from './Shapes'
 
-export enum SelectionModeLib {
-  'default' = 'default',
-  'brush' = 'brush',
-  'resize' = 'resize',
-  'rotate' = 'rotate',
-  'translate' = 'translate',
-  'textedition' = 'textedition'
-}
+export type SelectionModeType =
+  | 'default'
+  | 'brush'
+  | 'resize'
+  | 'rotate'
+  | 'translate'
+  | 'textedition'
 
 export type SelectionModeDefault = {
-  mode: SelectionModeLib.default
+  mode: 'default'
 }
 
 export type SelectionModeBrush = {
-  mode: SelectionModeLib.brush
+  mode: 'brush'
 }
 
 export type SelectionModeEditText = {
-  mode: SelectionModeLib.textedition
+  mode: 'textedition'
   defaultValue: string[]
 }
 
 export type SelectionModeResize<AnchorType extends Point | number = Point> = {
-  mode: SelectionModeLib.resize
+  mode: 'resize'
   cursorStartPosition: Point
   originalShape: DrawableShape
   anchor: AnchorType
 }
 
 export type SelectionModeRotate = {
-  mode: SelectionModeLib.rotate
+  mode: 'rotate'
   cursorStartPosition: Point
   originalShape: DrawableShape
   center: Point
 }
 export type SelectionModeTranslate = {
-  mode: SelectionModeLib.translate
+  mode: 'translate'
   cursorStartPosition: Point
   originalShape: DrawableShape
 }
@@ -51,21 +50,21 @@ export type SelectionModeData<AnchorType extends Point | number> =
 
 export type HoverModeData =
   | {
-      mode: SelectionModeLib.default
+      mode: 'default'
     }
   | {
-      mode: SelectionModeLib.resize
+      mode: 'resize'
       anchor: Point | number
     }
   | {
-      mode: SelectionModeLib.brush
+      mode: 'brush'
     }
   | {
-      mode: SelectionModeLib.rotate
+      mode: 'rotate'
     }
   | {
-      mode: SelectionModeLib.translate
+      mode: 'translate'
     }
   | {
-      mode: SelectionModeLib.textedition
+      mode: 'textedition'
     }
