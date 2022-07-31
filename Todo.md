@@ -2,23 +2,25 @@
 
 ## build
 
-- ladle
-- Migrer sous Vite
+- ladle + Vite
+- Build sous rollup ou Esbuild
 
 ## structure
 
-- get rid of enum for better typescript
-- big clean (composants, style, utils, types)
-- Tests !
+- **get rid of enum for better typescript**
+- **big clean (composants, style, types)**
+- Clean and harmonize props
+- Utils + Tests !
 
 ## core
 
-- get rid of translation prop (support previous save format by migrating it if import)
+- **get rid of translation prop (support previous save format by migrating it if import)**
 - améliorer perfs avec précalculs + usage de path
+- pré-rendre les images dans des canvas séparés
 
 ## features
 
-- true grid
+- **true grid**
 - add more settings
 - internationalization
 - add shortcuts (for tools) and show it in titles
@@ -29,8 +31,8 @@
 
 ## fixes
 
-- impossible de changer opacité si clic sur tool sans selectionner de shape
-- le sous menu des tool ne se cache pas tout le temps quand il faut
+- **impossible de changer opacité si clic sur tool sans selectionner de shape**
+- **le sous menu des tool ne se cache pas tout le temps quand il faut**
 - make selection padding works
 
 ## improvements
@@ -38,7 +40,8 @@
 - improve settings ui
 - better ui customization (with classname too)
 - better UI for curves and polygons
-- text tool : create automatically text shape when clicking on tool
+- **text tool : create automatically text shape when clicking on tool**
+- **text tool : add font size**
 - bordure des traits à revoir
 
 # Remarques de thomas :
