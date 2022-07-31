@@ -387,7 +387,7 @@ const App = ({
       setIsLoading(false)
     } catch (e) {
       if (e instanceof Error) {
-        addSnackbar({ type: 'Error', text: "L'export a échoué" })
+        addSnackbar({ type: 'error', text: "L'export a échoué" })
       }
       console.warn(e)
     } finally {
@@ -406,7 +406,7 @@ const App = ({
       setIsLoading(false)
     } catch (e) {
       if (e instanceof Error) {
-        addSnackbar({ type: 'Error', text: "L'enregistrement a échoué" })
+        addSnackbar({ type: 'error', text: "L'enregistrement a échoué" })
       }
       console.warn(e)
     } finally {
@@ -420,10 +420,10 @@ const App = ({
       try {
         const json = await decodeJson(file)
         await loadImportedData(json as ExportDataType)
-        addSnackbar({ type: 'Success', text: 'Fichier chargé !' })
+        addSnackbar({ type: 'success', text: 'Fichier chargé !' })
       } catch (e) {
         if (e instanceof Error) {
-          addSnackbar({ type: 'Error', text: 'Le chargement a échoué' })
+          addSnackbar({ type: 'error', text: 'Le chargement a échoué' })
         }
         console.warn(e)
       } finally {
@@ -441,7 +441,7 @@ const App = ({
         selectShape(pictureShape)
       } catch (e) {
         if (e instanceof Error) {
-          addSnackbar({ type: 'Error', text: 'Le chargement a échoué' })
+          addSnackbar({ type: 'error', text: 'Le chargement a échoué' })
         }
         console.warn(e)
       } finally {

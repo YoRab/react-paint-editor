@@ -15,19 +15,19 @@ const StyledSnackbar = styled.div`
   opacity: 0;
   transform: translate3d(0px, 40px, 0px);
 
-  &[data-type='Infos'] {
+  &[data-type='infos'] {
     /* Infos */
     background: #646464;
     color: white;
   }
 
-  &[data-type='Error'] {
+  &[data-type='error'] {
     /* Error */
     background: #911717;
     color: white;
   }
 
-  &[data-type='Success'] {
+  &[data-type='success'] {
     /* Success */
     background: #088900;
     color: white;

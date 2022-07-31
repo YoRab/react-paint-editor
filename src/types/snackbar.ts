@@ -1,4 +1,4 @@
-export type SnackbarTypeType = 'Infos' | 'Error' | 'Success'
+export type SnackbarTypeType = 'infos' | 'error' | 'success'
 
 export type SnackBarType = {
   id: string
