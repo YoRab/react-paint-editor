@@ -6,7 +6,7 @@ import {
   SELECTION_ROTATED_ANCHOR_POSITION
 } from 'constants/shapes'
 import { LINE_DASH_DATA, STYLE_FONT_DEFAULT } from 'constants/style'
-import {
+import type {
   Circle,
   Ellipse,
   Line,
