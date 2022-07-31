@@ -2,6 +2,7 @@
 
 - rewrite types and get rid of enum
 - fix optional prop toolId in storage file
+- fix opacity settings
 
 # V0.6.5
 

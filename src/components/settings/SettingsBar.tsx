@@ -338,7 +338,7 @@ const SettingsItems = ({
           step={activeTool.settings.opacity.step}
           unity="%"
           disabled={disabled}
-          field="globalAlpha"
+          field="opacity"
           value={activeTool.settings.opacity.default}
           valueChanged={handleShapeStyleChange}
         />
