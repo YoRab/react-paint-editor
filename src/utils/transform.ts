@@ -194,7 +194,7 @@ export const resizeBrush = (
   return {
     ...shapeWithNewDimensions,
     points: shapeWithNewDimensions.points.map(coord =>
-      coord.map(([x, y]) => [x + (newOppTrueX - oppTrueX), y + (newOppTrueY - oppTrueY)])
+      coord.map(([x, y]) => [x - (newOppTrueX - oppTrueX), y - (newOppTrueY - oppTrueY)])
     )
   }
 }
