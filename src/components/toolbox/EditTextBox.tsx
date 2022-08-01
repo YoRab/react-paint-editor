@@ -106,7 +106,8 @@ const EditTextBox = ({
       data-fontbold={shape.style?.fontBold ?? false}
       data-fontitalic={shape.style?.fontItalic ?? false}
       contentEditable={!disabled}
-      onInput={updateContentEditable}></StyledEditBox>
+      onInput={updateContentEditable}
+    />
   )
 }
 

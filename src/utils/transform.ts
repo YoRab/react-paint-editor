@@ -719,7 +719,7 @@ export const calculateTextFontSize = (
   )
 }
 
-export const calculateTextWidth = (
+const calculateTextWidth = (
   ctx: CanvasRenderingContext2D,
   text: string[],
   fontSize: number,
@@ -734,6 +734,49 @@ export const calculateTextWidth = (
       _.max
     )(text) ?? 20
   )
+}
+
+export const resizeTextShapeWithNewContent = (
+  ctx: CanvasRenderingContext2D,
+  shape: DrawableText,
+  newValue: string[]
+) => {
+  const newShape = _.set('value', newValue, shape)
+  const newWidth = calculateTextWidth(
+    ctx,
+    newShape.value,
+    newShape.fontSize,
+    newShape.style?.fontBold ?? false,
+    newShape.style?.fontItalic ?? false,
+    newShape.style?.fontFamily
+  )
+  const newHeight = newShape.fontSize * newShape.value.length
+
+  const resizedShape = {
+    ...newShape,
+    width: newWidth,
+    height: newHeight
+  }
+
+  const selectionPadding = 0
+  const { center } = getShapeInfos(shape, selectionPadding)
+
+  const { center: shapeWithNewDimensionsCenter } = getShapeInfos(resizedShape, selectionPadding)
+
+  const [oppTrueX, oppTrueY] = getRectOppositeAnchorAbsolutePosition([1, 0.5], center, shape)
+
+  const [newOppTrueX, newOppTrueY] = getRectOppositeAnchorAbsolutePosition(
+    [1, 0.5],
+    shapeWithNewDimensionsCenter,
+    resizedShape,
+    [false, false]
+  )
+
+  return {
+    ...resizedShape,
+    x: resizedShape.x - (newOppTrueX - oppTrueX),
+    y: resizedShape.y - (newOppTrueY - oppTrueY)
+  }
 }
 
 export const degreesToRadians = (degrees: number) => degrees * (Math.PI / 180)
