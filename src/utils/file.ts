@@ -3,6 +3,7 @@ import _ from 'lodash/fp'
 import type { DrawableShape, DrawableShapeJson, ExportDataType, Point } from 'types/Shapes'
 import { addDefaultAndTempShapeProps, buildDataToExport } from './data'
 import { drawShape } from './draw'
+import { migrateShapesV065 } from './migration'
 
 export const fetchAndStringify = (url: string) => {
   return fetch(url)
@@ -75,6 +76,7 @@ export const decodeImportedData = async (shapesForJson: ExportDataType) => {
   const promisesArray: Promise<void>[] = []
   const jsonShapes = shapesForJson.shapes
   const shapes: DrawableShape[] = _.flow(
+    shapes => migrateShapesV065(shapes),
     _.map((shape: DrawableShapeJson) => {
       if (!ShapeTypeArray.includes(shape.type)) return null
       if (shape.type === 'picture') {
