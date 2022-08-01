@@ -12,7 +12,6 @@
 
 ## core
 
-- **get rid of translation prop (support previous save format by migrating it if import)**
 - améliorer perfs avec précalculs + usage de path
 - pré-rendre les images dans des canvas séparés
 
