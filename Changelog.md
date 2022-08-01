@@ -3,6 +3,7 @@
 - rewrite types and get rid of enum
 - fix optional prop toolId in storage file
 - fix opacity settings
+- translation attribute has been removed from shapes
 
 # V0.6.5
 

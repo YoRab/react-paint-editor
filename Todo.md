@@ -12,7 +12,6 @@
 
 ## core
 
-- **get rid of translation prop (support previous save format by migrating it if import)**
 - améliorer perfs avec précalculs + usage de path
 - pré-rendre les images dans des canvas séparés
 
@@ -40,6 +39,7 @@
 - **text tool : create automatically text shape when clicking on tool**
 - **text tool : add font size**
 - bordure des traits à revoir
+- revoir la brosse : lacher la souris doit créer une autre forme
 
 # Remarques de thomas :
 

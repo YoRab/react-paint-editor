@@ -4,7 +4,7 @@ import _ from 'lodash/fp'
 import type { DrawableShape, Point } from 'types/Shapes'
 import { drawSelection, drawShape } from 'utils/draw'
 import type { SelectionModeData } from 'types/Mode'
-import { calculateTextWidth } from 'utils/transform'
+import { resizeTextShapeWithNewContent } from 'utils/transform'
 import EditTextBox from './toolbox/EditTextBox'
 import useDrawableCanvas from 'hooks/useDrawableCanvas'
 import { encodedTransparentIcon } from 'constants/icons'
@@ -210,21 +210,10 @@ const Canvas = React.forwardRef<HTMLCanvasElement, DrawerType>(
 
         const ctx = drawCanvasRef.current?.getContext('2d')
         if (!ctx) return
-        const newShape = _.set('value', newText, selectedShape)
-        const newWidth = calculateTextWidth(
-          ctx,
-          newShape.value,
-          newShape.fontSize,
-          newShape.style?.fontBold ?? false,
-          newShape.style?.fontItalic ?? false,
-          newShape.style?.fontFamily
-        )
-        const resizedShape = {
-          ...newShape,
-          width: newWidth,
-          height: newShape.fontSize * newShape.value.length
-        }
-        updateSingleShape(resizedShape)
+
+        const newShape = resizeTextShapeWithNewContent(ctx, selectedShape, newText)
+
+        updateSingleShape(newShape)
       },
       [updateSingleShape, selectedShape]
     )
