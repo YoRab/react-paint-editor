@@ -13,7 +13,7 @@
   ],
   "dependencies": {
     "@babel/runtime": "^7.16.7",
-    "@linaria/react": "^3.0.0-beta.15",
+    "@linaria/react": "4.1.2",
     "lodash": "^4.17.20"
   },
   "devDependencies": {
@@ -23,10 +23,10 @@
     "@babel/preset-env": "^7.16.8",
     "@babel/preset-react": "^7.16.7",
     "@babel/preset-typescript": "^7.16.7",
-    "@linaria/babel-preset": "^3.0.0-beta.15",
-    "@linaria/core": "^3.0.0-beta.15",
-    "@linaria/shaker": "^3.0.0-beta.15",
-    "@linaria/webpack-loader": "^3.0.0-beta.16",
+    "@linaria/babel-preset": "4.1.2",
+    "@linaria/core": "4.1.1",
+    "@linaria/shaker": "4.1.2",
+    "@linaria/webpack-loader": "4.1.2",
     "@testing-library/jest-dom": "^5.11.4",
     "@testing-library/react": "^11.1.0",
     "@testing-library/user-event": "^12.1.10",

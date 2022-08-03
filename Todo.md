@@ -14,6 +14,7 @@
 
 - améliorer perfs avec précalculs + usage de path
 - pré-rendre les images dans des canvas séparés
+- arrondir les positions pour optimiser le rendu
 
 ## features
 
@@ -38,7 +39,7 @@
 - better UI for curves and polygons
 - **text tool : create automatically text shape when clicking on tool**
 - **text tool : add font size**
-- bordure des traits à revoir
+- Revoir la collision avec souris et la bordure affichée pour les lignes
 - revoir la brosse : lacher la souris doit créer une autre forme
 
 # Remarques de thomas :
