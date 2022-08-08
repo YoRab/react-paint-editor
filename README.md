@@ -11,3 +11,4 @@
 - adding padding to selection result in wrong intersection calculs
 - Clear with custom callback breaks history stack
 - selection padding needs work
+- with shrunk or grown container, anchors selection is miscalculated

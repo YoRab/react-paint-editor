@@ -4,6 +4,8 @@
 - fix optional prop toolId in storage file
 - fix opacity settings
 - translation attribute has been removed from shapes
+- Always round values when creating or transforming shapes
+- Improve grid feature
 
 # V0.6.5
 
