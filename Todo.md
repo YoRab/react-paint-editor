@@ -26,20 +26,26 @@
 - lissage de traits
 - Move + zoom functionnality
 - fullscreen mode ?
+- **export as svg**
 
 ## fixes
 
 - **le sous menu des tool ne se cache pas tout le temps quand il faut**
 - make selection padding works
+- Clear with custom callback breaks history stack
+- TextEdit cursor overflow MINOR (quick fix : edit on modale ?)
+- dnd layout on mobile not working (fix : use dnd lib, or add touch listener to fake dnd, or provide alt UI)
+- circle resizing only goes one direction
 
 ## improvements
 
 - improve settings ui
 - better ui customization (with classname too)
 - better UI for curves and polygons
-- **text tool : create automatically text shape when clicking on tool**
-- **text tool : add font size**
+- text tool : create automatically text shape when clicking on tool
+- text tool : add font size
 - Revoir la collision avec souris et la bordure affichée pour les lignes
+- améliorer la sélection en mobile
 - revoir la brosse : lacher la souris doit créer une autre forme
 
 # Remarques de thomas :
