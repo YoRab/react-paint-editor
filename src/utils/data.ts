@@ -231,12 +231,12 @@ export const copyShape = (shape: DrawableShape) => {
   } as DrawableShape
 }
 
-export const roundValues = <T extends unknown>(prop: T, precision = 2): T => {
+export const roundValues = <T extends unknown>(prop: T, precision = 0): T => {
   if (_.isArray(prop)) {
-    return prop.map(roundValues) as T
+    return prop.map((value: unknown) => roundValues(value, precision)) as T
   }
   if (_.isObject(prop)) {
-    return _.mapValues(roundValues, prop) as T
+    return _.mapValues((value: unknown) => roundValues(value, precision), prop) as T
   }
   if (_.isNumber(prop)) {
     return +prop.toFixed(precision) as T
