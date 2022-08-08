@@ -1,10 +1,11 @@
 import _ from 'lodash/fp'
-import React, { useEffect, useState, useTransition } from 'react'
+import React, { useEffect, useRef, useState, useTransition } from 'react'
 import Button from 'components/common/Button'
 import Panel from 'components/common/Panel'
 import { styled } from '@linaria/react'
 import Tool from './Tool'
 import type { CustomTool, ToolsType } from 'types/tools'
+import { isEventInsideNode } from 'utils/dom'
 
 const StyledPanelContent = styled.div`
   display: flex;
@@ -42,6 +43,7 @@ const ToolbarGroup = ({
   disabled = false,
   setActiveToolFromId
 }: ToolbarGroupType) => {
+  const panelRef = useRef<HTMLDivElement | null>(null)
   const [isOpen, setIsOpen] = useState(false)
   const [, startTransition] = useTransition()
   const [localActiveTool, setLocalActiveTool] = useState<ToolsType | undefined>(undefined)
@@ -54,14 +56,17 @@ const ToolbarGroup = ({
   useEffect(() => {
     if (!isOpen) return
 
-    const closePanel = () => {
-      setIsOpen(false)
+    const closePanel = (event: MouseEvent | TouchEvent) => {
+      const isClickInsideToolbarGroup = isEventInsideNode(event, panelRef.current)
+      !isClickInsideToolbarGroup && setIsOpen(false)
     }
 
-    document.addEventListener('click', closePanel)
+    document.addEventListener('mousedown', closePanel, { passive: false })
+    document.addEventListener('touchstart', closePanel, { passive: false })
 
     return () => {
-      document.removeEventListener('click', closePanel)
+      document.removeEventListener('mousedown', closePanel)
+      document.removeEventListener('touchstart', closePanel)
     }
   }, [isOpen])
 
@@ -116,7 +121,7 @@ const ToolbarGroup = ({
       />
       {isOpen && (
         <Panel alignment={alignment} position="top">
-          <StyledPanelContent data-vertical={+group.vertical}>
+          <StyledPanelContent data-vertical={+group.vertical} ref={panelRef}>
             {group.toolsType.map((toolType, i) => (
               <Tool
                 disabled={disabled}

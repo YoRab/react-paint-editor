@@ -1,4 +1,5 @@
 import { RefObject, useEffect, useState } from 'react'
+import { isEventInsideNode } from 'utils/dom'
 
 type UseComponentType = {
   disabled: boolean
@@ -10,11 +11,7 @@ const useComponent = ({ disabled, componentRef }: UseComponentType) => {
 
   useEffect(() => {
     const onDetectClick = (event: MouseEvent | TouchEvent) => {
-      setIsInsideComponent(
-        !(event.target instanceof Node) || !componentRef.current
-          ? false
-          : componentRef.current.contains(event.target)
-      )
+      setIsInsideComponent(isEventInsideNode(event, componentRef.current))
     }
     if (disabled) {
       setIsInsideComponent(false)
