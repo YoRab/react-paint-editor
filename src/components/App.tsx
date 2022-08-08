@@ -461,6 +461,7 @@ const App = ({
 
   useKeyboard({
     isInsideComponent,
+    withGrid,
     isEditingText: selectionMode.mode === 'textedition',
     selectedShape,
     setSelectedShape,

@@ -1,5 +1,10 @@
 import _ from 'lodash/fp'
-import { calculateTextFontSize, fitContentInsideContainer, translateShape } from './transform'
+import {
+  calculateTextFontSize,
+  fitContentInsideContainer,
+  roundForGrid,
+  translateShape
+} from './transform'
 import type {
   DrawablePicture,
   Point,
@@ -69,8 +74,13 @@ export const createPicture = (
 export const createShape = (
   ctx: CanvasRenderingContext2D,
   shape: CustomTool,
-  cursorPosition: Point
+  cursorPosition: Point,
+  withGrid: boolean
 ): DrawableShape | undefined => {
+  const roundCursorPosition: Point = [
+    roundForGrid(cursorPosition[0], withGrid),
+    roundForGrid(cursorPosition[1], withGrid)
+  ]
   switch (shape.type) {
     case 'brush':
       shape.settings
@@ -78,7 +88,7 @@ export const createShape = (
         toolId: shape.id,
         type: shape.type,
         id: _.uniqueId(`${shape.type}_`),
-        points: [[cursorPosition]],
+        points: [[roundCursorPosition]],
         rotation: 0,
         style: {
           globalAlpha: shape.settings.opacity.default,
@@ -92,7 +102,7 @@ export const createShape = (
         toolId: shape.id,
         type: shape.type,
         id: _.uniqueId(`${shape.type}_`),
-        points: [cursorPosition, cursorPosition],
+        points: [roundCursorPosition, roundCursorPosition],
         rotation: 0,
         style: {
           globalAlpha: shape.settings.opacity.default,
@@ -109,7 +119,7 @@ export const createShape = (
         id: _.uniqueId(`${shape.type}_`),
         points: _.flow(
           _.range(0),
-          _.map(() => cursorPosition)
+          _.map(() => roundCursorPosition)
         )(shape.settings.pointsCount.default),
         rotation: 0,
         style: {
@@ -128,7 +138,7 @@ export const createShape = (
         id: _.uniqueId(`${shape.type}_`),
         points: _.flow(
           _.range(0),
-          _.map(() => cursorPosition)
+          _.map(() => roundCursorPosition)
         )(shape.settings.pointsCount.default),
         rotation: 0,
         style: {
@@ -146,8 +156,8 @@ export const createShape = (
         toolId: shape.id,
         type: shape.type,
         id: _.uniqueId(`${shape.type}_`),
-        x: cursorPosition[0],
-        y: cursorPosition[1],
+        x: roundCursorPosition[0],
+        y: roundCursorPosition[1],
         width: 1,
         height: 1,
         rotation: 0,
@@ -173,8 +183,8 @@ export const createShape = (
         toolId: shape.id,
         type: shape.type,
         id: _.uniqueId(`${shape.type}_`),
-        x: cursorPosition[0],
-        y: cursorPosition[1],
+        x: roundCursorPosition[0],
+        y: roundCursorPosition[1],
         value: defaultValue,
         fontSize,
         width: 50,
@@ -191,8 +201,8 @@ export const createShape = (
         toolId: shape.id,
         type: shape.type,
         id: _.uniqueId(`${shape.type}_`),
-        x: cursorPosition[0],
-        y: cursorPosition[1],
+        x: roundCursorPosition[0],
+        y: roundCursorPosition[1],
         radiusX: 0,
         radiusY: 0,
         rotation: 0,
@@ -209,8 +219,8 @@ export const createShape = (
         toolId: shape.id,
         type: shape.type,
         id: _.uniqueId(`${shape.type}_`),
-        x: cursorPosition[0],
-        y: cursorPosition[1],
+        x: roundCursorPosition[0],
+        y: roundCursorPosition[1],
         radius: 0,
         rotation: 0,
         style: {
@@ -224,9 +234,9 @@ export const createShape = (
   }
 }
 
-export const copyShape = (shape: DrawableShape) => {
+export const copyShape = (shape: DrawableShape, withGrid: boolean) => {
   return {
-    ...translateShape([20, 20], shape, [0, 0]),
+    ...translateShape([20, 20], shape, [0, 0], withGrid),
     id: _.uniqueId(`${shape.type}_`)
   } as DrawableShape
 }
