@@ -30,7 +30,6 @@
 
 ## fixes
 
-- **le sous menu des tool ne se cache pas tout le temps quand il faut**
 - make selection padding works
 - Clear with custom callback breaks history stack
 - TextEdit cursor overflow MINOR (quick fix : edit on modale ?)
