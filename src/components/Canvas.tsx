@@ -1,14 +1,13 @@
 import React, { useCallback, useEffect, useImperativeHandle, useRef } from 'react'
 import { styled } from '@linaria/react'
-import _ from 'lodash/fp'
 import type { DrawableShape, Point } from 'types/Shapes'
-import { drawSelection, drawShape } from 'utils/draw'
+import { drawGrid, drawSelection, drawShape, initDrawStyle } from 'utils/draw'
 import type { SelectionModeData } from 'types/Mode'
 import { resizeTextShapeWithNewContent } from 'utils/transform'
 import EditTextBox from './toolbox/EditTextBox'
 import useDrawableCanvas from 'hooks/useDrawableCanvas'
-import { encodedTransparentIcon } from 'constants/icons'
 import type { ToolsType } from 'types/tools'
+import type { GridFormatType } from 'constants/app'
 
 const renderDrawCanvas = (
   drawCtx: CanvasRenderingContext2D,
@@ -18,6 +17,7 @@ const renderDrawCanvas = (
     height: number
     scaleRatio: number
   },
+  gridFormat: GridFormatType,
   canvasOffset: Point,
   shapes: DrawableShape[],
   selectionPadding: number,
@@ -25,6 +25,8 @@ const renderDrawCanvas = (
 ) => {
   const { width, height, scaleRatio } = canvasSize
   drawCtx.clearRect(0, 0, width, height)
+  initDrawStyle(drawCtx)
+  gridFormat && drawGrid(drawCtx, width, height, scaleRatio, canvasOffset, gridFormat)
   for (let i = shapes.length - 1; i >= 0; i--) {
     if (selectionMode.mode !== 'textedition' || shapes[i] !== selectedShape) {
       drawShape(drawCtx, shapes[i], scaleRatio, canvasOffset, selectionPadding)
@@ -78,10 +80,6 @@ const StyledCanvasContainer = styled.div`
   overflow: hidden;
   display: grid;
 
-  &[data-grid='true'] {
-    background-image: url('data:image/svg+xml,${encodedTransparentIcon}');
-  }
-
   &[data-grow='true'] {
     width: 100%;
     height: 100%;
@@ -117,7 +115,7 @@ const StyledSelectionCanvas = styled.canvas<{
 `
 
 type DrawerType = {
-  withGrid: boolean
+  gridFormat: GridFormatType
   disabled?: boolean
   canGrow?: boolean
   canvasSize: {
@@ -149,7 +147,7 @@ type DrawerType = {
 const Canvas = React.forwardRef<HTMLCanvasElement, DrawerType>(
   (
     {
-      withGrid,
+      gridFormat,
       canGrow,
       disabled = false,
       canvasSize,
@@ -198,6 +196,7 @@ const Canvas = React.forwardRef<HTMLCanvasElement, DrawerType>(
       setSelectedShape,
       setCanvasOffsetStartPosition,
       updateSingleShape,
+      gridFormat,
       canvasOffset,
       saveShapes,
       setSelectionMode,
@@ -227,13 +226,22 @@ const Canvas = React.forwardRef<HTMLCanvasElement, DrawerType>(
             drawCtx,
             selectionMode,
             canvasSize,
+            gridFormat,
             canvasOffset,
             shapes,
             selectionPadding,
             selectedShape
           )
         )
-    }, [shapes, selectionMode, selectedShape, canvasOffset, canvasSize, selectionPadding])
+    }, [
+      shapes,
+      gridFormat,
+      selectionMode,
+      selectedShape,
+      canvasOffset,
+      canvasSize,
+      selectionPadding
+    ])
 
     useEffect(() => {
       const selectionCtx = selectionCanvasRef.current?.getContext('2d')
@@ -265,7 +273,7 @@ const Canvas = React.forwardRef<HTMLCanvasElement, DrawerType>(
 
     return (
       <StyledCanvasBox>
-        <StyledCanvasContainer data-grid={withGrid} data-grow={canGrow}>
+        <StyledCanvasContainer data-grow={canGrow}>
           <StyledDrawCanvas
             ref={drawCanvasRef}
             data-grow={canGrow}

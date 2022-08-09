@@ -1,3 +1,4 @@
+import type { GridFormatType } from 'constants/app'
 import {
   SELECTION_ANCHOR_SIZE,
   SELECTION_DEFAULT_COLOR,
@@ -5,7 +6,7 @@ import {
   SELECTION_RESIZE_ANCHOR_POSITIONS,
   SELECTION_ROTATED_ANCHOR_POSITION
 } from 'constants/shapes'
-import { LINE_DASH_DATA, STYLE_FONT_DEFAULT } from 'constants/style'
+import { GRID_STEP, LINE_DASH_DATA, STYLE_FONT_DEFAULT } from 'constants/style'
 import type {
   Circle,
   Ellipse,
@@ -49,6 +50,11 @@ const restoreShapeTransformations = (ctx: CanvasRenderingContext2D) => {
   ctx.restore()
 }
 
+export const initDrawStyle = (ctx: CanvasRenderingContext2D) => {
+  ctx.lineCap = 'round'
+  ctx.lineJoin = 'round'
+}
+
 const updateDrawStyle = (
   ctx: CanvasRenderingContext2D,
   style: {
@@ -66,8 +72,6 @@ const updateDrawStyle = (
     lineWidth = SELECTION_DEFAULT_WIDTH,
     lineDash = 0
   } = style
-  ctx.lineCap = 'round'
-  ctx.lineJoin = 'round'
   globalAlpha !== undefined && (ctx.globalAlpha = globalAlpha / 100)
   fillColor && (ctx.fillStyle = fillColor)
   strokeColor && (ctx.strokeStyle = strokeColor)
@@ -257,6 +261,38 @@ export const drawPicture = (ctx: CanvasRenderingContext2D, picture: Picture): vo
   ctx.beginPath()
 
   ctx.drawImage(picture.img, picture.x, picture.y, picture.width, picture.height)
+}
+
+export const drawGrid = (
+  ctx: CanvasRenderingContext2D,
+  width: number,
+  height: number,
+  responsiveScale: number,
+  canvasOffset: Point,
+  gridFormat: GridFormatType
+) => {
+  ctx.strokeStyle = 'rgb(220,220,220)'
+  ctx.lineWidth = 1
+  ctx.save()
+  ctx.scale(responsiveScale, responsiveScale)
+  ctx.beginPath()
+  const step = GRID_STEP[gridFormat - 1]
+
+  const horizontalOffset = -canvasOffset[0] % step
+  const verticalOffset = -canvasOffset[1] % step
+  const nbCols = Math.ceil(width / responsiveScale / step)
+  const nbRows = Math.ceil(height / responsiveScale / step)
+
+  for (let i = 0; i < nbCols; i++) {
+    ctx.moveTo(horizontalOffset + (i + 1) * step, verticalOffset)
+    ctx.lineTo(horizontalOffset + (i + 1) * step, verticalOffset + height / responsiveScale)
+  }
+  for (let i = 0; i < nbRows; i++) {
+    ctx.moveTo(horizontalOffset, verticalOffset + (i + 1) * step)
+    ctx.lineTo(horizontalOffset + width / responsiveScale, verticalOffset + (i + 1) * step)
+  }
+  ctx.stroke()
+  ctx.restore()
 }
 
 export const drawShape = (

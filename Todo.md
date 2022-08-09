@@ -14,11 +14,9 @@
 
 - améliorer perfs avec précalculs + usage de path
 - pré-rendre les images dans des canvas séparés
-- arrondir les positions pour optimiser le rendu
 
 ## features
 
-- **true grid**
 - add more settings
 - internationalization
 - add shortcuts (for tools) and show it in titles
@@ -26,6 +24,7 @@
 - lissage de traits
 - Move + zoom functionnality
 - fullscreen mode ?
+- select multi shapes
 - **export as svg**
 
 ## fixes
@@ -33,19 +32,21 @@
 - make selection padding works
 - Clear with custom callback breaks history stack
 - TextEdit cursor overflow MINOR (quick fix : edit on modale ?)
-- dnd layout on mobile not working (fix : use dnd lib, or add touch listener to fake dnd, or provide alt UI)
+- dnd layout on mobile not working (fix : add touch listener to fake dnd, or provide alt UI)
 - circle resizing only goes one direction
 
 ## improvements
 
 - improve settings ui
 - better ui customization (with classname too)
-- better UI for curves and polygons
+- **better UI for curves and polygons**
+- custom shapes
 - text tool : create automatically text shape when clicking on tool
-- text tool : add font size
-- Revoir la collision avec souris et la bordure affichée pour les lignes
+- **text tool : add font size**
+- **Revoir la collision avec souris et la bordure affichée pour les lignes**
 - améliorer la sélection en mobile
 - revoir la brosse : lacher la souris doit créer une autre forme
+- **add settings to toggle rec/square and circle/ellipse**
 
 # Remarques de thomas :
 

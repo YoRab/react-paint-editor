@@ -23,7 +23,13 @@ import {
   getPointPositionAfterCanvasTransformation,
   getPointPositionBeforeCanvasTransformation
 } from './intersect'
-import { STYLE_FONT_DEFAULT, STYLE_FONT_SIZE_DEFAULT } from 'constants/style'
+import {
+  GRID_ROTATION_STEPS,
+  GRID_STEP,
+  STYLE_FONT_DEFAULT,
+  STYLE_FONT_SIZE_DEFAULT
+} from 'constants/style'
+import type { GridFormatType } from 'constants/app'
 
 export const getNormalizedSize = (originalShape: Rect, width: number, height: number) => {
   const originalRatio = originalShape.width / originalShape.height
@@ -40,10 +46,16 @@ export const getNormalizedSize = (originalShape: Rect, width: number, height: nu
   return [width, height]
 }
 
+export const roundForGrid = (value: number, gridFormat: GridFormatType) => {
+  const step = value >= 0 ? GRID_STEP[gridFormat - 1] : -GRID_STEP[gridFormat - 1]
+  return gridFormat ? value + step / 2 - ((value + step / 2) % step) : Math.round(value)
+}
+
 export const translateShape = (
   cursorPosition: Point,
   originalShape: DrawableShape,
-  originalCursorPosition: Point
+  originalCursorPosition: Point,
+  gridFormat: GridFormatType
 ): DrawableShape => {
   switch (originalShape.type) {
     case 'rect':
@@ -54,45 +66,78 @@ export const translateShape = (
     default:
       return {
         ...originalShape,
-        x: originalShape.x + cursorPosition[0] - originalCursorPosition[0],
-        y: originalShape.y + cursorPosition[1] - originalCursorPosition[1]
+        x: roundForGrid(
+          originalShape.x + cursorPosition[0] - originalCursorPosition[0],
+          gridFormat
+        ),
+        y: roundForGrid(originalShape.y + cursorPosition[1] - originalCursorPosition[1], gridFormat)
       }
     case 'line':
       return {
         ...originalShape,
         points: originalShape.points.map(([x, y]) => [
-          x + cursorPosition[0] - originalCursorPosition[0],
-          y + cursorPosition[1] - originalCursorPosition[1]
+          roundForGrid(x + cursorPosition[0] - originalCursorPosition[0], gridFormat),
+          roundForGrid(y + cursorPosition[1] - originalCursorPosition[1], gridFormat)
         ]) as [Point, Point]
       }
     case 'polygon':
     case 'curve':
-      return {
-        ...originalShape,
-        points: originalShape.points.map(([x, y]) => [
-          x + cursorPosition[0] - originalCursorPosition[0],
-          y + cursorPosition[1] - originalCursorPosition[1]
-        ]) as Point[]
+      if (gridFormat) {
+        const { borders } = getShapeInfos(originalShape, 0)
+        const translationX =
+          roundForGrid(borders.x + cursorPosition[0] - originalCursorPosition[0], gridFormat) -
+          borders.x
+        const translationY =
+          roundForGrid(borders.y + cursorPosition[1] - originalCursorPosition[1], gridFormat) -
+          borders.y
+        return {
+          ...originalShape,
+          points: originalShape.points.map(([x, y]) => [x + translationX, y + translationY])
+        }
+      } else {
+        return {
+          ...originalShape,
+          points: originalShape.points.map(([x, y]) => [
+            roundForGrid(x + cursorPosition[0] - originalCursorPosition[0], gridFormat),
+            roundForGrid(y + cursorPosition[1] - originalCursorPosition[1], gridFormat)
+          ]) as Point[]
+        }
       }
     case 'brush':
-      return {
-        ...originalShape,
-        points: originalShape.points.map(coord =>
-          coord.map(([x, y]) => [
-            x + cursorPosition[0] - originalCursorPosition[0],
-            y + cursorPosition[1] - originalCursorPosition[1]
-          ])
-        ) as Point[][]
+      if (gridFormat) {
+        const { borders } = getShapeInfos(originalShape, 0)
+        const translationX =
+          roundForGrid(borders.x + cursorPosition[0] - originalCursorPosition[0], gridFormat) -
+          borders.x
+        const translationY =
+          roundForGrid(borders.y + cursorPosition[1] - originalCursorPosition[1], gridFormat) -
+          borders.y
+        return {
+          ...originalShape,
+          points: originalShape.points.map(coord =>
+            coord.map(([x, y]) => [x + translationX, y + translationY])
+          ) as Point[][]
+        }
+      } else {
+        return {
+          ...originalShape,
+          points: originalShape.points.map(coord =>
+            coord.map(([x, y]) => [
+              x + cursorPosition[0] - originalCursorPosition[0],
+              y + cursorPosition[1] - originalCursorPosition[1]
+            ])
+          ) as Point[][]
+        }
       }
   }
 }
-
 export const rotateShape = (
   shape: DrawableShape,
   cursorPosition: Point,
   originalShape: DrawableShape,
   originalCursorPosition: Point,
-  shapeCenter: Point
+  shapeCenter: Point,
+  gridFormat: GridFormatType
 ) => {
   const p1x = shapeCenter[0] - originalCursorPosition[0]
   const p1y = shapeCenter[1] - originalCursorPosition[1]
@@ -102,7 +147,11 @@ export const rotateShape = (
   return {
     ...shape,
     ...{
-      rotation
+      rotation: gridFormat
+        ? rotation +
+          Math.PI / GRID_ROTATION_STEPS / 2 -
+          ((rotation + Math.PI / GRID_ROTATION_STEPS / 2) % (Math.PI / GRID_ROTATION_STEPS))
+        : rotation
     }
   }
 }
@@ -668,6 +717,7 @@ export const transformShape = (
   ctx: CanvasRenderingContext2D,
   shape: DrawableShape,
   cursorPosition: Point,
+  gridFormat: GridFormatType,
   canvasOffset: Point,
   selectionMode: SelectionModeData<Point | number>,
   selectionPadding: number
@@ -678,7 +728,8 @@ export const transformShape = (
     return translateShape(
       cursorPosition,
       selectionMode.originalShape,
-      selectionMode.cursorStartPosition
+      selectionMode.cursorStartPosition,
+      gridFormat
     )
   } else if (selectionMode.mode === 'rotate') {
     return rotateShape(
@@ -686,13 +737,18 @@ export const transformShape = (
       cursorPosition,
       selectionMode.originalShape,
       selectionMode.cursorStartPosition,
-      selectionMode.center
+      selectionMode.center,
+      gridFormat
     )
   } else if (selectionMode.mode === 'resize') {
+    const roundCursorPosition: Point = [
+      roundForGrid(cursorPosition[0], gridFormat),
+      roundForGrid(cursorPosition[1], gridFormat)
+    ]
     return resizeShape(
       ctx,
       shape,
-      cursorPosition,
+      roundCursorPosition,
       canvasOffset,
       selectionMode.originalShape,
       selectionMode,

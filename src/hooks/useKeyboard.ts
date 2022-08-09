@@ -1,6 +1,7 @@
+import type { GridFormatType } from 'constants/app'
+import { GRID_STEP } from 'constants/style'
 import { useEffect, useState } from 'react'
-import type { DrawableShape } from 'types/Shapes'
-import _ from 'lodash/fp'
+import type { DrawableShape, Point } from 'types/Shapes'
 import { copyShape } from 'utils/data'
 import { translateShape } from 'utils/transform'
 
@@ -31,9 +32,11 @@ type UseKeyboardType = {
   backwardShape: () => void
   forwardShape: () => void
   isEditingText: boolean
+  gridFormat: GridFormatType
 }
 
 const useKeyboard = ({
+  gridFormat,
   isInsideComponent,
   selectedShape,
   isEditingText,
@@ -59,7 +62,7 @@ const useKeyboard = ({
       if (!copiedShape) return
       if (isEditingText) return
       e.preventDefault()
-      pasteShape(copyShape(copiedShape))
+      pasteShape(copyShape(copiedShape, gridFormat))
     }
 
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -84,18 +87,18 @@ const useKeyboard = ({
         return
       }
       if (isEditingText) return
+      const translationMap: { [key: string]: Point } = {
+        [KeyboardCode.ArrowLeft]: [gridFormat ? -GRID_STEP[gridFormat - 1] : -1, 0],
+        [KeyboardCode.ArrowRight]: [gridFormat ? GRID_STEP[gridFormat - 1] : 1, 0],
+        [KeyboardCode.ArrowDown]: [0, gridFormat ? GRID_STEP[gridFormat - 1] : 1],
+        [KeyboardCode.ArrowUp]: [0, gridFormat ? -GRID_STEP[gridFormat - 1] : -1]
+      }
       switch (e.key) {
         case KeyboardCode.ArrowLeft:
-          updateShape(translateShape([-1, 0], selectedShape, [0, 0]))
-          break
         case KeyboardCode.ArrowRight:
-          updateShape(translateShape([1, 0], selectedShape, [0, 0]))
-          break
         case KeyboardCode.ArrowDown:
-          updateShape(translateShape([0, 1], selectedShape, [0, 0]))
-          break
         case KeyboardCode.ArrowUp:
-          updateShape(translateShape([0, -1], selectedShape, [0, 0]))
+          updateShape(translateShape(translationMap[e.key], selectedShape, [0, 0], gridFormat))
           break
         case KeyboardCode.Delete:
         case KeyboardCode.Backspace:
@@ -119,6 +122,7 @@ const useKeyboard = ({
     }
   }, [
     isInsideComponent,
+    gridFormat,
     copiedShape,
     isEditingText,
     selectedShape,

@@ -5,6 +5,8 @@
 - fix opacity settings
 - fix toolbar menu not hiding after starting to create shape
 - translation attribute has been removed from shapes
+- Always round values when creating or transforming shapes
+- Improve grid feature
 
 # V0.6.5
 

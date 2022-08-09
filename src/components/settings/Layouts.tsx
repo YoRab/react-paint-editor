@@ -4,7 +4,6 @@ import type { DrawableShape } from 'types/Shapes'
 import useDrag from 'hooks/useDrag'
 import {
   gridOffIcon,
-  gridOnIcon,
   lockedIcon,
   trashIcon,
   unlockedIcon,
@@ -15,6 +14,7 @@ import { getShapePicture } from 'utils/style'
 import { styled } from '@linaria/react'
 import Button from 'components/common/Button'
 import Panel from 'components/common/Panel'
+import type { GridFormatType } from 'constants/app'
 
 const StyledLayouts = styled.div`
   display: inline-block;
@@ -108,11 +108,14 @@ const StyledLockedButton = styled(Button)`
 `
 
 const StyledGridButton = styled(Button)`
-  &[data-grid='false'] {
-    svg {
-      opacity: 0.2;
-    }
+  span {
+    justify-content: center;
   }
+`
+
+const StyledSubtitle = styled.span`
+  min-width: 60px;
+  font-weight: bold;
 `
 
 const StyledSeparator = styled.div`
@@ -136,6 +139,11 @@ const StyledScrollingContent = styled.div`
   display: flex;
   flex-direction: column;
   overflow-y: auto;
+`
+
+const StyledRow = styled.div`
+  display: flex;
+  align-items: center;
 `
 
 const StyledPlaceholder = styled.div`
@@ -245,8 +253,8 @@ const Layout = ({
 }
 
 type LayoutsType = {
-  withGrid: boolean
-  setWithGrid: React.Dispatch<React.SetStateAction<boolean>>
+  gridFormat: GridFormatType
+  setGridFormat: React.Dispatch<React.SetStateAction<GridFormatType>>
   disabled?: boolean
   shapes: DrawableShape[]
   removeShape: (shape: DrawableShape) => void
@@ -259,8 +267,8 @@ type LayoutsType = {
 }
 
 const Layouts = ({
-  withGrid,
-  setWithGrid,
+  gridFormat,
+  setGridFormat,
   disabled = false,
   shapes,
   removeShape,
@@ -273,21 +281,27 @@ const Layouts = ({
 }: LayoutsType) => {
   const [layoutDragging, setLayoutDragging] = useState<string | undefined>(undefined)
 
-  const onToggleGrid = () => {
-    setWithGrid(prev => !prev)
-  }
   return isLayoutPanelShown ? (
-    <StyledPanel title="Layers" alignment="right">
+    <StyledPanel alignment="right">
       <StyledPanelContent>
         <StyledScrollingContent>
-          <StyledGridButton
-            title={withGrid ? 'Grid on' : 'Grid off'}
-            data-grid={withGrid}
-            disabled={disabled}
-            onClick={onToggleGrid}
-            icon={withGrid ? gridOnIcon : gridOffIcon}>
-            Toggle grid
-          </StyledGridButton>
+          <StyledRow>
+            <StyledSubtitle>Grid</StyledSubtitle>
+            <StyledGridButton
+              icon={gridOffIcon}
+              selected={gridFormat === 0}
+              disabled={disabled}
+              onClick={() => setGridFormat(0)}></StyledGridButton>
+            {['S', 'M', 'L'].map((value, index) => (
+              <StyledGridButton
+                key={value}
+                selected={gridFormat === index + 1}
+                disabled={disabled}
+                onClick={() => setGridFormat((index + 1) as GridFormatType)}>
+                {value}
+              </StyledGridButton>
+            ))}
+          </StyledRow>
           <hr />
           <StyledLayouts>
             {shapes.length === 0 ? (
