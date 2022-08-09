@@ -78,12 +78,24 @@ export const translateShape = (
       }
     case 'polygon':
     case 'curve':
-      return {
-        ...originalShape,
-        points: originalShape.points.map(([x, y]) => [
-          roundForGrid(x + cursorPosition[0] - originalCursorPosition[0], withGrid),
-          roundForGrid(y + cursorPosition[1] - originalCursorPosition[1], withGrid)
-        ]) as Point[]
+      if (withGrid) {
+        const { borders } = getShapeInfos(originalShape, 0)
+        const translationX =
+          roundForGrid(borders.x + cursorPosition[0] - originalCursorPosition[0], true) - borders.x
+        const translationY =
+          roundForGrid(borders.y + cursorPosition[1] - originalCursorPosition[1], true) - borders.y
+        return {
+          ...originalShape,
+          points: originalShape.points.map(([x, y]) => [x + translationX, y + translationY])
+        }
+      } else {
+        return {
+          ...originalShape,
+          points: originalShape.points.map(([x, y]) => [
+            roundForGrid(x + cursorPosition[0] - originalCursorPosition[0], withGrid),
+            roundForGrid(y + cursorPosition[1] - originalCursorPosition[1], withGrid)
+          ]) as Point[]
+        }
       }
     case 'brush':
       if (withGrid) {
