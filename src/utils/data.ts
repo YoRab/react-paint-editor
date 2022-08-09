@@ -15,6 +15,7 @@ import type {
 import { fetchAndStringify, getBase64Image } from './file'
 import type { CustomTool } from 'types/tools'
 import { DEFAULT_SHAPE_PICTURE } from 'constants/tools'
+import type { GridFormatType } from 'constants/app'
 
 export const createPicture = (
   fileOrUrl: File | string,
@@ -75,11 +76,11 @@ export const createShape = (
   ctx: CanvasRenderingContext2D,
   shape: CustomTool,
   cursorPosition: Point,
-  withGrid: boolean
+  gridFormat: GridFormatType
 ): DrawableShape | undefined => {
   const roundCursorPosition: Point = [
-    roundForGrid(cursorPosition[0], withGrid),
-    roundForGrid(cursorPosition[1], withGrid)
+    roundForGrid(cursorPosition[0], gridFormat),
+    roundForGrid(cursorPosition[1], gridFormat)
   ]
   switch (shape.type) {
     case 'brush':
@@ -234,9 +235,9 @@ export const createShape = (
   }
 }
 
-export const copyShape = (shape: DrawableShape, withGrid: boolean) => {
+export const copyShape = (shape: DrawableShape, gridFormat: GridFormatType) => {
   return {
-    ...translateShape([20, 20], shape, [0, 0], withGrid),
+    ...translateShape([20, 20], shape, [0, 0], gridFormat),
     id: _.uniqueId(`${shape.type}_`)
   } as DrawableShape
 }

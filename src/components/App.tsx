@@ -32,6 +32,7 @@ import {
 import { sanitizeTools } from 'utils/toolbar'
 import { DEFAULT_SHAPE_TOOLS, SELECTION_TOOL } from 'constants/tools'
 import _ from 'lodash/fp'
+import { GridFormatType, GRID_NONE } from 'constants/app'
 
 const StyledApp = styled.div<{
   canvasWidth: number
@@ -104,7 +105,7 @@ const StyledRow = styled.div<{
 
 type AppOptionsType = {
   layersManipulation: boolean
-  gridVisible: boolean
+  grid: GridFormatType
   canGrow: boolean
   canShrink: boolean
   availableTools: CustomToolInput[]
@@ -136,7 +137,7 @@ type OptionalAppOptionsType = RecursivePartial<AppOptionsType>
 
 const DEFAULT_OPTIONS: AppOptionsType = {
   layersManipulation: true,
-  gridVisible: false,
+  grid: GRID_NONE,
   canGrow: false,
   canShrink: true,
   withExport: true,
@@ -195,7 +196,7 @@ const App = ({
 }: AppType) => {
   const {
     layersManipulation,
-    gridVisible,
+    grid,
     canGrow,
     canShrink,
     withExport,
@@ -265,7 +266,7 @@ const App = ({
     mode: 'default'
   })
 
-  const [withGrid, setWithGrid] = useState(gridVisible)
+  const [gridFormat, setGridFormat] = useState<GridFormatType>(grid)
 
   const {
     shapesRef,
@@ -461,7 +462,7 @@ const App = ({
 
   useKeyboard({
     isInsideComponent,
-    withGrid,
+    gridFormat,
     isEditingText: selectionMode.mode === 'textedition',
     selectedShape,
     setSelectedShape,
@@ -555,7 +556,7 @@ const App = ({
         aspectRatio={`calc(${canvasSize.width} / ${canvasSize.height})`}>
         <Canvas
           canGrow={canGrow}
-          withGrid={withGrid}
+          gridFormat={gridFormat}
           disabled={disabled}
           isInsideComponent={isInsideComponent}
           activeTool={activeTool}
@@ -581,8 +582,8 @@ const App = ({
         />
         {isEditMode && layersManipulation && (
           <Layouts
-            withGrid={withGrid}
-            setWithGrid={setWithGrid}
+            gridFormat={gridFormat}
+            setGridFormat={setGridFormat}
             disabled={disabled}
             shapes={shapesRef.current}
             moveShapes={moveShapes}

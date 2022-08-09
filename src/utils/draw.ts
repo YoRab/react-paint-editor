@@ -1,3 +1,4 @@
+import type { GridFormatType } from 'constants/app'
 import {
   SELECTION_ANCHOR_SIZE,
   SELECTION_DEFAULT_COLOR,
@@ -267,26 +268,28 @@ export const drawGrid = (
   width: number,
   height: number,
   responsiveScale: number,
-  canvasOffset: Point
+  canvasOffset: Point,
+  gridFormat: GridFormatType
 ) => {
   ctx.strokeStyle = 'rgb(220,220,220)'
   ctx.lineWidth = 1
   ctx.save()
   ctx.scale(responsiveScale, responsiveScale)
   ctx.beginPath()
+  const step = GRID_STEP[gridFormat - 1]
 
-  const horizontalOffset = -canvasOffset[0] % GRID_STEP
-  const verticalOffset = -canvasOffset[1] % GRID_STEP
-  const nbCols = Math.ceil(width / responsiveScale / GRID_STEP)
-  const nbRows = Math.ceil(height / responsiveScale / GRID_STEP)
+  const horizontalOffset = -canvasOffset[0] % step
+  const verticalOffset = -canvasOffset[1] % step
+  const nbCols = Math.ceil(width / responsiveScale / step)
+  const nbRows = Math.ceil(height / responsiveScale / step)
 
   for (let i = 0; i < nbCols; i++) {
-    ctx.moveTo(horizontalOffset + (i + 1) * GRID_STEP, verticalOffset)
-    ctx.lineTo(horizontalOffset + (i + 1) * GRID_STEP, verticalOffset + height / responsiveScale)
+    ctx.moveTo(horizontalOffset + (i + 1) * step, verticalOffset)
+    ctx.lineTo(horizontalOffset + (i + 1) * step, verticalOffset + height / responsiveScale)
   }
   for (let i = 0; i < nbRows; i++) {
-    ctx.moveTo(horizontalOffset, verticalOffset + (i + 1) * GRID_STEP)
-    ctx.lineTo(horizontalOffset + width / responsiveScale, verticalOffset + (i + 1) * GRID_STEP)
+    ctx.moveTo(horizontalOffset, verticalOffset + (i + 1) * step)
+    ctx.lineTo(horizontalOffset + width / responsiveScale, verticalOffset + (i + 1) * step)
   }
   ctx.stroke()
   ctx.restore()

@@ -1,3 +1,4 @@
+import type { GridFormatType } from 'constants/app'
 import { GRID_STEP } from 'constants/style'
 import { useEffect, useState } from 'react'
 import type { DrawableShape, Point } from 'types/Shapes'
@@ -31,11 +32,11 @@ type UseKeyboardType = {
   backwardShape: () => void
   forwardShape: () => void
   isEditingText: boolean
-  withGrid: boolean
+  gridFormat: GridFormatType
 }
 
 const useKeyboard = ({
-  withGrid,
+  gridFormat,
   isInsideComponent,
   selectedShape,
   isEditingText,
@@ -61,7 +62,7 @@ const useKeyboard = ({
       if (!copiedShape) return
       if (isEditingText) return
       e.preventDefault()
-      pasteShape(copyShape(copiedShape, withGrid))
+      pasteShape(copyShape(copiedShape, gridFormat))
     }
 
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -87,17 +88,17 @@ const useKeyboard = ({
       }
       if (isEditingText) return
       const translationMap: { [key: string]: Point } = {
-        [KeyboardCode.ArrowLeft]: [withGrid ? -GRID_STEP : -1, 0],
-        [KeyboardCode.ArrowRight]: [withGrid ? GRID_STEP : 1, 0],
-        [KeyboardCode.ArrowDown]: [0, withGrid ? GRID_STEP : 1],
-        [KeyboardCode.ArrowUp]: [0, withGrid ? -GRID_STEP : -1]
+        [KeyboardCode.ArrowLeft]: [gridFormat ? -GRID_STEP[gridFormat - 1] : -1, 0],
+        [KeyboardCode.ArrowRight]: [gridFormat ? GRID_STEP[gridFormat - 1] : 1, 0],
+        [KeyboardCode.ArrowDown]: [0, gridFormat ? GRID_STEP[gridFormat - 1] : 1],
+        [KeyboardCode.ArrowUp]: [0, gridFormat ? -GRID_STEP[gridFormat - 1] : -1]
       }
       switch (e.key) {
         case KeyboardCode.ArrowLeft:
         case KeyboardCode.ArrowRight:
         case KeyboardCode.ArrowDown:
         case KeyboardCode.ArrowUp:
-          updateShape(translateShape(translationMap[e.key], selectedShape, [0, 0], withGrid))
+          updateShape(translateShape(translationMap[e.key], selectedShape, [0, 0], gridFormat))
           break
         case KeyboardCode.Delete:
         case KeyboardCode.Backspace:
@@ -121,7 +122,7 @@ const useKeyboard = ({
     }
   }, [
     isInsideComponent,
-    withGrid,
+    gridFormat,
     copiedShape,
     isEditingText,
     selectedShape,

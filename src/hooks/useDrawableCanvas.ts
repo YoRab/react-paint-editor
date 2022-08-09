@@ -9,12 +9,13 @@ import type { CustomTool, ToolsType } from 'types/tools'
 import { SELECTION_TOOL } from 'constants/tools'
 import useDoubleClick from 'hooks/useDoubleClick'
 import { ShapeTypeArray } from 'constants/shapes'
+import type { GridFormatType } from 'constants/app'
 
 const handleMove = (
   e: MouseEvent | TouchEvent,
   canvasRef: React.RefObject<HTMLCanvasElement>,
   activeTool: ToolsType,
-  withGrid: boolean,
+  gridFormat: GridFormatType,
   canvasOffset: Point,
   selectedShape: DrawableShape | undefined,
   selectionMode: SelectionModeData<Point | number>,
@@ -59,7 +60,7 @@ const handleMove = (
       ctx,
       selectedShape,
       cursorPosition,
-      withGrid,
+      gridFormat,
       canvasOffset,
       selectionMode,
       selectionPadding
@@ -86,7 +87,7 @@ type UseCanvasType = {
   setActiveTool: React.Dispatch<React.SetStateAction<ToolsType>>
   canvasOffsetStartPosition: Point | undefined
   setCanvasOffsetStartPosition: React.Dispatch<React.SetStateAction<Point | undefined>>
-  withGrid: boolean
+  gridFormat: GridFormatType
   canvasOffset: Point
   setCanvasOffset: React.Dispatch<React.SetStateAction<Point>>
   isInsideComponent: boolean
@@ -114,7 +115,7 @@ const useDrawableCanvas = ({
   setSelectedShape,
   setCanvasOffsetStartPosition,
   updateSingleShape,
-  withGrid,
+  gridFormat,
   canvasOffset,
   saveShapes,
   setSelectionMode,
@@ -131,7 +132,7 @@ const useDrawableCanvas = ({
           e,
           selectionCanvasRef,
           activeTool,
-          withGrid,
+          gridFormat,
           canvasOffset,
           selectedShape,
           selectionMode,
@@ -163,7 +164,7 @@ const useDrawableCanvas = ({
     selectedShape,
     selectionMode,
     setHoverMode,
-    withGrid,
+    gridFormat,
     canvasOffset,
     canvasOffsetStartPosition,
     width,
@@ -240,7 +241,7 @@ const useDrawableCanvas = ({
             updateSingleShape(newShape)
             setSelectedShape(newShape)
           } else {
-            const newShape = createShape(drawCtx, activeTool, cursorPosition, withGrid)
+            const newShape = createShape(drawCtx, activeTool, cursorPosition, gridFormat)
             if (!newShape) return
             addShape(newShape)
             setSelectedShape(newShape)
@@ -250,7 +251,12 @@ const useDrawableCanvas = ({
             mode: 'brush'
           })
         } else {
-          const newShape = createShape(drawCtx, activeTool as CustomTool, cursorPosition, withGrid)
+          const newShape = createShape(
+            drawCtx,
+            activeTool as CustomTool,
+            cursorPosition,
+            gridFormat
+          )
           if (!newShape) return
           addShape(newShape)
           setActiveTool(SELECTION_TOOL)
@@ -296,7 +302,7 @@ const useDrawableCanvas = ({
     setSelectedShape,
     setSelectionMode,
     selectionPadding,
-    withGrid
+    gridFormat
   ])
 
   useEffect(() => {

@@ -7,6 +7,7 @@ import { resizeTextShapeWithNewContent } from 'utils/transform'
 import EditTextBox from './toolbox/EditTextBox'
 import useDrawableCanvas from 'hooks/useDrawableCanvas'
 import type { ToolsType } from 'types/tools'
+import type { GridFormatType } from 'constants/app'
 
 const renderDrawCanvas = (
   drawCtx: CanvasRenderingContext2D,
@@ -16,7 +17,7 @@ const renderDrawCanvas = (
     height: number
     scaleRatio: number
   },
-  withGrid: boolean,
+  gridFormat: GridFormatType,
   canvasOffset: Point,
   shapes: DrawableShape[],
   selectionPadding: number,
@@ -25,7 +26,7 @@ const renderDrawCanvas = (
   const { width, height, scaleRatio } = canvasSize
   drawCtx.clearRect(0, 0, width, height)
   initDrawStyle(drawCtx)
-  withGrid && drawGrid(drawCtx, width, height, scaleRatio, canvasOffset)
+  gridFormat && drawGrid(drawCtx, width, height, scaleRatio, canvasOffset, gridFormat)
   for (let i = shapes.length - 1; i >= 0; i--) {
     if (selectionMode.mode !== 'textedition' || shapes[i] !== selectedShape) {
       drawShape(drawCtx, shapes[i], scaleRatio, canvasOffset, selectionPadding)
@@ -114,7 +115,7 @@ const StyledSelectionCanvas = styled.canvas<{
 `
 
 type DrawerType = {
-  withGrid: boolean
+  gridFormat: GridFormatType
   disabled?: boolean
   canGrow?: boolean
   canvasSize: {
@@ -146,7 +147,7 @@ type DrawerType = {
 const Canvas = React.forwardRef<HTMLCanvasElement, DrawerType>(
   (
     {
-      withGrid,
+      gridFormat,
       canGrow,
       disabled = false,
       canvasSize,
@@ -195,7 +196,7 @@ const Canvas = React.forwardRef<HTMLCanvasElement, DrawerType>(
       setSelectedShape,
       setCanvasOffsetStartPosition,
       updateSingleShape,
-      withGrid,
+      gridFormat,
       canvasOffset,
       saveShapes,
       setSelectionMode,
@@ -225,14 +226,22 @@ const Canvas = React.forwardRef<HTMLCanvasElement, DrawerType>(
             drawCtx,
             selectionMode,
             canvasSize,
-            withGrid,
+            gridFormat,
             canvasOffset,
             shapes,
             selectionPadding,
             selectedShape
           )
         )
-    }, [shapes, withGrid, selectionMode, selectedShape, canvasOffset, canvasSize, selectionPadding])
+    }, [
+      shapes,
+      gridFormat,
+      selectionMode,
+      selectedShape,
+      canvasOffset,
+      canvasSize,
+      selectionPadding
+    ])
 
     useEffect(() => {
       const selectionCtx = selectionCanvasRef.current?.getContext('2d')
