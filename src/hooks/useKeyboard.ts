@@ -13,6 +13,7 @@ const KeyboardCode = {
   Delete: 'Delete',
   Backspace: 'Backspace',
   Escape: 'Escape',
+  Shift: 'Shift',
   Z: 'z',
   Y: 'y'
 } as const
@@ -31,6 +32,7 @@ type UseKeyboardType = {
   removeShape: (shape: DrawableShape) => void
   backwardShape: () => void
   forwardShape: () => void
+  setShiftPressed: (value: React.SetStateAction<boolean>) => void
   isEditingText: boolean
   gridFormat: GridFormatType
 }
@@ -45,7 +47,8 @@ const useKeyboard = ({
   pasteShape,
   updateShape,
   backwardShape,
-  forwardShape
+  forwardShape,
+  setShiftPressed
 }: UseKeyboardType) => {
   const [copiedShape, setCopiedShape] = useState<DrawableShape | undefined>(undefined)
 
@@ -65,6 +68,14 @@ const useKeyboard = ({
       pasteShape(copyShape(copiedShape, gridFormat))
     }
 
+    const handleKeyUp = (e: KeyboardEvent) => {
+      switch (e.key) {
+        case KeyboardCode.Shift:
+          setShiftPressed(false)
+          break
+      }
+    }
+
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.metaKey || e.ctrlKey) {
         if (e.key === KeyboardCode.Z) {
@@ -80,6 +91,11 @@ const useKeyboard = ({
         }
       }
 
+      if (e.key === KeyboardCode.Shift) {
+        setShiftPressed(true)
+        return
+      }
+
       if (!selectedShape) return
 
       if (e.key === KeyboardCode.Escape) {
@@ -87,6 +103,7 @@ const useKeyboard = ({
         return
       }
       if (isEditingText) return
+
       const translationMap: { [key: string]: Point } = {
         [KeyboardCode.ArrowLeft]: [gridFormat ? -GRID_STEP[gridFormat - 1] : -1, 0],
         [KeyboardCode.ArrowRight]: [gridFormat ? GRID_STEP[gridFormat - 1] : 1, 0],
@@ -109,6 +126,7 @@ const useKeyboard = ({
 
     if (isInsideComponent) {
       document.addEventListener('keydown', handleKeyDown)
+      document.addEventListener('keyup', handleKeyUp)
       document.addEventListener(KeyboardCommand.Copy, handleCopy)
       document.addEventListener(KeyboardCommand.Paste, handlePaste)
     }
@@ -116,6 +134,7 @@ const useKeyboard = ({
     return () => {
       if (isInsideComponent) {
         document.removeEventListener('keydown', handleKeyDown)
+        document.removeEventListener('keyup', handleKeyUp)
         document.removeEventListener(KeyboardCommand.Copy, handleCopy)
         document.removeEventListener(KeyboardCommand.Paste, handlePaste)
       }
@@ -131,7 +150,8 @@ const useKeyboard = ({
     setSelectedShape,
     pasteShape,
     backwardShape,
-    forwardShape
+    forwardShape,
+    setShiftPressed
   ])
 
   return {}

@@ -267,6 +267,7 @@ const App = ({
   })
 
   const [gridFormat, setGridFormat] = useState<GridFormatType>(grid)
+  const [isShiftPressed, setShiftPressed] = useState<boolean>(false)
 
   const {
     shapesRef,
@@ -470,7 +471,8 @@ const App = ({
     pasteShape,
     updateShape,
     backwardShape,
-    forwardShape
+    forwardShape,
+    setShiftPressed
   })
 
   useResizeObserver({ element: componentRef, onResized })
@@ -579,6 +581,7 @@ const App = ({
           selectionWidth={canvasSelectionWidth}
           selectionPadding={canvasSelectionPadding}
           isEditMode={isEditMode}
+          isShiftPressed={isShiftPressed}
         />
         {isEditMode && layersManipulation && (
           <Layouts

@@ -204,8 +204,8 @@ export const createShape = (
         id: _.uniqueId(`${shape.type}_`),
         x: roundCursorPosition[0],
         y: roundCursorPosition[1],
-        radiusX: 0,
-        radiusY: 0,
+        radiusX: 1,
+        radiusY: 1,
         rotation: 0,
         style: {
           globalAlpha: shape.settings.opacity.default,
@@ -222,7 +222,7 @@ export const createShape = (
         id: _.uniqueId(`${shape.type}_`),
         x: roundCursorPosition[0],
         y: roundCursorPosition[1],
-        radius: 0,
+        radius: 1,
         rotation: 0,
         style: {
           globalAlpha: shape.settings.opacity.default,
