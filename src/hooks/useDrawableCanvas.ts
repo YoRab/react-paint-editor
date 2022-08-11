@@ -27,7 +27,8 @@ const handleMove = (
   updateSingleShape: (updatedShape: DrawableShape) => void,
   setCanvasOffset: React.Dispatch<React.SetStateAction<Point>>,
   setSelectedShape: React.Dispatch<React.SetStateAction<DrawableShape | undefined>>,
-  selectionPadding: number
+  selectionPadding: number,
+  isShiftPressed: boolean
 ) => {
   if (activeTool.type === 'move' && canvasOffsetStartPosition !== undefined) {
     const cursorPosition = getCursorPosition(e, canvasRef.current, width, height, scaleRatio)
@@ -63,7 +64,8 @@ const handleMove = (
       gridFormat,
       canvasOffset,
       selectionMode,
-      selectionPadding
+      selectionPadding,
+      isShiftPressed
     )
     updateSingleShape(newShape)
     setSelectedShape(newShape)
@@ -96,6 +98,7 @@ type UseCanvasType = {
   drawCanvasRef: React.MutableRefObject<HTMLCanvasElement | null>
   selectionCanvasRef: React.MutableRefObject<HTMLCanvasElement | null>
   selectionPadding: number
+  isShiftPressed: boolean
 }
 
 const useDrawableCanvas = ({
@@ -119,7 +122,8 @@ const useDrawableCanvas = ({
   canvasOffset,
   saveShapes,
   setSelectionMode,
-  selectionPadding
+  selectionPadding,
+  isShiftPressed
 }: UseCanvasType) => {
   const { width, height, scaleRatio } = canvasSize
   const [hoverMode, setHoverMode] = useState<HoverModeData>({ mode: 'default' })
@@ -144,7 +148,8 @@ const useDrawableCanvas = ({
           updateSingleShape,
           setCanvasOffset,
           setSelectedShape,
-          selectionPadding
+          selectionPadding,
+          isShiftPressed
         )
       )
     if (isInsideComponent) {
@@ -174,7 +179,8 @@ const useDrawableCanvas = ({
     activeTool,
     setCanvasOffset,
     setSelectedShape,
-    selectionPadding
+    selectionPadding,
+    isShiftPressed
   ])
 
   useEffect(() => {

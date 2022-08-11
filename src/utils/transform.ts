@@ -31,15 +31,18 @@ import {
 } from 'constants/style'
 import type { GridFormatType } from 'constants/app'
 
-export const getNormalizedSize = (originalShape: Rect, width: number, height: number) => {
-  const originalRatio = originalShape.width / originalShape.height
+export const getNormalizedSize = (
+  originalWidth: number,
+  originalHeight: number,
+  width: number,
+  height: number
+) => {
+  const originalRatio = originalWidth / originalHeight
   const newRatio = width / height
   if (newRatio > originalRatio || height < 0) {
-    return width > originalShape.width
-      ? [width, width / originalRatio]
-      : [height * originalRatio, height]
+    return width > originalWidth ? [width, width / originalRatio] : [height * originalRatio, height]
   } else if (newRatio < originalRatio) {
-    return height > originalShape.height
+    return height > originalHeight
       ? [height * originalRatio, height]
       : [width, width / originalRatio]
   }
@@ -183,7 +186,8 @@ export const resizeBrush = (
   canvasOffset: Point,
   originalShape: DrawableBrush,
   selectionMode: SelectionModeResize,
-  selectionPadding: number
+  selectionPadding: number,
+  keepRatio: boolean
 ): DrawableBrush => {
   const { center, borders } = getShapeInfos(originalShape, selectionPadding)
 
@@ -212,14 +216,18 @@ export const resizeBrush = (
       : (cursorPositionBeforeResize[1] - borders.y - selectionPadding * 2) /
         (borders.height - selectionPadding * 2)
 
+  const [widthWithRatio, heightWithRatio] = keepRatio
+    ? getNormalizedSize(1, 1, scaledWidth, scaledHeight)
+    : [scaledWidth, scaledHeight]
+
   const shapeWithNewDimensions = {
     ...originalShape,
     points: originalShape.points.map(points => {
       return points.map(
         point =>
           [
-            (point[0] - borders.x) * scaledWidth + borders.x,
-            (point[1] - borders.y) * scaledHeight + borders.y
+            (point[0] - borders.x) * widthWithRatio + borders.x,
+            (point[1] - borders.y) * heightWithRatio + borders.y
           ] as Point
       )
     })
@@ -237,7 +245,7 @@ export const resizeBrush = (
     selectionMode.anchor,
     shapeWithNewDimensionsCenter,
     { ...shapeWithNewDimensions, ...shapeWithNewDimensionsBorders },
-    [scaledWidth < 0, scaledHeight < 0]
+    [widthWithRatio < 0, heightWithRatio < 0]
   )
 
   return {
@@ -389,7 +397,8 @@ export const resizeEllipse = (
   canvasOffset: Point,
   originalShape: DrawableEllipse,
   selectionMode: SelectionModeResize,
-  selectionPadding: number
+  selectionPadding: number,
+  keepRatio = false
 ): DrawableEllipse => {
   const { center, borders } = getShapeInfos(originalShape, selectionPadding)
 
@@ -426,11 +435,15 @@ export const resizeEllipse = (
             borders.y -
             selectionPadding * (selectionMode.anchor[1] === 0 ? -2 : 2)) / 2
 
+  const [radiusXWithRatio, radiusYWithRatio] = keepRatio
+    ? getNormalizedSize(originalShape.radiusX, originalShape.radiusY, scaledRadiusX, scaledRadiusY)
+    : [scaledRadiusX, scaledRadiusY]
+
   const shapeWithNewDimensions = {
     ...originalShape,
     ...{
-      radiusX: Math.abs(scaledRadiusX),
-      radiusY: Math.abs(scaledRadiusY)
+      radiusX: Math.abs(radiusXWithRatio),
+      radiusY: Math.abs(radiusYWithRatio)
     }
   }
   const { center: shapeWithNewDimensionsCenter } = getShapeInfos(
@@ -448,7 +461,7 @@ export const resizeEllipse = (
     selectionMode.anchor,
     shapeWithNewDimensionsCenter,
     shapeWithNewDimensions,
-    [scaledRadiusX < 0, scaledRadiusY < 0]
+    [radiusXWithRatio < 0, radiusYWithRatio < 0]
   )
 
   return {
@@ -468,7 +481,7 @@ export const resizeRect = <T extends DrawableShape & Rect>(
 ): T => {
   const { center, borders } = getShapeInfos(originalShape, selectionPadding)
 
-  const cursorPositionBeforeResize = getPointPositionAfterCanvasTransformation(
+  const cusroPositionAfterShapeTransormation = getPointPositionAfterCanvasTransformation(
     cursorPosition,
     canvasOffset,
     originalShape.rotation,
@@ -479,18 +492,18 @@ export const resizeRect = <T extends DrawableShape & Rect>(
     selectionMode.anchor[0] === 0.5
       ? originalShape.width
       : selectionMode.anchor[0] === 0
-      ? borders.x + borders.width - cursorPositionBeforeResize[0] + selectionPadding * -2
-      : cursorPositionBeforeResize[0] - borders.x - selectionPadding * 2
+      ? borders.x + borders.width - cusroPositionAfterShapeTransormation[0] + selectionPadding * -2
+      : cusroPositionAfterShapeTransormation[0] - borders.x - selectionPadding * 2
 
   const scaledHeight =
     selectionMode.anchor[1] === 0.5
       ? originalShape.height
       : selectionMode.anchor[1] === 0
-      ? borders.y + borders.height - cursorPositionBeforeResize[1] + selectionPadding * -2
-      : cursorPositionBeforeResize[1] - borders.y - selectionPadding * 2
+      ? borders.y + borders.height - cusroPositionAfterShapeTransormation[1] + selectionPadding * -2
+      : cusroPositionAfterShapeTransormation[1] - borders.y - selectionPadding * 2
 
   const [widthWithRatio, heightWithRatio] = keepRatio
-    ? getNormalizedSize(originalShape, scaledWidth, scaledHeight)
+    ? getNormalizedSize(originalShape.width, originalShape.height, scaledWidth, scaledHeight)
     : [scaledWidth, scaledHeight]
 
   const shapeWithNewDimensions = {
@@ -582,13 +595,13 @@ const getEllipseOppositeAnchorAbsolutePosition = <T extends DrawableShape & Elli
 ) => {
   const oppositeX =
     anchor[0] === 0.5
-      ? shape.x + shape.radiusX / 2
+      ? shape.x
       : anchor[0] === 0
       ? shape.x + (negW ? -shape.radiusX : shape.radiusX)
       : shape.x + (negW ? shape.radiusX : -shape.radiusX)
   const oppositeY =
     anchor[1] === 0.5
-      ? shape.y + shape.radiusY / 2
+      ? shape.y
       : anchor[1] === 0
       ? shape.y + (negH ? -shape.radiusY : shape.radiusY)
       : shape.y + (negH ? shape.radiusY : -shape.radiusY)
@@ -623,7 +636,8 @@ export const resizePicture = (
   canvasOffset: Point,
   originalShape: DrawablePicture,
   selectionMode: SelectionModeResize,
-  selectionPadding: number
+  selectionPadding: number,
+  keepRatio: boolean
 ): DrawablePicture => {
   return resizeRect(
     cursorPosition,
@@ -631,7 +645,7 @@ export const resizePicture = (
     originalShape,
     selectionMode,
     selectionPadding,
-    true
+    keepRatio
   )
 }
 
@@ -642,75 +656,75 @@ export const resizeShape = (
   canvasOffset: Point,
   originalShape: DrawableShape,
   selectionMode: SelectionModeData<Point | number>,
-  selectionPadding: number
+  selectionPadding: number,
+  isShiftPressed: boolean
 ): DrawableShape => {
-  if (shape.type === 'line' || shape.type === 'polygon' || shape.type === 'curve')
-    return resizeLine(
-      cursorPosition,
-      canvasOffset,
-      originalShape as DrawableLine,
-      selectionMode as SelectionModeResize<number>,
-      selectionPadding
-    )
-  else if (shape.type === 'brush')
-    return resizeBrush(
-      cursorPosition,
-      canvasOffset,
-      originalShape as DrawableBrush,
-      selectionMode as SelectionModeResize,
-      selectionPadding
-    )
-  else if (shape.type === 'circle')
-    return resizeCircle(
-      cursorPosition,
-      canvasOffset,
-      originalShape as DrawableCircle,
-      selectionMode as SelectionModeResize,
-      selectionPadding
-    )
-  else if (shape.type === 'ellipse')
-    return resizeEllipse(
-      cursorPosition,
-      canvasOffset,
-      originalShape as DrawableEllipse,
-      selectionMode as SelectionModeResize,
-      selectionPadding
-    )
-  else if (shape.type === 'rect')
-    return resizeRect(
-      cursorPosition,
-      canvasOffset,
-      originalShape as DrawableRect,
-      selectionMode as SelectionModeResize,
-      selectionPadding
-    )
-  else if (shape.type === 'square')
-    return resizeRect(
-      cursorPosition,
-      canvasOffset,
-      originalShape as DrawableRect,
-      selectionMode as SelectionModeResize,
-      selectionPadding,
-      true
-    )
-  else if (shape.type === 'text')
-    return resizeText(
-      ctx,
-      cursorPosition,
-      canvasOffset,
-      originalShape as DrawableText,
-      selectionMode as SelectionModeResize,
-      selectionPadding
-    )
-  else if (shape.type === 'picture')
-    return resizePicture(
-      cursorPosition,
-      canvasOffset,
-      originalShape as DrawablePicture,
-      selectionMode as SelectionModeResize,
-      selectionPadding
-    )
-  return shape
+  switch (shape.type) {
+    case 'line':
+    case 'polygon':
+    case 'curve':
+      return resizeLine(
+        cursorPosition,
+        canvasOffset,
+        originalShape as DrawableLine,
+        selectionMode as SelectionModeResize<number>,
+        selectionPadding
+      )
+    case 'brush':
+      return resizeBrush(
+        cursorPosition,
+        canvasOffset,
+        originalShape as DrawableBrush,
+        selectionMode as SelectionModeResize,
+        selectionPadding,
+        isShiftPressed
+      )
+    case 'circle':
+      return resizeCircle(
+        cursorPosition,
+        canvasOffset,
+        originalShape as DrawableCircle,
+        selectionMode as SelectionModeResize,
+        selectionPadding
+      )
+    case 'ellipse':
+      return resizeEllipse(
+        cursorPosition,
+        canvasOffset,
+        originalShape as DrawableEllipse,
+        selectionMode as SelectionModeResize,
+        selectionPadding,
+        isShiftPressed
+      )
+    case 'rect':
+    case 'square':
+      return resizeRect(
+        cursorPosition,
+        canvasOffset,
+        originalShape as DrawableRect,
+        selectionMode as SelectionModeResize,
+        selectionPadding,
+        shape.type === 'square' || isShiftPressed
+      )
+    case 'text':
+      return resizeText(
+        ctx,
+        cursorPosition,
+        canvasOffset,
+        originalShape as DrawableText,
+        selectionMode as SelectionModeResize,
+        selectionPadding
+      )
+    case 'picture':
+      return resizePicture(
+        cursorPosition,
+        canvasOffset,
+        originalShape as DrawablePicture,
+        selectionMode as SelectionModeResize,
+        selectionPadding,
+        !isShiftPressed
+      )
+  }
 }
 
 export const transformShape = (
@@ -720,7 +734,8 @@ export const transformShape = (
   gridFormat: GridFormatType,
   canvasOffset: Point,
   selectionMode: SelectionModeData<Point | number>,
-  selectionPadding: number
+  selectionPadding: number,
+  isShiftPressed: boolean
 ) => {
   if (selectionMode.mode === 'brush') {
     return paintNewPointToShape(shape as DrawableBrush, cursorPosition)
@@ -752,7 +767,8 @@ export const transformShape = (
       canvasOffset,
       selectionMode.originalShape,
       selectionMode,
-      selectionPadding
+      selectionPadding,
+      isShiftPressed
     )
   }
   return shape

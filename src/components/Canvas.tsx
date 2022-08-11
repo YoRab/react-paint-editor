@@ -142,6 +142,7 @@ type DrawerType = {
   isInsideComponent: boolean
   selectionMode: SelectionModeData<number | Point>
   setSelectionMode: React.Dispatch<React.SetStateAction<SelectionModeData<number | Point>>>
+  isShiftPressed: boolean
 }
 
 const Canvas = React.forwardRef<HTMLCanvasElement, DrawerType>(
@@ -169,7 +170,8 @@ const Canvas = React.forwardRef<HTMLCanvasElement, DrawerType>(
       selectionWidth,
       selectionColor,
       selectionPadding,
-      isEditMode
+      isEditMode,
+      isShiftPressed
     },
     ref
   ) => {
@@ -200,7 +202,8 @@ const Canvas = React.forwardRef<HTMLCanvasElement, DrawerType>(
       canvasOffset,
       saveShapes,
       setSelectionMode,
-      selectionPadding
+      selectionPadding,
+      isShiftPressed
     })
 
     const updateSelectedShapeText = useCallback(
