@@ -1,6 +1,6 @@
 import _ from 'lodash/fp'
 import { SelectionModeResize } from 'types/Mode'
-import type { Point, DrawableRect, Rect, DrawableShape } from 'types/Shapes'
+import type { Point, DrawableRect, Rect, DrawableShape, DrawableSquare } from 'types/Shapes'
 import type { ToolsSettingsType } from 'types/tools'
 import { updateCanvasContext } from 'utils/canvas'
 import {
@@ -10,16 +10,18 @@ import {
 import { getNormalizedSize } from 'utils/transform'
 import { getShapeInfos } from '.'
 
-export const createRectangle = (
+type RectangleOrSquareType<T> = T extends 'rect' ? DrawableRect : DrawableSquare
+
+export const createRectangle = <T extends 'rect' | 'square'>(
   shape: {
     id: string
     icon: string
     label: string
-    type: 'rect'
-    settings: ToolsSettingsType<'rect'>
+    type: T
+    settings: ToolsSettingsType<T>
   },
   cursorPosition: Point
-): DrawableRect | undefined => {
+): RectangleOrSquareType<T> => {
   return {
     toolId: shape.id,
     type: shape.type,
@@ -36,7 +38,7 @@ export const createRectangle = (
       lineWidth: shape.settings.lineWidth.default,
       lineDash: shape.settings.lineDash.default
     }
-  }
+  } as RectangleOrSquareType<T>
 }
 
 export const drawRect = (ctx: CanvasRenderingContext2D, rect: Rect): void => {

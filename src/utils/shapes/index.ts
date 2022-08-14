@@ -18,7 +18,6 @@ import { createBrush, drawBrush, getBrushBorder, resizeBrush } from './brush'
 import { createLine, drawLine, drawLineSelection, getLineBorder, resizeLine } from './line'
 import { createPolygon, drawPolygon, getPolygonBorder } from './polygon'
 import { createCurve, drawCurve, getCurveBorder } from './curve'
-import { createSquare } from './square'
 import { createRectangle, drawRect, getRectBorder, resizeRect } from './rectangle'
 import { createText, drawText, getTextBorder, resizeText } from './text'
 import { createEllipse, drawEllipse, getEllipseBorder, resizeEllipse } from './ellipse'
@@ -49,9 +48,8 @@ export const createShape = (
     case 'curve':
       return createCurve(shape, roundCursorPosition)
     case 'rect':
-      return createRectangle(shape, roundCursorPosition)
     case 'square':
-      return createSquare(shape, roundCursorPosition)
+      return createRectangle(shape, roundCursorPosition)
     case 'text':
       return createText(ctx, shape, roundCursorPosition)
     case 'ellipse':
