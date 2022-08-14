@@ -13,7 +13,8 @@ import type {
 } from 'types/Shapes'
 import type { ToolsSettingsType } from 'types/tools'
 import { updateCanvasContext } from 'utils/canvas'
-import { applyRotationToVector, getPointPositionAfterCanvasTransformation } from 'utils/intersect'
+import { getPointPositionAfterCanvasTransformation } from 'utils/intersect'
+import { rotatePoint } from 'utils/trigo'
 import { getShapeInfos } from '.'
 import { drawCircle } from './circle'
 import { drawRect } from './rectangle'
@@ -45,17 +46,20 @@ export const createLine = (
   }
 }
 
-export const buildTriangleOnLine = (center: Point, angle: number, lineStyle: StyledShape) => {
+export const buildTriangleOnLine = (center: Point, rotation: number, lineStyle: StyledShape) => {
   const trianglePoints = [
-    applyRotationToVector([0, -(10 + (lineStyle.style?.lineWidth ?? 0) * 1)], angle),
-    applyRotationToVector(
-      [-(5 + (lineStyle.style?.lineWidth ?? 0) * 1), 5 + (lineStyle.style?.lineWidth ?? 0) * 2],
-      angle
-    ),
-    applyRotationToVector(
-      [5 + (lineStyle.style?.lineWidth ?? 0) * 1, 5 + (lineStyle.style?.lineWidth ?? 0) * 2],
-      angle
-    )
+    rotatePoint({ point: [0, -(10 + (lineStyle.style?.lineWidth ?? 0) * 1)], rotation }),
+    rotatePoint({
+      point: [
+        -(5 + (lineStyle.style?.lineWidth ?? 0) * 1),
+        5 + (lineStyle.style?.lineWidth ?? 0) * 2
+      ],
+      rotation
+    }),
+    rotatePoint({
+      point: [5 + (lineStyle.style?.lineWidth ?? 0) * 1, 5 + (lineStyle.style?.lineWidth ?? 0) * 2],
+      rotation
+    })
   ]
   return {
     points: [
@@ -114,9 +118,9 @@ export const resizeLine = (
 
   const cursorPositionBeforeResize = getPointPositionAfterCanvasTransformation(
     cursorPosition,
-    canvasOffset,
     originalShape.rotation,
-    center
+    center,
+    canvasOffset
   )
   const updatedShape = _.set(
     ['points', selectionMode.anchor],

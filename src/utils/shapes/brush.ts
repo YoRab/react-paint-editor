@@ -92,9 +92,9 @@ export const resizeBrush = (
 
   const cursorPositionBeforeResize = getPointPositionAfterCanvasTransformation(
     cursorPosition,
-    canvasOffset,
     originalShape.rotation,
-    center
+    center,
+    canvasOffset
   )
 
   const scaledWidth =
@@ -135,15 +135,21 @@ export const resizeBrush = (
   const { center: shapeWithNewDimensionsCenter, borders: shapeWithNewDimensionsBorders } =
     getShapeInfos(shapeWithNewDimensions, selectionPadding)
 
-  const [oppTrueX, oppTrueY] = getRectOppositeAnchorAbsolutePosition(selectionMode.anchor, center, {
-    ...originalShape,
-    ...borders
-  })
+  const [oppTrueX, oppTrueY] = getRectOppositeAnchorAbsolutePosition(
+    selectionMode.anchor,
+    center,
+    {
+      ...originalShape,
+      ...borders
+    },
+    canvasOffset
+  )
 
   const [newOppTrueX, newOppTrueY] = getRectOppositeAnchorAbsolutePosition(
     selectionMode.anchor,
     shapeWithNewDimensionsCenter,
     { ...shapeWithNewDimensions, ...shapeWithNewDimensionsBorders },
+    canvasOffset,
     [widthWithRatio < 0, heightWithRatio < 0]
   )
 
@@ -152,5 +158,34 @@ export const resizeBrush = (
     points: shapeWithNewDimensions.points.map(coord =>
       coord.map(([x, y]) => [x - (newOppTrueX - oppTrueX), y - (newOppTrueY - oppTrueY)])
     )
+  }
+}
+
+export const addNewPointToShape = (shape: DrawableBrush, cursorPosition: Point) => {
+  return {
+    ...shape,
+    ...{
+      points: _.set(
+        shape.points.length - 1,
+        [
+          ...shape.points[shape.points.length - 1],
+          [Math.round(cursorPosition[0]), Math.round(cursorPosition[1])]
+        ],
+        shape.points
+      )
+    }
+  }
+}
+
+export const addNewPointGroupToShape = (shape: DrawableBrush, cursorPosition: Point) => {
+  return {
+    ...shape,
+    ...{
+      points: _.set(
+        shape.points.length,
+        [[Math.round(cursorPosition[0]), Math.round(cursorPosition[1])]],
+        shape.points
+      )
+    }
   }
 }

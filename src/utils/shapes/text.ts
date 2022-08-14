@@ -1,12 +1,28 @@
 import _ from 'lodash/fp'
-import { calculateTextFontSize } from '../transform'
 import type { Point, DrawableText, Text, Rect, DrawableShape } from 'types/Shapes'
 import type { ToolsSettingsType } from 'types/tools'
 import { updateCanvasContext } from 'utils/canvas'
-import { STYLE_FONT_DEFAULT } from 'constants/style'
+import { STYLE_FONT_DEFAULT, STYLE_FONT_SIZE_DEFAULT } from 'constants/style'
 import { SelectionModeResize } from 'types/Mode'
 import { getRectOppositeAnchorAbsolutePosition, resizeRect } from './rectangle'
 import { getShapeInfos } from '.'
+
+export const calculateTextFontSize = (
+  ctx: CanvasRenderingContext2D,
+  text: string[],
+  maxWidth: number,
+  fontBold: boolean,
+  fontItalic: boolean,
+  fontFamily: string | undefined = STYLE_FONT_DEFAULT
+) => {
+  ctx.font = `${fontItalic ? 'italic' : ''} ${fontBold ? 'bold' : ''} 1px ${fontFamily}`
+  return (
+    _.flow(
+      _.map((value: string) => maxWidth / ctx.measureText(value).width),
+      _.min
+    )(text) ?? STYLE_FONT_SIZE_DEFAULT
+  )
+}
 
 export const createText = (
   ctx: CanvasRenderingContext2D,
@@ -121,7 +137,8 @@ const calculateTextWidth = (
 export const resizeTextShapeWithNewContent = (
   ctx: CanvasRenderingContext2D,
   shape: DrawableText,
-  newValue: string[]
+  newValue: string[],
+  canvasOffset: Point
 ) => {
   const newShape = _.set('value', newValue, shape)
   const newWidth = calculateTextWidth(
@@ -145,12 +162,18 @@ export const resizeTextShapeWithNewContent = (
 
   const { center: shapeWithNewDimensionsCenter } = getShapeInfos(resizedShape, selectionPadding)
 
-  const [oppTrueX, oppTrueY] = getRectOppositeAnchorAbsolutePosition([1, 0.5], center, shape)
+  const [oppTrueX, oppTrueY] = getRectOppositeAnchorAbsolutePosition(
+    [1, 0.5],
+    center,
+    shape,
+    canvasOffset
+  )
 
   const [newOppTrueX, newOppTrueY] = getRectOppositeAnchorAbsolutePosition(
     [1, 0.5],
     shapeWithNewDimensionsCenter,
     resizedShape,
+    canvasOffset,
     [false, false]
   )
 

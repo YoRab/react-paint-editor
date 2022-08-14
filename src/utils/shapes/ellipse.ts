@@ -63,6 +63,7 @@ const getEllipseOppositeAnchorAbsolutePosition = <T extends DrawableShape & Elli
   anchor: Point,
   center: Point,
   shape: T,
+  canvasOffset: Point,
   [negW, negH] = [false, false]
 ) => {
   const oppositeX =
@@ -78,7 +79,12 @@ const getEllipseOppositeAnchorAbsolutePosition = <T extends DrawableShape & Elli
       ? shape.y + (negH ? -shape.radiusY : shape.radiusY)
       : shape.y + (negH ? shape.radiusY : -shape.radiusY)
 
-  return getPointPositionBeforeCanvasTransformation([oppositeX, oppositeY], shape.rotation, center)
+  return getPointPositionBeforeCanvasTransformation(
+    [oppositeX, oppositeY],
+    shape.rotation,
+    center,
+    canvasOffset
+  )
 }
 
 export const resizeEllipse = (
@@ -93,9 +99,9 @@ export const resizeEllipse = (
 
   const cursorPositionBeforeResize = getPointPositionAfterCanvasTransformation(
     cursorPosition,
-    canvasOffset,
     originalShape.rotation,
-    center
+    center,
+    canvasOffset
   )
 
   const newCursorPosition = [cursorPositionBeforeResize[0], cursorPositionBeforeResize[1]]
@@ -143,13 +149,15 @@ export const resizeEllipse = (
   const [oppTrueX, oppTrueY] = getEllipseOppositeAnchorAbsolutePosition(
     selectionMode.anchor,
     center,
-    originalShape
+    originalShape,
+    canvasOffset
   )
 
   const [newOppTrueX, newOppTrueY] = getEllipseOppositeAnchorAbsolutePosition(
     selectionMode.anchor,
     shapeWithNewDimensionsCenter,
     shapeWithNewDimensions,
+    canvasOffset,
     [radiusXWithRatio < 0, radiusYWithRatio < 0]
   )
 

@@ -215,11 +215,11 @@ const Canvas = React.forwardRef<HTMLCanvasElement, DrawerType>(
         const ctx = drawCanvasRef.current?.getContext('2d')
         if (!ctx) return
 
-        const newShape = resizeTextShapeWithNewContent(ctx, selectedShape, newText)
+        const newShape = resizeTextShapeWithNewContent(ctx, selectedShape, newText, canvasOffset)
 
         updateSingleShape(newShape)
       },
-      [updateSingleShape, selectedShape]
+      [updateSingleShape, selectedShape, canvasOffset]
     )
 
     useEffect(() => {

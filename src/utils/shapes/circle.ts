@@ -58,6 +58,7 @@ const getCircleOppositeAnchorAbsolutePosition = <T extends DrawableShape & Circl
   anchor: Point,
   center: Point,
   shape: T,
+  canvasOffset: Point,
   [negW, negH] = [false, false]
 ) => {
   const oppositeX =
@@ -73,7 +74,12 @@ const getCircleOppositeAnchorAbsolutePosition = <T extends DrawableShape & Circl
       ? shape.y + (negH ? -shape.radius : shape.radius)
       : shape.y + (negH ? shape.radius : -shape.radius)
 
-  return getPointPositionBeforeCanvasTransformation([oppositeX, oppositeY], shape.rotation, center)
+  return getPointPositionBeforeCanvasTransformation(
+    [oppositeX, oppositeY],
+    shape.rotation,
+    center,
+    canvasOffset
+  )
 }
 
 export const resizeCircle = (
@@ -87,9 +93,9 @@ export const resizeCircle = (
 
   const cursorPositionBeforeResize = getPointPositionAfterCanvasTransformation(
     cursorPosition,
-    canvasOffset,
     originalShape.rotation,
-    center
+    center,
+    canvasOffset
   )
 
   const newCursorPosition = [cursorPositionBeforeResize[0], cursorPositionBeforeResize[1]]
@@ -127,13 +133,15 @@ export const resizeCircle = (
   const [oppTrueX, oppTrueY] = getCircleOppositeAnchorAbsolutePosition(
     selectionMode.anchor,
     center,
-    originalShape
+    originalShape,
+    canvasOffset
   )
 
   const [newOppTrueX, newOppTrueY] = getCircleOppositeAnchorAbsolutePosition(
     selectionMode.anchor,
     shapeWithNewDimensionsCenter,
     shapeWithNewDimensions,
+    canvasOffset,
     [scaledRadius < 0, scaledRadius < 0]
   )
 

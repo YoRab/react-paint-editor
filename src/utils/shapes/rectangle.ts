@@ -65,6 +65,7 @@ export const getRectOppositeAnchorAbsolutePosition = <T extends DrawableShape & 
   anchor: Point,
   center: Point,
   shape: T,
+  canvasOffset: Point,
   [negW, negH] = [false, false]
 ) => {
   const oppositeX =
@@ -80,7 +81,12 @@ export const getRectOppositeAnchorAbsolutePosition = <T extends DrawableShape & 
       ? shape.y + (negH ? 0 : shape.height)
       : shape.y + (negH ? shape.height : 0)
 
-  return getPointPositionBeforeCanvasTransformation([oppositeX, oppositeY], shape.rotation, center)
+  return getPointPositionBeforeCanvasTransformation(
+    [oppositeX, oppositeY],
+    shape.rotation,
+    center,
+    canvasOffset
+  )
 }
 
 export const resizeRect = <T extends DrawableShape & Rect>(
@@ -95,9 +101,9 @@ export const resizeRect = <T extends DrawableShape & Rect>(
 
   const cusroPositionAfterShapeTransormation = getPointPositionAfterCanvasTransformation(
     cursorPosition,
-    canvasOffset,
     originalShape.rotation,
-    center
+    center,
+    canvasOffset
   )
 
   const scaledWidth =
@@ -131,13 +137,15 @@ export const resizeRect = <T extends DrawableShape & Rect>(
   const [oppTrueX, oppTrueY] = getRectOppositeAnchorAbsolutePosition(
     selectionMode.anchor,
     center,
-    originalShape
+    originalShape,
+    canvasOffset
   )
 
   const [newOppTrueX, newOppTrueY] = getRectOppositeAnchorAbsolutePosition(
     selectionMode.anchor,
     shapeWithNewDimensionsCenter,
     shapeWithNewDimensions,
+    canvasOffset,
     [widthWithRatio < 0, heightWithRatio < 0]
   )
 
