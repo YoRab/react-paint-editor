@@ -59,7 +59,7 @@ export const getRectBorder = (rect: Rect, selectionPadding: number): Rect => {
   }
 }
 
-const getRectOppositeAnchorAbsolutePosition = <T extends DrawableShape & Rect>(
+export const getRectOppositeAnchorAbsolutePosition = <T extends DrawableShape & Rect>(
   anchor: Point,
   center: Point,
   shape: T,

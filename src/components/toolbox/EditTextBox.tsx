@@ -3,9 +3,9 @@ import React, { useEffect, useMemo, useRef } from 'react'
 import { styled } from '@linaria/react'
 import type { DrawableText } from 'types/Shapes'
 import { getPointPositionBeforeCanvasTransformation } from 'utils/intersect'
-import { getShapeInfos } from 'utils/shapeData'
 import { convertDivContentToStringArray, convertStringArrayToDivContent } from 'utils/string'
-import { radiansToDegrees } from 'utils/transform'
+import { getShapeInfos } from 'utils/shapes'
+import { radiansToDegrees } from 'utils/trigo'
 
 const StyledEditBox = styled.div<{
   transform: string

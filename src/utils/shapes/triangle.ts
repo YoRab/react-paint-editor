@@ -1,4 +1,4 @@
-import { Point, StyledShape, Triangle } from 'types/Shapes'
+import { Triangle } from 'types/Shapes'
 import { updateCanvasContext } from 'utils/canvas'
 
 export const drawTriangle = (ctx: CanvasRenderingContext2D, triangle: Triangle): void => {

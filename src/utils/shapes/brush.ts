@@ -6,6 +6,7 @@ import { updateCanvasContext } from 'utils/canvas'
 import { getPointPositionAfterCanvasTransformation } from 'utils/intersect'
 import { getNormalizedSize } from 'utils/transform'
 import { getShapeInfos } from '.'
+import { getRectOppositeAnchorAbsolutePosition } from './rectangle'
 
 export const createBrush = (
   shape: {

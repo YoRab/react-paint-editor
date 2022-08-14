@@ -5,7 +5,7 @@ import type { ToolsSettingsType } from 'types/tools'
 import { updateCanvasContext } from 'utils/canvas'
 import { STYLE_FONT_DEFAULT } from 'constants/style'
 import { SelectionModeResize } from 'types/Mode'
-import { resizeRect } from './rectangle'
+import { getRectOppositeAnchorAbsolutePosition, resizeRect } from './rectangle'
 import { getShapeInfos } from '.'
 
 export const createText = (

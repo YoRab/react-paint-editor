@@ -1,14 +1,15 @@
 import React, { useCallback, useEffect, useImperativeHandle, useRef } from 'react'
 import { styled } from '@linaria/react'
 import type { DrawableShape, Point } from 'types/Shapes'
-import { drawGrid, initCanvasContext } from 'utils/canvas'
+import { initCanvasContext } from 'utils/canvas'
 import type { SelectionModeData } from 'types/Mode'
 import EditTextBox from './toolbox/EditTextBox'
 import useDrawableCanvas from 'hooks/useDrawableCanvas'
 import type { ToolsType } from 'types/tools'
 import type { GridFormatType } from 'constants/app'
-import { drawSelection, drawShape } from 'utils/shapes'
+import { drawShapeSelection, drawShape } from 'utils/shapes'
 import { resizeTextShapeWithNewContent } from 'utils/shapes/text'
+import { drawGrid } from 'utils/shapes/grid'
 
 const renderDrawCanvas = (
   drawCtx: CanvasRenderingContext2D,
@@ -54,7 +55,7 @@ const renderSelectionCanvas = (
   selectionCtx.clearRect(0, 0, width, height)
   selectedShape &&
     activeTool.type !== 'brush' &&
-    drawSelection({
+    drawShapeSelection({
       ctx: selectionCtx,
       shape: selectedShape,
       scaleRatio,

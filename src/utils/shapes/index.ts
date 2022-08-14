@@ -27,24 +27,7 @@ import { drawPicture, getPictureBorder, resizePicture } from './picture'
 import { GRID_ROTATION_STEPS } from 'constants/style'
 import { SelectionModeData, SelectionModeResize } from 'types/Mode'
 import { drawSelectionDefault } from './default'
-
-const applyShapeTransformations = (
-  ctx: CanvasRenderingContext2D,
-  marker: DrawableShape,
-  responsiveScale: number,
-  canvasOffset: Point,
-  selectionPadding: number
-) => {
-  ctx.save()
-  ctx.scale(responsiveScale, responsiveScale)
-  ctx.translate(canvasOffset[0], canvasOffset[1])
-  if (marker.rotation !== 0) {
-    const { center } = getShapeInfos(marker, selectionPadding)
-    ctx.translate(center[0], center[1])
-    ctx.rotate(marker.rotation)
-    ctx.translate(-center[0], -center[1])
-  }
-}
+import { transformCanvas } from 'utils/canvas'
 
 export const createShape = (
   ctx: CanvasRenderingContext2D,
@@ -86,7 +69,8 @@ export const drawShape = (
   selectionPadding: number
 ): void => {
   if (shape.visible === false) return
-  applyShapeTransformations(ctx, shape, responsiveScale, canvasOffset, selectionPadding)
+  const { center } = getShapeInfos(shape, selectionPadding)
+  transformCanvas(ctx, responsiveScale, canvasOffset, shape.rotation, center)
 
   switch (shape.type) {
     case 'brush':
@@ -340,7 +324,7 @@ export const translateShape = (
   }
 }
 
-export const drawSelection = ({
+export const drawShapeSelection = ({
   ctx,
   shape,
   scaleRatio = 1,
@@ -359,7 +343,9 @@ export const drawSelection = ({
   selectionColor: string
   withAnchors?: boolean
 }) => {
-  applyShapeTransformations(ctx, shape, scaleRatio, canvasOffset, selectionPadding)
+  const { center } = getShapeInfos(shape, selectionPadding)
+  transformCanvas(ctx, scaleRatio, canvasOffset, shape.rotation, center)
+
   switch (shape.type) {
     case 'polygon':
     case 'line':
