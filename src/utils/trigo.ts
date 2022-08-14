@@ -29,3 +29,8 @@ export const rotatePoint = ({
     pointFromOrigin[1] * Math.sin(rotation) + pointFromOrigin[0] * Math.cos(rotation)
   return [rotatedPointX + origin[0], rotatedPointY + origin[1]]
 }
+
+export const getAngleFromVector = (point1: Point, point2: Point, radian = true) => {
+  const radianAngle = Math.atan2(point2[1] - point1[1], point2[0] - point1[0])
+  return radian ? radianAngle : radiansToDegrees(radianAngle)
+}

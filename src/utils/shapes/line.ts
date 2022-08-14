@@ -14,7 +14,7 @@ import type {
 import type { ToolsSettingsType } from 'types/tools'
 import { updateCanvasContext } from 'utils/canvas'
 import { getPointPositionAfterCanvasTransformation } from 'utils/intersect'
-import { rotatePoint } from 'utils/trigo'
+import { getAngleFromVector, rotatePoint } from 'utils/trigo'
 import { getShapeInfos } from '.'
 import { drawCircle } from './circle'
 import { drawRect } from './rectangle'
@@ -86,15 +86,11 @@ export const drawLine = (ctx: CanvasRenderingContext2D, line: Line): void => {
   line.style?.fillColor !== 'transparent' && ctx.fill()
   line.style?.strokeColor !== 'transparent' && ctx.stroke()
   if (line.style?.lineArrow === 1 || line.style?.lineArrow === 3) {
-    const rotation =
-      Math.PI / 2 -
-      Math.atan2(line.points[1][1] - line.points[0][1], line.points[1][0] - line.points[0][0])
+    const rotation = Math.PI / 2 - getAngleFromVector(line.points[0], line.points[1])
     drawTriangle(ctx, buildTriangleOnLine(line.points[0], rotation, { style: line.style }))
   }
   if (line.style?.lineArrow === 2 || line.style?.lineArrow === 3) {
-    const rotation =
-      Math.PI / 2 -
-      Math.atan2(line.points[0][1] - line.points[1][1], line.points[0][0] - line.points[1][0])
+    const rotation = Math.PI / 2 - getAngleFromVector(line.points[1], line.points[0])
     drawTriangle(ctx, buildTriangleOnLine(line.points[1], rotation, { style: line.style }))
   }
 }
