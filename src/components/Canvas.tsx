@@ -1,13 +1,14 @@
 import React, { useCallback, useEffect, useImperativeHandle, useRef } from 'react'
 import { styled } from '@linaria/react'
 import type { DrawableShape, Point } from 'types/Shapes'
-import { drawGrid, drawSelection, drawShape, initDrawStyle } from 'utils/draw'
+import { drawGrid, initCanvasContext } from 'utils/canvas'
 import type { SelectionModeData } from 'types/Mode'
-import { resizeTextShapeWithNewContent } from 'utils/transform'
 import EditTextBox from './toolbox/EditTextBox'
 import useDrawableCanvas from 'hooks/useDrawableCanvas'
 import type { ToolsType } from 'types/tools'
 import type { GridFormatType } from 'constants/app'
+import { drawSelection, drawShape } from 'utils/shapes'
+import { resizeTextShapeWithNewContent } from 'utils/shapes/text'
 
 const renderDrawCanvas = (
   drawCtx: CanvasRenderingContext2D,
@@ -25,7 +26,7 @@ const renderDrawCanvas = (
 ) => {
   const { width, height, scaleRatio } = canvasSize
   drawCtx.clearRect(0, 0, width, height)
-  initDrawStyle(drawCtx)
+  initCanvasContext(drawCtx)
   gridFormat && drawGrid(drawCtx, width, height, scaleRatio, canvasOffset, gridFormat)
   for (let i = shapes.length - 1; i >= 0; i--) {
     if (selectionMode.mode !== 'textedition' || shapes[i] !== selectedShape) {

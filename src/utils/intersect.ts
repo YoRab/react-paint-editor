@@ -6,7 +6,7 @@ import {
 import _ from 'lodash/fp'
 import type { HoverModeData } from 'types/Mode'
 import type { Point, Rect, DrawableShape } from 'types/Shapes'
-import { getShapeInfos } from './shapeData'
+import { getShapeInfos } from './shapes'
 
 export const getCursorPosition = (
   e: MouseEvent | TouchEvent,

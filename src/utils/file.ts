@@ -2,8 +2,9 @@ import { ShapeTypeArray } from 'constants/shapes'
 import _ from 'lodash/fp'
 import type { DrawableShape, DrawableShapeJson, ExportDataType, Point } from 'types/Shapes'
 import { addDefaultAndTempShapeProps, buildDataToExport } from './data'
-import { drawShape, initDrawStyle } from './draw'
+import { initCanvasContext } from './canvas'
 import { migrateShapesV065 } from './migration'
+import { drawShape } from './shapes'
 
 export const fetchAndStringify = (url: string) => {
   return fetch(url)
@@ -48,7 +49,7 @@ export const getCanvasImage = (
   const ctx = newCanvas.getContext('2d')
   if (!ctx) return ''
   ctx.clearRect(0, 0, width, height)
-  initDrawStyle(ctx)
+  initCanvasContext(ctx)
   for (let i = shapes.length - 1; i >= 0; i--) {
     drawShape(ctx, shapes[i], 1, canvasOffset, selectionPadding)
   }

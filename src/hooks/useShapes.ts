@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { DrawableShape } from 'types/Shapes'
 import _ from 'lodash/fp'
-import { createPicture } from 'utils/data'
+import { createPicture } from 'utils/shapes/picture'
 
 const useShapes = (onDataChanged: () => void = _.noop) => {
   const shapesRef = useRef<DrawableShape[]>([])

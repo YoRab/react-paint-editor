@@ -4,12 +4,12 @@ import type { DrawableBrush, DrawableShape, Point, ShapeType } from 'types/Shape
 import { checkPositionIntersection, getCursorPosition } from 'utils/intersect'
 import type { HoverModeData, SelectionModeData } from 'types/Mode'
 import { createNewPointGroupToShape, transformShape } from 'utils/transform'
-import { createShape } from 'utils/data'
 import type { CustomTool, ToolsType } from 'types/tools'
 import { SELECTION_TOOL } from 'constants/tools'
 import useDoubleClick from 'hooks/useDoubleClick'
 import { ShapeTypeArray } from 'constants/shapes'
 import type { GridFormatType } from 'constants/app'
+import { createShape } from 'utils/shapes'
 
 const handleMove = (
   e: MouseEvent | TouchEvent,
