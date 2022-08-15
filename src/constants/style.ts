@@ -20,3 +20,6 @@ export const STYLE_ZINDEX = {
   PANEL: 3,
   SNACKBAR: 4
 }
+
+export const GRID_STEP = [10, 20, 40]
+export const GRID_ROTATION_STEPS = 18

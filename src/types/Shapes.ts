@@ -23,7 +23,6 @@ export type StyledShape = {
 type Drawable = {
   id: string
   toolId?: string
-  translation: Point
   rotation: number
 }
 
@@ -105,7 +104,7 @@ export type DrawableShape =
   | DrawableCircle
   | DrawableEllipse
 
-export type DrawableShapeJson =
+export type DrawableShapeJson = { translation?: Point } & (
   | DrawableRect
   | DrawableSquare
   | DrawablePictureJson
@@ -116,6 +115,7 @@ export type DrawableShapeJson =
   | DrawableBrush
   | DrawableCircle
   | DrawableEllipse
+)
 
 export type ExportDataType = {
   shapes: DrawableShapeJson[]

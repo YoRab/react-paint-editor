@@ -5,8 +5,9 @@ import {
 } from 'constants/shapes'
 import _ from 'lodash/fp'
 import type { HoverModeData } from 'types/Mode'
-import type { Point, Rect, DrawableShape } from 'types/Shapes'
-import { getShapeInfos } from './shapeData'
+import type { Point, DrawableShape } from 'types/Shapes'
+import { getShapeInfos } from './shapes'
+import { rotatePoint, isPointInsideRect } from './trigo'
 
 export const getCursorPosition = (
   e: MouseEvent | TouchEvent,
@@ -28,82 +29,29 @@ export const getCursorPosition = (
   ]
 }
 
-export const getSettingsPosition = (
-  shape: DrawableShape,
-  canvas: HTMLCanvasElement | null,
-  givenWidth: number,
-  givenHeight: number,
-  selectionPadding: number
-) => {
-  const shapeInfos = getShapeInfos(shape, selectionPadding)
-
-  const positionInCanvas = getPointPositionBeforeCanvasTransformation(
-    shapeInfos.center,
-    [-shape.translation[0], -shape.translation[1]],
-    shape.rotation,
-    shapeInfos.center
-  )
-
-  const canvasBoundingRect = canvas?.getBoundingClientRect() ?? {
-    left: 0,
-    top: 0,
-    width: givenWidth,
-    height: givenHeight
-  }
-
-  return [
-    canvasBoundingRect.left + positionInCanvas[0] * (canvasBoundingRect.width / givenWidth),
-    canvasBoundingRect.top + positionInCanvas[1] * (canvasBoundingRect.height / givenHeight)
-  ]
-}
-
-const isPointInsideRect = (rect: Rect, point: Point) => {
-  return (
-    point[0] >= rect.x &&
-    point[0] <= rect.x + rect.width &&
-    point[1] >= rect.y &&
-    point[1] <= rect.y + rect.height
-  )
-}
-
 export const getPointPositionAfterCanvasTransformation = (
-  [positionX, positionY]: Point,
-  [canvasOffsetX, canvasOffsetY]: Point,
-  [translationX, translationY]: Point,
+  point: Point,
   shapeRotation: number,
-  [centerX, centerY]: Point
-): Point => {
-  const newX = positionX + canvasOffsetX - centerX - translationX
-  const newY = positionY + canvasOffsetY - centerY - translationY
-  const rotatedY = newY * Math.cos(shapeRotation) - newX * Math.sin(shapeRotation)
-  const rotatedX = newY * Math.sin(shapeRotation) + newX * Math.cos(shapeRotation)
-
-  const translatedX = rotatedX + centerX
-  const translatedY = rotatedY + centerY
-  return [translatedX, translatedY]
-}
+  [originX, originY]: Point,
+  [canvasOffsetX, canvasOffsetY]: Point
+): Point =>
+  rotatePoint({
+    origin: [originX - canvasOffsetX, originY - canvasOffsetY],
+    point,
+    rotation: shapeRotation
+  })
 
 export const getPointPositionBeforeCanvasTransformation = (
-  [positionX, positionY]: Point,
-  [translationX, translationY]: Point,
+  point: Point,
   shapeRotation: number,
-  [centerX, centerY]: Point
-): Point => {
-  const newX = positionX - centerX
-  const newY = positionY - centerY
-  const rotatedY = newY * Math.cos(-shapeRotation) - newX * Math.sin(-shapeRotation)
-  const rotatedX = newY * Math.sin(-shapeRotation) + newX * Math.cos(-shapeRotation)
-
-  const translatedX = rotatedX + centerX
-  const translatedY = rotatedY + centerY
-  return [translatedX - translationX, translatedY - translationY]
-}
-
-export const applyRotationToVector = (vector: Point, shapeRotation: number): Point => {
-  const rotatedY = vector[1] * Math.cos(shapeRotation) - vector[0] * Math.sin(shapeRotation)
-  const rotatedX = vector[1] * Math.sin(shapeRotation) + vector[0] * Math.cos(shapeRotation)
-  return [rotatedX, rotatedY]
-}
+  [originX, originY]: Point,
+  [canvasOffsetX, canvasOffsetY]: Point
+): Point =>
+  rotatePoint({
+    origin: [originX - canvasOffsetX, originY - canvasOffsetY],
+    point,
+    rotation: -shapeRotation
+  })
 
 export const checkPositionIntersection = (
   shape: DrawableShape,
@@ -121,10 +69,9 @@ export const checkPositionIntersection = (
 
   const newPosition = getPointPositionAfterCanvasTransformation(
     position,
-    canvasOffset,
-    shape.translation,
     shape.rotation,
-    center
+    center,
+    canvasOffset
   )
 
   if (checkAnchors) {

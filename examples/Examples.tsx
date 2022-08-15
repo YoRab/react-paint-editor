@@ -319,7 +319,7 @@ const CurrentApp = ({ selectedComponent }: CurrentAppType) => {
       return (
         <App
           options={{
-            gridVisible: true,
+            grid: 2,
             layersManipulation: false,
             withLoadAndSave: true,
             withExport: true,
