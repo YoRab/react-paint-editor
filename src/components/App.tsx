@@ -1,6 +1,6 @@
 import React, { MutableRefObject, useCallback, useEffect, useRef, useState } from 'react'
 import type { DrawableShape, DrawableShapeJson, ExportDataType, Point } from 'types/Shapes'
-import type { CustomToolInput, ToolsType } from 'types/tools'
+import type { ToolsType } from 'types/tools'
 import Canvas from './Canvas'
 import Layouts from './settings/Layouts'
 import Toolbar from './toolbox/Toolbar'
@@ -23,16 +23,10 @@ import useSnackbar from 'hooks/useSnackbar'
 import Loading from 'components/common/Loading'
 import { buildDataToExport } from 'utils/data'
 import useResizeObserver from 'hooks/useResizeObserver'
-import type { RecursivePartial } from 'types/utils'
-import {
-  SELECTION_DEFAULT_COLOR,
-  SELECTION_DEFAULT_PADDING,
-  SELECTION_DEFAULT_WIDTH
-} from 'constants/shapes'
 import { sanitizeTools } from 'utils/toolbar'
-import { DEFAULT_SHAPE_TOOLS, SELECTION_TOOL } from 'constants/tools'
+import { SELECTION_TOOL } from 'constants/tools'
 import _ from 'lodash/fp'
-import { GridFormatType, GRID_NONE } from 'constants/app'
+import { DEFAULT_OPTIONS, GridFormatType, OptionalAppOptionsType } from 'constants/app'
 
 const StyledApp = styled.div<{
   canvasWidth: number
@@ -103,68 +97,6 @@ const StyledRow = styled.div<{
   aspect-ratio: ${({ aspectRatio }) => aspectRatio};
 `
 
-type AppOptionsType = {
-  layersManipulation: boolean
-  grid: GridFormatType
-  canGrow: boolean
-  canShrink: boolean
-  availableTools: CustomToolInput[]
-  withExport: boolean
-  withLoadAndSave: boolean
-  withUploadPicture: boolean
-  withUrlPicture: boolean
-  clearCallback: 'empty' | 'defaultShapes' | (() => DrawableShapeJson[])
-  uiStyle: {
-    toolbarBackgroundColor: string
-    dividerColor: string
-    fontRadius: number
-    fontDisabledColor: string
-    fontDisabledBackgroundColor: string
-    fontColor: string
-    fontBackgroundColor: string
-    fontSelectedColor: string
-    fontSelectedBackgroundColor: string
-    fontHoverColor: string
-    fontHoverBackgroundColor: string
-    canvasBackgroundColor: string
-    canvasSelectionColor: string
-    canvasSelectionWidth: number
-    canvasSelectionPadding: number
-  }
-}
-
-type OptionalAppOptionsType = RecursivePartial<AppOptionsType>
-
-const DEFAULT_OPTIONS: AppOptionsType = {
-  layersManipulation: true,
-  grid: GRID_NONE,
-  canGrow: false,
-  canShrink: true,
-  withExport: true,
-  withLoadAndSave: true,
-  withUploadPicture: true,
-  withUrlPicture: false,
-  availableTools: DEFAULT_SHAPE_TOOLS,
-  clearCallback: 'empty',
-  uiStyle: {
-    toolbarBackgroundColor: 'white',
-    dividerColor: '#36418129',
-    fontRadius: 8,
-    fontDisabledColor: '#3641812b',
-    fontDisabledBackgroundColor: 'transparent',
-    fontColor: '#364181',
-    fontBackgroundColor: 'transparent',
-    fontSelectedColor: 'white',
-    fontSelectedBackgroundColor: '#364181',
-    fontHoverColor: '#364181',
-    fontHoverBackgroundColor: '#afd8d8',
-    canvasBackgroundColor: 'white',
-    canvasSelectionColor: SELECTION_DEFAULT_COLOR,
-    canvasSelectionWidth: SELECTION_DEFAULT_WIDTH,
-    canvasSelectionPadding: SELECTION_DEFAULT_PADDING
-  }
-}
-
 type AppType = {
   className?: string
   width?: number
@@ -224,8 +156,8 @@ const App = ({
     fontHoverBackgroundColor,
     canvasBackgroundColor,
     canvasSelectionColor,
-    canvasSelectionWidth,
-    canvasSelectionPadding
+    canvasSelectionWidth
+    // canvasSelectionPadding
   } = {
     ...DEFAULT_OPTIONS.uiStyle,
     ...(options?.uiStyle ?? {})
@@ -239,6 +171,8 @@ const App = ({
     height: canvasHeight,
     scaleRatio: 1
   })
+
+  const canvasSelectionPadding = 0 // selection padding should not be larger than 0 until shape resizing is refactored
 
   const [availableTools, setAvailableTools] = useState(
     sanitizeTools(availableToolsFromProps, withUploadPicture || withUrlPicture)

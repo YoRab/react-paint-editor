@@ -1,12 +1,14 @@
-# Next
+# V0.7.0
 
 - rewrite types and get rid of enum
+- move utils location for more clarity
 - fix optional prop toolId in storage file
 - fix opacity settings
 - fix toolbar menu not hiding after starting to create shape
 - translation attribute has been removed from shapes
 - Always round values when creating or transforming shapes
 - Improve grid feature
+- prevent selection padding to be larger than 0 until shape resize is fixed
 
 # V0.6.5
 
