@@ -1,11 +1,11 @@
 import _ from 'lodash/fp'
-import { fitContentInsideContainer } from '../transform'
+import { fitContentInsideContainer, roundForGrid } from '../transform'
 import type { DrawablePicture, Picture, Point, Rect, StoredPicture } from 'types/Shapes'
 import { fetchAndStringify } from '../file'
 import { DEFAULT_SHAPE_PICTURE } from 'constants/tools'
-import { updateCanvasContext } from 'utils/canvas'
 import { getRectBorder, resizeRect } from './rectangle'
 import { SelectionModeResize } from 'types/Mode'
+import { GridFormatType } from 'constants/app'
 
 export const createPicture = (
   fileOrUrl: File | string,
@@ -63,16 +63,26 @@ export const createPicture = (
 }
 
 export const drawPicture = (ctx: CanvasRenderingContext2D, picture: Picture): void => {
-  updateCanvasContext(ctx, picture.style)
   if (ctx.globalAlpha === 0) return
-
   ctx.beginPath()
-
   ctx.drawImage(picture.img, picture.x, picture.y, picture.width, picture.height)
 }
 
 export const getPictureBorder = (picture: StoredPicture, selectionPadding: number): Rect => {
   return getRectBorder(picture, selectionPadding)
+}
+
+export const translatePicture = (
+  cursorPosition: Point,
+  originalShape: DrawablePicture,
+  originalCursorPosition: Point,
+  gridFormat: GridFormatType
+) => {
+  return {
+    ...originalShape,
+    x: roundForGrid(originalShape.x + cursorPosition[0] - originalCursorPosition[0], gridFormat),
+    y: roundForGrid(originalShape.y + cursorPosition[1] - originalCursorPosition[1], gridFormat)
+  }
 }
 
 export const resizePicture = (

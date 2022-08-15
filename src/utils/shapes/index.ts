@@ -14,19 +14,39 @@ import type {
 } from 'types/Shapes'
 import type { CustomTool } from 'types/tools'
 import type { GridFormatType } from 'constants/app'
-import { createBrush, drawBrush, getBrushBorder, resizeBrush } from './brush'
-import { createLine, drawLine, drawLineSelection, getLineBorder, resizeLine } from './line'
-import { createPolygon, drawPolygon, getPolygonBorder } from './polygon'
-import { createCurve, drawCurve, getCurveBorder } from './curve'
-import { createRectangle, drawRect, getRectBorder, resizeRect } from './rectangle'
-import { createText, drawText, getTextBorder, resizeText } from './text'
-import { createEllipse, drawEllipse, getEllipseBorder, resizeEllipse } from './ellipse'
-import { createCircle, drawCircle, getCircleBorder, resizeCircle } from './circle'
-import { drawPicture, getPictureBorder, resizePicture } from './picture'
+import { createBrush, drawBrush, getBrushBorder, resizeBrush, translateBrush } from './brush'
+import {
+  createLine,
+  drawLine,
+  drawLineSelection,
+  getLineBorder,
+  resizeLine,
+  translateLine
+} from './line'
+import { createPolygon, drawPolygon, getPolygonBorder, translatePolygon } from './polygon'
+import { createCurve, drawCurve, getCurveBorder, translateCurve } from './curve'
+import {
+  createRectangle,
+  legacyDrawRect,
+  getRectBorder,
+  resizeRect,
+  translateRect,
+  drawRect
+} from './rectangle'
+import { createText, drawText, getTextBorder, resizeText, translateText } from './text'
+import {
+  createEllipse,
+  drawEllipse,
+  getEllipseBorder,
+  resizeEllipse,
+  translateEllipse
+} from './ellipse'
+import { createCircle, drawCircle, getCircleBorder, resizeCircle, translateCircle } from './circle'
+import { drawPicture, getPictureBorder, resizePicture, translatePicture } from './picture'
 import { GRID_ROTATION_STEPS } from 'constants/style'
 import { SelectionModeData, SelectionModeResize } from 'types/Mode'
 import { drawSelectionDefault } from './default'
-import { transformCanvas } from 'utils/canvas'
+import { transformCanvas, updateCanvasContext } from 'utils/canvas'
 
 export const createShape = (
   ctx: CanvasRenderingContext2D,
@@ -69,6 +89,7 @@ export const drawShape = (
   if (shape.visible === false) return
   const { center } = getShapeInfos(shape, selectionPadding)
   transformCanvas(ctx, responsiveScale, canvasOffset, shape.rotation, center)
+  updateCanvasContext(ctx, shape.style)
 
   switch (shape.type) {
     case 'brush':
@@ -93,8 +114,10 @@ export const drawShape = (
       drawEllipse(ctx, shape)
       break
     case 'rect':
-    case 'square':
       drawRect(ctx, shape)
+      break
+    case 'square':
+      legacyDrawRect(ctx, shape)
       break
     case 'picture':
       drawPicture(ctx, shape)
@@ -250,75 +273,23 @@ export const translateShape = (
   switch (originalShape.type) {
     case 'rect':
     case 'square':
+      return translateRect(cursorPosition, originalShape, originalCursorPosition, gridFormat)
     case 'ellipse':
+      return translateEllipse(cursorPosition, originalShape, originalCursorPosition, gridFormat)
     case 'circle':
+      return translateCircle(cursorPosition, originalShape, originalCursorPosition, gridFormat)
     case 'picture':
-    default:
-      return {
-        ...originalShape,
-        x: roundForGrid(
-          originalShape.x + cursorPosition[0] - originalCursorPosition[0],
-          gridFormat
-        ),
-        y: roundForGrid(originalShape.y + cursorPosition[1] - originalCursorPosition[1], gridFormat)
-      }
+      return translatePicture(cursorPosition, originalShape, originalCursorPosition, gridFormat)
+    case 'text':
+      return translateText(cursorPosition, originalShape, originalCursorPosition, gridFormat)
     case 'line':
-      return {
-        ...originalShape,
-        points: originalShape.points.map(([x, y]) => [
-          roundForGrid(x + cursorPosition[0] - originalCursorPosition[0], gridFormat),
-          roundForGrid(y + cursorPosition[1] - originalCursorPosition[1], gridFormat)
-        ]) as [Point, Point]
-      }
+      return translateLine(cursorPosition, originalShape, originalCursorPosition, gridFormat)
     case 'polygon':
+      return translatePolygon(cursorPosition, originalShape, originalCursorPosition, gridFormat)
     case 'curve':
-      if (gridFormat) {
-        const { borders } = getShapeInfos(originalShape, 0)
-        const translationX =
-          roundForGrid(borders.x + cursorPosition[0] - originalCursorPosition[0], gridFormat) -
-          borders.x
-        const translationY =
-          roundForGrid(borders.y + cursorPosition[1] - originalCursorPosition[1], gridFormat) -
-          borders.y
-        return {
-          ...originalShape,
-          points: originalShape.points.map(([x, y]) => [x + translationX, y + translationY])
-        }
-      } else {
-        return {
-          ...originalShape,
-          points: originalShape.points.map(([x, y]) => [
-            roundForGrid(x + cursorPosition[0] - originalCursorPosition[0], gridFormat),
-            roundForGrid(y + cursorPosition[1] - originalCursorPosition[1], gridFormat)
-          ]) as Point[]
-        }
-      }
+      return translateCurve(cursorPosition, originalShape, originalCursorPosition, gridFormat)
     case 'brush':
-      if (gridFormat) {
-        const { borders } = getShapeInfos(originalShape, 0)
-        const translationX =
-          roundForGrid(borders.x + cursorPosition[0] - originalCursorPosition[0], gridFormat) -
-          borders.x
-        const translationY =
-          roundForGrid(borders.y + cursorPosition[1] - originalCursorPosition[1], gridFormat) -
-          borders.y
-        return {
-          ...originalShape,
-          points: originalShape.points.map(coord =>
-            coord.map(([x, y]) => [x + translationX, y + translationY])
-          ) as Point[][]
-        }
-      } else {
-        return {
-          ...originalShape,
-          points: originalShape.points.map(coord =>
-            coord.map(([x, y]) => [
-              x + cursorPosition[0] - originalCursorPosition[0],
-              y + cursorPosition[1] - originalCursorPosition[1]
-            ])
-          ) as Point[][]
-        }
-      }
+      return translateBrush(cursorPosition, originalShape, originalCursorPosition, gridFormat)
   }
 }
 

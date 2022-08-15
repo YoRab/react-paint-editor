@@ -1,13 +1,13 @@
+import { GridFormatType } from 'constants/app'
 import _ from 'lodash/fp'
 import { SelectionModeResize } from 'types/Mode'
 import type { Point, DrawableEllipse, Ellipse, Rect, DrawableShape } from 'types/Shapes'
 import type { ToolsSettingsType } from 'types/tools'
-import { updateCanvasContext } from 'utils/canvas'
 import {
   getPointPositionAfterCanvasTransformation,
   getPointPositionBeforeCanvasTransformation
 } from 'utils/intersect'
-import { getNormalizedSize } from 'utils/transform'
+import { getNormalizedSize, roundForGrid } from 'utils/transform'
 import { getShapeInfos } from '.'
 
 export const createEllipse = (
@@ -40,8 +40,6 @@ export const createEllipse = (
 }
 
 export const drawEllipse = (ctx: CanvasRenderingContext2D, ellipse: Ellipse): void => {
-  updateCanvasContext(ctx, ellipse.style)
-
   if (ctx.globalAlpha === 0) return
 
   ctx.beginPath()
@@ -56,6 +54,19 @@ export const getEllipseBorder = (ellipse: Ellipse, selectionPadding: number): Re
     width: (ellipse.radiusX + selectionPadding) * 2,
     y: ellipse.y - ellipse.radiusY - selectionPadding,
     height: (ellipse.radiusY + selectionPadding) * 2
+  }
+}
+
+export const translateEllipse = (
+  cursorPosition: Point,
+  originalShape: DrawableEllipse,
+  originalCursorPosition: Point,
+  gridFormat: GridFormatType
+) => {
+  return {
+    ...originalShape,
+    x: roundForGrid(originalShape.x + cursorPosition[0] - originalCursorPosition[0], gridFormat),
+    y: roundForGrid(originalShape.y + cursorPosition[1] - originalCursorPosition[1], gridFormat)
   }
 }
 

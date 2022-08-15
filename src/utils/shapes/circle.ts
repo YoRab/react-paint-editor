@@ -1,12 +1,13 @@
+import { GridFormatType } from 'constants/app'
 import _ from 'lodash/fp'
 import { SelectionModeResize } from 'types/Mode'
 import type { Point, DrawableCircle, Circle, Rect, DrawableShape } from 'types/Shapes'
 import type { ToolsSettingsType } from 'types/tools'
-import { updateCanvasContext } from 'utils/canvas'
 import {
   getPointPositionAfterCanvasTransformation,
   getPointPositionBeforeCanvasTransformation
 } from 'utils/intersect'
+import { roundForGrid } from 'utils/transform'
 import { getShapeInfos } from '.'
 
 export const createCircle = (
@@ -38,7 +39,6 @@ export const createCircle = (
 }
 
 export const drawCircle = (ctx: CanvasRenderingContext2D, circle: Circle): void => {
-  updateCanvasContext(ctx, circle.style)
   ctx.beginPath()
   ctx.arc(circle.x, circle.y, circle.radius, 0, 2 * Math.PI)
   circle.style?.fillColor !== 'transparent' && ctx.fill()
@@ -51,6 +51,19 @@ export const getCircleBorder = (circle: Circle, selectionPadding: number): Rect 
     width: (circle.radius + selectionPadding) * 2,
     y: circle.y - circle.radius - selectionPadding,
     height: (circle.radius + selectionPadding) * 2
+  }
+}
+
+export const translateCircle = (
+  cursorPosition: Point,
+  originalShape: DrawableCircle,
+  originalCursorPosition: Point,
+  gridFormat: GridFormatType
+) => {
+  return {
+    ...originalShape,
+    x: roundForGrid(originalShape.x + cursorPosition[0] - originalCursorPosition[0], gridFormat),
+    y: roundForGrid(originalShape.y + cursorPosition[1] - originalCursorPosition[1], gridFormat)
   }
 }
 

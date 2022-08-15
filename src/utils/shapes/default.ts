@@ -4,10 +4,10 @@ import {
   SELECTION_ROTATED_ANCHOR_POSITION
 } from 'constants/shapes'
 import { DrawableShape } from 'types/Shapes'
-import { getShapeInfos } from '.'
+import { getShapeInfos } from './index'
 import { drawCircle } from './circle'
 import { drawLine } from './line'
-import { drawRect } from './rectangle'
+import { legacyDrawRect } from './rectangle'
 
 export const drawSelectionDefault = ({
   ctx,
@@ -28,7 +28,7 @@ export const drawSelectionDefault = ({
 }) => {
   const { borders } = getShapeInfos(shape, selectionPadding / currentScale)
 
-  drawRect(ctx, {
+  legacyDrawRect(ctx, {
     ...borders,
     style: {
       fillColor: 'transparent',

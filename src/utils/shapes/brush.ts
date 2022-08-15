@@ -1,12 +1,34 @@
+import { GridFormatType } from 'constants/app'
 import _ from 'lodash/fp'
 import { SelectionModeResize } from 'types/Mode'
 import type { Point, DrawableBrush, Brush, Rect } from 'types/Shapes'
 import type { ToolsSettingsType } from 'types/tools'
-import { updateCanvasContext } from 'utils/canvas'
 import { getPointPositionAfterCanvasTransformation } from 'utils/intersect'
-import { getNormalizedSize } from 'utils/transform'
+import { getNormalizedSize, roundForGrid } from 'utils/transform'
 import { getShapeInfos } from '.'
 import { getRectOppositeAnchorAbsolutePosition } from './rectangle'
+
+export const addPath = (brush: DrawableBrush) => {
+  if (brush.points.length < 1 || brush.style?.strokeColor === 'transparent') return brush
+
+  const path = new Path2D()
+
+  brush.points.forEach(points => {
+    if (points.length === 1) {
+      path.rect(points[0][0], points[0][1], 1, 1)
+    } else {
+      path.moveTo(...points[0])
+      points.slice(1).forEach(point => {
+        path.lineTo(...point)
+      })
+    }
+  })
+
+  return {
+    ...brush,
+    path
+  }
+}
 
 export const createBrush = (
   shape: {
@@ -18,7 +40,7 @@ export const createBrush = (
   },
   cursorPosition: Point
 ): DrawableBrush | undefined => {
-  return {
+  const brushShape = {
     toolId: shape.id,
     type: shape.type,
     id: _.uniqueId(`${shape.type}_`),
@@ -31,27 +53,13 @@ export const createBrush = (
       lineDash: shape.settings.lineDash.default
     }
   }
+  return addPath(brushShape)
 }
 
-export const drawBrush = (ctx: CanvasRenderingContext2D, brush: Brush): void => {
-  if (brush.points.length < 1) return
-  updateCanvasContext(ctx, brush.style)
-  ctx.beginPath()
-
-  if (brush.style?.strokeColor === 'transparent' || ctx.globalAlpha === 0) return
-
-  brush.points.forEach(points => {
-    if (points.length === 1) {
-      ctx.rect(points[0][0], points[0][1], 1, 1)
-    } else {
-      ctx.moveTo(...points[0])
-      points.slice(1).forEach(point => {
-        ctx.lineTo(...point)
-      })
-    }
-  })
-
-  ctx.stroke()
+export const drawBrush = (ctx: CanvasRenderingContext2D, shape: DrawableBrush): void => {
+  if (shape.points.length < 1 || !shape.path) return
+  if (shape.style?.strokeColor === 'transparent' || ctx.globalAlpha === 0) return
+  ctx.stroke(shape.path)
 }
 
 export const getBrushBorder = (brush: Brush, selectionPadding: number): Rect => {
@@ -78,6 +86,29 @@ export const getBrushBorder = (brush: Brush, selectionPadding: number): Rect => 
   )(brushPoints)
 
   return { x: minX, width: maxX - minX, y: minY, height: maxY - minY }
+}
+
+export const translateBrush = (
+  cursorPosition: Point,
+  originalShape: DrawableBrush,
+  originalCursorPosition: Point,
+  gridFormat: GridFormatType
+): DrawableBrush => {
+  const { borders } = getShapeInfos(originalShape, 0)
+  const translationX = gridFormat
+    ? roundForGrid(borders.x + cursorPosition[0] - originalCursorPosition[0], gridFormat) -
+      borders.x
+    : cursorPosition[0] - originalCursorPosition[0]
+  const translationY = gridFormat
+    ? roundForGrid(borders.y + cursorPosition[1] - originalCursorPosition[1], gridFormat) -
+      borders.y
+    : cursorPosition[1] - originalCursorPosition[1]
+  return addPath({
+    ...originalShape,
+    points: originalShape.points.map(coord =>
+      coord.map(([x, y]) => [x + translationX, y + translationY])
+    ) as Point[][]
+  })
 }
 
 export const resizeBrush = (
@@ -153,16 +184,18 @@ export const resizeBrush = (
     [widthWithRatio < 0, heightWithRatio < 0]
   )
 
-  return {
+  const brushShape: DrawableBrush = {
     ...shapeWithNewDimensions,
     points: shapeWithNewDimensions.points.map(coord =>
       coord.map(([x, y]) => [x - (newOppTrueX - oppTrueX), y - (newOppTrueY - oppTrueY)])
     )
   }
+
+  return addPath(brushShape)
 }
 
 export const addNewPointToShape = (shape: DrawableBrush, cursorPosition: Point) => {
-  return {
+  const brushShape = {
     ...shape,
     ...{
       points: _.set(
@@ -175,10 +208,11 @@ export const addNewPointToShape = (shape: DrawableBrush, cursorPosition: Point) 
       )
     }
   }
+  return addPath(brushShape)
 }
 
 export const addNewPointGroupToShape = (shape: DrawableBrush, cursorPosition: Point) => {
-  return {
+  const brushShape = {
     ...shape,
     ...{
       points: _.set(
@@ -188,4 +222,5 @@ export const addNewPointGroupToShape = (shape: DrawableBrush, cursorPosition: Po
       )
     }
   }
+  return addPath(brushShape)
 }

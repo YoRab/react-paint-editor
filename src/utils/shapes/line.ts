@@ -1,3 +1,4 @@
+import { GridFormatType } from 'constants/app'
 import { SELECTION_ANCHOR_SIZE } from 'constants/shapes'
 import _ from 'lodash/fp'
 import { SelectionModeResize } from 'types/Mode'
@@ -12,12 +13,12 @@ import type {
   DrawablePolygon
 } from 'types/Shapes'
 import type { ToolsSettingsType } from 'types/tools'
-import { updateCanvasContext } from 'utils/canvas'
 import { getPointPositionAfterCanvasTransformation } from 'utils/intersect'
+import { roundForGrid } from 'utils/transform'
 import { getAngleFromVector, rotatePoint } from 'utils/trigo'
 import { getShapeInfos } from '.'
 import { drawCircle } from './circle'
-import { drawRect } from './rectangle'
+import { legacyDrawRect } from './rectangle'
 import { drawTriangle } from './triangle'
 
 export const createLine = (
@@ -76,8 +77,6 @@ export const buildTriangleOnLine = (center: Point, rotation: number, lineStyle: 
 }
 
 export const drawLine = (ctx: CanvasRenderingContext2D, line: Line): void => {
-  updateCanvasContext(ctx, line.style)
-
   if (ctx.globalAlpha === 0) return
 
   ctx.beginPath()
@@ -101,6 +100,21 @@ export const getLineBorder = (line: Line, selectionPadding: number): Rect => {
   const y = Math.min(line.points[0][1], line.points[1][1]) - selectionPadding
   const height = Math.abs(line.points[0][1] - line.points[1][1]) + selectionPadding * 2
   return { x, width, y, height }
+}
+
+export const translateLine = (
+  cursorPosition: Point,
+  originalShape: DrawableLine,
+  originalCursorPosition: Point,
+  gridFormat: GridFormatType
+) => {
+  return {
+    ...originalShape,
+    points: originalShape.points.map(([x, y]) => [
+      roundForGrid(x + cursorPosition[0] - originalCursorPosition[0], gridFormat),
+      roundForGrid(y + cursorPosition[1] - originalCursorPosition[1], gridFormat)
+    ]) as [Point, Point]
+  }
 }
 
 export const resizeLine = (
@@ -145,7 +159,7 @@ export const drawLineSelection = ({
   currentScale?: number
 }) => {
   const { borders } = getShapeInfos(shape, selectionPadding)
-  drawRect(ctx, {
+  legacyDrawRect(ctx, {
     ...borders,
     style: {
       fillColor: 'transparent',
@@ -157,7 +171,7 @@ export const drawLineSelection = ({
   for (let i = 0; i < shape.points.length; i++) {
     const coordinate = shape.points[i]
     if (shape.type === 'curve' && i > 0 && i < shape.points.length - 1) {
-      drawRect(ctx, {
+      legacyDrawRect(ctx, {
         x: coordinate[0] - SELECTION_ANCHOR_SIZE / 2,
         y: coordinate[1] - SELECTION_ANCHOR_SIZE / 2,
         width: SELECTION_ANCHOR_SIZE / currentScale,

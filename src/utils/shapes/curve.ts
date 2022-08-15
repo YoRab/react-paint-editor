@@ -1,7 +1,9 @@
+import { GridFormatType } from 'constants/app'
 import _ from 'lodash/fp'
 import type { Point, DrawableCurve, Curve } from 'types/Shapes'
 import type { ToolsSettingsType } from 'types/tools'
-import { updateCanvasContext } from 'utils/canvas'
+import { roundForGrid } from 'utils/transform'
+import { getShapeInfos } from '.'
 import { getPolygonBorder } from './polygon'
 
 export const createCurve = (
@@ -36,7 +38,6 @@ export const createCurve = (
 
 export const drawCurve = (ctx: CanvasRenderingContext2D, curve: Curve): void => {
   if (curve.points.length < 3) return
-  updateCanvasContext(ctx, curve.style)
 
   if (ctx.globalAlpha === 0) return
 
@@ -58,3 +59,32 @@ export const drawCurve = (ctx: CanvasRenderingContext2D, curve: Curve): void => 
 }
 
 export const getCurveBorder = getPolygonBorder
+
+export const translateCurve = (
+  cursorPosition: Point,
+  originalShape: DrawableCurve,
+  originalCursorPosition: Point,
+  gridFormat: GridFormatType
+): DrawableCurve => {
+  if (gridFormat) {
+    const { borders } = getShapeInfos(originalShape, 0)
+    const translationX =
+      roundForGrid(borders.x + cursorPosition[0] - originalCursorPosition[0], gridFormat) -
+      borders.x
+    const translationY =
+      roundForGrid(borders.y + cursorPosition[1] - originalCursorPosition[1], gridFormat) -
+      borders.y
+    return {
+      ...originalShape,
+      points: originalShape.points.map(([x, y]) => [x + translationX, y + translationY])
+    }
+  } else {
+    return {
+      ...originalShape,
+      points: originalShape.points.map(([x, y]) => [
+        roundForGrid(x + cursorPosition[0] - originalCursorPosition[0], gridFormat),
+        roundForGrid(y + cursorPosition[1] - originalCursorPosition[1], gridFormat)
+      ]) as Point[]
+    }
+  }
+}

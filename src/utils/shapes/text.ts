@@ -1,11 +1,12 @@
 import _ from 'lodash/fp'
 import type { Point, DrawableText, Text, Rect, DrawableShape } from 'types/Shapes'
 import type { ToolsSettingsType } from 'types/tools'
-import { updateCanvasContext } from 'utils/canvas'
 import { STYLE_FONT_DEFAULT, STYLE_FONT_SIZE_DEFAULT } from 'constants/style'
 import { SelectionModeResize } from 'types/Mode'
 import { getRectOppositeAnchorAbsolutePosition, resizeRect } from './rectangle'
 import { getShapeInfos } from '.'
+import { GridFormatType } from 'constants/app'
+import { roundForGrid } from 'utils/transform'
 
 export const calculateTextFontSize = (
   ctx: CanvasRenderingContext2D,
@@ -64,8 +65,6 @@ export const createText = (
 }
 
 export const drawText = (ctx: CanvasRenderingContext2D, text: Text): void => {
-  updateCanvasContext(ctx, text.style)
-
   if (ctx.globalAlpha === 0 || !text.style?.strokeColor || text.style.strokeColor === 'transparent')
     return
 
@@ -85,6 +84,19 @@ export const getTextBorder = (text: Text, selectionPadding: number): Rect => {
     width: text.width + selectionPadding * 2,
     y: text.y - selectionPadding,
     height: text.height + selectionPadding * 2
+  }
+}
+
+export const translateText = (
+  cursorPosition: Point,
+  originalShape: DrawableText,
+  originalCursorPosition: Point,
+  gridFormat: GridFormatType
+) => {
+  return {
+    ...originalShape,
+    x: roundForGrid(originalShape.x + cursorPosition[0] - originalCursorPosition[0], gridFormat),
+    y: roundForGrid(originalShape.y + cursorPosition[1] - originalCursorPosition[1], gridFormat)
   }
 }
 

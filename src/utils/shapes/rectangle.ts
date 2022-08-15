@@ -1,16 +1,25 @@
+import { GridFormatType } from 'constants/app'
 import _ from 'lodash/fp'
 import { SelectionModeResize } from 'types/Mode'
 import type { Point, DrawableRect, Rect, DrawableShape, DrawableSquare } from 'types/Shapes'
 import type { ToolsSettingsType } from 'types/tools'
-import { updateCanvasContext } from 'utils/canvas'
 import {
   getPointPositionAfterCanvasTransformation,
   getPointPositionBeforeCanvasTransformation
 } from 'utils/intersect'
-import { getNormalizedSize } from 'utils/transform'
+import { getNormalizedSize, roundForGrid } from 'utils/transform'
 import { getShapeInfos } from '.'
 
 type RectangleOrSquareType<T> = T extends 'rect' ? DrawableRect : DrawableSquare
+
+export const addPath = <T extends DrawableShape & Rect>(rect: T) => {
+  const path = new Path2D()
+  path.rect(rect.x, rect.y, rect.width, rect.height)
+  return {
+    ...rect,
+    path
+  }
+}
 
 export const createRectangle = <T extends 'rect' | 'square'>(
   shape: {
@@ -22,7 +31,7 @@ export const createRectangle = <T extends 'rect' | 'square'>(
   },
   cursorPosition: Point
 ): RectangleOrSquareType<T> => {
-  return {
+  const recShape = {
     toolId: shape.id,
     type: shape.type,
     id: _.uniqueId(`${shape.type}_`),
@@ -39,11 +48,17 @@ export const createRectangle = <T extends 'rect' | 'square'>(
       lineDash: shape.settings.lineDash.default
     }
   } as RectangleOrSquareType<T>
+  return addPath(recShape)
 }
 
-export const drawRect = (ctx: CanvasRenderingContext2D, rect: Rect): void => {
-  updateCanvasContext(ctx, rect.style)
+export const drawRect = (ctx: CanvasRenderingContext2D, shape: DrawableRect): void => {
+  if (ctx.globalAlpha === 0 || !shape.path) return
 
+  shape.style?.fillColor !== 'transparent' && ctx.fill(shape.path)
+  shape.style?.strokeColor !== 'transparent' && ctx.stroke(shape.path)
+}
+
+export const legacyDrawRect = (ctx: CanvasRenderingContext2D, rect: Rect): void => {
   if (ctx.globalAlpha === 0) return
 
   ctx.beginPath()
@@ -87,6 +102,19 @@ export const getRectOppositeAnchorAbsolutePosition = <T extends DrawableShape & 
     center,
     canvasOffset
   )
+}
+
+export const translateRect = <T extends DrawableShape & Rect>(
+  cursorPosition: Point,
+  originalShape: T,
+  originalCursorPosition: Point,
+  gridFormat: GridFormatType
+): T => {
+  return addPath({
+    ...originalShape,
+    x: roundForGrid(originalShape.x + cursorPosition[0] - originalCursorPosition[0], gridFormat),
+    y: roundForGrid(originalShape.y + cursorPosition[1] - originalCursorPosition[1], gridFormat)
+  })
 }
 
 export const resizeRect = <T extends DrawableShape & Rect>(
@@ -149,9 +177,9 @@ export const resizeRect = <T extends DrawableShape & Rect>(
     [widthWithRatio < 0, heightWithRatio < 0]
   )
 
-  return {
+  return addPath({
     ...shapeWithNewDimensions,
     x: shapeWithNewDimensions.x - (newOppTrueX - oppTrueX),
     y: shapeWithNewDimensions.y - (newOppTrueY - oppTrueY)
-  }
+  })
 }

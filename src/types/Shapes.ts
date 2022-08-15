@@ -80,7 +80,7 @@ export type Ellipse = StyledShape & {
   radiusX: number
   radiusY: number
 }
-export type DrawableRect = Rect & Drawable & { type: 'rect' }
+export type DrawableRect = Rect & Drawable & { type: 'rect'; path?: Path2D }
 export type DrawableSquare = Square & Drawable & { type: 'square' }
 export type DrawablePictureJson = StoredPicture & Drawable & { type: 'picture' }
 export type DrawablePicture = Picture & Drawable & { type: 'picture' }
@@ -88,7 +88,7 @@ export type DrawableText = Text & Drawable & { type: 'text' }
 export type DrawableLine = Line & Drawable & { type: 'line' }
 export type DrawablePolygon = Polygon & Drawable & { type: 'polygon' }
 export type DrawableCurve = Curve & Drawable & { type: 'curve' }
-export type DrawableBrush = Brush & Drawable & { type: 'brush' }
+export type DrawableBrush = Brush & Drawable & { type: 'brush'; path?: Path2D }
 export type DrawableCircle = Circle & Drawable & { type: 'circle' }
 export type DrawableEllipse = Ellipse & Drawable & { type: 'ellipse' }
 
