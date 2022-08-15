@@ -2,8 +2,7 @@ import type { GridFormatType } from 'constants/app'
 import { GRID_STEP } from 'constants/style'
 import { useEffect, useState } from 'react'
 import type { DrawableShape, Point } from 'types/Shapes'
-import { copyShape } from 'utils/data'
-import { translateShape } from 'utils/transform'
+import { copyShape, translateShape } from 'utils/shapes'
 
 const KeyboardCode = {
   ArrowUp: 'ArrowUp',

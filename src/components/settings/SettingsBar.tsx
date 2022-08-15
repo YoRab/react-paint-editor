@@ -2,7 +2,7 @@ import _ from 'lodash/fp'
 import React, { useEffect, useState } from 'react'
 import { styled } from '@linaria/react'
 import type { DrawablePolygon, DrawableShape, DrawableText } from 'types/Shapes'
-import { calculateTextFontSize, updatePolygonLinesCount } from 'utils/transform'
+import { updatePolygonLinesCount } from 'utils/transform'
 import ColorField from './ColorField'
 import DeleteButton from './DeleteButton'
 import LayoutButton from './LayoutButton'
@@ -16,6 +16,7 @@ import ToggleField from './ToggleField'
 import { boldIcon, italicIcon, lineWidthIcon, opacityIcon, settingsIcon } from 'constants/icons'
 import Button from 'components/common/Button'
 import Modal from 'components/common/Modal'
+import { calculateTextFontSize } from 'utils/shapes/text'
 
 const SETTING_WIDTH = 40
 

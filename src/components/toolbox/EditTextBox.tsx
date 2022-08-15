@@ -2,10 +2,9 @@ import { STYLE_FONT_DEFAULT } from 'constants/style'
 import React, { useEffect, useMemo, useRef } from 'react'
 import { styled } from '@linaria/react'
 import type { DrawableText } from 'types/Shapes'
-import { getPointPositionBeforeCanvasTransformation } from 'utils/intersect'
-import { getShapeInfos } from 'utils/shapeData'
 import { convertDivContentToStringArray, convertStringArrayToDivContent } from 'utils/string'
-import { radiansToDegrees } from 'utils/transform'
+import { getShapeInfos } from 'utils/shapes'
+import { radiansToDegrees, rotatePoint } from 'utils/trigo'
 
 const StyledEditBox = styled.div<{
   transform: string
@@ -85,11 +84,11 @@ const EditTextBox = ({
   const position = useMemo(() => {
     const { borders, center } = getShapeInfos(shape, selectionPadding)
 
-    return getPointPositionBeforeCanvasTransformation(
-      [borders.x, borders.y],
-      shape.rotation,
-      center
-    )
+    return rotatePoint({
+      point: [borders.x, borders.y],
+      rotation: shape.rotation,
+      origin: center
+    })
   }, [shape, selectionPadding])
 
   return (

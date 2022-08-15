@@ -1,13 +1,15 @@
 import React, { useCallback, useEffect, useImperativeHandle, useRef } from 'react'
 import { styled } from '@linaria/react'
 import type { DrawableShape, Point } from 'types/Shapes'
-import { drawGrid, drawSelection, drawShape, initDrawStyle } from 'utils/draw'
+import { initCanvasContext } from 'utils/canvas'
 import type { SelectionModeData } from 'types/Mode'
-import { resizeTextShapeWithNewContent } from 'utils/transform'
 import EditTextBox from './toolbox/EditTextBox'
 import useDrawableCanvas from 'hooks/useDrawableCanvas'
 import type { ToolsType } from 'types/tools'
 import type { GridFormatType } from 'constants/app'
+import { drawShapeSelection, drawShape } from 'utils/shapes'
+import { resizeTextShapeWithNewContent } from 'utils/shapes/text'
+import { drawGrid } from 'utils/shapes/grid'
 
 const renderDrawCanvas = (
   drawCtx: CanvasRenderingContext2D,
@@ -25,7 +27,7 @@ const renderDrawCanvas = (
 ) => {
   const { width, height, scaleRatio } = canvasSize
   drawCtx.clearRect(0, 0, width, height)
-  initDrawStyle(drawCtx)
+  initCanvasContext(drawCtx)
   gridFormat && drawGrid(drawCtx, width, height, scaleRatio, canvasOffset, gridFormat)
   for (let i = shapes.length - 1; i >= 0; i--) {
     if (selectionMode.mode !== 'textedition' || shapes[i] !== selectedShape) {
@@ -53,7 +55,7 @@ const renderSelectionCanvas = (
   selectionCtx.clearRect(0, 0, width, height)
   selectedShape &&
     activeTool.type !== 'brush' &&
-    drawSelection({
+    drawShapeSelection({
       ctx: selectionCtx,
       shape: selectedShape,
       scaleRatio,
@@ -213,11 +215,11 @@ const Canvas = React.forwardRef<HTMLCanvasElement, DrawerType>(
         const ctx = drawCanvasRef.current?.getContext('2d')
         if (!ctx) return
 
-        const newShape = resizeTextShapeWithNewContent(ctx, selectedShape, newText)
+        const newShape = resizeTextShapeWithNewContent(ctx, selectedShape, newText, canvasOffset)
 
         updateSingleShape(newShape)
       },
-      [updateSingleShape, selectedShape]
+      [updateSingleShape, selectedShape, canvasOffset]
     )
 
     useEffect(() => {

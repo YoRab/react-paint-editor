@@ -3,13 +3,14 @@ import { selectShape } from 'utils/selection'
 import type { DrawableBrush, DrawableShape, Point, ShapeType } from 'types/Shapes'
 import { checkPositionIntersection, getCursorPosition } from 'utils/intersect'
 import type { HoverModeData, SelectionModeData } from 'types/Mode'
-import { createNewPointGroupToShape, transformShape } from 'utils/transform'
-import { createShape } from 'utils/data'
+import { transformShape } from 'utils/transform'
 import type { CustomTool, ToolsType } from 'types/tools'
 import { SELECTION_TOOL } from 'constants/tools'
 import useDoubleClick from 'hooks/useDoubleClick'
 import { ShapeTypeArray } from 'constants/shapes'
 import type { GridFormatType } from 'constants/app'
+import { createShape } from 'utils/shapes'
+import { addNewPointGroupToShape } from 'utils/shapes/brush'
 
 const handleMove = (
   e: MouseEvent | TouchEvent,
@@ -240,10 +241,7 @@ const useDrawableCanvas = ({
         if (!drawCtx) return
         if (activeTool.type === 'brush') {
           if (!!selectedShape) {
-            const newShape = createNewPointGroupToShape(
-              selectedShape as DrawableBrush,
-              cursorPosition
-            )
+            const newShape = addNewPointGroupToShape(selectedShape as DrawableBrush, cursorPosition)
             updateSingleShape(newShape)
             setSelectedShape(newShape)
           } else {

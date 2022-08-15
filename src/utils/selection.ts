@@ -3,7 +3,7 @@ import _ from 'lodash/fp'
 import type { HoverModeData, SelectionModeData } from 'types/Mode'
 import type { Point, DrawableShape } from 'types/Shapes'
 import { checkPositionIntersection } from './intersect'
-import { getShapeInfos } from './shapeData'
+import { getShapeInfos } from './shapes'
 
 export const getNewSelectionData = (
   hoverMode: HoverModeData,
