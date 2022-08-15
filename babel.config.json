@@ -11,5 +11,6 @@
       "module-resolver",
       { "root": ["./src/"], "extensions": [".tsx", ".ts", ".js", ".json"], "loglevel": "warn" }
     ]
-  ]
+  ],
+  "targets" : "defaults, not IE 11"
 }
