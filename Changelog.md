@@ -9,6 +9,7 @@
 - Always round values when creating or transforming shapes
 - Improve grid feature
 - prevent selection padding to be larger than 0 until shape resize is fixed
+- target browser with babel to minimize build size
 
 # V0.6.5
 
