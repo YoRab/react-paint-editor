@@ -1,5 +1,9 @@
 # V0.6.5
 
+- move deps and add target to babel config
+
+# V0.6.5
+
 - add babel/runtime to dep to fix build
 
 # V0.6.4
