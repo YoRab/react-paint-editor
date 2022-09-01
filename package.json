@@ -12,10 +12,7 @@
     "dist/"
   ],
   "dependencies": {
-    "@babel/runtime": "^7.16.7",
-    "@linaria/core": "^3.0.0-beta.15",
-    "@linaria/react": "^3.0.0-beta.15",
-    "lodash": "^4.17.20"
+    "@linaria/react": "^3.0.0-beta.15"
   },
   "devDependencies": {
     "@babel/cli": "7.12.8",
@@ -24,7 +21,9 @@
     "@babel/preset-env": "^7.16.8",
     "@babel/preset-react": "^7.16.7",
     "@babel/preset-typescript": "^7.16.7",
+    "@babel/runtime": "^7.16.7",
     "@linaria/babel-preset": "^3.0.0-beta.15",
+    "@linaria/core": "^3.0.0-beta.15",
     "@linaria/shaker": "^3.0.0-beta.15",
     "@linaria/webpack-loader": "^3.0.0-beta.16",
     "@testing-library/jest-dom": "^5.11.4",
@@ -49,6 +48,7 @@
     "eslint-plugin-react-hooks": "^4.2.0",
     "html-webpack-plugin": "^5.5.0",
     "mini-css-extract-plugin": "^2.6.0",
+    "lodash": "^4.17.20",
     "prettier": "^2.3.2",
     "react": "18.1.0",
     "react-dom": "18.1.0",
@@ -58,6 +58,7 @@
     "webpack-dev-server": "^4.7.3"
   },
   "peerDependencies": {
+    "lodash" : "*",
     "react": "*",
     "react-dom": "*"
   },
