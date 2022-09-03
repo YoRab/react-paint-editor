@@ -1,3 +1,8 @@
+# V0.7.1
+
+- downgrade linara to 3.X.X to fix broken build
+- move back babel/runtime to devdep
+
 # V0.7.0
 
 - rewrite types and get rid of enum
@@ -8,6 +13,7 @@
 - translation attribute has been removed from shapes
 - Always round values when creating or transforming shapes
 - Improve grid feature
+- Add "keep ratio" feature when pressing shift key
 - prevent selection padding to be larger than 0 until shape resize is fixed
 - target browser with babel to minimize build size
 
