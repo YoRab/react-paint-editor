@@ -8,8 +8,8 @@ import { getNormalizedSize, roundForGrid } from 'utils/transform'
 import { getShapeInfos } from '.'
 import { getRectOppositeAnchorAbsolutePosition } from './rectangle'
 
-export const addPath = (brush: DrawableBrush) => {
-  if (brush.points.length < 1 || brush.style?.strokeColor === 'transparent') return brush
+const createBrushPath = (brush: DrawableBrush) => {
+  if (brush.points.length < 1 || brush.style?.strokeColor === 'transparent') return undefined
 
   const path = new Path2D()
 
@@ -24,23 +24,25 @@ export const addPath = (brush: DrawableBrush) => {
     }
   })
 
+  return path
+}
+
+const buildPath = (brush: DrawableBrush): DrawableBrush => {
   return {
     ...brush,
-    path
+    path: createBrushPath(brush)
   }
 }
 
 export const createBrush = (
   shape: {
     id: string
-    icon: string
-    label: string
     type: 'brush'
     settings: ToolsSettingsType<'brush'>
   },
   cursorPosition: Point
-): DrawableBrush | undefined => {
-  const brushShape = {
+): DrawableBrush => {
+  return buildPath({
     toolId: shape.id,
     type: shape.type,
     id: _.uniqueId(`${shape.type}_`),
@@ -52,12 +54,12 @@ export const createBrush = (
       lineWidth: shape.settings.lineWidth.default,
       lineDash: shape.settings.lineDash.default
     }
-  }
-  return addPath(brushShape)
+  })
 }
 
 export const drawBrush = (ctx: CanvasRenderingContext2D, shape: DrawableBrush): void => {
   if (shape.points.length < 1 || !shape.path) return
+  if (ctx.globalAlpha === 0) return
   if (shape.style?.strokeColor === 'transparent' || ctx.globalAlpha === 0) return
   ctx.stroke(shape.path)
 }
@@ -103,7 +105,7 @@ export const translateBrush = (
     ? roundForGrid(borders.y + cursorPosition[1] - originalCursorPosition[1], gridFormat) -
       borders.y
     : cursorPosition[1] - originalCursorPosition[1]
-  return addPath({
+  return buildPath({
     ...originalShape,
     points: originalShape.points.map(coord =>
       coord.map(([x, y]) => [x + translationX, y + translationY])
@@ -191,7 +193,7 @@ export const resizeBrush = (
     )
   }
 
-  return addPath(brushShape)
+  return buildPath(brushShape)
 }
 
 export const addNewPointToShape = (shape: DrawableBrush, cursorPosition: Point) => {
@@ -208,7 +210,7 @@ export const addNewPointToShape = (shape: DrawableBrush, cursorPosition: Point) 
       )
     }
   }
-  return addPath(brushShape)
+  return buildPath(brushShape)
 }
 
 export const addNewPointGroupToShape = (shape: DrawableBrush, cursorPosition: Point) => {
@@ -222,5 +224,5 @@ export const addNewPointGroupToShape = (shape: DrawableBrush, cursorPosition: Po
       )
     }
   }
-  return addPath(brushShape)
+  return buildPath(brushShape)
 }

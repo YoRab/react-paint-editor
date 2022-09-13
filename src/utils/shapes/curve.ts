@@ -1,22 +1,50 @@
 import { GridFormatType } from 'constants/app'
 import _ from 'lodash/fp'
-import type { Point, DrawableCurve, Curve } from 'types/Shapes'
+import { SelectionModeResize } from 'types/Mode'
+import type { Point, DrawableCurve } from 'types/Shapes'
 import type { ToolsSettingsType } from 'types/tools'
+import { getPointPositionAfterCanvasTransformation } from 'utils/intersect'
 import { roundForGrid } from 'utils/transform'
 import { getShapeInfos } from '.'
 import { getPolygonBorder } from './polygon'
 
+const createCurvePath = (curve: DrawableCurve) => {
+  if (curve.points.length < 3) return undefined
+
+  const path = new Path2D()
+
+  path.moveTo(...curve.points[0])
+  for (let i = 1; i < curve.points.length - 1; i++) {
+    path.quadraticCurveTo(
+      ...curve.points[i],
+      curve.points.length - 2 === i
+        ? curve.points[i + 1][0]
+        : (curve.points[i + 1][0] - curve.points[i][0]) / 2 + curve.points[i][0],
+      curve.points.length - 2 === i
+        ? curve.points[i + 1][1]
+        : (curve.points[i + 1][1] - curve.points[i][1]) / 2 + curve.points[i][1]
+    )
+  }
+
+  return path
+}
+
+const buildPath = (shape: DrawableCurve) => {
+  return {
+    ...shape,
+    path: createCurvePath(shape)
+  }
+}
+
 export const createCurve = (
   shape: {
     id: string
-    icon: string
-    label: string
     type: 'curve'
     settings: ToolsSettingsType<'curve'>
   },
   cursorPosition: Point
-): DrawableCurve | undefined => {
-  return {
+): DrawableCurve => {
+  return buildPath({
     toolId: shape.id,
     type: shape.type,
     id: _.uniqueId(`${shape.type}_`),
@@ -33,29 +61,38 @@ export const createCurve = (
       lineDash: shape.settings.lineDash.default,
       pointsCount: shape.settings.pointsCount.default
     }
-  }
+  })
 }
 
-export const drawCurve = (ctx: CanvasRenderingContext2D, curve: Curve): void => {
-  if (curve.points.length < 3) return
+export const resizeCurve = (
+  cursorPosition: Point,
+  canvasOffset: Point,
+  originalShape: DrawableCurve,
+  selectionMode: SelectionModeResize<number>,
+  selectionPadding: number
+): DrawableCurve => {
+  const { center } = getShapeInfos(originalShape, selectionPadding)
 
+  const cursorPositionBeforeResize = getPointPositionAfterCanvasTransformation(
+    cursorPosition,
+    originalShape.rotation,
+    center,
+    canvasOffset
+  )
+  const updatedShape = _.set(
+    ['points', selectionMode.anchor],
+    cursorPositionBeforeResize,
+    originalShape
+  )
+
+  return buildPath(updatedShape)
+}
+
+export const drawCurve = (ctx: CanvasRenderingContext2D, curve: DrawableCurve): void => {
+  if (!curve.path) return
   if (ctx.globalAlpha === 0) return
-
-  ctx.beginPath()
-  ctx.moveTo(...curve.points[0])
-  for (let i = 1; i < curve.points.length - 1; i++) {
-    ctx.quadraticCurveTo(
-      ...curve.points[i],
-      curve.points.length - 2 === i
-        ? curve.points[i + 1][0]
-        : (curve.points[i + 1][0] - curve.points[i][0]) / 2 + curve.points[i][0],
-      curve.points.length - 2 === i
-        ? curve.points[i + 1][1]
-        : (curve.points[i + 1][1] - curve.points[i][1]) / 2 + curve.points[i][1]
-    )
-  }
-  curve.style?.fillColor !== 'transparent' && ctx.fill()
-  curve.style?.strokeColor !== 'transparent' && ctx.stroke()
+  curve.style?.fillColor !== 'transparent' && ctx.fill(curve.path)
+  curve.style?.strokeColor !== 'transparent' && ctx.stroke(curve.path)
 }
 
 export const getCurveBorder = getPolygonBorder
@@ -66,25 +103,24 @@ export const translateCurve = (
   originalCursorPosition: Point,
   gridFormat: GridFormatType
 ): DrawableCurve => {
-  if (gridFormat) {
-    const { borders } = getShapeInfos(originalShape, 0)
-    const translationX =
-      roundForGrid(borders.x + cursorPosition[0] - originalCursorPosition[0], gridFormat) -
-      borders.x
-    const translationY =
-      roundForGrid(borders.y + cursorPosition[1] - originalCursorPosition[1], gridFormat) -
-      borders.y
-    return {
-      ...originalShape,
-      points: originalShape.points.map(([x, y]) => [x + translationX, y + translationY])
-    }
-  } else {
-    return {
-      ...originalShape,
-      points: originalShape.points.map(([x, y]) => [
-        roundForGrid(x + cursorPosition[0] - originalCursorPosition[0], gridFormat),
-        roundForGrid(y + cursorPosition[1] - originalCursorPosition[1], gridFormat)
-      ]) as Point[]
-    }
-  }
+  const { borders } = getShapeInfos(originalShape, 0)
+
+  return buildPath({
+    ...originalShape,
+    points: originalShape.points.map(([x, y]) =>
+      gridFormat
+        ? [
+            x +
+              roundForGrid(borders.x + cursorPosition[0] - originalCursorPosition[0], gridFormat) -
+              borders.x,
+            y +
+              roundForGrid(borders.y + cursorPosition[1] - originalCursorPosition[1], gridFormat) -
+              borders.y
+          ]
+        : [
+            roundForGrid(x + cursorPosition[0] - originalCursorPosition[0], gridFormat),
+            roundForGrid(y + cursorPosition[1] - originalCursorPosition[1], gridFormat)
+          ]
+    )
+  })
 }

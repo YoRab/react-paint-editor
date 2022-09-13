@@ -33,8 +33,6 @@ export type Rect = StyledShape & {
   height: number
 }
 
-export type Square = Rect
-
 export type StoredPicture = Rect & {
   src: string
 }
@@ -49,7 +47,7 @@ export type Text = Rect & {
 }
 
 export type Line = StyledShape & {
-  points: [Point, Point]
+  points: readonly [Point, Point]
 }
 
 export type Triangle = StyledShape & {
@@ -81,16 +79,18 @@ export type Ellipse = StyledShape & {
   radiusY: number
 }
 export type DrawableRect = Rect & Drawable & { type: 'rect'; path?: Path2D }
-export type DrawableSquare = Square & Drawable & { type: 'square' }
+export type DrawableSquare = Rect & Drawable & { type: 'square'; path?: Path2D }
 export type DrawablePictureJson = StoredPicture & Drawable & { type: 'picture' }
 export type DrawablePicture = Picture & Drawable & { type: 'picture' }
 export type DrawableText = Text & Drawable & { type: 'text' }
-export type DrawableLine = Line & Drawable & { type: 'line' }
-export type DrawablePolygon = Polygon & Drawable & { type: 'polygon' }
-export type DrawableCurve = Curve & Drawable & { type: 'curve' }
+export type DrawablePolygon = Polygon & Drawable & { type: 'polygon'; path?: Path2D }
+export type DrawableCurve = Curve & Drawable & { type: 'curve'; path?: Path2D }
 export type DrawableBrush = Brush & Drawable & { type: 'brush'; path?: Path2D }
-export type DrawableCircle = Circle & Drawable & { type: 'circle' }
-export type DrawableEllipse = Ellipse & Drawable & { type: 'ellipse' }
+export type DrawableCircle = Circle & Drawable & { type: 'circle'; path?: Path2D }
+export type DrawableEllipse = Ellipse & Drawable & { type: 'ellipse'; path?: Path2D }
+export type DrawableTriangle = Triangle & { type: 'triangle'; path?: Path2D }
+export type DrawableLine = Line &
+  Drawable & { type: 'line'; path?: Path2D; arrows?: DrawableTriangle[] }
 
 export type DrawableShape =
   | DrawableRect

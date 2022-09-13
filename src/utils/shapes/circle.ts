@@ -10,17 +10,28 @@ import {
 import { roundForGrid } from 'utils/transform'
 import { getShapeInfos } from '.'
 
+const createCirclePath = (shape: DrawableCircle) => {
+  const path = new Path2D()
+  path.arc(shape.x, shape.y, shape.radius, 0, 2 * Math.PI)
+  return path
+}
+
+const buildPath = (shape: DrawableCircle) => {
+  return {
+    ...shape,
+    path: createCirclePath(shape)
+  }
+}
+
 export const createCircle = (
   shape: {
     id: string
-    icon: string
-    label: string
     type: 'circle'
     settings: ToolsSettingsType<'circle'>
   },
   cursorPosition: Point
-): DrawableCircle | undefined => {
-  return {
+): DrawableCircle => {
+  return buildPath({
     toolId: shape.id,
     type: shape.type,
     id: _.uniqueId(`${shape.type}_`),
@@ -35,14 +46,13 @@ export const createCircle = (
       lineWidth: shape.settings.lineWidth.default,
       lineDash: shape.settings.lineDash.default
     }
-  }
+  })
 }
 
-export const drawCircle = (ctx: CanvasRenderingContext2D, circle: Circle): void => {
-  ctx.beginPath()
-  ctx.arc(circle.x, circle.y, circle.radius, 0, 2 * Math.PI)
-  circle.style?.fillColor !== 'transparent' && ctx.fill()
-  circle.style?.strokeColor !== 'transparent' && ctx.stroke()
+export const drawCircle = (ctx: CanvasRenderingContext2D, circle: DrawableCircle): void => {
+  if (ctx.globalAlpha === 0 || !circle.path) return
+  circle.style?.fillColor !== 'transparent' && ctx.fill(circle.path)
+  circle.style?.strokeColor !== 'transparent' && ctx.stroke(circle.path)
 }
 
 export const getCircleBorder = (circle: Circle, selectionPadding: number): Rect => {
@@ -60,11 +70,11 @@ export const translateCircle = (
   originalCursorPosition: Point,
   gridFormat: GridFormatType
 ) => {
-  return {
+  return buildPath({
     ...originalShape,
     x: roundForGrid(originalShape.x + cursorPosition[0] - originalCursorPosition[0], gridFormat),
     y: roundForGrid(originalShape.y + cursorPosition[1] - originalCursorPosition[1], gridFormat)
-  }
+  })
 }
 
 const getCircleOppositeAnchorAbsolutePosition = <T extends DrawableShape & Circle>(
@@ -158,9 +168,9 @@ export const resizeCircle = (
     [scaledRadius < 0, scaledRadius < 0]
   )
 
-  return {
+  return buildPath({
     ...shapeWithNewDimensions,
     x: shapeWithNewDimensions.x - (newOppTrueX - oppTrueX),
     y: shapeWithNewDimensions.y - (newOppTrueY - oppTrueY)
-  }
+  })
 }

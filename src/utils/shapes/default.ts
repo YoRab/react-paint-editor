@@ -39,7 +39,7 @@ export const drawSelectionDefault = ({
 
   if (!withAnchors || shape.locked) return
 
-  drawLine(ctx, {
+  /* drawLine(ctx, {
     points: [
       [borders.x + borders.width / 2, borders.y],
       [
@@ -75,5 +75,5 @@ export const drawSelectionDefault = ({
       strokeColor: 'rgb(150,150,150)',
       lineWidth: selectionWidth / currentScale
     }
-  })
+  })*/
 }

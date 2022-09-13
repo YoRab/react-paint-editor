@@ -29,13 +29,11 @@ export const createText = (
   ctx: CanvasRenderingContext2D,
   shape: {
     id: string
-    icon: string
-    label: string
     type: 'text'
     settings: ToolsSettingsType<'text'>
   },
   cursorPosition: Point
-): DrawableText | undefined => {
+): DrawableText => {
   const defaultValue: string[] = ['Texte']
   const fontSize = calculateTextFontSize(
     ctx,

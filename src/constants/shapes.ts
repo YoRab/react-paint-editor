@@ -26,5 +26,6 @@ export const ShapeTypeArray = [
   'curve',
   'ellipse',
   'picture',
-  'text'
+  'text',
+  'triangle'
 ] as const

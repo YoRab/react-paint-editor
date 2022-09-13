@@ -254,14 +254,13 @@ const useDrawableCanvas = ({
           setSelectionMode({
             mode: 'brush'
           })
-        } else {
+        } else if (activeTool.type !== 'picture') {
           const newShape = createShape(
             drawCtx,
-            activeTool as CustomTool,
+            activeTool as Exclude<CustomTool, { type: 'picture' }>,
             cursorPosition,
             gridFormat
           )
-          if (!newShape) return
           addShape(newShape)
           setActiveTool(SELECTION_TOOL)
           setSelectedShape(newShape)

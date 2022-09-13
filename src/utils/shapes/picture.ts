@@ -62,7 +62,7 @@ export const createPicture = (
   })
 }
 
-export const drawPicture = (ctx: CanvasRenderingContext2D, picture: Picture): void => {
+export const drawPicture = (ctx: CanvasRenderingContext2D, picture: DrawablePicture): void => {
   if (ctx.globalAlpha === 0) return
   ctx.beginPath()
   ctx.drawImage(picture.img, picture.x, picture.y, picture.width, picture.height)

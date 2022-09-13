@@ -8,19 +8,31 @@ import {
   getPointPositionBeforeCanvasTransformation
 } from 'utils/intersect'
 import { getNormalizedSize, roundForGrid } from 'utils/transform'
-import { getShapeInfos } from '.'
+import { getShapeInfos } from './index'
+
+const createEllipsePath = (ellipse: DrawableEllipse) => {
+  const path = new Path2D()
+  path.ellipse(ellipse.x, ellipse.y, ellipse.radiusX, ellipse.radiusY, 0, 0, 2 * Math.PI)
+
+  return path
+}
+
+const buildPath = (shape: DrawableEllipse) => {
+  return {
+    ...shape,
+    path: createEllipsePath(shape)
+  }
+}
 
 export const createEllipse = (
   shape: {
     id: string
-    icon: string
-    label: string
     type: 'ellipse'
     settings: ToolsSettingsType<'ellipse'>
   },
   cursorPosition: Point
-): DrawableEllipse | undefined => {
-  return {
+): DrawableEllipse => {
+  return buildPath({
     toolId: shape.id,
     type: shape.type,
     id: _.uniqueId(`${shape.type}_`),
@@ -36,16 +48,13 @@ export const createEllipse = (
       lineWidth: shape.settings.lineWidth.default,
       lineDash: shape.settings.lineDash.default
     }
-  }
+  })
 }
 
-export const drawEllipse = (ctx: CanvasRenderingContext2D, ellipse: Ellipse): void => {
-  if (ctx.globalAlpha === 0) return
-
-  ctx.beginPath()
-  ctx.ellipse(ellipse.x, ellipse.y, ellipse.radiusX, ellipse.radiusY, 0, 0, 2 * Math.PI)
-  ellipse.style?.fillColor !== 'transparent' && ctx.fill()
-  ellipse.style?.strokeColor !== 'transparent' && ctx.stroke()
+export const drawEllipse = (ctx: CanvasRenderingContext2D, ellipse: DrawableEllipse): void => {
+  if (ctx.globalAlpha === 0 || !ellipse.path) return
+  ellipse.style?.fillColor !== 'transparent' && ctx.fill(ellipse.path)
+  ellipse.style?.strokeColor !== 'transparent' && ctx.stroke(ellipse.path)
 }
 
 export const getEllipseBorder = (ellipse: Ellipse, selectionPadding: number): Rect => {
@@ -63,11 +72,11 @@ export const translateEllipse = (
   originalCursorPosition: Point,
   gridFormat: GridFormatType
 ) => {
-  return {
+  return buildPath({
     ...originalShape,
     x: roundForGrid(originalShape.x + cursorPosition[0] - originalCursorPosition[0], gridFormat),
     y: roundForGrid(originalShape.y + cursorPosition[1] - originalCursorPosition[1], gridFormat)
-  }
+  })
 }
 
 const getEllipseOppositeAnchorAbsolutePosition = <T extends DrawableShape & Ellipse>(
@@ -172,9 +181,9 @@ export const resizeEllipse = (
     [radiusXWithRatio < 0, radiusYWithRatio < 0]
   )
 
-  return {
+  return buildPath({
     ...shapeWithNewDimensions,
     x: shapeWithNewDimensions.x - (newOppTrueX - oppTrueX),
     y: shapeWithNewDimensions.y - (newOppTrueY - oppTrueY)
-  }
+  })
 }

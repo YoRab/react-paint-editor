@@ -12,20 +12,22 @@ import { getShapeInfos } from '.'
 
 type RectangleOrSquareType<T> = T extends 'rect' ? DrawableRect : DrawableSquare
 
-export const addPath = <T extends DrawableShape & Rect>(rect: T) => {
+const createRecPath = <T extends DrawableShape & Rect>(rect: T) => {
   const path = new Path2D()
   path.rect(rect.x, rect.y, rect.width, rect.height)
+  return path
+}
+
+const buildPath = <T extends DrawableShape & Rect>(rect: T) => {
   return {
     ...rect,
-    path
+    path: createRecPath(rect)
   }
 }
 
 export const createRectangle = <T extends 'rect' | 'square'>(
   shape: {
     id: string
-    icon: string
-    label: string
     type: T
     settings: ToolsSettingsType<T>
   },
@@ -48,7 +50,7 @@ export const createRectangle = <T extends 'rect' | 'square'>(
       lineDash: shape.settings.lineDash.default
     }
   } as RectangleOrSquareType<T>
-  return addPath(recShape)
+  return buildPath(recShape)
 }
 
 export const drawRect = (ctx: CanvasRenderingContext2D, shape: DrawableRect): void => {
@@ -110,7 +112,7 @@ export const translateRect = <T extends DrawableShape & Rect>(
   originalCursorPosition: Point,
   gridFormat: GridFormatType
 ): T => {
-  return addPath({
+  return buildPath({
     ...originalShape,
     x: roundForGrid(originalShape.x + cursorPosition[0] - originalCursorPosition[0], gridFormat),
     y: roundForGrid(originalShape.y + cursorPosition[1] - originalCursorPosition[1], gridFormat)
@@ -177,7 +179,7 @@ export const resizeRect = <T extends DrawableShape & Rect>(
     [widthWithRatio < 0, heightWithRatio < 0]
   )
 
-  return addPath({
+  return buildPath({
     ...shapeWithNewDimensions,
     x: shapeWithNewDimensions.x - (newOppTrueX - oppTrueX),
     y: shapeWithNewDimensions.y - (newOppTrueY - oppTrueY)

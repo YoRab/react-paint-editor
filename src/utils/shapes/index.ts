@@ -10,7 +10,9 @@ import type {
   DrawableEllipse,
   DrawablePicture,
   DrawableText,
-  DrawableRect
+  DrawableRect,
+  DrawableCurve,
+  DrawablePolygon
 } from 'types/Shapes'
 import type { CustomTool } from 'types/tools'
 import type { GridFormatType } from 'constants/app'
@@ -23,8 +25,14 @@ import {
   resizeLine,
   translateLine
 } from './line'
-import { createPolygon, drawPolygon, getPolygonBorder, translatePolygon } from './polygon'
-import { createCurve, drawCurve, getCurveBorder, translateCurve } from './curve'
+import {
+  createPolygon,
+  drawPolygon,
+  getPolygonBorder,
+  resizePolygon,
+  translatePolygon
+} from './polygon'
+import { createCurve, drawCurve, getCurveBorder, resizeCurve, translateCurve } from './curve'
 import {
   createRectangle,
   legacyDrawRect,
@@ -50,10 +58,10 @@ import { transformCanvas, updateCanvasContext } from 'utils/canvas'
 
 export const createShape = (
   ctx: CanvasRenderingContext2D,
-  shape: CustomTool,
+  shape: Exclude<CustomTool, { type: 'picture' }>,
   cursorPosition: Point,
   gridFormat: GridFormatType
-): DrawableShape | undefined => {
+): DrawableShape => {
   const roundCursorPosition: Point = [
     roundForGrid(cursorPosition[0], gridFormat),
     roundForGrid(cursorPosition[1], gridFormat)
@@ -198,12 +206,26 @@ export const resizeShape = (
 ): DrawableShape => {
   switch (shape.type) {
     case 'line':
-    case 'polygon':
-    case 'curve':
       return resizeLine(
         cursorPosition,
         canvasOffset,
         originalShape as DrawableLine,
+        selectionMode as SelectionModeResize<number>,
+        selectionPadding
+      )
+    case 'polygon':
+      return resizePolygon(
+        cursorPosition,
+        canvasOffset,
+        originalShape as DrawablePolygon,
+        selectionMode as SelectionModeResize<number>,
+        selectionPadding
+      )
+    case 'curve':
+      return resizeCurve(
+        cursorPosition,
+        canvasOffset,
+        originalShape as DrawableCurve,
         selectionMode as SelectionModeResize<number>,
         selectionPadding
       )
