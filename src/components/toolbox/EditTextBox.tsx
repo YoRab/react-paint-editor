@@ -86,7 +86,7 @@ const EditTextBox = ({
 
     return rotatePoint({
       point: [borders.x, borders.y],
-      rotation: shape.rotation,
+      rotation: -shape.rotation,
       origin: center
     })
   }, [shape, selectionPadding])
