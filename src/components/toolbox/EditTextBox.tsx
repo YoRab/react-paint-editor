@@ -46,6 +46,7 @@ type EditTextBoxType = {
   defaultValue: string[]
   selectionPadding: number
   updateValue: (newValue: string[]) => void
+  saveShapes: () => void
 }
 
 const EditTextBox = ({
@@ -54,9 +55,11 @@ const EditTextBox = ({
   shape,
   defaultValue,
   updateValue,
+  saveShapes,
   selectionPadding
 }: EditTextBoxType) => {
   const ref = useRef<HTMLDivElement>(null)
+  const saveShapesRef = useRef(saveShapes)
 
   const updateContentEditable = (e: React.ChangeEvent<HTMLDivElement>) => {
     updateValue(convertDivContentToStringArray(e.target.innerHTML))
@@ -80,6 +83,13 @@ const EditTextBox = ({
       currentNode.removeEventListener('paste', handlePaste)
     }
   }, [defaultValue])
+
+  useEffect(() => {
+    const saveText = saveShapesRef.current
+    return () => {
+      saveText()
+    }
+  }, [])
 
   const position = useMemo(() => {
     const { borders, center } = getShapeInfos(shape, selectionPadding)
