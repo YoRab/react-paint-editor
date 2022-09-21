@@ -29,7 +29,7 @@ const StyledEditBox = styled.div<{
   font-family: ${({ fontfamily }) => fontfamily};
   opacity: ${({ opacity }) => opacity};
   width: max-content;
-
+  background: none; /* required to override injected prop in contenteditable span elements */
   &[data-fontbold='true'] {
     font-weight: bold;
   }
