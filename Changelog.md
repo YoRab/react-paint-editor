@@ -1,3 +1,7 @@
+# V0.7.3
+
+- fix : strip all tags with text editing
+
 # V0.7.2
 
 - fix : text bad position when editing
