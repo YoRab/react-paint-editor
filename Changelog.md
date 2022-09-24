@@ -1,3 +1,12 @@
+# V0.7.3
+
+- fix : strip all tags with text editing
+
+# V0.7.2
+
+- fix : text bad position when editing
+- fix : call saveShape after text edit
+
 # V0.7.1
 
 - downgrade linara to 3.X.X to fix broken build

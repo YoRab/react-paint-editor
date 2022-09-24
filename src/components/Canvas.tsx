@@ -310,6 +310,7 @@ const Canvas = React.forwardRef<HTMLCanvasElement, DrawerType>(
               shape={selectedShape}
               defaultValue={selectionMode.defaultValue}
               updateValue={updateSelectedShapeText}
+              saveShapes={saveShapes}
               selectionPadding={selectionPadding}
             />
           )}
