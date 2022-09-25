@@ -29,6 +29,8 @@ export const drawSelectionDefault = ({
   const { borders } = getShapeInfos(shape, selectionPadding / currentScale)
 
   legacyDrawRect(ctx, {
+    type: 'rect',
+    rotation: 0,
     ...borders,
     style: {
       fillColor: 'transparent',
@@ -39,7 +41,9 @@ export const drawSelectionDefault = ({
 
   if (!withAnchors || shape.locked) return
 
-  /* drawLine(ctx, {
+  drawLine(ctx, {
+    type: 'line',
+    rotation: 0,
     points: [
       [borders.x + borders.width / 2, borders.y],
       [
@@ -56,6 +60,8 @@ export const drawSelectionDefault = ({
 
   for (const anchorPosition of SELECTION_RESIZE_ANCHOR_POSITIONS) {
     drawCircle(ctx, {
+      type: 'circle',
+      rotation: 0,
       x: borders.x + borders.width * anchorPosition[0],
       y: borders.y + borders.height * anchorPosition[1],
       radius: SELECTION_ANCHOR_SIZE / 2 / currentScale,
@@ -67,6 +73,8 @@ export const drawSelectionDefault = ({
     })
   }
   drawCircle(ctx, {
+    type: 'circle',
+    rotation: 0,
     x: borders.x + borders.width / 2,
     y: borders.y - SELECTION_ANCHOR_SIZE / 2 - SELECTION_ROTATED_ANCHOR_POSITION / currentScale,
     radius: SELECTION_ANCHOR_SIZE / 2 / currentScale,
@@ -75,5 +83,5 @@ export const drawSelectionDefault = ({
       strokeColor: 'rgb(150,150,150)',
       lineWidth: selectionWidth / currentScale
     }
-  })*/
+  })
 }

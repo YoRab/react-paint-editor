@@ -1,22 +1,22 @@
 import { GridFormatType } from 'constants/app'
 import _ from 'lodash/fp'
 import { SelectionModeResize } from 'types/Mode'
-import type { Point, DrawableCircle, Circle, Rect, DrawableShape } from 'types/Shapes'
+import type { Point, Circle, Rect, DrawableShape, ShapeEntity } from 'types/Shapes'
 import type { ToolsSettingsType } from 'types/tools'
 import {
   getPointPositionAfterCanvasTransformation,
   getPointPositionBeforeCanvasTransformation
 } from 'utils/intersect'
 import { roundForGrid } from 'utils/transform'
-import { getShapeInfos } from '.'
+import { getShapeInfos } from 'utils/shapes/index'
 
-const createCirclePath = (shape: DrawableCircle) => {
+const createCirclePath = (shape: DrawableShape<'circle'>) => {
   const path = new Path2D()
   path.arc(shape.x, shape.y, shape.radius, 0, 2 * Math.PI)
   return path
 }
 
-const buildPath = (shape: DrawableCircle) => {
+const buildPath = <T extends DrawableShape<'circle'>>(shape: T): T => {
   return {
     ...shape,
     path: createCirclePath(shape)
@@ -30,7 +30,7 @@ export const createCircle = (
     settings: ToolsSettingsType<'circle'>
   },
   cursorPosition: Point
-): DrawableCircle => {
+): ShapeEntity<'circle'> => {
   return buildPath({
     toolId: shape.id,
     type: shape.type,
@@ -49,7 +49,10 @@ export const createCircle = (
   })
 }
 
-export const drawCircle = (ctx: CanvasRenderingContext2D, circle: DrawableCircle): void => {
+export const drawCircle = (
+  ctx: CanvasRenderingContext2D,
+  circle: DrawableShape<'circle'>
+): void => {
   if (ctx.globalAlpha === 0 || !circle.path) return
   circle.style?.fillColor !== 'transparent' && ctx.fill(circle.path)
   circle.style?.strokeColor !== 'transparent' && ctx.stroke(circle.path)
@@ -64,9 +67,9 @@ export const getCircleBorder = (circle: Circle, selectionPadding: number): Rect 
   }
 }
 
-export const translateCircle = (
+export const translateCircle = <U extends DrawableShape<'circle'>>(
   cursorPosition: Point,
-  originalShape: DrawableCircle,
+  originalShape: U,
   originalCursorPosition: Point,
   gridFormat: GridFormatType
 ) => {
@@ -108,10 +111,10 @@ const getCircleOppositeAnchorAbsolutePosition = <T extends DrawableShape & Circl
 export const resizeCircle = (
   cursorPosition: Point,
   canvasOffset: Point,
-  originalShape: DrawableCircle,
+  originalShape: DrawableShape<'circle'>,
   selectionMode: SelectionModeResize,
   selectionPadding: number
-): DrawableCircle => {
+): DrawableShape<'circle'> => {
   const { center, borders } = getShapeInfos(originalShape, selectionPadding)
 
   const cursorPositionBeforeResize = getPointPositionAfterCanvasTransformation(

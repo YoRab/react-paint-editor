@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useImperativeHandle, useRef } from 'react'
 import { styled } from '@linaria/react'
-import type { DrawableShape, Point } from 'types/Shapes'
+import type { Point, ShapeEntity } from 'types/Shapes'
 import { initCanvasContext } from 'utils/canvas'
 import type { SelectionModeData } from 'types/Mode'
 import EditTextBox from './toolbox/EditTextBox'
@@ -21,9 +21,9 @@ const renderDrawCanvas = (
   },
   gridFormat: GridFormatType,
   canvasOffset: Point,
-  shapes: DrawableShape[],
+  shapes: ShapeEntity[],
   selectionPadding: number,
-  selectedShape: DrawableShape | undefined
+  selectedShape: ShapeEntity | undefined
 ) => {
   const { width, height, scaleRatio } = canvasSize
   drawCtx.clearRect(0, 0, width, height)
@@ -49,7 +49,7 @@ const renderSelectionCanvas = (
   selectionPadding: number,
   selectionWidth: number,
   selectionColor: string,
-  selectedShape: DrawableShape | undefined
+  selectedShape: ShapeEntity | undefined
 ) => {
   const { width, height, scaleRatio } = canvasSize
   selectionCtx.clearRect(0, 0, width, height)
@@ -129,12 +129,12 @@ type DrawerType = {
   selectionWidth: number
   selectionPadding: number
   isEditMode: boolean
-  shapes: DrawableShape[]
+  shapes: ShapeEntity[]
   saveShapes: () => void
-  addShape: (newShape: DrawableShape) => void
-  updateSingleShape: (updatedShape: DrawableShape) => void
-  selectedShape: DrawableShape | undefined
-  setSelectedShape: React.Dispatch<React.SetStateAction<DrawableShape | undefined>>
+  addShape: (newShape: ShapeEntity) => void
+  updateSingleShape: (updatedShape: ShapeEntity) => void
+  selectedShape: ShapeEntity | undefined
+  setSelectedShape: React.Dispatch<React.SetStateAction<ShapeEntity | undefined>>
   activeTool: ToolsType
   setActiveTool: React.Dispatch<React.SetStateAction<ToolsType>>
   canvasOffsetStartPosition: Point | undefined

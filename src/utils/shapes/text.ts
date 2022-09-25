@@ -1,10 +1,10 @@
 import _ from 'lodash/fp'
-import type { Point, DrawableText, Text, Rect, DrawableShape } from 'types/Shapes'
+import type { Point, DrawableShape, Text, Rect, ShapeEntity } from 'types/Shapes'
 import type { ToolsSettingsType } from 'types/tools'
 import { STYLE_FONT_DEFAULT, STYLE_FONT_SIZE_DEFAULT } from 'constants/style'
 import { SelectionModeResize } from 'types/Mode'
 import { getRectOppositeAnchorAbsolutePosition, resizeRect } from './rectangle'
-import { getShapeInfos } from '.'
+import { getShapeInfos } from 'utils/shapes/index'
 import { GridFormatType } from 'constants/app'
 import { roundForGrid } from 'utils/transform'
 
@@ -33,7 +33,7 @@ export const createText = (
     settings: ToolsSettingsType<'text'>
   },
   cursorPosition: Point
-): DrawableText => {
+): ShapeEntity<'text'> => {
   const defaultValue: string[] = ['Texte']
   const fontSize = calculateTextFontSize(
     ctx,
@@ -62,7 +62,7 @@ export const createText = (
   }
 }
 
-export const drawText = (ctx: CanvasRenderingContext2D, text: Text): void => {
+export const drawText = (ctx: CanvasRenderingContext2D, text: DrawableShape<'text'>): void => {
   if (ctx.globalAlpha === 0 || !text.style?.strokeColor || text.style.strokeColor === 'transparent')
     return
 
@@ -85,9 +85,9 @@ export const getTextBorder = (text: Text, selectionPadding: number): Rect => {
   }
 }
 
-export const translateText = (
+export const translateText = <U extends DrawableShape<'text'>>(
   cursorPosition: Point,
-  originalShape: DrawableText,
+  originalShape: U,
   originalCursorPosition: Point,
   gridFormat: GridFormatType
 ) => {
@@ -98,14 +98,14 @@ export const translateText = (
   }
 }
 
-export const resizeText = <T extends DrawableShape & Text>(
+export const resizeText = (
   ctx: CanvasRenderingContext2D,
   cursorPosition: Point,
   canvasOffset: Point,
-  originalShape: T,
+  originalShape: DrawableShape<'text'>,
   selectionMode: SelectionModeResize,
   selectionPadding: number
-): T => {
+): DrawableShape<'text'> => {
   const newRect = resizeRect(
     cursorPosition,
     canvasOffset,
@@ -124,7 +124,7 @@ export const resizeText = <T extends DrawableShape & Text>(
       newRect.style?.fontItalic ?? false,
       newRect.style?.fontFamily
     )
-  }
+  } as DrawableShape<'text'>
 }
 
 const calculateTextWidth = (
@@ -144,9 +144,9 @@ const calculateTextWidth = (
   )
 }
 
-export const resizeTextShapeWithNewContent = (
+export const resizeTextShapeWithNewContent = <U extends DrawableShape<'text'>>(
   ctx: CanvasRenderingContext2D,
-  shape: DrawableText,
+  shape: U,
   newValue: string[],
   canvasOffset: Point
 ) => {

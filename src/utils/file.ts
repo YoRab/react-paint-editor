@@ -1,6 +1,12 @@
 import { ShapeTypeArray } from 'constants/shapes'
 import _ from 'lodash/fp'
-import type { DrawableShape, DrawableShapeJson, ExportDataType, Point } from 'types/Shapes'
+import type {
+  DrawableShape,
+  DrawableShapeJson,
+  ExportDataType,
+  Point,
+  ShapeEntity
+} from 'types/Shapes'
 import { addDefaultAndTempShapeProps, buildDataToExport } from './data'
 import { initCanvasContext } from './canvas'
 import { migrateShapesV065 } from './migration'
@@ -77,7 +83,7 @@ export const decodeJson = async (file: File) => {
 export const decodeImportedData = async (shapesForJson: ExportDataType) => {
   const promisesArray: Promise<void>[] = []
   const jsonShapes = shapesForJson.shapes
-  const shapes: DrawableShape[] = _.flow(
+  const shapes: ShapeEntity[] = _.flow(
     shapes => migrateShapesV065(shapes),
     _.map((shape: DrawableShapeJson) => {
       if (!ShapeTypeArray.includes(shape.type)) return null

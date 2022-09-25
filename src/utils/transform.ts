@@ -1,5 +1,5 @@
 import type { SelectionModeData } from 'types/Mode'
-import type { Point, DrawableShape, DrawableBrush } from 'types/Shapes'
+import type { Point, ShapeEntity } from 'types/Shapes'
 import { GRID_STEP } from 'constants/style'
 import type { GridFormatType } from 'constants/app'
 import { resizeShape, rotateShape, translateShape } from './shapes'
@@ -30,17 +30,17 @@ export const roundForGrid = (value: number, gridFormat: GridFormatType) => {
 
 export const transformShape = (
   ctx: CanvasRenderingContext2D,
-  shape: DrawableShape,
+  shape: ShapeEntity,
   cursorPosition: Point,
   gridFormat: GridFormatType,
   canvasOffset: Point,
   selectionMode: SelectionModeData<Point | number>,
   selectionPadding: number,
   isShiftPressed: boolean
-) => {
+): ShapeEntity => {
   switch (selectionMode.mode) {
     case 'brush':
-      return addNewPointToShape(shape as DrawableBrush, cursorPosition)
+      return addNewPointToShape(shape as ShapeEntity<'brush'>, cursorPosition)
     case 'translate':
       return translateShape(
         cursorPosition,

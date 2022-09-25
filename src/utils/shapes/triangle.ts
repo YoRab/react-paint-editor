@@ -1,6 +1,6 @@
-import { DrawableTriangle, Triangle } from 'types/Shapes'
+import { DrawableShape, Triangle } from 'types/Shapes'
 
-export const createTrianglePath = (triangle: DrawableTriangle) => {
+export const createTrianglePath = (triangle: DrawableShape<'triangle'>) => {
   const path = new Path2D()
   path.moveTo(...triangle.points[0])
   path.lineTo(...triangle.points[1])
@@ -9,26 +9,28 @@ export const createTrianglePath = (triangle: DrawableTriangle) => {
   return path
 }
 
-const buildPath = (shape: DrawableTriangle) => {
+const buildPath = (shape: DrawableShape<'triangle'>) => {
   return {
     ...shape,
     path: createTrianglePath(shape)
   }
 }
 
-export const createTriangle = (triangle: Triangle): DrawableTriangle => {
+export const createTriangle = (triangle: Triangle): DrawableShape<'triangle'> => {
   const triangleShape = {
     ...triangle,
     type: 'triangle'
-  } as DrawableTriangle
+  } as DrawableShape<'triangle'>
 
   return buildPath(triangleShape)
 }
 
-export const drawTriangle = (ctx: CanvasRenderingContext2D, triangle: DrawableTriangle): void => {
+export const drawTriangle = (
+  ctx: CanvasRenderingContext2D,
+  triangle: DrawableShape<'triangle'>
+): void => {
   if (ctx.globalAlpha === 0) return
   if (!triangle.path) return
-  console.log('drawtiranfl')
   triangle.style?.fillColor !== 'transparent' && ctx.fill(triangle.path)
   triangle.style?.strokeColor !== 'transparent' && ctx.stroke(triangle.path)
 }

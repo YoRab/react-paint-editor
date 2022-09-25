@@ -1,14 +1,14 @@
 import { GridFormatType } from 'constants/app'
 import _ from 'lodash/fp'
 import { SelectionModeResize } from 'types/Mode'
-import type { Point, DrawableBrush, Brush, Rect } from 'types/Shapes'
+import type { Point, Brush, Rect, DrawableShape, ShapeEntity } from 'types/Shapes'
 import type { ToolsSettingsType } from 'types/tools'
 import { getPointPositionAfterCanvasTransformation } from 'utils/intersect'
 import { getNormalizedSize, roundForGrid } from 'utils/transform'
-import { getShapeInfos } from '.'
+import { getShapeInfos } from 'utils/shapes/index'
 import { getRectOppositeAnchorAbsolutePosition } from './rectangle'
 
-const createBrushPath = (brush: DrawableBrush) => {
+const createBrushPath = (brush: DrawableShape<'brush'>) => {
   if (brush.points.length < 1 || brush.style?.strokeColor === 'transparent') return undefined
 
   const path = new Path2D()
@@ -27,7 +27,7 @@ const createBrushPath = (brush: DrawableBrush) => {
   return path
 }
 
-const buildPath = (brush: DrawableBrush): DrawableBrush => {
+const buildPath = <T extends DrawableShape<'brush'>>(brush: T): T => {
   return {
     ...brush,
     path: createBrushPath(brush)
@@ -41,7 +41,7 @@ export const createBrush = (
     settings: ToolsSettingsType<'brush'>
   },
   cursorPosition: Point
-): DrawableBrush => {
+): ShapeEntity<'brush'> => {
   return buildPath({
     toolId: shape.id,
     type: shape.type,
@@ -57,7 +57,7 @@ export const createBrush = (
   })
 }
 
-export const drawBrush = (ctx: CanvasRenderingContext2D, shape: DrawableBrush): void => {
+export const drawBrush = (ctx: CanvasRenderingContext2D, shape: DrawableShape<'brush'>): void => {
   if (shape.points.length < 1 || !shape.path) return
   if (ctx.globalAlpha === 0) return
   if (shape.style?.strokeColor === 'transparent' || ctx.globalAlpha === 0) return
@@ -90,12 +90,12 @@ export const getBrushBorder = (brush: Brush, selectionPadding: number): Rect => 
   return { x: minX, width: maxX - minX, y: minY, height: maxY - minY }
 }
 
-export const translateBrush = (
+export const translateBrush = <U extends DrawableShape<'brush'>>(
   cursorPosition: Point,
-  originalShape: DrawableBrush,
+  originalShape: U,
   originalCursorPosition: Point,
   gridFormat: GridFormatType
-): DrawableBrush => {
+) => {
   const { borders } = getShapeInfos(originalShape, 0)
   const translationX = gridFormat
     ? roundForGrid(borders.x + cursorPosition[0] - originalCursorPosition[0], gridFormat) -
@@ -116,11 +116,11 @@ export const translateBrush = (
 export const resizeBrush = (
   cursorPosition: Point,
   canvasOffset: Point,
-  originalShape: DrawableBrush,
+  originalShape: DrawableShape<'brush'>,
   selectionMode: SelectionModeResize,
   selectionPadding: number,
   keepRatio: boolean
-): DrawableBrush => {
+): DrawableShape<'brush'> => {
   const { center, borders } = getShapeInfos(originalShape, selectionPadding)
 
   const cursorPositionBeforeResize = getPointPositionAfterCanvasTransformation(
@@ -186,7 +186,7 @@ export const resizeBrush = (
     [widthWithRatio < 0, heightWithRatio < 0]
   )
 
-  const brushShape: DrawableBrush = {
+  const brushShape: DrawableShape<'brush'> = {
     ...shapeWithNewDimensions,
     points: shapeWithNewDimensions.points.map(coord =>
       coord.map(([x, y]) => [x - (newOppTrueX - oppTrueX), y - (newOppTrueY - oppTrueY)])
@@ -196,7 +196,10 @@ export const resizeBrush = (
   return buildPath(brushShape)
 }
 
-export const addNewPointToShape = (shape: DrawableBrush, cursorPosition: Point) => {
+export const addNewPointToShape = <T extends DrawableShape<'brush'>>(
+  shape: T,
+  cursorPosition: Point
+) => {
   const brushShape = {
     ...shape,
     ...{
@@ -213,7 +216,10 @@ export const addNewPointToShape = (shape: DrawableBrush, cursorPosition: Point) 
   return buildPath(brushShape)
 }
 
-export const addNewPointGroupToShape = (shape: DrawableBrush, cursorPosition: Point) => {
+export const addNewPointGroupToShape = <T extends DrawableShape<'brush'>>(
+  shape: T,
+  cursorPosition: Point
+): T => {
   const brushShape = {
     ...shape,
     ...{

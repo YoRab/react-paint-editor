@@ -1,7 +1,7 @@
 import { GridFormatType } from 'constants/app'
 import _ from 'lodash/fp'
 import { SelectionModeResize } from 'types/Mode'
-import type { Point, DrawableEllipse, Ellipse, Rect, DrawableShape } from 'types/Shapes'
+import type { Point, Ellipse, Rect, DrawableShape, ShapeEntity } from 'types/Shapes'
 import type { ToolsSettingsType } from 'types/tools'
 import {
   getPointPositionAfterCanvasTransformation,
@@ -10,14 +10,14 @@ import {
 import { getNormalizedSize, roundForGrid } from 'utils/transform'
 import { getShapeInfos } from './index'
 
-const createEllipsePath = (ellipse: DrawableEllipse) => {
+const createEllipsePath = (ellipse: DrawableShape<'ellipse'>) => {
   const path = new Path2D()
   path.ellipse(ellipse.x, ellipse.y, ellipse.radiusX, ellipse.radiusY, 0, 0, 2 * Math.PI)
 
   return path
 }
 
-const buildPath = (shape: DrawableEllipse) => {
+const buildPath = <T extends DrawableShape<'ellipse'>>(shape: T): T => {
   return {
     ...shape,
     path: createEllipsePath(shape)
@@ -31,7 +31,7 @@ export const createEllipse = (
     settings: ToolsSettingsType<'ellipse'>
   },
   cursorPosition: Point
-): DrawableEllipse => {
+): ShapeEntity<'ellipse'> => {
   return buildPath({
     toolId: shape.id,
     type: shape.type,
@@ -51,7 +51,10 @@ export const createEllipse = (
   })
 }
 
-export const drawEllipse = (ctx: CanvasRenderingContext2D, ellipse: DrawableEllipse): void => {
+export const drawEllipse = (
+  ctx: CanvasRenderingContext2D,
+  ellipse: DrawableShape<'ellipse'>
+): void => {
   if (ctx.globalAlpha === 0 || !ellipse.path) return
   ellipse.style?.fillColor !== 'transparent' && ctx.fill(ellipse.path)
   ellipse.style?.strokeColor !== 'transparent' && ctx.stroke(ellipse.path)
@@ -66,9 +69,9 @@ export const getEllipseBorder = (ellipse: Ellipse, selectionPadding: number): Re
   }
 }
 
-export const translateEllipse = (
+export const translateEllipse = <U extends DrawableShape<'ellipse'>>(
   cursorPosition: Point,
-  originalShape: DrawableEllipse,
+  originalShape: U,
   originalCursorPosition: Point,
   gridFormat: GridFormatType
 ) => {
@@ -110,11 +113,11 @@ const getEllipseOppositeAnchorAbsolutePosition = <T extends DrawableShape & Elli
 export const resizeEllipse = (
   cursorPosition: Point,
   canvasOffset: Point,
-  originalShape: DrawableEllipse,
+  originalShape: DrawableShape<'ellipse'>,
   selectionMode: SelectionModeResize,
   selectionPadding: number,
   keepRatio = false
-): DrawableEllipse => {
+): DrawableShape<'ellipse'> => {
   const { center, borders } = getShapeInfos(originalShape, selectionPadding)
 
   const cursorPositionBeforeResize = getPointPositionAfterCanvasTransformation(

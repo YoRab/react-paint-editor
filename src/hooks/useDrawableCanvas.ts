@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { selectShape } from 'utils/selection'
-import type { DrawableBrush, DrawableShape, Point, ShapeType } from 'types/Shapes'
+import type { Point, ShapeEntity, ShapeType } from 'types/Shapes'
 import { checkPositionIntersection, getCursorPosition } from 'utils/intersect'
 import type { HoverModeData, SelectionModeData } from 'types/Mode'
 import { transformShape } from 'utils/transform'
@@ -18,16 +18,16 @@ const handleMove = (
   activeTool: ToolsType,
   gridFormat: GridFormatType,
   canvasOffset: Point,
-  selectedShape: DrawableShape | undefined,
+  selectedShape: ShapeEntity | undefined,
   selectionMode: SelectionModeData<Point | number>,
   canvasOffsetStartPosition: Point | undefined,
   width: number,
   height: number,
   scaleRatio: number,
   setHoverMode: React.Dispatch<React.SetStateAction<HoverModeData>>,
-  updateSingleShape: (updatedShape: DrawableShape) => void,
+  updateSingleShape: (updatedShape: ShapeEntity) => void,
   setCanvasOffset: React.Dispatch<React.SetStateAction<Point>>,
-  setSelectedShape: React.Dispatch<React.SetStateAction<DrawableShape | undefined>>,
+  setSelectedShape: React.Dispatch<React.SetStateAction<ShapeEntity | undefined>>,
   selectionPadding: number,
   isShiftPressed: boolean
 ) => {
@@ -80,12 +80,12 @@ type UseCanvasType = {
     height: number
     scaleRatio: number
   }
-  shapes: DrawableShape[]
+  shapes: ShapeEntity[]
   saveShapes: () => void
-  addShape: (newShape: DrawableShape) => void
-  updateSingleShape: (updatedShape: DrawableShape) => void
-  selectedShape: DrawableShape | undefined
-  setSelectedShape: React.Dispatch<React.SetStateAction<DrawableShape | undefined>>
+  addShape: (newShape: ShapeEntity) => void
+  updateSingleShape: (updatedShape: ShapeEntity) => void
+  selectedShape: ShapeEntity | undefined
+  setSelectedShape: React.Dispatch<React.SetStateAction<ShapeEntity | undefined>>
   activeTool: ToolsType
   setActiveTool: React.Dispatch<React.SetStateAction<ToolsType>>
   canvasOffsetStartPosition: Point | undefined
@@ -240,8 +240,8 @@ const useDrawableCanvas = ({
         const drawCtx = drawCanvasRef.current?.getContext('2d')
         if (!drawCtx) return
         if (activeTool.type === 'brush') {
-          if (!!selectedShape) {
-            const newShape = addNewPointGroupToShape(selectedShape as DrawableBrush, cursorPosition)
+          if (!!selectedShape && selectedShape.type === 'brush') {
+            const newShape = addNewPointGroupToShape(selectedShape, cursorPosition)
             updateSingleShape(newShape)
             setSelectedShape(newShape)
           } else {

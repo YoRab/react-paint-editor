@@ -1,6 +1,6 @@
 import _ from 'lodash/fp'
 import { fitContentInsideContainer, roundForGrid } from '../transform'
-import type { DrawablePicture, Picture, Point, Rect, StoredPicture } from 'types/Shapes'
+import type { DrawableShape, Picture, Point, Rect, ShapeEntity } from 'types/Shapes'
 import { fetchAndStringify } from '../file'
 import { DEFAULT_SHAPE_PICTURE } from 'constants/tools'
 import { getRectBorder, resizeRect } from './rectangle'
@@ -12,7 +12,7 @@ export const createPicture = (
   maxPictureWidth: number,
   maxPictureHeight: number
 ) => {
-  return new Promise<DrawablePicture>((resolve, reject) => {
+  return new Promise<ShapeEntity<'picture'>>((resolve, reject) => {
     const img = new Image()
     img.onload = () => {
       const [width, height] = fitContentInsideContainer(
@@ -23,7 +23,7 @@ export const createPicture = (
         true
       )
 
-      const pictureShape: DrawablePicture = {
+      const pictureShape: ShapeEntity<'picture'> = {
         toolId: DEFAULT_SHAPE_PICTURE.id,
         type: 'picture',
         id: _.uniqueId(`${'picture'}_`),
@@ -62,19 +62,22 @@ export const createPicture = (
   })
 }
 
-export const drawPicture = (ctx: CanvasRenderingContext2D, picture: DrawablePicture): void => {
+export const drawPicture = (
+  ctx: CanvasRenderingContext2D,
+  picture: DrawableShape<'picture'>
+): void => {
   if (ctx.globalAlpha === 0) return
   ctx.beginPath()
   ctx.drawImage(picture.img, picture.x, picture.y, picture.width, picture.height)
 }
 
-export const getPictureBorder = (picture: StoredPicture, selectionPadding: number): Rect => {
+export const getPictureBorder = (picture: Picture, selectionPadding: number): Rect => {
   return getRectBorder(picture, selectionPadding)
 }
 
-export const translatePicture = (
+export const translatePicture = <U extends DrawableShape<'picture'>>(
   cursorPosition: Point,
-  originalShape: DrawablePicture,
+  originalShape: U,
   originalCursorPosition: Point,
   gridFormat: GridFormatType
 ) => {
@@ -88,11 +91,11 @@ export const translatePicture = (
 export const resizePicture = (
   cursorPosition: Point,
   canvasOffset: Point,
-  originalShape: DrawablePicture,
+  originalShape: DrawableShape<'picture'>,
   selectionMode: SelectionModeResize,
   selectionPadding: number,
   keepRatio: boolean
-): DrawablePicture => {
+): DrawableShape<'picture'> => {
   return resizeRect(
     cursorPosition,
     canvasOffset,

@@ -4,50 +4,47 @@ import _ from 'lodash/fp'
 import { SelectionModeResize } from 'types/Mode'
 import type {
   Point,
-  DrawableLine,
+  DrawableShape,
   Line,
-  StyledShape,
   Triangle,
+  ShapeEntity,
   Rect,
-  DrawableCurve,
-  DrawablePolygon,
-  DrawableTriangle
+  StyleShape
 } from 'types/Shapes'
 import type { ToolsSettingsType } from 'types/tools'
 import { updateCanvasContext } from 'utils/canvas'
 import { getPointPositionAfterCanvasTransformation } from 'utils/intersect'
 import { roundForGrid } from 'utils/transform'
 import { getAngleFromVector, rotatePoint } from 'utils/trigo'
-import { getShapeInfos } from '.'
-import { drawCircle } from './circle'
+import { getShapeInfos } from 'utils/shapes/index'
 import { legacyDrawRect } from './rectangle'
 import { createTriangle, drawTriangle } from './triangle'
 
-const createLinePath = (line: DrawableLine) => {
+const createLinePath = (line: DrawableShape<'line'>) => {
   const path = new Path2D()
   path.moveTo(...line.points[0])
   path.lineTo(...line.points[1])
   return path
 }
 
-const buildPath = (line: DrawableLine): DrawableLine => {
+const buildPath = <T extends DrawableShape<'line'>>(line: T): T => {
   const arrows = _.flow(
-    (arrows: DrawableTriangle[]) => {
+    (arrows: DrawableShape<'triangle'>[]) => {
       if (line.style?.lineArrow === 1 || line.style?.lineArrow === 3) {
         const rotation = Math.PI / 2 - getAngleFromVector(line.points[0], line.points[1])
         return [
           ...arrows,
-          createTriangle(buildTriangleOnLine(line.points[0], rotation, { style: line.style }))
+          createTriangle(buildTriangleOnLine(line.points[0], rotation, line.style))
         ]
       }
       return arrows
     },
-    (arrows: DrawableTriangle[]) => {
+    (arrows: DrawableShape<'triangle'>[]) => {
       if (line.style?.lineArrow === 2 || line.style?.lineArrow === 3) {
         const rotation = Math.PI / 2 - getAngleFromVector(line.points[1], line.points[0])
         return [
           ...arrows,
-          createTriangle(buildTriangleOnLine(line.points[1], rotation, { style: line.style }))
+          createTriangle(buildTriangleOnLine(line.points[1], rotation, line.style))
         ]
       }
       return arrows
@@ -68,7 +65,7 @@ export const createLine = (
     settings: ToolsSettingsType<'line'>
   },
   cursorPosition: Point
-): DrawableLine => {
+): ShapeEntity<'line'> => {
   const lineShape = {
     toolId: shape.id,
     type: shape.type,
@@ -86,18 +83,15 @@ export const createLine = (
   return buildPath(lineShape)
 }
 
-export const buildTriangleOnLine = (center: Point, rotation: number, lineStyle: StyledShape) => {
+export const buildTriangleOnLine = (center: Point, rotation: number, lineStyle: StyleShape) => {
   const trianglePoints = [
-    rotatePoint({ point: [0, -(10 + (lineStyle.style?.lineWidth ?? 0) * 1)], rotation }),
+    rotatePoint({ point: [0, -(10 + (lineStyle.lineWidth ?? 0) * 1)], rotation }),
     rotatePoint({
-      point: [
-        -(5 + (lineStyle.style?.lineWidth ?? 0) * 1),
-        5 + (lineStyle.style?.lineWidth ?? 0) * 2
-      ],
+      point: [-(5 + (lineStyle.lineWidth ?? 0) * 1), 5 + (lineStyle.lineWidth ?? 0) * 2],
       rotation
     }),
     rotatePoint({
-      point: [5 + (lineStyle.style?.lineWidth ?? 0) * 1, 5 + (lineStyle.style?.lineWidth ?? 0) * 2],
+      point: [5 + (lineStyle.lineWidth ?? 0) * 1, 5 + (lineStyle.lineWidth ?? 0) * 2],
       rotation
     })
   ]
@@ -108,14 +102,14 @@ export const buildTriangleOnLine = (center: Point, rotation: number, lineStyle: 
       [center[0] + trianglePoints[2][0], center[1] + trianglePoints[2][1]]
     ],
     style: {
-      ...lineStyle.style,
-      fillColor: lineStyle.style?.strokeColor,
+      ...lineStyle,
+      fillColor: lineStyle.strokeColor,
       strokeColor: 'transparent'
     }
   } as Triangle
 }
 
-export const drawLine = (ctx: CanvasRenderingContext2D, shape: DrawableLine): void => {
+export const drawLine = (ctx: CanvasRenderingContext2D, shape: DrawableShape<'line'>): void => {
   if (ctx.globalAlpha === 0 || !shape.path) return
 
   shape.style?.fillColor !== 'transparent' && ctx.fill(shape.path)
@@ -135,9 +129,9 @@ export const getLineBorder = (line: Line, selectionPadding: number): Rect => {
   return { x, width, y, height }
 }
 
-export const translateLine = (
+export const translateLine = <U extends DrawableShape<'line'>>(
   cursorPosition: Point,
-  originalShape: DrawableLine,
+  originalShape: U,
   originalCursorPosition: Point,
   gridFormat: GridFormatType
 ) => {
@@ -150,13 +144,13 @@ export const translateLine = (
   })
 }
 
-export const resizeLine = (
+export const resizeLine = <U extends DrawableShape<'line'>>(
   cursorPosition: Point,
   canvasOffset: Point,
-  originalShape: DrawableLine,
+  originalShape: U,
   selectionMode: SelectionModeResize<number>,
   selectionPadding: number
-): DrawableLine => {
+): U => {
   const { center } = getShapeInfos(originalShape, selectionPadding)
 
   const cursorPositionBeforeResize = getPointPositionAfterCanvasTransformation(
@@ -184,7 +178,7 @@ export const drawLineSelection = ({
   currentScale = 1
 }: {
   ctx: CanvasRenderingContext2D
-  shape: DrawableLine | DrawablePolygon | DrawableCurve
+  shape: DrawableShape<'line'> | DrawableShape<'polygon'> | DrawableShape<'curve'>
   withAnchors: boolean
   selectionPadding: number
   selectionWidth: number
@@ -192,7 +186,10 @@ export const drawLineSelection = ({
   currentScale?: number
 }) => {
   const { borders } = getShapeInfos(shape, selectionPadding)
+  shape.type
   legacyDrawRect(ctx, {
+    type: 'rect',
+    rotation: 0,
     ...borders,
     style: {
       fillColor: 'transparent',
@@ -203,8 +200,11 @@ export const drawLineSelection = ({
   if (!withAnchors || shape.locked) return
   for (let i = 0; i < shape.points.length; i++) {
     const coordinate = shape.points[i]
+
     if (shape.type === 'curve' && i > 0 && i < shape.points.length - 1) {
       legacyDrawRect(ctx, {
+        type: 'rect',
+        rotation: 0,
         x: coordinate[0] - SELECTION_ANCHOR_SIZE / 2,
         y: coordinate[1] - SELECTION_ANCHOR_SIZE / 2,
         width: SELECTION_ANCHOR_SIZE / currentScale,

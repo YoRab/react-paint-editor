@@ -1,14 +1,14 @@
 import { GridFormatType } from 'constants/app'
 import _ from 'lodash/fp'
 import { SelectionModeResize } from 'types/Mode'
-import type { Point, DrawableCurve } from 'types/Shapes'
+import type { Point, DrawableShape, ShapeEntity } from 'types/Shapes'
 import type { ToolsSettingsType } from 'types/tools'
 import { getPointPositionAfterCanvasTransformation } from 'utils/intersect'
 import { roundForGrid } from 'utils/transform'
-import { getShapeInfos } from '.'
+import { getShapeInfos } from 'utils/shapes/index'
 import { getPolygonBorder } from './polygon'
 
-const createCurvePath = (curve: DrawableCurve) => {
+const createCurvePath = (curve: DrawableShape<'curve'>) => {
   if (curve.points.length < 3) return undefined
 
   const path = new Path2D()
@@ -29,7 +29,7 @@ const createCurvePath = (curve: DrawableCurve) => {
   return path
 }
 
-const buildPath = (shape: DrawableCurve) => {
+const buildPath = <T extends DrawableShape<'curve'>>(shape: T): T => {
   return {
     ...shape,
     path: createCurvePath(shape)
@@ -43,7 +43,7 @@ export const createCurve = (
     settings: ToolsSettingsType<'curve'>
   },
   cursorPosition: Point
-): DrawableCurve => {
+): ShapeEntity<'curve'> => {
   return buildPath({
     toolId: shape.id,
     type: shape.type,
@@ -67,10 +67,10 @@ export const createCurve = (
 export const resizeCurve = (
   cursorPosition: Point,
   canvasOffset: Point,
-  originalShape: DrawableCurve,
+  originalShape: DrawableShape<'curve'>,
   selectionMode: SelectionModeResize<number>,
   selectionPadding: number
-): DrawableCurve => {
+): DrawableShape<'curve'> => {
   const { center } = getShapeInfos(originalShape, selectionPadding)
 
   const cursorPositionBeforeResize = getPointPositionAfterCanvasTransformation(
@@ -88,7 +88,7 @@ export const resizeCurve = (
   return buildPath(updatedShape)
 }
 
-export const drawCurve = (ctx: CanvasRenderingContext2D, curve: DrawableCurve): void => {
+export const drawCurve = (ctx: CanvasRenderingContext2D, curve: DrawableShape<'curve'>): void => {
   if (!curve.path) return
   if (ctx.globalAlpha === 0) return
   curve.style?.fillColor !== 'transparent' && ctx.fill(curve.path)
@@ -97,12 +97,12 @@ export const drawCurve = (ctx: CanvasRenderingContext2D, curve: DrawableCurve): 
 
 export const getCurveBorder = getPolygonBorder
 
-export const translateCurve = (
+export const translateCurve = <U extends DrawableShape<'curve'>>(
   cursorPosition: Point,
-  originalShape: DrawableCurve,
+  originalShape: U,
   originalCursorPosition: Point,
   gridFormat: GridFormatType
-): DrawableCurve => {
+) => {
   const { borders } = getShapeInfos(originalShape, 0)
 
   return buildPath({

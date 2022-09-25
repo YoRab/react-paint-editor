@@ -1,5 +1,5 @@
 import React, { MutableRefObject, useCallback, useEffect, useRef, useState } from 'react'
-import type { DrawableShape, DrawableShapeJson, ExportDataType, Point } from 'types/Shapes'
+import type { DrawableShapeJson, ExportDataType, Point, ShapeEntity } from 'types/Shapes'
 import type { ToolsType } from 'types/tools'
 import Canvas from './Canvas'
 import Layouts from './settings/Layouts'
@@ -260,7 +260,7 @@ const App = ({
   }, [selectTool, forwardShape])
 
   const resetCanvas = useCallback(
-    (shapesToInit: DrawableShape[] = [], clearHistory = false) => {
+    (shapesToInit: ShapeEntity[] = [], clearHistory = false) => {
       clearShapes(shapesToInit, clearHistory)
       selectTool(SELECTION_TOOL)
       setCanvasOffset([0, 0])
@@ -289,7 +289,7 @@ const App = ({
   }, [resetCanvas, loadImportedData, shapesFromProps, clearCallback])
 
   const selectShape = useCallback(
-    (shape: DrawableShape) => {
+    (shape: ShapeEntity) => {
       setActiveTool(SELECTION_TOOL)
       setSelectedShape(shape)
     },
@@ -297,7 +297,7 @@ const App = ({
   )
 
   const pasteShape = useCallback(
-    (shape: DrawableShape) => {
+    (shape: ShapeEntity) => {
       addShape(shape)
       selectShape(shape)
     },

@@ -1,13 +1,13 @@
 import { GridFormatType } from 'constants/app'
 import _ from 'lodash/fp'
 import { SelectionModeResize } from 'types/Mode'
-import type { Point, DrawablePolygon, Polygon, Rect } from 'types/Shapes'
+import type { Point, DrawableShape, Polygon, Rect, ShapeEntity } from 'types/Shapes'
 import type { ToolsSettingsType } from 'types/tools'
 import { getPointPositionAfterCanvasTransformation } from 'utils/intersect'
 import { roundForGrid } from 'utils/transform'
 import { getShapeInfos } from '.'
 
-const createPloygonPath = (polygon: DrawablePolygon) => {
+const createPloygonPath = (polygon: DrawableShape<'polygon'>) => {
   if (polygon.points.length < 1) return undefined
 
   const path = new Path2D()
@@ -21,7 +21,7 @@ const createPloygonPath = (polygon: DrawablePolygon) => {
   return path
 }
 
-const buildPath = (shape: DrawablePolygon) => {
+const buildPath = <T extends DrawableShape<'polygon'>>(shape: T): T => {
   return {
     ...shape,
     path: createPloygonPath(shape)
@@ -35,7 +35,7 @@ export const createPolygon = (
     settings: ToolsSettingsType<'polygon'>
   },
   cursorPosition: Point
-): DrawablePolygon => {
+): ShapeEntity<'polygon'> => {
   return buildPath({
     toolId: shape.id,
     type: shape.type,
@@ -56,7 +56,10 @@ export const createPolygon = (
   })
 }
 
-export const drawPolygon = (ctx: CanvasRenderingContext2D, polygon: DrawablePolygon): void => {
+export const drawPolygon = (
+  ctx: CanvasRenderingContext2D,
+  polygon: DrawableShape<'polygon'>
+): void => {
   if (!polygon.path) return
   if (ctx.globalAlpha === 0) return
   polygon.style?.fillColor !== 'transparent' && ctx.fill(polygon.path)
@@ -88,12 +91,12 @@ export const getPolygonBorder = (polygon: Polygon, selectionPadding: number): Re
   return { x: minX, width: maxX - minX, y: minY, height: maxY - minY }
 }
 
-export const translatePolygon = (
+export const translatePolygon = <U extends DrawableShape<'polygon'>>(
   cursorPosition: Point,
-  originalShape: DrawablePolygon,
+  originalShape: U,
   originalCursorPosition: Point,
   gridFormat: GridFormatType
-): DrawablePolygon => {
+) => {
   if (gridFormat) {
     const { borders } = getShapeInfos(originalShape, 0)
     const translationX =
@@ -120,10 +123,10 @@ export const translatePolygon = (
 export const resizePolygon = (
   cursorPosition: Point,
   canvasOffset: Point,
-  originalShape: DrawablePolygon,
+  originalShape: DrawableShape<'polygon'>,
   selectionMode: SelectionModeResize<number>,
   selectionPadding: number
-): DrawablePolygon => {
+): DrawableShape<'polygon'> => {
   const { center } = getShapeInfos(originalShape, selectionPadding)
 
   const cursorPositionBeforeResize = getPointPositionAfterCanvasTransformation(
@@ -141,10 +144,10 @@ export const resizePolygon = (
   return buildPath(updatedShape)
 }
 
-export const updatePolygonLinesCount = (
-  shape: DrawablePolygon,
+export const updatePolygonLinesCount = <T extends DrawableShape<'polygon'>>(
+  shape: T,
   newPointsCount: number
-): DrawablePolygon => {
+) => {
   const currentPointsCount = shape.points.length
   if (currentPointsCount === newPointsCount) return shape
   if (currentPointsCount > newPointsCount) {

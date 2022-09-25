@@ -1,12 +1,12 @@
 import React from 'react'
 import { trashIcon } from 'constants/icons'
-import type { DrawableShape } from 'types/Shapes'
+import type { ShapeEntity } from 'types/Shapes'
 import Button from 'components/common/Button'
 
 type DeleteShapeButtonType = {
   disabled?: boolean
-  selectedShape: DrawableShape
-  removeShape: (shape: DrawableShape) => void
+  selectedShape: ShapeEntity
+  removeShape: (shape: ShapeEntity) => void
 }
 
 const DeleteButton = ({ disabled = false, selectedShape, removeShape }: DeleteShapeButtonType) => {
