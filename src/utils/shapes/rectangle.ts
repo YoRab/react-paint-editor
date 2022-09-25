@@ -1,7 +1,7 @@
 import { GridFormatType } from 'constants/app'
 import _ from 'lodash/fp'
 import { SelectionModeResize } from 'types/Mode'
-import type { Point, DrawableShape, ShapeEntity, Rect, Square } from 'types/Shapes'
+import type { Point, DrawableShape, ShapeEntity, Rect } from 'types/Shapes'
 import type { ToolsSettingsType } from 'types/tools'
 import {
   getPointPositionAfterCanvasTransformation,
@@ -75,7 +75,7 @@ export const legacyDrawRect = (
   rect.style?.strokeColor !== 'transparent' && ctx.stroke()
 }
 
-export const getRectBorder = (rect: Rect | Square, selectionPadding: number): Rect => {
+export const getRectBorder = (rect: Rect, selectionPadding: number): Rect => {
   return {
     x: rect.x - selectionPadding,
     width: rect.width + selectionPadding * 2,
