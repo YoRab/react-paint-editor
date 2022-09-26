@@ -400,6 +400,7 @@ const App = ({
     gridFormat,
     isEditingText: selectionMode.mode === 'textedition',
     selectedShape,
+    currentScale: canvasSize.scaleRatio,
     setSelectedShape,
     removeShape,
     pasteShape,

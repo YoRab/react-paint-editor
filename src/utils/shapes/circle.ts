@@ -10,7 +10,7 @@ import {
 import { roundForGrid } from 'utils/transform'
 import { getShapeInfos } from 'utils/shapes/index'
 
-const createCirclePath = (shape: DrawableShape<'circle'>) => {
+export const createCirclePath = (shape: Circle) => {
   const path = new Path2D()
   path.arc(shape.x, shape.y, shape.radius, 0, 2 * Math.PI)
   return path

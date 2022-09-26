@@ -20,7 +20,7 @@ import { getShapeInfos } from 'utils/shapes/index'
 import { legacyDrawRect } from './rectangle'
 import { createTriangle, drawTriangle } from './triangle'
 
-const createLinePath = (line: DrawableShape<'line'>) => {
+export const createLinePath = (line: Line) => {
   const path = new Path2D()
   path.moveTo(...line.points[0])
   path.lineTo(...line.points[1])
@@ -186,7 +186,6 @@ export const drawLineSelection = ({
   currentScale?: number
 }) => {
   const { borders } = getShapeInfos(shape, selectionPadding)
-  shape.type
   legacyDrawRect(ctx, {
     type: 'rect',
     rotation: 0,

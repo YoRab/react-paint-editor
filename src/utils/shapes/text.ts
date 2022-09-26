@@ -104,7 +104,8 @@ export const resizeText = (
   canvasOffset: Point,
   originalShape: DrawableShape<'text'>,
   selectionMode: SelectionModeResize,
-  selectionPadding: number
+  selectionPadding: number,
+  currentScale: number
 ): DrawableShape<'text'> => {
   const newRect = resizeRect(
     cursorPosition,
@@ -112,6 +113,7 @@ export const resizeText = (
     originalShape,
     selectionMode,
     selectionPadding,
+    currentScale,
     true
   )
   return {

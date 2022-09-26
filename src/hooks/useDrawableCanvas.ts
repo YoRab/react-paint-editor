@@ -66,7 +66,8 @@ const handleMove = (
       canvasOffset,
       selectionMode,
       selectionPadding,
-      isShiftPressed
+      isShiftPressed,
+      scaleRatio
     )
     updateSingleShape(newShape)
     setSelectedShape(newShape)
@@ -245,7 +246,13 @@ const useDrawableCanvas = ({
             updateSingleShape(newShape)
             setSelectedShape(newShape)
           } else {
-            const newShape = createShape(drawCtx, activeTool, cursorPosition, gridFormat)
+            const newShape = createShape(
+              drawCtx,
+              activeTool,
+              cursorPosition,
+              gridFormat,
+              scaleRatio
+            )
             if (!newShape) return
             addShape(newShape)
             setSelectedShape(newShape)
@@ -259,7 +266,8 @@ const useDrawableCanvas = ({
             drawCtx,
             activeTool as Exclude<CustomTool, { type: 'picture' }>,
             cursorPosition,
-            gridFormat
+            gridFormat,
+            scaleRatio
           )
           addShape(newShape)
           setActiveTool(SELECTION_TOOL)

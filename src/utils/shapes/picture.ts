@@ -94,6 +94,7 @@ export const resizePicture = (
   originalShape: DrawableShape<'picture'>,
   selectionMode: SelectionModeResize,
   selectionPadding: number,
+  currentScale: number,
   keepRatio: boolean
 ): DrawableShape<'picture'> => {
   return resizeRect(
@@ -102,6 +103,7 @@ export const resizePicture = (
     originalShape,
     selectionMode,
     selectionPadding,
+    currentScale,
     keepRatio
   )
 }

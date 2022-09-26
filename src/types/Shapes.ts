@@ -65,6 +65,12 @@ export type StyleShape = {
   fontBold?: boolean
 }
 
+export type SelectionDefaultType = {
+  border: Path2D
+  line: Path2D
+  anchors: Path2D[]
+}
+
 export type DrawableShape<T extends ShapeType = ShapeType> = {
   visible?: boolean
   locked?: boolean
@@ -77,9 +83,9 @@ export type DrawableShape<T extends ShapeType = ShapeType> = {
   : T extends 'text'
   ? Text & { type: 'text' }
   : T extends 'rect'
-  ? Rect & { type: 'rect'; path?: Path2D }
+  ? Rect & { type: 'rect'; selection?: SelectionDefaultType; path?: Path2D }
   : T extends 'square'
-  ? Rect & { type: 'square'; path?: Path2D }
+  ? Rect & { type: 'square'; selection?: SelectionDefaultType; path?: Path2D }
   : T extends 'circle'
   ? Circle & { type: 'circle'; path?: Path2D }
   : T extends 'ellipse'

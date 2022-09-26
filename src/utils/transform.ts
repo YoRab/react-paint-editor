@@ -36,7 +36,8 @@ export const transformShape = (
   canvasOffset: Point,
   selectionMode: SelectionModeData<Point | number>,
   selectionPadding: number,
-  isShiftPressed: boolean
+  isShiftPressed: boolean,
+  currentScale: number
 ): ShapeEntity => {
   switch (selectionMode.mode) {
     case 'brush':
@@ -46,7 +47,8 @@ export const transformShape = (
         cursorPosition,
         selectionMode.originalShape,
         selectionMode.cursorStartPosition,
-        gridFormat
+        gridFormat,
+        currentScale
       )
     case 'rotate':
       return rotateShape(
@@ -70,7 +72,8 @@ export const transformShape = (
         selectionMode.originalShape,
         selectionMode,
         selectionPadding,
-        isShiftPressed
+        isShiftPressed,
+        currentScale
       )
     default:
       return shape

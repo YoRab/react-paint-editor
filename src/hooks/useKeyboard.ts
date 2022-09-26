@@ -34,6 +34,7 @@ type UseKeyboardType = {
   setShiftPressed: (value: React.SetStateAction<boolean>) => void
   isEditingText: boolean
   gridFormat: GridFormatType
+  currentScale: number
 }
 
 const useKeyboard = ({
@@ -41,6 +42,7 @@ const useKeyboard = ({
   isInsideComponent,
   selectedShape,
   isEditingText,
+  currentScale,
   setSelectedShape,
   removeShape,
   pasteShape,
@@ -64,7 +66,7 @@ const useKeyboard = ({
       if (!copiedShape) return
       if (isEditingText) return
       e.preventDefault()
-      pasteShape(copyShape(copiedShape, gridFormat))
+      pasteShape(copyShape(copiedShape, gridFormat, currentScale))
     }
 
     const handleKeyUp = (e: KeyboardEvent) => {
@@ -114,7 +116,9 @@ const useKeyboard = ({
         case KeyboardCode.ArrowRight:
         case KeyboardCode.ArrowDown:
         case KeyboardCode.ArrowUp:
-          updateShape(translateShape(translationMap[e.key], selectedShape, [0, 0], gridFormat))
+          updateShape(
+            translateShape(translationMap[e.key], selectedShape, [0, 0], gridFormat, currentScale)
+          )
           break
         case KeyboardCode.Delete:
         case KeyboardCode.Backspace:
@@ -144,6 +148,7 @@ const useKeyboard = ({
     copiedShape,
     isEditingText,
     selectedShape,
+    currentScale,
     updateShape,
     removeShape,
     setSelectedShape,

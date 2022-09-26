@@ -7,7 +7,8 @@ import { DrawableShape } from 'types/Shapes'
 import { getShapeInfos } from './index'
 import { drawCircle } from './circle'
 import { drawLine } from './line'
-import { legacyDrawRect } from './rectangle'
+import { drawSelectionRect, legacyDrawRect } from './rectangle'
+import { updateCanvasContext } from 'utils/canvas'
 
 export const drawSelectionDefault = ({
   ctx,
@@ -16,7 +17,7 @@ export const drawSelectionDefault = ({
   selectionPadding,
   selectionWidth,
   selectionColor,
-  currentScale = 1
+  currentScale
 }: {
   ctx: CanvasRenderingContext2D
   shape: DrawableShape
@@ -24,10 +25,14 @@ export const drawSelectionDefault = ({
   selectionPadding: number
   selectionWidth: number
   selectionColor: string
-  currentScale?: number
+  currentScale: number
 }) => {
   const { borders } = getShapeInfos(shape, selectionPadding / currentScale)
 
+  if (shape.type === 'rect' || shape.type === 'square') {
+    drawSelectionRect(ctx, shape, selectionColor, selectionWidth, currentScale, withAnchors)
+    return
+  }
   legacyDrawRect(ctx, {
     type: 'rect',
     rotation: 0,
