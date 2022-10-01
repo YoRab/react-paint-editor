@@ -3,7 +3,7 @@ import type { ShapeEntity } from 'types/Shapes'
 import _ from 'lodash/fp'
 import { createPicture } from 'utils/shapes/picture'
 
-const useShapes = (onDataChanged: () => void = _.noop) => {
+const useShapes = (onDataChanged: () => void = _.noop, currentScale: number) => {
   const shapesRef = useRef<ShapeEntity[]>([])
   const onDataChangedRef = useRef<() => void>(onDataChanged)
   onDataChangedRef.current = onDataChanged
@@ -51,12 +51,12 @@ const useShapes = (onDataChanged: () => void = _.noop) => {
 
   const addPictureShape = useCallback(
     async (fileOrUrl: File | string, maxWidth = 300, maxHeight = 300) => {
-      const pictureShape = await createPicture(fileOrUrl, maxWidth, maxHeight)
+      const pictureShape = await createPicture(fileOrUrl, maxWidth, maxHeight, currentScale)
       addShape(pictureShape)
       saveShapes()
       return pictureShape
     },
-    [addShape, saveShapes]
+    [addShape, saveShapes, currentScale]
   )
 
   const updateShape = useCallback(

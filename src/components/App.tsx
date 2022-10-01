@@ -221,7 +221,7 @@ const App = ({
     canGoBackward,
     canGoForward,
     canClear
-  } = useShapes(onDataChanged)
+  } = useShapes(onDataChanged, canvasSize.scaleRatio)
 
   const { snackbarList, addSnackbar } = useSnackbar()
 
