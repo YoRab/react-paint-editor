@@ -1,6 +1,6 @@
 import React, { useRef, useState } from 'react'
 import _ from 'lodash/fp'
-import type { DrawableShape } from 'types/Shapes'
+import type { ShapeEntity } from 'types/Shapes'
 import useDrag from 'hooks/useDrag'
 import {
   gridOffIcon,
@@ -154,14 +154,14 @@ const StyledPlaceholder = styled.div`
 
 type LayoutType = {
   disabled?: boolean
-  shape: DrawableShape
+  shape: ShapeEntity
   selected: boolean
   layoutDragging: string | undefined
   setLayoutDragging: (shapeId: string | undefined) => void
-  handleRemove: (shape: DrawableShape) => void
-  handleSelect: (shape: DrawableShape) => void
-  toggleShapeVisibility: (shape: DrawableShape) => void
-  toggleShapeLock: (shape: DrawableShape) => void
+  handleRemove: (shape: ShapeEntity) => void
+  handleSelect: (shape: ShapeEntity) => void
+  toggleShapeVisibility: (shape: ShapeEntity) => void
+  toggleShapeLock: (shape: ShapeEntity) => void
   onMoveShapes: (firstShapeId: string, lastShapeId: string) => void
 }
 
@@ -256,12 +256,12 @@ type LayoutsType = {
   gridFormat: GridFormatType
   setGridFormat: React.Dispatch<React.SetStateAction<GridFormatType>>
   disabled?: boolean
-  shapes: DrawableShape[]
-  removeShape: (shape: DrawableShape) => void
-  toggleShapeVisibility: (shape: DrawableShape) => void
-  toggleShapeLock: (shape: DrawableShape) => void
-  selectedShape: DrawableShape | undefined
-  selectShape: (shape: DrawableShape) => void
+  shapes: ShapeEntity[]
+  removeShape: (shape: ShapeEntity) => void
+  toggleShapeVisibility: (shape: ShapeEntity) => void
+  toggleShapeLock: (shape: ShapeEntity) => void
+  selectedShape: ShapeEntity | undefined
+  selectShape: (shape: ShapeEntity) => void
   moveShapes: (firstShapeId: string, lastShapeId: string) => void
   isLayoutPanelShown: boolean
 }

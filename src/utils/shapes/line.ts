@@ -1,40 +1,102 @@
+import { GridFormatType } from 'constants/app'
 import { SELECTION_ANCHOR_SIZE } from 'constants/shapes'
 import _ from 'lodash/fp'
 import { SelectionModeResize } from 'types/Mode'
 import type {
   Point,
-  DrawableLine,
+  DrawableShape,
   Line,
-  StyledShape,
   Triangle,
+  ShapeEntity,
   Rect,
-  DrawableCurve,
-  DrawablePolygon
+  StyleShape,
+  SelectionLinesType
 } from 'types/Shapes'
 import type { ToolsSettingsType } from 'types/tools'
 import { updateCanvasContext } from 'utils/canvas'
 import { getPointPositionAfterCanvasTransformation } from 'utils/intersect'
+import { roundForGrid } from 'utils/transform'
 import { getAngleFromVector, rotatePoint } from 'utils/trigo'
-import { getShapeInfos } from '.'
-import { drawCircle } from './circle'
-import { drawRect } from './rectangle'
-import { drawTriangle } from './triangle'
+import { getShapeInfos } from 'utils/shapes/index'
+import { createRecPath } from './rectangle'
+import { createTriangle, drawTriangle } from './triangle'
+import { createCirclePath } from './circle'
+
+export const createLinePath = (line: Line) => {
+  const path = new Path2D()
+  path.moveTo(...line.points[0])
+  path.lineTo(...line.points[1])
+  return path
+}
+
+const createLineSelectionPath = (
+  shape: DrawableShape<'line'>,
+  currentScale: number
+): SelectionLinesType => {
+  const { borders } = getShapeInfos(shape, 0)
+
+  return {
+    border: createRecPath(borders),
+    anchors: [
+      ...shape.points.map(point => {
+        return createCirclePath({
+          x: point[0],
+          y: point[1],
+          radius: SELECTION_ANCHOR_SIZE / 2 / currentScale
+        })
+      })
+    ]
+  }
+}
+
+const buildPath = <T extends DrawableShape<'line'>>(line: T, currentScale: number): T => {
+  const arrows = _.flow(
+    (arrows: DrawableShape<'triangle'>[]) => {
+      if (line.style?.lineArrow === 1 || line.style?.lineArrow === 3) {
+        const rotation = Math.PI / 2 - getAngleFromVector(line.points[0], line.points[1])
+        return [
+          ...arrows,
+          createTriangle(buildTriangleOnLine(line.points[0], rotation, line.style))
+        ]
+      }
+      return arrows
+    },
+    (arrows: DrawableShape<'triangle'>[]) => {
+      if (line.style?.lineArrow === 2 || line.style?.lineArrow === 3) {
+        const rotation = Math.PI / 2 - getAngleFromVector(line.points[1], line.points[0])
+        return [
+          ...arrows,
+          createTriangle(buildTriangleOnLine(line.points[1], rotation, line.style))
+        ]
+      }
+      return arrows
+    }
+  )([])
+
+  return {
+    ...line,
+    path: createLinePath(line),
+    selection: createLineSelectionPath(line, currentScale),
+    arrows
+  }
+}
+
+export const refreshLine = buildPath
 
 export const createLine = (
   shape: {
     id: string
-    icon: string
-    label: string
     type: 'line'
     settings: ToolsSettingsType<'line'>
   },
-  cursorPosition: Point
-): DrawableLine | undefined => {
-  return {
+  cursorPosition: Point,
+  currentScale: number
+): ShapeEntity<'line'> => {
+  const lineShape = {
     toolId: shape.id,
     type: shape.type,
     id: _.uniqueId(`${shape.type}_`),
-    points: [cursorPosition, cursorPosition],
+    points: [cursorPosition, cursorPosition] as const,
     rotation: 0,
     style: {
       globalAlpha: shape.settings.opacity.default,
@@ -44,20 +106,18 @@ export const createLine = (
       lineArrow: shape.settings.lineArrow.default
     }
   }
+  return buildPath(lineShape, currentScale)
 }
 
-export const buildTriangleOnLine = (center: Point, rotation: number, lineStyle: StyledShape) => {
+export const buildTriangleOnLine = (center: Point, rotation: number, lineStyle: StyleShape) => {
   const trianglePoints = [
-    rotatePoint({ point: [0, -(10 + (lineStyle.style?.lineWidth ?? 0) * 1)], rotation }),
+    rotatePoint({ point: [0, -(10 + (lineStyle.lineWidth ?? 0) * 1)], rotation }),
     rotatePoint({
-      point: [
-        -(5 + (lineStyle.style?.lineWidth ?? 0) * 1),
-        5 + (lineStyle.style?.lineWidth ?? 0) * 2
-      ],
+      point: [-(5 + (lineStyle.lineWidth ?? 0) * 1), 5 + (lineStyle.lineWidth ?? 0) * 2],
       rotation
     }),
     rotatePoint({
-      point: [5 + (lineStyle.style?.lineWidth ?? 0) * 1, 5 + (lineStyle.style?.lineWidth ?? 0) * 2],
+      point: [5 + (lineStyle.lineWidth ?? 0) * 1, 5 + (lineStyle.lineWidth ?? 0) * 2],
       rotation
     })
   ]
@@ -68,30 +128,22 @@ export const buildTriangleOnLine = (center: Point, rotation: number, lineStyle: 
       [center[0] + trianglePoints[2][0], center[1] + trianglePoints[2][1]]
     ],
     style: {
-      ...lineStyle.style,
-      fillColor: lineStyle.style?.strokeColor,
+      ...lineStyle,
+      fillColor: lineStyle.strokeColor,
       strokeColor: 'transparent'
     }
   } as Triangle
 }
 
-export const drawLine = (ctx: CanvasRenderingContext2D, line: Line): void => {
-  updateCanvasContext(ctx, line.style)
+export const drawLine = (ctx: CanvasRenderingContext2D, shape: DrawableShape<'line'>): void => {
+  if (ctx.globalAlpha === 0 || !shape.path) return
 
-  if (ctx.globalAlpha === 0) return
+  shape.style?.fillColor !== 'transparent' && ctx.fill(shape.path)
+  shape.style?.strokeColor !== 'transparent' && ctx.stroke(shape.path)
 
-  ctx.beginPath()
-  ctx.moveTo(...line.points[0])
-  ctx.lineTo(...line.points[1])
-  line.style?.fillColor !== 'transparent' && ctx.fill()
-  line.style?.strokeColor !== 'transparent' && ctx.stroke()
-  if (line.style?.lineArrow === 1 || line.style?.lineArrow === 3) {
-    const rotation = Math.PI / 2 - getAngleFromVector(line.points[0], line.points[1])
-    drawTriangle(ctx, buildTriangleOnLine(line.points[0], rotation, { style: line.style }))
-  }
-  if (line.style?.lineArrow === 2 || line.style?.lineArrow === 3) {
-    const rotation = Math.PI / 2 - getAngleFromVector(line.points[1], line.points[0])
-    drawTriangle(ctx, buildTriangleOnLine(line.points[1], rotation, { style: line.style }))
+  for (const arrow of shape.arrows ?? []) {
+    updateCanvasContext(ctx, arrow.style)
+    drawTriangle(ctx, arrow)
   }
 }
 
@@ -103,13 +155,33 @@ export const getLineBorder = (line: Line, selectionPadding: number): Rect => {
   return { x, width, y, height }
 }
 
-export const resizeLine = (
+export const translateLine = <U extends DrawableShape<'line'>>(
+  cursorPosition: Point,
+  originalShape: U,
+  originalCursorPosition: Point,
+  gridFormat: GridFormatType,
+  currentScale: number
+) => {
+  return buildPath(
+    {
+      ...originalShape,
+      points: originalShape.points.map(([x, y]) => [
+        roundForGrid(x + cursorPosition[0] - originalCursorPosition[0], gridFormat),
+        roundForGrid(y + cursorPosition[1] - originalCursorPosition[1], gridFormat)
+      ]) as [Point, Point]
+    },
+    currentScale
+  )
+}
+
+export const resizeLine = <U extends DrawableShape<'line'>>(
   cursorPosition: Point,
   canvasOffset: Point,
-  originalShape: DrawableLine | DrawablePolygon | DrawableCurve,
+  originalShape: U,
   selectionMode: SelectionModeResize<number>,
-  selectionPadding: number
-): DrawableLine | DrawablePolygon | DrawableCurve => {
+  selectionPadding: number,
+  currentScale: number
+): U => {
   const { center } = getShapeInfos(originalShape, selectionPadding)
 
   const cursorPositionBeforeResize = getPointPositionAfterCanvasTransformation(
@@ -124,61 +196,43 @@ export const resizeLine = (
     originalShape
   )
 
-  return updatedShape
+  return buildPath(updatedShape, currentScale)
 }
 
 export const drawLineSelection = ({
   ctx,
   shape,
   withAnchors,
-  selectionPadding,
   selectionWidth,
   selectionColor,
   currentScale = 1
 }: {
   ctx: CanvasRenderingContext2D
-  shape: DrawableLine | DrawablePolygon | DrawableCurve
+  shape: DrawableShape<'line'> | DrawableShape<'polygon'> | DrawableShape<'curve'>
   withAnchors: boolean
-  selectionPadding: number
   selectionWidth: number
   selectionColor: string
   currentScale?: number
 }) => {
-  const { borders } = getShapeInfos(shape, selectionPadding)
-  drawRect(ctx, {
-    ...borders,
-    style: {
-      fillColor: 'transparent',
-      strokeColor: selectionColor,
-      lineWidth: selectionWidth / currentScale
-    }
+  if (!shape.selection) return
+
+  updateCanvasContext(ctx, {
+    fillColor: 'transparent',
+    strokeColor: selectionColor,
+    lineWidth: selectionWidth / currentScale
   })
+  ctx.stroke(shape.selection.border)
+
   if (!withAnchors || shape.locked) return
-  for (let i = 0; i < shape.points.length; i++) {
-    const coordinate = shape.points[i]
-    if (shape.type === 'curve' && i > 0 && i < shape.points.length - 1) {
-      drawRect(ctx, {
-        x: coordinate[0] - SELECTION_ANCHOR_SIZE / 2,
-        y: coordinate[1] - SELECTION_ANCHOR_SIZE / 2,
-        width: SELECTION_ANCHOR_SIZE / currentScale,
-        height: SELECTION_ANCHOR_SIZE / currentScale,
-        style: {
-          fillColor: 'rgb(255,255,255)',
-          strokeColor: 'rgb(150,150,150)',
-          lineWidth: selectionWidth / currentScale
-        }
-      })
-    } else {
-      drawCircle(ctx, {
-        x: coordinate[0],
-        y: coordinate[1],
-        radius: SELECTION_ANCHOR_SIZE / 2 / currentScale,
-        style: {
-          fillColor: 'rgb(255,255,255)',
-          strokeColor: 'rgb(150,150,150)',
-          lineWidth: selectionWidth / currentScale
-        }
-      })
-    }
+
+  updateCanvasContext(ctx, {
+    fillColor: 'rgb(255,255,255)',
+    strokeColor: 'rgb(150,150,150)',
+    lineWidth: 2 / currentScale
+  })
+
+  for (const anchor of shape.selection.anchors) {
+    ctx.fill(anchor)
+    ctx.stroke(anchor)
   }
 }

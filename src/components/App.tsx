@@ -1,5 +1,5 @@
 import React, { MutableRefObject, useCallback, useEffect, useRef, useState } from 'react'
-import type { DrawableShape, DrawableShapeJson, ExportDataType, Point } from 'types/Shapes'
+import type { DrawableShapeJson, ExportDataType, Point, ShapeEntity } from 'types/Shapes'
 import type { ToolsType } from 'types/tools'
 import Canvas from './Canvas'
 import Layouts from './settings/Layouts'
@@ -221,7 +221,7 @@ const App = ({
     canGoBackward,
     canGoForward,
     canClear
-  } = useShapes(onDataChanged)
+  } = useShapes(onDataChanged, canvasSize)
 
   const { snackbarList, addSnackbar } = useSnackbar()
 
@@ -260,7 +260,7 @@ const App = ({
   }, [selectTool, forwardShape])
 
   const resetCanvas = useCallback(
-    (shapesToInit: DrawableShape[] = [], clearHistory = false) => {
+    (shapesToInit: ShapeEntity[] = [], clearHistory = false) => {
       clearShapes(shapesToInit, clearHistory)
       selectTool(SELECTION_TOOL)
       setCanvasOffset([0, 0])
@@ -270,10 +270,10 @@ const App = ({
 
   const loadImportedData = useCallback(
     async (json: ExportDataType, clearHistory = true) => {
-      const shapes = await decodeImportedData(json)
+      const shapes = await decodeImportedData(json, canvasSize.scaleRatio)
       resetCanvas(shapes, clearHistory)
     },
-    [resetCanvas]
+    [resetCanvas, canvasSize]
   )
 
   const clearCanvas = useCallback(() => {
@@ -289,7 +289,7 @@ const App = ({
   }, [resetCanvas, loadImportedData, shapesFromProps, clearCallback])
 
   const selectShape = useCallback(
-    (shape: DrawableShape) => {
+    (shape: ShapeEntity) => {
       setActiveTool(SELECTION_TOOL)
       setSelectedShape(shape)
     },
@@ -297,7 +297,7 @@ const App = ({
   )
 
   const pasteShape = useCallback(
-    (shape: DrawableShape) => {
+    (shape: ShapeEntity) => {
       addShape(shape)
       selectShape(shape)
     },
@@ -400,6 +400,7 @@ const App = ({
     gridFormat,
     isEditingText: selectionMode.mode === 'textedition',
     selectedShape,
+    currentScale: canvasSize.scaleRatio,
     setSelectedShape,
     removeShape,
     pasteShape,
@@ -544,6 +545,7 @@ const App = ({
             removeShape={removeShape}
             updateShape={updateShape}
             canvas={canvasRef.current}
+            currentScale={canvasSize.scaleRatio}
             layersManipulation={layersManipulation}
             toggleLayoutPanel={() => {
               setIsLayoutPanelShown(prev => !prev)

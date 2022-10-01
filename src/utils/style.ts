@@ -34,5 +34,7 @@ export const getShapePicture = (shape: ShapeType) => {
       return textIcon
     case 'picture':
       return pictureIcon
+    case 'triangle':
+      return ''
   }
 }

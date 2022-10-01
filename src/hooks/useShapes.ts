@@ -1,19 +1,27 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import type { DrawableShape } from 'types/Shapes'
+import type { ShapeEntity } from 'types/Shapes'
 import _ from 'lodash/fp'
 import { createPicture } from 'utils/shapes/picture'
+import { refreshShape } from 'utils/shapes'
 
-const useShapes = (onDataChanged: () => void = _.noop) => {
-  const shapesRef = useRef<DrawableShape[]>([])
+const useShapes = (
+  onDataChanged: () => void = _.noop,
+  canvasSize: {
+    width: number
+    height: number
+    scaleRatio: number
+  }
+) => {
+  const shapesRef = useRef<ShapeEntity[]>([])
   const onDataChangedRef = useRef<() => void>(onDataChanged)
   onDataChangedRef.current = onDataChanged
 
-  const [selectedShape, setSelectedShape] = useState<DrawableShape | undefined>(undefined)
+  const [selectedShape, setSelectedShape] = useState<ShapeEntity | undefined>(undefined)
 
   const [savedShapes, setSavedShapes] = useState<{
     states: {
-      shapes: DrawableShape[]
-      selectedShape: DrawableShape | undefined
+      shapes: ShapeEntity[]
+      selectedShape: ShapeEntity | undefined
     }[]
     cursor: number
   }>({
@@ -45,22 +53,27 @@ const useShapes = (onDataChanged: () => void = _.noop) => {
     })
   }, [selectedShape])
 
-  const addShape = useCallback((newShape: DrawableShape) => {
+  const addShape = useCallback((newShape: ShapeEntity) => {
     shapesRef.current = [newShape, ...shapesRef.current]
   }, [])
 
   const addPictureShape = useCallback(
     async (fileOrUrl: File | string, maxWidth = 300, maxHeight = 300) => {
-      const pictureShape = await createPicture(fileOrUrl, maxWidth, maxHeight)
+      const pictureShape = await createPicture(
+        fileOrUrl,
+        maxWidth,
+        maxHeight,
+        canvasSize.scaleRatio
+      )
       addShape(pictureShape)
       saveShapes()
       return pictureShape
     },
-    [addShape, saveShapes]
+    [addShape, saveShapes, canvasSize]
   )
 
   const updateShape = useCallback(
-    (updatedShape: DrawableShape, withSave = false) => {
+    (updatedShape: ShapeEntity, withSave = false) => {
       shapesRef.current = shapesRef.current.map(marker => {
         return marker.id === selectedShape?.id ? updatedShape : marker
       })
@@ -73,8 +86,8 @@ const useShapes = (onDataChanged: () => void = _.noop) => {
   )
 
   const updateShapes = useCallback(
-    (newShapes: DrawableShape[]) => {
-      const pureShapes = newShapes.map(shape => _.omit(['chosen'], shape)) as DrawableShape[]
+    (newShapes: ShapeEntity[]) => {
+      const pureShapes = newShapes.map(shape => _.omit(['chosen'], shape)) as ShapeEntity[]
       shapesRef.current = pureShapes
       saveShapes()
     },
@@ -82,7 +95,7 @@ const useShapes = (onDataChanged: () => void = _.noop) => {
   )
 
   const removeShape = useCallback(
-    (shape: DrawableShape) => {
+    (shape: ShapeEntity) => {
       setSelectedShape(prevSelectedShape =>
         prevSelectedShape?.id === shape.id ? undefined : prevSelectedShape
       )
@@ -110,7 +123,7 @@ const useShapes = (onDataChanged: () => void = _.noop) => {
     })
   }, [])
 
-  const clearShapes = useCallback((shapesToInit: DrawableShape[] = [], clearHistory = false) => {
+  const clearShapes = useCallback((shapesToInit: ShapeEntity[] = [], clearHistory = false) => {
     setSelectedShape(undefined)
     shapesRef.current = shapesToInit
     setSavedShapes(prevSavedShaped => {
@@ -159,7 +172,7 @@ const useShapes = (onDataChanged: () => void = _.noop) => {
   )
 
   const toggleShapeVisibility = useCallback(
-    (shape: DrawableShape) => {
+    (shape: ShapeEntity) => {
       const shapes = shapesRef.current
       const shapeIndex = _.findIndex({ id: shape.id }, shapes)
       if (shapeIndex < 0) return
@@ -173,7 +186,7 @@ const useShapes = (onDataChanged: () => void = _.noop) => {
   )
 
   const toggleShapeLock = useCallback(
-    (shape: DrawableShape) => {
+    (shape: ShapeEntity) => {
       const shapes = shapesRef.current
       const shapeIndex = _.findIndex({ id: shape.id }, shapes)
       if (shapeIndex < 0) return
@@ -189,6 +202,15 @@ const useShapes = (onDataChanged: () => void = _.noop) => {
   useEffect(() => {
     onDataChangedRef.current()
   }, [savedShapes])
+
+  useEffect(() => {
+    shapesRef.current = shapesRef.current.map(shape => refreshShape(shape, canvasSize.scaleRatio))
+    setSelectedShape(prevSelectedShape =>
+      prevSelectedShape === undefined
+        ? undefined
+        : shapesRef.current.find(shape => shape.id === prevSelectedShape.id)
+    )
+  }, [canvasSize])
 
   return {
     shapesRef,

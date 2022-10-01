@@ -1,61 +1,119 @@
 import _ from 'lodash/fp'
 import { roundForGrid } from '../transform'
-import type {
-  Point,
-  DrawableShape,
-  Rect,
-  DrawableLine,
-  DrawableBrush,
-  DrawableCircle,
-  DrawableEllipse,
-  DrawablePicture,
-  DrawableText,
-  DrawableRect
-} from 'types/Shapes'
+import type { Point, DrawableShape, Rect, ShapeEntity } from 'types/Shapes'
 import type { CustomTool } from 'types/tools'
 import type { GridFormatType } from 'constants/app'
-import { createBrush, drawBrush, getBrushBorder, resizeBrush } from './brush'
-import { createLine, drawLine, drawLineSelection, getLineBorder, resizeLine } from './line'
-import { createPolygon, drawPolygon, getPolygonBorder } from './polygon'
-import { createCurve, drawCurve, getCurveBorder } from './curve'
-import { createRectangle, drawRect, getRectBorder, resizeRect } from './rectangle'
-import { createText, drawText, getTextBorder, resizeText } from './text'
-import { createEllipse, drawEllipse, getEllipseBorder, resizeEllipse } from './ellipse'
-import { createCircle, drawCircle, getCircleBorder, resizeCircle } from './circle'
-import { drawPicture, getPictureBorder, resizePicture } from './picture'
+import {
+  createBrush,
+  drawBrush,
+  drawSelectionBrush,
+  getBrushBorder,
+  refreshBrush,
+  resizeBrush,
+  translateBrush
+} from './brush'
+import {
+  createLine,
+  drawLine,
+  drawLineSelection,
+  getLineBorder,
+  refreshLine,
+  resizeLine,
+  translateLine
+} from './line'
+import {
+  createPolygon,
+  drawPolygon,
+  getPolygonBorder,
+  refreshPolygon,
+  resizePolygon,
+  translatePolygon
+} from './polygon'
+import {
+  createCurve,
+  drawCurve,
+  getCurveBorder,
+  refreshCurve,
+  resizeCurve,
+  translateCurve
+} from './curve'
+import {
+  createRectangle,
+  getRectBorder,
+  resizeRect,
+  translateRect,
+  drawRect,
+  drawSelectionRect,
+  refreshRect
+} from './rectangle'
+import {
+  createText,
+  drawSelectionText,
+  drawText,
+  getTextBorder,
+  refreshText,
+  resizeText,
+  translateText
+} from './text'
+import {
+  createEllipse,
+  drawEllipse,
+  drawSelectionEllipse,
+  getEllipseBorder,
+  refreshEllipse,
+  resizeEllipse,
+  translateEllipse
+} from './ellipse'
+import {
+  createCircle,
+  drawCircle,
+  drawSelectionCircle,
+  getCircleBorder,
+  refreshCircle,
+  resizeCircle,
+  translateCircle
+} from './circle'
+import {
+  drawPicture,
+  drawSelectionPicture,
+  getPictureBorder,
+  refreshPicture,
+  resizePicture,
+  translatePicture
+} from './picture'
 import { GRID_ROTATION_STEPS } from 'constants/style'
 import { SelectionModeData, SelectionModeResize } from 'types/Mode'
-import { drawSelectionDefault } from './default'
-import { transformCanvas } from 'utils/canvas'
+import { transformCanvas, updateCanvasContext } from 'utils/canvas'
 
 export const createShape = (
   ctx: CanvasRenderingContext2D,
-  shape: CustomTool,
+  shape: Exclude<CustomTool, { type: 'picture' }>,
   cursorPosition: Point,
-  gridFormat: GridFormatType
-): DrawableShape | undefined => {
+  gridFormat: GridFormatType,
+  currentScale: number
+): ShapeEntity => {
   const roundCursorPosition: Point = [
     roundForGrid(cursorPosition[0], gridFormat),
     roundForGrid(cursorPosition[1], gridFormat)
   ]
   switch (shape.type) {
     case 'brush':
-      return createBrush(shape, roundCursorPosition)
+      return createBrush(shape, roundCursorPosition, currentScale)
     case 'line':
-      return createLine(shape, roundCursorPosition)
+      return createLine(shape, roundCursorPosition, currentScale)
     case 'polygon':
-      return createPolygon(shape, roundCursorPosition)
+      return createPolygon(shape, roundCursorPosition, currentScale)
     case 'curve':
-      return createCurve(shape, roundCursorPosition)
+      return createCurve(shape, roundCursorPosition, currentScale)
     case 'rect':
     case 'square':
-      return createRectangle(shape, roundCursorPosition)
+      return createRectangle(shape, roundCursorPosition, currentScale)
     case 'text':
-      return createText(ctx, shape, roundCursorPosition)
+      return createText(ctx, shape, roundCursorPosition, currentScale)
     case 'ellipse':
-      return createEllipse(shape, roundCursorPosition)
+      return createEllipse(shape, roundCursorPosition, currentScale)
     case 'circle':
-      return createCircle(shape, roundCursorPosition)
+      return createCircle(shape, roundCursorPosition, currentScale)
   }
 }
 
@@ -69,6 +127,7 @@ export const drawShape = (
   if (shape.visible === false) return
   const { center } = getShapeInfos(shape, selectionPadding)
   transformCanvas(ctx, responsiveScale, canvasOffset, shape.rotation, center)
+  updateCanvasContext(ctx, shape.style)
 
   switch (shape.type) {
     case 'brush':
@@ -93,6 +152,8 @@ export const drawShape = (
       drawEllipse(ctx, shape)
       break
     case 'rect':
+      drawRect(ctx, shape)
+      break
     case 'square':
       drawRect(ctx, shape)
       break
@@ -119,12 +180,18 @@ const getShapeBorders = (marker: DrawableShape, selectionPadding: number): Rect 
       return getEllipseBorder(marker, selectionPadding)
     case 'rect':
     case 'square':
-    default:
       return getRectBorder(marker, selectionPadding)
     case 'text':
       return getTextBorder(marker, selectionPadding)
     case 'picture':
       return getPictureBorder(marker, selectionPadding)
+    default:
+      return {
+        x: 0,
+        y: 0,
+        width: 100,
+        height: 100
+      } // TODO a cause du triangle, a supprimer
   }
 }
 
@@ -138,10 +205,10 @@ export const getShapeInfos = (shape: DrawableShape, selectionPadding: number) =>
   return { borders, center }
 }
 
-export const rotateShape = (
-  shape: DrawableShape,
+export const rotateShape = <T extends DrawableShape>(
+  shape: T,
   cursorPosition: Point,
-  originalShape: DrawableShape,
+  originalShape: T,
   originalCursorPosition: Point,
   shapeCenter: Point,
   gridFormat: GridFormatType
@@ -163,169 +230,227 @@ export const rotateShape = (
   }
 }
 
-export const resizeShape = (
+export const resizeShape = <T extends DrawableShape>(
   ctx: CanvasRenderingContext2D,
-  shape: DrawableShape,
+  shape: T,
   cursorPosition: Point,
   canvasOffset: Point,
-  originalShape: DrawableShape,
+  originalShape: T,
   selectionMode: SelectionModeData<Point | number>,
   selectionPadding: number,
-  isShiftPressed: boolean
-): DrawableShape => {
-  switch (shape.type) {
+  isShiftPressed: boolean,
+  currentScale: number
+): T => {
+  switch (originalShape.type) {
     case 'line':
-    case 'polygon':
-    case 'curve':
       return resizeLine(
         cursorPosition,
         canvasOffset,
-        originalShape as DrawableLine,
+        originalShape,
         selectionMode as SelectionModeResize<number>,
-        selectionPadding
-      )
+        selectionPadding,
+        currentScale
+      ) as T
+    case 'polygon':
+      return resizePolygon(
+        cursorPosition,
+        canvasOffset,
+        originalShape,
+        selectionMode as SelectionModeResize<number>,
+        selectionPadding,
+        currentScale
+      ) as T
+    case 'curve':
+      return resizeCurve(
+        cursorPosition,
+        canvasOffset,
+        originalShape,
+        selectionMode as SelectionModeResize<number>,
+        selectionPadding,
+        currentScale
+      ) as T
     case 'brush':
+      originalShape.type
       return resizeBrush(
         cursorPosition,
         canvasOffset,
-        originalShape as DrawableBrush,
+        originalShape,
         selectionMode as SelectionModeResize,
         selectionPadding,
+        currentScale,
         isShiftPressed
-      )
+      ) as T
     case 'circle':
       return resizeCircle(
         cursorPosition,
         canvasOffset,
-        originalShape as DrawableCircle,
+        originalShape,
         selectionMode as SelectionModeResize,
-        selectionPadding
-      )
+        selectionPadding,
+        currentScale
+      ) as T
     case 'ellipse':
       return resizeEllipse(
         cursorPosition,
         canvasOffset,
-        originalShape as DrawableEllipse,
+        originalShape,
         selectionMode as SelectionModeResize,
         selectionPadding,
+        currentScale,
         isShiftPressed
-      )
+      ) as T
     case 'rect':
     case 'square':
       return resizeRect(
         cursorPosition,
         canvasOffset,
-        originalShape as DrawableRect,
+        originalShape,
         selectionMode as SelectionModeResize,
         selectionPadding,
+        currentScale,
         shape.type === 'square' || isShiftPressed
-      )
+      ) as T
     case 'text':
       return resizeText(
         ctx,
         cursorPosition,
         canvasOffset,
-        originalShape as DrawableText,
+        originalShape,
         selectionMode as SelectionModeResize,
-        selectionPadding
-      )
+        selectionPadding,
+        currentScale
+      ) as T
     case 'picture':
       return resizePicture(
         cursorPosition,
         canvasOffset,
-        originalShape as DrawablePicture,
+        originalShape,
         selectionMode as SelectionModeResize,
         selectionPadding,
+        currentScale,
         !isShiftPressed
-      )
+      ) as T
+    default:
+      return originalShape
   }
 }
 
 export const translateShape = (
   cursorPosition: Point,
-  originalShape: DrawableShape,
+  originalShape: ShapeEntity,
   originalCursorPosition: Point,
-  gridFormat: GridFormatType
-): DrawableShape => {
+  gridFormat: GridFormatType,
+  currentScale: number
+): ShapeEntity => {
   switch (originalShape.type) {
     case 'rect':
     case 'square':
+      return translateRect(
+        cursorPosition,
+        originalShape,
+        originalCursorPosition,
+        gridFormat,
+        currentScale
+      )
     case 'ellipse':
+      return translateEllipse(
+        cursorPosition,
+        originalShape,
+        originalCursorPosition,
+        gridFormat,
+        currentScale
+      )
     case 'circle':
+      return translateCircle(
+        cursorPosition,
+        originalShape,
+        originalCursorPosition,
+        gridFormat,
+        currentScale
+      )
     case 'picture':
-    default:
-      return {
-        ...originalShape,
-        x: roundForGrid(
-          originalShape.x + cursorPosition[0] - originalCursorPosition[0],
-          gridFormat
-        ),
-        y: roundForGrid(originalShape.y + cursorPosition[1] - originalCursorPosition[1], gridFormat)
-      }
+      return translatePicture(
+        cursorPosition,
+        originalShape,
+        originalCursorPosition,
+        gridFormat,
+        currentScale
+      )
+    case 'text':
+      return translateText(
+        cursorPosition,
+        originalShape,
+        originalCursorPosition,
+        gridFormat,
+        currentScale
+      )
     case 'line':
-      return {
-        ...originalShape,
-        points: originalShape.points.map(([x, y]) => [
-          roundForGrid(x + cursorPosition[0] - originalCursorPosition[0], gridFormat),
-          roundForGrid(y + cursorPosition[1] - originalCursorPosition[1], gridFormat)
-        ]) as [Point, Point]
-      }
+      return translateLine(
+        cursorPosition,
+        originalShape,
+        originalCursorPosition,
+        gridFormat,
+        currentScale
+      )
     case 'polygon':
+      return translatePolygon(
+        cursorPosition,
+        originalShape,
+        originalCursorPosition,
+        gridFormat,
+        currentScale
+      )
     case 'curve':
-      if (gridFormat) {
-        const { borders } = getShapeInfos(originalShape, 0)
-        const translationX =
-          roundForGrid(borders.x + cursorPosition[0] - originalCursorPosition[0], gridFormat) -
-          borders.x
-        const translationY =
-          roundForGrid(borders.y + cursorPosition[1] - originalCursorPosition[1], gridFormat) -
-          borders.y
-        return {
-          ...originalShape,
-          points: originalShape.points.map(([x, y]) => [x + translationX, y + translationY])
-        }
-      } else {
-        return {
-          ...originalShape,
-          points: originalShape.points.map(([x, y]) => [
-            roundForGrid(x + cursorPosition[0] - originalCursorPosition[0], gridFormat),
-            roundForGrid(y + cursorPosition[1] - originalCursorPosition[1], gridFormat)
-          ]) as Point[]
-        }
-      }
+      return translateCurve(
+        cursorPosition,
+        originalShape,
+        originalCursorPosition,
+        gridFormat,
+        currentScale
+      )
     case 'brush':
-      if (gridFormat) {
-        const { borders } = getShapeInfos(originalShape, 0)
-        const translationX =
-          roundForGrid(borders.x + cursorPosition[0] - originalCursorPosition[0], gridFormat) -
-          borders.x
-        const translationY =
-          roundForGrid(borders.y + cursorPosition[1] - originalCursorPosition[1], gridFormat) -
-          borders.y
-        return {
-          ...originalShape,
-          points: originalShape.points.map(coord =>
-            coord.map(([x, y]) => [x + translationX, y + translationY])
-          ) as Point[][]
-        }
-      } else {
-        return {
-          ...originalShape,
-          points: originalShape.points.map(coord =>
-            coord.map(([x, y]) => [
-              x + cursorPosition[0] - originalCursorPosition[0],
-              y + cursorPosition[1] - originalCursorPosition[1]
-            ])
-          ) as Point[][]
-        }
-      }
+      return translateBrush(
+        cursorPosition,
+        originalShape,
+        originalCursorPosition,
+        gridFormat,
+        currentScale
+      )
+    default:
+      return originalShape
+  }
+}
+
+export const refreshShape = (shape: ShapeEntity, currentScale: number): ShapeEntity => {
+  switch (shape.type) {
+    case 'rect':
+    case 'square':
+      return refreshRect(shape, currentScale)
+    case 'ellipse':
+      return refreshEllipse(shape, currentScale)
+    case 'circle':
+      return refreshCircle(shape, currentScale)
+    case 'picture':
+      return refreshPicture(shape, currentScale)
+    case 'text':
+      return refreshText(shape, currentScale)
+    case 'line':
+      return refreshLine(shape, currentScale)
+    case 'polygon':
+      return refreshPolygon(shape, currentScale)
+    case 'curve':
+      return refreshCurve(shape, currentScale)
+    case 'brush':
+      return refreshBrush(shape, currentScale)
+    default:
+      return shape
   }
 }
 
 export const drawShapeSelection = ({
   ctx,
   shape,
-  scaleRatio = 1,
+  currentScale = 1,
   canvasOffset,
   selectionPadding,
   selectionWidth,
@@ -334,7 +459,7 @@ export const drawShapeSelection = ({
 }: {
   ctx: CanvasRenderingContext2D
   shape: DrawableShape
-  scaleRatio: number
+  currentScale: number
   canvasOffset: Point
   selectionPadding: number
   selectionWidth: number
@@ -342,9 +467,28 @@ export const drawShapeSelection = ({
   withAnchors?: boolean
 }) => {
   const { center } = getShapeInfos(shape, selectionPadding)
-  transformCanvas(ctx, scaleRatio, canvasOffset, shape.rotation, center)
+  transformCanvas(ctx, currentScale, canvasOffset, shape.rotation, center)
 
   switch (shape.type) {
+    case 'rect':
+    case 'square':
+      drawSelectionRect(ctx, shape, selectionColor, selectionWidth, currentScale, withAnchors)
+      break
+    case 'ellipse':
+      drawSelectionEllipse(ctx, shape, selectionColor, selectionWidth, currentScale, withAnchors)
+      break
+    case 'circle':
+      drawSelectionCircle(ctx, shape, selectionColor, selectionWidth, currentScale, withAnchors)
+      break
+    case 'picture':
+      drawSelectionPicture(ctx, shape, selectionColor, selectionWidth, currentScale, withAnchors)
+      break
+    case 'text':
+      drawSelectionText(ctx, shape, selectionColor, selectionWidth, currentScale, withAnchors)
+      break
+    case 'brush':
+      drawSelectionBrush(ctx, shape, selectionColor, selectionWidth, currentScale, withAnchors)
+      break
     case 'polygon':
     case 'line':
     case 'curve':
@@ -352,30 +496,18 @@ export const drawShapeSelection = ({
         ctx,
         shape,
         withAnchors,
-        selectionPadding,
         selectionWidth,
         selectionColor,
-        currentScale: scaleRatio
-      })
-      break
-    default:
-      drawSelectionDefault({
-        ctx,
-        shape,
-        withAnchors,
-        selectionPadding,
-        selectionWidth,
-        selectionColor,
-        currentScale: scaleRatio
+        currentScale
       })
       break
   }
   ctx.restore()
 }
 
-export const copyShape = (shape: DrawableShape, gridFormat: GridFormatType) => {
+export const copyShape = (shape: ShapeEntity, gridFormat: GridFormatType, currentScale: number) => {
   return {
-    ...translateShape([20, 20], shape, [0, 0], gridFormat),
+    ...translateShape([20, 20], shape, [0, 0], gridFormat, currentScale),
     id: _.uniqueId(`${shape.type}_`)
-  } as DrawableShape
+  } as ShapeEntity
 }

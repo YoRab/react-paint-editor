@@ -1,13 +1,13 @@
 import { RefObject, useEffect, useState } from 'react'
-import type { DrawableShape } from 'types/Shapes'
+import type { ShapeEntity } from 'types/Shapes'
 
 type useDragType = {
   disabled?: boolean
   ref: RefObject<HTMLDivElement>
-  shape: DrawableShape
+  shape: ShapeEntity
   layoutDragging: string | undefined
   setLayoutDragging: (shapeId: string | undefined) => void
-  handleSelect: (shape: DrawableShape) => void
+  handleSelect: (shape: ShapeEntity) => void
   onMoveShapes: (firstShapeId: string, lastShapeId: string) => void
 }
 

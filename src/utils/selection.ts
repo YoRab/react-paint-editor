@@ -1,13 +1,13 @@
 import _ from 'lodash/fp'
 
 import type { HoverModeData, SelectionModeData } from 'types/Mode'
-import type { Point, DrawableShape } from 'types/Shapes'
+import type { Point, ShapeEntity } from 'types/Shapes'
 import { checkPositionIntersection } from './intersect'
 import { getShapeInfos } from './shapes'
 
 export const getNewSelectionData = (
   hoverMode: HoverModeData,
-  selectedShape: DrawableShape,
+  selectedShape: ShapeEntity,
   cursorPosition: Point,
   selectionPadding: number
 ): SelectionModeData<Point | number> | undefined => {
@@ -38,13 +38,13 @@ export const getNewSelectionData = (
 }
 
 export const selectShape = (
-  shapes: DrawableShape[],
+  shapes: ShapeEntity[],
   cursorPosition: Point,
   currentScale: number,
   canvasOffset: Point,
-  selectedShape: DrawableShape | undefined,
+  selectedShape: ShapeEntity | undefined,
   selectionPadding: number
-): { mode: SelectionModeData<Point | number>; shape: DrawableShape | undefined } => {
+): { mode: SelectionModeData<Point | number>; shape: ShapeEntity | undefined } => {
   if (selectedShape) {
     const positionIntersection = checkPositionIntersection(
       selectedShape,

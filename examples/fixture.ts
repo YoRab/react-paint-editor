@@ -3,7 +3,6 @@ import { DrawableShapeJson } from 'types/Shapes'
 export const EXAMPLE_DEFAULT: DrawableShapeJson[] = [
   {
     type: 'brush',
-    id: 'brush46060',
     points: [
       [
         [146.7391304347826, 344.5652173913043],
@@ -2074,7 +2073,6 @@ export const EXAMPLE_DEFAULT: DrawableShapeJson[] = [
   },
   {
     type: 'curve',
-    id: 'curve27907',
     points: [
       [154, 59],
       [96, 110],
@@ -2101,7 +2099,6 @@ export const EXAMPLE_DEFAULT: DrawableShapeJson[] = [
   },
   {
     type: 'curve',
-    id: 'curve27660',
     points: [
       [144, 84],
       [61, 57],
@@ -2128,7 +2125,6 @@ export const EXAMPLE_DEFAULT: DrawableShapeJson[] = [
   },
   {
     type: 'curve',
-    id: 'curve18701',
     points: [
       [143, 84],
       [96, 110],
@@ -2155,7 +2151,6 @@ export const EXAMPLE_DEFAULT: DrawableShapeJson[] = [
   },
   {
     type: 'circle',
-    id: 'circle16989',
     x: 782.6086956521739,
     y: 139.1304347826087,
     radius: 118.43478260869564,
@@ -2174,7 +2169,6 @@ export const EXAMPLE_DEFAULT: DrawableShapeJson[] = [
   },
   {
     type: 'curve',
-    id: 'curve7',
     points: [
       [974, 337],
       [1160, 186],
@@ -2198,7 +2192,6 @@ export const EXAMPLE_DEFAULT: DrawableShapeJson[] = [
   },
   {
     type: 'rect',
-    id: 'rect37681',
     x: 430,
     y: 479,
     width: 65,
@@ -2218,7 +2211,6 @@ export const EXAMPLE_DEFAULT: DrawableShapeJson[] = [
   },
   {
     type: 'rect',
-    id: 'rect16219',
     x: 221,
     y: 78,
     width: 1206,

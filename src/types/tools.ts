@@ -175,6 +175,12 @@ export type ToolsCurveSettings = SettingsOpacity &
   SettingsLineDash &
   SettingsPointsCount
 
+export type ToolsTriangleSettings = SettingsStrokeColor &
+  SettingsFillColor &
+  SettingsOpacity &
+  SettingsLineWidth &
+  SettingsLineDash
+
 export type ToolsPictureSettings = SettingsOpacity
 
 export type ToolsSettingsType<T extends ShapeType> = T extends 'rect'
@@ -195,6 +201,8 @@ export type ToolsSettingsType<T extends ShapeType> = T extends 'rect'
   ? ToolsPolygonSettings
   : T extends 'curve'
   ? ToolsCurveSettings
+  : T extends 'triangle'
+  ? ToolsTriangleSettings
   : T extends 'picture'
   ? ToolsPictureSettings
   : unknown // default

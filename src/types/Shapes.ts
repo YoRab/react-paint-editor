@@ -3,44 +3,15 @@ import { ShapeTypeArray } from 'constants/shapes'
 export type ShapeType = typeof ShapeTypeArray[number]
 export type Point = [number, number]
 
-export type StyledShape = {
-  visible?: boolean
-  locked?: boolean
-  style?: {
-    fillColor?: string
-    globalAlpha?: number
-    strokeColor?: string
-    lineWidth?: number
-    lineDash?: number
-    lineArrow?: number
-    pointsCount?: number
-    fontFamily?: string
-    fontItalic?: boolean
-    fontBold?: boolean
-  }
-}
-
-type Drawable = {
-  id: string
-  toolId?: string
-  rotation: number
-}
-
-export type Rect = StyledShape & {
+export type Rect = {
   x: number
   y: number
   width: number
   height: number
 }
 
-export type Square = Rect
-
-export type StoredPicture = Rect & {
+export type Picture = Rect & {
   src: string
-}
-
-export type Picture = StoredPicture & {
-  img: HTMLImageElement
 }
 
 export type Text = Rect & {
@@ -48,74 +19,106 @@ export type Text = Rect & {
   fontSize: number
 }
 
-export type Line = StyledShape & {
-  points: [Point, Point]
+export type Line = {
+  points: readonly [Point, Point]
 }
 
-export type Triangle = StyledShape & {
+export type Triangle = {
   points: [Point, Point, Point]
 }
 
-export type Polygon = StyledShape & {
+export type Polygon = {
   points: Point[]
 }
 
-export type Curve = StyledShape & {
+export type Curve = {
   points: Point[]
 }
 
-export type Brush = StyledShape & {
+export type Brush = {
   points: Point[][]
 }
 
-export type Circle = StyledShape & {
+export type Circle = {
   x: number
   y: number
   radius: number
 }
 
-export type Ellipse = StyledShape & {
+export type Ellipse = {
   x: number
   y: number
   radiusX: number
   radiusY: number
 }
-export type DrawableRect = Rect & Drawable & { type: 'rect' }
-export type DrawableSquare = Square & Drawable & { type: 'square' }
-export type DrawablePictureJson = StoredPicture & Drawable & { type: 'picture' }
-export type DrawablePicture = Picture & Drawable & { type: 'picture' }
-export type DrawableText = Text & Drawable & { type: 'text' }
-export type DrawableLine = Line & Drawable & { type: 'line' }
-export type DrawablePolygon = Polygon & Drawable & { type: 'polygon' }
-export type DrawableCurve = Curve & Drawable & { type: 'curve' }
-export type DrawableBrush = Brush & Drawable & { type: 'brush' }
-export type DrawableCircle = Circle & Drawable & { type: 'circle' }
-export type DrawableEllipse = Ellipse & Drawable & { type: 'ellipse' }
 
-export type DrawableShape =
-  | DrawableRect
-  | DrawableSquare
-  | DrawablePicture
-  | DrawableText
-  | DrawableLine
-  | DrawablePolygon
-  | DrawableCurve
-  | DrawableBrush
-  | DrawableCircle
-  | DrawableEllipse
+export type StyleShape = {
+  fillColor?: string
+  globalAlpha?: number
+  strokeColor?: string
+  lineWidth?: number
+  lineDash?: number
+  lineArrow?: number
+  pointsCount?: number
+  fontFamily?: string
+  fontItalic?: boolean
+  fontBold?: boolean
+}
 
-export type DrawableShapeJson = { translation?: Point } & (
-  | DrawableRect
-  | DrawableSquare
-  | DrawablePictureJson
-  | DrawableText
-  | DrawableLine
-  | DrawableCurve
-  | DrawablePolygon
-  | DrawableBrush
-  | DrawableCircle
-  | DrawableEllipse
-)
+export type SelectionDefaultType = {
+  border: Path2D
+  line: Path2D
+  anchors: Path2D[]
+}
+
+export type SelectionLinesType = {
+  border: Path2D
+  anchors: Path2D[]
+}
+
+export type DrawableShape<T extends ShapeType = ShapeType> = {
+  visible?: boolean
+  locked?: boolean
+  rotation: number
+  style?: StyleShape
+} & (T extends 'line'
+  ? Line & {
+      type: 'line'
+      selection?: SelectionLinesType
+      path?: Path2D
+      arrows?: DrawableShape<'triangle'>[]
+    }
+  : T extends 'picture'
+  ? Picture & { type: 'picture'; img: HTMLImageElement; selection?: SelectionDefaultType }
+  : T extends 'text'
+  ? Text & { type: 'text'; selection?: SelectionDefaultType }
+  : T extends 'rect'
+  ? Rect & { type: 'rect'; selection?: SelectionDefaultType; path?: Path2D }
+  : T extends 'square'
+  ? Rect & { type: 'square'; selection?: SelectionDefaultType; path?: Path2D }
+  : T extends 'circle'
+  ? Circle & { type: 'circle'; selection?: SelectionDefaultType; path?: Path2D }
+  : T extends 'ellipse'
+  ? Ellipse & { type: 'ellipse'; selection?: SelectionDefaultType; path?: Path2D }
+  : T extends 'triangle'
+  ? Triangle & { type: 'triangle'; path?: Path2D }
+  : T extends 'polygon'
+  ? Polygon & { type: 'polygon'; selection?: SelectionLinesType; path?: Path2D }
+  : T extends 'curve'
+  ? Curve & { type: 'curve'; selection?: SelectionLinesType; path?: Path2D }
+  : T extends 'brush'
+  ? Brush & { type: 'brush'; selection?: SelectionDefaultType; path?: Path2D }
+  : never)
+
+export type DrawableShapeJson<T extends ShapeType = ShapeType> = DrawableShape<T> & {
+  translation?: Point
+}
+
+export type ShapeEntity<T extends Exclude<ShapeType, 'triangle'> = Exclude<ShapeType, 'triangle'>> =
+  {
+    id: string
+    toolId?: string
+  } & DrawableShape<T>
 
 export type ExportDataType = {
   shapes: DrawableShapeJson[]

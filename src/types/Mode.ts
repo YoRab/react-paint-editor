@@ -1,4 +1,4 @@
-import type { Point, DrawableShape } from './Shapes'
+import type { Point, ShapeEntity } from './Shapes'
 
 export type SelectionModeDefault = {
   mode: 'default'
@@ -16,20 +16,20 @@ export type SelectionModeEditText = {
 export type SelectionModeResize<AnchorType extends Point | number = Point> = {
   mode: 'resize'
   cursorStartPosition: Point
-  originalShape: DrawableShape
+  originalShape: ShapeEntity
   anchor: AnchorType
 }
 
 export type SelectionModeRotate = {
   mode: 'rotate'
   cursorStartPosition: Point
-  originalShape: DrawableShape
+  originalShape: ShapeEntity
   center: Point
 }
 export type SelectionModeTranslate = {
   mode: 'translate'
   cursorStartPosition: Point
-  originalShape: DrawableShape
+  originalShape: ShapeEntity
 }
 
 export type SelectionModeData<AnchorType extends Point | number> =

@@ -1,8 +1,8 @@
 import _ from 'lodash/fp'
 import React, { useEffect, useState } from 'react'
 import { styled } from '@linaria/react'
-import type { DrawablePolygon, DrawableShape, DrawableText } from 'types/Shapes'
-import { updatePolygonLinesCount } from 'utils/transform'
+import type { ShapeEntity } from 'types/Shapes'
+import { updatePolygonLinesCount } from 'utils/shapes/polygon'
 import ColorField from './ColorField'
 import DeleteButton from './DeleteButton'
 import LayoutButton from './LayoutButton'
@@ -17,6 +17,7 @@ import { boldIcon, italicIcon, lineWidthIcon, opacityIcon, settingsIcon } from '
 import Button from 'components/common/Button'
 import Modal from 'components/common/Modal'
 import { calculateTextFontSize } from 'utils/shapes/text'
+import { refreshShape } from 'utils/shapes'
 
 const SETTING_WIDTH = 40
 
@@ -46,17 +47,18 @@ type SettingsBoxType = {
   updateToolSettings: (toolId: string, field: string, value: string | number | boolean) => void
   layersManipulation?: boolean
   activeTool: ToolsType
-  selectedShape: DrawableShape | undefined
+  selectedShape: ShapeEntity | undefined
   canvas: HTMLCanvasElement | null
-  updateShape: (shape: DrawableShape, withSave?: boolean) => void
-  removeShape: (shape: DrawableShape) => void
+  currentScale: number
+  updateShape: (shape: ShapeEntity, withSave?: boolean) => void
+  removeShape: (shape: ShapeEntity) => void
   toggleLayoutPanel: () => void
 }
 
 type SettingsItemsType = {
   disabled?: boolean
   activeTool: ToolsType
-  selectedShape: DrawableShape | undefined
+  selectedShape: ShapeEntity | undefined
   selectedShapeTool: CustomTool | undefined
   selectedSettings: string | undefined
   setSelectedSettings: React.Dispatch<React.SetStateAction<string | undefined>>
@@ -358,6 +360,7 @@ const SettingsBar = ({
   activeTool,
   selectedShape,
   canvas,
+  currentScale,
   updateShape,
   removeShape
 }: SettingsBoxType) => {
@@ -386,7 +389,7 @@ const SettingsBar = ({
 
   const handleShapeStyleChange = (field: string, value: string | number | boolean) => {
     if (selectedShape) {
-      updateShape(_.set(['style', field], value, selectedShape), true)
+      updateShape(refreshShape(_.set(['style', field], value, selectedShape), currentScale), true)
       updateToolSettings(selectedShape.toolId || activeTool.id, field, value)
     } else {
       updateToolSettings(activeTool.id, field, value)
@@ -395,9 +398,10 @@ const SettingsBar = ({
 
   const handleShapeFontFamilyChange = (field: string, value: string | number | boolean) => {
     if (selectedShape) {
+      if (selectedShape.type !== 'text') return
       const ctx = canvas?.getContext('2d')
       if (!ctx) return
-      const newShape = _.set(['style', field], value, selectedShape) as DrawableText
+      const newShape = _.set(['style', field], value, selectedShape)
       const fontSize = calculateTextFontSize(
         ctx,
         newShape.value,
@@ -406,11 +410,14 @@ const SettingsBar = ({
         newShape.style?.fontItalic ?? false,
         newShape.style?.fontFamily
       )
-      const resizedShape = {
-        ...newShape,
-        fontSize,
-        height: fontSize * newShape.value.length
-      }
+      const resizedShape = refreshShape(
+        {
+          ...newShape,
+          fontSize,
+          height: fontSize * newShape.value.length
+        },
+        currentScale
+      )
       updateShape(resizedShape, true)
       updateToolSettings(selectedShape.toolId || activeTool.id, field, value)
     } else {
@@ -420,7 +427,8 @@ const SettingsBar = ({
 
   const handlePolygonLinesCount = (field: string, value: string | number) => {
     if (selectedShape) {
-      updateShape(updatePolygonLinesCount(selectedShape as DrawablePolygon, value as number), true)
+      if (selectedShape.type !== 'polygon') return
+      updateShape(updatePolygonLinesCount(selectedShape, value as number, currentScale), true)
       updateToolSettings(selectedShape.toolId || activeTool.id, field, value)
     } else {
       updateToolSettings(activeTool.id, field, value)
