@@ -242,7 +242,7 @@ const useDrawableCanvas = ({
         if (!drawCtx) return
         if (activeTool.type === 'brush') {
           if (!!selectedShape && selectedShape.type === 'brush') {
-            const newShape = addNewPointGroupToShape(selectedShape, cursorPosition)
+            const newShape = addNewPointGroupToShape(selectedShape, cursorPosition, scaleRatio)
             updateSingleShape(newShape)
             setSelectedShape(newShape)
           } else {
@@ -272,7 +272,6 @@ const useDrawableCanvas = ({
           addShape(newShape)
           setActiveTool(SELECTION_TOOL)
           setSelectedShape(newShape)
-
           setSelectionMode({
             mode: 'resize',
             cursorStartPosition: cursorPosition,
