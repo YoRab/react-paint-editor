@@ -7,7 +7,7 @@ import EditTextBox from './toolbox/EditTextBox'
 import useDrawableCanvas from 'hooks/useDrawableCanvas'
 import type { ToolsType } from 'types/tools'
 import type { GridFormatType } from 'constants/app'
-import { drawShapeSelection, drawShape } from 'utils/shapes'
+import { drawShapeSelection, drawShape, refreshShape } from 'utils/shapes'
 import { resizeTextShapeWithNewContent } from 'utils/shapes/text'
 import { drawGrid } from 'utils/shapes/grid'
 
@@ -208,6 +208,8 @@ const Canvas = React.forwardRef<HTMLCanvasElement, DrawerType>(
       isShiftPressed
     })
 
+    const { scaleRatio: currentScale } = canvasSize
+
     const updateSelectedShapeText = useCallback(
       (newText: string[]) => {
         if (selectedShape?.type !== 'text') return
@@ -215,11 +217,14 @@ const Canvas = React.forwardRef<HTMLCanvasElement, DrawerType>(
         const ctx = drawCanvasRef.current?.getContext('2d')
         if (!ctx) return
 
-        const newShape = resizeTextShapeWithNewContent(ctx, selectedShape, newText, canvasOffset)
+        const newShape = refreshShape(
+          resizeTextShapeWithNewContent(ctx, selectedShape, newText, canvasOffset),
+          currentScale
+        )
 
         updateSingleShape(newShape)
       },
-      [updateSingleShape, selectedShape, canvasOffset]
+      [updateSingleShape, selectedShape, canvasOffset, currentScale]
     )
 
     useEffect(() => {

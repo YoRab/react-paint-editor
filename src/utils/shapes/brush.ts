@@ -84,6 +84,8 @@ const buildPath = <T extends DrawableShape<'brush'>>(brush: T, currentScale: num
   }
 }
 
+export const refreshBrush = buildPath
+
 export const createBrush = (
   shape: {
     id: string
@@ -142,7 +144,8 @@ export const drawSelectionBrush = (
 
   updateCanvasContext(ctx, {
     fillColor: 'rgb(255,255,255)',
-    strokeColor: 'rgb(150,150,150)'
+    strokeColor: 'rgb(150,150,150)',
+    lineWidth: 2 / currentScale
   })
 
   for (const anchor of shape.selection.anchors) {

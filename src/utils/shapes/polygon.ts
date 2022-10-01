@@ -59,6 +59,8 @@ const buildPath = <T extends DrawableShape<'polygon'>>(shape: T, currentScale: n
   }
 }
 
+export const refreshPolygon = buildPath
+
 export const createPolygon = (
   shape: {
     id: string

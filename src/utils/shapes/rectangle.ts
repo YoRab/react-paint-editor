@@ -68,6 +68,8 @@ const buildPath = <T extends DrawableShape<rectish>>(rect: T, currentScale: numb
   }
 }
 
+export const refreshRect = buildPath
+
 export const createRectangle = <T extends 'rect' | 'square'>(
   shape: {
     id: string
@@ -131,7 +133,8 @@ export const drawSelectionRect = (
 
   updateCanvasContext(ctx, {
     fillColor: 'rgb(255,255,255)',
-    strokeColor: 'rgb(150,150,150)'
+    strokeColor: 'rgb(150,150,150)',
+    lineWidth: 2 / currentScale
   })
 
   for (const anchor of shape.selection.anchors) {

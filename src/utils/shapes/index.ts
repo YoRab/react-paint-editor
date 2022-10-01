@@ -8,6 +8,7 @@ import {
   drawBrush,
   drawSelectionBrush,
   getBrushBorder,
+  refreshBrush,
   resizeBrush,
   translateBrush
 } from './brush'
@@ -16,6 +17,7 @@ import {
   drawLine,
   drawLineSelection,
   getLineBorder,
+  refreshLine,
   resizeLine,
   translateLine
 } from './line'
@@ -23,23 +25,33 @@ import {
   createPolygon,
   drawPolygon,
   getPolygonBorder,
+  refreshPolygon,
   resizePolygon,
   translatePolygon
 } from './polygon'
-import { createCurve, drawCurve, getCurveBorder, resizeCurve, translateCurve } from './curve'
+import {
+  createCurve,
+  drawCurve,
+  getCurveBorder,
+  refreshCurve,
+  resizeCurve,
+  translateCurve
+} from './curve'
 import {
   createRectangle,
   getRectBorder,
   resizeRect,
   translateRect,
   drawRect,
-  drawSelectionRect
+  drawSelectionRect,
+  refreshRect
 } from './rectangle'
 import {
   createText,
   drawSelectionText,
   drawText,
   getTextBorder,
+  refreshText,
   resizeText,
   translateText
 } from './text'
@@ -48,6 +60,7 @@ import {
   drawEllipse,
   drawSelectionEllipse,
   getEllipseBorder,
+  refreshEllipse,
   resizeEllipse,
   translateEllipse
 } from './ellipse'
@@ -56,6 +69,7 @@ import {
   drawCircle,
   drawSelectionCircle,
   getCircleBorder,
+  refreshCircle,
   resizeCircle,
   translateCircle
 } from './circle'
@@ -63,6 +77,7 @@ import {
   drawPicture,
   drawSelectionPicture,
   getPictureBorder,
+  refreshPicture,
   resizePicture,
   translatePicture
 } from './picture'
@@ -403,6 +418,32 @@ export const translateShape = (
       )
     default:
       return originalShape
+  }
+}
+
+export const refreshShape = (shape: ShapeEntity, currentScale: number): ShapeEntity => {
+  switch (shape.type) {
+    case 'rect':
+    case 'square':
+      return refreshRect(shape, currentScale)
+    case 'ellipse':
+      return refreshEllipse(shape, currentScale)
+    case 'circle':
+      return refreshCircle(shape, currentScale)
+    case 'picture':
+      return refreshPicture(shape, currentScale)
+    case 'text':
+      return refreshText(shape, currentScale)
+    case 'line':
+      return refreshLine(shape, currentScale)
+    case 'polygon':
+      return refreshPolygon(shape, currentScale)
+    case 'curve':
+      return refreshCurve(shape, currentScale)
+    case 'brush':
+      return refreshBrush(shape, currentScale)
+    default:
+      return shape
   }
 }
 

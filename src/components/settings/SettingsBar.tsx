@@ -17,6 +17,7 @@ import { boldIcon, italicIcon, lineWidthIcon, opacityIcon, settingsIcon } from '
 import Button from 'components/common/Button'
 import Modal from 'components/common/Modal'
 import { calculateTextFontSize } from 'utils/shapes/text'
+import { refreshShape } from 'utils/shapes'
 
 const SETTING_WIDTH = 40
 
@@ -388,7 +389,7 @@ const SettingsBar = ({
 
   const handleShapeStyleChange = (field: string, value: string | number | boolean) => {
     if (selectedShape) {
-      updateShape(_.set(['style', field], value, selectedShape), true)
+      updateShape(refreshShape(_.set(['style', field], value, selectedShape), currentScale), true)
       updateToolSettings(selectedShape.toolId || activeTool.id, field, value)
     } else {
       updateToolSettings(activeTool.id, field, value)
@@ -409,11 +410,14 @@ const SettingsBar = ({
         newShape.style?.fontItalic ?? false,
         newShape.style?.fontFamily
       )
-      const resizedShape = {
-        ...newShape,
-        fontSize,
-        height: fontSize * newShape.value.length
-      }
+      const resizedShape = refreshShape(
+        {
+          ...newShape,
+          fontSize,
+          height: fontSize * newShape.value.length
+        },
+        currentScale
+      )
       updateShape(resizedShape, true)
       updateToolSettings(selectedShape.toolId || activeTool.id, field, value)
     } else {

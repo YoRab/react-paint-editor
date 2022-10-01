@@ -75,6 +75,8 @@ const buildPath = <T extends DrawableShape<'ellipse'>>(shape: T, currentScale: n
   }
 }
 
+export const refreshEllipse = buildPath
+
 export const createEllipse = (
   shape: {
     id: string
@@ -139,7 +141,8 @@ export const drawSelectionEllipse = (
 
   updateCanvasContext(ctx, {
     fillColor: 'rgb(255,255,255)',
-    strokeColor: 'rgb(150,150,150)'
+    strokeColor: 'rgb(150,150,150)',
+    lineWidth: 2 / currentScale
   })
 
   for (const anchor of shape.selection.anchors) {

@@ -2,8 +2,16 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import type { ShapeEntity } from 'types/Shapes'
 import _ from 'lodash/fp'
 import { createPicture } from 'utils/shapes/picture'
+import { refreshShape } from 'utils/shapes'
 
-const useShapes = (onDataChanged: () => void = _.noop, currentScale: number) => {
+const useShapes = (
+  onDataChanged: () => void = _.noop,
+  canvasSize: {
+    width: number
+    height: number
+    scaleRatio: number
+  }
+) => {
   const shapesRef = useRef<ShapeEntity[]>([])
   const onDataChangedRef = useRef<() => void>(onDataChanged)
   onDataChangedRef.current = onDataChanged
@@ -51,12 +59,17 @@ const useShapes = (onDataChanged: () => void = _.noop, currentScale: number) => 
 
   const addPictureShape = useCallback(
     async (fileOrUrl: File | string, maxWidth = 300, maxHeight = 300) => {
-      const pictureShape = await createPicture(fileOrUrl, maxWidth, maxHeight, currentScale)
+      const pictureShape = await createPicture(
+        fileOrUrl,
+        maxWidth,
+        maxHeight,
+        canvasSize.scaleRatio
+      )
       addShape(pictureShape)
       saveShapes()
       return pictureShape
     },
-    [addShape, saveShapes, currentScale]
+    [addShape, saveShapes, canvasSize]
   )
 
   const updateShape = useCallback(
@@ -189,6 +202,15 @@ const useShapes = (onDataChanged: () => void = _.noop, currentScale: number) => 
   useEffect(() => {
     onDataChangedRef.current()
   }, [savedShapes])
+
+  useEffect(() => {
+    shapesRef.current = shapesRef.current.map(shape => refreshShape(shape, canvasSize.scaleRatio))
+    setSelectedShape(prevSelectedShape =>
+      prevSelectedShape === undefined
+        ? undefined
+        : shapesRef.current.find(shape => shape.id === prevSelectedShape.id)
+    )
+  }, [canvasSize])
 
   return {
     shapesRef,

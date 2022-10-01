@@ -81,6 +81,8 @@ const buildPath = <T extends DrawableShape<'line'>>(line: T, currentScale: numbe
   }
 }
 
+export const refreshLine = buildPath
+
 export const createLine = (
   shape: {
     id: string
@@ -225,7 +227,8 @@ export const drawLineSelection = ({
 
   updateCanvasContext(ctx, {
     fillColor: 'rgb(255,255,255)',
-    strokeColor: 'rgb(150,150,150)'
+    strokeColor: 'rgb(150,150,150)',
+    lineWidth: 2 / currentScale
   })
 
   for (const anchor of shape.selection.anchors) {

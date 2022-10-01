@@ -64,6 +64,8 @@ const buildPath = <T extends DrawableShape<'picture'>>(shape: T, currentScale: n
   }
 }
 
+export const refreshPicture = buildPath
+
 export const createPicture = (
   fileOrUrl: File | string,
   maxPictureWidth: number,
@@ -153,7 +155,8 @@ export const drawSelectionPicture = (
 
   updateCanvasContext(ctx, {
     fillColor: 'rgb(255,255,255)',
-    strokeColor: 'rgb(150,150,150)'
+    strokeColor: 'rgb(150,150,150)',
+    lineWidth: 2 / currentScale
   })
 
   for (const anchor of shape.selection.anchors) {

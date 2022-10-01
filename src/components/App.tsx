@@ -221,7 +221,7 @@ const App = ({
     canGoBackward,
     canGoForward,
     canClear
-  } = useShapes(onDataChanged, canvasSize.scaleRatio)
+  } = useShapes(onDataChanged, canvasSize)
 
   const { snackbarList, addSnackbar } = useSnackbar()
 
@@ -270,10 +270,10 @@ const App = ({
 
   const loadImportedData = useCallback(
     async (json: ExportDataType, clearHistory = true) => {
-      const shapes = await decodeImportedData(json)
+      const shapes = await decodeImportedData(json, canvasSize.scaleRatio)
       resetCanvas(shapes, clearHistory)
     },
-    [resetCanvas]
+    [resetCanvas, canvasSize]
   )
 
   const clearCanvas = useCallback(() => {

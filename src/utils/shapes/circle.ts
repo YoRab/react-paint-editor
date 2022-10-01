@@ -73,6 +73,8 @@ const buildPath = <T extends DrawableShape<'circle'>>(shape: T, currentScale: nu
   }
 }
 
+export const refreshCircle = buildPath
+
 export const createCircle = (
   shape: {
     id: string
@@ -136,7 +138,8 @@ export const drawSelectionCircle = (
 
   updateCanvasContext(ctx, {
     fillColor: 'rgb(255,255,255)',
-    strokeColor: 'rgb(150,150,150)'
+    strokeColor: 'rgb(150,150,150)',
+    lineWidth: 2 / currentScale
   })
 
   for (const anchor of shape.selection.anchors) {

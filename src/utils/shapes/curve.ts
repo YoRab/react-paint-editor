@@ -69,6 +69,8 @@ const buildPath = <T extends DrawableShape<'curve'>>(shape: T, currentScale: num
   }
 }
 
+export const refreshCurve = buildPath
+
 export const createCurve = (
   shape: {
     id: string
