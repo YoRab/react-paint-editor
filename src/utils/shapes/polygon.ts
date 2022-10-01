@@ -1,11 +1,21 @@
 import { GridFormatType } from 'constants/app'
+import { SELECTION_ANCHOR_SIZE } from 'constants/shapes'
 import _ from 'lodash/fp'
 import { SelectionModeResize } from 'types/Mode'
-import type { Point, DrawableShape, Polygon, Rect, ShapeEntity } from 'types/Shapes'
+import type {
+  Point,
+  DrawableShape,
+  Polygon,
+  Rect,
+  ShapeEntity,
+  SelectionLinesType
+} from 'types/Shapes'
 import type { ToolsSettingsType } from 'types/tools'
 import { getPointPositionAfterCanvasTransformation } from 'utils/intersect'
 import { roundForGrid } from 'utils/transform'
 import { getShapeInfos } from '.'
+import { createCirclePath } from './circle'
+import { createRecPath } from './rectangle'
 
 const createPloygonPath = (polygon: DrawableShape<'polygon'>) => {
   if (polygon.points.length < 1) return undefined
@@ -21,10 +31,31 @@ const createPloygonPath = (polygon: DrawableShape<'polygon'>) => {
   return path
 }
 
-const buildPath = <T extends DrawableShape<'polygon'>>(shape: T): T => {
+const createPolygonSelectionPath = (
+  shape: DrawableShape<'polygon'>,
+  currentScale: number
+): SelectionLinesType => {
+  const { borders } = getShapeInfos(shape, 0)
+
+  return {
+    border: createRecPath(borders),
+    anchors: [
+      ...shape.points.map(point => {
+        return createCirclePath({
+          x: point[0],
+          y: point[1],
+          radius: SELECTION_ANCHOR_SIZE / 2 / currentScale
+        })
+      })
+    ]
+  }
+}
+
+const buildPath = <T extends DrawableShape<'polygon'>>(shape: T, currentScale: number): T => {
   return {
     ...shape,
-    path: createPloygonPath(shape)
+    path: createPloygonPath(shape),
+    selection: createPolygonSelectionPath(shape, currentScale)
   }
 }
 
@@ -34,26 +65,30 @@ export const createPolygon = (
     type: 'polygon'
     settings: ToolsSettingsType<'polygon'>
   },
-  cursorPosition: Point
+  cursorPosition: Point,
+  currentScale: number
 ): ShapeEntity<'polygon'> => {
-  return buildPath({
-    toolId: shape.id,
-    type: shape.type,
-    id: _.uniqueId(`${shape.type}_`),
-    points: _.flow(
-      _.range(0),
-      _.map(() => cursorPosition)
-    )(shape.settings.pointsCount.default),
-    rotation: 0,
-    style: {
-      globalAlpha: shape.settings.opacity.default,
-      fillColor: shape.settings.fillColor.default,
-      strokeColor: shape.settings.strokeColor.default,
-      lineWidth: shape.settings.lineWidth.default,
-      lineDash: shape.settings.lineDash.default,
-      pointsCount: shape.settings.pointsCount.default
-    }
-  })
+  return buildPath(
+    {
+      toolId: shape.id,
+      type: shape.type,
+      id: _.uniqueId(`${shape.type}_`),
+      points: _.flow(
+        _.range(0),
+        _.map(() => cursorPosition)
+      )(shape.settings.pointsCount.default),
+      rotation: 0,
+      style: {
+        globalAlpha: shape.settings.opacity.default,
+        fillColor: shape.settings.fillColor.default,
+        strokeColor: shape.settings.strokeColor.default,
+        lineWidth: shape.settings.lineWidth.default,
+        lineDash: shape.settings.lineDash.default,
+        pointsCount: shape.settings.pointsCount.default
+      }
+    },
+    currentScale
+  )
 }
 
 export const drawPolygon = (
@@ -95,7 +130,8 @@ export const translatePolygon = <U extends DrawableShape<'polygon'>>(
   cursorPosition: Point,
   originalShape: U,
   originalCursorPosition: Point,
-  gridFormat: GridFormatType
+  gridFormat: GridFormatType,
+  currentScale: number
 ) => {
   if (gridFormat) {
     const { borders } = getShapeInfos(originalShape, 0)
@@ -110,13 +146,16 @@ export const translatePolygon = <U extends DrawableShape<'polygon'>>(
       points: originalShape.points.map(([x, y]) => [x + translationX, y + translationY])
     }
   } else {
-    return buildPath({
-      ...originalShape,
-      points: originalShape.points.map(([x, y]) => [
-        roundForGrid(x + cursorPosition[0] - originalCursorPosition[0], gridFormat),
-        roundForGrid(y + cursorPosition[1] - originalCursorPosition[1], gridFormat)
-      ]) as Point[]
-    })
+    return buildPath(
+      {
+        ...originalShape,
+        points: originalShape.points.map(([x, y]) => [
+          roundForGrid(x + cursorPosition[0] - originalCursorPosition[0], gridFormat),
+          roundForGrid(y + cursorPosition[1] - originalCursorPosition[1], gridFormat)
+        ]) as Point[]
+      },
+      currentScale
+    )
   }
 }
 
@@ -125,7 +164,8 @@ export const resizePolygon = (
   canvasOffset: Point,
   originalShape: DrawableShape<'polygon'>,
   selectionMode: SelectionModeResize<number>,
-  selectionPadding: number
+  selectionPadding: number,
+  currentScale: number
 ): DrawableShape<'polygon'> => {
   const { center } = getShapeInfos(originalShape, selectionPadding)
 
@@ -141,25 +181,29 @@ export const resizePolygon = (
     originalShape
   )
 
-  return buildPath(updatedShape)
+  return buildPath(updatedShape, currentScale)
 }
 
 export const updatePolygonLinesCount = <T extends DrawableShape<'polygon'>>(
   shape: T,
-  newPointsCount: number
+  newPointsCount: number,
+  currentScale: number
 ) => {
   const currentPointsCount = shape.points.length
   if (currentPointsCount === newPointsCount) return shape
   if (currentPointsCount > newPointsCount) {
     const totalPoints = shape.points.slice(0, newPointsCount)
-    return buildPath({
-      ...shape,
-      points: totalPoints,
-      style: {
-        ...shape.style,
-        pointsCount: totalPoints.length
-      }
-    })
+    return buildPath(
+      {
+        ...shape,
+        points: totalPoints,
+        style: {
+          ...shape.style,
+          pointsCount: totalPoints.length
+        }
+      },
+      currentScale
+    )
   } else {
     //TODO : better distribution for new points
     const nbPointsToAdd = newPointsCount - currentPointsCount
@@ -178,13 +222,16 @@ export const updatePolygonLinesCount = <T extends DrawableShape<'polygon'>>(
       ...shape.points.slice(1, shape.points.length)
     ]
 
-    return buildPath({
-      ...shape,
-      points: totalPoints,
-      style: {
-        ...shape.style,
-        pointsCount: totalPoints.length
-      }
-    })
+    return buildPath(
+      {
+        ...shape,
+        points: totalPoints,
+        style: {
+          ...shape.style,
+          pointsCount: totalPoints.length
+        }
+      },
+      currentScale
+    )
   }
 }

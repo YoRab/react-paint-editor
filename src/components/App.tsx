@@ -545,6 +545,7 @@ const App = ({
             removeShape={removeShape}
             updateShape={updateShape}
             canvas={canvasRef.current}
+            currentScale={canvasSize.scaleRatio}
             layersManipulation={layersManipulation}
             toggleLayoutPanel={() => {
               setIsLayoutPanelShown(prev => !prev)

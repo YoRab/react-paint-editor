@@ -1,12 +1,15 @@
 import { GridFormatType } from 'constants/app'
 import _ from 'lodash/fp'
 import { SelectionModeResize } from 'types/Mode'
-import type { Point, DrawableShape, ShapeEntity } from 'types/Shapes'
+import type { Point, DrawableShape, ShapeEntity, SelectionLinesType } from 'types/Shapes'
 import type { ToolsSettingsType } from 'types/tools'
 import { getPointPositionAfterCanvasTransformation } from 'utils/intersect'
 import { roundForGrid } from 'utils/transform'
 import { getShapeInfos } from 'utils/shapes/index'
 import { getPolygonBorder } from './polygon'
+import { createRecPath } from './rectangle'
+import { createCirclePath } from './circle'
+import { SELECTION_ANCHOR_SIZE } from 'constants/shapes'
 
 const createCurvePath = (curve: DrawableShape<'curve'>) => {
   if (curve.points.length < 3) return undefined
@@ -29,10 +32,40 @@ const createCurvePath = (curve: DrawableShape<'curve'>) => {
   return path
 }
 
-const buildPath = <T extends DrawableShape<'curve'>>(shape: T): T => {
+const createCurveSelectionPath = (
+  shape: DrawableShape<'curve'>,
+  currentScale: number
+): SelectionLinesType => {
+  const { borders } = getShapeInfos(shape, 0)
+
+  return {
+    border: createRecPath(borders),
+    anchors: [
+      ...shape.points.map((point, i) => {
+        if (i > 0 && i < shape.points.length - 1) {
+          return createRecPath({
+            x: point[0] - SELECTION_ANCHOR_SIZE / 2,
+            y: point[1] - SELECTION_ANCHOR_SIZE / 2,
+            width: SELECTION_ANCHOR_SIZE / currentScale,
+            height: SELECTION_ANCHOR_SIZE / currentScale
+          })
+        } else {
+          return createCirclePath({
+            x: point[0],
+            y: point[1],
+            radius: SELECTION_ANCHOR_SIZE / 2 / currentScale
+          })
+        }
+      })
+    ]
+  }
+}
+
+const buildPath = <T extends DrawableShape<'curve'>>(shape: T, currentScale: number): T => {
   return {
     ...shape,
-    path: createCurvePath(shape)
+    path: createCurvePath(shape),
+    selection: createCurveSelectionPath(shape, currentScale)
   }
 }
 
@@ -42,26 +75,30 @@ export const createCurve = (
     type: 'curve'
     settings: ToolsSettingsType<'curve'>
   },
-  cursorPosition: Point
+  cursorPosition: Point,
+  currentScale: number
 ): ShapeEntity<'curve'> => {
-  return buildPath({
-    toolId: shape.id,
-    type: shape.type,
-    id: _.uniqueId(`${shape.type}_`),
-    points: _.flow(
-      _.range(0),
-      _.map(() => cursorPosition)
-    )(shape.settings.pointsCount.default),
-    rotation: 0,
-    style: {
-      globalAlpha: shape.settings.opacity.default,
-      fillColor: shape.settings.fillColor.default,
-      strokeColor: shape.settings.strokeColor.default,
-      lineWidth: shape.settings.lineWidth.default,
-      lineDash: shape.settings.lineDash.default,
-      pointsCount: shape.settings.pointsCount.default
-    }
-  })
+  return buildPath(
+    {
+      toolId: shape.id,
+      type: shape.type,
+      id: _.uniqueId(`${shape.type}_`),
+      points: _.flow(
+        _.range(0),
+        _.map(() => cursorPosition)
+      )(shape.settings.pointsCount.default),
+      rotation: 0,
+      style: {
+        globalAlpha: shape.settings.opacity.default,
+        fillColor: shape.settings.fillColor.default,
+        strokeColor: shape.settings.strokeColor.default,
+        lineWidth: shape.settings.lineWidth.default,
+        lineDash: shape.settings.lineDash.default,
+        pointsCount: shape.settings.pointsCount.default
+      }
+    },
+    currentScale
+  )
 }
 
 export const resizeCurve = (
@@ -69,7 +106,8 @@ export const resizeCurve = (
   canvasOffset: Point,
   originalShape: DrawableShape<'curve'>,
   selectionMode: SelectionModeResize<number>,
-  selectionPadding: number
+  selectionPadding: number,
+  currentScale: number
 ): DrawableShape<'curve'> => {
   const { center } = getShapeInfos(originalShape, selectionPadding)
 
@@ -85,7 +123,7 @@ export const resizeCurve = (
     originalShape
   )
 
-  return buildPath(updatedShape)
+  return buildPath(updatedShape, currentScale)
 }
 
 export const drawCurve = (ctx: CanvasRenderingContext2D, curve: DrawableShape<'curve'>): void => {
@@ -101,26 +139,36 @@ export const translateCurve = <U extends DrawableShape<'curve'>>(
   cursorPosition: Point,
   originalShape: U,
   originalCursorPosition: Point,
-  gridFormat: GridFormatType
+  gridFormat: GridFormatType,
+  currentScale: number
 ) => {
   const { borders } = getShapeInfos(originalShape, 0)
 
-  return buildPath({
-    ...originalShape,
-    points: originalShape.points.map(([x, y]) =>
-      gridFormat
-        ? [
-            x +
-              roundForGrid(borders.x + cursorPosition[0] - originalCursorPosition[0], gridFormat) -
-              borders.x,
-            y +
-              roundForGrid(borders.y + cursorPosition[1] - originalCursorPosition[1], gridFormat) -
-              borders.y
-          ]
-        : [
-            roundForGrid(x + cursorPosition[0] - originalCursorPosition[0], gridFormat),
-            roundForGrid(y + cursorPosition[1] - originalCursorPosition[1], gridFormat)
-          ]
-    )
-  })
+  return buildPath(
+    {
+      ...originalShape,
+      points: originalShape.points.map(([x, y]) =>
+        gridFormat
+          ? [
+              x +
+                roundForGrid(
+                  borders.x + cursorPosition[0] - originalCursorPosition[0],
+                  gridFormat
+                ) -
+                borders.x,
+              y +
+                roundForGrid(
+                  borders.y + cursorPosition[1] - originalCursorPosition[1],
+                  gridFormat
+                ) -
+                borders.y
+            ]
+          : [
+              roundForGrid(x + cursorPosition[0] - originalCursorPosition[0], gridFormat),
+              roundForGrid(y + cursorPosition[1] - originalCursorPosition[1], gridFormat)
+            ]
+      )
+    },
+    currentScale
+  )
 }

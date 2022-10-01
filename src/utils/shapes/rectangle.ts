@@ -20,7 +20,7 @@ import { createCirclePath } from './circle'
 
 type rectish = 'text' | 'rect' | 'square' | 'picture'
 
-const createRecPath = (rect: Rect) => {
+export const createRecPath = (rect: Rect) => {
   const path = new Path2D()
   path.rect(rect.x, rect.y, rect.width, rect.height)
   return path
@@ -124,6 +124,9 @@ export const drawSelectionRect = (
   })
 
   ctx.stroke(shape.selection.border)
+
+  if (!withAnchors || shape.locked) return
+
   ctx.stroke(shape.selection.line)
 
   updateCanvasContext(ctx, {
@@ -135,20 +138,6 @@ export const drawSelectionRect = (
     ctx.fill(anchor)
     ctx.stroke(anchor)
   }
-
-  if (!withAnchors || shape.locked) return
-}
-
-export const legacyDrawRect = (
-  ctx: CanvasRenderingContext2D,
-  rect: DrawableShape<'rect'>
-): void => {
-  if (ctx.globalAlpha === 0) return
-
-  ctx.beginPath()
-  ctx.rect(rect.x, rect.y, rect.width, rect.height)
-  rect.style?.fillColor !== 'transparent' && ctx.fill()
-  rect.style?.strokeColor !== 'transparent' && ctx.stroke()
 }
 
 export const getRectBorder = (rect: Rect, selectionPadding: number): Rect => {

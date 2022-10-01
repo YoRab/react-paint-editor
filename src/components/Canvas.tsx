@@ -58,7 +58,7 @@ const renderSelectionCanvas = (
     drawShapeSelection({
       ctx: selectionCtx,
       shape: selectedShape,
-      scaleRatio,
+      currentScale: scaleRatio,
       canvasOffset,
       selectionPadding,
       selectionWidth,

@@ -71,33 +71,43 @@ export type SelectionDefaultType = {
   anchors: Path2D[]
 }
 
+export type SelectionLinesType = {
+  border: Path2D
+  anchors: Path2D[]
+}
+
 export type DrawableShape<T extends ShapeType = ShapeType> = {
   visible?: boolean
   locked?: boolean
   rotation: number
   style?: StyleShape
 } & (T extends 'line'
-  ? Line & { type: 'line'; path?: Path2D; arrows?: DrawableShape<'triangle'>[] }
+  ? Line & {
+      type: 'line'
+      selection?: SelectionLinesType
+      path?: Path2D
+      arrows?: DrawableShape<'triangle'>[]
+    }
   : T extends 'picture'
-  ? Picture & { type: 'picture'; img: HTMLImageElement }
+  ? Picture & { type: 'picture'; img: HTMLImageElement; selection?: SelectionDefaultType }
   : T extends 'text'
-  ? Text & { type: 'text' }
+  ? Text & { type: 'text'; selection?: SelectionDefaultType }
   : T extends 'rect'
   ? Rect & { type: 'rect'; selection?: SelectionDefaultType; path?: Path2D }
   : T extends 'square'
   ? Rect & { type: 'square'; selection?: SelectionDefaultType; path?: Path2D }
   : T extends 'circle'
-  ? Circle & { type: 'circle'; path?: Path2D }
+  ? Circle & { type: 'circle'; selection?: SelectionDefaultType; path?: Path2D }
   : T extends 'ellipse'
-  ? Ellipse & { type: 'ellipse'; path?: Path2D }
+  ? Ellipse & { type: 'ellipse'; selection?: SelectionDefaultType; path?: Path2D }
   : T extends 'triangle'
   ? Triangle & { type: 'triangle'; path?: Path2D }
   : T extends 'polygon'
-  ? Polygon & { type: 'polygon'; path?: Path2D }
+  ? Polygon & { type: 'polygon'; selection?: SelectionLinesType; path?: Path2D }
   : T extends 'curve'
-  ? Curve & { type: 'curve'; path?: Path2D }
+  ? Curve & { type: 'curve'; selection?: SelectionLinesType; path?: Path2D }
   : T extends 'brush'
-  ? Brush & { type: 'brush'; path?: Path2D }
+  ? Brush & { type: 'brush'; selection?: SelectionDefaultType; path?: Path2D }
   : never)
 
 export type DrawableShapeJson<T extends ShapeType = ShapeType> = DrawableShape<T> & {

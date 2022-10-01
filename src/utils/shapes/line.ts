@@ -9,7 +9,8 @@ import type {
   Triangle,
   ShapeEntity,
   Rect,
-  StyleShape
+  StyleShape,
+  SelectionLinesType
 } from 'types/Shapes'
 import type { ToolsSettingsType } from 'types/tools'
 import { updateCanvasContext } from 'utils/canvas'
@@ -17,8 +18,9 @@ import { getPointPositionAfterCanvasTransformation } from 'utils/intersect'
 import { roundForGrid } from 'utils/transform'
 import { getAngleFromVector, rotatePoint } from 'utils/trigo'
 import { getShapeInfos } from 'utils/shapes/index'
-import { legacyDrawRect } from './rectangle'
+import { createRecPath } from './rectangle'
 import { createTriangle, drawTriangle } from './triangle'
+import { createCirclePath } from './circle'
 
 export const createLinePath = (line: Line) => {
   const path = new Path2D()
@@ -27,7 +29,27 @@ export const createLinePath = (line: Line) => {
   return path
 }
 
-const buildPath = <T extends DrawableShape<'line'>>(line: T): T => {
+const createLineSelectionPath = (
+  shape: DrawableShape<'line'>,
+  currentScale: number
+): SelectionLinesType => {
+  const { borders } = getShapeInfos(shape, 0)
+
+  return {
+    border: createRecPath(borders),
+    anchors: [
+      ...shape.points.map(point => {
+        return createCirclePath({
+          x: point[0],
+          y: point[1],
+          radius: SELECTION_ANCHOR_SIZE / 2 / currentScale
+        })
+      })
+    ]
+  }
+}
+
+const buildPath = <T extends DrawableShape<'line'>>(line: T, currentScale: number): T => {
   const arrows = _.flow(
     (arrows: DrawableShape<'triangle'>[]) => {
       if (line.style?.lineArrow === 1 || line.style?.lineArrow === 3) {
@@ -54,6 +76,7 @@ const buildPath = <T extends DrawableShape<'line'>>(line: T): T => {
   return {
     ...line,
     path: createLinePath(line),
+    selection: createLineSelectionPath(line, currentScale),
     arrows
   }
 }
@@ -64,7 +87,8 @@ export const createLine = (
     type: 'line'
     settings: ToolsSettingsType<'line'>
   },
-  cursorPosition: Point
+  cursorPosition: Point,
+  currentScale: number
 ): ShapeEntity<'line'> => {
   const lineShape = {
     toolId: shape.id,
@@ -80,7 +104,7 @@ export const createLine = (
       lineArrow: shape.settings.lineArrow.default
     }
   }
-  return buildPath(lineShape)
+  return buildPath(lineShape, currentScale)
 }
 
 export const buildTriangleOnLine = (center: Point, rotation: number, lineStyle: StyleShape) => {
@@ -133,15 +157,19 @@ export const translateLine = <U extends DrawableShape<'line'>>(
   cursorPosition: Point,
   originalShape: U,
   originalCursorPosition: Point,
-  gridFormat: GridFormatType
+  gridFormat: GridFormatType,
+  currentScale: number
 ) => {
-  return buildPath({
-    ...originalShape,
-    points: originalShape.points.map(([x, y]) => [
-      roundForGrid(x + cursorPosition[0] - originalCursorPosition[0], gridFormat),
-      roundForGrid(y + cursorPosition[1] - originalCursorPosition[1], gridFormat)
-    ]) as [Point, Point]
-  })
+  return buildPath(
+    {
+      ...originalShape,
+      points: originalShape.points.map(([x, y]) => [
+        roundForGrid(x + cursorPosition[0] - originalCursorPosition[0], gridFormat),
+        roundForGrid(y + cursorPosition[1] - originalCursorPosition[1], gridFormat)
+      ]) as [Point, Point]
+    },
+    currentScale
+  )
 }
 
 export const resizeLine = <U extends DrawableShape<'line'>>(
@@ -149,7 +177,8 @@ export const resizeLine = <U extends DrawableShape<'line'>>(
   canvasOffset: Point,
   originalShape: U,
   selectionMode: SelectionModeResize<number>,
-  selectionPadding: number
+  selectionPadding: number,
+  currentScale: number
 ): U => {
   const { center } = getShapeInfos(originalShape, selectionPadding)
 
@@ -165,14 +194,13 @@ export const resizeLine = <U extends DrawableShape<'line'>>(
     originalShape
   )
 
-  return buildPath(updatedShape)
+  return buildPath(updatedShape, currentScale)
 }
 
 export const drawLineSelection = ({
   ctx,
   shape,
   withAnchors,
-  selectionPadding,
   selectionWidth,
   selectionColor,
   currentScale = 1
@@ -180,51 +208,28 @@ export const drawLineSelection = ({
   ctx: CanvasRenderingContext2D
   shape: DrawableShape<'line'> | DrawableShape<'polygon'> | DrawableShape<'curve'>
   withAnchors: boolean
-  selectionPadding: number
   selectionWidth: number
   selectionColor: string
   currentScale?: number
 }) => {
-  const { borders } = getShapeInfos(shape, selectionPadding)
-  legacyDrawRect(ctx, {
-    type: 'rect',
-    rotation: 0,
-    ...borders,
-    style: {
-      fillColor: 'transparent',
-      strokeColor: selectionColor,
-      lineWidth: selectionWidth / currentScale
-    }
-  })
-  if (!withAnchors || shape.locked) return
-  for (let i = 0; i < shape.points.length; i++) {
-    const coordinate = shape.points[i]
+  if (!shape.selection) return
 
-    if (shape.type === 'curve' && i > 0 && i < shape.points.length - 1) {
-      legacyDrawRect(ctx, {
-        type: 'rect',
-        rotation: 0,
-        x: coordinate[0] - SELECTION_ANCHOR_SIZE / 2,
-        y: coordinate[1] - SELECTION_ANCHOR_SIZE / 2,
-        width: SELECTION_ANCHOR_SIZE / currentScale,
-        height: SELECTION_ANCHOR_SIZE / currentScale,
-        style: {
-          fillColor: 'rgb(255,255,255)',
-          strokeColor: 'rgb(150,150,150)',
-          lineWidth: selectionWidth / currentScale
-        }
-      })
-    } else {
-      /* drawCircle(ctx, {
-        x: coordinate[0],
-        y: coordinate[1],
-        radius: SELECTION_ANCHOR_SIZE / 2 / currentScale,
-        style: {
-          fillColor: 'rgb(255,255,255)',
-          strokeColor: 'rgb(150,150,150)',
-          lineWidth: selectionWidth / currentScale
-        }
-      })*/
-    }
+  updateCanvasContext(ctx, {
+    fillColor: 'transparent',
+    strokeColor: selectionColor,
+    lineWidth: selectionWidth / currentScale
+  })
+  ctx.stroke(shape.selection.border)
+
+  if (!withAnchors || shape.locked) return
+
+  updateCanvasContext(ctx, {
+    fillColor: 'rgb(255,255,255)',
+    strokeColor: 'rgb(150,150,150)'
+  })
+
+  for (const anchor of shape.selection.anchors) {
+    ctx.fill(anchor)
+    ctx.stroke(anchor)
   }
 }

@@ -48,6 +48,7 @@ type SettingsBoxType = {
   activeTool: ToolsType
   selectedShape: ShapeEntity | undefined
   canvas: HTMLCanvasElement | null
+  currentScale: number
   updateShape: (shape: ShapeEntity, withSave?: boolean) => void
   removeShape: (shape: ShapeEntity) => void
   toggleLayoutPanel: () => void
@@ -358,6 +359,7 @@ const SettingsBar = ({
   activeTool,
   selectedShape,
   canvas,
+  currentScale,
   updateShape,
   removeShape
 }: SettingsBoxType) => {
@@ -422,7 +424,7 @@ const SettingsBar = ({
   const handlePolygonLinesCount = (field: string, value: string | number) => {
     if (selectedShape) {
       if (selectedShape.type !== 'polygon') return
-      updateShape(updatePolygonLinesCount(selectedShape, value as number), true)
+      updateShape(updatePolygonLinesCount(selectedShape, value as number, currentScale), true)
       updateToolSettings(selectedShape.toolId || activeTool.id, field, value)
     } else {
       updateToolSettings(activeTool.id, field, value)
