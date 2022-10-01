@@ -4,7 +4,7 @@ import { getBase64Image } from './file'
 import { refreshShape } from './shapes'
 
 export const cleanShapesBeforeExport = (shapes: DrawableShape[]) => {
-  const propsToOmit = ['img', 'id']
+  const propsToOmit = ['img', 'id', 'selection', 'path']
   return shapes.map(shape => {
     if (shape.type === 'picture') {
       if (!shape.src.startsWith('http')) {
