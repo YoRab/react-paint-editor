@@ -80,7 +80,11 @@ export const decodeJson = async (file: File) => {
   })
 }
 
-export const decodeImportedData = async (shapesForJson: ExportDataType, currentScale: number) => {
+export const decodeImportedData = async (
+  shapesForJson: ExportDataType,
+  currentScale: number,
+  selectionPadding: number
+) => {
   const promisesArray: Promise<void>[] = []
   const jsonShapes = shapesForJson.shapes
   const shapes: ShapeEntity[] = _.flow(
@@ -117,10 +121,11 @@ export const decodeImportedData = async (shapesForJson: ExportDataType, currentS
             ...shape,
             img
           },
-          currentScale
+          currentScale,
+          selectionPadding
         )
       }
-      return addDefaultAndTempShapeProps(shape, currentScale)
+      return addDefaultAndTempShapeProps(shape, currentScale, selectionPadding)
     }),
     _.compact
   )(jsonShapes)

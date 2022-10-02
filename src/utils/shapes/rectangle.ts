@@ -28,9 +28,10 @@ export const createRecPath = (rect: Rect) => {
 
 const createRecSelectionPath = (
   rect: DrawableShape<rectish>,
-  currentScale: number
+  currentScale: number,
+  selectionPadding: number
 ): SelectionDefaultType => {
-  const { borders } = getShapeInfos(rect, 0)
+  const { borders } = getShapeInfos(rect, selectionPadding)
 
   return {
     border: createRecPath(borders),
@@ -60,11 +61,15 @@ const createRecSelectionPath = (
   }
 }
 
-const buildPath = <T extends DrawableShape<rectish>>(rect: T, currentScale: number): T => {
+const buildPath = <T extends DrawableShape<rectish>>(
+  rect: T,
+  currentScale: number,
+  selectionPadding: number
+): T => {
   return {
     ...rect,
     path: createRecPath(rect),
-    selection: createRecSelectionPath(rect, currentScale)
+    selection: createRecSelectionPath(rect, currentScale, selectionPadding)
   }
 }
 
@@ -77,7 +82,8 @@ export const createRectangle = <T extends 'rect' | 'square'>(
     settings: ToolsSettingsType<T>
   },
   cursorPosition: Point,
-  currentScale: number
+  currentScale: number,
+  selectionPadding: number
 ): ShapeEntity<T> => {
   const recShape = {
     toolId: shape.id,
@@ -96,7 +102,7 @@ export const createRectangle = <T extends 'rect' | 'square'>(
       lineDash: shape.settings.lineDash.default
     }
   } as unknown as ShapeEntity<T>
-  return buildPath(recShape, currentScale) as ShapeEntity<T>
+  return buildPath(recShape, currentScale, selectionPadding) as ShapeEntity<T>
 }
 
 export const drawRect = (
@@ -185,7 +191,8 @@ export const translateRect = <T extends 'rect' | 'square', U extends DrawableSha
   originalShape: U,
   originalCursorPosition: Point,
   gridFormat: GridFormatType,
-  currentScale: number
+  currentScale: number,
+  selectionPadding: number
 ) => {
   return buildPath(
     {
@@ -193,7 +200,8 @@ export const translateRect = <T extends 'rect' | 'square', U extends DrawableSha
       x: roundForGrid(originalShape.x + cursorPosition[0] - originalCursorPosition[0], gridFormat),
       y: roundForGrid(originalShape.y + cursorPosition[1] - originalCursorPosition[1], gridFormat)
     },
-    currentScale
+    currentScale,
+    selectionPadding
   )
 }
 
@@ -264,6 +272,7 @@ export const resizeRect = <T extends rectish>(
       x: shapeWithNewDimensions.x - (newOppTrueX - oppTrueX),
       y: shapeWithNewDimensions.y - (newOppTrueY - oppTrueY)
     },
-    currentScale
+    currentScale,
+    selectionPadding
   ) as DrawableShape<T>
 }

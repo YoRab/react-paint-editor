@@ -219,12 +219,13 @@ const Canvas = React.forwardRef<HTMLCanvasElement, DrawerType>(
 
         const newShape = refreshShape(
           resizeTextShapeWithNewContent(ctx, selectedShape, newText, canvasOffset),
-          currentScale
+          currentScale,
+          selectionPadding
         )
 
         updateSingleShape(newShape)
       },
-      [updateSingleShape, selectedShape, canvasOffset, currentScale]
+      [updateSingleShape, selectedShape, canvasOffset, currentScale, selectionPadding]
     )
 
     useEffect(() => {

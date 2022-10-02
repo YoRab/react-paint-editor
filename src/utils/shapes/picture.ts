@@ -25,9 +25,10 @@ import { createCirclePath } from './circle'
 
 const createPictureSelectionPath = (
   rect: DrawableShape<'picture'>,
-  currentScale: number
+  currentScale: number,
+  selectionPadding: number
 ): SelectionDefaultType => {
-  const { borders } = getShapeInfos(rect, 0)
+  const { borders } = getShapeInfos(rect, selectionPadding)
 
   return {
     border: createRecPath(borders),
@@ -57,10 +58,14 @@ const createPictureSelectionPath = (
   }
 }
 
-const buildPath = <T extends DrawableShape<'picture'>>(shape: T, currentScale: number): T => {
+const buildPath = <T extends DrawableShape<'picture'>>(
+  shape: T,
+  currentScale: number,
+  selectionPadding: number
+): T => {
   return {
     ...shape,
-    selection: createPictureSelectionPath(shape, currentScale)
+    selection: createPictureSelectionPath(shape, currentScale, selectionPadding)
   }
 }
 
@@ -70,7 +75,8 @@ export const createPicture = (
   fileOrUrl: File | string,
   maxPictureWidth: number,
   maxPictureHeight: number,
-  currentScale: number
+  currentScale: number,
+  selectionPadding: number
 ) => {
   return new Promise<ShapeEntity<'picture'>>((resolve, reject) => {
     const img = new Image()
@@ -95,7 +101,7 @@ export const createPicture = (
         img,
         rotation: 0
       }
-      resolve(buildPath(pictureShape, currentScale))
+      resolve(buildPath(pictureShape, currentScale, selectionPadding))
     }
 
     img.onerror = () => {
@@ -174,7 +180,8 @@ export const translatePicture = <U extends DrawableShape<'picture'>>(
   originalShape: U,
   originalCursorPosition: Point,
   gridFormat: GridFormatType,
-  currentScale: number
+  currentScale: number,
+  selectionPadding: number
 ) => {
   return buildPath(
     {
@@ -182,7 +189,8 @@ export const translatePicture = <U extends DrawableShape<'picture'>>(
       x: roundForGrid(originalShape.x + cursorPosition[0] - originalCursorPosition[0], gridFormat),
       y: roundForGrid(originalShape.y + cursorPosition[1] - originalCursorPosition[1], gridFormat)
     },
-    currentScale
+    currentScale,
+    selectionPadding
   )
 }
 

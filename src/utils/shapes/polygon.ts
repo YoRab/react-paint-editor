@@ -33,9 +33,10 @@ const createPloygonPath = (polygon: DrawableShape<'polygon'>) => {
 
 const createPolygonSelectionPath = (
   shape: DrawableShape<'polygon'>,
-  currentScale: number
+  currentScale: number,
+  selectionPadding: number
 ): SelectionLinesType => {
-  const { borders } = getShapeInfos(shape, 0)
+  const { borders } = getShapeInfos(shape, selectionPadding)
 
   return {
     border: createRecPath(borders),
@@ -51,11 +52,15 @@ const createPolygonSelectionPath = (
   }
 }
 
-const buildPath = <T extends DrawableShape<'polygon'>>(shape: T, currentScale: number): T => {
+const buildPath = <T extends DrawableShape<'polygon'>>(
+  shape: T,
+  currentScale: number,
+  selectionPadding: number
+): T => {
   return {
     ...shape,
     path: createPloygonPath(shape),
-    selection: createPolygonSelectionPath(shape, currentScale)
+    selection: createPolygonSelectionPath(shape, currentScale, selectionPadding)
   }
 }
 
@@ -68,7 +73,8 @@ export const createPolygon = (
     settings: ToolsSettingsType<'polygon'>
   },
   cursorPosition: Point,
-  currentScale: number
+  currentScale: number,
+  selectionPadding: number
 ): ShapeEntity<'polygon'> => {
   return buildPath(
     {
@@ -89,7 +95,8 @@ export const createPolygon = (
         pointsCount: shape.settings.pointsCount.default
       }
     },
-    currentScale
+    currentScale,
+    selectionPadding
   )
 }
 
@@ -133,10 +140,11 @@ export const translatePolygon = <U extends DrawableShape<'polygon'>>(
   originalShape: U,
   originalCursorPosition: Point,
   gridFormat: GridFormatType,
-  currentScale: number
+  currentScale: number,
+  selectionPadding: number
 ) => {
   if (gridFormat) {
-    const { borders } = getShapeInfos(originalShape, 0)
+    const { borders } = getShapeInfos(originalShape, selectionPadding)
     const translationX =
       roundForGrid(borders.x + cursorPosition[0] - originalCursorPosition[0], gridFormat) -
       borders.x
@@ -156,7 +164,8 @@ export const translatePolygon = <U extends DrawableShape<'polygon'>>(
           roundForGrid(y + cursorPosition[1] - originalCursorPosition[1], gridFormat)
         ]) as Point[]
       },
-      currentScale
+      currentScale,
+      selectionPadding
     )
   }
 }
@@ -183,13 +192,14 @@ export const resizePolygon = (
     originalShape
   )
 
-  return buildPath(updatedShape, currentScale)
+  return buildPath(updatedShape, currentScale, selectionPadding)
 }
 
 export const updatePolygonLinesCount = <T extends DrawableShape<'polygon'>>(
   shape: T,
   newPointsCount: number,
-  currentScale: number
+  currentScale: number,
+  selectionPadding: number
 ) => {
   const currentPointsCount = shape.points.length
   if (currentPointsCount === newPointsCount) return shape
@@ -204,7 +214,8 @@ export const updatePolygonLinesCount = <T extends DrawableShape<'polygon'>>(
           pointsCount: totalPoints.length
         }
       },
-      currentScale
+      currentScale,
+      selectionPadding
     )
   } else {
     //TODO : better distribution for new points
@@ -233,7 +244,8 @@ export const updatePolygonLinesCount = <T extends DrawableShape<'polygon'>>(
           pointsCount: totalPoints.length
         }
       },
-      currentScale
+      currentScale,
+      selectionPadding
     )
   }
 }

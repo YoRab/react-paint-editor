@@ -35,9 +35,10 @@ const createEllipsePath = (ellipse: DrawableShape<'ellipse'>) => {
 
 const createEllipseSelectionPath = (
   rect: DrawableShape<'ellipse'>,
-  currentScale: number
+  currentScale: number,
+  selectionPadding: number
 ): SelectionDefaultType => {
-  const { borders } = getShapeInfos(rect, 0)
+  const { borders } = getShapeInfos(rect, selectionPadding)
 
   return {
     border: createRecPath(borders),
@@ -67,11 +68,15 @@ const createEllipseSelectionPath = (
   }
 }
 
-const buildPath = <T extends DrawableShape<'ellipse'>>(shape: T, currentScale: number): T => {
+const buildPath = <T extends DrawableShape<'ellipse'>>(
+  shape: T,
+  currentScale: number,
+  selectionPadding: number
+): T => {
   return {
     ...shape,
     path: createEllipsePath(shape),
-    selection: createEllipseSelectionPath(shape, currentScale)
+    selection: createEllipseSelectionPath(shape, currentScale, selectionPadding)
   }
 }
 
@@ -84,7 +89,8 @@ export const createEllipse = (
     settings: ToolsSettingsType<'ellipse'>
   },
   cursorPosition: Point,
-  currentScale: number
+  currentScale: number,
+  selectionPadding: number
 ): ShapeEntity<'ellipse'> => {
   return buildPath(
     {
@@ -104,7 +110,8 @@ export const createEllipse = (
         lineDash: shape.settings.lineDash.default
       }
     },
-    currentScale
+    currentScale,
+    selectionPadding
   )
 }
 
@@ -165,7 +172,8 @@ export const translateEllipse = <U extends DrawableShape<'ellipse'>>(
   originalShape: U,
   originalCursorPosition: Point,
   gridFormat: GridFormatType,
-  currentScale: number
+  currentScale: number,
+  selectionPadding: number
 ) => {
   return buildPath(
     {
@@ -173,7 +181,8 @@ export const translateEllipse = <U extends DrawableShape<'ellipse'>>(
       x: roundForGrid(originalShape.x + cursorPosition[0] - originalCursorPosition[0], gridFormat),
       y: roundForGrid(originalShape.y + cursorPosition[1] - originalCursorPosition[1], gridFormat)
     },
-    currentScale
+    currentScale,
+    selectionPadding
   )
 }
 
@@ -286,6 +295,7 @@ export const resizeEllipse = (
       x: shapeWithNewDimensions.x - (newOppTrueX - oppTrueX),
       y: shapeWithNewDimensions.y - (newOppTrueY - oppTrueY)
     },
-    currentScale
+    currentScale,
+    selectionPadding
   )
 }

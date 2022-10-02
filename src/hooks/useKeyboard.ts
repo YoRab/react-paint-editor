@@ -35,6 +35,7 @@ type UseKeyboardType = {
   isEditingText: boolean
   gridFormat: GridFormatType
   currentScale: number
+  selectionPadding: number
 }
 
 const useKeyboard = ({
@@ -43,6 +44,7 @@ const useKeyboard = ({
   selectedShape,
   isEditingText,
   currentScale,
+  selectionPadding,
   setSelectedShape,
   removeShape,
   pasteShape,
@@ -66,7 +68,7 @@ const useKeyboard = ({
       if (!copiedShape) return
       if (isEditingText) return
       e.preventDefault()
-      pasteShape(copyShape(copiedShape, gridFormat, currentScale))
+      pasteShape(copyShape(copiedShape, gridFormat, currentScale, selectionPadding))
     }
 
     const handleKeyUp = (e: KeyboardEvent) => {
@@ -117,7 +119,14 @@ const useKeyboard = ({
         case KeyboardCode.ArrowDown:
         case KeyboardCode.ArrowUp:
           updateShape(
-            translateShape(translationMap[e.key], selectedShape, [0, 0], gridFormat, currentScale)
+            translateShape(
+              translationMap[e.key],
+              selectedShape,
+              [0, 0],
+              gridFormat,
+              currentScale,
+              selectionPadding
+            )
           )
           break
         case KeyboardCode.Delete:
@@ -144,6 +153,7 @@ const useKeyboard = ({
     }
   }, [
     isInsideComponent,
+    selectionPadding,
     gridFormat,
     copiedShape,
     isEditingText,

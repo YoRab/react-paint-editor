@@ -44,9 +44,10 @@ const createBrushPath = (brush: DrawableShape<'brush'>) => {
 
 const createBrushSelectionPath = (
   rect: DrawableShape<'brush'>,
-  currentScale: number
+  currentScale: number,
+  selectionPadding: number
 ): SelectionDefaultType => {
-  const { borders } = getShapeInfos(rect, 0)
+  const { borders } = getShapeInfos(rect, selectionPadding)
 
   return {
     border: createRecPath(borders),
@@ -76,11 +77,15 @@ const createBrushSelectionPath = (
   }
 }
 
-const buildPath = <T extends DrawableShape<'brush'>>(brush: T, currentScale: number): T => {
+const buildPath = <T extends DrawableShape<'brush'>>(
+  brush: T,
+  currentScale: number,
+  selectionPadding: number
+): T => {
   return {
     ...brush,
     path: createBrushPath(brush),
-    selection: createBrushSelectionPath(brush, currentScale)
+    selection: createBrushSelectionPath(brush, currentScale, selectionPadding)
   }
 }
 
@@ -93,7 +98,8 @@ export const createBrush = (
     settings: ToolsSettingsType<'brush'>
   },
   cursorPosition: Point,
-  currentScale: number
+  currentScale: number,
+  selectionPadding: number
 ): ShapeEntity<'brush'> => {
   return buildPath(
     {
@@ -109,7 +115,8 @@ export const createBrush = (
         lineDash: shape.settings.lineDash.default
       }
     },
-    currentScale
+    currentScale,
+    selectionPadding
   )
 }
 
@@ -185,9 +192,10 @@ export const translateBrush = <U extends DrawableShape<'brush'>>(
   originalShape: U,
   originalCursorPosition: Point,
   gridFormat: GridFormatType,
-  currentScale: number
+  currentScale: number,
+  selectionPadding: number
 ) => {
-  const { borders } = getShapeInfos(originalShape, 0)
+  const { borders } = getShapeInfos(originalShape, selectionPadding)
   const translationX = gridFormat
     ? roundForGrid(borders.x + cursorPosition[0] - originalCursorPosition[0], gridFormat) -
       borders.x
@@ -203,7 +211,8 @@ export const translateBrush = <U extends DrawableShape<'brush'>>(
         coord.map(([x, y]) => [x + translationX, y + translationY])
       ) as Point[][]
     },
-    currentScale
+    currentScale,
+    selectionPadding
   )
 }
 
@@ -288,13 +297,14 @@ export const resizeBrush = (
     )
   }
 
-  return buildPath(brushShape, currentScale)
+  return buildPath(brushShape, currentScale, selectionPadding)
 }
 
 export const addNewPointToShape = <T extends DrawableShape<'brush'>>(
   shape: T,
   cursorPosition: Point,
-  currentScale: number
+  currentScale: number,
+  selectionPadding: number
 ) => {
   const brushShape = {
     ...shape,
@@ -309,13 +319,14 @@ export const addNewPointToShape = <T extends DrawableShape<'brush'>>(
       )
     }
   }
-  return buildPath(brushShape, currentScale)
+  return buildPath(brushShape, currentScale, selectionPadding)
 }
 
 export const addNewPointGroupToShape = <T extends DrawableShape<'brush'>>(
   shape: T,
   cursorPosition: Point,
-  currentScale: number
+  currentScale: number,
+  selectionPadding: number
 ): T => {
   const brushShape = {
     ...shape,
@@ -327,5 +338,5 @@ export const addNewPointGroupToShape = <T extends DrawableShape<'brush'>>(
       )
     }
   }
-  return buildPath(brushShape, currentScale)
+  return buildPath(brushShape, currentScale, selectionPadding)
 }

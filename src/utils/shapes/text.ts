@@ -25,9 +25,10 @@ import {
 
 const createTextSelectionPath = (
   rect: DrawableShape<'text'>,
-  currentScale: number
+  currentScale: number,
+  selectionPadding: number
 ): SelectionDefaultType => {
-  const { borders } = getShapeInfos(rect, 0)
+  const { borders } = getShapeInfos(rect, selectionPadding)
 
   return {
     border: createRecPath(borders),
@@ -57,10 +58,14 @@ const createTextSelectionPath = (
   }
 }
 
-const buildPath = <T extends DrawableShape<'text'>>(shape: T, currentScale: number): T => {
+const buildPath = <T extends DrawableShape<'text'>>(
+  shape: T,
+  currentScale: number,
+  selectionPadding: number
+): T => {
   return {
     ...shape,
-    selection: createTextSelectionPath(shape, currentScale)
+    selection: createTextSelectionPath(shape, currentScale, selectionPadding)
   }
 }
 
@@ -91,7 +96,8 @@ export const createText = (
     settings: ToolsSettingsType<'text'>
   },
   cursorPosition: Point,
-  currentScale: number
+  currentScale: number,
+  selectionPadding: number
 ): ShapeEntity<'text'> => {
   const defaultValue: string[] = ['Texte']
   const fontSize = calculateTextFontSize(
@@ -120,7 +126,8 @@ export const createText = (
         fontFamily: shape.settings.fontFamily.default
       }
     },
-    currentScale
+    currentScale,
+    selectionPadding
   )
 }
 
@@ -186,7 +193,8 @@ export const translateText = <U extends DrawableShape<'text'>>(
   originalShape: U,
   originalCursorPosition: Point,
   gridFormat: GridFormatType,
-  currentScale: number
+  currentScale: number,
+  selectionPadding: number
 ) => {
   return buildPath(
     {
@@ -194,7 +202,8 @@ export const translateText = <U extends DrawableShape<'text'>>(
       x: roundForGrid(originalShape.x + cursorPosition[0] - originalCursorPosition[0], gridFormat),
       y: roundForGrid(originalShape.y + cursorPosition[1] - originalCursorPosition[1], gridFormat)
     },
-    currentScale
+    currentScale,
+    selectionPadding
   )
 }
 

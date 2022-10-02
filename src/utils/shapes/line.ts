@@ -31,9 +31,10 @@ export const createLinePath = (line: Line) => {
 
 const createLineSelectionPath = (
   shape: DrawableShape<'line'>,
-  currentScale: number
+  currentScale: number,
+  selectionPadding: number
 ): SelectionLinesType => {
-  const { borders } = getShapeInfos(shape, 0)
+  const { borders } = getShapeInfos(shape, selectionPadding)
 
   return {
     border: createRecPath(borders),
@@ -49,7 +50,11 @@ const createLineSelectionPath = (
   }
 }
 
-const buildPath = <T extends DrawableShape<'line'>>(line: T, currentScale: number): T => {
+const buildPath = <T extends DrawableShape<'line'>>(
+  line: T,
+  currentScale: number,
+  selectionPadding: number
+): T => {
   const arrows = _.flow(
     (arrows: DrawableShape<'triangle'>[]) => {
       if (line.style?.lineArrow === 1 || line.style?.lineArrow === 3) {
@@ -76,7 +81,7 @@ const buildPath = <T extends DrawableShape<'line'>>(line: T, currentScale: numbe
   return {
     ...line,
     path: createLinePath(line),
-    selection: createLineSelectionPath(line, currentScale),
+    selection: createLineSelectionPath(line, currentScale, selectionPadding),
     arrows
   }
 }
@@ -90,7 +95,8 @@ export const createLine = (
     settings: ToolsSettingsType<'line'>
   },
   cursorPosition: Point,
-  currentScale: number
+  currentScale: number,
+  selectionPadding: number
 ): ShapeEntity<'line'> => {
   const lineShape = {
     toolId: shape.id,
@@ -106,7 +112,7 @@ export const createLine = (
       lineArrow: shape.settings.lineArrow.default
     }
   }
-  return buildPath(lineShape, currentScale)
+  return buildPath(lineShape, currentScale, selectionPadding)
 }
 
 export const buildTriangleOnLine = (center: Point, rotation: number, lineStyle: StyleShape) => {
@@ -160,7 +166,8 @@ export const translateLine = <U extends DrawableShape<'line'>>(
   originalShape: U,
   originalCursorPosition: Point,
   gridFormat: GridFormatType,
-  currentScale: number
+  currentScale: number,
+  selectionPadding: number
 ) => {
   return buildPath(
     {
@@ -170,7 +177,8 @@ export const translateLine = <U extends DrawableShape<'line'>>(
         roundForGrid(y + cursorPosition[1] - originalCursorPosition[1], gridFormat)
       ]) as [Point, Point]
     },
-    currentScale
+    currentScale,
+    selectionPadding
   )
 }
 
@@ -196,7 +204,7 @@ export const resizeLine = <U extends DrawableShape<'line'>>(
     originalShape
   )
 
-  return buildPath(updatedShape, currentScale)
+  return buildPath(updatedShape, currentScale, selectionPadding)
 }
 
 export const drawLineSelection = ({

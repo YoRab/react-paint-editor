@@ -33,9 +33,10 @@ export const createCirclePath = (shape: Circle) => {
 
 const createCircleSelectionPath = (
   rect: DrawableShape<'circle'>,
-  currentScale: number
+  currentScale: number,
+  selectionPadding: number
 ): SelectionDefaultType => {
-  const { borders } = getShapeInfos(rect, 0)
+  const { borders } = getShapeInfos(rect, selectionPadding)
 
   return {
     border: createRecPath(borders),
@@ -65,11 +66,15 @@ const createCircleSelectionPath = (
   }
 }
 
-const buildPath = <T extends DrawableShape<'circle'>>(shape: T, currentScale: number): T => {
+const buildPath = <T extends DrawableShape<'circle'>>(
+  shape: T,
+  currentScale: number,
+  selectionPadding: number
+): T => {
   return {
     ...shape,
     path: createCirclePath(shape),
-    selection: createCircleSelectionPath(shape, currentScale)
+    selection: createCircleSelectionPath(shape, currentScale, selectionPadding)
   }
 }
 
@@ -82,7 +87,8 @@ export const createCircle = (
     settings: ToolsSettingsType<'circle'>
   },
   cursorPosition: Point,
-  currentScale: number
+  currentScale: number,
+  selectionPadding: number
 ): ShapeEntity<'circle'> => {
   return buildPath(
     {
@@ -101,7 +107,8 @@ export const createCircle = (
         lineDash: shape.settings.lineDash.default
       }
     },
-    currentScale
+    currentScale,
+    selectionPadding
   )
 }
 
@@ -162,7 +169,8 @@ export const translateCircle = <U extends DrawableShape<'circle'>>(
   originalShape: U,
   originalCursorPosition: Point,
   gridFormat: GridFormatType,
-  currentScale: number
+  currentScale: number,
+  selectionPadding: number
 ) => {
   return buildPath(
     {
@@ -170,7 +178,8 @@ export const translateCircle = <U extends DrawableShape<'circle'>>(
       x: roundForGrid(originalShape.x + cursorPosition[0] - originalCursorPosition[0], gridFormat),
       y: roundForGrid(originalShape.y + cursorPosition[1] - originalCursorPosition[1], gridFormat)
     },
-    currentScale
+    currentScale,
+    selectionPadding
   )
 }
 
@@ -272,6 +281,7 @@ export const resizeCircle = (
       x: shapeWithNewDimensions.x - (newOppTrueX - oppTrueX),
       y: shapeWithNewDimensions.y - (newOppTrueY - oppTrueY)
     },
-    currentScale
+    currentScale,
+    selectionPadding
   )
 }

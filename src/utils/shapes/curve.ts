@@ -34,9 +34,10 @@ const createCurvePath = (curve: DrawableShape<'curve'>) => {
 
 const createCurveSelectionPath = (
   shape: DrawableShape<'curve'>,
-  currentScale: number
+  currentScale: number,
+  selectionPadding: number
 ): SelectionLinesType => {
-  const { borders } = getShapeInfos(shape, 0)
+  const { borders } = getShapeInfos(shape, selectionPadding)
 
   return {
     border: createRecPath(borders),
@@ -61,11 +62,15 @@ const createCurveSelectionPath = (
   }
 }
 
-const buildPath = <T extends DrawableShape<'curve'>>(shape: T, currentScale: number): T => {
+const buildPath = <T extends DrawableShape<'curve'>>(
+  shape: T,
+  currentScale: number,
+  selectionPadding: number
+): T => {
   return {
     ...shape,
     path: createCurvePath(shape),
-    selection: createCurveSelectionPath(shape, currentScale)
+    selection: createCurveSelectionPath(shape, currentScale, selectionPadding)
   }
 }
 
@@ -78,7 +83,8 @@ export const createCurve = (
     settings: ToolsSettingsType<'curve'>
   },
   cursorPosition: Point,
-  currentScale: number
+  currentScale: number,
+  selectionPadding: number
 ): ShapeEntity<'curve'> => {
   return buildPath(
     {
@@ -99,7 +105,8 @@ export const createCurve = (
         pointsCount: shape.settings.pointsCount.default
       }
     },
-    currentScale
+    currentScale,
+    selectionPadding
   )
 }
 
@@ -125,7 +132,7 @@ export const resizeCurve = (
     originalShape
   )
 
-  return buildPath(updatedShape, currentScale)
+  return buildPath(updatedShape, currentScale, selectionPadding)
 }
 
 export const drawCurve = (ctx: CanvasRenderingContext2D, curve: DrawableShape<'curve'>): void => {
@@ -142,9 +149,10 @@ export const translateCurve = <U extends DrawableShape<'curve'>>(
   originalShape: U,
   originalCursorPosition: Point,
   gridFormat: GridFormatType,
-  currentScale: number
+  currentScale: number,
+  selectionPadding: number
 ) => {
-  const { borders } = getShapeInfos(originalShape, 0)
+  const { borders } = getShapeInfos(originalShape, selectionPadding)
 
   return buildPath(
     {
@@ -171,6 +179,7 @@ export const translateCurve = <U extends DrawableShape<'curve'>>(
             ]
       )
     },
-    currentScale
+    currentScale,
+    selectionPadding
   )
 }

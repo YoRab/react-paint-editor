@@ -41,14 +41,20 @@ export const transformShape = (
 ): ShapeEntity => {
   switch (selectionMode.mode) {
     case 'brush':
-      return addNewPointToShape(shape as ShapeEntity<'brush'>, cursorPosition, currentScale)
+      return addNewPointToShape(
+        shape as ShapeEntity<'brush'>,
+        cursorPosition,
+        currentScale,
+        selectionPadding
+      )
     case 'translate':
       return translateShape(
         cursorPosition,
         selectionMode.originalShape,
         selectionMode.cursorStartPosition,
         gridFormat,
-        currentScale
+        currentScale,
+        selectionPadding
       )
     case 'rotate':
       return rotateShape(

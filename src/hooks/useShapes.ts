@@ -6,6 +6,7 @@ import { refreshShape } from 'utils/shapes'
 
 const useShapes = (
   onDataChanged: () => void = _.noop,
+  selectionPadding: number,
   canvasSize: {
     width: number
     height: number
@@ -63,13 +64,14 @@ const useShapes = (
         fileOrUrl,
         maxWidth,
         maxHeight,
-        canvasSize.scaleRatio
+        canvasSize.scaleRatio,
+        selectionPadding
       )
       addShape(pictureShape)
       saveShapes()
       return pictureShape
     },
-    [addShape, saveShapes, canvasSize]
+    [addShape, saveShapes, canvasSize, selectionPadding]
   )
 
   const updateShape = useCallback(
@@ -204,13 +206,15 @@ const useShapes = (
   }, [savedShapes])
 
   useEffect(() => {
-    shapesRef.current = shapesRef.current.map(shape => refreshShape(shape, canvasSize.scaleRatio))
+    shapesRef.current = shapesRef.current.map(shape =>
+      refreshShape(shape, canvasSize.scaleRatio, selectionPadding)
+    )
     setSelectedShape(prevSelectedShape =>
       prevSelectedShape === undefined
         ? undefined
         : shapesRef.current.find(shape => shape.id === prevSelectedShape.id)
     )
-  }, [canvasSize])
+  }, [canvasSize, selectionPadding])
 
   return {
     shapesRef,

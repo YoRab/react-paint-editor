@@ -25,6 +25,14 @@ export const buildDataToExport = (shapes: DrawableShape[], width: number, height
   } as ExportDataType
 }
 
-export const addDefaultAndTempShapeProps = (shape: DrawableShape, currentScale: number) => {
-  return refreshShape({ ...shape, id: _.uniqueId(`${shape.type}_`) } as ShapeEntity, currentScale)
+export const addDefaultAndTempShapeProps = (
+  shape: DrawableShape,
+  currentScale: number,
+  selectionPadding: number
+) => {
+  return refreshShape(
+    { ...shape, id: _.uniqueId(`${shape.type}_`) } as ShapeEntity,
+    currentScale,
+    selectionPadding
+  )
 }
