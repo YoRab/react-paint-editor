@@ -13,8 +13,10 @@ const KeyboardCode = {
   Backspace: 'Backspace',
   Escape: 'Escape',
   Shift: 'Shift',
-  Z: 'z',
-  Y: 'y'
+  z: 'z',
+  Z: 'Z',
+  y: 'y',
+  Y: 'Y'
 } as const
 
 const KeyboardCommand = {
@@ -79,12 +81,12 @@ const useKeyboard = ({
 
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.metaKey || e.ctrlKey) {
-        if (e.key === KeyboardCode.Z) {
+        if (e.key === KeyboardCode.Z || e.key === KeyboardCode.z) {
           e.preventDefault()
           e.stopPropagation()
           backwardShape()
           return
-        } else if (e.key === KeyboardCode.Y) {
+        } else if (e.key === KeyboardCode.Y || e.key === KeyboardCode.y) {
           e.preventDefault()
           e.stopPropagation()
           forwardShape()
