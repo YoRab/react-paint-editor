@@ -238,6 +238,7 @@ export const resizeShape = <T extends DrawableShape>(
   canvasOffset: Point,
   originalShape: T,
   selectionMode: SelectionModeData<Point | number>,
+  gridFormat: GridFormatType,
   selectionPadding: number,
   isShiftPressed: boolean,
   currentScale: number
@@ -271,12 +272,11 @@ export const resizeShape = <T extends DrawableShape>(
         currentScale
       ) as T
     case 'brush':
-      originalShape.type
       return resizeBrush(
         cursorPosition,
-        canvasOffset,
         originalShape,
         selectionMode as SelectionModeResize,
+        gridFormat,
         selectionPadding,
         currentScale,
         isShiftPressed
@@ -284,18 +284,18 @@ export const resizeShape = <T extends DrawableShape>(
     case 'circle':
       return resizeCircle(
         cursorPosition,
-        canvasOffset,
         originalShape,
         selectionMode as SelectionModeResize,
+        gridFormat,
         selectionPadding,
         currentScale
       ) as T
     case 'ellipse':
       return resizeEllipse(
         cursorPosition,
-        canvasOffset,
         originalShape,
         selectionMode as SelectionModeResize,
+        gridFormat,
         selectionPadding,
         currentScale,
         isShiftPressed
@@ -304,9 +304,9 @@ export const resizeShape = <T extends DrawableShape>(
     case 'square':
       return resizeRect(
         cursorPosition,
-        canvasOffset,
         originalShape,
         selectionMode as SelectionModeResize,
+        gridFormat,
         selectionPadding,
         currentScale,
         shape.type === 'square' || isShiftPressed
@@ -315,18 +315,18 @@ export const resizeShape = <T extends DrawableShape>(
       return resizeText(
         ctx,
         cursorPosition,
-        canvasOffset,
         originalShape,
         selectionMode as SelectionModeResize,
+        gridFormat,
         selectionPadding,
         currentScale
       ) as T
     case 'picture':
       return resizePicture(
         cursorPosition,
-        canvasOffset,
         originalShape,
         selectionMode as SelectionModeResize,
+        gridFormat,
         selectionPadding,
         currentScale,
         !isShiftPressed

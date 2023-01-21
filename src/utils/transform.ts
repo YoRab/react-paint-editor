@@ -66,17 +66,18 @@ export const transformShape = (
         gridFormat
       )
     case 'resize':
-      const roundCursorPosition: Point = [
-        roundForGrid(cursorPosition[0], gridFormat),
-        roundForGrid(cursorPosition[1], gridFormat)
-      ]
+      // const roundCursorPosition: Point = [
+      //   roundForGrid(cursorPosition[0], gridFormat),
+      //   roundForGrid(cursorPosition[1], gridFormat)
+      // ]
       return resizeShape(
         ctx,
         shape,
-        roundCursorPosition,
+        cursorPosition,
         canvasOffset,
         selectionMode.originalShape,
         selectionMode,
+        gridFormat,
         selectionPadding,
         isShiftPressed,
         currentScale

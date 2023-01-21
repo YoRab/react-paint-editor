@@ -210,17 +210,17 @@ export const translateText = <U extends DrawableShape<'text'>>(
 export const resizeText = (
   ctx: CanvasRenderingContext2D,
   cursorPosition: Point,
-  canvasOffset: Point,
   originalShape: DrawableShape<'text'>,
   selectionMode: SelectionModeResize,
+  gridFormat: GridFormatType,
   selectionPadding: number,
   currentScale: number
 ): DrawableShape<'text'> => {
   const newRect = resizeRect(
     cursorPosition,
-    canvasOffset,
     originalShape,
     selectionMode,
+    gridFormat,
     selectionPadding,
     currentScale,
     true

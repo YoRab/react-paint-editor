@@ -281,7 +281,10 @@ const useDrawableCanvas = ({
           setSelectedShape(newShape)
           setSelectionMode({
             mode: 'resize',
-            cursorStartPosition: cursorPosition,
+            cursorStartPosition: [
+              cursorPosition[0] + selectionPadding,
+              cursorPosition[1] + selectionPadding
+            ],
             originalShape: newShape,
             anchor:
               activeTool.type === 'line' ||

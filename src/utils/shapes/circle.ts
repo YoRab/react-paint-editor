@@ -10,10 +10,7 @@ import type {
   SelectionDefaultType
 } from 'types/Shapes'
 import type { ToolsSettingsType } from 'types/tools'
-import {
-  getPointPositionAfterCanvasTransformation,
-  getPointPositionBeforeCanvasTransformation
-} from 'utils/intersect'
+import { getPointPositionBeforeCanvasTransformation } from 'utils/intersect'
 import { roundForGrid } from 'utils/transform'
 import { getShapeInfos } from 'utils/shapes/index'
 import { updateCanvasContext } from 'utils/canvas'
@@ -24,6 +21,7 @@ import {
   SELECTION_RESIZE_ANCHOR_POSITIONS,
   SELECTION_ROTATED_ANCHOR_POSITION
 } from 'constants/shapes'
+import { resizeShapeBorder } from './common'
 
 export const createCirclePath = (shape: Circle) => {
   const path = new Path2D()
@@ -97,7 +95,7 @@ export const createCircle = (
       id: _.uniqueId(`${shape.type}_`),
       x: cursorPosition[0],
       y: cursorPosition[1],
-      radius: 1,
+      radius: 0,
       rotation: 0,
       style: {
         globalAlpha: shape.settings.opacity.default,
@@ -213,73 +211,27 @@ const getCircleOppositeAnchorAbsolutePosition = <T extends DrawableShape & Circl
 
 export const resizeCircle = (
   cursorPosition: Point,
-  canvasOffset: Point,
   originalShape: DrawableShape<'circle'>,
   selectionMode: SelectionModeResize,
+  gridFormat: GridFormatType,
   selectionPadding: number,
   currentScale: number
 ): DrawableShape<'circle'> => {
-  const { center, borders } = getShapeInfos(originalShape, selectionPadding)
-
-  const cursorPositionBeforeResize = getPointPositionAfterCanvasTransformation(
+  const { borderX, borderHeight, borderY, borderWidth } = resizeShapeBorder(
     cursorPosition,
-    originalShape.rotation,
-    center,
-    canvasOffset
-  )
-
-  const newCursorPosition = [cursorPositionBeforeResize[0], cursorPositionBeforeResize[1]]
-
-  const scaledRadius =
-    selectionMode.anchor[1] === 0.5
-      ? (selectionMode.anchor[0] === 0
-          ? borders.x +
-            borders.width -
-            newCursorPosition[0] +
-            selectionPadding * (selectionMode.anchor[0] === 0 ? -2 : 2)
-          : newCursorPosition[0] -
-            borders.x -
-            selectionPadding * (selectionMode.anchor[0] === 0 ? -2 : 2)) / 2
-      : (selectionMode.anchor[1] === 0
-          ? borders.y +
-            borders.height -
-            newCursorPosition[1] +
-            selectionPadding * (selectionMode.anchor[1] === 0 ? -2 : 2)
-          : newCursorPosition[1] -
-            borders.y -
-            selectionPadding * (selectionMode.anchor[1] === 0 ? -2 : 2)) / 2
-
-  const shapeWithNewDimensions = {
-    ...originalShape,
-    ...{
-      radius: Math.abs(scaledRadius)
-    }
-  }
-  const { center: shapeWithNewDimensionsCenter } = getShapeInfos(
-    shapeWithNewDimensions,
-    selectionPadding
-  )
-
-  const [oppTrueX, oppTrueY] = getCircleOppositeAnchorAbsolutePosition(
-    selectionMode.anchor,
-    center,
     originalShape,
-    canvasOffset
-  )
-
-  const [newOppTrueX, newOppTrueY] = getCircleOppositeAnchorAbsolutePosition(
-    selectionMode.anchor,
-    shapeWithNewDimensionsCenter,
-    shapeWithNewDimensions,
-    canvasOffset,
-    [scaledRadius < 0, scaledRadius < 0]
+    selectionMode,
+    gridFormat,
+    selectionPadding,
+    true
   )
 
   return buildPath(
     {
-      ...shapeWithNewDimensions,
-      x: shapeWithNewDimensions.x - (newOppTrueX - oppTrueX),
-      y: shapeWithNewDimensions.y - (newOppTrueY - oppTrueY)
+      ...originalShape,
+      radius: Math.max(0, borderWidth / 2 - selectionPadding),
+      x: borderX + borderWidth / 2,
+      y: borderY + borderHeight / 2
     },
     currentScale,
     selectionPadding

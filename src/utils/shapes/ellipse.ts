@@ -16,12 +16,9 @@ import type {
 } from 'types/Shapes'
 import type { ToolsSettingsType } from 'types/tools'
 import { updateCanvasContext } from 'utils/canvas'
-import {
-  getPointPositionAfterCanvasTransformation,
-  getPointPositionBeforeCanvasTransformation
-} from 'utils/intersect'
-import { getNormalizedSize, roundForGrid } from 'utils/transform'
+import { roundForGrid } from 'utils/transform'
 import { createCirclePath } from './circle'
+import { resizeShapeBorder } from './common'
 import { getShapeInfos } from './index'
 import { createLinePath } from './line'
 import { createRecPath } from './rectangle'
@@ -99,8 +96,8 @@ export const createEllipse = (
       id: _.uniqueId(`${shape.type}_`),
       x: cursorPosition[0],
       y: cursorPosition[1],
-      radiusX: 1,
-      radiusY: 1,
+      radiusX: 0,
+      radiusY: 0,
       rotation: 0,
       style: {
         globalAlpha: shape.settings.opacity.default,
@@ -186,114 +183,31 @@ export const translateEllipse = <U extends DrawableShape<'ellipse'>>(
   )
 }
 
-const getEllipseOppositeAnchorAbsolutePosition = <T extends DrawableShape & Ellipse>(
-  anchor: Point,
-  center: Point,
-  shape: T,
-  canvasOffset: Point,
-  [negW, negH] = [false, false]
-) => {
-  const oppositeX =
-    anchor[0] === 0.5
-      ? shape.x
-      : anchor[0] === 0
-      ? shape.x + (negW ? -shape.radiusX : shape.radiusX)
-      : shape.x + (negW ? shape.radiusX : -shape.radiusX)
-  const oppositeY =
-    anchor[1] === 0.5
-      ? shape.y
-      : anchor[1] === 0
-      ? shape.y + (negH ? -shape.radiusY : shape.radiusY)
-      : shape.y + (negH ? shape.radiusY : -shape.radiusY)
-
-  return getPointPositionBeforeCanvasTransformation(
-    [oppositeX, oppositeY],
-    shape.rotation,
-    center,
-    canvasOffset
-  )
-}
-
 export const resizeEllipse = (
   cursorPosition: Point,
-  canvasOffset: Point,
   originalShape: DrawableShape<'ellipse'>,
   selectionMode: SelectionModeResize,
+  gridFormat: GridFormatType,
   selectionPadding: number,
   currentScale: number,
   keepRatio = false
 ): DrawableShape<'ellipse'> => {
-  const { center, borders } = getShapeInfos(originalShape, selectionPadding)
-
-  const cursorPositionBeforeResize = getPointPositionAfterCanvasTransformation(
+  const { borderX, borderHeight, borderY, borderWidth } = resizeShapeBorder(
     cursorPosition,
-    originalShape.rotation,
-    center,
-    canvasOffset
-  )
-
-  const newCursorPosition = [cursorPositionBeforeResize[0], cursorPositionBeforeResize[1]]
-
-  const scaledRadiusX =
-    selectionMode.anchor[0] === 0.5
-      ? originalShape.radiusX
-      : (selectionMode.anchor[0] === 0
-          ? borders.x +
-            borders.width -
-            newCursorPosition[0] +
-            selectionPadding * (selectionMode.anchor[0] === 0 ? -2 : 2)
-          : newCursorPosition[0] -
-            borders.x -
-            selectionPadding * (selectionMode.anchor[0] === 0 ? -2 : 2)) / 2
-
-  const scaledRadiusY =
-    selectionMode.anchor[1] === 0.5
-      ? originalShape.radiusY
-      : (selectionMode.anchor[1] === 0
-          ? borders.y +
-            borders.height -
-            newCursorPosition[1] +
-            selectionPadding * (selectionMode.anchor[1] === 0 ? -2 : 2)
-          : newCursorPosition[1] -
-            borders.y -
-            selectionPadding * (selectionMode.anchor[1] === 0 ? -2 : 2)) / 2
-
-  const [radiusXWithRatio, radiusYWithRatio] = keepRatio
-    ? getNormalizedSize(originalShape.radiusX, originalShape.radiusY, scaledRadiusX, scaledRadiusY)
-    : [scaledRadiusX, scaledRadiusY]
-
-  const shapeWithNewDimensions = {
-    ...originalShape,
-    ...{
-      radiusX: Math.abs(radiusXWithRatio),
-      radiusY: Math.abs(radiusYWithRatio)
-    }
-  }
-  const { center: shapeWithNewDimensionsCenter } = getShapeInfos(
-    shapeWithNewDimensions,
-    selectionPadding
-  )
-
-  const [oppTrueX, oppTrueY] = getEllipseOppositeAnchorAbsolutePosition(
-    selectionMode.anchor,
-    center,
     originalShape,
-    canvasOffset
-  )
-
-  const [newOppTrueX, newOppTrueY] = getEllipseOppositeAnchorAbsolutePosition(
-    selectionMode.anchor,
-    shapeWithNewDimensionsCenter,
-    shapeWithNewDimensions,
-    canvasOffset,
-    [radiusXWithRatio < 0, radiusYWithRatio < 0]
+    selectionMode,
+    gridFormat,
+    selectionPadding,
+    keepRatio
   )
 
   return buildPath(
     {
-      ...shapeWithNewDimensions,
-      x: shapeWithNewDimensions.x - (newOppTrueX - oppTrueX),
-      y: shapeWithNewDimensions.y - (newOppTrueY - oppTrueY)
+      ...originalShape,
+      radiusX: Math.max(0, borderWidth / 2 - selectionPadding),
+      radiusY: Math.max(0, borderHeight / 2 - selectionPadding),
+      x: borderX + borderWidth / 2,
+      y: borderY + borderHeight / 2
     },
     currentScale,
     selectionPadding

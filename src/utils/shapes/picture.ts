@@ -196,18 +196,18 @@ export const translatePicture = <U extends DrawableShape<'picture'>>(
 
 export const resizePicture = (
   cursorPosition: Point,
-  canvasOffset: Point,
   originalShape: DrawableShape<'picture'>,
   selectionMode: SelectionModeResize,
+  gridFormat: GridFormatType,
   selectionPadding: number,
   currentScale: number,
   keepRatio: boolean
 ): DrawableShape<'picture'> => {
   return resizeRect(
     cursorPosition,
-    canvasOffset,
     originalShape,
     selectionMode,
+    gridFormat,
     selectionPadding,
     currentScale,
     keepRatio

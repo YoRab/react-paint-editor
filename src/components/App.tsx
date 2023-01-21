@@ -108,9 +108,9 @@ type AppType = {
   apiRef?: MutableRefObject<
     | undefined
     | {
-        getCurrentImage: () => string | undefined
-        getCurrentData: () => ExportDataType
-      }
+      getCurrentImage: () => string | undefined
+      getCurrentData: () => ExportDataType
+    }
   >
   options?: OptionalAppOptionsType
 }
@@ -157,11 +157,12 @@ const App = ({
     canvasBackgroundColor,
     canvasSelectionColor,
     canvasSelectionWidth,
-    canvasSelectionPadding
+    // canvasSelectionPadding
   } = {
     ...DEFAULT_OPTIONS.uiStyle,
     ...(options?.uiStyle ?? {})
   }
+  const canvasSelectionPadding = 24;
   const isEditMode = mode !== 'viewer'
   const disabled = disabledFromProps || !isEditMode
   const componentRef = useRef<HTMLDivElement>(null)
@@ -427,12 +428,12 @@ const App = ({
       getCurrentImage: () => {
         return canvasRef.current
           ? getCanvasImage(
-              shapesRef.current,
-              canvasOffset,
-              canvasWidth,
-              canvasHeight,
-              canvasSelectionPadding
-            )
+            shapesRef.current,
+            canvasOffset,
+            canvasWidth,
+            canvasHeight,
+            canvasSelectionPadding
+          )
           : undefined
       },
 
