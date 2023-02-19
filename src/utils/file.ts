@@ -5,11 +5,38 @@ import { addDefaultAndTempShapeProps, buildDataToExport } from './data'
 import { initCanvasContext } from './canvas'
 import { migrateShapesV065 } from './migration'
 import { drawShape } from './shapes'
+import { PICTURE_DEFAULT_SIZE } from 'constants/picture'
+
+export const addSizeAndConvertSvgToBase64 = (svgFileContent: string) => {
+  const parser = new DOMParser()
+  const result = parser.parseFromString(svgFileContent, 'text/xml')
+  const inlineSVG = result.getElementsByTagName('svg')[0]
+
+  const svgWidth = inlineSVG.getAttribute('width')
+  const svgHeight = inlineSVG.getAttribute('height')
+  if (svgWidth || svgHeight) {
+    return 'data:image/svg+xml;base64,' + btoa(svgFileContent)
+  }
+  const viewBox =
+    inlineSVG.getAttribute('viewBox') ?? `0 0 ${PICTURE_DEFAULT_SIZE} ${PICTURE_DEFAULT_SIZE}`
+  const [, , width, height] = viewBox.split(' ')
+  inlineSVG.setAttribute('width', width ?? PICTURE_DEFAULT_SIZE)
+  inlineSVG.setAttribute('height', height ?? PICTURE_DEFAULT_SIZE)
+  const svg64 = btoa(new XMLSerializer().serializeToString(inlineSVG))
+  return 'data:image/svg+xml;base64,' + svg64
+}
+
+export const isSvg = (fileOrUrl: File | string) =>
+  (fileOrUrl instanceof File ? fileOrUrl.name : fileOrUrl).includes('.svg')
 
 export const fetchAndStringify = (url: string) => {
-  return fetch(url)
-    .then(response => response.blob())
-    .then(myBlob => URL.createObjectURL(myBlob))
+  return isSvg(url)
+    ? fetch(url)
+        .then(response => response.text())
+        .then(svgFileContent => addSizeAndConvertSvgToBase64(svgFileContent))
+    : fetch(url)
+        .then(response => response.blob())
+        .then(myBlob => URL.createObjectURL(myBlob))
 }
 
 export const downloadFile = (content: string, fileName: string) => {
