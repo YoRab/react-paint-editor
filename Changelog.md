@@ -1,3 +1,8 @@
+# V0.7.4
+
+- fix : shortcut with caps fixed
+- fix : add suport for svg in firefox
+
 # V0.7.3
 
 - fix : strip all tags with text editing
