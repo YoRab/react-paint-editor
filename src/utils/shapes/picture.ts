@@ -9,6 +9,7 @@ import { SelectionModeResize } from 'types/Mode'
 
 const createPictureShape = (
   img: HTMLImageElement,
+  storedSrc: string,
   maxPictureWidth: number,
   maxPictureHeight: number
 ): DrawablePicture => {
@@ -28,7 +29,7 @@ const createPictureShape = (
     y: (maxPictureHeight - height) / 2,
     width,
     height,
-    src: img.src,
+    src: storedSrc,
     img,
     rotation: 0
   }
@@ -49,7 +50,7 @@ const createFilePicture = (
       img.src = svgFile
       return
     }
-    const pictureShape = createPictureShape(img, maxPictureWidth, maxPictureHeight)
+    const pictureShape = createPictureShape(img, img.src, maxPictureWidth, maxPictureHeight)
     resolve(pictureShape)
   }
   img.src = URL.createObjectURL(file)
@@ -63,7 +64,7 @@ const createUrlPicture = (
   maxPictureHeight: number
 ) => {
   img.onload = () => {
-    const pictureShape = createPictureShape(img, maxPictureWidth, maxPictureHeight)
+    const pictureShape = createPictureShape(img, url, maxPictureWidth, maxPictureHeight)
     resolve(pictureShape)
   }
 
