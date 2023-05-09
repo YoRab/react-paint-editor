@@ -1,3 +1,7 @@
+# V0.7.5
+
+- fix : store url for url picture instead of base64 version of the file
+
 # V0.7.4
 
 - fix : shortcut with caps fixed
