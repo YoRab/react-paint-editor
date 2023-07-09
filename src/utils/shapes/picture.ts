@@ -1,7 +1,7 @@
 import _ from 'lodash/fp'
 import { fitContentInsideContainer } from '../transform'
 import type { DrawablePicture, Picture, Point, Rect, StoredPicture } from 'types/Shapes'
-import { addSizeAndConvertSvgToBase64, fetchAndStringify, isSvg } from '../file'
+import { addSizeAndConvertSvgToObjectUrl, fetchAndStringify, isSvg } from '../file'
 import { DEFAULT_SHAPE_PICTURE } from 'constants/tools'
 import { updateCanvasContext } from 'utils/canvas'
 import { getRectBorder, resizeRect } from './rectangle'
@@ -42,18 +42,23 @@ const createFilePicture = (
   maxPictureWidth: number,
   maxPictureHeight: number
 ) => {
+
+  const initSrc = URL.createObjectURL(file)
   img.onload = async () => {
+    URL.revokeObjectURL(img.src)
     if (isSvg(file) && !img.width && !img.height) {
       const svgFileContent = await file.text()
-      const svgFile = addSizeAndConvertSvgToBase64(svgFileContent)
-      if (svgFile === img.src) return // prevent infinite loop
-      img.src = svgFile
-      return
+      const svgUrl = addSizeAndConvertSvgToObjectUrl(svgFileContent)
+
+      if (initSrc === img.src) {
+        img.src = svgUrl
+        return
+      }
     }
     const pictureShape = createPictureShape(img, img.src, maxPictureWidth, maxPictureHeight)
     resolve(pictureShape)
   }
-  img.src = URL.createObjectURL(file)
+  img.src = initSrc
 }
 
 const createUrlPicture = (
@@ -64,6 +69,7 @@ const createUrlPicture = (
   maxPictureHeight: number
 ) => {
   img.onload = () => {
+    URL.revokeObjectURL(img.src)
     const pictureShape = createPictureShape(img, url, maxPictureWidth, maxPictureHeight)
     resolve(pictureShape)
   }
