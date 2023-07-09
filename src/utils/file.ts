@@ -7,23 +7,27 @@ import { migrateShapesV065 } from './migration'
 import { drawShape } from './shapes'
 import { PICTURE_DEFAULT_SIZE } from 'constants/picture'
 
-export const addSizeAndConvertSvgToBase64 = (svgFileContent: string) => {
+export const addSizeAndConvertSvgToObjectUrl = (svgFileContent: string) => {
   const parser = new DOMParser()
   const result = parser.parseFromString(svgFileContent, 'text/xml')
   const inlineSVG = result.getElementsByTagName('svg')[0]
 
   const svgWidth = inlineSVG.getAttribute('width')
   const svgHeight = inlineSVG.getAttribute('height')
+
+  let svgContentToConvert
   if (svgWidth || svgHeight) {
-    return 'data:image/svg+xml;base64,' + btoa(svgFileContent)
+    svgContentToConvert = svgFileContent
+  } else {
+    const viewBox =
+      inlineSVG.getAttribute('viewBox') ?? `0 0 ${PICTURE_DEFAULT_SIZE} ${PICTURE_DEFAULT_SIZE}`
+    const [, , width, height] = viewBox.split(' ')
+    inlineSVG.setAttribute('width', width ?? PICTURE_DEFAULT_SIZE)
+    inlineSVG.setAttribute('height', height ?? PICTURE_DEFAULT_SIZE)
+    svgContentToConvert = new XMLSerializer().serializeToString(inlineSVG)
   }
-  const viewBox =
-    inlineSVG.getAttribute('viewBox') ?? `0 0 ${PICTURE_DEFAULT_SIZE} ${PICTURE_DEFAULT_SIZE}`
-  const [, , width, height] = viewBox.split(' ')
-  inlineSVG.setAttribute('width', width ?? PICTURE_DEFAULT_SIZE)
-  inlineSVG.setAttribute('height', height ?? PICTURE_DEFAULT_SIZE)
-  const svg64 = btoa(new XMLSerializer().serializeToString(inlineSVG))
-  return 'data:image/svg+xml;base64,' + svg64
+  const blob = new Blob([svgContentToConvert], { type: 'image/svg+xml' });
+  return URL.createObjectURL(blob);
 }
 
 export const isSvg = (fileOrUrl: File | string) =>
@@ -32,11 +36,11 @@ export const isSvg = (fileOrUrl: File | string) =>
 export const fetchAndStringify = (url: string) => {
   return isSvg(url)
     ? fetch(url)
-        .then(response => response.text())
-        .then(svgFileContent => addSizeAndConvertSvgToBase64(svgFileContent))
+      .then(response => response.text())
+      .then(svgFileContent => addSizeAndConvertSvgToObjectUrl(svgFileContent))
     : fetch(url)
-        .then(response => response.blob())
-        .then(myBlob => URL.createObjectURL(myBlob))
+      .then(response => response.blob())
+      .then(myBlob => URL.createObjectURL(myBlob))
 }
 
 export const downloadFile = (content: string, fileName: string) => {
@@ -112,6 +116,7 @@ export const decodeImportedData = async (shapesForJson: ExportDataType) => {
         const img = new Image()
         const newPromise = new Promise<void>((resolve, reject) => {
           img.onload = () => {
+            URL.revokeObjectURL(img.src)
             resolve()
           }
 
