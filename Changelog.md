@@ -1,3 +1,7 @@
+# V0.7.6
+
+- fix : prevent big svg failing to load using blob instead of base64
+
 # V0.7.5
 
 - fix : store url for url picture instead of base64 version of the file
