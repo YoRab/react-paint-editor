@@ -2,7 +2,8 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import type { ShapeEntity } from 'types/Shapes'
 import _ from 'lodash/fp'
 import { createPicture } from 'utils/shapes/picture'
-import { refreshShape } from 'utils/shapes'
+import { refreshShape } from 'utils/shapes/index'
+import { PICTURE_DEFAULT_SIZE } from 'constants/picture'
 
 const useShapes = (
   onDataChanged: () => void = _.noop,
@@ -42,15 +43,15 @@ const useShapes = (
       )
         ? prevSavedShaped
         : {
-            states: [
-              ...prevSavedShaped.states.slice(0, prevSavedShaped.cursor + 1),
-              {
-                shapes: shapesRef.current,
-                selectedShape
-              }
-            ],
-            cursor: prevSavedShaped.cursor + 1
-          }
+          states: [
+            ...prevSavedShaped.states.slice(0, prevSavedShaped.cursor + 1),
+            {
+              shapes: shapesRef.current,
+              selectedShape
+            }
+          ],
+          cursor: prevSavedShaped.cursor + 1
+        }
     })
   }, [selectedShape])
 
@@ -59,7 +60,11 @@ const useShapes = (
   }, [])
 
   const addPictureShape = useCallback(
-    async (fileOrUrl: File | string, maxWidth = 300, maxHeight = 300) => {
+    async (
+      fileOrUrl: File | string,
+      maxWidth = PICTURE_DEFAULT_SIZE,
+      maxHeight = PICTURE_DEFAULT_SIZE
+    ) => {
       const pictureShape = await createPicture(
         fileOrUrl,
         maxWidth,
@@ -131,19 +136,19 @@ const useShapes = (
     setSavedShapes(prevSavedShaped => {
       return clearHistory
         ? {
-            states: [{ shapes: shapesToInit, selectedShape: undefined }],
-            cursor: 0
-          }
+          states: [{ shapes: shapesToInit, selectedShape: undefined }],
+          cursor: 0
+        }
         : {
-            states: [
-              ...prevSavedShaped.states.slice(0, prevSavedShaped.cursor + 1),
-              {
-                shapes: shapesToInit,
-                selectedShape: undefined
-              }
-            ],
-            cursor: prevSavedShaped.cursor + 1
-          }
+          states: [
+            ...prevSavedShaped.states.slice(0, prevSavedShaped.cursor + 1),
+            {
+              shapes: shapesToInit,
+              selectedShape: undefined
+            }
+          ],
+          cursor: prevSavedShaped.cursor + 1
+        }
     })
   }, [])
 

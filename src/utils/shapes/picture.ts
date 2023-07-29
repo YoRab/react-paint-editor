@@ -8,7 +8,7 @@ import type {
   SelectionDefaultType,
   ShapeEntity
 } from 'types/Shapes'
-import { fetchAndStringify } from '../file'
+import { addSizeAndConvertSvgToObjectUrl, fetchAndStringify, isSvg } from '../file'
 import { DEFAULT_SHAPE_PICTURE } from 'constants/tools'
 import { createRecPath, getRectBorder, resizeRect } from './rectangle'
 import { SelectionModeResize } from 'types/Mode'
@@ -71,6 +71,88 @@ const buildPath = <T extends DrawableShape<'picture'>>(
 
 export const refreshPicture = buildPath
 
+const createPictureShape = (
+  img: HTMLImageElement,
+  storedSrc: string,
+  maxPictureWidth: number,
+  maxPictureHeight: number,
+  currentScale: number,
+  selectionPadding: number
+): ShapeEntity<'picture'> => {
+  const [width, height] = fitContentInsideContainer(
+    img.width,
+    img.height,
+    maxPictureWidth,
+    maxPictureHeight,
+    true
+  )
+
+  return buildPath({
+    toolId: DEFAULT_SHAPE_PICTURE.id,
+    type: 'picture',
+    id: _.uniqueId(`${'picture'}_`),
+    x: (maxPictureWidth - width) / 2,
+    y: (maxPictureHeight - height) / 2,
+    width,
+    height,
+    src: storedSrc,
+    img,
+    rotation: 0
+  }, currentScale, selectionPadding)
+}
+
+const createFilePicture = (
+  img: HTMLImageElement,
+  resolve: (value: ShapeEntity<'picture'> | PromiseLike<ShapeEntity<'picture'>>) => void,
+  file: File,
+  maxPictureWidth: number,
+  maxPictureHeight: number,
+  currentScale: number,
+  selectionPadding: number
+) => {
+
+  const initSrc = URL.createObjectURL(file)
+  img.onload = async () => {
+    URL.revokeObjectURL(img.src)
+    if (isSvg(file) && !img.width && !img.height) {
+      const svgFileContent = await file.text()
+      const svgUrl = addSizeAndConvertSvgToObjectUrl(svgFileContent)
+
+      if (initSrc === img.src) {
+        img.src = svgUrl
+        return
+      }
+    }
+    const pictureShape = createPictureShape(img, img.src, maxPictureWidth, maxPictureHeight, currentScale, selectionPadding)
+    resolve(pictureShape)
+  }
+  img.src = initSrc
+}
+
+const createUrlPicture = (
+  img: HTMLImageElement,
+  resolve: (value: ShapeEntity<'picture'> | PromiseLike<ShapeEntity<'picture'>>) => void,
+  url: string,
+  maxPictureWidth: number,
+  maxPictureHeight: number,
+  currentScale: number,
+  selectionPadding: number
+) => {
+  img.onload = () => {
+    URL.revokeObjectURL(img.src)
+    const pictureShape = createPictureShape(img, url, maxPictureWidth, maxPictureHeight, currentScale, selectionPadding)
+    resolve(pictureShape)
+  }
+
+  fetchAndStringify(url)
+    .then(picData => {
+      img.src = picData
+    })
+    .catch(() => {
+      img.src = '' // trigger onerror
+    })
+}
+
 export const createPicture = (
   fileOrUrl: File | string,
   maxPictureWidth: number,
@@ -80,51 +162,18 @@ export const createPicture = (
 ) => {
   return new Promise<ShapeEntity<'picture'>>((resolve, reject) => {
     const img = new Image()
-    img.onload = () => {
-      const [width, height] = fitContentInsideContainer(
-        img.width,
-        img.height,
-        maxPictureWidth,
-        maxPictureHeight,
-        true
-      )
-
-      const pictureShape: ShapeEntity<'picture'> = {
-        toolId: DEFAULT_SHAPE_PICTURE.id,
-        type: 'picture',
-        id: _.uniqueId(`${'picture'}_`),
-        x: (maxPictureWidth - width) / 2,
-        y: (maxPictureHeight - height) / 2,
-        width,
-        height,
-        src: fileOrUrl instanceof File ? img.src : fileOrUrl,
-        img,
-        rotation: 0
-      }
-      resolve(buildPath(pictureShape, currentScale, selectionPadding))
-    }
 
     img.onerror = () => {
       reject(new Error('Some images could not be loaded'))
     }
-    if (fileOrUrl instanceof File) {
-      img.src = URL.createObjectURL(fileOrUrl)
-    } else {
-      fetchAndStringify(fileOrUrl)
-        .then(picData => {
-          img.src = picData
-        })
-        .catch(() => {
-          img.src = '' // to trigger onerror
-        })
-    }
 
-    img.onerror = () => {
-      reject(new Error('Error while loading the src'))
-    }
     setTimeout(() => {
-      reject(new Error('Timeout while loading the src'))
+      reject(new Error('Timeout while loading images'))
     }, 4000)
+
+    fileOrUrl instanceof File
+      ? createFilePicture(img, resolve, fileOrUrl, maxPictureWidth, maxPictureHeight, currentScale, selectionPadding)
+      : createUrlPicture(img, resolve, fileOrUrl, maxPictureWidth, maxPictureHeight, currentScale, selectionPadding)
   })
 }
 
@@ -171,9 +220,8 @@ export const drawSelectionPicture = (
   }
 }
 
-export const getPictureBorder = (picture: Picture, selectionPadding: number): Rect => {
-  return getRectBorder(picture, selectionPadding)
-}
+export const getPictureBorder = (picture: Picture, selectionPadding: number): Rect =>
+  getRectBorder(picture, selectionPadding)
 
 export const translatePicture = <U extends DrawableShape<'picture'>>(
   cursorPosition: Point,

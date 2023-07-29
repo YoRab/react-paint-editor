@@ -4,6 +4,7 @@ import { GRID_STEP } from 'constants/style'
 import type { GridFormatType } from 'constants/app'
 import { resizeShape, rotateShape, translateShape } from './shapes'
 import { addNewPointToShape } from './shapes/brush'
+import { PICTURE_DEFAULT_SIZE } from 'constants/picture'
 
 export const getNormalizedSize = (
   originalWidth: number,
@@ -94,6 +95,8 @@ export const fitContentInsideContainer = (
   containerHeight: number,
   shouldFillContainer = false
 ) => {
+  if (!contentWidth || !contentHeight || !containerHeight || !containerWidth)
+    return [PICTURE_DEFAULT_SIZE, PICTURE_DEFAULT_SIZE]
   const contentRatio = contentWidth / contentHeight
   const containerRatio = containerWidth / containerHeight
   if (contentRatio > containerRatio) {
