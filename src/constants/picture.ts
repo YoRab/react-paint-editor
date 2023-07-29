@@ -1,0 +1,1 @@
+export const PICTURE_DEFAULT_SIZE = 300

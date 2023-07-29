@@ -1,3 +1,16 @@
+# V0.7.6
+
+- fix : prevent big svg failing to load using blob instead of base64
+
+# V0.7.5
+
+- fix : store url for url picture instead of base64 version of the file
+
+# V0.7.4
+
+- fix : shortcut with caps fixed
+- fix : add suport for svg in firefox
+
 # V0.7.3
 
 - fix : strip all tags with text editing
