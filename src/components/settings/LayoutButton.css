@@ -1,0 +1,4 @@
+.react-paint-editor-layout-opened .react-paint-editor-layout-button.react-paint-editor-layout-button.react-paint-editor-layout-button {
+    color: var(--font-selected-color);
+    background: var(--font-selected-bg);
+}

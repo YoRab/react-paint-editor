@@ -108,9 +108,9 @@ type AppType = {
   apiRef?: MutableRefObject<
     | undefined
     | {
-        getCurrentImage: () => string | undefined
-        getCurrentData: () => ExportDataType
-      }
+      getCurrentImage: () => string | undefined
+      getCurrentData: () => ExportDataType
+    }
   >
   options?: OptionalAppOptionsType
 }
@@ -427,12 +427,12 @@ const App = ({
       getCurrentImage: () => {
         return canvasRef.current
           ? getCanvasImage(
-              shapesRef.current,
-              canvasOffset,
-              canvasWidth,
-              canvasHeight,
-              canvasSelectionPadding
-            )
+            shapesRef.current,
+            canvasOffset,
+            canvasWidth,
+            canvasHeight,
+            canvasSelectionPadding
+          )
           : undefined
       },
 
@@ -442,7 +442,7 @@ const App = ({
     }
   }, [apiRef, shapesRef, canvasOffset, canvasWidth, canvasHeight, canvasSelectionPadding])
 
-  const className = `${classNameFromProps ?? ''} ${isLayoutPanelShown ? 'layoutPanelOpened' : ''}`
+  const className = `${classNameFromProps ?? ''} ${isLayoutPanelShown ? 'react-paint-editor-layout-opened' : ''}`
 
   return (
     <StyledApp

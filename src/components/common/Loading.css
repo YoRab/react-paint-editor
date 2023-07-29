@@ -1,0 +1,64 @@
+.react-paint-editor-loading {
+    display: flex;
+    position: absolute;
+    z-index: var(--react-paint-editor-loading-zindex);
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    justify-content: center;
+    align-items: center;
+    background: #00000050;
+    transition: opacity var(--react-paint-editor-loading-transition-duration) linear;
+    opacity: 0;
+}
+
+.react-paint-editor-loading[data-loading='visible'] {
+    opacity: 1;
+}
+
+@keyframes react-paint-editor-loading-rotation {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.react-paint-editor-loader {
+    width: 40px;
+    height: 40px;
+    position: relative;
+    transform: rotate(10deg);
+    animation: react-paint-editor-loading-rotation 1s infinite;
+}
+
+.react-paint-editor-loader>div {
+    border-radius: 50%;
+    position: absolute;
+    width: 15px;
+    height: 15px;
+}
+
+.react-paint-editor-loader>div:nth-child(1) {
+    left: 0;
+    background-color: #5c6bc0;
+}
+
+.react-paint-editor-loader>div:nth-child(2) {
+    right: 0;
+    background-color: #8bc34a;
+}
+
+.react-paint-editor-loader>div:nth-child(3) {
+    bottom: 0;
+    background-color: #ffb74d;
+}
+
+.react-paint-editor-loader>div:nth-child(4) {
+    bottom: 0;
+    right: 0;
+    background-color: #f44336;
+}

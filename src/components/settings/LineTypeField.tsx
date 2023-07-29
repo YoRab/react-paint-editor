@@ -1,44 +1,8 @@
 import React from 'react'
 import SelectField from './SelectField'
-import { styled } from '@linaria/react'
 import _ from 'lodash/fp'
 import { lineTypeIcon } from 'constants/icons'
-
-const StyledLine = styled.span`
-  display: inline-block;
-  width: 6px;
-  height: 2px;
-  background: transparent;
-  vertical-align: middle;
-`
-
-const StyledOption = styled.span`
-  display: inline-block;
-
-  &[data-type='0'] {
-    ${StyledLine} {
-      background: currentColor;
-    }
-  }
-
-  &[data-type='2'] {
-    position: relative;
-    left: 3px;
-    ${StyledLine}:nth-child(3n-1) {
-      background: currentColor;
-      width: 12px;
-    }
-    ${StyledLine}:nth-child(n+11) {
-      display: none;
-    }
-  }
-
-  &[data-type='1'] {
-    ${StyledLine}:nth-child(2n+1) {
-      background: currentColor;
-    }
-  }
-`
+import './LineTypeField.css'
 
 type LineTypeOptionType = {
   children: string
@@ -46,15 +10,15 @@ type LineTypeOptionType = {
 
 export const LineTypeOption = ({ children }: LineTypeOptionType) => {
   return (
-    <StyledOption data-type={children}>
-      <StyledLine />
-      <StyledLine />
-      <StyledLine />
-      <StyledLine />
-      <StyledLine />
-      <StyledLine />
-      <StyledLine />
-    </StyledOption>
+    <span className='react-paint-editor-linetype-option' data-type={children}>
+      <span />
+      <span />
+      <span />
+      <span />
+      <span />
+      <span />
+      <span />
+    </span>
   )
 }
 

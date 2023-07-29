@@ -1,0 +1,39 @@
+.react-paint-editor-modal {
+    z-index: var(--react-paint-editor-modal-zindex);
+    position: absolute;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    top: 0;
+}
+
+.react-paint-editor-modal[data-position='center'] {
+    align-items: center;
+}
+
+.react-paint-editor-modal[data-position='bottom'] {
+    align-items: end;
+}
+
+.react-paint-editor-modal-panel {
+    display: grid;
+    background: var(--toolbar-bg);
+    box-shadow: 0 3px 8px rgb(0 0 0 / 24%);
+    padding: 4px;
+    border-radius: 8px;
+    white-space: nowrap;
+    position: relative;
+
+}
+
+.react-paint-editor-modal-mask {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    background: #00000073;
+}

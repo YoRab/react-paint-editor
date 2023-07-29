@@ -1,50 +1,6 @@
-import React from 'react'
-import { styled } from '@linaria/react'
+import React, { CSSProperties } from 'react'
 import { STYLE_ZINDEX } from 'constants/style'
-
-const StyledPanel = styled.div`
-  position: absolute;
-  z-index: ${STYLE_ZINDEX.PANEL};
-  background: var(--toolbar-bg);
-  box-shadow: 0 3px 8px rgb(0 0 0 / 24%);
-  padding: 8px;
-  border-radius: 8px;
-  white-space: nowrap;
-  box-sizing: border-box;
-
-  &[data-alignment='left'] {
-    left: 0;
-    margin: 4px;
-  }
-
-  &[data-alignment='center'] {
-    left: 50%;
-    transform: translate3d(-50%, 0px, 0px);
-    margin: 4px 0px;
-  }
-
-  &[data-alignment='right'] {
-    right: 0;
-    margin: 4px;
-  }
-
-  &[data-position='bottom'] {
-    bottom: 100%;
-  }
-
-  &[data-position='top'] {
-    top: 100%;
-  }
-
-  &[data-fitcontainer='true'] {
-    max-width: 100%;
-  }
-`
-const StyledTitle = styled.h3`
-  margin-bottom: 8px;
-  margin-top: 4px;
-  font-size: 18px;
-`
+import './Panel.css'
 
 type PanelType = {
   vertical?: boolean
@@ -59,20 +15,22 @@ type PanelType = {
 const Panel = ({
   children,
   title = '',
-  className,
+  className = '',
   position = 'bottom',
   fitContainer = false,
   alignment = 'center'
 }: PanelType) => {
   return (
-    <StyledPanel
-      className={className}
+    <div
+      className={`react-paint-editor-panel ${className}`}
       data-fitcontainer={fitContainer}
       data-position={position}
-      data-alignment={alignment}>
-      {title && <StyledTitle>{title}</StyledTitle>}
+      data-alignment={alignment}
+      style={{ '--react-paint-editor-panel-zindex': STYLE_ZINDEX.PANEL } as CSSProperties}
+    >
+      {title && <h3 className='react-paint-editor-panel-title'>{title}</h3>}
       {children}
-    </StyledPanel>
+    </div>
   )
 }
 
