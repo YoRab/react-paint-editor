@@ -1,6 +1,5 @@
 import _ from 'lodash/fp'
 import React, { useEffect, useState } from 'react'
-import { styled } from '@linaria/react'
 import type { DrawablePolygon, DrawableShape, DrawableText } from 'types/Shapes'
 import { updatePolygonLinesCount } from 'utils/transform'
 import ColorField from './ColorField'
@@ -17,27 +16,9 @@ import { boldIcon, italicIcon, lineWidthIcon, opacityIcon, settingsIcon } from '
 import Button from 'components/common/Button'
 import Modal from 'components/common/Modal'
 import { calculateTextFontSize } from 'utils/shapes/text'
+import './SettingsBar.css'
 
 const SETTING_WIDTH = 40
-
-const StyledSettingsBar = styled.div`
-  user-select: none;
-  display: flex;
-  background: var(--toolbar-bg);
-  position: relative;
-  height: 36px;
-  border-top: 1px solid var(--divider-color);
-  box-sizing: border-box;
-`
-
-const StyledSeparator = styled.div`
-  flex: 1;
-`
-
-const StyledToolsModal = styled(Modal)`
-  grid-template-columns: repeat(auto-fill, 40px);
-  width: 100%;
-`
 
 type SettingsBoxType = {
   width: number
@@ -370,15 +351,15 @@ const SettingsBar = ({
 
   const selectedShapeTool = selectedShape
     ? _.find({ id: selectedShape.toolId }, availableTools) ||
-      _.find({ type: selectedShape.type }, availableTools)
+    _.find({ type: selectedShape.type }, availableTools)
     : undefined
 
   const nbSettingsTools =
     (selectedShapeTool
       ? _.size(selectedShapeTool.settings) + 1
       : 'settings' in activeTool
-      ? _.size(activeTool.settings)
-      : 0) + (layersManipulation ? 1 : 0)
+        ? _.size(activeTool.settings)
+        : 0) + (layersManipulation ? 1 : 0)
 
   const settingsBreakpoint = nbSettingsTools * SETTING_WIDTH
 
@@ -433,7 +414,7 @@ const SettingsBar = ({
 
   return (
     <>
-      <StyledSettingsBar>
+      <div className='react-paint-editor-settings-bar'>
         {settingsInMenu && nbSettingsTools > 2 && (
           <Button
             disabled={disabled}
@@ -483,17 +464,16 @@ const SettingsBar = ({
             />
           )
         )}
-        <StyledSeparator />
+        <div className='react-paint-editor-settings-separator' />
         {layersManipulation && (
           <LayoutButton
-            layersManipulation={layersManipulation}
             disabled={disabled}
             toggleLayoutPanel={toggleLayoutPanel}
           />
         )}
-      </StyledSettingsBar>
+      </div>
       {isMenuOpen && (
-        <StyledToolsModal onClose={toggleTools} position="bottom">
+        <Modal className='react-paint-editor-settings-modal' onClose={toggleTools} position="bottom">
           <SettingsItems
             activeTool={activeTool}
             selectedShape={selectedShape}
@@ -505,7 +485,7 @@ const SettingsBar = ({
             handlePolygonLinesCount={handlePolygonLinesCount}
             handleShapeFontFamilyChange={handleShapeFontFamilyChange}
           />
-        </StyledToolsModal>
+        </Modal>
       )}
     </>
   )

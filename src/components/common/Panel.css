@@ -1,0 +1,44 @@
+.react-paint-editor-panel {
+    position: absolute;
+    z-index: var(--react-paint-editor-panel-zindex);
+    background: var(--react-paint-editor-app-toolbar-bg);
+    box-shadow: 0 3px 8px rgb(0 0 0 / 24%);
+    padding: 8px;
+    border-radius: 8px;
+    white-space: nowrap;
+    box-sizing: border-box;
+}
+
+.react-paint-editor-panel[data-alignment='left'] {
+    left: 0;
+    margin: 4px;
+}
+
+.react-paint-editor-panel[data-alignment='center'] {
+    left: 50%;
+    transform: translate3d(-50%, 0px, 0px);
+    margin: 4px 0px;
+}
+
+.react-paint-editor-panel[data-alignment='right'] {
+    right: 0;
+    margin: 4px;
+}
+
+.react-paint-editor-panel[data-position='bottom'] {
+    bottom: 100%;
+}
+
+.react-paint-editor-panel[data-position='top'] {
+    top: 100%;
+}
+
+.react-paint-editor-panel[data-fitcontainer='true'] {
+    max-width: 100%;
+}
+
+.react-paint-editor-panel-title {
+    margin-bottom: 8px;
+    margin-top: 4px;
+    font-size: 18px;
+}

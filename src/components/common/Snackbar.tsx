@@ -1,60 +1,8 @@
-import React, { useEffect, useState } from 'react'
-import { styled } from '@linaria/react'
+import React, { CSSProperties, useEffect, useState } from 'react'
 import { STYLE_ZINDEX } from 'constants/style'
 import { SNACKBAR_DURATION, SNACKBAR_TOGGLE_ANIMATION_DURATION } from 'constants/snackbar'
 import type { SnackBarType } from 'types/snackbar'
-
-const StyledSnackbar = styled.div`
-  display: inline-block;
-  padding: 12px 48px;
-  margin: 4px;
-  max-width: calc(100% - 24px);
-  overflow-wrap: break-word;
-  box-sizing: border-box;
-  transition: all ${SNACKBAR_DURATION}ms;
-  opacity: 0;
-  transform: translate3d(0px, 40px, 0px);
-
-  &[data-type='infos'] {
-    /* Infos */
-    background: #646464;
-    color: white;
-  }
-
-  &[data-type='error'] {
-    /* Error */
-    background: #911717;
-    color: white;
-  }
-
-  &[data-type='success'] {
-    /* Success */
-    background: #088900;
-    color: white;
-  }
-
-  &[data-is-shown='1'] {
-    opacity: 1;
-    transform: translate3d(0px, 0px, 0px);
-  }
-
-  &[data-is-shown='0'] {
-    opacity: 0;
-    transform: translate3d(0px, 40px, 0px);
-  }
-`
-
-const StyledSnackbarContainer = styled.div`
-  display: flex;
-  flex-direction: column-reverse;
-  position: absolute;
-  z-index: ${STYLE_ZINDEX.SNACKBAR};
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: 0;
-  align-items: center;
-`
+import './Snackbar.css'
 
 type SnackbarContainerType = {
   snackbarList: SnackBarType[]
@@ -76,19 +24,26 @@ const Snackbar = ({ type, text, duration }: SnackBarType) => {
   }, [duration])
 
   return (
-    <StyledSnackbar data-is-shown={+isShown} data-type={type}>
+    <div
+      className='react-paint-editor-snackbar'
+      data-is-shown={+isShown}
+      data-type={type}
+      style={{ '--react-paint-editor-panel-transition-duration': `${SNACKBAR_DURATION}ms` } as CSSProperties}
+    >
       {text}
-    </StyledSnackbar>
+    </div>
   )
 }
 
 const SnackbarContainer = ({ snackbarList }: SnackbarContainerType) => {
   return (
-    <StyledSnackbarContainer>
+    <div className='react-paint-editor-snackbar-container'
+      style={{ '--react-paint-editor-snackbar-zindex': STYLE_ZINDEX.PANEL } as CSSProperties}
+    >
       {snackbarList.map(snackbar => (
         <Snackbar key={snackbar.id} {...snackbar} />
       ))}
-    </StyledSnackbarContainer>
+    </div>
   )
 }
 

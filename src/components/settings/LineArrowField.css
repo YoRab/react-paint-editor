@@ -1,0 +1,44 @@
+.react-paint-editor-linearrow-left {
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translate3d(-25%, -50%, 0px);
+    display: inline-block;
+    width: 0;
+    height: 0;
+    border-top: 5px solid transparent;
+    border-bottom: 5px solid transparent;
+    border-right: 15px solid currentColor;
+}
+
+.react-paint-editor-linearrow-right {
+    position: absolute;
+    right: 0;
+    top: 50%;
+    transform: translate3d(25%, -50%, 0px);
+    display: inline-block;
+    width: 0;
+    height: 0;
+    border-top: 5px solid transparent;
+    border-bottom: 5px solid transparent;
+    border-left: 15px solid currentColor;
+}
+
+.react-paint-editor-linearrow-option {
+    position: relative;
+    display: inline-block;
+    width: 60px;
+    height: 2px;
+    background: currentColor;
+    vertical-align: middle;
+}
+
+.react-paint-editor-linearrow-option[data-type='0'] .react-paint-editor-linearrow-left,
+.react-paint-editor-linearrow-option[data-type='1'] .react-paint-editor-linearrow-left {
+    display: none;
+}
+
+.react-paint-editor-linearrow-option[data-type='0'] .react-paint-editor-linearrow-right,
+.react-paint-editor-linearrow-option[data-type='2'] .react-paint-editor-linearrow-right {
+    display: none;
+}

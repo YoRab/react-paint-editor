@@ -1,0 +1,12 @@
+.react-paint-editor-toolbox-panel-content {
+    display: flex;
+}
+
+.react-paint-editor-toolbox-panel-content[data-vertical='1'] {
+    flex-direction: column;
+}
+
+.react-paint-editor-toolbox-relative {
+    position: relative;
+    display: inline-block;
+}

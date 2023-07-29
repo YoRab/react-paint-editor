@@ -1,10 +1,9 @@
-import React, { MutableRefObject, useCallback, useEffect, useRef, useState } from 'react'
+import React, { CSSProperties, MutableRefObject, useCallback, useEffect, useRef, useState } from 'react'
 import type { DrawableShape, DrawableShapeJson, ExportDataType, Point } from 'types/Shapes'
 import type { ToolsType } from 'types/tools'
 import Canvas from './Canvas'
 import Layouts from './settings/Layouts'
 import Toolbar from './toolbox/Toolbar'
-import { styled } from '@linaria/react'
 import SettingsBar from './settings/SettingsBar'
 import { STYLE_ZINDEX } from 'constants/style'
 import useKeyboard from 'hooks/useKeyboard'
@@ -27,75 +26,8 @@ import { sanitizeTools } from 'utils/toolbar'
 import { SELECTION_TOOL } from 'constants/tools'
 import _ from 'lodash/fp'
 import { DEFAULT_OPTIONS, GridFormatType, OptionalAppOptionsType } from 'constants/app'
+import './App.css'
 
-const StyledApp = styled.div<{
-  canvasWidth: number
-  toolbarBackgroundColor: string
-  dividerColor: string
-  fontRadius: number
-  fontDisabledColor: string
-  fontDisabledBackgroundColor: string
-  fontColor: string
-  fontBackgroundColor: string
-  fontSelectedColor: string
-  fontSelectedBackgroundColor: string
-  fontHoverColor: string
-  fontHoverBackgroundColor: string
-  canvasBackgroundColor: string
-}>`
-  --toolbar-bg: ${props => props.toolbarBackgroundColor};
-  --divider-color: ${props => props.dividerColor};
-  --font-radius: ${props => props.fontRadius}px;
-  --font-disabled-color: ${props => props.fontDisabledColor};
-  --font-disabled-bg: ${props => props.fontDisabledBackgroundColor};
-  --font-color: ${props => props.fontColor};
-  --font-bg: ${props => props.fontBackgroundColor};
-  --font-selected-color: ${props => props.fontSelectedColor};
-  --font-selected-bg: ${props => props.fontSelectedBackgroundColor};
-  --font-hover-color: ${props => props.fontHoverColor};
-  --font-hover-bg: ${props => props.fontHoverBackgroundColor};
-  --canvas-bg: ${props => props.canvasBackgroundColor};
-
-  display: flex;
-  color: var(--font-color);
-  position: relative;
-  flex-direction: column;
-
-  hr {
-    width: 100%;
-    border: none;
-    border-top: 1px solid var(--divider-color);
-  }
-
-  &[data-grow='false'] {
-    max-width: ${({ canvasWidth }) => `min(100%, ${canvasWidth}px)`};
-  }
-
-  &[data-shrink='false'] {
-    min-width: ${({ canvasWidth }) => canvasWidth}px;
-  }
-`
-
-const StyledRow = styled.div<{
-  width: number | string
-  aspectRatio: string
-}>`
-  display: flex;
-  flex-direction: row;
-  position: relative;
-  max-width: 100%;
-  z-index: ${STYLE_ZINDEX.APP};
-
-  &[data-grow='true'] {
-    width: 100%;
-  }
-
-  &[data-grow='false'] {
-    width: ${({ width }) => width}px;
-  }
-
-  aspect-ratio: ${({ aspectRatio }) => aspectRatio};
-`
 
 type AppType = {
   className?: string
@@ -108,9 +40,9 @@ type AppType = {
   apiRef?: MutableRefObject<
     | undefined
     | {
-        getCurrentImage: () => string | undefined
-        getCurrentData: () => ExportDataType
-      }
+      getCurrentImage: () => string | undefined
+      getCurrentData: () => ExportDataType
+    }
   >
   options?: OptionalAppOptionsType
 }
@@ -119,7 +51,7 @@ const App = ({
   width: canvasWidth = 1000,
   height: canvasHeight = 600,
   shapes: shapesFromProps,
-  className: classNameFromProps,
+  className: classNameFromProps = "",
   mode = 'editor',
   disabled: disabledFromProps = false,
   onDataChanged,
@@ -427,12 +359,12 @@ const App = ({
       getCurrentImage: () => {
         return canvasRef.current
           ? getCanvasImage(
-              shapesRef.current,
-              canvasOffset,
-              canvasWidth,
-              canvasHeight,
-              canvasSelectionPadding
-            )
+            shapesRef.current,
+            canvasOffset,
+            canvasWidth,
+            canvasHeight,
+            canvasSelectionPadding
+          )
           : undefined
       },
 
@@ -442,27 +374,30 @@ const App = ({
     }
   }, [apiRef, shapesRef, canvasOffset, canvasWidth, canvasHeight, canvasSelectionPadding])
 
-  const className = `${classNameFromProps ?? ''} ${isLayoutPanelShown ? 'layoutPanelOpened' : ''}`
+  const className = `${classNameFromProps}${isLayoutPanelShown ? ' react-paint-editor-layout-opened' : ''} react-paint-editor-app`
 
   return (
-    <StyledApp
+    <div
       ref={componentRef}
       className={className}
       data-grow={canGrow}
       data-shrink={canShrink}
-      canvasWidth={canvasWidth}
-      toolbarBackgroundColor={toolbarBackgroundColor}
-      dividerColor={dividerColor}
-      fontRadius={fontRadius}
-      fontDisabledColor={fontDisabledColor}
-      fontDisabledBackgroundColor={fontDisabledBackgroundColor}
-      fontColor={fontColor}
-      fontBackgroundColor={fontBackgroundColor}
-      fontSelectedColor={fontSelectedColor}
-      fontSelectedBackgroundColor={fontSelectedBackgroundColor}
-      fontHoverColor={fontHoverColor}
-      fontHoverBackgroundColor={fontHoverBackgroundColor}
-      canvasBackgroundColor={canvasBackgroundColor}>
+      style={{
+        "--react-paint-editor-app-canvaswidth": `${canvasWidth}px`,
+        "--react-paint-editor-app-toolbar-bg": toolbarBackgroundColor,
+        "--react-paint-editor-app-divider-color": dividerColor,
+        "--react-paint-editor-app-font-radius": fontRadius,
+        "--react-paint-editor-app-font-disabled-color": fontDisabledColor,
+        "--react-paint-editor-app-font-disabled-bg": fontDisabledBackgroundColor,
+        "--react-paint-editor-app-font-color": fontColor,
+        "--react-paint-editor-app-font-bg": fontBackgroundColor,
+        "--react-paint-editor-app-font-selected-color": fontSelectedColor,
+        "--react-paint-editor-app-font-selected-bg": fontSelectedBackgroundColor,
+        "--react-paint-editor-app-font-hover-color": fontHoverColor,
+        "--react-paint-editor-app-font-hover-bg": fontHoverBackgroundColor,
+        "--react-paint-editor-app-canvas-bg": canvasBackgroundColor,
+      } as CSSProperties}
+    >
       {isEditMode && (
         <Toolbar
           width={canvasSize.width}
@@ -486,10 +421,15 @@ const App = ({
           withUrlPicture={withUrlPicture}
         />
       )}
-      <StyledRow
+      <div
+        className='react-paint-editor-app-row'
         data-grow={canGrow}
-        width={canvasSize.width}
-        aspectRatio={`calc(${canvasSize.width} / ${canvasSize.height})`}>
+        style={{
+          "--react-paint-editor-app-row-zindex": STYLE_ZINDEX.APP,
+          "--react-paint-editor-app-row-width": canvasSize.width,
+          "--react-paint-editor-app-row-aspectratio": `calc(${canvasSize.width} / ${canvasSize.height})`
+        } as CSSProperties}
+      >
         <Canvas
           canGrow={canGrow}
           gridFormat={gridFormat}
@@ -532,7 +472,7 @@ const App = ({
             isLayoutPanelShown={isLayoutPanelShown}
           />
         )}
-      </StyledRow>
+      </div>
       {isEditMode && (
         <>
           <SettingsBar
@@ -554,7 +494,7 @@ const App = ({
           <SnackbarContainer snackbarList={snackbarList} />
         </>
       )}
-    </StyledApp>
+    </div>
   )
 }
 

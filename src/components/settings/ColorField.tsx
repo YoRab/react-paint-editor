@@ -1,59 +1,9 @@
 import _ from 'lodash/fp'
-import React, { useState } from 'react'
-import { styled } from '@linaria/react'
+import React, { CSSProperties, useState } from 'react'
 import Button from 'components/common/Button'
 import Panel from 'components/common/Panel'
 import { paletteIcon, noStrokeIcon, noFillIcon } from 'constants/icons'
-
-const StyledColor = styled.div<{
-  color: string
-}>`
-  width: 20px;
-  height: 20px;
-  box-sizing: border-box;
-  border-radius: 50%;
-
-  &[data-mode='fill'] {
-    border: 1px solid #80808038;
-    background: ${({ color }) => color};
-  }
-
-  &[data-mode='stroke'] {
-    border: 4px solid #80808038;
-
-    &:after {
-      content: '';
-      display: block;
-      border-radius: 100%;
-      border: 2px solid ${({ color }) => color};
-      position: relative;
-      width: 18px;
-      height: 18px;
-      left: -3px;
-      top: -3px;
-      box-sizing: border-box;
-    }
-  }
-`
-
-const StyleWrapper = styled.div`
-  display: flex;
-  flex-wrap: wrap;
-`
-
-const StyledCustomColor = styled.div<{
-  color: string
-}>`
-  width: 20px;
-  height: 20px;
-  box-sizing: border-box;
-  border-radius: 50%;
-  color: ${({ color }) => color};
-  display: flex;
-  align-items: baseline;
-  justify-content: center;
-  font-weight: bold;
-`
+import './ColorField.css'
 
 type ShapeStyleColorType = {
   selectedSettings: string | undefined
@@ -106,11 +56,16 @@ const ColorField = ({
         disabled={disabled}
         onClick={togglePanel}
         icon={value === 'transparent' ? (mode === 'fill' ? noFillIcon : noStrokeIcon) : undefined}>
-        {value !== 'transparent' && <StyledColor color={value} data-mode={mode} />}
+        {value !== 'transparent' && <div
+          className='react-paint-editor-colorfield-color'
+          data-mode={mode}
+          style={{
+            '--react-paint-editor-colorfield-color-value': value
+          } as CSSProperties} />}
       </Button>
       {isPanelVisible && (
         <Panel title={title} alignment="left">
-          <StyleWrapper>
+          <div className='react-paint-editor-colorfield-wrapper'>
             {values.map((color, index) => (
               <Button
                 title={color}
@@ -125,7 +80,13 @@ const ColorField = ({
                     : undefined
                 }
                 onClick={() => handleClick(color)}>
-                {color !== 'transparent' && <StyledColor color={color} data-mode={mode} />}
+                {color !== 'transparent' && <div
+                  className='react-paint-editor-colorfield-color'
+                  color={color}
+                  data-mode={mode}
+                  style={{
+                    '--react-paint-editor-colorfield-color-value': color
+                  } as CSSProperties} />}
               </Button>
             ))}
             <Button
@@ -134,11 +95,16 @@ const ColorField = ({
               selected={!_.includes(value, values)}
               value={value}
               onChange={handleChange}>
-              <StyledCustomColor color={_.includes(value, values) ? 'var(--font-color)' : value}>
+              <div
+                className='react-paint-editor-colorfield-customcolor'
+                style={{
+                  '--react-paint-editor-colorfield-color-value': _.includes(value, values) ? 'var(--react-paint-editor-app-font-color)' : value
+                } as CSSProperties}
+              >
                 <span dangerouslySetInnerHTML={{ __html: paletteIcon }} />
-              </StyledCustomColor>
+              </div>
             </Button>
-          </StyleWrapper>
+          </div>
         </Panel>
       )}
     </>

@@ -21,7 +21,7 @@ const LoadFileTool = ({
 }: LoadFileToolType) => {
   const inputRef = useRef<HTMLInputElement>(null)
 
-  const handleClick = (event: React.MouseEvent<HTMLInputElement | HTMLButtonElement>) => {
+  const handleClick = (event: React.MouseEvent) => {
     event.stopPropagation()
     if (inputRef.current) inputRef.current.value = ''
   }

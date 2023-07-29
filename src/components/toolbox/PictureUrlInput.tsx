@@ -1,20 +1,7 @@
 import React, { useEffect, useRef } from 'react'
 import Button from 'components/common/Button'
 import Modal from 'components/common/Modal'
-import { styled } from '@linaria/react'
-
-const StyledInputModal = styled(Modal)`
-  form {
-    grid-template-columns: 3fr 1fr 1fr;
-
-    input {
-      color: var(--font-color);
-      border: 1px solid var(--font-color);
-      background: var(--toolbar-bg);
-      outline: none;
-    }
-  }
-`
+import './PictureUrlInput.css'
 
 type PictureUrlModalType = {
   togglePictureUrlModal: () => void
@@ -40,7 +27,7 @@ const PictureUrlModal = ({ togglePictureUrlModal, addPicture }: PictureUrlModalT
   }, [])
 
   return (
-    <StyledInputModal onClose={togglePictureUrlModal}>
+    <Modal className='react-paint-editor-toolbox-pictureinput-modal' onClose={togglePictureUrlModal}>
       <form onSubmit={addPictureFromUrl}>
         <label>
           URL&nbsp;
@@ -51,7 +38,7 @@ const PictureUrlModal = ({ togglePictureUrlModal, addPicture }: PictureUrlModalT
           Ajouter
         </Button>
       </form>
-    </StyledInputModal>
+    </Modal>
   )
 }
 
