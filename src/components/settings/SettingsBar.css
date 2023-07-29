@@ -1,10 +1,10 @@
 .react-paint-editor-settings-bar {
     user-select: none;
     display: flex;
-    background: var(--toolbar-bg);
+    background: var(--react-paint-editor-app-toolbar-bg);
     position: relative;
     height: 36px;
-    border-top: 1px solid var(--divider-color);
+    border-top: 1px solid var(--react-paint-editor-app-divider-color);
     box-sizing: border-box;
 }
 

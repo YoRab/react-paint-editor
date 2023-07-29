@@ -19,13 +19,7 @@ module.exports = {
       {
         test: /\.tsx?$/,
         use: [
-          { loader: 'babel-loader' },
-          {
-            loader: '@linaria/webpack-loader',
-            options: {
-              sourceMap: process.env.NODE_ENV !== 'production'
-            }
-          }
+          { loader: 'babel-loader' }
         ],
 
         exclude: /node_modules/

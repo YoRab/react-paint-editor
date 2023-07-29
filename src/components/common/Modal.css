@@ -20,7 +20,7 @@
 
 .react-paint-editor-modal-panel {
     display: grid;
-    background: var(--toolbar-bg);
+    background: var(--react-paint-editor-app-toolbar-bg);
     box-shadow: 0 3px 8px rgb(0 0 0 / 24%);
     padding: 4px;
     border-radius: 8px;

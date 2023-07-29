@@ -10,15 +10,15 @@
     background: none;
     border: none;
     cursor: pointer;
-    border-radius: var(--font-radius);
-    color: var(--font-color);
+    border-radius: var(--react-paint-editor-app-font-radius);
+    color: var(--react-paint-editor-app-font-color);
     margin: 2px 4px;
     padding: var(--react-paint-editor-button-padding, 0);
 }
 
 .react-paint-editor-button[data-selected='1'] {
-    color: var(--font-selected-color);
-    background: var(--font-selected-bg);
+    color: var(--react-paint-editor-app-font-selected-color);
+    background: var(--react-paint-editor-app-font-selected-bg);
 }
 
 .react-paint-editor-button[data-hidden='1'] {
@@ -27,18 +27,18 @@
 
 .react-paint-editor-button[data-disabled='1'] {
     cursor: default;
-    color: var(--font-disabled-color);
-    background: var(--font-disabled-bg);
+    color: var(--react-paint-editor-app-font-disabled-color);
+    background: var(--react-paint-editor-app-font-disabled-bg);
 }
 
 .react-paint-editor-button[data-selected='0'][data-disabled='0'] {
-    background: var(--font-bg);
-    color: var(--font-color);
+    background: var(--react-paint-editor-app-font-bg);
+    color: var(--react-paint-editor-app-font-color);
 }
 
 .react-paint-editor-button[data-selected='0'][data-disabled='0']:hover {
-    color: var(--font-hover-color);
-    background: var(--font-hover-bg);
+    color: var(--react-paint-editor-app-font-hover-color);
+    background: var(--react-paint-editor-app-font-hover-bg);
 }
 
 .react-paint-editor-button[data-disabled='0'] {

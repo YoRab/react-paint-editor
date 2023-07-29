@@ -13,7 +13,7 @@ type ButtonType = CommonType & React.ButtonHTMLAttributes<HTMLButtonElement>
 type FileInputType = CommonType & {
   type: 'file' | 'color'
   accept?: string
-  onClick?: React.MouseEventHandler<HTMLLabelElement> | undefined
+  onClick?: React.MouseEventHandler<HTMLElement>
 } & React.InputHTMLAttributes<HTMLInputElement | HTMLButtonElement>
 
 const Button = React.forwardRef<HTMLButtonElement | HTMLInputElement, ButtonType | FileInputType>(

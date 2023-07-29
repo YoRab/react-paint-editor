@@ -98,7 +98,7 @@ const ColorField = ({
               <div
                 className='react-paint-editor-colorfield-customcolor'
                 style={{
-                  '--react-paint-editor-colorfield-color-value': _.includes(value, values) ? 'var(--font-color)' : value
+                  '--react-paint-editor-colorfield-color-value': _.includes(value, values) ? 'var(--react-paint-editor-app-font-color)' : value
                 } as CSSProperties}
               >
                 <span dangerouslySetInnerHTML={{ __html: paletteIcon }} />
