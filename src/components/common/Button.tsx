@@ -1,84 +1,5 @@
 import React from 'react'
-import { styled } from '@linaria/react'
-
-const StyledButton = styled.button`
-  min-width: 32px;
-  height: 32px;
-  font-size: 14px;
-  display: inline-flex;
-  vertical-align: middle;
-  box-sizing: border-box;
-  align-items: center;
-  justify-content: center;
-  background: none;
-  border: none;
-  cursor: pointer;
-  border-radius: var(--font-radius);
-  color: var(--font-color);
-  margin: 2px 4px;
-  padding: 0;
-  &[data-selected='1'] {
-    color: var(--font-selected-color);
-    background: var(--font-selected-bg);
-  }
-
-  &[data-hidden='1'] {
-    visibility: hidden;
-  }
-
-  &[data-disabled='1'] {
-    cursor: default;
-    color: var(--font-disabled-color);
-    background: var(--font-disabled-bg);
-  }
-
-  &[data-selected='0'][data-disabled='0'] {
-    background: var(--font-bg);
-    color: var(--font-color);
-    &:hover {
-      color: var(--font-hover-color);
-      background: var(--font-hover-bg);
-    }
-  }
-
-  &[data-disabled='0'] {
-    cursor: pointer;
-  }
-
-  svg {
-    fill: currentColor;
-    width: 20px;
-    height: 20px;
-  }
-
-  input {
-    position: absolute;
-    visibility: hidden;
-  }
-`
-
-const StyledButtonContent = styled.span`
-  width: 100%;
-  box-sizing: border-box;
-  display: flex;
-  padding: 2px 6px;
-`
-
-const StyledIcon = styled.span`
-  display: flex;
-  align-items: center;
-`
-
-const StyledChildren = styled.span`
-  flex: 1;
-  text-align: left;
-  display: flex;
-  align-items: center;
-
-  & + ${StyledIcon} {
-    margin-left: 12px;
-  }
-`
+import './Button.css'
 
 type CommonType = {
   hidden?: boolean
@@ -92,6 +13,7 @@ type ButtonType = CommonType & React.ButtonHTMLAttributes<HTMLButtonElement>
 type FileInputType = CommonType & {
   type: 'file' | 'color'
   accept?: string
+  onClick?: React.MouseEventHandler<HTMLElement>
 } & React.InputHTMLAttributes<HTMLInputElement | HTMLButtonElement>
 
 const Button = React.forwardRef<HTMLButtonElement | HTMLInputElement, ButtonType | FileInputType>(
@@ -103,15 +25,14 @@ const Button = React.forwardRef<HTMLButtonElement | HTMLInputElement, ButtonType
         selected = false,
         icon,
         children,
-        className,
+        className = '',
         title,
         onClick,
         ...fileProps
       } = props
       return (
-        <StyledButton
-          as="label"
-          className={className}
+        <label
+          className={`react-paint-editor-button ${className}`}
           title={title}
           onClick={onClick}
           data-disabled={+disabled}
@@ -122,11 +43,11 @@ const Button = React.forwardRef<HTMLButtonElement | HTMLInputElement, ButtonType
             disabled={disabled}
             {...fileProps}
           />
-          <StyledButtonContent>
-            {children && <StyledChildren>{children}</StyledChildren>}
-            {icon && <StyledIcon dangerouslySetInnerHTML={{ __html: icon }} />}
-          </StyledButtonContent>
-        </StyledButton>
+          <span className='react-paint-editor-button-content'>
+            {children && <span className='react-paint-editor-button-children'>{children}</span>}
+            {icon && <span className='react-paint-editor-button-icon' dangerouslySetInnerHTML={{ __html: icon }} />}
+          </span>
+        </label>
       )
     } else {
       const {
@@ -136,11 +57,13 @@ const Button = React.forwardRef<HTMLButtonElement | HTMLInputElement, ButtonType
         icon,
         children,
         type = 'button',
+        className = '',
         ...fileProps
       } = props as ButtonType
 
       return (
-        <StyledButton
+        <button
+          className={`react-paint-editor-button ${className}`}
           ref={ref as React.ForwardedRef<HTMLButtonElement>}
           disabled={disabled}
           data-disabled={+disabled}
@@ -148,11 +71,11 @@ const Button = React.forwardRef<HTMLButtonElement | HTMLInputElement, ButtonType
           data-hidden={+hidden}
           type={type}
           {...fileProps}>
-          <StyledButtonContent>
-            {children && <StyledChildren>{children}</StyledChildren>}
-            {icon && <StyledIcon dangerouslySetInnerHTML={{ __html: icon }} />}
-          </StyledButtonContent>
-        </StyledButton>
+          <span className='react-paint-editor-button-content'>
+            {children && <span className='react-paint-editor-button-children'>{children}</span>}
+            {icon && <span className='react-paint-editor-button-icon' dangerouslySetInnerHTML={{ __html: icon }} />}
+          </span>
+        </button>
       )
     }
   }

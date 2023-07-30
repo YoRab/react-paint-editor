@@ -1,0 +1,18 @@
+.react-paint-editor-settings-bar {
+    user-select: none;
+    display: flex;
+    background: var(--react-paint-editor-app-toolbar-bg);
+    position: relative;
+    height: 36px;
+    border-top: 1px solid var(--react-paint-editor-app-divider-color);
+    box-sizing: border-box;
+}
+
+.react-paint-editor-settings-separator {
+    flex: 1;
+}
+
+.react-paint-editor-settings-modal {
+    grid-template-columns: repeat(auto-fill, 40px);
+    width: 100%;
+}

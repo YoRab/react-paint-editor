@@ -1,7 +1,7 @@
-import { GridFormatType } from 'constants/app'
-import { SELECTION_ANCHOR_SIZE } from 'constants/shapes'
+import { GridFormatType } from '../../constants/app'
+import { SELECTION_ANCHOR_SIZE } from '../../constants/shapes'
 import _ from 'lodash/fp'
-import { SelectionModeResize } from 'types/Mode'
+import { SelectionModeResize } from '../../types/Mode'
 import type {
   Point,
   DrawableShape,
@@ -11,13 +11,13 @@ import type {
   Rect,
   StyleShape,
   SelectionLinesType
-} from 'types/Shapes'
-import type { ToolsSettingsType } from 'types/tools'
-import { updateCanvasContext } from 'utils/canvas'
-import { getPointPositionAfterCanvasTransformation } from 'utils/intersect'
-import { roundForGrid } from 'utils/transform'
-import { getAngleFromVector, rotatePoint } from 'utils/trigo'
-import { getShapeInfos } from 'utils/shapes/index'
+} from '../../types/Shapes'
+import type { ToolsSettingsType } from '../../types/tools'
+import { updateCanvasContext } from '../../utils/canvas'
+import { getPointPositionAfterCanvasTransformation } from '../../utils/intersect'
+import { roundForGrid } from '../../utils/transform'
+import { getAngleFromVector, rotatePoint } from '../../utils/trigo'
+import { getShapeInfos } from '../../utils/shapes/index'
 import { createRecPath } from './rectangle'
 import { createTriangle, drawTriangle } from './triangle'
 import { createCirclePath } from './circle'

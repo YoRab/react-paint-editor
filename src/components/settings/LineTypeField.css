@@ -1,0 +1,33 @@
+.react-paint-editor-linetype-option {
+    display: inline-block;
+}
+
+.react-paint-editor-linetype-option[data-type='0']>span {
+    background: currentColor;
+}
+
+.react-paint-editor-linetype-option[data-type='2'] {
+    position: relative;
+    left: 3px;
+}
+
+.react-paint-editor-linetype-option[data-type='2']>span:nth-child(3n-1) {
+    background: currentColor;
+    width: 12px;
+}
+
+.react-paint-editor-linetype-option[data-type='2']>span:nth-child(n+11) {
+    display: none;
+}
+
+.react-paint-editor-linetype-option[data-type='1']>span:nth-child(2n+1) {
+    background: currentColor;
+}
+
+.react-paint-editor-linetype-option>span {
+    display: inline-block;
+    width: 6px;
+    height: 2px;
+    background: transparent;
+    vertical-align: middle;
+}

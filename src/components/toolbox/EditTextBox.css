@@ -1,0 +1,27 @@
+.react-paint-editor-toolbox-edittextbox {
+    position: absolute;
+    display: inline-block;
+    outline: none;
+    left: 0px;
+    top: 0px;
+    transform-origin: left top;
+    box-sizing: border-box;
+    line-height: 1;
+    transform: var(--react-paint-editor-toolbox-edittextbox-transform);
+    color: var(--react-paint-editor-toolbox-edittextbox-color);
+    padding: var(--react-paint-editor-toolbox-edittextbox-padding);
+    font-size: var(--react-paint-editor-toolbox-edittextbox-fontsize);
+    font-family: var(--react-paint-editor-toolbox-edittextbox-fontfamily);
+    opacity: var(--react-paint-editor-toolbox-edittextbox-opacity);
+    width: max-content;
+    /* required to override injected prop in contenteditable span elements */
+    background: none;
+}
+
+.react-paint-editor-toolbox-edittextbox[data-fontbold='true'] {
+    font-weight: bold;
+}
+
+.react-paint-editor-toolbox-edittextbox[data-fontitalic='true'] {
+    font-style: italic;
+}

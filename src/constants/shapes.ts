@@ -1,4 +1,4 @@
-import type { Point } from 'types/Shapes'
+import type { Point } from '../types/Shapes'
 
 export const SELECTION_DEFAULT_PADDING = 0
 export const SELECTION_DEFAULT_WIDTH = 2

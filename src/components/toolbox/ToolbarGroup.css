@@ -1,0 +1,12 @@
+.react-paint-editor-toolbargroup-panel-content {
+    display: flex;
+}
+
+.react-paint-editor-toolbargroup-panel-content[data-vertical='1'] {
+    flex-direction: column;
+}
+
+.react-paint-editor-toolbargroup-relative {
+    position: relative;
+    display: inline-block;
+}

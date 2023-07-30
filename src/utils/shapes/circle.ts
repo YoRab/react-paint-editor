@@ -1,6 +1,6 @@
-import { GridFormatType } from 'constants/app'
+import { GridFormatType } from '../../constants/app'
 import _ from 'lodash/fp'
-import { SelectionModeResize } from 'types/Mode'
+import { SelectionModeResize } from '../../types/Mode'
 import type {
   Point,
   Circle,
@@ -8,19 +8,19 @@ import type {
   DrawableShape,
   ShapeEntity,
   SelectionDefaultType
-} from 'types/Shapes'
-import type { ToolsSettingsType } from 'types/tools'
-import { getPointPositionBeforeCanvasTransformation } from 'utils/intersect'
-import { roundForGrid } from 'utils/transform'
-import { getShapeInfos } from 'utils/shapes/index'
-import { updateCanvasContext } from 'utils/canvas'
+} from '../../types/Shapes'
+import type { ToolsSettingsType } from '../../types/tools'
+import { getPointPositionBeforeCanvasTransformation } from '../../utils/intersect'
+import { roundForGrid } from '../../utils/transform'
+import { getShapeInfos } from '../../utils/shapes/index'
+import { updateCanvasContext } from '../../utils/canvas'
 import { createRecPath } from './rectangle'
 import { createLinePath } from './line'
 import {
   SELECTION_ANCHOR_SIZE,
   SELECTION_RESIZE_ANCHOR_POSITIONS,
   SELECTION_ROTATED_ANCHOR_POSITION
-} from 'constants/shapes'
+} from '../../constants/shapes'
 import { resizeShapeBorder } from './common'
 
 export const createCirclePath = (shape: Circle) => {
@@ -192,14 +192,14 @@ const getCircleOppositeAnchorAbsolutePosition = <T extends DrawableShape & Circl
     anchor[0] === 0.5
       ? shape.x
       : anchor[0] === 0
-      ? shape.x + (negW ? -shape.radius : shape.radius)
-      : shape.x + (negW ? shape.radius : -shape.radius)
+        ? shape.x + (negW ? -shape.radius : shape.radius)
+        : shape.x + (negW ? shape.radius : -shape.radius)
   const oppositeY =
     anchor[1] === 0.5
       ? shape.y
       : anchor[1] === 0
-      ? shape.y + (negH ? -shape.radius : shape.radius)
-      : shape.y + (negH ? shape.radius : -shape.radius)
+        ? shape.y + (negH ? -shape.radius : shape.radius)
+        : shape.y + (negH ? shape.radius : -shape.radius)
 
   return getPointPositionBeforeCanvasTransformation(
     [oppositeX, oppositeY],

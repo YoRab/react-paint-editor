@@ -1,4 +1,4 @@
-import type { ShapeType } from 'types/Shapes'
+import type { ShapeType } from '../types/Shapes'
 import {
   brushIcon,
   circleIcon,
@@ -10,7 +10,7 @@ import {
   squareIcon,
   recIcon,
   textIcon
-} from 'constants/icons'
+} from '../constants/icons'
 
 export const getShapePicture = (shape: ShapeType) => {
   switch (shape) {

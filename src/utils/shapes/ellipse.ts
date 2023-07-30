@@ -1,11 +1,11 @@
-import { GridFormatType } from 'constants/app'
+import { GridFormatType } from '../../constants/app'
 import {
   SELECTION_ANCHOR_SIZE,
   SELECTION_RESIZE_ANCHOR_POSITIONS,
   SELECTION_ROTATED_ANCHOR_POSITION
-} from 'constants/shapes'
+} from '../../constants/shapes'
 import _ from 'lodash/fp'
-import { SelectionModeResize } from 'types/Mode'
+import { SelectionModeResize } from '../../types/Mode'
 import type {
   Point,
   Ellipse,
@@ -13,10 +13,10 @@ import type {
   DrawableShape,
   ShapeEntity,
   SelectionDefaultType
-} from 'types/Shapes'
-import type { ToolsSettingsType } from 'types/tools'
-import { updateCanvasContext } from 'utils/canvas'
-import { roundForGrid } from 'utils/transform'
+} from '../../types/Shapes'
+import type { ToolsSettingsType } from '../../types/tools'
+import { updateCanvasContext } from '../../utils/canvas'
+import { roundForGrid } from '../../utils/transform'
 import { createCirclePath } from './circle'
 import { resizeShapeBorder } from './common'
 import { getShapeInfos } from './index'

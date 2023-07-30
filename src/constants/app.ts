@@ -1,6 +1,6 @@
-import type { DrawableShapeJson } from 'types/Shapes'
-import type { CustomToolInput } from 'types/tools'
-import type { RecursivePartial } from 'types/utils'
+import type { DrawableShapeJson } from '../types/Shapes'
+import type { CustomToolInput } from '../types/tools'
+import type { RecursivePartial } from '../types/utils'
 import {
   SELECTION_DEFAULT_COLOR,
   SELECTION_DEFAULT_PADDING,

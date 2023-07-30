@@ -1,66 +1,46 @@
-import { menuIcon, shapesIcon } from 'constants/icons'
+import { menuIcon, shapesIcon } from '../../constants/icons'
 import React, { useEffect, useState } from 'react'
-import { styled } from '@linaria/react'
-import type { ToolsType } from 'types/tools'
-import Button from 'components/common/Button'
-import { getCurrentStructure } from 'utils/toolbar'
+import type { ToolsType } from '../../types/tools'
+import Button from '../../components/common/Button'
+import { getCurrentStructure } from '../../utils/toolbar'
 import ToolbarGroup from './ToolbarGroup'
 import MenuGroup from './MenuGroup'
 import Tool from './Tool'
-import Modal from 'components/common/Modal'
+import Modal from '../../components/common/Modal'
 import PictureUrlModal from './PictureUrlInput'
-import type { CustomTool } from 'types/tools'
+import type { CustomTool } from '../../types/tools'
 import _ from 'lodash/fp'
-import { CLEAR_TOOL, REDO_TOOL, SELECTION_TOOL, UNDO_TOOL } from 'constants/tools'
-import type { ShapeType } from 'types/Shapes'
+import { CLEAR_TOOL, REDO_TOOL, SELECTION_TOOL, UNDO_TOOL } from '../../constants/tools'
+import type { ShapeType } from '../../types/Shapes'
+import './Toolbar.css'
 
 const TOOL_WIDTH = 40
-
-const StyledShrinkableTools = styled.div`
-  flex: 1;
-  position: relative;
-  height: 100%;
-  text-align: center;
-  height: 36px;
-`
-
-const StyledToolbox = styled.div`
-  display: flex;
-  max-height: 36px;
-  background: var(--toolbar-bg);
-  border-bottom: 1px solid var(--divider-color);
-  box-sizing: border-box;
-`
-
-const StyledToolsModal = styled(Modal)`
-  grid-template-columns: 1fr 1fr 1fr;
-`
 
 const TOOLBAR_STRUCTURE: (
   | ShapeType
   | {
-      title: string
-      toolsType: ShapeType[]
-      vertical: boolean
-    }
+    title: string
+    toolsType: ShapeType[]
+    vertical: boolean
+  }
 )[] = [
-  {
-    title: 'brush',
-    toolsType: ['brush'],
-    vertical: false
-  },
-  {
-    title: 'lines',
-    toolsType: ['line', 'curve', 'polygon'],
-    vertical: false
-  },
-  {
-    title: 'shapes',
-    toolsType: ['rect', 'square', 'circle', 'ellipse'],
-    vertical: false
-  },
-  'text'
-]
+    {
+      title: 'brush',
+      toolsType: ['brush'],
+      vertical: false
+    },
+    {
+      title: 'lines',
+      toolsType: ['line', 'curve', 'polygon'],
+      vertical: false
+    },
+    {
+      title: 'shapes',
+      toolsType: ['rect', 'square', 'circle', 'ellipse'],
+      vertical: false
+    },
+    'text'
+  ]
 
 type ToolboxType = {
   width: number
@@ -145,7 +125,7 @@ const Toolbar = ({
 
   return (
     <>
-      <StyledToolbox>
+      <div className='react-paint-editor-toolbar-toolbox'>
         {/* <Tool
         type="move"
         label="move"
@@ -153,7 +133,7 @@ const Toolbar = ({
         isActive={activeTool === "move"}
         setActive={setActiveTool}
       /> */}
-        <StyledShrinkableTools>
+        <div className='react-paint-editor-toolbar-shrinkable'>
           <Tool
             type={SELECTION_TOOL}
             disabled={disabled}
@@ -180,7 +160,7 @@ const Toolbar = ({
               />
             ))
           )}
-        </StyledShrinkableTools>
+        </div>
 
         {!actionsInMenu && (
           <>
@@ -230,9 +210,9 @@ const Toolbar = ({
           redoAction={redoAction}
           clearCanvas={clearCanvas}
         />
-      </StyledToolbox>
+      </div>
       {isMenuOpen && (
-        <StyledToolsModal onClose={toggleTools}>
+        <Modal className='react-paint-editor-toolbar-modal' onClose={toggleTools}>
           {availableTools.map((toolType, index) =>
             toolType.type === 'picture' ? null : (
               <Tool
@@ -246,7 +226,7 @@ const Toolbar = ({
               />
             )
           )}
-        </StyledToolsModal>
+        </Modal>
       )}
       {isPictureUrlModalOpen && (
         <PictureUrlModal togglePictureUrlModal={togglePictureUrlModal} addPicture={addPicture} />

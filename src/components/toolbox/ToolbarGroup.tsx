@@ -1,34 +1,21 @@
 import _ from 'lodash/fp'
 import React, { useEffect, useRef, useState, useTransition } from 'react'
-import Button from 'components/common/Button'
-import Panel from 'components/common/Panel'
-import { styled } from '@linaria/react'
+import Button from '../../components/common/Button'
+import Panel from '../../components/common/Panel'
 import Tool from './Tool'
-import type { CustomTool, ToolsType } from 'types/tools'
-import { isEventInsideNode } from 'utils/dom'
-
-const StyledPanelContent = styled.div`
-  display: flex;
-
-  &[data-vertical='1'] {
-    flex-direction: column;
-  }
-`
-
-const StyledRelative = styled.div`
-  position: relative;
-  display: inline-block;
-`
+import type { CustomTool, ToolsType } from '../../types/tools'
+import { isEventInsideNode } from '../../utils/dom'
+import './ToolbarGroup.css'
 
 type ToolbarGroupType = {
   activeTool: ToolsType
   group:
-    | CustomTool
-    | {
-        title: string
-        toolsType: CustomTool[]
-        vertical: boolean
-      }
+  | CustomTool
+  | {
+    title: string
+    toolsType: CustomTool[]
+    vertical: boolean
+  }
   alignment?: 'left' | 'center' | 'right'
   title?: string
   disabled?: boolean
@@ -111,7 +98,7 @@ const ToolbarGroup = ({
   }
 
   return (
-    <StyledRelative>
+    <div className='react-paint-editor-toolbargroup-relative'>
       <Button
         selected={isActive}
         title={group.title}
@@ -121,7 +108,7 @@ const ToolbarGroup = ({
       />
       {isOpen && (
         <Panel alignment={alignment} position="top">
-          <StyledPanelContent data-vertical={+group.vertical} ref={panelRef}>
+          <div className='react-paint-editor-toolbargroup-panel-content' data-vertical={+group.vertical} ref={panelRef}>
             {group.toolsType.map((toolType, i) => (
               <Tool
                 disabled={disabled}
@@ -132,10 +119,10 @@ const ToolbarGroup = ({
                 setActive={setActiveTool}
               />
             ))}
-          </StyledPanelContent>
+          </div>
         </Panel>
       )}
-    </StyledRelative>
+    </div>
   )
 }
 

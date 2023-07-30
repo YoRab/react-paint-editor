@@ -1,17 +1,8 @@
 import _ from 'lodash/fp'
-import React, { useState } from 'react'
-import Button from 'components/common/Button'
-import Panel from 'components/common/Panel'
-import { styled } from '@linaria/react'
-
-const StyledButton = styled(Button)`
-  padding: 16px;
-`
-
-const StyleWrapper = styled.div`
-  display: flex;
-  flex-wrap: wrap;
-`
+import React, { CSSProperties, useState } from 'react'
+import Button from '../../components/common/Button'
+import Panel from '../../components/common/Panel'
+import './SelectField.css'
 
 type SelectFieldType = {
   CustomOption: React.FC<{
@@ -67,19 +58,22 @@ const SelectField = ({
       />
       {isPanelVisible && (
         <Panel title={title} alignment="left" fitContainer={true}>
-          <StyleWrapper>
+          <div className='react-paint-editor-selectfield-wrapper'>
             {values.map(value => {
               return (
-                <StyledButton
+                <Button
                   key={value}
                   title={`${value}`}
                   onClick={() => handleClick(value)}
-                  selected={defaultValue == value}>
+                  selected={defaultValue == value}
+                  style={{
+                    '--react-paint-editor-button-padding': '16px'
+                  } as CSSProperties}>
                   <CustomOption>{value}</CustomOption>
-                </StyledButton>
+                </Button>
               )
             })}
-          </StyleWrapper>
+          </div>
         </Panel>
       )}
     </>

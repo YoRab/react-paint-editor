@@ -1,6 +1,6 @@
-import { GridFormatType } from 'constants/app'
+import { GridFormatType } from '../../constants/app'
 import _ from 'lodash/fp'
-import { SelectionModeResize } from 'types/Mode'
+import { SelectionModeResize } from '../../types/Mode'
 import type {
   Point,
   Brush,
@@ -8,18 +8,18 @@ import type {
   DrawableShape,
   ShapeEntity,
   SelectionDefaultType
-} from 'types/Shapes'
-import type { ToolsSettingsType } from 'types/tools'
-import { roundForGrid } from 'utils/transform'
-import { getShapeInfos } from 'utils/shapes/index'
+} from '../../types/Shapes'
+import type { ToolsSettingsType } from '../../types/tools'
+import { roundForGrid } from '../../utils/transform'
+import { getShapeInfos } from '../../utils/shapes/index'
 import { createRecPath } from './rectangle'
-import { updateCanvasContext } from 'utils/canvas'
+import { updateCanvasContext } from '../../utils/canvas'
 import { createLinePath } from './line'
 import {
   SELECTION_ANCHOR_SIZE,
   SELECTION_RESIZE_ANCHOR_POSITIONS,
   SELECTION_ROTATED_ANCHOR_POSITION
-} from 'constants/shapes'
+} from '../../constants/shapes'
 import { createCirclePath } from './circle'
 import { resizeShapeBorder } from './common'
 
@@ -198,11 +198,11 @@ export const translateBrush = <U extends DrawableShape<'brush'>>(
   const { borders } = getShapeInfos(originalShape, selectionPadding)
   const translationX = gridFormat
     ? roundForGrid(borders.x + cursorPosition[0] - originalCursorPosition[0], gridFormat) -
-      borders.x
+    borders.x
     : cursorPosition[0] - originalCursorPosition[0]
   const translationY = gridFormat
     ? roundForGrid(borders.y + cursorPosition[1] - originalCursorPosition[1], gridFormat) -
-      borders.y
+    borders.y
     : cursorPosition[1] - originalCursorPosition[1]
   return buildPath(
     {
@@ -247,11 +247,11 @@ export const resizeBrush = (
       points: originalShape.points.map(coord =>
         coord.map(([x, y]) => [
           borderX +
-            selectionPadding +
-            ((x - originalBorders.x - selectionPadding) / originalShapeWidth) * shapeWidth,
+          selectionPadding +
+          ((x - originalBorders.x - selectionPadding) / originalShapeWidth) * shapeWidth,
           borderY +
-            selectionPadding +
-            ((y - originalBorders.y - selectionPadding) / originalShapeHeight) * shapeHeight
+          selectionPadding +
+          ((y - originalBorders.y - selectionPadding) / originalShapeHeight) * shapeHeight
         ])
       )
     },

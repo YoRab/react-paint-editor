@@ -1,5 +1,6 @@
 import { RefObject, useEffect, useState } from 'react'
-import type { ShapeEntity } from 'types/Shapes'
+
+import type { ShapeEntity } from '../types/Shapes'
 
 type useDragType = {
   disabled?: boolean

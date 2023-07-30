@@ -7,20 +7,20 @@ import type {
   Rect,
   SelectionDefaultType,
   ShapeEntity
-} from 'types/Shapes'
+} from '../../types/Shapes'
 import { addSizeAndConvertSvgToObjectUrl, fetchAndStringify, isSvg } from '../file'
-import { DEFAULT_SHAPE_PICTURE } from 'constants/tools'
+import { DEFAULT_SHAPE_PICTURE } from '../../constants/tools'
 import { createRecPath, getRectBorder, resizeRect } from './rectangle'
-import { SelectionModeResize } from 'types/Mode'
-import { GridFormatType } from 'constants/app'
-import { updateCanvasContext } from 'utils/canvas'
+import { SelectionModeResize } from '../../types/Mode'
+import { GridFormatType } from '../../constants/app'
+import { updateCanvasContext } from '../../utils/canvas'
 import { getShapeInfos } from '.'
 import { createLinePath } from './line'
 import {
   SELECTION_ANCHOR_SIZE,
   SELECTION_RESIZE_ANCHOR_POSITIONS,
   SELECTION_ROTATED_ANCHOR_POSITION
-} from 'constants/shapes'
+} from '../../constants/shapes'
 import { createCirclePath } from './circle'
 
 const createPictureSelectionPath = (

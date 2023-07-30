@@ -1,8 +1,8 @@
 import _ from 'lodash/fp'
 import { roundForGrid } from '../transform'
-import type { Point, DrawableShape, Rect, ShapeEntity } from 'types/Shapes'
-import type { CustomTool } from 'types/tools'
-import type { GridFormatType } from 'constants/app'
+import type { Point, DrawableShape, Rect, ShapeEntity } from '../../types/Shapes'
+import type { CustomTool } from '../../types/tools'
+import type { GridFormatType } from '../../constants/app'
 import {
   createBrush,
   drawBrush,
@@ -81,9 +81,9 @@ import {
   resizePicture,
   translatePicture
 } from './picture'
-import { GRID_ROTATION_STEPS } from 'constants/style'
-import { SelectionModeData, SelectionModeResize } from 'types/Mode'
-import { transformCanvas, updateCanvasContext } from 'utils/canvas'
+import { GRID_ROTATION_STEPS } from '../../constants/style'
+import { SelectionModeData, SelectionModeResize } from '../../types/Mode'
+import { transformCanvas, updateCanvasContext } from '../../utils/canvas'
 
 export const createShape = (
   ctx: CanvasRenderingContext2D,
@@ -224,8 +224,8 @@ export const rotateShape = <T extends DrawableShape>(
     ...{
       rotation: gridFormat
         ? rotation +
-          Math.PI / GRID_ROTATION_STEPS / 2 -
-          ((rotation + Math.PI / GRID_ROTATION_STEPS / 2) % (Math.PI / GRID_ROTATION_STEPS))
+        Math.PI / GRID_ROTATION_STEPS / 2 -
+        ((rotation + Math.PI / GRID_ROTATION_STEPS / 2) % (Math.PI / GRID_ROTATION_STEPS))
         : rotation
     }
   }

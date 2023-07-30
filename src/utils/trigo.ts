@@ -1,4 +1,4 @@
-import { Point, Rect } from 'types/Shapes'
+import { Point, Rect } from '../types/Shapes'
 
 export const degreesToRadians = (degrees: number) => degrees * (Math.PI / 180)
 

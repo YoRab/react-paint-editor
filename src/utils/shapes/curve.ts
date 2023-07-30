@@ -1,15 +1,15 @@
-import { GridFormatType } from 'constants/app'
+import { GridFormatType } from '../../constants/app'
 import _ from 'lodash/fp'
-import { SelectionModeResize } from 'types/Mode'
-import type { Point, DrawableShape, ShapeEntity, SelectionLinesType } from 'types/Shapes'
-import type { ToolsSettingsType } from 'types/tools'
-import { getPointPositionAfterCanvasTransformation } from 'utils/intersect'
-import { roundForGrid } from 'utils/transform'
-import { getShapeInfos } from 'utils/shapes/index'
+import { SelectionModeResize } from '../../types/Mode'
+import type { Point, DrawableShape, ShapeEntity, SelectionLinesType } from '../../types/Shapes'
+import type { ToolsSettingsType } from '../../types/tools'
+import { getPointPositionAfterCanvasTransformation } from '../../utils/intersect'
+import { roundForGrid } from '../../utils/transform'
+import { getShapeInfos } from '../../utils/shapes/index'
 import { getPolygonBorder } from './polygon'
 import { createRecPath } from './rectangle'
 import { createCirclePath } from './circle'
-import { SELECTION_ANCHOR_SIZE } from 'constants/shapes'
+import { SELECTION_ANCHOR_SIZE } from '../../constants/shapes'
 
 const createCurvePath = (curve: DrawableShape<'curve'>) => {
   if (curve.points.length < 3) return undefined
@@ -160,23 +160,23 @@ export const translateCurve = <U extends DrawableShape<'curve'>>(
       points: originalShape.points.map(([x, y]) =>
         gridFormat
           ? [
-              x +
-                roundForGrid(
-                  borders.x + cursorPosition[0] - originalCursorPosition[0],
-                  gridFormat
-                ) -
-                borders.x,
-              y +
-                roundForGrid(
-                  borders.y + cursorPosition[1] - originalCursorPosition[1],
-                  gridFormat
-                ) -
-                borders.y
-            ]
+            x +
+            roundForGrid(
+              borders.x + cursorPosition[0] - originalCursorPosition[0],
+              gridFormat
+            ) -
+            borders.x,
+            y +
+            roundForGrid(
+              borders.y + cursorPosition[1] - originalCursorPosition[1],
+              gridFormat
+            ) -
+            borders.y
+          ]
           : [
-              roundForGrid(x + cursorPosition[0] - originalCursorPosition[0], gridFormat),
-              roundForGrid(y + cursorPosition[1] - originalCursorPosition[1], gridFormat)
-            ]
+            roundForGrid(x + cursorPosition[0] - originalCursorPosition[0], gridFormat),
+            roundForGrid(y + cursorPosition[1] - originalCursorPosition[1], gridFormat)
+          ]
       )
     },
     currentScale,

@@ -1,8 +1,8 @@
-import type { GridFormatType } from 'constants/app'
-import { GRID_STEP } from 'constants/style'
+import type { GridFormatType } from '../constants/app'
+import { GRID_STEP } from '../constants/style'
 import { useEffect, useState } from 'react'
-import type { Point, ShapeEntity } from 'types/Shapes'
-import { copyShape, translateShape } from 'utils/shapes'
+import type { Point, ShapeEntity } from '../types/Shapes'
+import { copyShape, translateShape } from '../utils/shapes'
 
 const KeyboardCode = {
   ArrowUp: 'ArrowUp',

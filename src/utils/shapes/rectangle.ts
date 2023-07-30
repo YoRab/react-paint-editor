@@ -1,18 +1,18 @@
-import type { GridFormatType } from 'constants/app'
+import type { GridFormatType } from '../../constants/app'
 import _ from 'lodash/fp'
-import type { SelectionModeResize } from 'types/Mode'
-import type { Point, DrawableShape, ShapeEntity, Rect, SelectionDefaultType } from 'types/Shapes'
-import type { ToolsSettingsType } from 'types/tools'
-import { getPointPositionBeforeCanvasTransformation } from 'utils/intersect'
-import { roundForGrid } from 'utils/transform'
-import { getShapeInfos } from 'utils/shapes/index'
-import { updateCanvasContext } from 'utils/canvas'
+import type { SelectionModeResize } from '../../types/Mode'
+import type { Point, DrawableShape, ShapeEntity, Rect, SelectionDefaultType } from '../../types/Shapes'
+import type { ToolsSettingsType } from '../../types/tools'
+import { getPointPositionBeforeCanvasTransformation } from '../../utils/intersect'
+import { roundForGrid } from '../../utils/transform'
+import { getShapeInfos } from '../../utils/shapes/index'
+import { updateCanvasContext } from '../../utils/canvas'
 import { createLinePath } from './line'
 import {
   SELECTION_ANCHOR_SIZE,
   SELECTION_RESIZE_ANCHOR_POSITIONS,
   SELECTION_ROTATED_ANCHOR_POSITION
-} from 'constants/shapes'
+} from '../../constants/shapes'
 import { createCirclePath } from './circle'
 import { resizeShapeBorder } from './common'
 
@@ -167,14 +167,14 @@ export const getRectOppositeAnchorAbsolutePosition = <T extends DrawableShape & 
     anchor[0] === 0.5
       ? shape.x + shape.width / 2
       : anchor[0] === 0
-      ? shape.x + (negW ? 0 : shape.width)
-      : shape.x + (negW ? shape.width : 0)
+        ? shape.x + (negW ? 0 : shape.width)
+        : shape.x + (negW ? shape.width : 0)
   const oppositeY =
     anchor[1] === 0.5
       ? shape.y + shape.height / 2
       : anchor[1] === 0
-      ? shape.y + (negH ? 0 : shape.height)
-      : shape.y + (negH ? shape.height : 0)
+        ? shape.y + (negH ? 0 : shape.height)
+        : shape.y + (negH ? shape.height : 0)
 
   return getPointPositionBeforeCanvasTransformation(
     [oppositeX, oppositeY],

@@ -1,4 +1,4 @@
-import { polygonIcon } from 'constants/icons'
+import { polygonIcon } from '../../constants/icons'
 import React from 'react'
 import RangeField from './RangeField'
 

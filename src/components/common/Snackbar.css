@@ -1,0 +1,47 @@
+.react-paint-editor-snackbar-container {
+    display: flex;
+    flex-direction: column-reverse;
+    position: absolute;
+    z-index: var(--react-paint-editor-snackbar-zindex);
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 0;
+    align-items: center;
+}
+
+
+.react-paint-editor-snackbar {
+    display: inline-block;
+    padding: 12px 48px;
+    margin: 4px;
+    color: white;
+    max-width: calc(100% - 24px);
+    overflow-wrap: break-word;
+    box-sizing: border-box;
+    transition: all var(--react-paint-editor-panel-transition-duration);
+    opacity: 0;
+    transform: translate3d(0px, 40px, 0px);
+}
+
+.react-paint-editor-snackbar[data-type='infos'] {
+    background: #646464;
+}
+
+.react-paint-editor-snackbar[data-type='error'] {
+    background: #911717;
+}
+
+.react-paint-editor-snackbar[data-type='success'] {
+    background: #088900;
+}
+
+.react-paint-editor-snackbar[data-is-shown='1'] {
+    opacity: 1;
+    transform: translate3d(0px, 0px, 0px);
+}
+
+.react-paint-editor-snackbar[data-is-shown='0'] {
+    opacity: 0;
+    transform: translate3d(0px, 40px, 0px);
+}

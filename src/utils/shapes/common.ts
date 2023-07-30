@@ -1,8 +1,8 @@
-import { rotatePoint } from 'utils/trigo'
-import type { Point, DrawableShape } from 'types/Shapes'
-import type { SelectionModeResize } from 'types/Mode'
-import type { GridFormatType } from 'constants/app'
-import { getShapeInfos } from 'utils/shapes/index'
+import { rotatePoint } from '../../utils/trigo'
+import type { Point, DrawableShape } from '../../types/Shapes'
+import type { SelectionModeResize } from '../../types/Mode'
+import type { GridFormatType } from '../../constants/app'
+import { getShapeInfos } from '../../utils/shapes/index'
 
 const getBorderData = ({
   borderCoordinate,
