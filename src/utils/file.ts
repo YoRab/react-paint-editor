@@ -1,11 +1,11 @@
-import { ShapeTypeArray } from 'constants/shapes'
+import { ShapeTypeArray } from '../constants/shapes'
 import _ from 'lodash/fp'
-import type { DrawableShape, DrawableShapeJson, ExportDataType, Point } from 'types/Shapes'
+import type { DrawableShape, DrawableShapeJson, ExportDataType, Point } from '../types/Shapes'
 import { addDefaultAndTempShapeProps, buildDataToExport } from './data'
 import { initCanvasContext } from './canvas'
 import { migrateShapesV065 } from './migration'
 import { drawShape } from './shapes'
-import { PICTURE_DEFAULT_SIZE } from 'constants/picture'
+import { PICTURE_DEFAULT_SIZE } from '../constants/picture'
 
 export const addSizeAndConvertSvgToObjectUrl = (svgFileContent: string) => {
   const parser = new DOMParser()

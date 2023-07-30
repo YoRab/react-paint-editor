@@ -1,11 +1,11 @@
 import _ from 'lodash/fp'
 import { fitContentInsideContainer } from '../transform'
-import type { DrawablePicture, Picture, Point, Rect, StoredPicture } from 'types/Shapes'
+import type { DrawablePicture, Picture, Point, Rect, StoredPicture } from '../../types/Shapes'
 import { addSizeAndConvertSvgToObjectUrl, fetchAndStringify, isSvg } from '../file'
-import { DEFAULT_SHAPE_PICTURE } from 'constants/tools'
-import { updateCanvasContext } from 'utils/canvas'
+import { DEFAULT_SHAPE_PICTURE } from '../../constants/tools'
+import { updateCanvasContext } from '../../utils/canvas'
 import { getRectBorder, resizeRect } from './rectangle'
-import { SelectionModeResize } from 'types/Mode'
+import { SelectionModeResize } from '../../types/Mode'
 
 const createPictureShape = (
   img: HTMLImageElement,

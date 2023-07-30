@@ -1,31 +1,31 @@
 import React, { CSSProperties, MutableRefObject, useCallback, useEffect, useRef, useState } from 'react'
-import type { DrawableShape, DrawableShapeJson, ExportDataType, Point } from 'types/Shapes'
-import type { ToolsType } from 'types/tools'
+import type { DrawableShape, DrawableShapeJson, ExportDataType, Point } from '../types/Shapes'
+import type { ToolsType } from '../types/tools'
 import Canvas from './Canvas'
 import Layouts from './settings/Layouts'
 import Toolbar from './toolbox/Toolbar'
 import SettingsBar from './settings/SettingsBar'
-import { STYLE_ZINDEX } from 'constants/style'
-import useKeyboard from 'hooks/useKeyboard'
+import { STYLE_ZINDEX } from '../constants/style'
+import useKeyboard from '../hooks/useKeyboard'
 import {
   decodeJson,
   decodeImportedData,
   downloadFile,
   encodeShapesInString as encodeProjectDataInString,
   getCanvasImage
-} from 'utils/file'
-import type { SelectionModeData } from 'types/Mode'
-import useComponent from 'hooks/useComponent'
-import useShapes from 'hooks/useShapes'
+} from '../utils/file'
+import type { SelectionModeData } from '../types/Mode'
+import useComponent from '../hooks/useComponent'
+import useShapes from '../hooks/useShapes'
 import SnackbarContainer from './common/Snackbar'
-import useSnackbar from 'hooks/useSnackbar'
-import Loading from 'components/common/Loading'
-import { buildDataToExport } from 'utils/data'
-import useResizeObserver from 'hooks/useResizeObserver'
-import { sanitizeTools } from 'utils/toolbar'
-import { SELECTION_TOOL } from 'constants/tools'
+import useSnackbar from '../hooks/useSnackbar'
+import Loading from '../components/common/Loading'
+import { buildDataToExport } from '../utils/data'
+import useResizeObserver from '../hooks/useResizeObserver'
+import { sanitizeTools } from '../utils/toolbar'
+import { SELECTION_TOOL } from '../constants/tools'
 import _ from 'lodash/fp'
-import { DEFAULT_OPTIONS, GridFormatType, OptionalAppOptionsType } from 'constants/app'
+import { DEFAULT_OPTIONS, GridFormatType, OptionalAppOptionsType } from '../constants/app'
 import './App.css'
 
 

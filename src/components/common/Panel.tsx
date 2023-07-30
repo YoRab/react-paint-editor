@@ -1,5 +1,5 @@
 import React, { CSSProperties } from 'react'
-import { STYLE_ZINDEX } from 'constants/style'
+import { STYLE_ZINDEX } from '../../constants/style'
 import './Panel.css'
 
 type PanelType = {

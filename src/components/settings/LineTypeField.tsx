@@ -1,7 +1,7 @@
 import React from 'react'
 import SelectField from './SelectField'
 import _ from 'lodash/fp'
-import { lineTypeIcon } from 'constants/icons'
+import { lineTypeIcon } from '../../constants/icons'
 import './LineTypeField.css'
 
 type LineTypeOptionType = {

@@ -5,10 +5,20 @@
   "keywords": [],
   "author": "Yohann Rabatel",
   "license": "MIT",
-  "main": "./dist/components/App.js",
+  "main": "./dist/react-paint.js",
+  "module": "./dist/react-paint.umd.cjs",
   "types": "./dist/components/App.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/react-paint.js",
+      "require": "./dist/react-paint.umd.cjs",
+      "types": "./dist/components/App.d.ts"
+    },
+    "./react-paint.css": "./dist/react-paint.css"
+  },
   "files": [
     "README.md",
+    "LICENSE.txt",
     "package.json",
     "dist/"
   ],
@@ -16,14 +26,14 @@
     "lodash": "4.17.21"
   },
   "devDependencies": {
-    "@storybook/addon-essentials": "^7.1.1",
-    "@storybook/addon-interactions": "^7.1.1",
-    "@storybook/addon-links": "^7.1.1",
-    "@storybook/addon-onboarding": "^1.0.8",
-    "@storybook/blocks": "^7.1.1",
-    "@storybook/react": "^7.1.1",
-    "@storybook/react-vite": "^7.1.1",
-    "@storybook/testing-library": "^0.2.0",
+    "@storybook/addon-essentials": "7.1.1",
+    "@storybook/addon-interactions": "7.1.1",
+    "@storybook/addon-links": "7.1.1",
+    "@storybook/addon-onboarding": "1.0.8",
+    "@storybook/blocks": "7.1.1",
+    "@storybook/react": "7.1.1",
+    "@storybook/react-vite": "7.1.1",
+    "@storybook/testing-library": "0.2.0",
     "@types/lodash": "4.14.196",
     "@types/node": "20.4.5",
     "@types/react": "18.2.17",
@@ -37,11 +47,12 @@
     "eslint-plugin-import": "2.28.0",
     "eslint-plugin-prettier": "5.0.0",
     "eslint-plugin-react-hooks": "4.6.0",
-    "eslint-plugin-storybook": "^0.6.13",
+    "eslint-plugin-storybook": "0.6.13",
+    "lightningcss": "1.21.5",
     "prettier": "3.0.0",
     "react": "18.2.0",
     "react-dom": "18.2.0",
-    "storybook": "^7.1.1",
+    "storybook": "7.1.1",
     "typescript": "5.1.6",
     "vite": "4.4.5",
     "vite-tsconfig-paths": "4.2.0"
@@ -55,8 +66,8 @@
     "start": "storybook dev -p 6006",
     "build-storybook": "storybook build",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "tsc && vite build",
+    "build": "vite build && npm run declarationfiles",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
-    "publishnpm": "npm run buildwithcss && npm publish --access public"
+    "publishnpm": "npm run build && npm publish --access public"
   }
 }

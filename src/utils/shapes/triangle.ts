@@ -1,5 +1,5 @@
-import { Triangle } from 'types/Shapes'
-import { updateCanvasContext } from 'utils/canvas'
+import { Triangle } from '../../types/Shapes'
+import { updateCanvasContext } from '../../utils/canvas'
 
 export const drawTriangle = (ctx: CanvasRenderingContext2D, triangle: Triangle): void => {
   updateCanvasContext(ctx, triangle.style)

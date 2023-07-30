@@ -1,16 +1,16 @@
 import React, { useEffect, useState } from 'react'
-import { selectShape } from 'utils/selection'
-import type { DrawableBrush, DrawableShape, Point, ShapeType } from 'types/Shapes'
-import { checkPositionIntersection, getCursorPosition } from 'utils/intersect'
-import type { HoverModeData, SelectionModeData } from 'types/Mode'
-import { transformShape } from 'utils/transform'
-import type { CustomTool, ToolsType } from 'types/tools'
-import { SELECTION_TOOL } from 'constants/tools'
-import useDoubleClick from 'hooks/useDoubleClick'
-import { ShapeTypeArray } from 'constants/shapes'
-import type { GridFormatType } from 'constants/app'
-import { createShape } from 'utils/shapes'
-import { addNewPointGroupToShape } from 'utils/shapes/brush'
+import { selectShape } from '../utils/selection'
+import type { DrawableBrush, DrawableShape, Point, ShapeType } from '../types/Shapes'
+import { checkPositionIntersection, getCursorPosition } from '../utils/intersect'
+import type { HoverModeData, SelectionModeData } from '../types/Mode'
+import { transformShape } from '../utils/transform'
+import type { CustomTool, ToolsType } from '../types/tools'
+import { SELECTION_TOOL } from '../constants/tools'
+import useDoubleClick from '../hooks/useDoubleClick'
+import { ShapeTypeArray } from '../constants/shapes'
+import type { GridFormatType } from '../constants/app'
+import { createShape } from '../utils/shapes'
+import { addNewPointGroupToShape } from '../utils/shapes/brush'
 
 const handleMove = (
   e: MouseEvent | TouchEvent,
@@ -272,8 +272,8 @@ const useDrawableCanvas = ({
             originalShape: newShape,
             anchor:
               activeTool.type === 'line' ||
-              activeTool.type === 'polygon' ||
-              activeTool.type === 'curve'
+                activeTool.type === 'polygon' ||
+                activeTool.type === 'curve'
                 ? 0
                 : [1, 1]
           })

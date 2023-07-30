@@ -2,8 +2,8 @@ import {
   SELECTION_ANCHOR_SIZE,
   SELECTION_RESIZE_ANCHOR_POSITIONS,
   SELECTION_ROTATED_ANCHOR_POSITION
-} from 'constants/shapes'
-import { DrawableShape } from 'types/Shapes'
+} from '../../constants/shapes'
+import { DrawableShape } from '../../types/Shapes'
 import { getShapeInfos } from '.'
 import { drawCircle } from './circle'
 import { drawLine } from './line'

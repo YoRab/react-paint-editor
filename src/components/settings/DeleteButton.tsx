@@ -1,7 +1,7 @@
 import React from 'react'
-import { trashIcon } from 'constants/icons'
-import type { DrawableShape } from 'types/Shapes'
-import Button from 'components/common/Button'
+import { trashIcon } from '../../constants/icons'
+import type { DrawableShape } from '../../types/Shapes'
+import Button from '../../components/common/Button'
 
 type DeleteShapeButtonType = {
   disabled?: boolean

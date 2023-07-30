@@ -1,7 +1,7 @@
 import _ from 'lodash/fp'
 
-import type { HoverModeData, SelectionModeData } from 'types/Mode'
-import type { Point, DrawableShape } from 'types/Shapes'
+import type { HoverModeData, SelectionModeData } from '../types/Mode'
+import type { Point, DrawableShape } from '../types/Shapes'
 import { checkPositionIntersection } from './intersect'
 import { getShapeInfos } from './shapes'
 

@@ -8,9 +8,7 @@
     ],
     "baseUrl": ".",
     "skipLibCheck": true,
-    "declaration": true,
-    "emitDeclarationOnly": true,
-    "outDir": "dist",
+    "noEmit": true,
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
     "strict": true,
@@ -19,12 +17,7 @@
     "module": "esnext",
     "moduleResolution": "node",
     "resolveJsonModule": true,
-    "jsx": "react",
-    "paths": {
-      "*": [
-        "src/*"
-      ]
-    }
+    "jsx": "react"
   },
   "include": [
     "src",

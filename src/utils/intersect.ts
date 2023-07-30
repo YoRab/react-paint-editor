@@ -2,10 +2,10 @@ import {
   SELECTION_ANCHOR_SIZE,
   SELECTION_RESIZE_ANCHOR_POSITIONS,
   SELECTION_ROTATED_ANCHOR_POSITION
-} from 'constants/shapes'
+} from '../constants/shapes'
 import _ from 'lodash/fp'
-import type { HoverModeData } from 'types/Mode'
-import type { Point, DrawableShape } from 'types/Shapes'
+import type { HoverModeData } from '../types/Mode'
+import type { Point, DrawableShape } from '../types/Shapes'
 import { getShapeInfos } from './shapes'
 import { rotatePoint, isPointInsideRect } from './trigo'
 
