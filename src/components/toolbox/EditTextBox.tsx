@@ -1,5 +1,5 @@
 import { STYLE_FONT_DEFAULT } from '../../constants/style'
-import React, { useEffect, useMemo, useRef } from 'react'
+import React, { CSSProperties, useEffect, useMemo, useRef } from 'react'
 import type { DrawableShape } from '../../types/Shapes'
 import { convertDivContentToStringArray, convertStringArrayToDivContent } from '../../utils/string'
 import { getShapeInfos } from '../../utils/shapes'
