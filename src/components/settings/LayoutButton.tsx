@@ -1,6 +1,6 @@
 import React from 'react'
-import { layersIcon } from 'constants/icons'
-import Button from 'components/common/Button'
+import { layersIcon } from '../../constants/icons'
+import Button from '../../components/common/Button'
 import './LayoutButton.css'
 
 type LayoutButtonType = {

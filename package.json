@@ -1,73 +1,73 @@
 {
   "name": "@yorab/react-paint",
   "version": "0.7.6",
+  "type": "module",
   "keywords": [],
   "author": "Yohann Rabatel",
   "license": "MIT",
-  "main": "./dist/components/App.js",
+  "main": "./dist/react-paint.js",
+  "module": "./dist/react-paint.umd.cjs",
   "types": "./dist/components/App.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/react-paint.js",
+      "require": "./dist/react-paint.umd.cjs",
+      "types": "./dist/components/App.d.ts"
+    },
+    "./react-paint.css": "./dist/react-paint.css"
+  },
   "files": [
     "README.md",
+    "LICENSE.txt",
     "package.json",
     "dist/"
   ],
   "dependencies": {
-    "lodash": "^4.17.20"
+    "lodash": "4.17.21"
   },
   "devDependencies": {
-    "@babel/cli": "7.12.8",
-    "@babel/core": "^7.16.7",
-    "@babel/plugin-transform-runtime": "^7.16.8",
-    "@babel/preset-env": "^7.16.8",
-    "@babel/preset-react": "^7.16.7",
-    "@babel/preset-typescript": "^7.16.7",
-    "@babel/runtime": "^7.16.7",
-    "@testing-library/jest-dom": "^5.11.4",
-    "@testing-library/react": "^11.1.0",
-    "@testing-library/user-event": "^12.1.10",
-    "@types/jest": "^26.0.15",
-    "@types/lodash": "4.14.170",
-    "@types/node": "^12.0.0",
-    "@types/react": "^18.0.10",
-    "@types/react-dom": "^18.0.5",
-    "@typescript-eslint/eslint-plugin": "4.28.0",
-    "@typescript-eslint/parser": "4.28.0",
-    "babel-jest": "^27.4.6",
-    "babel-loader": "^8.2.3",
-    "babel-plugin-module-resolver": "^4.1.0",
-    "css-loader": "^6.7.0",
-    "eslint": "7.29.0",
-    "eslint-config-prettier": "^8.3.0",
-    "eslint-import-resolver-typescript": "2.4.0",
-    "eslint-plugin-import": "2.23.4",
-    "eslint-plugin-prettier": "^3.4.0",
-    "eslint-plugin-react-hooks": "^4.2.0",
-    "html-webpack-plugin": "^5.5.0",
-    "mini-css-extract-plugin": "^2.6.0",
-    "prettier": "^2.3.2",
-    "react": "18.1.0",
-    "react-dom": "18.1.0",
-    "typescript": "^4.7.2",
-    "webpack": "^5.66.0",
-    "webpack-cli": "^4.9.1",
-    "webpack-dev-server": "^4.7.3"
+    "@storybook/addon-essentials": "7.1.1",
+    "@storybook/addon-interactions": "7.1.1",
+    "@storybook/addon-links": "7.1.1",
+    "@storybook/addon-onboarding": "1.0.8",
+    "@storybook/blocks": "7.1.1",
+    "@storybook/react": "7.1.1",
+    "@storybook/react-vite": "7.1.1",
+    "@storybook/testing-library": "0.2.0",
+    "@types/lodash": "4.14.196",
+    "@types/node": "20.4.5",
+    "@types/react": "18.2.17",
+    "@types/react-dom": "18.2.7",
+    "@typescript-eslint/eslint-plugin": "6.0.0",
+    "@typescript-eslint/parser": "6.0.0",
+    "@vitejs/plugin-react": "4.0.3",
+    "eslint": "8.45.0",
+    "eslint-config-prettier": "8.9.0",
+    "eslint-import-resolver-typescript": "3.5.5",
+    "eslint-plugin-import": "2.28.0",
+    "eslint-plugin-prettier": "5.0.0",
+    "eslint-plugin-react-hooks": "4.6.0",
+    "eslint-plugin-storybook": "0.6.13",
+    "lightningcss": "1.21.5",
+    "prettier": "3.0.0",
+    "react": "18.2.0",
+    "react-dom": "18.2.0",
+    "storybook": "7.1.1",
+    "typescript": "5.1.6",
+    "vite": "4.4.5",
+    "vite-tsconfig-paths": "4.2.0"
   },
   "peerDependencies": {
-    "react": "*",
-    "react-dom": "*"
+    "react": "18.x",
+    "react-dom": "18.x"
   },
   "scripts": {
     "declarationfiles": "tsc --project tsconfig.prod.json",
-    "start": "webpack serve --config webpack.config.js --open",
+    "start": "storybook dev -p 6006",
+    "build-storybook": "storybook build",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "buildexamples": "webpack --config webpack.prod.config.js",
-    "build": "npx babel src/ --extensions '.js,.ts,.tsx,.jsx' --copy-files --delete-dir-on-start -d dist",
-    "buildwithcss": "npm run build && npm run buildexamples && mv build/styles.css dist/styles.css",
-    "publish": "npm run buildwithcss && npm publish --access public"
-  },
-  "jest": {
-    "transform": {
-      "^.+\\.[t|j]sx?$": "babel-jest"
-    }
+    "build": "vite build && npm run declarationfiles",
+    "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
+    "publishnpm": "npm run build && npm publish --access public"
   }
 }

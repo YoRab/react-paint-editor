@@ -1,7 +1,7 @@
 import React from 'react'
 import SelectField from './SelectField'
 import _ from 'lodash/fp'
-import { lineEndIcon } from 'constants/icons'
+import { lineEndIcon } from '../../constants/icons'
 import './LineArrowField.css'
 
 const LineArrowOption: React.FC<{

@@ -1,4 +1,4 @@
-import { ShapeTypeArray } from 'constants/shapes'
+import { ShapeTypeArray } from '../constants/shapes'
 
 export type ShapeType = typeof ShapeTypeArray[number]
 export type Point = [number, number]

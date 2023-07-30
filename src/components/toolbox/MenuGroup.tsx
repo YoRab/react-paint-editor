@@ -1,12 +1,12 @@
 import _ from 'lodash/fp'
 import React, { useEffect, useState, useTransition } from 'react'
-import Button from 'components/common/Button'
-import Panel from 'components/common/Panel'
-import type { ShapeType } from 'types/Shapes'
+import Button from '../../components/common/Button'
+import Panel from '../../components/common/Panel'
+import type { ShapeType } from '../../types/Shapes'
 import Tool from './Tool'
 import LoadFileTool from './LoadFileTool'
-import { publicIcon } from 'constants/icons'
-import type { ToolsType } from 'types/tools'
+import { publicIcon } from '../../constants/icons'
+import type { ToolsType } from '../../types/tools'
 import {
   CLEAR_TOOL,
   EXPORT_TOOL,
@@ -15,7 +15,7 @@ import {
   SAVE_TOOL,
   UNDO_TOOL,
   UPLOAD_PICTURE_TOOL
-} from 'constants/tools'
+} from '../../constants/tools'
 import './MenuGroup.css'
 
 type ToolbarGroupType = {

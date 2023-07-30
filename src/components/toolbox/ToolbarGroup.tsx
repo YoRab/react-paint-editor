@@ -1,10 +1,10 @@
 import _ from 'lodash/fp'
 import React, { useEffect, useRef, useState, useTransition } from 'react'
-import Button from 'components/common/Button'
-import Panel from 'components/common/Panel'
+import Button from '../../components/common/Button'
+import Panel from '../../components/common/Panel'
 import Tool from './Tool'
-import type { CustomTool, ToolsType } from 'types/tools'
-import { isEventInsideNode } from 'utils/dom'
+import type { CustomTool, ToolsType } from '../../types/tools'
+import { isEventInsideNode } from '../../utils/dom'
 import './ToolbarGroup.css'
 
 type ToolbarGroupType = {

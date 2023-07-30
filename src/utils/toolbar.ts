@@ -1,7 +1,7 @@
-import type { ShapeType } from 'types/Shapes'
+import type { ShapeType } from '../types/Shapes'
 import _ from 'lodash/fp'
-import type { CustomTool, CustomToolInput } from 'types/tools'
-import type { RecursivePartial } from 'types/utils'
+import type { CustomTool, CustomToolInput } from '../types/tools'
+import type { RecursivePartial } from '../types/utils'
 import {
   DEFAULT_SHAPE_BRUSH,
   DEFAULT_SHAPE_CIRCLE,
@@ -13,17 +13,17 @@ import {
   DEFAULT_SHAPE_SQUARE,
   DEFAULT_SHAPE_TEXT,
   DEFAULT_SHAPE_PICTURE
-} from 'constants/tools'
+} from '../constants/tools'
 
 export const getCurrentStructure = (
   availableTools: CustomTool[],
   defaultStructure: (
     | ShapeType
     | {
-        title: string
-        toolsType: ShapeType[]
-        vertical: boolean
-      }
+      title: string
+      toolsType: ShapeType[]
+      vertical: boolean
+    }
   )[]
 ) => {
   return _.flow(
@@ -39,10 +39,10 @@ export const getCurrentStructure = (
   )(defaultStructure) as unknown as (
     | CustomTool
     | {
-        title: string
-        toolsType: CustomTool[]
-        vertical: boolean
-      }
+      title: string
+      toolsType: CustomTool[]
+      vertical: boolean
+    }
   )[]
 }
 

@@ -1,7 +1,7 @@
 import _ from 'lodash/fp'
 import React, { useState } from 'react'
-import Button from 'components/common/Button'
-import Panel from 'components/common/Panel'
+import Button from '../../components/common/Button'
+import Panel from '../../components/common/Panel'
 import './RangeField.css'
 
 type ShapeStyleColorType = {

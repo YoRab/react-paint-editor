@@ -1,4 +1,4 @@
-import { DrawableShapeJson, Point } from 'types/Shapes'
+import { DrawableShapeJson, Point } from '../types/Shapes'
 import _ from 'lodash/fp'
 
 export const migrateShapesV065 = (shapes: DrawableShapeJson[]) => {

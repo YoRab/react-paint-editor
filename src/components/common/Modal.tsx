@@ -1,5 +1,5 @@
 import React, { CSSProperties, ReactNode } from 'react'
-import { STYLE_ZINDEX } from 'constants/style'
+import { STYLE_ZINDEX } from '../../constants/style'
 import './Modal.css'
 
 type ModalType = {

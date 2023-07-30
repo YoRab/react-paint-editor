@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from 'react'
-import Button from 'components/common/Button'
-import Modal from 'components/common/Modal'
+import Button from '../../components/common/Button'
+import Modal from '../../components/common/Modal'
 import './PictureUrlInput.css'
 
 type PictureUrlModalType = {

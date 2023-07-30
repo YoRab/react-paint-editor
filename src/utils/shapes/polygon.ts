@@ -1,7 +1,7 @@
 import _ from 'lodash/fp'
-import type { Point, DrawablePolygon, Polygon, Rect } from 'types/Shapes'
-import type { ToolsSettingsType } from 'types/tools'
-import { updateCanvasContext } from 'utils/canvas'
+import type { Point, DrawablePolygon, Polygon, Rect } from '../../types/Shapes'
+import type { ToolsSettingsType } from '../../types/tools'
+import { updateCanvasContext } from '../../utils/canvas'
 
 export const createPolygon = (
   shape: {

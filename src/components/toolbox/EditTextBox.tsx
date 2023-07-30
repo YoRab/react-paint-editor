@@ -1,9 +1,9 @@
-import { STYLE_FONT_DEFAULT } from 'constants/style'
+import { STYLE_FONT_DEFAULT } from '../../constants/style'
 import React, { CSSProperties, useEffect, useMemo, useRef } from 'react'
-import type { DrawableText } from 'types/Shapes'
-import { convertDivContentToStringArray, convertStringArrayToDivContent } from 'utils/string'
-import { getShapeInfos } from 'utils/shapes'
-import { radiansToDegrees, rotatePoint } from 'utils/trigo'
+import type { DrawableText } from '../../types/Shapes'
+import { convertDivContentToStringArray, convertStringArrayToDivContent } from '../../utils/string'
+import { getShapeInfos } from '../../utils/shapes'
+import { radiansToDegrees, rotatePoint } from '../../utils/trigo'
 import './EditTextBox.css'
 
 type EditTextBoxType = {

@@ -1,10 +1,10 @@
 import _ from 'lodash/fp'
-import { SelectionModeResize } from 'types/Mode'
-import type { Point, DrawableBrush, Brush, Rect } from 'types/Shapes'
-import type { ToolsSettingsType } from 'types/tools'
-import { updateCanvasContext } from 'utils/canvas'
-import { getPointPositionAfterCanvasTransformation } from 'utils/intersect'
-import { getNormalizedSize } from 'utils/transform'
+import { SelectionModeResize } from '../../types/Mode'
+import type { Point, DrawableBrush, Brush, Rect } from '../../types/Shapes'
+import type { ToolsSettingsType } from '../../types/tools'
+import { updateCanvasContext } from '../../utils/canvas'
+import { getPointPositionAfterCanvasTransformation } from '../../utils/intersect'
+import { getNormalizedSize } from '../../utils/transform'
 import { getShapeInfos } from '.'
 import { getRectOppositeAnchorAbsolutePosition } from './rectangle'
 
@@ -101,18 +101,18 @@ export const resizeBrush = (
     selectionMode.anchor[0] === 0.5
       ? 1
       : selectionMode.anchor[0] === 0
-      ? (borders.x + borders.width - cursorPositionBeforeResize[0] + selectionPadding * -2) /
+        ? (borders.x + borders.width - cursorPositionBeforeResize[0] + selectionPadding * -2) /
         (borders.width + selectionPadding * -2)
-      : (cursorPositionBeforeResize[0] - borders.x - selectionPadding * 2) /
+        : (cursorPositionBeforeResize[0] - borders.x - selectionPadding * 2) /
         (borders.width - selectionPadding * 2)
 
   const scaledHeight =
     selectionMode.anchor[1] === 0.5
       ? 1
       : selectionMode.anchor[1] === 0
-      ? (borders.y + borders.height - cursorPositionBeforeResize[1] + selectionPadding * -2) /
+        ? (borders.y + borders.height - cursorPositionBeforeResize[1] + selectionPadding * -2) /
         (borders.height + selectionPadding * -2)
-      : (cursorPositionBeforeResize[1] - borders.y - selectionPadding * 2) /
+        : (cursorPositionBeforeResize[1] - borders.y - selectionPadding * 2) /
         (borders.height - selectionPadding * 2)
 
   const [widthWithRatio, heightWithRatio] = keepRatio

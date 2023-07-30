@@ -1,7 +1,7 @@
-import { SNACKBAR_DEFAULT_SETTINGS } from 'constants/snackbar'
+import { SNACKBAR_DEFAULT_SETTINGS } from '../constants/snackbar'
 import _ from 'lodash/fp'
 import { useEffect, useRef, useState } from 'react'
-import type { SnackBarType, SnackbarTypeType } from 'types/snackbar'
+import type { SnackBarType, SnackbarTypeType } from '../types/snackbar'
 
 const useSnackbar = () => {
   const timers = useRef<NodeJS.Timeout[]>([])

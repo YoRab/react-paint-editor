@@ -1,12 +1,12 @@
 import _ from 'lodash/fp'
-import { SelectionModeResize } from 'types/Mode'
-import type { Point, DrawableCircle, Circle, Rect, DrawableShape } from 'types/Shapes'
-import type { ToolsSettingsType } from 'types/tools'
-import { updateCanvasContext } from 'utils/canvas'
+import { SelectionModeResize } from '../../types/Mode'
+import type { Point, DrawableCircle, Circle, Rect, DrawableShape } from '../../types/Shapes'
+import type { ToolsSettingsType } from '../../types/tools'
+import { updateCanvasContext } from '../../utils/canvas'
 import {
   getPointPositionAfterCanvasTransformation,
   getPointPositionBeforeCanvasTransformation
-} from 'utils/intersect'
+} from '../../utils/intersect'
 import { getShapeInfos } from '.'
 
 export const createCircle = (
@@ -65,14 +65,14 @@ const getCircleOppositeAnchorAbsolutePosition = <T extends DrawableShape & Circl
     anchor[0] === 0.5
       ? shape.x
       : anchor[0] === 0
-      ? shape.x + (negW ? -shape.radius : shape.radius)
-      : shape.x + (negW ? shape.radius : -shape.radius)
+        ? shape.x + (negW ? -shape.radius : shape.radius)
+        : shape.x + (negW ? shape.radius : -shape.radius)
   const oppositeY =
     anchor[1] === 0.5
       ? shape.y
       : anchor[1] === 0
-      ? shape.y + (negH ? -shape.radius : shape.radius)
-      : shape.y + (negH ? shape.radius : -shape.radius)
+        ? shape.y + (negH ? -shape.radius : shape.radius)
+        : shape.y + (negH ? shape.radius : -shape.radius)
 
   return getPointPositionBeforeCanvasTransformation(
     [oppositeX, oppositeY],
@@ -103,21 +103,21 @@ export const resizeCircle = (
   const scaledRadius =
     selectionMode.anchor[1] === 0.5
       ? (selectionMode.anchor[0] === 0
-          ? borders.x +
-            borders.width -
-            newCursorPosition[0] +
-            selectionPadding * (selectionMode.anchor[0] === 0 ? -2 : 2)
-          : newCursorPosition[0] -
-            borders.x -
-            selectionPadding * (selectionMode.anchor[0] === 0 ? -2 : 2)) / 2
+        ? borders.x +
+        borders.width -
+        newCursorPosition[0] +
+        selectionPadding * (selectionMode.anchor[0] === 0 ? -2 : 2)
+        : newCursorPosition[0] -
+        borders.x -
+        selectionPadding * (selectionMode.anchor[0] === 0 ? -2 : 2)) / 2
       : (selectionMode.anchor[1] === 0
-          ? borders.y +
-            borders.height -
-            newCursorPosition[1] +
-            selectionPadding * (selectionMode.anchor[1] === 0 ? -2 : 2)
-          : newCursorPosition[1] -
-            borders.y -
-            selectionPadding * (selectionMode.anchor[1] === 0 ? -2 : 2)) / 2
+        ? borders.y +
+        borders.height -
+        newCursorPosition[1] +
+        selectionPadding * (selectionMode.anchor[1] === 0 ? -2 : 2)
+        : newCursorPosition[1] -
+        borders.y -
+        selectionPadding * (selectionMode.anchor[1] === 0 ? -2 : 2)) / 2
 
   const shapeWithNewDimensions = {
     ...originalShape,

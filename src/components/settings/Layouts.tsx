@@ -1,7 +1,7 @@
 import React, { useRef, useState } from 'react'
 import _ from 'lodash/fp'
-import type { DrawableShape } from 'types/Shapes'
-import useDrag from 'hooks/useDrag'
+import type { DrawableShape } from '../../types/Shapes'
+import useDrag from '../../hooks/useDrag'
 import {
   gridOffIcon,
   lockedIcon,
@@ -9,11 +9,11 @@ import {
   unlockedIcon,
   visibilityIcon,
   visibilityOffIcon
-} from 'constants/icons'
-import { getShapePicture } from 'utils/style'
-import Button from 'components/common/Button'
-import Panel from 'components/common/Panel'
-import type { GridFormatType } from 'constants/app'
+} from '../../constants/icons'
+import { getShapePicture } from '../../utils/style'
+import Button from '../../components/common/Button'
+import Panel from '../../components/common/Panel'
+import type { GridFormatType } from '../../constants/app'
 import './Layouts.css'
 
 type LayoutType = {

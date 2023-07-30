@@ -1,31 +1,31 @@
 import React, { CSSProperties, MutableRefObject, useCallback, useEffect, useRef, useState } from 'react'
-import type { DrawableShape, DrawableShapeJson, ExportDataType, Point } from 'types/Shapes'
-import type { ToolsType } from 'types/tools'
+import type { DrawableShape, DrawableShapeJson, ExportDataType, Point } from '../types/Shapes'
+import type { ToolsType } from '../types/tools'
 import Canvas from './Canvas'
 import Layouts from './settings/Layouts'
 import Toolbar from './toolbox/Toolbar'
 import SettingsBar from './settings/SettingsBar'
-import { STYLE_ZINDEX } from 'constants/style'
-import useKeyboard from 'hooks/useKeyboard'
+import { STYLE_ZINDEX } from '../constants/style'
+import useKeyboard from '../hooks/useKeyboard'
 import {
   decodeJson,
   decodeImportedData,
   downloadFile,
   encodeShapesInString as encodeProjectDataInString,
   getCanvasImage
-} from 'utils/file'
-import type { SelectionModeData } from 'types/Mode'
-import useComponent from 'hooks/useComponent'
-import useShapes from 'hooks/useShapes'
+} from '../utils/file'
+import type { SelectionModeData } from '../types/Mode'
+import useComponent from '../hooks/useComponent'
+import useShapes from '../hooks/useShapes'
 import SnackbarContainer from './common/Snackbar'
-import useSnackbar from 'hooks/useSnackbar'
-import Loading from 'components/common/Loading'
-import { buildDataToExport } from 'utils/data'
-import useResizeObserver from 'hooks/useResizeObserver'
-import { sanitizeTools } from 'utils/toolbar'
-import { SELECTION_TOOL } from 'constants/tools'
+import useSnackbar from '../hooks/useSnackbar'
+import Loading from '../components/common/Loading'
+import { buildDataToExport } from '../utils/data'
+import useResizeObserver from '../hooks/useResizeObserver'
+import { sanitizeTools } from '../utils/toolbar'
+import { SELECTION_TOOL } from '../constants/tools'
 import _ from 'lodash/fp'
-import { DEFAULT_OPTIONS, GridFormatType, OptionalAppOptionsType } from 'constants/app'
+import { DEFAULT_OPTIONS, GridFormatType, OptionalAppOptionsType } from '../constants/app'
 import './App.css'
 
 
@@ -48,15 +48,15 @@ type AppType = {
 }
 
 const App = ({
-  width: canvasWidth = 1000,
-  height: canvasHeight = 600,
+  width = 1000,
+  height = 600,
   shapes: shapesFromProps,
-  className: classNameFromProps = "",
+  className = "",
   mode = 'editor',
-  disabled: disabledFromProps = false,
+  disabled = false,
   onDataChanged,
   apiRef,
-  options
+  options = DEFAULT_OPTIONS
 }: AppType) => {
   const {
     layersManipulation,
@@ -95,12 +95,12 @@ const App = ({
     ...(options?.uiStyle ?? {})
   }
   const isEditMode = mode !== 'viewer'
-  const disabled = disabledFromProps || !isEditMode
+  const isDisabled = disabled || !isEditMode
   const componentRef = useRef<HTMLDivElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const [canvasSize, setCanvasSize] = useState({
-    width: canvasWidth,
-    height: canvasHeight,
+    width: width,
+    height: height,
     scaleRatio: 1
   })
 
@@ -115,7 +115,7 @@ const App = ({
   }, [availableToolsFromProps, withUploadPicture, withUrlPicture])
 
   const { isInsideComponent } = useComponent({
-    disabled,
+    disabled: isDisabled,
     componentRef
   })
 
@@ -244,8 +244,8 @@ const App = ({
         getCanvasImage(
           shapesRef.current,
           canvasOffset,
-          canvasWidth,
-          canvasHeight,
+          width,
+          height,
           canvasSelectionPadding
         )
       if (!dataURL) {
@@ -261,12 +261,12 @@ const App = ({
     } finally {
       setIsLoading(false)
     }
-  }, [addSnackbar, shapesRef, canvasOffset, canvasWidth, canvasHeight, canvasSelectionPadding])
+  }, [addSnackbar, shapesRef, canvasOffset, width, height, canvasSelectionPadding])
 
   const saveFile = useCallback(() => {
     setIsLoading(true)
     try {
-      const content = encodeProjectDataInString(shapesRef.current, canvasWidth, canvasHeight)
+      const content = encodeProjectDataInString(shapesRef.current, width, height)
       if (!content) {
         throw new Error("L'encodage a échoué")
       }
@@ -280,7 +280,7 @@ const App = ({
     } finally {
       setIsLoading(false)
     }
-  }, [shapesRef, addSnackbar, canvasWidth, canvasHeight])
+  }, [shapesRef, addSnackbar, width, height])
 
   const loadFile = useCallback(
     async (file: File) => {
@@ -305,7 +305,7 @@ const App = ({
     async (fileOrUrl: File | string) => {
       setIsLoading(true)
       try {
-        const pictureShape = await addPictureShape(fileOrUrl, canvasWidth, canvasHeight)
+        const pictureShape = await addPictureShape(fileOrUrl, width, height)
         selectShape(pictureShape)
       } catch (e) {
         if (e instanceof Error) {
@@ -316,15 +316,15 @@ const App = ({
         setIsLoading(false)
       }
     },
-    [addPictureShape, selectShape, addSnackbar, canvasWidth, canvasHeight]
+    [addPictureShape, selectShape, addSnackbar, width, height]
   )
 
   const onResized = useCallback(
     (measuredWidth: number) => {
-      const scaleRatio = measuredWidth / canvasWidth
-      setCanvasSize({ width: measuredWidth, height: canvasHeight * scaleRatio, scaleRatio })
+      const scaleRatio = measuredWidth / width
+      setCanvasSize({ width: measuredWidth, height: height * scaleRatio, scaleRatio })
     },
-    [canvasWidth, canvasHeight]
+    [width, height]
   )
 
   useKeyboard({
@@ -361,29 +361,29 @@ const App = ({
           ? getCanvasImage(
             shapesRef.current,
             canvasOffset,
-            canvasWidth,
-            canvasHeight,
+            width,
+            height,
             canvasSelectionPadding
           )
           : undefined
       },
 
       getCurrentData: () => {
-        return buildDataToExport(shapesRef.current, canvasWidth, canvasHeight)
+        return buildDataToExport(shapesRef.current, width, height)
       }
     }
-  }, [apiRef, shapesRef, canvasOffset, canvasWidth, canvasHeight, canvasSelectionPadding])
+  }, [apiRef, shapesRef, canvasOffset, width, height, canvasSelectionPadding])
 
-  const className = `${classNameFromProps}${isLayoutPanelShown ? ' react-paint-editor-layout-opened' : ''} react-paint-editor-app`
+  const appClassName = `${className}${isLayoutPanelShown ? ' react-paint-editor-layout-opened' : ''} react-paint-editor-app`
 
   return (
     <div
       ref={componentRef}
-      className={className}
+      className={appClassName}
       data-grow={canGrow}
       data-shrink={canShrink}
       style={{
-        "--react-paint-editor-app-canvaswidth": `${canvasWidth}px`,
+        "--react-paint-editor-app-canvaswidth": `${width}px`,
         "--react-paint-editor-app-toolbar-bg": toolbarBackgroundColor,
         "--react-paint-editor-app-divider-color": dividerColor,
         "--react-paint-editor-app-font-radius": fontRadius,
@@ -401,7 +401,7 @@ const App = ({
       {isEditMode && (
         <Toolbar
           width={canvasSize.width}
-          disabled={disabled}
+          disabled={isDisabled}
           activeTool={activeTool}
           clearCanvas={clearCanvas}
           setActiveTool={selectTool}
@@ -433,7 +433,7 @@ const App = ({
         <Canvas
           canGrow={canGrow}
           gridFormat={gridFormat}
-          disabled={disabled}
+          disabled={isDisabled}
           isInsideComponent={isInsideComponent}
           activeTool={activeTool}
           setActiveTool={setActiveTool}
@@ -461,7 +461,7 @@ const App = ({
           <Layouts
             gridFormat={gridFormat}
             setGridFormat={setGridFormat}
-            disabled={disabled}
+            disabled={isDisabled}
             shapes={shapesRef.current}
             moveShapes={moveShapes}
             selectedShape={selectedShape}
@@ -477,7 +477,7 @@ const App = ({
         <>
           <SettingsBar
             width={canvasSize.width}
-            disabled={disabled}
+            disabled={isDisabled}
             activeTool={activeTool}
             availableTools={availableTools}
             selectedShape={selectedShape}

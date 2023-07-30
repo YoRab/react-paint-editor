@@ -1,5 +1,5 @@
 import _ from 'lodash/fp'
-import type { DrawableShape, DrawableShapeJson, ExportDataType } from 'types/Shapes'
+import type { DrawableShape, DrawableShapeJson, ExportDataType } from '../types/Shapes'
 import { getBase64Image } from './file'
 
 export const cleanShapesBeforeExport = (shapes: DrawableShape[]) => {

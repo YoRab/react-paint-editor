@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import type { DrawableShape } from 'types/Shapes'
+import type { DrawableShape } from '../types/Shapes'
 import _ from 'lodash/fp'
-import { createPicture } from 'utils/shapes/picture'
-import { PICTURE_DEFAULT_SIZE } from 'constants/picture'
+import { createPicture } from '../utils/shapes/picture'
+import { PICTURE_DEFAULT_SIZE } from '../constants/picture'
 
 const useShapes = (onDataChanged: () => void = _.noop) => {
   const shapesRef = useRef<DrawableShape[]>([])
@@ -34,15 +34,15 @@ const useShapes = (onDataChanged: () => void = _.noop) => {
       )
         ? prevSavedShaped
         : {
-            states: [
-              ...prevSavedShaped.states.slice(0, prevSavedShaped.cursor + 1),
-              {
-                shapes: shapesRef.current,
-                selectedShape
-              }
-            ],
-            cursor: prevSavedShaped.cursor + 1
-          }
+          states: [
+            ...prevSavedShaped.states.slice(0, prevSavedShaped.cursor + 1),
+            {
+              shapes: shapesRef.current,
+              selectedShape
+            }
+          ],
+          cursor: prevSavedShaped.cursor + 1
+        }
     })
   }, [selectedShape])
 
@@ -121,19 +121,19 @@ const useShapes = (onDataChanged: () => void = _.noop) => {
     setSavedShapes(prevSavedShaped => {
       return clearHistory
         ? {
-            states: [{ shapes: shapesToInit, selectedShape: undefined }],
-            cursor: 0
-          }
+          states: [{ shapes: shapesToInit, selectedShape: undefined }],
+          cursor: 0
+        }
         : {
-            states: [
-              ...prevSavedShaped.states.slice(0, prevSavedShaped.cursor + 1),
-              {
-                shapes: shapesToInit,
-                selectedShape: undefined
-              }
-            ],
-            cursor: prevSavedShaped.cursor + 1
-          }
+          states: [
+            ...prevSavedShaped.states.slice(0, prevSavedShaped.cursor + 1),
+            {
+              shapes: shapesToInit,
+              selectedShape: undefined
+            }
+          ],
+          cursor: prevSavedShaped.cursor + 1
+        }
     })
   }, [])
 

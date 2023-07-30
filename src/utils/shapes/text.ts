@@ -1,9 +1,9 @@
 import _ from 'lodash/fp'
-import type { Point, DrawableText, Text, Rect, DrawableShape } from 'types/Shapes'
-import type { ToolsSettingsType } from 'types/tools'
-import { updateCanvasContext } from 'utils/canvas'
-import { STYLE_FONT_DEFAULT, STYLE_FONT_SIZE_DEFAULT } from 'constants/style'
-import { SelectionModeResize } from 'types/Mode'
+import type { Point, DrawableText, Text, Rect, DrawableShape } from '../../types/Shapes'
+import type { ToolsSettingsType } from '../../types/tools'
+import { updateCanvasContext } from '../../utils/canvas'
+import { STYLE_FONT_DEFAULT, STYLE_FONT_SIZE_DEFAULT } from '../../constants/style'
+import { SelectionModeResize } from '../../types/Mode'
 import { getRectOppositeAnchorAbsolutePosition, resizeRect } from './rectangle'
 import { getShapeInfos } from '.'
 
@@ -69,9 +69,8 @@ export const drawText = (ctx: CanvasRenderingContext2D, text: Text): void => {
   if (ctx.globalAlpha === 0 || !text.style?.strokeColor || text.style.strokeColor === 'transparent')
     return
 
-  ctx.font = `${text.style?.fontItalic ? 'italic' : ''} ${text.style?.fontBold ? 'bold' : ''} ${
-    text.fontSize
-  }px ${text.style?.fontFamily ?? STYLE_FONT_DEFAULT}`
+  ctx.font = `${text.style?.fontItalic ? 'italic' : ''} ${text.style?.fontBold ? 'bold' : ''} ${text.fontSize
+    }px ${text.style?.fontFamily ?? STYLE_FONT_DEFAULT}`
   ctx.textBaseline = 'top'
   ctx.fillStyle = text.style.strokeColor
   for (let i = 0; i < text.value.length; i++) {

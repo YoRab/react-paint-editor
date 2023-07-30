@@ -1,7 +1,7 @@
 import React, { CSSProperties } from 'react'
 import SelectField from './SelectField'
 import _ from 'lodash/fp'
-import { fontIcon } from 'constants/icons'
+import { fontIcon } from '../../constants/icons'
 import './FontFamilyField.css'
 
 const FontFamilyOption: React.FC<{

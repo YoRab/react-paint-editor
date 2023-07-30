@@ -1,6 +1,6 @@
-import { SELECTION_ANCHOR_SIZE } from 'constants/shapes'
+import { SELECTION_ANCHOR_SIZE } from '../../constants/shapes'
 import _ from 'lodash/fp'
-import { SelectionModeResize } from 'types/Mode'
+import { SelectionModeResize } from '../../types/Mode'
 import type {
   Point,
   DrawableLine,
@@ -10,11 +10,11 @@ import type {
   Rect,
   DrawableCurve,
   DrawablePolygon
-} from 'types/Shapes'
-import type { ToolsSettingsType } from 'types/tools'
-import { updateCanvasContext } from 'utils/canvas'
-import { getPointPositionAfterCanvasTransformation } from 'utils/intersect'
-import { getAngleFromVector, rotatePoint } from 'utils/trigo'
+} from '../../types/Shapes'
+import type { ToolsSettingsType } from '../../types/tools'
+import { updateCanvasContext } from '../../utils/canvas'
+import { getPointPositionAfterCanvasTransformation } from '../../utils/intersect'
+import { getAngleFromVector, rotatePoint } from '../../utils/trigo'
 import { getShapeInfos } from '.'
 import { drawCircle } from './circle'
 import { drawRect } from './rectangle'

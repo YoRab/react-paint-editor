@@ -1,7 +1,7 @@
 import _ from 'lodash/fp'
 import React, { CSSProperties, useState } from 'react'
-import Button from 'components/common/Button'
-import Panel from 'components/common/Panel'
+import Button from '../../components/common/Button'
+import Panel from '../../components/common/Panel'
 import './SelectField.css'
 
 type SelectFieldType = {

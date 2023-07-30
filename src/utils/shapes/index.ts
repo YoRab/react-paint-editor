@@ -11,9 +11,9 @@ import type {
   DrawablePicture,
   DrawableText,
   DrawableRect
-} from 'types/Shapes'
-import type { CustomTool } from 'types/tools'
-import type { GridFormatType } from 'constants/app'
+} from '../../types/Shapes'
+import type { CustomTool } from '../../types/tools'
+import type { GridFormatType } from '../../constants/app'
 import { createBrush, drawBrush, getBrushBorder, resizeBrush } from './brush'
 import { createLine, drawLine, drawLineSelection, getLineBorder, resizeLine } from './line'
 import { createPolygon, drawPolygon, getPolygonBorder } from './polygon'
@@ -23,10 +23,10 @@ import { createText, drawText, getTextBorder, resizeText } from './text'
 import { createEllipse, drawEllipse, getEllipseBorder, resizeEllipse } from './ellipse'
 import { createCircle, drawCircle, getCircleBorder, resizeCircle } from './circle'
 import { drawPicture, getPictureBorder, resizePicture } from './picture'
-import { GRID_ROTATION_STEPS } from 'constants/style'
-import { SelectionModeData, SelectionModeResize } from 'types/Mode'
+import { GRID_ROTATION_STEPS } from '../../constants/style'
+import { SelectionModeData, SelectionModeResize } from '../../types/Mode'
 import { drawSelectionDefault } from './default'
-import { transformCanvas } from 'utils/canvas'
+import { transformCanvas } from '../../utils/canvas'
 
 export const createShape = (
   ctx: CanvasRenderingContext2D,
@@ -156,8 +156,8 @@ export const rotateShape = (
     ...{
       rotation: gridFormat
         ? rotation +
-          Math.PI / GRID_ROTATION_STEPS / 2 -
-          ((rotation + Math.PI / GRID_ROTATION_STEPS / 2) % (Math.PI / GRID_ROTATION_STEPS))
+        Math.PI / GRID_ROTATION_STEPS / 2 -
+        ((rotation + Math.PI / GRID_ROTATION_STEPS / 2) % (Math.PI / GRID_ROTATION_STEPS))
         : rotation
     }
   }

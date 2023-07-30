@@ -1,13 +1,13 @@
 import _ from 'lodash/fp'
-import { SelectionModeResize } from 'types/Mode'
-import type { Point, DrawableRect, Rect, DrawableShape, DrawableSquare } from 'types/Shapes'
-import type { ToolsSettingsType } from 'types/tools'
-import { updateCanvasContext } from 'utils/canvas'
+import { SelectionModeResize } from '../../types/Mode'
+import type { Point, DrawableRect, Rect, DrawableShape, DrawableSquare } from '../../types/Shapes'
+import type { ToolsSettingsType } from '../../types/tools'
+import { updateCanvasContext } from '../../utils/canvas'
 import {
   getPointPositionAfterCanvasTransformation,
   getPointPositionBeforeCanvasTransformation
-} from 'utils/intersect'
-import { getNormalizedSize } from 'utils/transform'
+} from '../../utils/intersect'
+import { getNormalizedSize } from '../../utils/transform'
 import { getShapeInfos } from '.'
 
 type RectangleOrSquareType<T> = T extends 'rect' ? DrawableRect : DrawableSquare
@@ -72,14 +72,14 @@ export const getRectOppositeAnchorAbsolutePosition = <T extends DrawableShape & 
     anchor[0] === 0.5
       ? shape.x + shape.width / 2
       : anchor[0] === 0
-      ? shape.x + (negW ? 0 : shape.width)
-      : shape.x + (negW ? shape.width : 0)
+        ? shape.x + (negW ? 0 : shape.width)
+        : shape.x + (negW ? shape.width : 0)
   const oppositeY =
     anchor[1] === 0.5
       ? shape.y + shape.height / 2
       : anchor[1] === 0
-      ? shape.y + (negH ? 0 : shape.height)
-      : shape.y + (negH ? shape.height : 0)
+        ? shape.y + (negH ? 0 : shape.height)
+        : shape.y + (negH ? shape.height : 0)
 
   return getPointPositionBeforeCanvasTransformation(
     [oppositeX, oppositeY],
@@ -110,15 +110,15 @@ export const resizeRect = <T extends DrawableShape & Rect>(
     selectionMode.anchor[0] === 0.5
       ? originalShape.width
       : selectionMode.anchor[0] === 0
-      ? borders.x + borders.width - cusroPositionAfterShapeTransormation[0] + selectionPadding * -2
-      : cusroPositionAfterShapeTransormation[0] - borders.x - selectionPadding * 2
+        ? borders.x + borders.width - cusroPositionAfterShapeTransormation[0] + selectionPadding * -2
+        : cusroPositionAfterShapeTransormation[0] - borders.x - selectionPadding * 2
 
   const scaledHeight =
     selectionMode.anchor[1] === 0.5
       ? originalShape.height
       : selectionMode.anchor[1] === 0
-      ? borders.y + borders.height - cusroPositionAfterShapeTransormation[1] + selectionPadding * -2
-      : cusroPositionAfterShapeTransormation[1] - borders.y - selectionPadding * 2
+        ? borders.y + borders.height - cusroPositionAfterShapeTransormation[1] + selectionPadding * -2
+        : cusroPositionAfterShapeTransormation[1] - borders.y - selectionPadding * 2
 
   const [widthWithRatio, heightWithRatio] = keepRatio
     ? getNormalizedSize(originalShape.width, originalShape.height, scaledWidth, scaledHeight)

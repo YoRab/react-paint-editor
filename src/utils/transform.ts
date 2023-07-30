@@ -1,11 +1,11 @@
 import _ from 'lodash/fp'
-import type { SelectionModeData } from 'types/Mode'
-import type { Point, DrawableShape, DrawablePolygon, DrawableBrush } from 'types/Shapes'
-import { GRID_STEP, STYLE_FONT_DEFAULT, STYLE_FONT_SIZE_DEFAULT } from 'constants/style'
-import type { GridFormatType } from 'constants/app'
+import type { SelectionModeData } from '../types/Mode'
+import type { Point, DrawableShape, DrawablePolygon, DrawableBrush } from '../types/Shapes'
+import { GRID_STEP, STYLE_FONT_DEFAULT, STYLE_FONT_SIZE_DEFAULT } from '../constants/style'
+import type { GridFormatType } from '../constants/app'
 import { resizeShape, rotateShape, translateShape } from './shapes'
 import { addNewPointToShape } from './shapes/brush'
-import { PICTURE_DEFAULT_SIZE } from 'constants/picture'
+import { PICTURE_DEFAULT_SIZE } from '../constants/picture'
 
 export const getNormalizedSize = (
   originalWidth: number,
@@ -53,9 +53,9 @@ export const updatePolygonLinesCount = (
       _.range(0),
       _.map(index => [
         shape.points[0][0] +
-          ((shape.points[1][0] - shape.points[0][0]) * (index + 1)) / (nbPointsToAdd + 1),
+        ((shape.points[1][0] - shape.points[0][0]) * (index + 1)) / (nbPointsToAdd + 1),
         shape.points[0][1] +
-          ((shape.points[1][1] - shape.points[0][1]) * (index + 1)) / (nbPointsToAdd + 1)
+        ((shape.points[1][1] - shape.points[0][1]) * (index + 1)) / (nbPointsToAdd + 1)
       ])
     )(nbPointsToAdd) as Point[]
     const totalPoints = [

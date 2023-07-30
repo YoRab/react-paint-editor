@@ -1,7 +1,7 @@
 import _ from 'lodash/fp'
-import type { Point, DrawableCurve, Curve } from 'types/Shapes'
-import type { ToolsSettingsType } from 'types/tools'
-import { updateCanvasContext } from 'utils/canvas'
+import type { Point, DrawableCurve, Curve } from '../../types/Shapes'
+import type { ToolsSettingsType } from '../../types/tools'
+import { updateCanvasContext } from '../../utils/canvas'
 import { getPolygonBorder } from './polygon'
 
 export const createCurve = (
