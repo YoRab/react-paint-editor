@@ -1,43 +1,10 @@
-import { STYLE_FONT_DEFAULT } from 'constants/style'
+import { STYLE_FONT_DEFAULT } from '../../constants/style'
 import React, { useEffect, useMemo, useRef } from 'react'
-import { styled } from '@linaria/react'
-import type { DrawableShape } from 'types/Shapes'
-import { convertDivContentToStringArray, convertStringArrayToDivContent } from 'utils/string'
-import { getShapeInfos } from 'utils/shapes'
-import { radiansToDegrees, rotatePoint } from 'utils/trigo'
-
-const StyledEditBox = styled.div<{
-  transform: string
-  fontsize: number
-  fontfamily: string
-  color: string
-  padding: number
-  opacity: number
-}>`
-  position: absolute;
-  display: inline-block;
-  outline: none;
-  left: 0px;
-  top: 0px;
-  transform-origin: left top;
-  box-sizing: border-box;
-  transform: ${({ transform }) => transform};
-  color: ${({ color }) => color};
-  padding: ${({ padding }) => padding}px;
-  font-size: ${({ fontsize }) => fontsize}px;
-  line-height: ${({ fontsize }) => fontsize}px;
-  font-family: ${({ fontfamily }) => fontfamily};
-  opacity: ${({ opacity }) => opacity};
-  width: max-content;
-  background: none; /* required to override injected prop in contenteditable span elements */
-  &[data-fontbold='true'] {
-    font-weight: bold;
-  }
-
-  &[data-fontitalic='true'] {
-    font-style: italic;
-  }
-`
+import type { DrawableShape } from '../../types/Shapes'
+import { convertDivContentToStringArray, convertStringArrayToDivContent } from '../../utils/string'
+import { getShapeInfos } from '../../utils/shapes'
+import { radiansToDegrees, rotatePoint } from '../../utils/trigo'
+import './EditTextBox.css'
 
 type EditTextBoxType = {
   scaleRatio: number
@@ -102,20 +69,21 @@ const EditTextBox = ({
   }, [shape, selectionPadding])
 
   return (
-    <StyledEditBox
+    <div
+      className='react-paint-editor-toolbox-edittextbox'
       ref={ref}
-      transform={`translate3D(${position[0] * scaleRatio}px, ${
-        position[1] * scaleRatio
-      }px, 0) rotate(${radiansToDegrees(shape.rotation)}deg)`}
-      fontsize={shape.fontSize * scaleRatio}
-      padding={selectionPadding * scaleRatio}
-      color={shape.style?.strokeColor ?? 'inherit'}
-      opacity={(shape.style?.globalAlpha ?? 100) / 100}
-      fontfamily={shape.style?.fontFamily ?? STYLE_FONT_DEFAULT}
       data-fontbold={shape.style?.fontBold ?? false}
       data-fontitalic={shape.style?.fontItalic ?? false}
       contentEditable={!disabled}
       onInput={updateContentEditable}
+      style={{
+        '--react-paint-editor-toolbox-edittextbox-transform': `translate3D(${position[0] * scaleRatio}px, ${position[1] * scaleRatio}px, 0) rotate(${radiansToDegrees(shape.rotation)}deg)`,
+        '--react-paint-editor-toolbox-edittextbox-fontsize': `${shape.fontSize * scaleRatio}px`,
+        '--react-paint-editor-toolbox-edittextbox-padding': `${selectionPadding * scaleRatio}px`,
+        '--react-paint-editor-toolbox-edittextbox-color': shape.style?.strokeColor ?? 'inherit',
+        '--react-paint-editor-toolbox-edittextbox-opacity': (shape.style?.globalAlpha ?? 100) / 100,
+        '--react-paint-editor-toolbox-edittextbox-fontfamily': shape.style?.fontFamily ?? STYLE_FONT_DEFAULT
+      } as CSSProperties}
     />
   )
 }

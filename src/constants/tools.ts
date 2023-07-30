@@ -11,7 +11,7 @@ import type {
   ToolsRectSettings,
   ToolsSquareSettings,
   ToolsTextSettings
-} from 'types/tools'
+} from '../types/tools'
 import {
   arrowIcon,
   brushIcon,

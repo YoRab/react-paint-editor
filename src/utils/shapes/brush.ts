@@ -1,6 +1,6 @@
-import { GridFormatType } from 'constants/app'
+import { GridFormatType } from '../../constants/app'
 import _ from 'lodash/fp'
-import { SelectionModeResize } from 'types/Mode'
+import { SelectionModeResize } from '../../types/Mode'
 import type {
   Point,
   Brush,
@@ -8,19 +8,19 @@ import type {
   DrawableShape,
   ShapeEntity,
   SelectionDefaultType
-} from 'types/Shapes'
-import type { ToolsSettingsType } from 'types/tools'
-import { getPointPositionAfterCanvasTransformation } from 'utils/intersect'
-import { getNormalizedSize, roundForGrid } from 'utils/transform'
-import { getShapeInfos } from 'utils/shapes/index'
+} from '../../types/Shapes'
+import type { ToolsSettingsType } from '../../types/tools'
+import { getPointPositionAfterCanvasTransformation } from '../../utils/intersect'
+import { getNormalizedSize, roundForGrid } from '../../utils/transform'
+import { getShapeInfos } from '../../utils/shapes/index'
 import { createRecPath, getRectOppositeAnchorAbsolutePosition } from './rectangle'
-import { updateCanvasContext } from 'utils/canvas'
+import { updateCanvasContext } from '../../utils/canvas'
 import { createLinePath } from './line'
 import {
   SELECTION_ANCHOR_SIZE,
   SELECTION_RESIZE_ANCHOR_POSITIONS,
   SELECTION_ROTATED_ANCHOR_POSITION
-} from 'constants/shapes'
+} from '../../constants/shapes'
 import { createCirclePath } from './circle'
 
 const createBrushPath = (brush: DrawableShape<'brush'>) => {
@@ -190,11 +190,11 @@ export const translateBrush = <U extends DrawableShape<'brush'>>(
   const { borders } = getShapeInfos(originalShape, 0)
   const translationX = gridFormat
     ? roundForGrid(borders.x + cursorPosition[0] - originalCursorPosition[0], gridFormat) -
-      borders.x
+    borders.x
     : cursorPosition[0] - originalCursorPosition[0]
   const translationY = gridFormat
     ? roundForGrid(borders.y + cursorPosition[1] - originalCursorPosition[1], gridFormat) -
-      borders.y
+    borders.y
     : cursorPosition[1] - originalCursorPosition[1]
   return buildPath(
     {
@@ -229,18 +229,18 @@ export const resizeBrush = (
     selectionMode.anchor[0] === 0.5
       ? 1
       : selectionMode.anchor[0] === 0
-      ? (borders.x + borders.width - cursorPositionBeforeResize[0] + selectionPadding * -2) /
+        ? (borders.x + borders.width - cursorPositionBeforeResize[0] + selectionPadding * -2) /
         (borders.width + selectionPadding * -2)
-      : (cursorPositionBeforeResize[0] - borders.x - selectionPadding * 2) /
+        : (cursorPositionBeforeResize[0] - borders.x - selectionPadding * 2) /
         (borders.width - selectionPadding * 2)
 
   const scaledHeight =
     selectionMode.anchor[1] === 0.5
       ? 1
       : selectionMode.anchor[1] === 0
-      ? (borders.y + borders.height - cursorPositionBeforeResize[1] + selectionPadding * -2) /
+        ? (borders.y + borders.height - cursorPositionBeforeResize[1] + selectionPadding * -2) /
         (borders.height + selectionPadding * -2)
-      : (cursorPositionBeforeResize[1] - borders.y - selectionPadding * 2) /
+        : (cursorPositionBeforeResize[1] - borders.y - selectionPadding * 2) /
         (borders.height - selectionPadding * 2)
 
   const [widthWithRatio, heightWithRatio] = keepRatio

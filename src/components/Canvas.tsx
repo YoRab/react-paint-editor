@@ -1,15 +1,14 @@
-import React, { useCallback, useEffect, useImperativeHandle, useRef } from 'react'
-import { styled } from '@linaria/react'
-import type { Point, ShapeEntity } from 'types/Shapes'
-import { initCanvasContext } from 'utils/canvas'
-import type { SelectionModeData } from 'types/Mode'
+import React, { CSSProperties, useCallback, useEffect, useImperativeHandle, useRef } from 'react'
+import type { Point, ShapeEntity } from '../types/Shapes'
+import { initCanvasContext } from '../utils/canvas'
+import type { SelectionModeData } from '../types/Mode'
 import EditTextBox from './toolbox/EditTextBox'
-import useDrawableCanvas from 'hooks/useDrawableCanvas'
-import type { ToolsType } from 'types/tools'
-import type { GridFormatType } from 'constants/app'
-import { drawShapeSelection, drawShape, refreshShape } from 'utils/shapes'
-import { resizeTextShapeWithNewContent } from 'utils/shapes/text'
-import { drawGrid } from 'utils/shapes/grid'
+import useDrawableCanvas from '../hooks/useDrawableCanvas'
+import type { ToolsType } from '../types/tools'
+import type { GridFormatType } from '../constants/app'
+import { drawShapeSelection, drawShape, refreshShape } from '../utils/shapes'
+import { resizeTextShapeWithNewContent } from '../utils/shapes/text'
+import { drawGrid } from '../utils/shapes/grid'
 
 const renderDrawCanvas = (
   drawCtx: CanvasRenderingContext2D,
@@ -66,55 +65,6 @@ const renderSelectionCanvas = (
       withAnchors: selectionMode.mode !== 'textedition'
     })
 }
-
-const StyledCanvasBox = styled.div`
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-`
-
-const StyledCanvasContainer = styled.div`
-  position: relative;
-  background-color: var(--canvas-bg);
-  background-repeat: repeat;
-  background-size: 16px;
-  overflow: hidden;
-  display: grid;
-
-  &[data-grow='true'] {
-    width: 100%;
-    height: 100%;
-  }
-`
-
-const StyledDrawCanvas = styled.canvas`
-  user-select: none;
-  max-width: 100%;
-  touch-action: none; /* prevent scroll on touch */
-  display: block;
-  grid-area: 1 / 1;
-
-  &[data-grow='true'] {
-    width: 100%;
-  }
-`
-
-const StyledSelectionCanvas = styled.canvas<{
-  cursor: string
-}>`
-  user-select: none;
-  position: relative;
-  max-width: 100%;
-  touch-action: none; /* prevent scroll on touch */
-  display: block;
-  grid-area: 1 / 1;
-  cursor: ${({ cursor }) => cursor};
-
-  &[data-grow='true'] {
-    width: 100%;
-  }
-`
 
 type DrawerType = {
   gridFormat: GridFormatType
@@ -282,30 +232,33 @@ const Canvas = React.forwardRef<HTMLCanvasElement, DrawerType>(
     ])
 
     return (
-      <StyledCanvasBox>
-        <StyledCanvasContainer data-grow={canGrow}>
-          <StyledDrawCanvas
+      <div className='react-paint-editor-canvas-box'>
+        <div className='react-paint-editor-canvas-container' data-grow={canGrow}>
+          <canvas
+            className='react-paint-editor-canvas-drawcanvas'
             ref={drawCanvasRef}
             data-grow={canGrow}
             width={canvasSize.width}
             height={canvasSize.height}
           />
           {isEditMode && (
-            <StyledSelectionCanvas
+            <canvas
+              className='react-paint-editor-canvas-selectioncanvas'
               ref={selectionCanvasRef}
               width={canvasSize.width}
               height={canvasSize.height}
               data-grow={canGrow}
-              cursor={
-                (activeTool.type !== 'selection' && activeTool.type !== 'move') ||
-                hoverMode.mode === 'resize'
+              style={{
+                '--react-paint-editor-canvas-cursor': (activeTool.type !== 'selection' && activeTool.type !== 'move') ||
+                  hoverMode.mode === 'resize'
                   ? 'crosshair'
                   : activeTool.type === 'move' || hoverMode.mode === 'translate'
-                  ? 'move'
-                  : hoverMode.mode === 'rotate'
-                  ? 'grab'
-                  : 'default'
-              }
+                    ? 'move'
+                    : hoverMode.mode === 'rotate'
+                      ? 'grab'
+                      : 'default'
+
+              } as CSSProperties}
             />
           )}
           {isEditMode && selectionMode.mode === 'textedition' && selectedShape?.type === 'text' && (
@@ -319,8 +272,8 @@ const Canvas = React.forwardRef<HTMLCanvasElement, DrawerType>(
               selectionPadding={selectionPadding}
             />
           )}
-        </StyledCanvasContainer>
-      </StyledCanvasBox>
+        </div>
+      </div>
     )
   }
 )

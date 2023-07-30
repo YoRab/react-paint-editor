@@ -1,6 +1,6 @@
-import { SELECTION_DEFAULT_COLOR, SELECTION_DEFAULT_WIDTH } from 'constants/shapes'
-import { LINE_DASH_DATA } from 'constants/style'
-import type { Point } from 'types/Shapes'
+import { SELECTION_DEFAULT_COLOR, SELECTION_DEFAULT_WIDTH } from '../constants/shapes'
+import { LINE_DASH_DATA } from '../constants/style'
+import type { Point } from '../types/Shapes'
 
 export const initCanvasContext = (ctx: CanvasRenderingContext2D) => {
   ctx.lineCap = 'round'

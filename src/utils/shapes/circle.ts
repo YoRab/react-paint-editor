@@ -1,6 +1,6 @@
-import { GridFormatType } from 'constants/app'
+import { GridFormatType } from '../../constants/app'
 import _ from 'lodash/fp'
-import { SelectionModeResize } from 'types/Mode'
+import { SelectionModeResize } from '../../types/Mode'
 import type {
   Point,
   Circle,
@@ -8,22 +8,22 @@ import type {
   DrawableShape,
   ShapeEntity,
   SelectionDefaultType
-} from 'types/Shapes'
-import type { ToolsSettingsType } from 'types/tools'
+} from '../../types/Shapes'
+import type { ToolsSettingsType } from '../../types/tools'
 import {
   getPointPositionAfterCanvasTransformation,
   getPointPositionBeforeCanvasTransformation
-} from 'utils/intersect'
-import { roundForGrid } from 'utils/transform'
-import { getShapeInfos } from 'utils/shapes/index'
-import { updateCanvasContext } from 'utils/canvas'
+} from '../../utils/intersect'
+import { roundForGrid } from '../../utils/transform'
+import { getShapeInfos } from '../../utils/shapes/index'
+import { updateCanvasContext } from '../../utils/canvas'
 import { createRecPath } from './rectangle'
 import { createLinePath } from './line'
 import {
   SELECTION_ANCHOR_SIZE,
   SELECTION_RESIZE_ANCHOR_POSITIONS,
   SELECTION_ROTATED_ANCHOR_POSITION
-} from 'constants/shapes'
+} from '../../constants/shapes'
 
 export const createCirclePath = (shape: Circle) => {
   const path = new Path2D()
@@ -185,14 +185,14 @@ const getCircleOppositeAnchorAbsolutePosition = <T extends DrawableShape & Circl
     anchor[0] === 0.5
       ? shape.x
       : anchor[0] === 0
-      ? shape.x + (negW ? -shape.radius : shape.radius)
-      : shape.x + (negW ? shape.radius : -shape.radius)
+        ? shape.x + (negW ? -shape.radius : shape.radius)
+        : shape.x + (negW ? shape.radius : -shape.radius)
   const oppositeY =
     anchor[1] === 0.5
       ? shape.y
       : anchor[1] === 0
-      ? shape.y + (negH ? -shape.radius : shape.radius)
-      : shape.y + (negH ? shape.radius : -shape.radius)
+        ? shape.y + (negH ? -shape.radius : shape.radius)
+        : shape.y + (negH ? shape.radius : -shape.radius)
 
   return getPointPositionBeforeCanvasTransformation(
     [oppositeX, oppositeY],
@@ -224,21 +224,21 @@ export const resizeCircle = (
   const scaledRadius =
     selectionMode.anchor[1] === 0.5
       ? (selectionMode.anchor[0] === 0
-          ? borders.x +
-            borders.width -
-            newCursorPosition[0] +
-            selectionPadding * (selectionMode.anchor[0] === 0 ? -2 : 2)
-          : newCursorPosition[0] -
-            borders.x -
-            selectionPadding * (selectionMode.anchor[0] === 0 ? -2 : 2)) / 2
+        ? borders.x +
+        borders.width -
+        newCursorPosition[0] +
+        selectionPadding * (selectionMode.anchor[0] === 0 ? -2 : 2)
+        : newCursorPosition[0] -
+        borders.x -
+        selectionPadding * (selectionMode.anchor[0] === 0 ? -2 : 2)) / 2
       : (selectionMode.anchor[1] === 0
-          ? borders.y +
-            borders.height -
-            newCursorPosition[1] +
-            selectionPadding * (selectionMode.anchor[1] === 0 ? -2 : 2)
-          : newCursorPosition[1] -
-            borders.y -
-            selectionPadding * (selectionMode.anchor[1] === 0 ? -2 : 2)) / 2
+        ? borders.y +
+        borders.height -
+        newCursorPosition[1] +
+        selectionPadding * (selectionMode.anchor[1] === 0 ? -2 : 2)
+        : newCursorPosition[1] -
+        borders.y -
+        selectionPadding * (selectionMode.anchor[1] === 0 ? -2 : 2)) / 2
 
   const shapeWithNewDimensions = {
     ...originalShape,

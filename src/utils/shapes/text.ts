@@ -6,22 +6,22 @@ import type {
   Rect,
   ShapeEntity,
   SelectionDefaultType
-} from 'types/Shapes'
-import type { ToolsSettingsType } from 'types/tools'
-import { STYLE_FONT_DEFAULT, STYLE_FONT_SIZE_DEFAULT } from 'constants/style'
-import { SelectionModeResize } from 'types/Mode'
+} from '../../types/Shapes'
+import type { ToolsSettingsType } from '../../types/tools'
+import { STYLE_FONT_DEFAULT, STYLE_FONT_SIZE_DEFAULT } from '../../constants/style'
+import { SelectionModeResize } from '../../types/Mode'
 import { createRecPath, getRectOppositeAnchorAbsolutePosition, resizeRect } from './rectangle'
-import { getShapeInfos } from 'utils/shapes/index'
-import { GridFormatType } from 'constants/app'
-import { roundForGrid } from 'utils/transform'
-import { updateCanvasContext } from 'utils/canvas'
+import { getShapeInfos } from '../../utils/shapes/index'
+import { GridFormatType } from '../../constants/app'
+import { roundForGrid } from '../../utils/transform'
+import { updateCanvasContext } from '../../utils/canvas'
 import { createLinePath } from './line'
 import { createCirclePath } from './circle'
 import {
   SELECTION_ANCHOR_SIZE,
   SELECTION_RESIZE_ANCHOR_POSITIONS,
   SELECTION_ROTATED_ANCHOR_POSITION
-} from 'constants/shapes'
+} from '../../constants/shapes'
 
 const createTextSelectionPath = (
   rect: DrawableShape<'text'>,
@@ -128,9 +128,8 @@ export const drawText = (ctx: CanvasRenderingContext2D, text: DrawableShape<'tex
   if (ctx.globalAlpha === 0 || !text.style?.strokeColor || text.style.strokeColor === 'transparent')
     return
 
-  ctx.font = `${text.style?.fontItalic ? 'italic' : ''} ${text.style?.fontBold ? 'bold' : ''} ${
-    text.fontSize
-  }px ${text.style?.fontFamily ?? STYLE_FONT_DEFAULT}`
+  ctx.font = `${text.style?.fontItalic ? 'italic' : ''} ${text.style?.fontBold ? 'bold' : ''} ${text.fontSize
+    }px ${text.style?.fontFamily ?? STYLE_FONT_DEFAULT}`
   ctx.textBaseline = 'top'
   ctx.fillStyle = text.style.strokeColor
   for (let i = 0; i < text.value.length; i++) {

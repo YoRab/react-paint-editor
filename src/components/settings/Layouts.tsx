@@ -1,7 +1,8 @@
 import React, { useRef, useState } from 'react'
 import _ from 'lodash/fp'
-import type { ShapeEntity } from 'types/Shapes'
-import useDrag from 'hooks/useDrag'
+import type { ShapeEntity } from '../../types/Shapes'
+import useDrag from '../../hooks/useDrag'
+
 import {
   gridOffIcon,
   lockedIcon,
@@ -9,148 +10,12 @@ import {
   unlockedIcon,
   visibilityIcon,
   visibilityOffIcon
-} from 'constants/icons'
-import { getShapePicture } from 'utils/style'
-import { styled } from '@linaria/react'
-import Button from 'components/common/Button'
-import Panel from 'components/common/Panel'
-import type { GridFormatType } from 'constants/app'
-
-const StyledLayouts = styled.div`
-  display: inline-block;
-  background: var(--toolbar-bg);
-  box-sizing: border-box;
-  overflow-y: auto;
-  min-width: 200px;
-`
-
-const StyledRemoveButton = styled(Button)`
-  margin: 2px 0;
-
-  &:not(:hover) {
-    opacity: 0.2;
-  }
-`
-
-const StyledLayout = styled.div`
-  border: 3px solid transparent;
-  padding: 4px 0px;
-  position: relative;
-  background: var(--toolbar-bg);
-  box-sizing: border-box;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-
-  &[data-is-over='1'] {
-    border: 3px dotted var(--font-hover-bg);
-  }
-
-  &[data-is-dragging='1'] {
-    opacity: 0.4;
-  }
-
-  &[data-selected='1'] {
-    color: var(--font-selected-color);
-    background: var(--font-selected-bg);
-
-    ${StyledRemoveButton} {
-      color: white;
-    }
-  }
-
-  &[data-selected='0'][data-disabled='0'] {
-    background: var(--font-bg);
-    color: var(--font-color);
-    &:hover {
-      color: var(--font-hover-color);
-      background: var(--font-hover-bg);
-    }
-  }
-
-  &[data-disabled='1'] {
-    cursor: default;
-    color: var(--font-disabled-color);
-    background: var(--font-disabled-bg);
-  }
-
-  &[data-disabled='0'] {
-    cursor: move;
-  }
-
-  > span {
-    height: 20px;
-    line-height: 1;
-    color: #8a8a8a;
-    > svg {
-      fill: #8a8a8a;
-      width: 20px;
-      height: 20px;
-      padding: 0 4px;
-      transform: scale(0.75);
-    }
-  }
-`
-
-const StyledVisibleButton = styled(Button)`
-  margin: 2px 0;
-  &[data-visible='false'] {
-    opacity: 0.2;
-  }
-`
-
-const StyledLockedButton = styled(Button)`
-  margin: 2px 0;
-
-  &[data-locked='false'] {
-    opacity: 0.2;
-  }
-`
-
-const StyledGridButton = styled(Button)`
-  span {
-    justify-content: center;
-  }
-`
-
-const StyledSubtitle = styled.span`
-  min-width: 60px;
-  font-weight: bold;
-`
-
-const StyledSeparator = styled.div`
-  flex: 1;
-`
-
-const StyledPanel = styled(Panel)`
-  && {
-    bottom: 0;
-    top: unset;
-  }
-`
-
-const StyledPanelContent = styled.div`
-  display: flex;
-  flex-direction: column;
-  max-height: 100%;
-`
-
-const StyledScrollingContent = styled.div`
-  display: flex;
-  flex-direction: column;
-  overflow-y: auto;
-`
-
-const StyledRow = styled.div`
-  display: flex;
-  align-items: center;
-`
-
-const StyledPlaceholder = styled.div`
-  opacity: 0.6;
-  text-align: center;
-  padding: 12px 0px;
-`
+} from '../../constants/icons'
+import { getShapePicture } from '../../utils/style'
+import Button from '../../components/common/Button'
+import Panel from '../../components/common/Panel'
+import type { GridFormatType } from '../../constants/app'
+import './Layouts.css'
 
 type LayoutType = {
   disabled?: boolean
@@ -218,7 +83,8 @@ const Layout = ({
   })
 
   return (
-    <StyledLayout
+    <div
+      className='react-paint-editor-layout'
       data-disabled={+disabled}
       draggable={!disabled}
       data-is-dragging={+(layoutDragging === shape.id)}
@@ -228,9 +94,10 @@ const Layout = ({
       ref={ref}>
       <span dangerouslySetInnerHTML={{ __html: getShapePicture(shape.type) }} />
       <span>{shape.id}</span>
-      <StyledSeparator />
+      <div className='react-paint-editor-layouts-separator' />
 
-      <StyledVisibleButton
+      <Button
+        className='react-paint-editor-layouts-visible-button'
         title={shape.visible ? 'Hide' : 'Show'}
         data-visible={shape.visible !== false}
         disabled={disabled}
@@ -239,7 +106,8 @@ const Layout = ({
         icon={shape.visible === false ? visibilityOffIcon : visibilityIcon}
       />
 
-      <StyledLockedButton
+      <Button
+        className='react-paint-editor-layouts-locked-button'
         title={shape.locked ? 'Locked' : 'Unlocked'}
         data-locked={!!shape.locked}
         disabled={disabled}
@@ -247,8 +115,8 @@ const Layout = ({
         onClick={onToggleShapeLock}
         icon={shape.locked ? lockedIcon : unlockedIcon}
       />
-      <StyledRemoveButton title="Remove" disabled={disabled} onClick={onRemove} icon={trashIcon} />
-    </StyledLayout>
+      <Button className='react-paint-editor-layouts-remove-button' title="Remove" disabled={disabled} onClick={onRemove} icon={trashIcon} />
+    </div>
   )
 }
 
@@ -282,30 +150,32 @@ const Layouts = ({
   const [layoutDragging, setLayoutDragging] = useState<string | undefined>(undefined)
 
   return isLayoutPanelShown ? (
-    <StyledPanel alignment="right">
-      <StyledPanelContent>
-        <StyledScrollingContent>
-          <StyledRow>
-            <StyledSubtitle>Grid</StyledSubtitle>
-            <StyledGridButton
+    <Panel alignment="right" className='react-paint-editor-layouts-panel'>
+      <div className='react-paint-editor-layouts-panel-content'>
+        <div className='react-paint-editor-layouts-scrolling-content'>
+          <div className='react-paint-editor-layouts-row'>
+            <span className='react-paint-editor-layouts-subtitle'>Grid</span>
+            <Button
               icon={gridOffIcon}
+              className='react-paint-editor-layouts-grid-button'
               selected={gridFormat === 0}
               disabled={disabled}
-              onClick={() => setGridFormat(0)}></StyledGridButton>
+              onClick={() => setGridFormat(0)}></Button>
             {['S', 'M', 'L'].map((value, index) => (
-              <StyledGridButton
+              <Button
                 key={value}
+                className='react-paint-editor-layouts-grid-button'
                 selected={gridFormat === index + 1}
                 disabled={disabled}
                 onClick={() => setGridFormat((index + 1) as GridFormatType)}>
                 {value}
-              </StyledGridButton>
+              </Button>
             ))}
-          </StyledRow>
+          </div>
           <hr />
-          <StyledLayouts>
+          <div className='react-paint-editor-layouts'>
             {shapes.length === 0 ? (
-              <StyledPlaceholder>No layer yet</StyledPlaceholder>
+              <div className='react-paint-editor-layouts-placeholder'>No layer yet</div>
             ) : (
               _.map(
                 shape => (
@@ -326,10 +196,10 @@ const Layouts = ({
                 shapes
               )
             )}
-          </StyledLayouts>
-        </StyledScrollingContent>
-      </StyledPanelContent>
-    </StyledPanel>
+          </div>
+        </div>
+      </div>
+    </Panel>
   ) : null
 }
 

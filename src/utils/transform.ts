@@ -1,10 +1,10 @@
-import type { SelectionModeData } from 'types/Mode'
-import type { Point, ShapeEntity } from 'types/Shapes'
-import { GRID_STEP } from 'constants/style'
-import type { GridFormatType } from 'constants/app'
+import type { SelectionModeData } from '../types/Mode'
+import type { Point, ShapeEntity } from '../types/Shapes'
+import { GRID_STEP } from '../constants/style'
+import type { GridFormatType } from '../constants/app'
 import { resizeShape, rotateShape, translateShape } from './shapes'
 import { addNewPointToShape } from './shapes/brush'
-import { PICTURE_DEFAULT_SIZE } from 'constants/picture'
+import { PICTURE_DEFAULT_SIZE } from '../constants/picture'
 
 export const getNormalizedSize = (
   originalWidth: number,

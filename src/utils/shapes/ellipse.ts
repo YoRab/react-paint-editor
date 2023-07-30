@@ -1,11 +1,11 @@
-import { GridFormatType } from 'constants/app'
+import { GridFormatType } from '../../constants/app'
 import {
   SELECTION_ANCHOR_SIZE,
   SELECTION_RESIZE_ANCHOR_POSITIONS,
   SELECTION_ROTATED_ANCHOR_POSITION
-} from 'constants/shapes'
+} from '../../constants/shapes'
 import _ from 'lodash/fp'
-import { SelectionModeResize } from 'types/Mode'
+import { SelectionModeResize } from '../../types/Mode'
 import type {
   Point,
   Ellipse,
@@ -13,14 +13,14 @@ import type {
   DrawableShape,
   ShapeEntity,
   SelectionDefaultType
-} from 'types/Shapes'
-import type { ToolsSettingsType } from 'types/tools'
-import { updateCanvasContext } from 'utils/canvas'
+} from '../../types/Shapes'
+import type { ToolsSettingsType } from '../../types/tools'
+import { updateCanvasContext } from '../../utils/canvas'
 import {
   getPointPositionAfterCanvasTransformation,
   getPointPositionBeforeCanvasTransformation
-} from 'utils/intersect'
-import { getNormalizedSize, roundForGrid } from 'utils/transform'
+} from '../../utils/intersect'
+import { getNormalizedSize, roundForGrid } from '../../utils/transform'
 import { createCirclePath } from './circle'
 import { getShapeInfos } from './index'
 import { createLinePath } from './line'
@@ -188,14 +188,14 @@ const getEllipseOppositeAnchorAbsolutePosition = <T extends DrawableShape & Elli
     anchor[0] === 0.5
       ? shape.x
       : anchor[0] === 0
-      ? shape.x + (negW ? -shape.radiusX : shape.radiusX)
-      : shape.x + (negW ? shape.radiusX : -shape.radiusX)
+        ? shape.x + (negW ? -shape.radiusX : shape.radiusX)
+        : shape.x + (negW ? shape.radiusX : -shape.radiusX)
   const oppositeY =
     anchor[1] === 0.5
       ? shape.y
       : anchor[1] === 0
-      ? shape.y + (negH ? -shape.radiusY : shape.radiusY)
-      : shape.y + (negH ? shape.radiusY : -shape.radiusY)
+        ? shape.y + (negH ? -shape.radiusY : shape.radiusY)
+        : shape.y + (negH ? shape.radiusY : -shape.radiusY)
 
   return getPointPositionBeforeCanvasTransformation(
     [oppositeX, oppositeY],
@@ -229,25 +229,25 @@ export const resizeEllipse = (
     selectionMode.anchor[0] === 0.5
       ? originalShape.radiusX
       : (selectionMode.anchor[0] === 0
-          ? borders.x +
-            borders.width -
-            newCursorPosition[0] +
-            selectionPadding * (selectionMode.anchor[0] === 0 ? -2 : 2)
-          : newCursorPosition[0] -
-            borders.x -
-            selectionPadding * (selectionMode.anchor[0] === 0 ? -2 : 2)) / 2
+        ? borders.x +
+        borders.width -
+        newCursorPosition[0] +
+        selectionPadding * (selectionMode.anchor[0] === 0 ? -2 : 2)
+        : newCursorPosition[0] -
+        borders.x -
+        selectionPadding * (selectionMode.anchor[0] === 0 ? -2 : 2)) / 2
 
   const scaledRadiusY =
     selectionMode.anchor[1] === 0.5
       ? originalShape.radiusY
       : (selectionMode.anchor[1] === 0
-          ? borders.y +
-            borders.height -
-            newCursorPosition[1] +
-            selectionPadding * (selectionMode.anchor[1] === 0 ? -2 : 2)
-          : newCursorPosition[1] -
-            borders.y -
-            selectionPadding * (selectionMode.anchor[1] === 0 ? -2 : 2)) / 2
+        ? borders.y +
+        borders.height -
+        newCursorPosition[1] +
+        selectionPadding * (selectionMode.anchor[1] === 0 ? -2 : 2)
+        : newCursorPosition[1] -
+        borders.y -
+        selectionPadding * (selectionMode.anchor[1] === 0 ? -2 : 2)) / 2
 
   const [radiusXWithRatio, radiusYWithRatio] = keepRatio
     ? getNormalizedSize(originalShape.radiusX, originalShape.radiusY, scaledRadiusX, scaledRadiusY)

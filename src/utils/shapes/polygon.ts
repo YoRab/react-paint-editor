@@ -1,7 +1,7 @@
-import { GridFormatType } from 'constants/app'
-import { SELECTION_ANCHOR_SIZE } from 'constants/shapes'
+import { GridFormatType } from '../../constants/app'
+import { SELECTION_ANCHOR_SIZE } from '../../constants/shapes'
 import _ from 'lodash/fp'
-import { SelectionModeResize } from 'types/Mode'
+import { SelectionModeResize } from '../../types/Mode'
 import type {
   Point,
   DrawableShape,
@@ -9,10 +9,10 @@ import type {
   Rect,
   ShapeEntity,
   SelectionLinesType
-} from 'types/Shapes'
-import type { ToolsSettingsType } from 'types/tools'
-import { getPointPositionAfterCanvasTransformation } from 'utils/intersect'
-import { roundForGrid } from 'utils/transform'
+} from '../../types/Shapes'
+import type { ToolsSettingsType } from '../../types/tools'
+import { getPointPositionAfterCanvasTransformation } from '../../utils/intersect'
+import { roundForGrid } from '../../utils/transform'
 import { getShapeInfos } from '.'
 import { createCirclePath } from './circle'
 import { createRecPath } from './rectangle'
@@ -213,9 +213,9 @@ export const updatePolygonLinesCount = <T extends DrawableShape<'polygon'>>(
       _.range(0),
       _.map(index => [
         shape.points[0][0] +
-          ((shape.points[1][0] - shape.points[0][0]) * (index + 1)) / (nbPointsToAdd + 1),
+        ((shape.points[1][0] - shape.points[0][0]) * (index + 1)) / (nbPointsToAdd + 1),
         shape.points[0][1] +
-          ((shape.points[1][1] - shape.points[0][1]) * (index + 1)) / (nbPointsToAdd + 1)
+        ((shape.points[1][1] - shape.points[0][1]) * (index + 1)) / (nbPointsToAdd + 1)
       ])
     )(nbPointsToAdd) as Point[]
     const totalPoints = [

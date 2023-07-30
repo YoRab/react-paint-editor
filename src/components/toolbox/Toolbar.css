@@ -1,0 +1,19 @@
+.react-paint-editor-toolbar-shrinkable {
+    flex: 1;
+    position: relative;
+    height: 100%;
+    text-align: center;
+    height: 36px;
+}
+
+.react-paint-editor-toolbar-toolbox {
+    display: flex;
+    max-height: 36px;
+    background: var(--react-paint-editor-app-toolbar-bg);
+    border-bottom: 1px solid var(--react-paint-editor-app-divider-color);
+    box-sizing: border-box;
+}
+
+.react-paint-editor-toolbar-modal {
+    grid-template-columns: 1fr 1fr 1fr;
+}

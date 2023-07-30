@@ -1,5 +1,5 @@
 import _ from 'lodash/fp'
-import type { DrawableShape, DrawableShapeJson, ExportDataType, ShapeEntity } from 'types/Shapes'
+import type { DrawableShape, DrawableShapeJson, ExportDataType, ShapeEntity } from '../types/Shapes'
 import { getBase64Image } from './file'
 import { refreshShape } from './shapes'
 

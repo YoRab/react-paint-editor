@@ -1,6 +1,6 @@
 import React, { useRef } from 'react'
-import Button from 'components/common/Button'
-import type { ToolsType } from 'types/tools'
+import Button from '../../components/common/Button'
+import type { ToolsType } from '../../types/tools'
 
 type LoadFileToolType = {
   disabled?: boolean
@@ -21,7 +21,7 @@ const LoadFileTool = ({
 }: LoadFileToolType) => {
   const inputRef = useRef<HTMLInputElement>(null)
 
-  const handleClick = (event: React.MouseEvent<HTMLInputElement | HTMLButtonElement>) => {
+  const handleClick = (event: React.MouseEvent) => {
     event.stopPropagation()
     if (inputRef.current) inputRef.current.value = ''
   }

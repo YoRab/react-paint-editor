@@ -1,15 +1,8 @@
 import _ from 'lodash/fp'
 import React, { useState } from 'react'
-import { styled } from '@linaria/react'
-import Button from 'components/common/Button'
-import Panel from 'components/common/Panel'
-
-const StyledLabel = styled.label`
-  display: inline-flex;
-  align-items: center;
-  max-width: 100%;
-  flex-wrap: wrap;
-`
+import Button from '../../components/common/Button'
+import Panel from '../../components/common/Panel'
+import './RangeField.css'
 
 type ShapeStyleColorType = {
   selectedSettings: string | undefined
@@ -70,7 +63,7 @@ const RangeField = ({
       {isPanelVisible && (
         <Panel title={title} alignment="left" fitContainer={true}>
           <div>
-            <StyledLabel>
+            <label className='react-paint-editor-rangefield'>
               <input
                 type="range"
                 min={min}
@@ -83,7 +76,7 @@ const RangeField = ({
                 {roundValue}
                 {unity}
               </span>
-            </StyledLabel>
+            </label>
           </div>
         </Panel>
       )}

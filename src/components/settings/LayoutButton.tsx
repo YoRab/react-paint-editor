@@ -1,33 +1,21 @@
 import React from 'react'
-import { styled } from '@linaria/react'
-import { layersIcon } from 'constants/icons'
-import Button from 'components/common/Button'
-
-const StyleToggleLayoutButton = styled(Button)`
-  .layoutPanelOpened && {
-    color: var(--font-selected-color);
-    background: var(--font-selected-bg);
-  }
-
-  &[data-hidden='1'] {
-    display: none;
-  }
-`
+import { layersIcon } from '../../constants/icons'
+import Button from '../../components/common/Button'
+import './LayoutButton.css'
 
 type LayoutButtonType = {
   disabled: boolean
-  layersManipulation?: boolean
   toggleLayoutPanel: () => void
 }
 
-const LayoutButton = ({ layersManipulation, disabled, toggleLayoutPanel }: LayoutButtonType) => {
+const LayoutButton = ({ disabled, toggleLayoutPanel }: LayoutButtonType) => {
   return (
-    <StyleToggleLayoutButton
+    <Button
       title="Toggle layers panel"
-      data-hidden={!layersManipulation}
       disabled={disabled}
       onClick={toggleLayoutPanel}
       icon={layersIcon}
+      className='react-paint-editor-layout-button'
     />
   )
 }

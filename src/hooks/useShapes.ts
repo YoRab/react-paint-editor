@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import type { ShapeEntity } from 'types/Shapes'
+import type { ShapeEntity } from '../types/Shapes'
 import _ from 'lodash/fp'
-import { createPicture } from 'utils/shapes/picture'
-import { refreshShape } from 'utils/shapes/index'
-import { PICTURE_DEFAULT_SIZE } from 'constants/picture'
+import { createPicture } from '../utils/shapes/picture'
+import { refreshShape } from '../utils/shapes/index'
+import { PICTURE_DEFAULT_SIZE } from '../constants/picture'
 
 const useShapes = (
   onDataChanged: () => void = _.noop,

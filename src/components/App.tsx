@@ -1,101 +1,33 @@
 import React, { MutableRefObject, useCallback, useEffect, useRef, useState } from 'react'
-import type { DrawableShapeJson, ExportDataType, Point, ShapeEntity } from 'types/Shapes'
-import type { ToolsType } from 'types/tools'
+import type { DrawableShapeJson, ExportDataType, Point, ShapeEntity } from '../types/Shapes'
+import type { ToolsType } from '../types/tools'
 import Canvas from './Canvas'
 import Layouts from './settings/Layouts'
 import Toolbar from './toolbox/Toolbar'
-import { styled } from '@linaria/react'
 import SettingsBar from './settings/SettingsBar'
-import { STYLE_ZINDEX } from 'constants/style'
-import useKeyboard from 'hooks/useKeyboard'
+import { STYLE_ZINDEX } from '../constants/style'
+import useKeyboard from '../hooks/useKeyboard'
 import {
   decodeJson,
   decodeImportedData,
   downloadFile,
   encodeShapesInString as encodeProjectDataInString,
   getCanvasImage
-} from 'utils/file'
-import type { SelectionModeData } from 'types/Mode'
-import useComponent from 'hooks/useComponent'
-import useShapes from 'hooks/useShapes'
+} from '../utils/file'
+import type { SelectionModeData } from '../types/Mode'
+import useComponent from '../hooks/useComponent'
+import useShapes from '../hooks/useShapes'
 import SnackbarContainer from './common/Snackbar'
-import useSnackbar from 'hooks/useSnackbar'
-import Loading from 'components/common/Loading'
-import { buildDataToExport } from 'utils/data'
-import useResizeObserver from 'hooks/useResizeObserver'
-import { sanitizeTools } from 'utils/toolbar'
-import { SELECTION_TOOL } from 'constants/tools'
+import useSnackbar from '../hooks/useSnackbar'
+import Loading from '../components/common/Loading'
+import { buildDataToExport } from '../utils/data'
+import useResizeObserver from '../hooks/useResizeObserver'
+import { sanitizeTools } from '../utils/toolbar'
+import { SELECTION_TOOL } from '../constants/tools'
 import _ from 'lodash/fp'
-import { DEFAULT_OPTIONS, GridFormatType, OptionalAppOptionsType } from 'constants/app'
+import { DEFAULT_OPTIONS, GridFormatType, OptionalAppOptionsType } from '../constants/app'
+import './App.css'
 
-const StyledApp = styled.div<{
-  canvasWidth: number
-  toolbarBackgroundColor: string
-  dividerColor: string
-  fontRadius: number
-  fontDisabledColor: string
-  fontDisabledBackgroundColor: string
-  fontColor: string
-  fontBackgroundColor: string
-  fontSelectedColor: string
-  fontSelectedBackgroundColor: string
-  fontHoverColor: string
-  fontHoverBackgroundColor: string
-  canvasBackgroundColor: string
-}>`
-  --toolbar-bg: ${props => props.toolbarBackgroundColor};
-  --divider-color: ${props => props.dividerColor};
-  --font-radius: ${props => props.fontRadius}px;
-  --font-disabled-color: ${props => props.fontDisabledColor};
-  --font-disabled-bg: ${props => props.fontDisabledBackgroundColor};
-  --font-color: ${props => props.fontColor};
-  --font-bg: ${props => props.fontBackgroundColor};
-  --font-selected-color: ${props => props.fontSelectedColor};
-  --font-selected-bg: ${props => props.fontSelectedBackgroundColor};
-  --font-hover-color: ${props => props.fontHoverColor};
-  --font-hover-bg: ${props => props.fontHoverBackgroundColor};
-  --canvas-bg: ${props => props.canvasBackgroundColor};
-
-  display: flex;
-  color: var(--font-color);
-  position: relative;
-  flex-direction: column;
-
-  hr {
-    width: 100%;
-    border: none;
-    border-top: 1px solid var(--divider-color);
-  }
-
-  &[data-grow='false'] {
-    max-width: ${({ canvasWidth }) => `min(100%, ${canvasWidth}px)`};
-  }
-
-  &[data-shrink='false'] {
-    min-width: ${({ canvasWidth }) => canvasWidth}px;
-  }
-`
-
-const StyledRow = styled.div<{
-  width: number | string
-  aspectRatio: string
-}>`
-  display: flex;
-  flex-direction: row;
-  position: relative;
-  max-width: 100%;
-  z-index: ${STYLE_ZINDEX.APP};
-
-  &[data-grow='true'] {
-    width: 100%;
-  }
-
-  &[data-grow='false'] {
-    width: ${({ width }) => width}px;
-  }
-
-  aspect-ratio: ${({ aspectRatio }) => aspectRatio};
-`
 
 type AppType = {
   className?: string
@@ -108,23 +40,23 @@ type AppType = {
   apiRef?: MutableRefObject<
     | undefined
     | {
-        getCurrentImage: () => string | undefined
-        getCurrentData: () => ExportDataType
-      }
+      getCurrentImage: () => string | undefined
+      getCurrentData: () => ExportDataType
+    }
   >
   options?: OptionalAppOptionsType
 }
 
 const App = ({
-  width: canvasWidth = 1000,
-  height: canvasHeight = 600,
+  width = 1000,
+  height = 600,
   shapes: shapesFromProps,
-  className: classNameFromProps,
+  className = "",
   mode = 'editor',
-  disabled: disabledFromProps = false,
+  disabled = false,
   onDataChanged,
   apiRef,
-  options
+  options = DEFAULT_OPTIONS
 }: AppType) => {
   const {
     layersManipulation,
@@ -163,12 +95,12 @@ const App = ({
     ...(options?.uiStyle ?? {})
   }
   const isEditMode = mode !== 'viewer'
-  const disabled = disabledFromProps || !isEditMode
+  const isDisabled = disabled || !isEditMode
   const componentRef = useRef<HTMLDivElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const [canvasSize, setCanvasSize] = useState({
-    width: canvasWidth,
-    height: canvasHeight,
+    width: width,
+    height: height,
     scaleRatio: 1
   })
 
@@ -183,7 +115,7 @@ const App = ({
   }, [availableToolsFromProps, withUploadPicture, withUrlPicture])
 
   const { isInsideComponent } = useComponent({
-    disabled,
+    disabled: isDisabled,
     componentRef
   })
 
@@ -312,8 +244,8 @@ const App = ({
         getCanvasImage(
           shapesRef.current,
           canvasOffset,
-          canvasWidth,
-          canvasHeight,
+          width,
+          height,
           canvasSelectionPadding
         )
       if (!dataURL) {
@@ -329,12 +261,12 @@ const App = ({
     } finally {
       setIsLoading(false)
     }
-  }, [addSnackbar, shapesRef, canvasOffset, canvasWidth, canvasHeight, canvasSelectionPadding])
+  }, [addSnackbar, shapesRef, canvasOffset, width, height, canvasSelectionPadding])
 
   const saveFile = useCallback(() => {
     setIsLoading(true)
     try {
-      const content = encodeProjectDataInString(shapesRef.current, canvasWidth, canvasHeight)
+      const content = encodeProjectDataInString(shapesRef.current, width, height)
       if (!content) {
         throw new Error("L'encodage a échoué")
       }
@@ -348,7 +280,7 @@ const App = ({
     } finally {
       setIsLoading(false)
     }
-  }, [shapesRef, addSnackbar, canvasWidth, canvasHeight])
+  }, [shapesRef, addSnackbar, width, height])
 
   const loadFile = useCallback(
     async (file: File) => {
@@ -373,7 +305,7 @@ const App = ({
     async (fileOrUrl: File | string) => {
       setIsLoading(true)
       try {
-        const pictureShape = await addPictureShape(fileOrUrl, canvasWidth, canvasHeight)
+        const pictureShape = await addPictureShape(fileOrUrl, width, height)
         selectShape(pictureShape)
       } catch (e) {
         if (e instanceof Error) {
@@ -384,15 +316,15 @@ const App = ({
         setIsLoading(false)
       }
     },
-    [addPictureShape, selectShape, addSnackbar, canvasWidth, canvasHeight]
+    [addPictureShape, selectShape, addSnackbar, width, height]
   )
 
   const onResized = useCallback(
     (measuredWidth: number) => {
-      const scaleRatio = measuredWidth / canvasWidth
-      setCanvasSize({ width: measuredWidth, height: canvasHeight * scaleRatio, scaleRatio })
+      const scaleRatio = measuredWidth / width
+      setCanvasSize({ width: measuredWidth, height: height * scaleRatio, scaleRatio })
     },
-    [canvasWidth, canvasHeight]
+    [width, height]
   )
 
   useKeyboard({
@@ -428,46 +360,49 @@ const App = ({
       getCurrentImage: () => {
         return canvasRef.current
           ? getCanvasImage(
-              shapesRef.current,
-              canvasOffset,
-              canvasWidth,
-              canvasHeight,
-              canvasSelectionPadding
-            )
+            shapesRef.current,
+            canvasOffset,
+            width,
+            height,
+            canvasSelectionPadding
+          )
           : undefined
       },
 
       getCurrentData: () => {
-        return buildDataToExport(shapesRef.current, canvasWidth, canvasHeight)
+        return buildDataToExport(shapesRef.current, width, height)
       }
     }
-  }, [apiRef, shapesRef, canvasOffset, canvasWidth, canvasHeight, canvasSelectionPadding])
+  }, [apiRef, shapesRef, canvasOffset, width, height, canvasSelectionPadding])
 
-  const className = `${classNameFromProps ?? ''} ${isLayoutPanelShown ? 'layoutPanelOpened' : ''}`
+  const appClassName = `${className}${isLayoutPanelShown ? ' react-paint-editor-layout-opened' : ''} react-paint-editor-app`
 
   return (
-    <StyledApp
+    <div
       ref={componentRef}
-      className={className}
+      className={appClassName}
       data-grow={canGrow}
       data-shrink={canShrink}
-      canvasWidth={canvasWidth}
-      toolbarBackgroundColor={toolbarBackgroundColor}
-      dividerColor={dividerColor}
-      fontRadius={fontRadius}
-      fontDisabledColor={fontDisabledColor}
-      fontDisabledBackgroundColor={fontDisabledBackgroundColor}
-      fontColor={fontColor}
-      fontBackgroundColor={fontBackgroundColor}
-      fontSelectedColor={fontSelectedColor}
-      fontSelectedBackgroundColor={fontSelectedBackgroundColor}
-      fontHoverColor={fontHoverColor}
-      fontHoverBackgroundColor={fontHoverBackgroundColor}
-      canvasBackgroundColor={canvasBackgroundColor}>
+      style={{
+        "--react-paint-editor-app-canvaswidth": `${width}px`,
+        "--react-paint-editor-app-toolbar-bg": toolbarBackgroundColor,
+        "--react-paint-editor-app-divider-color": dividerColor,
+        "--react-paint-editor-app-font-radius": fontRadius,
+        "--react-paint-editor-app-font-disabled-color": fontDisabledColor,
+        "--react-paint-editor-app-font-disabled-bg": fontDisabledBackgroundColor,
+        "--react-paint-editor-app-font-color": fontColor,
+        "--react-paint-editor-app-font-bg": fontBackgroundColor,
+        "--react-paint-editor-app-font-selected-color": fontSelectedColor,
+        "--react-paint-editor-app-font-selected-bg": fontSelectedBackgroundColor,
+        "--react-paint-editor-app-font-hover-color": fontHoverColor,
+        "--react-paint-editor-app-font-hover-bg": fontHoverBackgroundColor,
+        "--react-paint-editor-app-canvas-bg": canvasBackgroundColor,
+      } as CSSProperties}
+    >
       {isEditMode && (
         <Toolbar
           width={canvasSize.width}
-          disabled={disabled}
+          disabled={isDisabled}
           activeTool={activeTool}
           clearCanvas={clearCanvas}
           setActiveTool={selectTool}
@@ -487,14 +422,19 @@ const App = ({
           withUrlPicture={withUrlPicture}
         />
       )}
-      <StyledRow
+      <div
+        className='react-paint-editor-app-row'
         data-grow={canGrow}
-        width={canvasSize.width}
-        aspectRatio={`calc(${canvasSize.width} / ${canvasSize.height})`}>
+        style={{
+          "--react-paint-editor-app-row-zindex": STYLE_ZINDEX.APP,
+          "--react-paint-editor-app-row-width": canvasSize.width,
+          "--react-paint-editor-app-row-aspectratio": `calc(${canvasSize.width} / ${canvasSize.height})`
+        } as CSSProperties}
+      >
         <Canvas
           canGrow={canGrow}
           gridFormat={gridFormat}
-          disabled={disabled}
+          disabled={isDisabled}
           isInsideComponent={isInsideComponent}
           activeTool={activeTool}
           setActiveTool={setActiveTool}
@@ -522,7 +462,7 @@ const App = ({
           <Layouts
             gridFormat={gridFormat}
             setGridFormat={setGridFormat}
-            disabled={disabled}
+            disabled={isDisabled}
             shapes={shapesRef.current}
             moveShapes={moveShapes}
             selectedShape={selectedShape}
@@ -533,12 +473,12 @@ const App = ({
             isLayoutPanelShown={isLayoutPanelShown}
           />
         )}
-      </StyledRow>
+      </div>
       {isEditMode && (
         <>
           <SettingsBar
             width={canvasSize.width}
-            disabled={disabled}
+            disabled={isDisabled}
             activeTool={activeTool}
             availableTools={availableTools}
             selectedShape={selectedShape}
@@ -556,7 +496,7 @@ const App = ({
           <SnackbarContainer snackbarList={snackbarList} />
         </>
       )}
-    </StyledApp>
+    </div>
   )
 }
 

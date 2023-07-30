@@ -1,6 +1,6 @@
 import _ from 'lodash/fp'
 import React, { useState } from 'react'
-import Button from 'components/common/Button'
+import Button from '../../components/common/Button'
 
 type ShapeStyleSelectType = {
   setSelectedSettings: React.Dispatch<React.SetStateAction<string | undefined>>

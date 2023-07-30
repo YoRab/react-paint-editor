@@ -1,13 +1,12 @@
 import _ from 'lodash/fp'
 import React, { useEffect, useState, useTransition } from 'react'
-import Button from 'components/common/Button'
-import Panel from 'components/common/Panel'
-import { styled } from '@linaria/react'
-import type { ShapeType } from 'types/Shapes'
+import Button from '../../components/common/Button'
+import Panel from '../../components/common/Panel'
+import type { ShapeType } from '../../types/Shapes'
 import Tool from './Tool'
 import LoadFileTool from './LoadFileTool'
-import { publicIcon } from 'constants/icons'
-import type { ToolsType } from 'types/tools'
+import { publicIcon } from '../../constants/icons'
+import type { ToolsType } from '../../types/tools'
 import {
   CLEAR_TOOL,
   EXPORT_TOOL,
@@ -16,20 +15,8 @@ import {
   SAVE_TOOL,
   UNDO_TOOL,
   UPLOAD_PICTURE_TOOL
-} from 'constants/tools'
-
-const StyledPanelContent = styled.div`
-  display: flex;
-
-  &[data-vertical='1'] {
-    flex-direction: column;
-  }
-`
-
-const StyledRelative = styled.div`
-  position: relative;
-  display: inline-block;
-`
+} from '../../constants/tools'
+import './MenuGroup.css'
 
 type ToolbarGroupType = {
   activeTool: ToolsType
@@ -122,7 +109,7 @@ const MenuGroup = ({
     withActionsInMenu || withUploadPicture || withUrlPicture || withLoadAndSave || withExport
 
   return withMenu ? (
-    <StyledRelative>
+    <div className='react-paint-editor-toolbox-relative'>
       <Button
         selected={isActive}
         title={group.title}
@@ -132,7 +119,7 @@ const MenuGroup = ({
       />
       {isOpen && (
         <Panel alignment={alignment} position="top">
-          <StyledPanelContent data-vertical={+vertical}>
+          <div className='react-paint-editor-toolbox-panel-content' data-vertical={+vertical}>
             {withActionsInMenu && (
               <>
                 <Tool
@@ -216,10 +203,10 @@ const MenuGroup = ({
                 setActive={exportCanvasInFile}
               />
             )}
-          </StyledPanelContent>
+          </div>
         </Panel>
       )}
-    </StyledRelative>
+    </div>
   ) : null
 }
 

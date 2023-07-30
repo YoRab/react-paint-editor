@@ -1,4 +1,4 @@
-import { DrawableShape, Triangle } from 'types/Shapes'
+import { DrawableShape, Triangle } from '../../types/Shapes'
 
 export const createTrianglePath = (triangle: DrawableShape<'triangle'>) => {
   const path = new Path2D()

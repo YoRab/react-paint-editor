@@ -1,19 +1,18 @@
-import React from 'react'
+import React, { CSSProperties } from 'react'
 import SelectField from './SelectField'
-import { styled } from '@linaria/react'
 import _ from 'lodash/fp'
-import { fontIcon } from 'constants/icons'
-
-const StyledOption = styled.span<{
-  family: string
-}>`
-  font-family: ${({ family }) => family};
-`
+import { fontIcon } from '../../constants/icons'
+import './FontFamilyField.css'
 
 const FontFamilyOption: React.FC<{
   children?: React.ReactNode
 }> = ({ children }) => {
-  return <StyledOption family={children as string}>{children}</StyledOption>
+  return <span
+    className='react-paint-editor-fontfamily-option'
+    style={{
+      '--react-paint-editor-fontfamily-family': children
+    } as CSSProperties}
+  >{children}</span>
 }
 
 type FontFamilyFieldType = {
