@@ -1,3 +1,10 @@
+# V0.8.0
+
+- migrate from linaria to vanilla css
+- remove use of babel
+- migrate from webpack to vite
+- init storybook
+
 # V0.7.6
 
 - fix : prevent big svg failing to load using blob instead of base64
