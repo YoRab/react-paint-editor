@@ -2,7 +2,7 @@ import React from 'react'
 import Button from '../../components/common/Button'
 import type { ToolsType } from '../../types/tools'
 
-type ToolType = {
+type ToolComponentType = {
   type: ToolsType
   img?: string
   withText?: boolean
@@ -11,7 +11,7 @@ type ToolType = {
   setActive: (marker: ToolsType) => void
 }
 
-const Tool = ({ type, img, isActive, withText = false, disabled = false, setActive }: ToolType) => {
+const Tool = ({ type, img, isActive, withText = false, disabled = false, setActive }: ToolComponentType) => {
   const handleClick = () => {
     setActive(type)
   }

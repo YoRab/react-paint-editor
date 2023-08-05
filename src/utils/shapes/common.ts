@@ -16,7 +16,7 @@ const getBorderData = ({
   rotatedCoordinate: number
   selectionPadding: number
   anchor: number
-}) => {
+}): [number, number] => {
   switch (anchor) {
     case 0:
       if (borderSize - rotatedCoordinate < 0) {
