@@ -1,5 +1,5 @@
 import { rotatePoint } from '../../utils/trigo'
-import type { Point, DrawableShape } from '../../types/Shapes'
+import type { Point, DrawableShape, Rect } from '../../types/Shapes'
 import type { SelectionModeResize } from '../../types/Mode'
 import type { GridFormatType } from '../../constants/app'
 import { getShapeInfos } from '../../utils/shapes/index'
@@ -41,39 +41,18 @@ const getBorderData = ({
 }
 
 const resizeShapeBorderKeepingRatio = (
-  cursorPosition: Point,
+  rotatedVector: Point,
+  borders: Rect,
+  center: Point,
+  borderX: number,
+  borderWidth: number,
+  borderY: number,
+  borderHeight: number,
   originalShape: DrawableShape,
   selectionMode: SelectionModeResize,
   gridFormat: GridFormatType,
   selectionPadding: number,
 ) => {
-  const vector = [
-    cursorPosition[0] - selectionMode.cursorStartPosition[0],
-    cursorPosition[1] - selectionMode.cursorStartPosition[1]
-  ] as Point
-
-  const rotatedVector = rotatePoint({
-    point: vector,
-    rotation: originalShape.rotation
-  })
-
-  const { center, borders } = getShapeInfos(originalShape, selectionPadding)
-
-  const [borderX, borderWidth] = getBorderData({
-    borderStart: borders.x,
-    borderSize: borders.width,
-    vector: rotatedVector[0],
-    selectionPadding,
-    anchor: selectionMode.anchor[0]
-  })
-
-  const [borderY, borderHeight] = getBorderData({
-    borderStart: borders.y,
-    borderSize: borders.height,
-    vector: rotatedVector[1],
-    selectionPadding,
-    anchor: selectionMode.anchor[1]
-  })
 
   const originalRatio = ((borders.width - selectionPadding * 2) / (borders.height - selectionPadding * 2)) || 1
   const calculatedRatio = ((borderWidth - selectionPadding * 2) / (borderHeight - selectionPadding * 2))
@@ -149,10 +128,6 @@ export const resizeShapeBorder = (
   keepRatio = false
 ) => {
 
-  if (keepRatio) {
-    return resizeShapeBorderKeepingRatio(cursorPosition, originalShape, selectionMode, gridFormat, selectionPadding)
-  }
-
   const vector = [
     cursorPosition[0] - selectionMode.cursorStartPosition[0],
     cursorPosition[1] - selectionMode.cursorStartPosition[1]
@@ -180,6 +155,23 @@ export const resizeShapeBorder = (
     selectionPadding,
     anchor: selectionMode.anchor[1]
   })
+
+  if (keepRatio) {
+    return resizeShapeBorderKeepingRatio(
+      rotatedVector,
+      borders,
+      center,
+      borderX,
+      borderWidth,
+      borderY,
+      borderHeight,
+      originalShape,
+      selectionMode,
+      gridFormat,
+      selectionPadding)
+  }
+
+
   const centerVector = [
     borderX + borderWidth / 2 - center[0],
     borderY + borderHeight / 2 - center[1]
