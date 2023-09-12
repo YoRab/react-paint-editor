@@ -58,7 +58,7 @@ const buildPath = <T extends DrawableShape<'line'>>(
   const arrows = _.flow(
     (arrows: DrawableShape<'triangle'>[]) => {
       if (line.style?.lineArrow === 1 || line.style?.lineArrow === 3) {
-        const rotation = Math.PI / 2 - getAngleFromVector(line.points[0], line.points[1])
+        const rotation = Math.PI / 2 - getAngleFromVector({ targetVector: [line.points[0], line.points[1]] })
         return [
           ...arrows,
           createTriangle(buildTriangleOnLine(line.points[0], rotation, line.style))
@@ -68,7 +68,7 @@ const buildPath = <T extends DrawableShape<'line'>>(
     },
     (arrows: DrawableShape<'triangle'>[]) => {
       if (line.style?.lineArrow === 2 || line.style?.lineArrow === 3) {
-        const rotation = Math.PI / 2 - getAngleFromVector(line.points[1], line.points[0])
+        const rotation = Math.PI / 2 - getAngleFromVector({ targetVector: [line.points[1], line.points[0]] })
         return [
           ...arrows,
           createTriangle(buildTriangleOnLine(line.points[1], rotation, line.style))
