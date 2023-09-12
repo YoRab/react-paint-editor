@@ -75,7 +75,7 @@ const resizeShapeBorderKeepingRatio = (
     anchor: selectionMode.anchor[1]
   })
 
-  const originalRatio = ((borders.width - selectionPadding * 2) / (borders.height - selectionPadding * 2))
+  const originalRatio = ((borders.width - selectionPadding * 2) / (borders.height - selectionPadding * 2)) || 1
   const calculatedRatio = ((borderWidth - selectionPadding * 2) / (borderHeight - selectionPadding * 2))
 
   let trueBorderX, trueBorderY, trueBorderWidth, trueBorderHeight
