@@ -169,7 +169,7 @@ const Canvas = React.forwardRef<HTMLCanvasElement, DrawerType>(
         if (!ctx) return
 
         const newShape = refreshShape(
-          resizeTextShapeWithNewContent(ctx, selectedShape, newText, canvasOffset),
+          resizeTextShapeWithNewContent(ctx, selectedShape, newText, selectionPadding, canvasOffset),
           currentScale,
           selectionPadding
         )
