@@ -54,7 +54,7 @@ const resizeShapeBorderKeepingRatio = (
   selectionPadding: number,
 ) => {
 
-  const originalRatio = ((borders.width - selectionPadding * 2) / (borders.height - selectionPadding * 2)) || 1
+  const originalRatio = ((borders.width - selectionPadding * 2) || 1) / ((borders.height - selectionPadding * 2) || 1)
   const calculatedRatio = ((borderWidth - selectionPadding * 2) / (borderHeight - selectionPadding * 2))
 
   let trueBorderX, trueBorderY, trueBorderWidth, trueBorderHeight
@@ -91,9 +91,35 @@ const resizeShapeBorderKeepingRatio = (
     trueBorderX = borders.x + (borders.width - trueBorderWidth) / 2
   }
 
+
+  return {
+    borderX: trueBorderX,
+    borderWidth: trueBorderWidth,
+    borderY: trueBorderY,
+    borderHeight: trueBorderHeight,
+    center,
+    originalShape
+  }
+}
+
+const calculateShapeBorderData = ({
+  borderX,
+  borderWidth,
+  borderY,
+  borderHeight,
+  center,
+  originalShape
+}: {
+  borderX: number
+  borderWidth: number
+  borderY: number
+  borderHeight: number
+  center: Point
+  originalShape: DrawableShape
+}) => {
   const centerVector = [
-    trueBorderX + trueBorderWidth / 2 - center[0],
-    trueBorderY + trueBorderHeight / 2 - center[1]
+    borderX + borderWidth / 2 - center[0],
+    borderY + borderHeight / 2 - center[1]
   ] as Point
 
   const [newCenterX, newCenterY] = rotatePoint({
@@ -102,17 +128,15 @@ const resizeShapeBorderKeepingRatio = (
   })
 
   return {
-    borderX: trueBorderX + newCenterX - centerVector[0],
-    borderHeight: trueBorderHeight,
-    borderY: trueBorderY + newCenterY - centerVector[1],
-    borderWidth: trueBorderWidth
+    borderX: borderX + newCenterX - centerVector[0],
+    borderHeight,
+    borderY: borderY + newCenterY - centerVector[1],
+    borderWidth
   }
 }
 
 /*
 todo : 
-keepratio
-  jamais de zero ? suveiller rect, circle & texts 1 BRUSH
 finish text
   revoir resizeTextShapeWithNewContent ?
 grid
@@ -126,7 +150,7 @@ export const resizeShapeBorder = (
   gridFormat: GridFormatType,
   selectionPadding: number,
   keepRatio = false
-) => {
+): { borderX: number, borderHeight: number, borderY: number, borderWidth: number } => {
 
   const vector = [
     cursorPosition[0] - selectionMode.cursorStartPosition[0],
@@ -157,7 +181,7 @@ export const resizeShapeBorder = (
   })
 
   if (keepRatio) {
-    return resizeShapeBorderKeepingRatio(
+    const data = resizeShapeBorderKeepingRatio(
       rotatedVector,
       borders,
       center,
@@ -169,23 +193,15 @@ export const resizeShapeBorder = (
       selectionMode,
       gridFormat,
       selectionPadding)
+    return calculateShapeBorderData(data)
   }
 
-
-  const centerVector = [
-    borderX + borderWidth / 2 - center[0],
-    borderY + borderHeight / 2 - center[1]
-  ] as Point
-
-  const [newCenterX, newCenterY] = rotatePoint({
-    point: centerVector,
-    rotation: -originalShape.rotation
-  })
-
-  return {
-    borderX: borderX + newCenterX - centerVector[0],
+  return calculateShapeBorderData({
+    borderX,
+    borderWidth,
+    borderY,
     borderHeight,
-    borderY: borderY + newCenterY - centerVector[1],
-    borderWidth
-  }
+    center,
+    originalShape
+  })
 }
