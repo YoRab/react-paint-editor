@@ -258,6 +258,7 @@ export const resizeTextShapeWithNewContent = <U extends DrawableShape<'text'>>(
   ctx: CanvasRenderingContext2D,
   shape: U,
   newValue: string[],
+  selectionPadding: number,
   canvasOffset: Point
 ) => {
   const newShape = _.set('value', newValue, shape)
@@ -277,20 +278,19 @@ export const resizeTextShapeWithNewContent = <U extends DrawableShape<'text'>>(
     height: newHeight
   }
 
-  const selectionPadding = 0
   const { center } = getShapeInfos(shape, selectionPadding)
 
   const { center: shapeWithNewDimensionsCenter } = getShapeInfos(resizedShape, selectionPadding)
 
   const [oppTrueX, oppTrueY] = getRectOppositeAnchorAbsolutePosition(
-    [1, 0.5],
+    [1, 1],
     center,
     shape,
     canvasOffset
   )
 
   const [newOppTrueX, newOppTrueY] = getRectOppositeAnchorAbsolutePosition(
-    [1, 0.5],
+    [1, 1],
     shapeWithNewDimensionsCenter,
     resizedShape,
     canvasOffset,
