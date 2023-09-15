@@ -24,9 +24,11 @@ export const getNormalizedSize = (
   return [width, height]
 }
 
-export const roundForGrid = (value: number, gridFormat: GridFormatType) => {
-  const step = value >= 0 ? GRID_STEP[gridFormat - 1] : -GRID_STEP[gridFormat - 1]
-  return gridFormat ? value + step / 2 - ((value + step / 2) % step) : Math.round(value)
+export const roundForGrid = (value: number, gridFormat: GridFormatType, gridOffset: number = 0) => {
+  if (!gridFormat) return Math.round(value)
+  const valueWithOffset = value + gridOffset
+  const step = valueWithOffset >= 0 ? GRID_STEP[gridFormat - 1] : -GRID_STEP[gridFormat - 1]
+  return valueWithOffset + step / 2 - ((valueWithOffset + step / 2) % step) - gridOffset
 }
 
 export const transformShape = (
@@ -67,10 +69,6 @@ export const transformShape = (
         gridFormat
       )
     case 'resize':
-      // const roundCursorPosition: Point = [
-      //   roundForGrid(cursorPosition[0], gridFormat),
-      //   roundForGrid(cursorPosition[1], gridFormat)
-      // ]
       return resizeShape(
         ctx,
         shape,

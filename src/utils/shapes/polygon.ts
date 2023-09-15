@@ -175,13 +175,20 @@ export const resizePolygon = (
   canvasOffset: Point,
   originalShape: DrawableShape<'polygon'>,
   selectionMode: SelectionModeResize<number>,
+  gridFormat: GridFormatType,
   selectionPadding: number,
   currentScale: number
 ): DrawableShape<'polygon'> => {
+
+  const roundCursorPosition: Point = [
+    roundForGrid(cursorPosition[0], gridFormat),
+    roundForGrid(cursorPosition[1], gridFormat)
+  ]
+
   const { center } = getShapeInfos(originalShape, selectionPadding)
 
   const cursorPositionBeforeResize = getPointPositionAfterCanvasTransformation(
-    cursorPosition,
+    roundCursorPosition,
     originalShape.rotation,
     center,
     canvasOffset
