@@ -22,7 +22,7 @@ const getBorderData = ({
 }): [number, number] => {
   switch (anchor) {
     case 0:
-      if (invertedAxe) {
+      if (borderSize - vector < 0) {
         const shapeSize = borderSize - 2 * selectionPadding
         return [borderStart + shapeSize, vector - shapeSize]
       } else {
@@ -32,7 +32,7 @@ const getBorderData = ({
     case 0.5:
       return [borderStart, borderSize]
     case 1:
-      if (invertedAxe) {
+      if (borderSize + vector < 0) {
         const offset = borderSize + vector
         return [borderStart + offset, 2 * selectionPadding - offset]
       } else {
@@ -53,7 +53,6 @@ const resizeShapeBorderKeepingRatio = (
   borderHeight: number,
   originalShape: DrawableShape,
   selectionMode: SelectionModeResize,
-  gridFormat: GridFormatType,
   selectionPadding: number,
 ) => {
 
@@ -140,7 +139,6 @@ const calculateShapeBorderData = ({
 
 /*
 todo : 
-grid
 finish brush (division by 0):   revoir taille min ?
 grosse factorisation / clean
  */
@@ -154,33 +152,38 @@ export const resizeShapeBorder = (
 ): { borderX: number, borderHeight: number, borderY: number, borderWidth: number } => {
   const { center, borders } = getShapeInfos(originalShape, selectionPadding)
 
-  const isXinverted = (selectionMode.anchor[0] === 0 && cursorPosition[0] >= borders.x + borders.width) || (selectionMode.anchor[0] === 1 && cursorPosition[0] <= borders.x)
-  const isYinverted = (selectionMode.anchor[1] === 0 && cursorPosition[1] >= borders.y + borders.height) || (selectionMode.anchor[1] === 1 && cursorPosition[1] <= borders.y)
+  const rotatedCursorPosition = rotatePoint({
+    origin: center,
+    point: cursorPosition,
+    rotation: originalShape.rotation
+  })
+
+  const isXinverted = (selectionMode.anchor[0] === 0 && rotatedCursorPosition[0] >= borders.x + borders.width) || (selectionMode.anchor[0] === 1 && rotatedCursorPosition[0] <= borders.x)
+  const isYinverted = (selectionMode.anchor[1] === 0 && rotatedCursorPosition[1] >= borders.y + borders.height) || (selectionMode.anchor[1] === 1 && rotatedCursorPosition[1] <= borders.y)
 
   const roundCursorPosition: Point = [
-    roundForGrid(cursorPosition[0], gridFormat, (selectionMode.anchor[0] === 0 && !isXinverted) || (selectionMode.anchor[0] === 1 && isXinverted) ? selectionPadding : -selectionPadding),
-    roundForGrid(cursorPosition[1], gridFormat, (selectionMode.anchor[1] === 0 && !isYinverted) || (selectionMode.anchor[1] === 1 && isYinverted) ? selectionPadding : -selectionPadding)
+    roundForGrid(rotatedCursorPosition[0], gridFormat, (selectionMode.anchor[0] === 0 && !isXinverted) || (selectionMode.anchor[0] === 1 && isXinverted) ? selectionPadding : -selectionPadding),
+    roundForGrid(rotatedCursorPosition[1], gridFormat, (selectionMode.anchor[1] === 0 && !isYinverted) || (selectionMode.anchor[1] === 1 && isYinverted) ? selectionPadding : -selectionPadding)
   ]
 
   const roundCursorStartPosition = gridFormat ? [
     selectionMode.anchor[0] === 0 ? borders.x : selectionMode.anchor[0] === 0.5 ? borders.x + borders.width / 2 : borders.x + borders.width,
     selectionMode.anchor[1] === 0 ? borders.y : selectionMode.anchor[1] === 0.5 ? borders.y + borders.height / 2 : borders.y + borders.height,
-  ] : selectionMode.cursorStartPosition
+  ] : rotatePoint({
+    origin: center,
+    point: selectionMode.cursorStartPosition,
+    rotation: originalShape.rotation
+  })
 
   const vector = [
     roundCursorPosition[0] - roundCursorStartPosition[0],
     roundCursorPosition[1] - roundCursorStartPosition[1]
   ] as Point
 
-  const rotatedVector = rotatePoint({
-    point: vector,
-    rotation: originalShape.rotation
-  })
-
   const [borderX, borderWidth] = getBorderData({
     borderStart: borders.x,
     borderSize: borders.width,
-    vector: rotatedVector[0],
+    vector: vector[0],
     selectionPadding,
     invertedAxe: isXinverted,
     anchor: selectionMode.anchor[0]
@@ -189,7 +192,7 @@ export const resizeShapeBorder = (
   const [borderY, borderHeight] = getBorderData({
     borderStart: borders.y,
     borderSize: borders.height,
-    vector: rotatedVector[1],
+    vector: vector[1],
     selectionPadding,
     invertedAxe: isYinverted,
     anchor: selectionMode.anchor[1]
@@ -197,7 +200,7 @@ export const resizeShapeBorder = (
 
   if (keepRatio) {
     const data = resizeShapeBorderKeepingRatio(
-      rotatedVector,
+      vector,
       borders,
       center,
       borderX,
@@ -206,7 +209,6 @@ export const resizeShapeBorder = (
       borderHeight,
       originalShape,
       selectionMode,
-      gridFormat,
       selectionPadding)
     return calculateShapeBorderData(data)
   }
