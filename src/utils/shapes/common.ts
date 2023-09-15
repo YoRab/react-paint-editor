@@ -3,23 +3,26 @@ import type { Point, DrawableShape, Rect } from '../../types/Shapes'
 import type { SelectionModeResize } from '../../types/Mode'
 import type { GridFormatType } from '../../constants/app'
 import { getShapeInfos } from '../../utils/shapes/index'
+import { roundForGrid } from 'src/utils/transform'
 
 const getBorderData = ({
   borderStart,
   borderSize,
   vector,
   selectionPadding,
+  invertedAxe,
   anchor
 }: {
   borderStart: number
   borderSize: number
   vector: number
   selectionPadding: number
+  invertedAxe: boolean
   anchor: number
 }): [number, number] => {
   switch (anchor) {
     case 0:
-      if (borderSize - vector < 0) {
+      if (invertedAxe) {
         const shapeSize = borderSize - 2 * selectionPadding
         return [borderStart + shapeSize, vector - shapeSize]
       } else {
@@ -29,7 +32,7 @@ const getBorderData = ({
     case 0.5:
       return [borderStart, borderSize]
     case 1:
-      if (borderSize + vector < 0) {
+      if (invertedAxe) {
         const offset = borderSize + vector
         return [borderStart + offset, 2 * selectionPadding - offset]
       } else {
@@ -137,11 +140,9 @@ const calculateShapeBorderData = ({
 
 /*
 todo : 
-finish text
-  revoir resizeTextShapeWithNewContent ?
 grid
-finish brush (division by 0)
-  revoir taille min ?
+finish brush (division by 0):   revoir taille min ?
+grosse factorisation / clean
  */
 export const resizeShapeBorder = (
   cursorPosition: Point,
@@ -151,10 +152,24 @@ export const resizeShapeBorder = (
   selectionPadding: number,
   keepRatio = false
 ): { borderX: number, borderHeight: number, borderY: number, borderWidth: number } => {
+  const { center, borders } = getShapeInfos(originalShape, selectionPadding)
+
+  const isXinverted = (selectionMode.anchor[0] === 0 && cursorPosition[0] >= borders.x + borders.width) || (selectionMode.anchor[0] === 1 && cursorPosition[0] <= borders.x)
+  const isYinverted = (selectionMode.anchor[1] === 0 && cursorPosition[1] >= borders.y + borders.height) || (selectionMode.anchor[1] === 1 && cursorPosition[1] <= borders.y)
+
+  const roundCursorPosition: Point = [
+    roundForGrid(cursorPosition[0], gridFormat, (selectionMode.anchor[0] === 0 && !isXinverted) || (selectionMode.anchor[0] === 1 && isXinverted) ? selectionPadding : -selectionPadding),
+    roundForGrid(cursorPosition[1], gridFormat, (selectionMode.anchor[1] === 0 && !isYinverted) || (selectionMode.anchor[1] === 1 && isYinverted) ? selectionPadding : -selectionPadding)
+  ]
+
+  const roundCursorStartPosition = gridFormat ? [
+    selectionMode.anchor[0] === 0 ? borders.x : selectionMode.anchor[0] === 0.5 ? borders.x + borders.width / 2 : borders.x + borders.width,
+    selectionMode.anchor[1] === 0 ? borders.y : selectionMode.anchor[1] === 0.5 ? borders.y + borders.height / 2 : borders.y + borders.height,
+  ] : selectionMode.cursorStartPosition
 
   const vector = [
-    cursorPosition[0] - selectionMode.cursorStartPosition[0],
-    cursorPosition[1] - selectionMode.cursorStartPosition[1]
+    roundCursorPosition[0] - roundCursorStartPosition[0],
+    roundCursorPosition[1] - roundCursorStartPosition[1]
   ] as Point
 
   const rotatedVector = rotatePoint({
@@ -162,13 +177,12 @@ export const resizeShapeBorder = (
     rotation: originalShape.rotation
   })
 
-  const { center, borders } = getShapeInfos(originalShape, selectionPadding)
-
   const [borderX, borderWidth] = getBorderData({
     borderStart: borders.x,
     borderSize: borders.width,
     vector: rotatedVector[0],
     selectionPadding,
+    invertedAxe: isXinverted,
     anchor: selectionMode.anchor[0]
   })
 
@@ -177,6 +191,7 @@ export const resizeShapeBorder = (
     borderSize: borders.height,
     vector: rotatedVector[1],
     selectionPadding,
+    invertedAxe: isYinverted,
     anchor: selectionMode.anchor[1]
   })
 

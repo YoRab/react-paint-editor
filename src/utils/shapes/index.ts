@@ -250,6 +250,7 @@ export const resizeShape = <T extends DrawableShape>(
         canvasOffset,
         originalShape,
         selectionMode as SelectionModeResize<number>,
+        gridFormat,
         selectionPadding,
         currentScale
       ) as T
@@ -259,6 +260,7 @@ export const resizeShape = <T extends DrawableShape>(
         canvasOffset,
         originalShape,
         selectionMode as SelectionModeResize<number>,
+        gridFormat,
         selectionPadding,
         currentScale
       ) as T
@@ -268,6 +270,7 @@ export const resizeShape = <T extends DrawableShape>(
         canvasOffset,
         originalShape,
         selectionMode as SelectionModeResize<number>,
+        gridFormat,
         selectionPadding,
         currentScale
       ) as T
