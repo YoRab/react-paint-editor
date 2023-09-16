@@ -6,22 +6,12 @@ import type {
   Brush,
   Rect,
   DrawableShape,
-  ShapeEntity,
-  SelectionDefaultType
+  ShapeEntity
 } from '../../types/Shapes'
 import type { ToolsSettingsType } from '../../types/tools'
 import { roundForGrid } from '../../utils/transform'
 import { getShapeInfos } from '../../utils/shapes/index'
-import { createRecPath } from './rectangle'
-import { updateCanvasContext } from '../../utils/canvas'
-import { createLinePath } from './line'
-import {
-  SELECTION_ANCHOR_SIZE,
-  SELECTION_RESIZE_ANCHOR_POSITIONS,
-  SELECTION_ROTATED_ANCHOR_POSITION
-} from '../../constants/shapes'
-import { createCirclePath } from './circle'
-import { resizeShapeBorder } from './common'
+import { createRecSelectionPath, resizeRectSelection } from 'src/utils/selection/rectSelection'
 
 const createBrushPath = (brush: DrawableShape<'brush'>) => {
   if (brush.points.length < 1 || brush.style?.strokeColor === 'transparent') return undefined
@@ -42,41 +32,6 @@ const createBrushPath = (brush: DrawableShape<'brush'>) => {
   return path
 }
 
-const createBrushSelectionPath = (
-  rect: DrawableShape<'brush'>,
-  currentScale: number,
-  selectionPadding: number
-): SelectionDefaultType => {
-  const { borders } = getShapeInfos(rect, selectionPadding)
-
-  return {
-    border: createRecPath(borders),
-    line: createLinePath({
-      points: [
-        [borders.x + borders.width / 2, borders.y],
-        [
-          borders.x + borders.width / 2,
-          borders.y - SELECTION_ANCHOR_SIZE / 2 - SELECTION_ROTATED_ANCHOR_POSITION / currentScale
-        ]
-      ]
-    }),
-    anchors: [
-      createCirclePath({
-        x: borders.x + borders.width / 2,
-        y: borders.y - SELECTION_ANCHOR_SIZE / 2 - SELECTION_ROTATED_ANCHOR_POSITION / currentScale,
-        radius: SELECTION_ANCHOR_SIZE / 2 / currentScale
-      }),
-      ...SELECTION_RESIZE_ANCHOR_POSITIONS.map(anchorPosition =>
-        createCirclePath({
-          x: borders.x + borders.width * anchorPosition[0],
-          y: borders.y + borders.height * anchorPosition[1],
-          radius: SELECTION_ANCHOR_SIZE / 2 / currentScale
-        })
-      )
-    ]
-  }
-}
-
 const buildPath = <T extends DrawableShape<'brush'>>(
   brush: T,
   currentScale: number,
@@ -85,7 +40,7 @@ const buildPath = <T extends DrawableShape<'brush'>>(
   return {
     ...brush,
     path: createBrushPath(brush),
-    selection: createBrushSelectionPath(brush, currentScale, selectionPadding)
+    selection: createRecSelectionPath(brush, currentScale, selectionPadding)
   }
 }
 
@@ -125,40 +80,6 @@ export const drawBrush = (ctx: CanvasRenderingContext2D, shape: DrawableShape<'b
   if (ctx.globalAlpha === 0) return
   if (shape.style?.strokeColor === 'transparent' || ctx.globalAlpha === 0) return
   ctx.stroke(shape.path)
-}
-
-export const drawSelectionBrush = (
-  ctx: CanvasRenderingContext2D,
-  shape: DrawableShape<'brush'>,
-  selectionColor: string,
-  selectionWidth: number,
-  currentScale: number,
-  withAnchors: boolean
-): void => {
-  if (!shape.selection) return
-
-  updateCanvasContext(ctx, {
-    fillColor: 'transparent',
-    strokeColor: selectionColor,
-    lineWidth: selectionWidth / currentScale
-  })
-
-  ctx.stroke(shape.selection.border)
-
-  if (!withAnchors || shape.locked) return
-
-  ctx.stroke(shape.selection.line)
-
-  updateCanvasContext(ctx, {
-    fillColor: 'rgb(255,255,255)',
-    strokeColor: 'rgb(150,150,150)',
-    lineWidth: 2 / currentScale
-  })
-
-  for (const anchor of shape.selection.anchors) {
-    ctx.fill(anchor)
-    ctx.stroke(anchor)
-  }
 }
 
 export const getBrushBorder = (brush: Brush, selectionPadding: number): Rect => {
@@ -227,7 +148,7 @@ export const resizeBrush = (
 ): DrawableShape<'brush'> => {
   const { borders: originalBorders } = getShapeInfos(originalShape, selectionPadding)
 
-  const { borderX, borderHeight, borderY, borderWidth } = resizeShapeBorder(
+  const { borderX, borderHeight, borderY, borderWidth } = resizeRectSelection(
     cursorPosition,
     originalShape,
     selectionMode,
