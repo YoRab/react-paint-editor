@@ -89,12 +89,11 @@ const App = ({
     canvasBackgroundColor,
     canvasSelectionColor,
     canvasSelectionWidth,
-    // canvasSelectionPadding
+    canvasSelectionPadding
   } = {
     ...DEFAULT_OPTIONS.uiStyle,
     ...(options?.uiStyle ?? {})
   }
-  const canvasSelectionPadding = 24;
   const isEditMode = mode !== 'viewer'
   const isDisabled = disabled || !isEditMode
   const componentRef = useRef<HTMLDivElement>(null)
