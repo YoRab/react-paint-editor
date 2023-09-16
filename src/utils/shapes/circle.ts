@@ -6,63 +6,12 @@ import type {
   Circle,
   Rect,
   DrawableShape,
-  ShapeEntity,
-  SelectionDefaultType
+  ShapeEntity
 } from '../../types/Shapes'
 import type { ToolsSettingsType } from '../../types/tools'
-import { getPointPositionBeforeCanvasTransformation } from '../../utils/intersect'
 import { roundForGrid } from '../../utils/transform'
-import { getShapeInfos } from '../../utils/shapes/index'
-import { updateCanvasContext } from '../../utils/canvas'
-import { createRecPath } from './rectangle'
-import { createLinePath } from './line'
-import {
-  SELECTION_ANCHOR_SIZE,
-  SELECTION_RESIZE_ANCHOR_POSITIONS,
-  SELECTION_ROTATED_ANCHOR_POSITION
-} from '../../constants/shapes'
-import { resizeShapeBorder } from './common'
-
-export const createCirclePath = (shape: Circle) => {
-  const path = new Path2D()
-  path.arc(shape.x, shape.y, shape.radius, 0, 2 * Math.PI)
-  return path
-}
-
-const createCircleSelectionPath = (
-  rect: DrawableShape<'circle'>,
-  currentScale: number,
-  selectionPadding: number
-): SelectionDefaultType => {
-  const { borders } = getShapeInfos(rect, selectionPadding)
-
-  return {
-    border: createRecPath(borders),
-    line: createLinePath({
-      points: [
-        [borders.x + borders.width / 2, borders.y],
-        [
-          borders.x + borders.width / 2,
-          borders.y - SELECTION_ANCHOR_SIZE / 2 - SELECTION_ROTATED_ANCHOR_POSITION / currentScale
-        ]
-      ]
-    }),
-    anchors: [
-      createCirclePath({
-        x: borders.x + borders.width / 2,
-        y: borders.y - SELECTION_ANCHOR_SIZE / 2 - SELECTION_ROTATED_ANCHOR_POSITION / currentScale,
-        radius: SELECTION_ANCHOR_SIZE / 2 / currentScale
-      }),
-      ...SELECTION_RESIZE_ANCHOR_POSITIONS.map(anchorPosition =>
-        createCirclePath({
-          x: borders.x + borders.width * anchorPosition[0],
-          y: borders.y + borders.height * anchorPosition[1],
-          radius: SELECTION_ANCHOR_SIZE / 2 / currentScale
-        })
-      )
-    ]
-  }
-}
+import { createCirclePath } from './path'
+import { createRecSelectionPath, resizeRectSelection } from 'src/utils/selection/rectSelection'
 
 const buildPath = <T extends DrawableShape<'circle'>>(
   shape: T,
@@ -72,7 +21,7 @@ const buildPath = <T extends DrawableShape<'circle'>>(
   return {
     ...shape,
     path: createCirclePath(shape),
-    selection: createCircleSelectionPath(shape, currentScale, selectionPadding)
+    selection: createRecSelectionPath(shape, currentScale, selectionPadding)
   }
 }
 
@@ -119,40 +68,6 @@ export const drawCircle = (
   circle.style?.strokeColor !== 'transparent' && ctx.stroke(circle.path)
 }
 
-export const drawSelectionCircle = (
-  ctx: CanvasRenderingContext2D,
-  shape: DrawableShape<'circle'>,
-  selectionColor: string,
-  selectionWidth: number,
-  currentScale: number,
-  withAnchors: boolean
-): void => {
-  if (!shape.selection) return
-
-  updateCanvasContext(ctx, {
-    fillColor: 'transparent',
-    strokeColor: selectionColor,
-    lineWidth: selectionWidth / currentScale
-  })
-
-  ctx.stroke(shape.selection.border)
-
-  if (!withAnchors || shape.locked) return
-
-  ctx.stroke(shape.selection.line)
-
-  updateCanvasContext(ctx, {
-    fillColor: 'rgb(255,255,255)',
-    strokeColor: 'rgb(150,150,150)',
-    lineWidth: 2 / currentScale
-  })
-
-  for (const anchor of shape.selection.anchors) {
-    ctx.fill(anchor)
-    ctx.stroke(anchor)
-  }
-}
-
 export const getCircleBorder = (circle: Circle, selectionPadding: number): Rect => {
   return {
     x: circle.x - circle.radius - selectionPadding,
@@ -181,34 +96,6 @@ export const translateCircle = <U extends DrawableShape<'circle'>>(
   )
 }
 
-const getCircleOppositeAnchorAbsolutePosition = <T extends DrawableShape & Circle>(
-  anchor: Point,
-  center: Point,
-  shape: T,
-  canvasOffset: Point,
-  [negW, negH] = [false, false]
-) => {
-  const oppositeX =
-    anchor[0] === 0.5
-      ? shape.x
-      : anchor[0] === 0
-        ? shape.x + (negW ? -shape.radius : shape.radius)
-        : shape.x + (negW ? shape.radius : -shape.radius)
-  const oppositeY =
-    anchor[1] === 0.5
-      ? shape.y
-      : anchor[1] === 0
-        ? shape.y + (negH ? -shape.radius : shape.radius)
-        : shape.y + (negH ? shape.radius : -shape.radius)
-
-  return getPointPositionBeforeCanvasTransformation(
-    [oppositeX, oppositeY],
-    shape.rotation,
-    center,
-    canvasOffset
-  )
-}
-
 export const resizeCircle = (
   cursorPosition: Point,
   originalShape: DrawableShape<'circle'>,
@@ -217,7 +104,7 @@ export const resizeCircle = (
   selectionPadding: number,
   currentScale: number
 ): DrawableShape<'circle'> => {
-  const { borderX, borderHeight, borderY, borderWidth } = resizeShapeBorder(
+  const { borderX, borderHeight, borderY, borderWidth } = resizeRectSelection(
     cursorPosition,
     originalShape,
     selectionMode,

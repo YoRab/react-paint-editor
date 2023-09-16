@@ -1,5 +1,4 @@
 import { GridFormatType } from '../../constants/app'
-import { SELECTION_ANCHOR_SIZE } from '../../constants/shapes'
 import _ from 'lodash/fp'
 import { SelectionModeResize } from '../../types/Mode'
 import type {
@@ -7,50 +6,14 @@ import type {
   DrawableShape,
   Polygon,
   Rect,
-  ShapeEntity,
-  SelectionLinesType
+  ShapeEntity
 } from '../../types/Shapes'
 import type { ToolsSettingsType } from '../../types/tools'
 import { getPointPositionAfterCanvasTransformation } from '../../utils/intersect'
 import { roundForGrid } from '../../utils/transform'
 import { getShapeInfos } from '.'
-import { createCirclePath } from './circle'
-import { createRecPath } from './rectangle'
-
-const createPloygonPath = (polygon: DrawableShape<'polygon'>) => {
-  if (polygon.points.length < 1) return undefined
-
-  const path = new Path2D()
-
-  path.moveTo(...polygon.points[0])
-  polygon.points.slice(1).forEach(point => {
-    path.lineTo(...point)
-  })
-  path.lineTo(...polygon.points[0])
-
-  return path
-}
-
-const createPolygonSelectionPath = (
-  shape: DrawableShape<'polygon'>,
-  currentScale: number,
-  selectionPadding: number
-): SelectionLinesType => {
-  const { borders } = getShapeInfos(shape, selectionPadding)
-
-  return {
-    border: createRecPath(borders),
-    anchors: [
-      ...shape.points.map(point => {
-        return createCirclePath({
-          x: point[0],
-          y: point[1],
-          radius: SELECTION_ANCHOR_SIZE / 2 / currentScale
-        })
-      })
-    ]
-  }
-}
+import { createLineSelectionPath } from 'src/utils/selection/lineSelection'
+import { createPolygonPath } from 'src/utils/shapes/path'
 
 const buildPath = <T extends DrawableShape<'polygon'>>(
   shape: T,
@@ -59,8 +22,8 @@ const buildPath = <T extends DrawableShape<'polygon'>>(
 ): T => {
   return {
     ...shape,
-    path: createPloygonPath(shape),
-    selection: createPolygonSelectionPath(shape, currentScale, selectionPadding)
+    path: createPolygonPath(shape),
+    selection: createLineSelectionPath(shape, currentScale, selectionPadding)
   }
 }
 

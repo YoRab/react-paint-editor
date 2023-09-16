@@ -6,7 +6,6 @@ import type { GridFormatType } from '../../constants/app'
 import {
   createBrush,
   drawBrush,
-  drawSelectionBrush,
   getBrushBorder,
   refreshBrush,
   resizeBrush,
@@ -15,7 +14,6 @@ import {
 import {
   createLine,
   drawLine,
-  drawLineSelection,
   getLineBorder,
   refreshLine,
   resizeLine,
@@ -43,12 +41,10 @@ import {
   resizeRect,
   translateRect,
   drawRect,
-  drawSelectionRect,
   refreshRect
 } from './rectangle'
 import {
   createText,
-  drawSelectionText,
   drawText,
   getTextBorder,
   refreshText,
@@ -58,7 +54,6 @@ import {
 import {
   createEllipse,
   drawEllipse,
-  drawSelectionEllipse,
   getEllipseBorder,
   refreshEllipse,
   resizeEllipse,
@@ -67,7 +62,6 @@ import {
 import {
   createCircle,
   drawCircle,
-  drawSelectionCircle,
   getCircleBorder,
   refreshCircle,
   resizeCircle,
@@ -75,7 +69,6 @@ import {
 } from './circle'
 import {
   drawPicture,
-  drawSelectionPicture,
   getPictureBorder,
   refreshPicture,
   resizePicture,
@@ -84,6 +77,8 @@ import {
 import { GRID_ROTATION_STEPS } from '../../constants/style'
 import { SelectionModeData, SelectionModeResize } from '../../types/Mode'
 import { transformCanvas, updateCanvasContext } from '../../utils/canvas'
+import { drawSelectionRect } from 'src/utils/selection/rectSelection'
+import { drawLineSelection } from 'src/utils/selection/lineSelection'
 
 export const createShape = (
   ctx: CanvasRenderingContext2D,
@@ -490,22 +485,12 @@ export const drawShapeSelection = ({
   switch (shape.type) {
     case 'rect':
     case 'square':
-      drawSelectionRect(ctx, shape, selectionColor, selectionWidth, currentScale, withAnchors)
-      break
-    case 'ellipse':
-      drawSelectionEllipse(ctx, shape, selectionColor, selectionWidth, currentScale, withAnchors)
-      break
     case 'circle':
-      drawSelectionCircle(ctx, shape, selectionColor, selectionWidth, currentScale, withAnchors)
-      break
+    case 'ellipse':
     case 'picture':
-      drawSelectionPicture(ctx, shape, selectionColor, selectionWidth, currentScale, withAnchors)
-      break
     case 'text':
-      drawSelectionText(ctx, shape, selectionColor, selectionWidth, currentScale, withAnchors)
-      break
     case 'brush':
-      drawSelectionBrush(ctx, shape, selectionColor, selectionWidth, currentScale, withAnchors)
+      drawSelectionRect(ctx, shape, selectionColor, selectionWidth, currentScale, withAnchors)
       break
     case 'polygon':
     case 'line':

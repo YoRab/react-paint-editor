@@ -8,7 +8,7 @@ import type { ToolsType } from '../types/tools'
 import type { GridFormatType } from '../constants/app'
 import { drawShapeSelection, drawShape, refreshShape } from '../utils/shapes'
 import { resizeTextShapeWithNewContent } from '../utils/shapes/text'
-import { drawGrid } from '../utils/shapes/grid'
+import { drawGrid } from '../utils/grid'
 import './Canvas.css'
 
 const renderDrawCanvas = (

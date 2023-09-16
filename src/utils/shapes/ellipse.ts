@@ -1,9 +1,4 @@
 import { GridFormatType } from '../../constants/app'
-import {
-  SELECTION_ANCHOR_SIZE,
-  SELECTION_RESIZE_ANCHOR_POSITIONS,
-  SELECTION_ROTATED_ANCHOR_POSITION
-} from '../../constants/shapes'
 import _ from 'lodash/fp'
 import { SelectionModeResize } from '../../types/Mode'
 import type {
@@ -11,59 +6,12 @@ import type {
   Ellipse,
   Rect,
   DrawableShape,
-  ShapeEntity,
-  SelectionDefaultType
+  ShapeEntity
 } from '../../types/Shapes'
 import type { ToolsSettingsType } from '../../types/tools'
-import { updateCanvasContext } from '../../utils/canvas'
 import { roundForGrid } from '../../utils/transform'
-import { createCirclePath } from './circle'
-import { resizeShapeBorder } from './common'
-import { getShapeInfos } from './index'
-import { createLinePath } from './line'
-import { createRecPath } from './rectangle'
-
-const createEllipsePath = (ellipse: DrawableShape<'ellipse'>) => {
-  const path = new Path2D()
-  path.ellipse(ellipse.x, ellipse.y, ellipse.radiusX, ellipse.radiusY, 0, 0, 2 * Math.PI)
-
-  return path
-}
-
-const createEllipseSelectionPath = (
-  rect: DrawableShape<'ellipse'>,
-  currentScale: number,
-  selectionPadding: number
-): SelectionDefaultType => {
-  const { borders } = getShapeInfos(rect, selectionPadding)
-
-  return {
-    border: createRecPath(borders),
-    line: createLinePath({
-      points: [
-        [borders.x + borders.width / 2, borders.y],
-        [
-          borders.x + borders.width / 2,
-          borders.y - SELECTION_ANCHOR_SIZE / 2 - SELECTION_ROTATED_ANCHOR_POSITION / currentScale
-        ]
-      ]
-    }),
-    anchors: [
-      createCirclePath({
-        x: borders.x + borders.width / 2,
-        y: borders.y - SELECTION_ANCHOR_SIZE / 2 - SELECTION_ROTATED_ANCHOR_POSITION / currentScale,
-        radius: SELECTION_ANCHOR_SIZE / 2 / currentScale
-      }),
-      ...SELECTION_RESIZE_ANCHOR_POSITIONS.map(anchorPosition =>
-        createCirclePath({
-          x: borders.x + borders.width * anchorPosition[0],
-          y: borders.y + borders.height * anchorPosition[1],
-          radius: SELECTION_ANCHOR_SIZE / 2 / currentScale
-        })
-      )
-    ]
-  }
-}
+import { createRecSelectionPath, resizeRectSelection } from 'src/utils/selection/rectSelection'
+import { createEllipsePath } from 'src/utils/shapes/path'
 
 const buildPath = <T extends DrawableShape<'ellipse'>>(
   shape: T,
@@ -73,7 +21,7 @@ const buildPath = <T extends DrawableShape<'ellipse'>>(
   return {
     ...shape,
     path: createEllipsePath(shape),
-    selection: createEllipseSelectionPath(shape, currentScale, selectionPadding)
+    selection: createRecSelectionPath(shape, currentScale, selectionPadding)
   }
 }
 
@@ -121,40 +69,6 @@ export const drawEllipse = (
   ellipse.style?.strokeColor !== 'transparent' && ctx.stroke(ellipse.path)
 }
 
-export const drawSelectionEllipse = (
-  ctx: CanvasRenderingContext2D,
-  shape: DrawableShape<'ellipse'>,
-  selectionColor: string,
-  selectionWidth: number,
-  currentScale: number,
-  withAnchors: boolean
-): void => {
-  if (!shape.selection) return
-
-  updateCanvasContext(ctx, {
-    fillColor: 'transparent',
-    strokeColor: selectionColor,
-    lineWidth: selectionWidth / currentScale
-  })
-
-  ctx.stroke(shape.selection.border)
-
-  if (!withAnchors || shape.locked) return
-
-  ctx.stroke(shape.selection.line)
-
-  updateCanvasContext(ctx, {
-    fillColor: 'rgb(255,255,255)',
-    strokeColor: 'rgb(150,150,150)',
-    lineWidth: 2 / currentScale
-  })
-
-  for (const anchor of shape.selection.anchors) {
-    ctx.fill(anchor)
-    ctx.stroke(anchor)
-  }
-}
-
 export const getEllipseBorder = (ellipse: Ellipse, selectionPadding: number): Rect => {
   return {
     x: ellipse.x - ellipse.radiusX - selectionPadding,
@@ -192,7 +106,7 @@ export const resizeEllipse = (
   currentScale: number,
   keepRatio = false
 ): DrawableShape<'ellipse'> => {
-  const { borderX, borderHeight, borderY, borderWidth } = resizeShapeBorder(
+  const { borderX, borderHeight, borderY, borderWidth } = resizeRectSelection(
     cursorPosition,
     originalShape,
     selectionMode,

@@ -5,58 +5,14 @@ import type {
   Picture,
   Point,
   Rect,
-  SelectionDefaultType,
   ShapeEntity
 } from '../../types/Shapes'
 import { addSizeAndConvertSvgToObjectUrl, fetchAndStringify, isSvg } from '../file'
 import { DEFAULT_SHAPE_PICTURE } from '../../constants/tools'
-import { createRecPath, getRectBorder, resizeRect } from './rectangle'
+import { getRectBorder, resizeRect } from './rectangle'
 import { SelectionModeResize } from '../../types/Mode'
 import { GridFormatType } from '../../constants/app'
-import { updateCanvasContext } from '../../utils/canvas'
-import { getShapeInfos } from '.'
-import { createLinePath } from './line'
-import {
-  SELECTION_ANCHOR_SIZE,
-  SELECTION_RESIZE_ANCHOR_POSITIONS,
-  SELECTION_ROTATED_ANCHOR_POSITION
-} from '../../constants/shapes'
-import { createCirclePath } from './circle'
-
-const createPictureSelectionPath = (
-  rect: DrawableShape<'picture'>,
-  currentScale: number,
-  selectionPadding: number
-): SelectionDefaultType => {
-  const { borders } = getShapeInfos(rect, selectionPadding)
-
-  return {
-    border: createRecPath(borders),
-    line: createLinePath({
-      points: [
-        [borders.x + borders.width / 2, borders.y],
-        [
-          borders.x + borders.width / 2,
-          borders.y - SELECTION_ANCHOR_SIZE / 2 - SELECTION_ROTATED_ANCHOR_POSITION / currentScale
-        ]
-      ]
-    }),
-    anchors: [
-      createCirclePath({
-        x: borders.x + borders.width / 2,
-        y: borders.y - SELECTION_ANCHOR_SIZE / 2 - SELECTION_ROTATED_ANCHOR_POSITION / currentScale,
-        radius: SELECTION_ANCHOR_SIZE / 2 / currentScale
-      }),
-      ...SELECTION_RESIZE_ANCHOR_POSITIONS.map(anchorPosition =>
-        createCirclePath({
-          x: borders.x + borders.width * anchorPosition[0],
-          y: borders.y + borders.height * anchorPosition[1],
-          radius: SELECTION_ANCHOR_SIZE / 2 / currentScale
-        })
-      )
-    ]
-  }
-}
+import { createRecSelectionPath } from 'src/utils/selection/rectSelection'
 
 const buildPath = <T extends DrawableShape<'picture'>>(
   shape: T,
@@ -65,7 +21,7 @@ const buildPath = <T extends DrawableShape<'picture'>>(
 ): T => {
   return {
     ...shape,
-    selection: createPictureSelectionPath(shape, currentScale, selectionPadding)
+    selection: createRecSelectionPath(shape, currentScale, selectionPadding)
   }
 }
 
@@ -184,40 +140,6 @@ export const drawPicture = (
   if (ctx.globalAlpha === 0) return
   ctx.beginPath()
   ctx.drawImage(picture.img, picture.x, picture.y, picture.width, picture.height)
-}
-
-export const drawSelectionPicture = (
-  ctx: CanvasRenderingContext2D,
-  shape: DrawableShape<'picture'>,
-  selectionColor: string,
-  selectionWidth: number,
-  currentScale: number,
-  withAnchors: boolean
-): void => {
-  if (!shape.selection) return
-
-  updateCanvasContext(ctx, {
-    fillColor: 'transparent',
-    strokeColor: selectionColor,
-    lineWidth: selectionWidth / currentScale
-  })
-
-  ctx.stroke(shape.selection.border)
-
-  if (!withAnchors || shape.locked) return
-
-  ctx.stroke(shape.selection.line)
-
-  updateCanvasContext(ctx, {
-    fillColor: 'rgb(255,255,255)',
-    strokeColor: 'rgb(150,150,150)',
-    lineWidth: 2 / currentScale
-  })
-
-  for (const anchor of shape.selection.anchors) {
-    ctx.fill(anchor)
-    ctx.stroke(anchor)
-  }
 }
 
 export const getPictureBorder = (picture: Picture, selectionPadding: number): Rect =>
