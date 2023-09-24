@@ -1,66 +1,14 @@
 import { GridFormatType } from '../../constants/app'
 import _ from 'lodash/fp'
 import { SelectionModeResize } from '../../types/Mode'
-import type { Point, DrawableShape, ShapeEntity, SelectionLinesType } from '../../types/Shapes'
+import type { Point, DrawableShape, ShapeEntity } from '../../types/Shapes'
 import type { ToolsSettingsType } from '../../types/tools'
 import { getPointPositionAfterCanvasTransformation } from '../../utils/intersect'
 import { roundForGrid } from '../../utils/transform'
 import { getShapeInfos } from '../../utils/shapes/index'
 import { getPolygonBorder } from './polygon'
-import { createRecPath } from './rectangle'
-import { createCirclePath } from './circle'
-import { SELECTION_ANCHOR_SIZE } from '../../constants/shapes'
-
-const createCurvePath = (curve: DrawableShape<'curve'>) => {
-  if (curve.points.length < 3) return undefined
-
-  const path = new Path2D()
-
-  path.moveTo(...curve.points[0])
-  for (let i = 1; i < curve.points.length - 1; i++) {
-    path.quadraticCurveTo(
-      ...curve.points[i],
-      curve.points.length - 2 === i
-        ? curve.points[i + 1][0]
-        : (curve.points[i + 1][0] - curve.points[i][0]) / 2 + curve.points[i][0],
-      curve.points.length - 2 === i
-        ? curve.points[i + 1][1]
-        : (curve.points[i + 1][1] - curve.points[i][1]) / 2 + curve.points[i][1]
-    )
-  }
-
-  return path
-}
-
-const createCurveSelectionPath = (
-  shape: DrawableShape<'curve'>,
-  currentScale: number,
-  selectionPadding: number
-): SelectionLinesType => {
-  const { borders } = getShapeInfos(shape, selectionPadding)
-
-  return {
-    border: createRecPath(borders),
-    anchors: [
-      ...shape.points.map((point, i) => {
-        if (i > 0 && i < shape.points.length - 1) {
-          return createRecPath({
-            x: point[0] - SELECTION_ANCHOR_SIZE / 2,
-            y: point[1] - SELECTION_ANCHOR_SIZE / 2,
-            width: SELECTION_ANCHOR_SIZE / currentScale,
-            height: SELECTION_ANCHOR_SIZE / currentScale
-          })
-        } else {
-          return createCirclePath({
-            x: point[0],
-            y: point[1],
-            radius: SELECTION_ANCHOR_SIZE / 2 / currentScale
-          })
-        }
-      })
-    ]
-  }
-}
+import { createLineSelectionPath } from 'src/utils/selection/lineSelection'
+import { createCurvePath } from 'src/utils/shapes/path'
 
 const buildPath = <T extends DrawableShape<'curve'>>(
   shape: T,
@@ -70,7 +18,7 @@ const buildPath = <T extends DrawableShape<'curve'>>(
   return {
     ...shape,
     path: createCurvePath(shape),
-    selection: createCurveSelectionPath(shape, currentScale, selectionPadding)
+    selection: createLineSelectionPath(shape, currentScale, selectionPadding, true)
   }
 }
 

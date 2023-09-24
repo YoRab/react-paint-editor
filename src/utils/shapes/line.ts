@@ -1,5 +1,4 @@
 import { GridFormatType } from '../../constants/app'
-import { SELECTION_ANCHOR_SIZE } from '../../constants/shapes'
 import _ from 'lodash/fp'
 import { SelectionModeResize } from '../../types/Mode'
 import type {
@@ -10,7 +9,6 @@ import type {
   ShapeEntity,
   Rect,
   StyleShape,
-  SelectionLinesType
 } from '../../types/Shapes'
 import type { ToolsSettingsType } from '../../types/tools'
 import { updateCanvasContext } from '../../utils/canvas'
@@ -18,37 +16,9 @@ import { getPointPositionAfterCanvasTransformation } from '../../utils/intersect
 import { roundForGrid } from '../../utils/transform'
 import { getAngleFromVector, rotatePoint } from '../../utils/trigo'
 import { getShapeInfos } from '../../utils/shapes/index'
-import { createRecPath } from './rectangle'
 import { createTriangle, drawTriangle } from './triangle'
-import { createCirclePath } from './circle'
-
-export const createLinePath = (line: Line) => {
-  const path = new Path2D()
-  path.moveTo(...line.points[0])
-  path.lineTo(...line.points[1])
-  return path
-}
-
-const createLineSelectionPath = (
-  shape: DrawableShape<'line'>,
-  currentScale: number,
-  selectionPadding: number
-): SelectionLinesType => {
-  const { borders } = getShapeInfos(shape, selectionPadding)
-
-  return {
-    border: createRecPath(borders),
-    anchors: [
-      ...shape.points.map(point => {
-        return createCirclePath({
-          x: point[0],
-          y: point[1],
-          radius: SELECTION_ANCHOR_SIZE / 2 / currentScale
-        })
-      })
-    ]
-  }
-}
+import { createLinePath } from 'src/utils/shapes/path'
+import { createLineSelectionPath } from 'src/utils/selection/lineSelection'
 
 const buildPath = <T extends DrawableShape<'line'>>(
   line: T,
@@ -212,42 +182,4 @@ export const resizeLine = <U extends DrawableShape<'line'>>(
   )
 
   return buildPath(updatedShape, currentScale, selectionPadding)
-}
-
-export const drawLineSelection = ({
-  ctx,
-  shape,
-  withAnchors,
-  selectionWidth,
-  selectionColor,
-  currentScale = 1
-}: {
-  ctx: CanvasRenderingContext2D
-  shape: DrawableShape<'line'> | DrawableShape<'polygon'> | DrawableShape<'curve'>
-  withAnchors: boolean
-  selectionWidth: number
-  selectionColor: string
-  currentScale?: number
-}) => {
-  if (!shape.selection) return
-
-  updateCanvasContext(ctx, {
-    fillColor: 'transparent',
-    strokeColor: selectionColor,
-    lineWidth: selectionWidth / currentScale
-  })
-  ctx.stroke(shape.selection.border)
-
-  if (!withAnchors || shape.locked) return
-
-  updateCanvasContext(ctx, {
-    fillColor: 'rgb(255,255,255)',
-    strokeColor: 'rgb(150,150,150)',
-    lineWidth: 2 / currentScale
-  })
-
-  for (const anchor of shape.selection.anchors) {
-    ctx.fill(anchor)
-    ctx.stroke(anchor)
-  }
 }

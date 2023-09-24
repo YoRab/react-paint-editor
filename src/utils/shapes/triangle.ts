@@ -1,13 +1,5 @@
+import { createTrianglePath } from 'src/utils/shapes/path'
 import { DrawableShape, Triangle } from '../../types/Shapes'
-
-export const createTrianglePath = (triangle: DrawableShape<'triangle'>) => {
-  const path = new Path2D()
-  path.moveTo(...triangle.points[0])
-  path.lineTo(...triangle.points[1])
-  path.lineTo(...triangle.points[2])
-  path.lineTo(...triangle.points[0])
-  return path
-}
 
 const buildPath = (shape: DrawableShape<'triangle'>) => {
   return {
