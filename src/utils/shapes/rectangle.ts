@@ -6,7 +6,7 @@ import type { ToolsSettingsType } from '../../types/tools'
 import { getPointPositionBeforeCanvasTransformation } from '../../utils/intersect'
 import { roundForGrid } from '../../utils/transform'
 import { createRecPath } from './path'
-import { createRecSelectionPath, resizeRectSelection } from 'src/utils/selection/rectSelection'
+import { createRecSelectionPath, resizeRectSelection } from '../../utils/selection/rectSelection'
 
 type rectish = 'text' | 'rect' | 'square' | 'picture'
 

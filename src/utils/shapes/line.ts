@@ -17,8 +17,8 @@ import { roundForGrid } from '../../utils/transform'
 import { getAngleFromVector, rotatePoint } from '../../utils/trigo'
 import { getShapeInfos } from '../../utils/shapes/index'
 import { createTriangle, drawTriangle } from './triangle'
-import { createLinePath } from 'src/utils/shapes/path'
-import { createLineSelectionPath } from 'src/utils/selection/lineSelection'
+import { createLinePath } from '../../utils/shapes/path'
+import { createLineSelectionPath } from '../../utils/selection/lineSelection'
 
 const buildPath = <T extends DrawableShape<'line'>>(
   line: T,

@@ -7,8 +7,8 @@ import { getPointPositionAfterCanvasTransformation } from '../../utils/intersect
 import { roundForGrid } from '../../utils/transform'
 import { getShapeInfos } from '../../utils/shapes/index'
 import { getPolygonBorder } from './polygon'
-import { createLineSelectionPath } from 'src/utils/selection/lineSelection'
-import { createCurvePath } from 'src/utils/shapes/path'
+import { createLineSelectionPath } from '../../utils/selection/lineSelection'
+import { createCurvePath } from '../../utils/shapes/path'
 
 const buildPath = <T extends DrawableShape<'curve'>>(
   shape: T,
