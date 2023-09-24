@@ -11,7 +11,7 @@ import type {
 import type { ToolsSettingsType } from '../../types/tools'
 import { roundForGrid } from '../../utils/transform'
 import { getShapeInfos } from '../../utils/shapes/index'
-import { createRecSelectionPath, resizeRectSelection } from 'src/utils/selection/rectSelection'
+import { createRecSelectionPath, resizeRectSelection } from '../../utils/selection/rectSelection'
 
 const createBrushPath = (brush: DrawableShape<'brush'>) => {
   if (brush.points.length < 1 || brush.style?.strokeColor === 'transparent') return undefined

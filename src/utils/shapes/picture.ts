@@ -12,7 +12,7 @@ import { DEFAULT_SHAPE_PICTURE } from '../../constants/tools'
 import { getRectBorder, resizeRect } from './rectangle'
 import { SelectionModeResize } from '../../types/Mode'
 import { GridFormatType } from '../../constants/app'
-import { createRecSelectionPath } from 'src/utils/selection/rectSelection'
+import { createRecSelectionPath } from '../../utils/selection/rectSelection'
 
 const buildPath = <T extends DrawableShape<'picture'>>(
   shape: T,

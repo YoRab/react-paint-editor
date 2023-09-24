@@ -12,8 +12,8 @@ import type { ToolsSettingsType } from '../../types/tools'
 import { getPointPositionAfterCanvasTransformation } from '../../utils/intersect'
 import { roundForGrid } from '../../utils/transform'
 import { getShapeInfos } from '.'
-import { createLineSelectionPath } from 'src/utils/selection/lineSelection'
-import { createPolygonPath } from 'src/utils/shapes/path'
+import { createLineSelectionPath } from '../../utils/selection/lineSelection'
+import { createPolygonPath } from '../../utils/shapes/path'
 
 const buildPath = <T extends DrawableShape<'polygon'>>(
   shape: T,

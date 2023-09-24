@@ -11,7 +11,7 @@ import type {
 import type { ToolsSettingsType } from '../../types/tools'
 import { roundForGrid } from '../../utils/transform'
 import { createCirclePath } from './path'
-import { createRecSelectionPath, resizeRectSelection } from 'src/utils/selection/rectSelection'
+import { createRecSelectionPath, resizeRectSelection } from '../../utils/selection/rectSelection'
 
 const buildPath = <T extends DrawableShape<'circle'>>(
   shape: T,

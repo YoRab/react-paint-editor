@@ -10,8 +10,8 @@ import type {
 } from '../../types/Shapes'
 import type { ToolsSettingsType } from '../../types/tools'
 import { roundForGrid } from '../../utils/transform'
-import { createRecSelectionPath, resizeRectSelection } from 'src/utils/selection/rectSelection'
-import { createEllipsePath } from 'src/utils/shapes/path'
+import { createRecSelectionPath, resizeRectSelection } from '../../utils/selection/rectSelection'
+import { createEllipsePath } from '../../utils/shapes/path'
 
 const buildPath = <T extends DrawableShape<'ellipse'>>(
   shape: T,

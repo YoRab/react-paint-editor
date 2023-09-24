@@ -13,7 +13,7 @@ import { getRectOppositeAnchorAbsolutePosition, resizeRect } from './rectangle'
 import { getShapeInfos } from '../../utils/shapes/index'
 import { GridFormatType } from '../../constants/app'
 import { roundForGrid } from '../../utils/transform'
-import { createRecSelectionPath } from 'src/utils/selection/rectSelection'
+import { createRecSelectionPath } from '../../utils/selection/rectSelection'
 
 const buildPath = <T extends DrawableShape<'text'>>(
   shape: T,

@@ -77,8 +77,8 @@ import {
 import { GRID_ROTATION_STEPS } from '../../constants/style'
 import { SelectionModeData, SelectionModeResize } from '../../types/Mode'
 import { transformCanvas, updateCanvasContext } from '../../utils/canvas'
-import { drawSelectionRect } from 'src/utils/selection/rectSelection'
-import { drawLineSelection } from 'src/utils/selection/lineSelection'
+import { drawSelectionRect } from '../../utils/selection/rectSelection'
+import { drawLineSelection } from '../../utils/selection/lineSelection'
 
 export const createShape = (
   ctx: CanvasRenderingContext2D,
