@@ -131,7 +131,6 @@ const Canvas = React.forwardRef<HTMLCanvasElement, DrawerType>(
     const drawCanvasRef = useRef<HTMLCanvasElement | null>(null)
     const selectionCanvasRef = useRef<HTMLCanvasElement | null>(null)
 
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     useImperativeHandle(ref, () => drawCanvasRef.current!)
 
     const { hoverMode } = useDrawableCanvas({

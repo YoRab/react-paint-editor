@@ -119,7 +119,7 @@ export const decodeImportedData = async (
   const promisesArray: Promise<void>[] = []
   const jsonShapes = shapesForJson.shapes
   const shapes: ShapeEntity[] = _.flow(
-    shapes => migrateShapesV065(shapes),
+    (shapes: typeof jsonShapes) => migrateShapesV065(shapes),
     _.map((shape: DrawableShapeJson) => {
       if (!ShapeTypeArray.includes(shape.type)) return null
       if (shape.type === 'picture') {

@@ -42,9 +42,7 @@ export const getAngleFromVector = ({
   radian?: boolean
   originVector?: Vector
 }): number => {
-  let targetAngle: number;
-
-  targetAngle = sanitizeRadAngle(Math.atan2(point2[1] - point1[1], point2[0] - point1[0]))
+  const targetAngle = sanitizeRadAngle(Math.atan2(point2[1] - point1[1], point2[0] - point1[0]))
 
   if (originVector) {
     const [origin1, origin2] = originVector;
