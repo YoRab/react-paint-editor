@@ -1,4 +1,4 @@
-import React, { CSSProperties, useCallback, useEffect, useImperativeHandle, useRef } from 'react'
+import React, { useCallback, useEffect, useImperativeHandle, useRef } from 'react'
 import type { Point, ShapeEntity } from '../types/Shapes'
 import { initCanvasContext } from '../utils/canvas'
 import type { SelectionModeData } from '../types/Mode'
@@ -258,8 +258,7 @@ const Canvas = React.forwardRef<HTMLCanvasElement, DrawerType>(
                     : hoverMode.mode === 'rotate'
                       ? 'grab'
                       : 'default'
-
-              } as CSSProperties}
+              }}
             />
           )}
           {isEditMode && selectionMode.mode === 'textedition' && selectedShape?.type === 'text' && (

@@ -1,6 +1,6 @@
 import { LOADING_TRANSITION_DURATION } from '../../constants/loading'
 import { STYLE_ZINDEX } from '../../constants/style'
-import React, { CSSProperties, useEffect, useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import './Loading.css'
 
 export type LoadingType = {
@@ -30,7 +30,7 @@ const Loading = ({ isLoading = false }: LoadingType) => {
       style={{
         '--react-paint-editor-loading-zindex': STYLE_ZINDEX.LOADING,
         '--react-paint-editor-loading-transition-duration': `${LOADING_TRANSITION_DURATION}ms`,
-      } as CSSProperties}
+      }}
     >
       <div className='react-paint-editor-loader'>
         <div />

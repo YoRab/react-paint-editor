@@ -1,4 +1,4 @@
-import React, { CSSProperties, useEffect, useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { STYLE_ZINDEX } from '../../constants/style'
 import { SNACKBAR_DURATION, SNACKBAR_TOGGLE_ANIMATION_DURATION } from '../../constants/snackbar'
 import type { SnackBarType } from '../../types/snackbar'
@@ -28,7 +28,7 @@ const Snackbar = ({ type, text, duration }: SnackBarType) => {
       className='react-paint-editor-snackbar'
       data-is-shown={+isShown}
       data-type={type}
-      style={{ '--react-paint-editor-panel-transition-duration': `${SNACKBAR_DURATION}ms` } as CSSProperties}
+      style={{ '--react-paint-editor-panel-transition-duration': `${SNACKBAR_DURATION}ms` }}
     >
       {text}
     </div>
@@ -38,7 +38,7 @@ const Snackbar = ({ type, text, duration }: SnackBarType) => {
 const SnackbarContainer = ({ snackbarList }: SnackbarContainerType) => {
   return (
     <div className='react-paint-editor-snackbar-container'
-      style={{ '--react-paint-editor-snackbar-zindex': STYLE_ZINDEX.PANEL } as CSSProperties}
+      style={{ '--react-paint-editor-snackbar-zindex': STYLE_ZINDEX.PANEL }}
     >
       {snackbarList.map(snackbar => (
         <Snackbar key={snackbar.id} {...snackbar} />

@@ -1,5 +1,5 @@
 import _ from 'lodash/fp'
-import React, { CSSProperties, useState } from 'react'
+import React, { useState } from 'react'
 import Button from '../../components/common/Button'
 import Panel from '../../components/common/Panel'
 import { paletteIcon, noStrokeIcon, noFillIcon } from '../../constants/icons'
@@ -61,7 +61,7 @@ const ColorField = ({
           data-mode={mode}
           style={{
             '--react-paint-editor-colorfield-color-value': value
-          } as CSSProperties} />}
+          }} />}
       </Button>
       {isPanelVisible && (
         <Panel title={title} alignment="left">
@@ -86,7 +86,7 @@ const ColorField = ({
                   data-mode={mode}
                   style={{
                     '--react-paint-editor-colorfield-color-value': color
-                  } as CSSProperties} />}
+                  }} />}
               </Button>
             ))}
             <Button
@@ -99,7 +99,7 @@ const ColorField = ({
                 className='react-paint-editor-colorfield-customcolor'
                 style={{
                   '--react-paint-editor-colorfield-color-value': _.includes(value, values) ? 'var(--react-paint-editor-app-font-color)' : value
-                } as CSSProperties}
+                }}
               >
                 <span dangerouslySetInnerHTML={{ __html: paletteIcon }} />
               </div>

@@ -1,4 +1,4 @@
-import React, { CSSProperties, ReactNode } from 'react'
+import React, { ReactNode } from 'react'
 import { STYLE_ZINDEX } from '../../constants/style'
 import './Modal.css'
 
@@ -14,7 +14,7 @@ const Modal = ({ children, onClose, position = 'center', className = '' }: Modal
     <div
       className='react-paint-editor-modal'
       data-position={position}
-      style={{ '--react-paint-editor-modal-zindex': STYLE_ZINDEX.PANEL } as CSSProperties}>
+      style={{ '--react-paint-editor-modal-zindex': STYLE_ZINDEX.PANEL }}>
       <div className='react-paint-editor-modal-mask' onClick={onClose} />
       <div className={`react-paint-editor-modal-panel ${className}`}>{children}</div>
     </div>

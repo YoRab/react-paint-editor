@@ -1,5 +1,5 @@
 import { STYLE_FONT_DEFAULT } from '../../constants/style'
-import React, { CSSProperties, useEffect, useMemo, useRef } from 'react'
+import React, { useEffect, useMemo, useRef } from 'react'
 import type { DrawableShape } from '../../types/Shapes'
 import { convertDivContentToStringArray, convertStringArrayToDivContent } from '../../utils/string'
 import { getShapeInfos } from '../../utils/shapes'
@@ -83,7 +83,7 @@ const EditTextBox = ({
         '--react-paint-editor-toolbox-edittextbox-color': shape.style?.strokeColor ?? 'inherit',
         '--react-paint-editor-toolbox-edittextbox-opacity': (shape.style?.globalAlpha ?? 100) / 100,
         '--react-paint-editor-toolbox-edittextbox-fontfamily': shape.style?.fontFamily ?? STYLE_FONT_DEFAULT
-      } as CSSProperties}
+      }}
     />
   )
 }
