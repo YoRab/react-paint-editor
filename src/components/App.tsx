@@ -1,4 +1,4 @@
-import React, { CSSProperties, MutableRefObject, useCallback, useEffect, useRef, useState } from 'react'
+import React, { MutableRefObject, useCallback, useEffect, useRef, useState } from 'react'
 import type { DrawableShapeJson, ExportDataType, Point, ShapeEntity } from '../types/Shapes'
 import type { ToolsType } from '../types/tools'
 import Canvas from './Canvas'
@@ -396,7 +396,7 @@ const App = ({
         "--react-paint-editor-app-font-hover-color": fontHoverColor,
         "--react-paint-editor-app-font-hover-bg": fontHoverBackgroundColor,
         "--react-paint-editor-app-canvas-bg": canvasBackgroundColor,
-      } as CSSProperties}
+      }}
     >
       {isEditMode && (
         <Toolbar
@@ -428,7 +428,7 @@ const App = ({
           "--react-paint-editor-app-row-zindex": STYLE_ZINDEX.APP,
           "--react-paint-editor-app-row-width": canvasSize.width,
           "--react-paint-editor-app-row-aspectratio": `calc(${canvasSize.width} / ${canvasSize.height})`
-        } as CSSProperties}
+        }}
       >
         <Canvas
           canGrow={canGrow}

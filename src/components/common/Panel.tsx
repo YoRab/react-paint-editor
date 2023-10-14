@@ -1,4 +1,4 @@
-import React, { CSSProperties } from 'react'
+import React from 'react'
 import { STYLE_ZINDEX } from '../../constants/style'
 import './Panel.css'
 
@@ -26,7 +26,7 @@ const Panel = ({
       data-fitcontainer={fitContainer}
       data-position={position}
       data-alignment={alignment}
-      style={{ '--react-paint-editor-panel-zindex': STYLE_ZINDEX.PANEL } as CSSProperties}
+      style={{ '--react-paint-editor-panel-zindex': STYLE_ZINDEX.PANEL }}
     >
       {title && <h3 className='react-paint-editor-panel-title'>{title}</h3>}
       {children}

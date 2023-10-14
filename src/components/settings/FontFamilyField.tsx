@@ -1,4 +1,4 @@
-import React, { CSSProperties } from 'react'
+import React from 'react'
 import SelectField from './SelectField'
 import _ from 'lodash/fp'
 import { fontIcon } from '../../constants/icons'
@@ -10,8 +10,8 @@ const FontFamilyOption: React.FC<{
   return <span
     className='react-paint-editor-fontfamily-option'
     style={{
-      '--react-paint-editor-fontfamily-family': children
-    } as CSSProperties}
+      '--react-paint-editor-fontfamily-family': children as string
+    }}
   >{children}</span>
 }
 

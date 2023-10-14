@@ -1,5 +1,5 @@
 import _ from 'lodash/fp'
-import React, { CSSProperties, useState } from 'react'
+import React, { useState } from 'react'
 import Button from '../../components/common/Button'
 import Panel from '../../components/common/Panel'
 import './SelectField.css'
@@ -68,7 +68,7 @@ const SelectField = ({
                   selected={defaultValue == value}
                   style={{
                     '--react-paint-editor-button-padding': '16px'
-                  } as CSSProperties}>
+                  }}>
                   <CustomOption>{value}</CustomOption>
                 </Button>
               )
