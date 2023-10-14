@@ -1,70 +1,25 @@
-import { GridFormatType } from '../../constants/app'
+import type { GridFormatType } from '../../constants/app'
 import _ from 'lodash/fp'
-import { SelectionModeResize } from '../../types/Mode'
-import type { Point, DrawableShape, ShapeEntity, Rect, SelectionDefaultType } from '../../types/Shapes'
+import type { SelectionModeResize } from '../../types/Mode'
+import type { Point, DrawableShape, ShapeEntity, Rect } from '../../types/Shapes'
 import type { ToolsSettingsType } from '../../types/tools'
-import {
-  getPointPositionAfterCanvasTransformation,
-  getPointPositionBeforeCanvasTransformation
-} from '../../utils/intersect'
-import { getNormalizedSize, roundForGrid } from '../../utils/transform'
-import { getShapeInfos } from '../../utils/shapes/index'
-import { updateCanvasContext } from '../../utils/canvas'
-import { createLinePath } from './line'
-import {
-  SELECTION_ANCHOR_SIZE,
-  SELECTION_RESIZE_ANCHOR_POSITIONS,
-  SELECTION_ROTATED_ANCHOR_POSITION
-} from '../../constants/shapes'
-import { createCirclePath } from './circle'
+import { getPointPositionBeforeCanvasTransformation } from '../../utils/intersect'
+import { roundForGrid } from '../../utils/transform'
+import { createRecPath } from './path'
+import { createRecSelectionPath, resizeRectSelection } from '../../utils/selection/rectSelection'
 
 type rectish = 'text' | 'rect' | 'square' | 'picture'
 
-export const createRecPath = (rect: Rect) => {
-  const path = new Path2D()
-  path.rect(rect.x, rect.y, rect.width, rect.height)
-  return path
-}
 
-const createRecSelectionPath = (
-  rect: DrawableShape<rectish>,
-  currentScale: number
-): SelectionDefaultType => {
-  const { borders } = getShapeInfos(rect, 0)
-
-  return {
-    border: createRecPath(borders),
-    line: createLinePath({
-      points: [
-        [borders.x + borders.width / 2, borders.y],
-        [
-          borders.x + borders.width / 2,
-          borders.y - SELECTION_ANCHOR_SIZE / 2 - SELECTION_ROTATED_ANCHOR_POSITION / currentScale
-        ]
-      ]
-    }),
-    anchors: [
-      createCirclePath({
-        x: borders.x + borders.width / 2,
-        y: borders.y - SELECTION_ANCHOR_SIZE / 2 - SELECTION_ROTATED_ANCHOR_POSITION / currentScale,
-        radius: SELECTION_ANCHOR_SIZE / 2 / currentScale
-      }),
-      ...SELECTION_RESIZE_ANCHOR_POSITIONS.map(anchorPosition =>
-        createCirclePath({
-          x: borders.x + borders.width * anchorPosition[0],
-          y: borders.y + borders.height * anchorPosition[1],
-          radius: SELECTION_ANCHOR_SIZE / 2 / currentScale
-        })
-      )
-    ]
-  }
-}
-
-const buildPath = <T extends DrawableShape<rectish>>(rect: T, currentScale: number): T => {
+const buildPath = <T extends DrawableShape<rectish>>(
+  rect: T,
+  currentScale: number,
+  selectionPadding: number
+): T => {
   return {
     ...rect,
     path: createRecPath(rect),
-    selection: createRecSelectionPath(rect, currentScale)
+    selection: createRecSelectionPath(rect, currentScale, selectionPadding)
   }
 }
 
@@ -77,7 +32,8 @@ export const createRectangle = <T extends 'rect' | 'square'>(
     settings: ToolsSettingsType<T>
   },
   cursorPosition: Point,
-  currentScale: number
+  currentScale: number,
+  selectionPadding: number
 ): ShapeEntity<T> => {
   const recShape = {
     toolId: shape.id,
@@ -85,8 +41,8 @@ export const createRectangle = <T extends 'rect' | 'square'>(
     id: _.uniqueId(`${shape.type}_`),
     x: cursorPosition[0],
     y: cursorPosition[1],
-    width: 1,
-    height: 1,
+    width: 0,
+    height: 0,
     rotation: 0,
     style: {
       globalAlpha: shape.settings.opacity.default,
@@ -96,7 +52,7 @@ export const createRectangle = <T extends 'rect' | 'square'>(
       lineDash: shape.settings.lineDash.default
     }
   } as unknown as ShapeEntity<T>
-  return buildPath(recShape, currentScale) as ShapeEntity<T>
+  return buildPath(recShape, currentScale, selectionPadding) as ShapeEntity<T>
 }
 
 export const drawRect = (
@@ -109,39 +65,7 @@ export const drawRect = (
   shape.style?.strokeColor !== 'transparent' && ctx.stroke(shape.path)
 }
 
-export const drawSelectionRect = (
-  ctx: CanvasRenderingContext2D,
-  shape: DrawableShape<'rect' | 'square'>,
-  selectionColor: string,
-  selectionWidth: number,
-  currentScale: number,
-  withAnchors: boolean
-): void => {
-  if (!shape.selection) return
 
-  updateCanvasContext(ctx, {
-    fillColor: 'transparent',
-    strokeColor: selectionColor,
-    lineWidth: selectionWidth / currentScale
-  })
-
-  ctx.stroke(shape.selection.border)
-
-  if (!withAnchors || shape.locked) return
-
-  ctx.stroke(shape.selection.line)
-
-  updateCanvasContext(ctx, {
-    fillColor: 'rgb(255,255,255)',
-    strokeColor: 'rgb(150,150,150)',
-    lineWidth: 2 / currentScale
-  })
-
-  for (const anchor of shape.selection.anchors) {
-    ctx.fill(anchor)
-    ctx.stroke(anchor)
-  }
-}
 
 export const getRectBorder = (rect: Rect, selectionPadding: number): Rect => {
   return {
@@ -185,7 +109,8 @@ export const translateRect = <T extends 'rect' | 'square', U extends DrawableSha
   originalShape: U,
   originalCursorPosition: Point,
   gridFormat: GridFormatType,
-  currentScale: number
+  currentScale: number,
+  selectionPadding: number
 ) => {
   return buildPath(
     {
@@ -193,77 +118,38 @@ export const translateRect = <T extends 'rect' | 'square', U extends DrawableSha
       x: roundForGrid(originalShape.x + cursorPosition[0] - originalCursorPosition[0], gridFormat),
       y: roundForGrid(originalShape.y + cursorPosition[1] - originalCursorPosition[1], gridFormat)
     },
-    currentScale
+    currentScale,
+    selectionPadding
   )
 }
 
 export const resizeRect = <T extends rectish>(
   cursorPosition: Point,
-  canvasOffset: Point,
   originalShape: DrawableShape<T>,
   selectionMode: SelectionModeResize,
+  gridFormat: GridFormatType,
   selectionPadding: number,
   currentScale: number,
   keepRatio = false
 ): DrawableShape<T> => {
-  const { center, borders } = getShapeInfos(originalShape, selectionPadding)
-
-  const cusroPositionAfterShapeTransormation = getPointPositionAfterCanvasTransformation(
+  const { borderX, borderHeight, borderY, borderWidth } = resizeRectSelection(
     cursorPosition,
-    originalShape.rotation,
-    center,
-    canvasOffset
-  )
-
-  const scaledWidth =
-    selectionMode.anchor[0] === 0.5
-      ? originalShape.width
-      : selectionMode.anchor[0] === 0
-        ? borders.x + borders.width - cusroPositionAfterShapeTransormation[0] + selectionPadding * -2
-        : cusroPositionAfterShapeTransormation[0] - borders.x - selectionPadding * 2
-
-  const scaledHeight =
-    selectionMode.anchor[1] === 0.5
-      ? originalShape.height
-      : selectionMode.anchor[1] === 0
-        ? borders.y + borders.height - cusroPositionAfterShapeTransormation[1] + selectionPadding * -2
-        : cusroPositionAfterShapeTransormation[1] - borders.y - selectionPadding * 2
-
-  const [widthWithRatio, heightWithRatio] = keepRatio
-    ? getNormalizedSize(originalShape.width, originalShape.height, scaledWidth, scaledHeight)
-    : [scaledWidth, scaledHeight]
-
-  const shapeWithNewDimensions = {
-    ...originalShape,
-    width: Math.abs(widthWithRatio),
-    height: Math.abs(heightWithRatio)
-  }
-  const { center: shapeWithNewDimensionsCenter } = getShapeInfos(
-    shapeWithNewDimensions,
-    selectionPadding
-  )
-
-  const [oppTrueX, oppTrueY] = getRectOppositeAnchorAbsolutePosition(
-    selectionMode.anchor,
-    center,
     originalShape,
-    canvasOffset
-  )
-
-  const [newOppTrueX, newOppTrueY] = getRectOppositeAnchorAbsolutePosition(
-    selectionMode.anchor,
-    shapeWithNewDimensionsCenter,
-    shapeWithNewDimensions,
-    canvasOffset,
-    [widthWithRatio < 0, heightWithRatio < 0]
+    selectionMode,
+    gridFormat,
+    selectionPadding,
+    keepRatio
   )
 
   return buildPath(
     {
-      ...shapeWithNewDimensions,
-      x: shapeWithNewDimensions.x - (newOppTrueX - oppTrueX),
-      y: shapeWithNewDimensions.y - (newOppTrueY - oppTrueY)
+      ...originalShape,
+      width: Math.max(0, borderWidth - 2 * selectionPadding),
+      height: Math.max(0, borderHeight - 2 * selectionPadding),
+      x: borderX + selectionPadding,
+      y: borderY + selectionPadding
     },
-    currentScale
+    currentScale,
+    selectionPadding
   ) as DrawableShape<T>
 }

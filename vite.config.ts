@@ -15,7 +15,7 @@ export default defineConfig({
     },
 
     rollupOptions: {
-      external: ['react'],
+      external: ['react', 'react/jsx-runtime', 'react-dom'],
       output: {
         assetFileNames: 'react-paint.css',
         generatedCode: "es2015"

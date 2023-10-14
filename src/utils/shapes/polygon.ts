@@ -1,5 +1,4 @@
 import { GridFormatType } from '../../constants/app'
-import { SELECTION_ANCHOR_SIZE } from '../../constants/shapes'
 import _ from 'lodash/fp'
 import { SelectionModeResize } from '../../types/Mode'
 import type {
@@ -7,55 +6,24 @@ import type {
   DrawableShape,
   Polygon,
   Rect,
-  ShapeEntity,
-  SelectionLinesType
+  ShapeEntity
 } from '../../types/Shapes'
 import type { ToolsSettingsType } from '../../types/tools'
 import { getPointPositionAfterCanvasTransformation } from '../../utils/intersect'
 import { roundForGrid } from '../../utils/transform'
 import { getShapeInfos } from '.'
-import { createCirclePath } from './circle'
-import { createRecPath } from './rectangle'
+import { createLineSelectionPath } from '../../utils/selection/lineSelection'
+import { createPolygonPath } from '../../utils/shapes/path'
 
-const createPloygonPath = (polygon: DrawableShape<'polygon'>) => {
-  if (polygon.points.length < 1) return undefined
-
-  const path = new Path2D()
-
-  path.moveTo(...polygon.points[0])
-  polygon.points.slice(1).forEach(point => {
-    path.lineTo(...point)
-  })
-  path.lineTo(...polygon.points[0])
-
-  return path
-}
-
-const createPolygonSelectionPath = (
-  shape: DrawableShape<'polygon'>,
-  currentScale: number
-): SelectionLinesType => {
-  const { borders } = getShapeInfos(shape, 0)
-
-  return {
-    border: createRecPath(borders),
-    anchors: [
-      ...shape.points.map(point => {
-        return createCirclePath({
-          x: point[0],
-          y: point[1],
-          radius: SELECTION_ANCHOR_SIZE / 2 / currentScale
-        })
-      })
-    ]
-  }
-}
-
-const buildPath = <T extends DrawableShape<'polygon'>>(shape: T, currentScale: number): T => {
+const buildPath = <T extends DrawableShape<'polygon'>>(
+  shape: T,
+  currentScale: number,
+  selectionPadding: number
+): T => {
   return {
     ...shape,
-    path: createPloygonPath(shape),
-    selection: createPolygonSelectionPath(shape, currentScale)
+    path: createPolygonPath(shape),
+    selection: createLineSelectionPath(shape, currentScale, selectionPadding)
   }
 }
 
@@ -68,7 +36,8 @@ export const createPolygon = (
     settings: ToolsSettingsType<'polygon'>
   },
   cursorPosition: Point,
-  currentScale: number
+  currentScale: number,
+  selectionPadding: number
 ): ShapeEntity<'polygon'> => {
   return buildPath(
     {
@@ -89,7 +58,8 @@ export const createPolygon = (
         pointsCount: shape.settings.pointsCount.default
       }
     },
-    currentScale
+    currentScale,
+    selectionPadding
   )
 }
 
@@ -133,10 +103,11 @@ export const translatePolygon = <U extends DrawableShape<'polygon'>>(
   originalShape: U,
   originalCursorPosition: Point,
   gridFormat: GridFormatType,
-  currentScale: number
+  currentScale: number,
+  selectionPadding: number
 ) => {
   if (gridFormat) {
-    const { borders } = getShapeInfos(originalShape, 0)
+    const { borders } = getShapeInfos(originalShape, selectionPadding)
     const translationX =
       roundForGrid(borders.x + cursorPosition[0] - originalCursorPosition[0], gridFormat) -
       borders.x
@@ -156,7 +127,8 @@ export const translatePolygon = <U extends DrawableShape<'polygon'>>(
           roundForGrid(y + cursorPosition[1] - originalCursorPosition[1], gridFormat)
         ]) as Point[]
       },
-      currentScale
+      currentScale,
+      selectionPadding
     )
   }
 }
@@ -166,13 +138,20 @@ export const resizePolygon = (
   canvasOffset: Point,
   originalShape: DrawableShape<'polygon'>,
   selectionMode: SelectionModeResize<number>,
+  gridFormat: GridFormatType,
   selectionPadding: number,
   currentScale: number
 ): DrawableShape<'polygon'> => {
+
+  const roundCursorPosition: Point = [
+    roundForGrid(cursorPosition[0], gridFormat),
+    roundForGrid(cursorPosition[1], gridFormat)
+  ]
+
   const { center } = getShapeInfos(originalShape, selectionPadding)
 
   const cursorPositionBeforeResize = getPointPositionAfterCanvasTransformation(
-    cursorPosition,
+    roundCursorPosition,
     originalShape.rotation,
     center,
     canvasOffset
@@ -183,13 +162,14 @@ export const resizePolygon = (
     originalShape
   )
 
-  return buildPath(updatedShape, currentScale)
+  return buildPath(updatedShape, currentScale, selectionPadding)
 }
 
 export const updatePolygonLinesCount = <T extends DrawableShape<'polygon'>>(
   shape: T,
   newPointsCount: number,
-  currentScale: number
+  currentScale: number,
+  selectionPadding: number
 ) => {
   const currentPointsCount = shape.points.length
   if (currentPointsCount === newPointsCount) return shape
@@ -204,7 +184,8 @@ export const updatePolygonLinesCount = <T extends DrawableShape<'polygon'>>(
           pointsCount: totalPoints.length
         }
       },
-      currentScale
+      currentScale,
+      selectionPadding
     )
   } else {
     //TODO : better distribution for new points
@@ -233,7 +214,8 @@ export const updatePolygonLinesCount = <T extends DrawableShape<'polygon'>>(
           pointsCount: totalPoints.length
         }
       },
-      currentScale
+      currentScale,
+      selectionPadding
     )
   }
 }

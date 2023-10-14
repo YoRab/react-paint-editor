@@ -1,4 +1,5 @@
 import { Point, Rect } from '../types/Shapes'
+type Vector = [Point, Point]
 
 export const degreesToRadians = (degrees: number) => degrees * (Math.PI / 180)
 
@@ -30,7 +31,26 @@ export const rotatePoint = ({
   return [rotatedPointX + origin[0], rotatedPointY + origin[1]]
 }
 
-export const getAngleFromVector = (point1: Point, point2: Point, radian = true) => {
-  const radianAngle = Math.atan2(point2[1] - point1[1], point2[0] - point1[0])
-  return radian ? radianAngle : radiansToDegrees(radianAngle)
-}
+const sanitizeRadAngle = (angle: number) => (angle + 2 * Math.PI) % (2 * Math.PI)
+
+export const getAngleFromVector = ({
+  targetVector: [point1, point2],
+  radian = true,
+  originVector
+}: {
+  targetVector: Vector
+  radian?: boolean
+  originVector?: Vector
+}): number => {
+  const targetAngle = sanitizeRadAngle(Math.atan2(point2[1] - point1[1], point2[0] - point1[0]))
+
+  if (originVector) {
+    const [origin1, origin2] = originVector;
+
+    const originAngle = Math.atan2(origin2[1] - origin1[1], origin2[0] - origin1[0]);
+    const diffAngle = sanitizeRadAngle(targetAngle - originAngle)
+    return radian ? diffAngle : radiansToDegrees(diffAngle);
+
+  }
+  return radian ? targetAngle : radiansToDegrees(targetAngle);
+};

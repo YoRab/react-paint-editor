@@ -6,7 +6,6 @@ import type { GridFormatType } from '../../constants/app'
 import {
   createBrush,
   drawBrush,
-  drawSelectionBrush,
   getBrushBorder,
   refreshBrush,
   resizeBrush,
@@ -15,7 +14,6 @@ import {
 import {
   createLine,
   drawLine,
-  drawLineSelection,
   getLineBorder,
   refreshLine,
   resizeLine,
@@ -43,12 +41,10 @@ import {
   resizeRect,
   translateRect,
   drawRect,
-  drawSelectionRect,
   refreshRect
 } from './rectangle'
 import {
   createText,
-  drawSelectionText,
   drawText,
   getTextBorder,
   refreshText,
@@ -58,7 +54,6 @@ import {
 import {
   createEllipse,
   drawEllipse,
-  drawSelectionEllipse,
   getEllipseBorder,
   refreshEllipse,
   resizeEllipse,
@@ -67,7 +62,6 @@ import {
 import {
   createCircle,
   drawCircle,
-  drawSelectionCircle,
   getCircleBorder,
   refreshCircle,
   resizeCircle,
@@ -75,7 +69,6 @@ import {
 } from './circle'
 import {
   drawPicture,
-  drawSelectionPicture,
   getPictureBorder,
   refreshPicture,
   resizePicture,
@@ -84,13 +77,16 @@ import {
 import { GRID_ROTATION_STEPS } from '../../constants/style'
 import { SelectionModeData, SelectionModeResize } from '../../types/Mode'
 import { transformCanvas, updateCanvasContext } from '../../utils/canvas'
+import { drawSelectionRect } from '../../utils/selection/rectSelection'
+import { drawLineSelection } from '../../utils/selection/lineSelection'
 
 export const createShape = (
   ctx: CanvasRenderingContext2D,
   shape: Exclude<CustomTool, { type: 'picture' }>,
   cursorPosition: Point,
   gridFormat: GridFormatType,
-  currentScale: number
+  currentScale: number,
+  selectionPadding: number
 ): ShapeEntity => {
   const roundCursorPosition: Point = [
     roundForGrid(cursorPosition[0], gridFormat),
@@ -98,22 +94,22 @@ export const createShape = (
   ]
   switch (shape.type) {
     case 'brush':
-      return createBrush(shape, roundCursorPosition, currentScale)
+      return createBrush(shape, roundCursorPosition, currentScale, selectionPadding)
     case 'line':
-      return createLine(shape, roundCursorPosition, currentScale)
+      return createLine(shape, roundCursorPosition, currentScale, selectionPadding)
     case 'polygon':
-      return createPolygon(shape, roundCursorPosition, currentScale)
+      return createPolygon(shape, roundCursorPosition, currentScale, selectionPadding)
     case 'curve':
-      return createCurve(shape, roundCursorPosition, currentScale)
+      return createCurve(shape, roundCursorPosition, currentScale, selectionPadding)
     case 'rect':
     case 'square':
-      return createRectangle(shape, roundCursorPosition, currentScale)
+      return createRectangle(shape, roundCursorPosition, currentScale, selectionPadding)
     case 'text':
-      return createText(ctx, shape, roundCursorPosition, currentScale)
+      return createText(ctx, shape, roundCursorPosition, currentScale, selectionPadding)
     case 'ellipse':
-      return createEllipse(shape, roundCursorPosition, currentScale)
+      return createEllipse(shape, roundCursorPosition, currentScale, selectionPadding)
     case 'circle':
-      return createCircle(shape, roundCursorPosition, currentScale)
+      return createCircle(shape, roundCursorPosition, currentScale, selectionPadding)
   }
 }
 
@@ -237,6 +233,7 @@ export const resizeShape = <T extends DrawableShape>(
   canvasOffset: Point,
   originalShape: T,
   selectionMode: SelectionModeData<Point | number>,
+  gridFormat: GridFormatType,
   selectionPadding: number,
   isShiftPressed: boolean,
   currentScale: number
@@ -248,6 +245,7 @@ export const resizeShape = <T extends DrawableShape>(
         canvasOffset,
         originalShape,
         selectionMode as SelectionModeResize<number>,
+        gridFormat,
         selectionPadding,
         currentScale
       ) as T
@@ -257,6 +255,7 @@ export const resizeShape = <T extends DrawableShape>(
         canvasOffset,
         originalShape,
         selectionMode as SelectionModeResize<number>,
+        gridFormat,
         selectionPadding,
         currentScale
       ) as T
@@ -266,16 +265,16 @@ export const resizeShape = <T extends DrawableShape>(
         canvasOffset,
         originalShape,
         selectionMode as SelectionModeResize<number>,
+        gridFormat,
         selectionPadding,
         currentScale
       ) as T
     case 'brush':
-      originalShape.type
       return resizeBrush(
         cursorPosition,
-        canvasOffset,
         originalShape,
         selectionMode as SelectionModeResize,
+        gridFormat,
         selectionPadding,
         currentScale,
         isShiftPressed
@@ -283,18 +282,18 @@ export const resizeShape = <T extends DrawableShape>(
     case 'circle':
       return resizeCircle(
         cursorPosition,
-        canvasOffset,
         originalShape,
         selectionMode as SelectionModeResize,
+        gridFormat,
         selectionPadding,
         currentScale
       ) as T
     case 'ellipse':
       return resizeEllipse(
         cursorPosition,
-        canvasOffset,
         originalShape,
         selectionMode as SelectionModeResize,
+        gridFormat,
         selectionPadding,
         currentScale,
         isShiftPressed
@@ -303,9 +302,9 @@ export const resizeShape = <T extends DrawableShape>(
     case 'square':
       return resizeRect(
         cursorPosition,
-        canvasOffset,
         originalShape,
         selectionMode as SelectionModeResize,
+        gridFormat,
         selectionPadding,
         currentScale,
         shape.type === 'square' || isShiftPressed
@@ -314,18 +313,18 @@ export const resizeShape = <T extends DrawableShape>(
       return resizeText(
         ctx,
         cursorPosition,
-        canvasOffset,
         originalShape,
         selectionMode as SelectionModeResize,
+        gridFormat,
         selectionPadding,
         currentScale
       ) as T
     case 'picture':
       return resizePicture(
         cursorPosition,
-        canvasOffset,
         originalShape,
         selectionMode as SelectionModeResize,
+        gridFormat,
         selectionPadding,
         currentScale,
         !isShiftPressed
@@ -340,7 +339,8 @@ export const translateShape = (
   originalShape: ShapeEntity,
   originalCursorPosition: Point,
   gridFormat: GridFormatType,
-  currentScale: number
+  currentScale: number,
+  selectionPadding: number
 ): ShapeEntity => {
   switch (originalShape.type) {
     case 'rect':
@@ -350,7 +350,8 @@ export const translateShape = (
         originalShape,
         originalCursorPosition,
         gridFormat,
-        currentScale
+        currentScale,
+        selectionPadding
       )
     case 'ellipse':
       return translateEllipse(
@@ -358,7 +359,8 @@ export const translateShape = (
         originalShape,
         originalCursorPosition,
         gridFormat,
-        currentScale
+        currentScale,
+        selectionPadding
       )
     case 'circle':
       return translateCircle(
@@ -366,7 +368,8 @@ export const translateShape = (
         originalShape,
         originalCursorPosition,
         gridFormat,
-        currentScale
+        currentScale,
+        selectionPadding
       )
     case 'picture':
       return translatePicture(
@@ -374,7 +377,8 @@ export const translateShape = (
         originalShape,
         originalCursorPosition,
         gridFormat,
-        currentScale
+        currentScale,
+        selectionPadding
       )
     case 'text':
       return translateText(
@@ -382,7 +386,8 @@ export const translateShape = (
         originalShape,
         originalCursorPosition,
         gridFormat,
-        currentScale
+        currentScale,
+        selectionPadding
       )
     case 'line':
       return translateLine(
@@ -390,7 +395,8 @@ export const translateShape = (
         originalShape,
         originalCursorPosition,
         gridFormat,
-        currentScale
+        currentScale,
+        selectionPadding
       )
     case 'polygon':
       return translatePolygon(
@@ -398,7 +404,8 @@ export const translateShape = (
         originalShape,
         originalCursorPosition,
         gridFormat,
-        currentScale
+        currentScale,
+        selectionPadding
       )
     case 'curve':
       return translateCurve(
@@ -406,7 +413,8 @@ export const translateShape = (
         originalShape,
         originalCursorPosition,
         gridFormat,
-        currentScale
+        currentScale,
+        selectionPadding
       )
     case 'brush':
       return translateBrush(
@@ -414,34 +422,39 @@ export const translateShape = (
         originalShape,
         originalCursorPosition,
         gridFormat,
-        currentScale
+        currentScale,
+        selectionPadding
       )
     default:
       return originalShape
   }
 }
 
-export const refreshShape = (shape: ShapeEntity, currentScale: number): ShapeEntity => {
+export const refreshShape = (
+  shape: ShapeEntity,
+  currentScale: number,
+  selectionPadding: number
+): ShapeEntity => {
   switch (shape.type) {
     case 'rect':
     case 'square':
-      return refreshRect(shape, currentScale)
+      return refreshRect(shape, currentScale, selectionPadding)
     case 'ellipse':
-      return refreshEllipse(shape, currentScale)
+      return refreshEllipse(shape, currentScale, selectionPadding)
     case 'circle':
-      return refreshCircle(shape, currentScale)
+      return refreshCircle(shape, currentScale, selectionPadding)
     case 'picture':
-      return refreshPicture(shape, currentScale)
+      return refreshPicture(shape, currentScale, selectionPadding)
     case 'text':
-      return refreshText(shape, currentScale)
+      return refreshText(shape, currentScale, selectionPadding)
     case 'line':
-      return refreshLine(shape, currentScale)
+      return refreshLine(shape, currentScale, selectionPadding)
     case 'polygon':
-      return refreshPolygon(shape, currentScale)
+      return refreshPolygon(shape, currentScale, selectionPadding)
     case 'curve':
-      return refreshCurve(shape, currentScale)
+      return refreshCurve(shape, currentScale, selectionPadding)
     case 'brush':
-      return refreshBrush(shape, currentScale)
+      return refreshBrush(shape, currentScale, selectionPadding)
     default:
       return shape
   }
@@ -472,22 +485,12 @@ export const drawShapeSelection = ({
   switch (shape.type) {
     case 'rect':
     case 'square':
-      drawSelectionRect(ctx, shape, selectionColor, selectionWidth, currentScale, withAnchors)
-      break
-    case 'ellipse':
-      drawSelectionEllipse(ctx, shape, selectionColor, selectionWidth, currentScale, withAnchors)
-      break
     case 'circle':
-      drawSelectionCircle(ctx, shape, selectionColor, selectionWidth, currentScale, withAnchors)
-      break
+    case 'ellipse':
     case 'picture':
-      drawSelectionPicture(ctx, shape, selectionColor, selectionWidth, currentScale, withAnchors)
-      break
     case 'text':
-      drawSelectionText(ctx, shape, selectionColor, selectionWidth, currentScale, withAnchors)
-      break
     case 'brush':
-      drawSelectionBrush(ctx, shape, selectionColor, selectionWidth, currentScale, withAnchors)
+      drawSelectionRect(ctx, shape, selectionColor, selectionWidth, currentScale, withAnchors)
       break
     case 'polygon':
     case 'line':
@@ -505,9 +508,14 @@ export const drawShapeSelection = ({
   ctx.restore()
 }
 
-export const copyShape = (shape: ShapeEntity, gridFormat: GridFormatType, currentScale: number) => {
+export const copyShape = (
+  shape: ShapeEntity,
+  gridFormat: GridFormatType,
+  currentScale: number,
+  selectionPadding: number
+) => {
   return {
-    ...translateShape([20, 20], shape, [0, 0], gridFormat, currentScale),
+    ...translateShape([20, 20], shape, [0, 0], gridFormat, currentScale, selectionPadding),
     id: _.uniqueId(`${shape.type}_`)
   } as ShapeEntity
 }

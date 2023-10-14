@@ -1,5 +1,4 @@
 import { GridFormatType } from '../../constants/app'
-import { SELECTION_ANCHOR_SIZE } from '../../constants/shapes'
 import _ from 'lodash/fp'
 import { SelectionModeResize } from '../../types/Mode'
 import type {
@@ -10,7 +9,6 @@ import type {
   ShapeEntity,
   Rect,
   StyleShape,
-  SelectionLinesType
 } from '../../types/Shapes'
 import type { ToolsSettingsType } from '../../types/tools'
 import { updateCanvasContext } from '../../utils/canvas'
@@ -18,42 +16,19 @@ import { getPointPositionAfterCanvasTransformation } from '../../utils/intersect
 import { roundForGrid } from '../../utils/transform'
 import { getAngleFromVector, rotatePoint } from '../../utils/trigo'
 import { getShapeInfos } from '../../utils/shapes/index'
-import { createRecPath } from './rectangle'
 import { createTriangle, drawTriangle } from './triangle'
-import { createCirclePath } from './circle'
+import { createLinePath } from '../../utils/shapes/path'
+import { createLineSelectionPath } from '../../utils/selection/lineSelection'
 
-export const createLinePath = (line: Line) => {
-  const path = new Path2D()
-  path.moveTo(...line.points[0])
-  path.lineTo(...line.points[1])
-  return path
-}
-
-const createLineSelectionPath = (
-  shape: DrawableShape<'line'>,
-  currentScale: number
-): SelectionLinesType => {
-  const { borders } = getShapeInfos(shape, 0)
-
-  return {
-    border: createRecPath(borders),
-    anchors: [
-      ...shape.points.map(point => {
-        return createCirclePath({
-          x: point[0],
-          y: point[1],
-          radius: SELECTION_ANCHOR_SIZE / 2 / currentScale
-        })
-      })
-    ]
-  }
-}
-
-const buildPath = <T extends DrawableShape<'line'>>(line: T, currentScale: number): T => {
+const buildPath = <T extends DrawableShape<'line'>>(
+  line: T,
+  currentScale: number,
+  selectionPadding: number
+): T => {
   const arrows = _.flow(
     (arrows: DrawableShape<'triangle'>[]) => {
       if (line.style?.lineArrow === 1 || line.style?.lineArrow === 3) {
-        const rotation = Math.PI / 2 - getAngleFromVector(line.points[0], line.points[1])
+        const rotation = Math.PI / 2 - getAngleFromVector({ targetVector: [line.points[0], line.points[1]] })
         return [
           ...arrows,
           createTriangle(buildTriangleOnLine(line.points[0], rotation, line.style))
@@ -63,7 +38,7 @@ const buildPath = <T extends DrawableShape<'line'>>(line: T, currentScale: numbe
     },
     (arrows: DrawableShape<'triangle'>[]) => {
       if (line.style?.lineArrow === 2 || line.style?.lineArrow === 3) {
-        const rotation = Math.PI / 2 - getAngleFromVector(line.points[1], line.points[0])
+        const rotation = Math.PI / 2 - getAngleFromVector({ targetVector: [line.points[1], line.points[0]] })
         return [
           ...arrows,
           createTriangle(buildTriangleOnLine(line.points[1], rotation, line.style))
@@ -76,7 +51,7 @@ const buildPath = <T extends DrawableShape<'line'>>(line: T, currentScale: numbe
   return {
     ...line,
     path: createLinePath(line),
-    selection: createLineSelectionPath(line, currentScale),
+    selection: createLineSelectionPath(line, currentScale, selectionPadding),
     arrows
   }
 }
@@ -90,7 +65,8 @@ export const createLine = (
     settings: ToolsSettingsType<'line'>
   },
   cursorPosition: Point,
-  currentScale: number
+  currentScale: number,
+  selectionPadding: number
 ): ShapeEntity<'line'> => {
   const lineShape = {
     toolId: shape.id,
@@ -106,7 +82,7 @@ export const createLine = (
       lineArrow: shape.settings.lineArrow.default
     }
   }
-  return buildPath(lineShape, currentScale)
+  return buildPath(lineShape, currentScale, selectionPadding)
 }
 
 export const buildTriangleOnLine = (center: Point, rotation: number, lineStyle: StyleShape) => {
@@ -160,7 +136,8 @@ export const translateLine = <U extends DrawableShape<'line'>>(
   originalShape: U,
   originalCursorPosition: Point,
   gridFormat: GridFormatType,
-  currentScale: number
+  currentScale: number,
+  selectionPadding: number
 ) => {
   return buildPath(
     {
@@ -170,7 +147,8 @@ export const translateLine = <U extends DrawableShape<'line'>>(
         roundForGrid(y + cursorPosition[1] - originalCursorPosition[1], gridFormat)
       ]) as [Point, Point]
     },
-    currentScale
+    currentScale,
+    selectionPadding
   )
 }
 
@@ -179,13 +157,20 @@ export const resizeLine = <U extends DrawableShape<'line'>>(
   canvasOffset: Point,
   originalShape: U,
   selectionMode: SelectionModeResize<number>,
+  gridFormat: GridFormatType,
   selectionPadding: number,
   currentScale: number
 ): U => {
+
+  const roundCursorPosition: Point = [
+    roundForGrid(cursorPosition[0], gridFormat),
+    roundForGrid(cursorPosition[1], gridFormat)
+  ]
+
   const { center } = getShapeInfos(originalShape, selectionPadding)
 
   const cursorPositionBeforeResize = getPointPositionAfterCanvasTransformation(
-    cursorPosition,
+    roundCursorPosition,
     originalShape.rotation,
     center,
     canvasOffset
@@ -196,43 +181,5 @@ export const resizeLine = <U extends DrawableShape<'line'>>(
     originalShape
   )
 
-  return buildPath(updatedShape, currentScale)
-}
-
-export const drawLineSelection = ({
-  ctx,
-  shape,
-  withAnchors,
-  selectionWidth,
-  selectionColor,
-  currentScale = 1
-}: {
-  ctx: CanvasRenderingContext2D
-  shape: DrawableShape<'line'> | DrawableShape<'polygon'> | DrawableShape<'curve'>
-  withAnchors: boolean
-  selectionWidth: number
-  selectionColor: string
-  currentScale?: number
-}) => {
-  if (!shape.selection) return
-
-  updateCanvasContext(ctx, {
-    fillColor: 'transparent',
-    strokeColor: selectionColor,
-    lineWidth: selectionWidth / currentScale
-  })
-  ctx.stroke(shape.selection.border)
-
-  if (!withAnchors || shape.locked) return
-
-  updateCanvasContext(ctx, {
-    fillColor: 'rgb(255,255,255)',
-    strokeColor: 'rgb(150,150,150)',
-    lineWidth: 2 / currentScale
-  })
-
-  for (const anchor of shape.selection.anchors) {
-    ctx.fill(anchor)
-    ctx.stroke(anchor)
-  }
+  return buildPath(updatedShape, currentScale, selectionPadding)
 }

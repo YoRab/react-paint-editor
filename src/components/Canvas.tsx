@@ -8,7 +8,7 @@ import type { ToolsType } from '../types/tools'
 import type { GridFormatType } from '../constants/app'
 import { drawShapeSelection, drawShape, refreshShape } from '../utils/shapes'
 import { resizeTextShapeWithNewContent } from '../utils/shapes/text'
-import { drawGrid } from '../utils/shapes/grid'
+import { drawGrid } from '../utils/grid'
 import './Canvas.css'
 
 const renderDrawCanvas = (
@@ -131,7 +131,6 @@ const Canvas = React.forwardRef<HTMLCanvasElement, DrawerType>(
     const drawCanvasRef = useRef<HTMLCanvasElement | null>(null)
     const selectionCanvasRef = useRef<HTMLCanvasElement | null>(null)
 
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     useImperativeHandle(ref, () => drawCanvasRef.current!)
 
     const { hoverMode } = useDrawableCanvas({
@@ -169,13 +168,14 @@ const Canvas = React.forwardRef<HTMLCanvasElement, DrawerType>(
         if (!ctx) return
 
         const newShape = refreshShape(
-          resizeTextShapeWithNewContent(ctx, selectedShape, newText, canvasOffset),
-          currentScale
+          resizeTextShapeWithNewContent(ctx, selectedShape, newText, selectionPadding, canvasOffset),
+          currentScale,
+          selectionPadding
         )
 
         updateSingleShape(newShape)
       },
-      [updateSingleShape, selectedShape, canvasOffset, currentScale]
+      [updateSingleShape, selectedShape, canvasOffset, currentScale, selectionPadding]
     )
 
     useEffect(() => {

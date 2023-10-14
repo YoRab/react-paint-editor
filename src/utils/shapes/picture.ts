@@ -5,62 +5,23 @@ import type {
   Picture,
   Point,
   Rect,
-  SelectionDefaultType,
   ShapeEntity
 } from '../../types/Shapes'
 import { addSizeAndConvertSvgToObjectUrl, fetchAndStringify, isSvg } from '../file'
 import { DEFAULT_SHAPE_PICTURE } from '../../constants/tools'
-import { createRecPath, getRectBorder, resizeRect } from './rectangle'
+import { getRectBorder, resizeRect } from './rectangle'
 import { SelectionModeResize } from '../../types/Mode'
 import { GridFormatType } from '../../constants/app'
-import { updateCanvasContext } from '../../utils/canvas'
-import { getShapeInfos } from '.'
-import { createLinePath } from './line'
-import {
-  SELECTION_ANCHOR_SIZE,
-  SELECTION_RESIZE_ANCHOR_POSITIONS,
-  SELECTION_ROTATED_ANCHOR_POSITION
-} from '../../constants/shapes'
-import { createCirclePath } from './circle'
+import { createRecSelectionPath } from '../../utils/selection/rectSelection'
 
-const createPictureSelectionPath = (
-  rect: DrawableShape<'picture'>,
-  currentScale: number
-): SelectionDefaultType => {
-  const { borders } = getShapeInfos(rect, 0)
-
-  return {
-    border: createRecPath(borders),
-    line: createLinePath({
-      points: [
-        [borders.x + borders.width / 2, borders.y],
-        [
-          borders.x + borders.width / 2,
-          borders.y - SELECTION_ANCHOR_SIZE / 2 - SELECTION_ROTATED_ANCHOR_POSITION / currentScale
-        ]
-      ]
-    }),
-    anchors: [
-      createCirclePath({
-        x: borders.x + borders.width / 2,
-        y: borders.y - SELECTION_ANCHOR_SIZE / 2 - SELECTION_ROTATED_ANCHOR_POSITION / currentScale,
-        radius: SELECTION_ANCHOR_SIZE / 2 / currentScale
-      }),
-      ...SELECTION_RESIZE_ANCHOR_POSITIONS.map(anchorPosition =>
-        createCirclePath({
-          x: borders.x + borders.width * anchorPosition[0],
-          y: borders.y + borders.height * anchorPosition[1],
-          radius: SELECTION_ANCHOR_SIZE / 2 / currentScale
-        })
-      )
-    ]
-  }
-}
-
-const buildPath = <T extends DrawableShape<'picture'>>(shape: T, currentScale: number): T => {
+const buildPath = <T extends DrawableShape<'picture'>>(
+  shape: T,
+  currentScale: number,
+  selectionPadding: number
+): T => {
   return {
     ...shape,
-    selection: createPictureSelectionPath(shape, currentScale)
+    selection: createRecSelectionPath(shape, currentScale, selectionPadding)
   }
 }
 
@@ -71,7 +32,8 @@ const createPictureShape = (
   storedSrc: string,
   maxPictureWidth: number,
   maxPictureHeight: number,
-  currentScale: number
+  currentScale: number,
+  selectionPadding: number
 ): ShapeEntity<'picture'> => {
   const [width, height] = fitContentInsideContainer(
     img.width,
@@ -92,7 +54,7 @@ const createPictureShape = (
     src: storedSrc,
     img,
     rotation: 0
-  }, currentScale)
+  }, currentScale, selectionPadding)
 }
 
 const createFilePicture = (
@@ -101,7 +63,8 @@ const createFilePicture = (
   file: File,
   maxPictureWidth: number,
   maxPictureHeight: number,
-  currentScale: number
+  currentScale: number,
+  selectionPadding: number
 ) => {
 
   const initSrc = URL.createObjectURL(file)
@@ -116,7 +79,7 @@ const createFilePicture = (
         return
       }
     }
-    const pictureShape = createPictureShape(img, img.src, maxPictureWidth, maxPictureHeight, currentScale)
+    const pictureShape = createPictureShape(img, img.src, maxPictureWidth, maxPictureHeight, currentScale, selectionPadding)
     resolve(pictureShape)
   }
   img.src = initSrc
@@ -128,11 +91,12 @@ const createUrlPicture = (
   url: string,
   maxPictureWidth: number,
   maxPictureHeight: number,
-  currentScale: number
+  currentScale: number,
+  selectionPadding: number
 ) => {
   img.onload = () => {
     URL.revokeObjectURL(img.src)
-    const pictureShape = createPictureShape(img, url, maxPictureWidth, maxPictureHeight, currentScale)
+    const pictureShape = createPictureShape(img, url, maxPictureWidth, maxPictureHeight, currentScale, selectionPadding)
     resolve(pictureShape)
   }
 
@@ -149,7 +113,8 @@ export const createPicture = (
   fileOrUrl: File | string,
   maxPictureWidth: number,
   maxPictureHeight: number,
-  currentScale: number
+  currentScale: number,
+  selectionPadding: number
 ) => {
   return new Promise<ShapeEntity<'picture'>>((resolve, reject) => {
     const img = new Image()
@@ -163,8 +128,8 @@ export const createPicture = (
     }, 4000)
 
     fileOrUrl instanceof File
-      ? createFilePicture(img, resolve, fileOrUrl, maxPictureWidth, maxPictureHeight, currentScale)
-      : createUrlPicture(img, resolve, fileOrUrl, maxPictureWidth, maxPictureHeight, currentScale)
+      ? createFilePicture(img, resolve, fileOrUrl, maxPictureWidth, maxPictureHeight, currentScale, selectionPadding)
+      : createUrlPicture(img, resolve, fileOrUrl, maxPictureWidth, maxPictureHeight, currentScale, selectionPadding)
   })
 }
 
@@ -177,40 +142,6 @@ export const drawPicture = (
   ctx.drawImage(picture.img, picture.x, picture.y, picture.width, picture.height)
 }
 
-export const drawSelectionPicture = (
-  ctx: CanvasRenderingContext2D,
-  shape: DrawableShape<'picture'>,
-  selectionColor: string,
-  selectionWidth: number,
-  currentScale: number,
-  withAnchors: boolean
-): void => {
-  if (!shape.selection) return
-
-  updateCanvasContext(ctx, {
-    fillColor: 'transparent',
-    strokeColor: selectionColor,
-    lineWidth: selectionWidth / currentScale
-  })
-
-  ctx.stroke(shape.selection.border)
-
-  if (!withAnchors || shape.locked) return
-
-  ctx.stroke(shape.selection.line)
-
-  updateCanvasContext(ctx, {
-    fillColor: 'rgb(255,255,255)',
-    strokeColor: 'rgb(150,150,150)',
-    lineWidth: 2 / currentScale
-  })
-
-  for (const anchor of shape.selection.anchors) {
-    ctx.fill(anchor)
-    ctx.stroke(anchor)
-  }
-}
-
 export const getPictureBorder = (picture: Picture, selectionPadding: number): Rect =>
   getRectBorder(picture, selectionPadding)
 
@@ -219,7 +150,8 @@ export const translatePicture = <U extends DrawableShape<'picture'>>(
   originalShape: U,
   originalCursorPosition: Point,
   gridFormat: GridFormatType,
-  currentScale: number
+  currentScale: number,
+  selectionPadding: number
 ) => {
   return buildPath(
     {
@@ -227,24 +159,25 @@ export const translatePicture = <U extends DrawableShape<'picture'>>(
       x: roundForGrid(originalShape.x + cursorPosition[0] - originalCursorPosition[0], gridFormat),
       y: roundForGrid(originalShape.y + cursorPosition[1] - originalCursorPosition[1], gridFormat)
     },
-    currentScale
+    currentScale,
+    selectionPadding
   )
 }
 
 export const resizePicture = (
   cursorPosition: Point,
-  canvasOffset: Point,
   originalShape: DrawableShape<'picture'>,
   selectionMode: SelectionModeResize,
+  gridFormat: GridFormatType,
   selectionPadding: number,
   currentScale: number,
   keepRatio: boolean
 ): DrawableShape<'picture'> => {
   return resizeRect(
     cursorPosition,
-    canvasOffset,
     originalShape,
     selectionMode,
+    gridFormat,
     selectionPadding,
     currentScale,
     keepRatio

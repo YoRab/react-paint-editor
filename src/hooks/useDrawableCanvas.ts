@@ -242,7 +242,12 @@ const useDrawableCanvas = ({
         if (!drawCtx) return
         if (activeTool.type === 'brush') {
           if (!!selectedShape && selectedShape.type === 'brush') {
-            const newShape = addNewPointGroupToShape(selectedShape, cursorPosition, scaleRatio)
+            const newShape = addNewPointGroupToShape(
+              selectedShape,
+              cursorPosition,
+              scaleRatio,
+              selectionPadding
+            )
             updateSingleShape(newShape)
             setSelectedShape(newShape)
           } else {
@@ -251,7 +256,8 @@ const useDrawableCanvas = ({
               activeTool,
               cursorPosition,
               gridFormat,
-              scaleRatio
+              scaleRatio,
+              selectionPadding
             )
             if (!newShape) return
             addShape(newShape)
@@ -267,14 +273,18 @@ const useDrawableCanvas = ({
             activeTool as Exclude<CustomTool, { type: 'picture' }>,
             cursorPosition,
             gridFormat,
-            scaleRatio
+            scaleRatio,
+            selectionPadding
           )
           addShape(newShape)
           setActiveTool(SELECTION_TOOL)
           setSelectedShape(newShape)
           setSelectionMode({
             mode: 'resize',
-            cursorStartPosition: cursorPosition,
+            cursorStartPosition: [
+              cursorPosition[0] + selectionPadding,
+              cursorPosition[1] + selectionPadding
+            ],
             originalShape: newShape,
             anchor:
               activeTool.type === 'line' ||

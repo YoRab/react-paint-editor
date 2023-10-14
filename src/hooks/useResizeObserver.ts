@@ -1,4 +1,3 @@
-import _ from 'lodash/fp'
 import { useEffect } from 'react'
 
 type UseResizeObserverType = {
@@ -11,14 +10,13 @@ const useResizeObserver = ({ onResized, element }: UseResizeObserverType) => {
     const current = element.current
     if (!current) return
     const resizeObserver = new ResizeObserver(entries => {
-      const { width, height } = _.get('0.borderBoxSize', entries)
-        ? _.flow(_.get('0.borderBoxSize'), _.castArray, _.first, el => {
-            return {
-              width: _.get('inlineSize', el),
-              height: _.get('blockSize', el)
-            }
-          })(entries)
-        : _.get('0.contentRect', entries)
+      const boxSize = entries?.[0]?.borderBoxSize?.[0]
+      const { width, height } = boxSize
+        ? {
+          width: boxSize.inlineSize,
+          height: boxSize.blockSize
+        }
+        : entries?.[0].contentRect
       onResized(width, height)
     })
     resizeObserver.observe(current)

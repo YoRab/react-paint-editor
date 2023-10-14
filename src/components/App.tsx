@@ -1,4 +1,4 @@
-import React, { MutableRefObject, useCallback, useEffect, useRef, useState } from 'react'
+import React, { CSSProperties, MutableRefObject, useCallback, useEffect, useRef, useState } from 'react'
 import type { DrawableShapeJson, ExportDataType, Point, ShapeEntity } from '../types/Shapes'
 import type { ToolsType } from '../types/tools'
 import Canvas from './Canvas'
@@ -88,8 +88,8 @@ const App = ({
     fontHoverBackgroundColor,
     canvasBackgroundColor,
     canvasSelectionColor,
-    canvasSelectionWidth
-    // canvasSelectionPadding
+    canvasSelectionWidth,
+    canvasSelectionPadding
   } = {
     ...DEFAULT_OPTIONS.uiStyle,
     ...(options?.uiStyle ?? {})
@@ -103,8 +103,6 @@ const App = ({
     height: height,
     scaleRatio: 1
   })
-
-  const canvasSelectionPadding = 0 // selection padding should not be larger than 0 until shape resizing is refactored
 
   const [availableTools, setAvailableTools] = useState(
     sanitizeTools(availableToolsFromProps, withUploadPicture || withUrlPicture)
@@ -153,7 +151,7 @@ const App = ({
     canGoBackward,
     canGoForward,
     canClear
-  } = useShapes(onDataChanged, canvasSize)
+  } = useShapes(onDataChanged, canvasSelectionPadding, canvasSize)
 
   const { snackbarList, addSnackbar } = useSnackbar()
 
@@ -202,10 +200,10 @@ const App = ({
 
   const loadImportedData = useCallback(
     async (json: ExportDataType, clearHistory = true) => {
-      const shapes = await decodeImportedData(json, canvasSize.scaleRatio)
+      const shapes = await decodeImportedData(json, canvasSize.scaleRatio, canvasSelectionPadding)
       resetCanvas(shapes, clearHistory)
     },
-    [resetCanvas, canvasSize]
+    [resetCanvas, canvasSize, canvasSelectionPadding]
   )
 
   const clearCanvas = useCallback(() => {
@@ -329,6 +327,7 @@ const App = ({
 
   useKeyboard({
     isInsideComponent,
+    selectionPadding: canvasSelectionPadding,
     gridFormat,
     isEditingText: selectionMode.mode === 'textedition',
     selectedShape,
@@ -482,6 +481,7 @@ const App = ({
             activeTool={activeTool}
             availableTools={availableTools}
             selectedShape={selectedShape}
+            selectionPadding={canvasSelectionPadding}
             removeShape={removeShape}
             updateShape={updateShape}
             canvas={canvasRef.current}

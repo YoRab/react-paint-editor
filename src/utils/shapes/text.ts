@@ -5,62 +5,24 @@ import type {
   Text,
   Rect,
   ShapeEntity,
-  SelectionDefaultType
 } from '../../types/Shapes'
 import type { ToolsSettingsType } from '../../types/tools'
 import { STYLE_FONT_DEFAULT, STYLE_FONT_SIZE_DEFAULT } from '../../constants/style'
 import { SelectionModeResize } from '../../types/Mode'
-import { createRecPath, getRectOppositeAnchorAbsolutePosition, resizeRect } from './rectangle'
+import { getRectOppositeAnchorAbsolutePosition, resizeRect } from './rectangle'
 import { getShapeInfos } from '../../utils/shapes/index'
 import { GridFormatType } from '../../constants/app'
 import { roundForGrid } from '../../utils/transform'
-import { updateCanvasContext } from '../../utils/canvas'
-import { createLinePath } from './line'
-import { createCirclePath } from './circle'
-import {
-  SELECTION_ANCHOR_SIZE,
-  SELECTION_RESIZE_ANCHOR_POSITIONS,
-  SELECTION_ROTATED_ANCHOR_POSITION
-} from '../../constants/shapes'
+import { createRecSelectionPath } from '../../utils/selection/rectSelection'
 
-const createTextSelectionPath = (
-  rect: DrawableShape<'text'>,
-  currentScale: number
-): SelectionDefaultType => {
-  const { borders } = getShapeInfos(rect, 0)
-
-  return {
-    border: createRecPath(borders),
-    line: createLinePath({
-      points: [
-        [borders.x + borders.width / 2, borders.y],
-        [
-          borders.x + borders.width / 2,
-          borders.y - SELECTION_ANCHOR_SIZE / 2 - SELECTION_ROTATED_ANCHOR_POSITION / currentScale
-        ]
-      ]
-    }),
-    anchors: [
-      createCirclePath({
-        x: borders.x + borders.width / 2,
-        y: borders.y - SELECTION_ANCHOR_SIZE / 2 - SELECTION_ROTATED_ANCHOR_POSITION / currentScale,
-        radius: SELECTION_ANCHOR_SIZE / 2 / currentScale
-      }),
-      ...SELECTION_RESIZE_ANCHOR_POSITIONS.map(anchorPosition =>
-        createCirclePath({
-          x: borders.x + borders.width * anchorPosition[0],
-          y: borders.y + borders.height * anchorPosition[1],
-          radius: SELECTION_ANCHOR_SIZE / 2 / currentScale
-        })
-      )
-    ]
-  }
-}
-
-const buildPath = <T extends DrawableShape<'text'>>(shape: T, currentScale: number): T => {
+const buildPath = <T extends DrawableShape<'text'>>(
+  shape: T,
+  currentScale: number,
+  selectionPadding: number
+): T => {
   return {
     ...shape,
-    selection: createTextSelectionPath(shape, currentScale)
+    selection: createRecSelectionPath(shape, currentScale, selectionPadding)
   }
 }
 
@@ -91,7 +53,8 @@ export const createText = (
     settings: ToolsSettingsType<'text'>
   },
   cursorPosition: Point,
-  currentScale: number
+  currentScale: number,
+  selectionPadding: number
 ): ShapeEntity<'text'> => {
   const defaultValue: string[] = ['Texte']
   const fontSize = calculateTextFontSize(
@@ -120,7 +83,8 @@ export const createText = (
         fontFamily: shape.settings.fontFamily.default
       }
     },
-    currentScale
+    currentScale,
+    selectionPadding
   )
 }
 
@@ -134,40 +98,6 @@ export const drawText = (ctx: CanvasRenderingContext2D, text: DrawableShape<'tex
   ctx.fillStyle = text.style.strokeColor
   for (let i = 0; i < text.value.length; i++) {
     ctx.fillText(text.value[i], text.x, text.y + i * text.fontSize, text.width)
-  }
-}
-
-export const drawSelectionText = (
-  ctx: CanvasRenderingContext2D,
-  shape: DrawableShape<'text'>,
-  selectionColor: string,
-  selectionWidth: number,
-  currentScale: number,
-  withAnchors: boolean
-): void => {
-  if (!shape.selection) return
-
-  updateCanvasContext(ctx, {
-    fillColor: 'transparent',
-    strokeColor: selectionColor,
-    lineWidth: selectionWidth / currentScale
-  })
-
-  ctx.stroke(shape.selection.border)
-
-  if (!withAnchors || shape.locked) return
-
-  ctx.stroke(shape.selection.line)
-
-  updateCanvasContext(ctx, {
-    fillColor: 'rgb(255,255,255)',
-    strokeColor: 'rgb(150,150,150)',
-    lineWidth: 2 / currentScale
-  })
-
-  for (const anchor of shape.selection.anchors) {
-    ctx.fill(anchor)
-    ctx.stroke(anchor)
   }
 }
 
@@ -185,7 +115,8 @@ export const translateText = <U extends DrawableShape<'text'>>(
   originalShape: U,
   originalCursorPosition: Point,
   gridFormat: GridFormatType,
-  currentScale: number
+  currentScale: number,
+  selectionPadding: number
 ) => {
   return buildPath(
     {
@@ -193,24 +124,25 @@ export const translateText = <U extends DrawableShape<'text'>>(
       x: roundForGrid(originalShape.x + cursorPosition[0] - originalCursorPosition[0], gridFormat),
       y: roundForGrid(originalShape.y + cursorPosition[1] - originalCursorPosition[1], gridFormat)
     },
-    currentScale
+    currentScale,
+    selectionPadding
   )
 }
 
 export const resizeText = (
   ctx: CanvasRenderingContext2D,
   cursorPosition: Point,
-  canvasOffset: Point,
   originalShape: DrawableShape<'text'>,
   selectionMode: SelectionModeResize,
+  gridFormat: GridFormatType,
   selectionPadding: number,
   currentScale: number
 ): DrawableShape<'text'> => {
   const newRect = resizeRect(
     cursorPosition,
-    canvasOffset,
     originalShape,
     selectionMode,
+    gridFormat,
     selectionPadding,
     currentScale,
     true
@@ -249,6 +181,7 @@ export const resizeTextShapeWithNewContent = <U extends DrawableShape<'text'>>(
   ctx: CanvasRenderingContext2D,
   shape: U,
   newValue: string[],
+  selectionPadding: number,
   canvasOffset: Point
 ) => {
   const newShape = _.set('value', newValue, shape)
@@ -268,20 +201,19 @@ export const resizeTextShapeWithNewContent = <U extends DrawableShape<'text'>>(
     height: newHeight
   }
 
-  const selectionPadding = 0
   const { center } = getShapeInfos(shape, selectionPadding)
 
   const { center: shapeWithNewDimensionsCenter } = getShapeInfos(resizedShape, selectionPadding)
 
   const [oppTrueX, oppTrueY] = getRectOppositeAnchorAbsolutePosition(
-    [1, 0.5],
+    [1, 1],
     center,
     shape,
     canvasOffset
   )
 
   const [newOppTrueX, newOppTrueY] = getRectOppositeAnchorAbsolutePosition(
-    [1, 0.5],
+    [1, 1],
     shapeWithNewDimensionsCenter,
     resizedShape,
     canvasOffset,
