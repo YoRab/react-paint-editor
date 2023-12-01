@@ -1,4 +1,3 @@
-import _ from 'lodash/fp'
 import React, { useEffect, useState, useTransition } from 'react'
 import Button from '../../components/common/Button'
 import Panel from '../../components/common/Panel'

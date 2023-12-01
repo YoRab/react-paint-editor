@@ -38,7 +38,7 @@ const useShapes = (
   const saveShapes = useCallback(() => {
     setSavedShapes(prevSavedShaped => {
       return _.isEqual(
-        _.get([prevSavedShaped.cursor, 'shapes'], prevSavedShaped.states),
+        prevSavedShaped.states[prevSavedShaped.cursor].shapes,
         shapesRef.current
       )
         ? prevSavedShaped
@@ -112,23 +112,22 @@ const useShapes = (
     [saveShapes]
   )
 
-  const backwardShape = useCallback(() => {
+  const moveCursor = useCallback((getNewCursor: (shapes: typeof savedShapes) => number) => {
     setSavedShapes(prevSavedShaped => {
-      const newCursor = Math.max(0, prevSavedShaped.cursor - 1)
-      shapesRef.current = _.get([newCursor, 'shapes'], prevSavedShaped.states)
-      setSelectedShape(_.get([newCursor, 'selectedShape'], prevSavedShaped.states))
+      const newCursor = getNewCursor(prevSavedShaped)
+      shapesRef.current = prevSavedShaped.states[newCursor].shapes
+      setSelectedShape(prevSavedShaped.states[newCursor].selectedShape)
       return _.set('cursor', newCursor, prevSavedShaped)
     })
   }, [])
 
+  const backwardShape = useCallback(() => {
+    moveCursor(prevSavedShaped => Math.max(0, prevSavedShaped.cursor - 1))
+  }, [moveCursor])
+
   const forwardShape = useCallback(() => {
-    setSavedShapes(prevSavedShaped => {
-      const newCursor = Math.min(prevSavedShaped.states.length - 1, prevSavedShaped.cursor + 1)
-      shapesRef.current = _.get([newCursor, 'shapes'], prevSavedShaped.states)
-      setSelectedShape(_.get([newCursor, 'selectedShape'], prevSavedShaped.states))
-      return _.set('cursor', newCursor, prevSavedShaped)
-    })
-  }, [])
+    moveCursor(prevSavedShaped => Math.min(prevSavedShaped.states.length - 1, prevSavedShaped.cursor + 1))
+  }, [moveCursor])
 
   const clearShapes = useCallback((shapesToInit: ShapeEntity[] = [], clearHistory = false) => {
     setSelectedShape(undefined)

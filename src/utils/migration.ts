@@ -2,7 +2,7 @@ import { DrawableShapeJson, Point } from '../types/Shapes'
 import _ from 'lodash/fp'
 
 export const migrateShapesV065 = (shapes: DrawableShapeJson[]) => {
-  return _.map(shape => {
+  return shapes?.map(shape => {
     if (!shape.translation) {
       return shape
     }
@@ -40,5 +40,5 @@ export const migrateShapesV065 = (shapes: DrawableShapeJson[]) => {
           ) as Point[][]
         }
     }
-  }, shapes)
+  })
 }
