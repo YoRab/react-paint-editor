@@ -56,7 +56,7 @@ export const sanitizeTools = (tools: RecursivePartial<CustomToolInput>[], withPi
   return _.flow(
     _.map((tool: RecursivePartial<CustomToolInput>) => {
       if (!_.isObject(tool)) return null
-      switch (_.get('type', tool)) {
+      switch (tool.type) {
         case 'brush':
           return _.mergeWith(customizer, DEFAULT_SHAPE_BRUSH, tool)
         case 'circle':
