@@ -1,7 +1,8 @@
 import type { SelectionModeData } from '../types/Mode'
 import type { Point, ShapeEntity } from '../types/Shapes'
-import { GRID_STEP } from '../constants/style'
 import type { GridFormatType } from '../constants/app'
+import _ from 'lodash/fp'
+import { GRID_ROTATION_STEPS, GRID_STEP } from '../constants/style'
 import { resizeShape, rotateShape, translateShape } from './shapes'
 import { addNewPointToShape } from './shapes/brush'
 import { PICTURE_DEFAULT_SIZE } from '../constants/picture'
@@ -24,11 +25,20 @@ export const getNormalizedSize = (
   return [width, height]
 }
 
+export const roundValues = (prop: number, precision = 2): number => {
+  return Math.round(prop * 10 ** precision) / 10 ** precision
+}
+
 export const roundForGrid = (value: number, gridFormat: GridFormatType, gridOffset: number = 0) => {
-  if (!gridFormat) return Math.round(value)
+  if (!gridFormat) return roundValues(value)
   const valueWithOffset = value + gridOffset
   const step = valueWithOffset >= 0 ? GRID_STEP[gridFormat - 1] : -GRID_STEP[gridFormat - 1]
   return valueWithOffset + step / 2 - ((valueWithOffset + step / 2) % step) - gridOffset
+}
+
+export const roundRotationForGrid = (rotation: number, gridFormat: GridFormatType, gridOffset: number = 0) => {
+  if (!gridFormat) return roundValues(rotation, 3)
+  return rotation + Math.PI / GRID_ROTATION_STEPS / 2 - ((rotation + Math.PI / GRID_ROTATION_STEPS / 2) % (Math.PI / GRID_ROTATION_STEPS))
 }
 
 export const transformShape = (

@@ -1,5 +1,5 @@
 import _ from 'lodash/fp'
-import { roundForGrid } from '../transform'
+import { roundForGrid, roundRotationForGrid } from '../transform'
 import type { Point, DrawableShape, Rect, ShapeEntity } from '../../types/Shapes'
 import type { CustomTool } from '../../types/tools'
 import type { GridFormatType } from '../../constants/app'
@@ -217,11 +217,7 @@ export const rotateShape = <T extends DrawableShape>(
   return {
     ...shape,
     ...{
-      rotation: gridFormat
-        ? rotation +
-        Math.PI / GRID_ROTATION_STEPS / 2 -
-        ((rotation + Math.PI / GRID_ROTATION_STEPS / 2) % (Math.PI / GRID_ROTATION_STEPS))
-        : rotation
+      rotation: roundRotationForGrid(rotation, gridFormat)
     }
   }
 }
