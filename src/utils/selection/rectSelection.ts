@@ -5,7 +5,7 @@ import type { GridFormatType } from '../../constants/app'
 import { getShapeInfos } from '../../utils/shapes/index'
 import { createCirclePath, createLinePath, createRecPath } from '../shapes/path'
 import { SELECTION_ANCHOR_SIZE, SELECTION_RESIZE_ANCHOR_POSITIONS, SELECTION_ROTATED_ANCHOR_POSITION } from '../../constants/shapes'
-import { roundForGrid } from '../../utils/transform'
+import { roundForGrid, roundValues } from '../../utils/transform'
 import { updateCanvasContext } from '../../utils/canvas'
 
 export const createRecSelectionPath = (
@@ -206,10 +206,10 @@ const calculateRectSelectionData = ({
     })
 
     return {
-        borderX: borderX + newCenterX - centerVector[0],
-        borderHeight,
-        borderY: borderY + newCenterY - centerVector[1],
-        borderWidth
+        borderX: roundValues(borderX + newCenterX - centerVector[0]),
+        borderWidth: roundValues(borderWidth),
+        borderY: roundValues(borderY + newCenterY - centerVector[1]),
+        borderHeight: roundValues(borderHeight),
     }
 }
 
