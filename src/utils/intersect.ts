@@ -3,7 +3,6 @@ import {
   SELECTION_RESIZE_ANCHOR_POSITIONS,
   SELECTION_ROTATED_ANCHOR_POSITION
 } from '../constants/shapes'
-import _ from 'lodash/fp'
 import type { HoverModeData } from '../types/Mode'
 import type { Point, DrawableShape } from '../types/Shapes'
 import { getShapeInfos } from './shapes'
@@ -16,7 +15,9 @@ export const getCursorPosition = (
   givenHeight: number,
   scaleRatio = 1
 ): Point => {
-  const { clientX, clientY } = _.getOr(_.getOr(e, 'changedTouches[0]', e), 'touches[0]', e)
+
+  const { clientX = 0, clientY = 0 } = 'touches' in e && e.touches[0] ? e.touches[0] : 'changedTouches' in e && e.changedTouches[0] ? e.changedTouches[0] : 'clientX' in e ? e : {}
+
   const canvasBoundingRect = canvas?.getBoundingClientRect() ?? {
     left: 0,
     top: 0,

@@ -1,4 +1,3 @@
-import _ from 'lodash/fp'
 import React, { useEffect, useRef, useState, useTransition } from 'react'
 import Button from '../../components/common/Button'
 import Panel from '../../components/common/Panel'
@@ -68,7 +67,7 @@ const ToolbarGroup = ({
       />
     )
   }
-  if (_.isEmpty(group.toolsType)) return null
+  if (!group.toolsType.length) return null
 
   if (group.toolsType?.length === 1) {
     return (
@@ -82,7 +81,7 @@ const ToolbarGroup = ({
     )
   }
 
-  const isActive = _.find({ type: activeTool.type }, group?.toolsType) !== undefined
+  const isActive = group?.toolsType.find(tool => tool.type === activeTool.type) !== undefined
 
   const groupIcon =
     (localActiveTool

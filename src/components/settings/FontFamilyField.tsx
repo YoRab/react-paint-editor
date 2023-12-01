@@ -1,6 +1,5 @@
 import React from 'react'
 import SelectField from './SelectField'
-import _ from 'lodash/fp'
 import { fontIcon } from '../../constants/icons'
 import './FontFamilyField.css'
 
@@ -32,7 +31,7 @@ const FontFamilyField = ({
   defaultValue,
   valueChanged
 }: FontFamilyFieldType) => {
-  if (_.isEmpty(values)) return null
+  if (!values.length) return null
 
   return (
     <SelectField
