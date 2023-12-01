@@ -45,7 +45,7 @@ const SelectField = ({
 
   const isPanelVisible = selectedSettings === customKey
 
-  if (_.isEmpty(values)) return null
+  if (!values.length) return null
 
   return (
     <>

@@ -8,7 +8,7 @@ const useSnackbar = () => {
   const [snackbarList, setSnackbarList] = useState<SnackBarType[]>([])
 
   const removeSnackbar = (id: string) => {
-    setSnackbarList(prev => _.remove({ id: id }, prev))
+    setSnackbarList(prev => prev.filter(snackbar => snackbar.id !== id))
   }
 
   const addSnackbar = ({

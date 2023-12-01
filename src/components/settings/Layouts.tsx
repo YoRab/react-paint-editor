@@ -1,5 +1,4 @@
 import React, { useRef, useState } from 'react'
-import _ from 'lodash/fp'
 import type { ShapeEntity } from '../../types/Shapes'
 import useDrag from '../../hooks/useDrag'
 
@@ -177,7 +176,7 @@ const Layouts = ({
             {shapes.length === 0 ? (
               <div className='react-paint-editor-layouts-placeholder'>No layer yet</div>
             ) : (
-              _.map(
+              shapes.map(
                 shape => (
                   <Layout
                     key={shape.id}
@@ -192,8 +191,7 @@ const Layouts = ({
                     toggleShapeVisibility={toggleShapeVisibility}
                     toggleShapeLock={toggleShapeLock}
                   />
-                ),
-                shapes
+                )
               )
             )}
           </div>

@@ -90,7 +90,8 @@ const MenuGroup = ({
     })
   }
 
-  const isActive = _.includes(activeTool.type, group?.tools)
+  const isActive = group?.tools?.some(tool => tool == activeTool.type)
+
   const groupIcon = (isActive ? activeTool.icon : group.img) ?? group.title
 
   useEffect(() => {

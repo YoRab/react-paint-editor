@@ -121,7 +121,7 @@ const Toolbar = ({
     setToolsInMenu(width < withMenuToolbarSize)
   }, [width, fullToolbarSize, withMenuToolbarSize])
 
-  const isAnyToolSelected = _.find({ type: activeTool }, availableTools) !== undefined
+  const isAnyToolSelected = availableTools.find(tool => tool.type === activeTool.type) !== undefined
 
   return (
     <>

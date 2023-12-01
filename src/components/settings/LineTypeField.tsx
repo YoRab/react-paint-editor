@@ -1,6 +1,5 @@
 import React from 'react'
 import SelectField from './SelectField'
-import _ from 'lodash/fp'
 import { lineTypeIcon } from '../../constants/icons'
 import './LineTypeField.css'
 
@@ -39,7 +38,7 @@ const LineTypeField = ({
   defaultValue,
   valueChanged
 }: LineTypeType) => {
-  if (_.isEmpty(values)) return null
+  if (!values.length) return null
 
   return (
     <SelectField

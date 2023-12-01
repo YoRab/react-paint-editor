@@ -15,6 +15,8 @@ import { GridFormatType } from '../../constants/app'
 import { roundForGrid } from '../../utils/transform'
 import { createRecSelectionPath } from '../../utils/selection/rectSelection'
 
+const DEFAULT_TEXT_VALUE: string[] = ['Texte']
+
 const buildPath = <T extends DrawableShape<'text'>>(
   shape: T,
   currentScale: number,
@@ -37,12 +39,9 @@ export const calculateTextFontSize = (
   fontFamily: string | undefined = STYLE_FONT_DEFAULT
 ) => {
   ctx.font = `${fontItalic ? 'italic' : ''} ${fontBold ? 'bold' : ''} 1px ${fontFamily}`
-  return (
-    _.flow(
-      _.map((value: string) => maxWidth / ctx.measureText(value).width),
-      _.min
-    )(text) ?? STYLE_FONT_SIZE_DEFAULT
-  )
+
+  const measuredFontsSizes = text.map((value: string) => maxWidth / ctx.measureText(value).width)
+  return Math.min(...measuredFontsSizes) || STYLE_FONT_SIZE_DEFAULT
 }
 
 export const createText = (
@@ -56,10 +55,9 @@ export const createText = (
   currentScale: number,
   selectionPadding: number
 ): ShapeEntity<'text'> => {
-  const defaultValue: string[] = ['Texte']
   const fontSize = calculateTextFontSize(
     ctx,
-    defaultValue,
+    DEFAULT_TEXT_VALUE,
     50,
     shape.settings?.fontBold.default ?? false,
     shape.settings?.fontItalic.default ?? false,
@@ -72,10 +70,10 @@ export const createText = (
       id: _.uniqueId(`${shape.type}_`),
       x: cursorPosition[0],
       y: cursorPosition[1],
-      value: defaultValue,
+      value: DEFAULT_TEXT_VALUE,
       fontSize,
       width: 50,
-      height: fontSize * (defaultValue.length || 1),
+      height: fontSize * (DEFAULT_TEXT_VALUE.length || 1),
       rotation: 0,
       style: {
         globalAlpha: shape.settings.opacity.default,
@@ -169,12 +167,8 @@ const calculateTextWidth = (
   fontFamily: string | undefined = STYLE_FONT_DEFAULT
 ) => {
   ctx.font = `${fontItalic ? 'italic' : ''} ${fontBold ? 'bold' : ''} ${fontSize}px ${fontFamily}`
-  return (
-    _.flow(
-      _.map((value: string) => ctx.measureText(value).width),
-      _.max
-    )(text) ?? 20
-  )
+  const measuredText = text.map((value: string) => ctx.measureText(value).width)
+  return Math.max(...measuredText) || 20
 }
 
 export const resizeTextShapeWithNewContent = <U extends DrawableShape<'text'>>(
@@ -183,8 +177,8 @@ export const resizeTextShapeWithNewContent = <U extends DrawableShape<'text'>>(
   newValue: string[],
   selectionPadding: number,
   canvasOffset: Point
-) => {
-  const newShape = _.set('value', newValue, shape)
+): U => {
+  const newShape = { ...shape, value: newValue }
   const newWidth = calculateTextWidth(
     ctx,
     newShape.value,

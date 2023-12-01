@@ -67,7 +67,7 @@ export const selectShape = (
       return { shape: selectedShape, mode: newSelectionMode }
     }
   }
-  const foundShape = _.find(shape => {
+  const foundShape = shapes.find(shape => {
     return !!checkPositionIntersection(
       shape,
       cursorPosition,
@@ -76,7 +76,7 @@ export const selectShape = (
       currentScale,
       false
     )
-  }, shapes)
+  })
   if (!!foundShape) {
     return {
       shape: foundShape,
