@@ -1,3 +1,15 @@
+# V0.9.0
+
+ - Refacto transformation and draw utils
+ - Store Path2d for precalculation
+ - optimize data export format
+ - improve keep ratio behavior
+ - globally round values
+ - fix brush tool losing precision with transformation
+ - fix circle resizing only going one direction
+ - fix padding selection with grid on
+ - target es2020
+
 # V0.8.0
 
 - migrate from linaria to vanilla css
@@ -16,7 +28,7 @@
 # V0.7.4
 
 - fix : shortcut with caps fixed
-- fix : add suport for svg in firefox
+- fix : add support for svg in firefox
 
 # V0.7.3
 

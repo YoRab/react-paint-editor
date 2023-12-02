@@ -213,13 +213,6 @@ const calculateRectSelectionData = ({
     }
 }
 
-
-
-
-/*
-todo : 
-finish brush (division by 0):   revoir taille min ?
- */
 export const resizeRectSelection = (
     cursorPosition: Point,
     originalShape: DrawableShape,
