@@ -1,3 +1,4 @@
+import { fn } from '@storybook/test';
 import type { Meta, StoryObj } from '@storybook/react';
 import App from '../src/components/App'
 import { EXAMPLE_DEFAULT } from './fixture'
@@ -22,11 +23,14 @@ type Story = StoryObj<typeof meta>;
 
 
 export const Default: Story = {
-  args: {},
+  args: {
+    onDataChanged: fn()
+  },
 };
 
 export const FromFile: Story = {
   args: {
+    onDataChanged: fn(),
     shapes: EXAMPLE_DEFAULT,
     options: {
       clearCallback: 'defaultShapes'
@@ -36,6 +40,7 @@ export const FromFile: Story = {
 
 export const ViewerMode: Story = {
   args: {
+    onDataChanged: fn(),
     shapes: EXAMPLE_DEFAULT,
     mode: 'viewer'
   },
@@ -43,6 +48,7 @@ export const ViewerMode: Story = {
 
 export const LimitedTools: Story = {
   args: {
+    onDataChanged: fn(),
     options: {
       grid: 2,
       layersManipulation: false,

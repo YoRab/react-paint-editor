@@ -74,7 +74,6 @@ import {
   resizePicture,
   translatePicture
 } from './picture'
-import { GRID_ROTATION_STEPS } from '../../constants/style'
 import { SelectionModeData, SelectionModeResize } from '../../types/Mode'
 import { transformCanvas, updateCanvasContext } from '../../utils/canvas'
 import { drawSelectionRect } from '../../utils/selection/rectSelection'
