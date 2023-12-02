@@ -83,11 +83,11 @@ export type DrawableShape<T extends ShapeType = ShapeType> = {
   style?: StyleShape
 } & (T extends 'line'
   ? Line & {
-      type: 'line'
-      selection?: SelectionLinesType
-      path?: Path2D
-      arrows?: DrawableShape<'triangle'>[]
-    }
+    type: 'line'
+    selection?: SelectionLinesType
+    path?: Path2D
+    arrows?: DrawableShape<'triangle'>[]
+  }
   : T extends 'picture'
   ? Picture & { type: 'picture'; img: HTMLImageElement; selection?: SelectionDefaultType }
   : T extends 'text'
@@ -107,7 +107,7 @@ export type DrawableShape<T extends ShapeType = ShapeType> = {
   : T extends 'curve'
   ? Curve & { type: 'curve'; selection?: SelectionLinesType; path?: Path2D }
   : T extends 'brush'
-  ? Brush & { type: 'brush'; selection?: SelectionDefaultType; path?: Path2D }
+  ? Brush & { type: 'brush'; selection?: SelectionDefaultType; path?: Path2D, scaleX?: number, scaleY?: number }
   : never)
 
 export type DrawableShapeJson<T extends ShapeType = ShapeType> = DrawableShape<T> & {

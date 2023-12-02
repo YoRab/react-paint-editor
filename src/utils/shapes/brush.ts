@@ -3,28 +3,41 @@ import _ from 'lodash/fp'
 import { SelectionModeResize } from '../../types/Mode'
 import type {
   Point,
-  Brush,
   Rect,
   DrawableShape,
   ShapeEntity
 } from '../../types/Shapes'
 import type { ToolsSettingsType } from '../../types/tools'
-import { roundForGrid } from '../../utils/transform'
+import { roundForGrid, roundValues } from '../../utils/transform'
 import { getShapeInfos } from '../../utils/shapes/index'
 import { createRecSelectionPath, resizeRectSelection } from '../../utils/selection/rectSelection'
 
+const scalePoint = (point: Point, minX: number, minY: number, scaleX: number = 1, scaleY: number = 1): Point => {
+  return [
+    minX + ((point[0] - minX) * scaleX),
+    minY + ((point[1] - minY) * scaleY)
+  ]
+}
+
 const createBrushPath = (brush: DrawableShape<'brush'>) => {
   if (brush.points.length < 1 || brush.style?.strokeColor === 'transparent') return undefined
+
+  const brushPoints = brush.points.flat()
+  const brushPointX = brushPoints.map(point => point[0])
+  const brushPointY = brushPoints.map(point => point[1])
+
+  const minX = Math.min(...brushPointX)
+  const minY = Math.min(...brushPointY)
 
   const path = new Path2D()
 
   brush.points.forEach(points => {
     if (points.length === 1) {
-      path.rect(points[0][0], points[0][1], 1, 1)
+      path.rect(...scalePoint(points[0], minX, minY, brush.scaleX, brush.scaleY), 1, 1)
     } else {
-      path.moveTo(...points[0])
+      path.moveTo(...scalePoint(points[0], minX, minY, brush.scaleX, brush.scaleY))
       points.slice(1).forEach(point => {
-        path.lineTo(...point)
+        path.lineTo(...scalePoint(point, minX, minY, brush.scaleX, brush.scaleY))
       })
     }
   })
@@ -63,6 +76,8 @@ export const createBrush = (
       id: _.uniqueId(`${shape.type}_`),
       points: [[cursorPosition]],
       rotation: 0,
+      scaleX: 1,
+      scaleY: 1,
       style: {
         globalAlpha: shape.settings.opacity.default,
         strokeColor: shape.settings.strokeColor.default,
@@ -82,30 +97,17 @@ export const drawBrush = (ctx: CanvasRenderingContext2D, shape: DrawableShape<'b
   ctx.stroke(shape.path)
 }
 
-export const getBrushBorder = (brush: Brush, selectionPadding: number): Rect => {
-  const brushPoints = _.flatMap(points => points, brush.points)
-  const minX: number = _.flow(
-    _.map((point: Point) => point[0]),
-    _.min,
-    _.add(-selectionPadding)
-  )(brushPoints)
-  const maxX: number = _.flow(
-    _.map((point: Point) => point[0]),
-    _.max,
-    _.add(selectionPadding)
-  )(brushPoints)
-  const minY: number = _.flow(
-    _.map((point: Point) => point[1]),
-    _.min,
-    _.add(-selectionPadding)
-  )(brushPoints)
-  const maxY: number = _.flow(
-    _.map((point: Point) => point[1]),
-    _.max,
-    _.add(selectionPadding)
-  )(brushPoints)
+export const getBrushBorder = (brush: DrawableShape<'brush'>, selectionPadding: number): Rect => {
+  const brushPoints = brush.points.flat()
+  const minX = Math.min(...brushPoints.map(point => point[0]))
+  const minY = Math.min(...brushPoints.map(point => point[1]))
 
-  return { x: minX, width: maxX - minX, y: minY, height: maxY - minY }
+  const scaledPoints = brushPoints.map(point => scalePoint(point, minX, minY, brush.scaleX, brush.scaleY))
+
+  const maxX = Math.max(...scaledPoints.map(point => point[0])) + selectionPadding
+  const maxY = Math.max(...scaledPoints.map(point => point[1])) + selectionPadding
+
+  return { x: minX - selectionPadding, width: maxX - minX + selectionPadding, y: minY - selectionPadding, height: maxY - minY + selectionPadding }
 }
 
 export const translateBrush = <U extends DrawableShape<'brush'>>(
@@ -146,6 +148,7 @@ export const resizeBrush = (
   currentScale: number,
   keepRatio: boolean
 ): DrawableShape<'brush'> => {
+  const { borders: originalBordersWithoutScale } = getShapeInfos({ ...originalShape, scaleX: 1, scaleY: 1 }, selectionPadding)
   const { borders: originalBorders } = getShapeInfos(originalShape, selectionPadding)
 
   const { borderX, borderHeight, borderY, borderWidth } = resizeRectSelection(
@@ -157,24 +160,27 @@ export const resizeBrush = (
     keepRatio
   )
 
-  const originalShapeWidth = Math.max(0, originalBorders.width - 2 * selectionPadding)
-  const originalShapeHeight = Math.max(0, originalBorders.height - 2 * selectionPadding)
+  const originalShapeWidth = Math.max(0, originalBordersWithoutScale.width - 2 * selectionPadding)
+  const originalShapeHeight = Math.max(0, originalBordersWithoutScale.height - 2 * selectionPadding)
   const shapeWidth = Math.max(0, borderWidth - 2 * selectionPadding)
   const shapeHeight = Math.max(0, borderHeight - 2 * selectionPadding)
 
+  const scaleX = shapeWidth / originalShapeWidth
+  const scaleY = shapeHeight / originalShapeHeight
+
+  const diffX = roundValues(borderX - originalBorders.x)
+  const diffY = roundValues(borderY - originalBorders.y)
   return buildPath(
     {
       ...originalShape,
       points: originalShape.points.map(coord =>
         coord.map(([x, y]) => [
-          borderX +
-          selectionPadding +
-          ((x - originalBorders.x - selectionPadding) / originalShapeWidth) * shapeWidth,
-          borderY +
-          selectionPadding +
-          ((y - originalBorders.y - selectionPadding) / originalShapeHeight) * shapeHeight
+          x + diffX,
+          y + diffY
         ])
-      )
+      ),
+      scaleX,
+      scaleY
     },
     currentScale,
     selectionPadding
