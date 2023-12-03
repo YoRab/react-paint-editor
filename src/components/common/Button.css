@@ -52,8 +52,7 @@
 }
 
 .react-paint-editor-button input {
-    position: absolute;
-    visibility: hidden;
+    display: none;
 }
 
 
