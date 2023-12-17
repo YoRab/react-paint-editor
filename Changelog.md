@@ -1,3 +1,9 @@
+# V0.9.1
+
+ - fix toolbar menu creating inner scrollbar
+ - fix canvas state resetting when updating its size and having shapes from props
+ - fix toolbars size not updating correctly in mobile
+
 # V0.9.0
 
  - Refacto transformation and draw utils
