@@ -1,5 +1,5 @@
 import _ from 'lodash/fp'
-import React, { useEffect, useState } from 'react'
+import React, { useState } from 'react'
 import type { ShapeEntity } from '../../types/Shapes'
 import { updatePolygonLinesCount } from '../../utils/shapes/polygon'
 import ColorField from './ColorField'
@@ -368,7 +368,7 @@ const SettingsBar = ({
 
   const settingsBreakpoint = nbSettingsTools * SETTING_WIDTH
 
-  const [settingsInMenu, setSettingsInMenu] = useState(width < settingsBreakpoint)
+  const settingsInMenu = width < settingsBreakpoint
 
   const handleShapeStyleChange = (field: string, value: string | number | boolean) => {
     if (selectedShape) {
@@ -424,10 +424,6 @@ const SettingsBar = ({
       updateToolSettings(activeTool.id, field, value)
     }
   }
-
-  useEffect(() => {
-    setSettingsInMenu(width < settingsBreakpoint)
-  }, [width, settingsBreakpoint])
 
   return (
     <>
