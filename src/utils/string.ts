@@ -1,4 +1,4 @@
-import _ from 'lodash/fp'
+import { compact } from "src/utils/array"
 
 const stripAllTagsRegexp = /(<([^>]+)>)/gi
 const stripDivRegexp = /<(\/)?div(\/?\s?)>/gi
@@ -14,13 +14,11 @@ export const decodeHtmlEntities = (html: string) => {
 }
 
 export const convertDivContentToStringArray = (toConvert: string) => {
-  return _.flow(
-    (divContent: string) => decodeHtmlEntities(divContent),
-    (divContent: string) => divContent.split('<div>'),
-    _.flatMap((val: string) => {
-      const newVal = val.replaceAll(stripDivRegexp, '')
-      return newVal === '' ? undefined : newVal.replaceAll(stripAllTagsRegexp, '')
-    }),
-    _.reject(_.isUndefined)
-  )(toConvert) as string[]
+  const decodedLines = decodeHtmlEntities(toConvert).split('<div>')
+  const linesWithNodeDiv = decodedLines.flatMap(val => {
+    const newVal = val.replaceAll(stripDivRegexp, '')
+    return newVal === '' ? undefined : newVal.replaceAll(stripAllTagsRegexp, '')
+  })
+  const compactedLines = compact(linesWithNodeDiv)
+  return compactedLines
 }

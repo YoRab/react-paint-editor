@@ -30,8 +30,8 @@ const ColorField = ({
 }: ShapeStyleColorType) => {
   const [customKey] = useState(_.uniqueId('settings_'))
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const parsedValue = _.toNumber(event.target.value)
-    valueChanged(field, _.isNaN(parsedValue) ? event.target.value : parsedValue)
+    const parsedValue = +event.target.value
+    valueChanged(field, isNaN(parsedValue) ? event.target.value : parsedValue)
   }
 
   const handleClick = (value: string) => {
@@ -46,7 +46,7 @@ const ColorField = ({
 
   const isPanelVisible = selectedSettings === customKey
 
-  if (_.isEmpty(values)) return null
+  if (!values.length) return null
 
   return (
     <>
