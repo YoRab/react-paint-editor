@@ -1,5 +1,5 @@
 import { menuIcon, shapesIcon } from '../../constants/icons'
-import React, { useEffect, useState } from 'react'
+import React, { useState } from 'react'
 import type { ToolsType } from '../../types/tools'
 import Button from '../../components/common/Button'
 import { getCurrentStructure } from '../../utils/toolbar'
@@ -87,12 +87,13 @@ const Toolbar = ({
   const currentStructure = getCurrentStructure(availableTools, TOOLBAR_STRUCTURE)
 
   const fullToolbarSize = (5 + currentStructure.length) * TOOL_WIDTH
+  const actionsInMenu = width < fullToolbarSize
+
   const withMenuToolbarSize = (2 + currentStructure.length) * TOOL_WIDTH
+  const toolsInMenu = width < withMenuToolbarSize
 
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [isPictureUrlModalOpen, setIsPictureUrlModalOpen] = useState(false)
-  const [actionsInMenu, setActionsInMenu] = useState(width < fullToolbarSize)
-  const [toolsInMenu, setToolsInMenu] = useState(width < withMenuToolbarSize)
 
   const toggleTools = () => {
     setIsMenuOpen(prev => !prev)
@@ -114,11 +115,6 @@ const Toolbar = ({
   const setActiveToolFromId = (toolId: string) => {
     setActiveTool(availableTools.find(tool => tool.id === toolId) ?? activeTool)
   }
-
-  useEffect(() => {
-    setActionsInMenu(width < fullToolbarSize)
-    setToolsInMenu(width < withMenuToolbarSize)
-  }, [width, fullToolbarSize, withMenuToolbarSize])
 
   const isAnyToolSelected = availableTools.find(tool => tool.type === activeTool.type) !== undefined
 

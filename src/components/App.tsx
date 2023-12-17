@@ -108,10 +108,6 @@ const App = ({
     sanitizeTools(availableToolsFromProps, withUploadPicture || withUrlPicture)
   )
 
-  useEffect(() => {
-    setAvailableTools(sanitizeTools(availableToolsFromProps, withUploadPicture || withUrlPicture))
-  }, [availableToolsFromProps, withUploadPicture, withUrlPicture])
-
   const { isInsideComponent } = useComponent({
     disabled: isDisabled,
     componentRef
@@ -132,6 +128,27 @@ const App = ({
 
   const [gridFormat, setGridFormat] = useState<GridFormatType>(grid)
   const [isShiftPressed, setShiftPressed] = useState<boolean>(false)
+
+
+  if (apiRef) {
+    apiRef.current = {
+      getCurrentImage: () => {
+        return canvasRef.current
+          ? getCanvasImage(
+            shapesRef.current,
+            canvasOffset,
+            width,
+            height,
+            canvasSelectionPadding
+          )
+          : undefined
+      },
+
+      getCurrentData: () => {
+        return buildDataToExport(shapesRef.current, width, height)
+      }
+    }
+  }
 
   const {
     shapesRef,
@@ -344,35 +361,23 @@ const App = ({
   useResizeObserver({ element: componentRef, onResized })
 
   useEffect(() => {
+    setAvailableTools(sanitizeTools(availableToolsFromProps, withUploadPicture || withUrlPicture))
+  }, [availableToolsFromProps, withUploadPicture, withUrlPicture])
+
+  useEffect(() => {
     if (!isInsideComponent) setSelectedShape(undefined)
   }, [isInsideComponent, setSelectedShape])
 
+
+  //TODO: temporary hack. Need to be fixed when rewriting api
+  const loadImportedDataRef = useRef(loadImportedData)
+  loadImportedDataRef.current = loadImportedData
+
   useEffect(() => {
     if (shapesFromProps !== undefined) {
-      void loadImportedData({ shapes: shapesFromProps } as ExportDataType)
+      void loadImportedDataRef.current({ shapes: shapesFromProps } as ExportDataType)
     }
-  }, [loadImportedData, shapesFromProps])
-
-  useEffect(() => {
-    if (!apiRef) return
-    apiRef.current = {
-      getCurrentImage: () => {
-        return canvasRef.current
-          ? getCanvasImage(
-            shapesRef.current,
-            canvasOffset,
-            width,
-            height,
-            canvasSelectionPadding
-          )
-          : undefined
-      },
-
-      getCurrentData: () => {
-        return buildDataToExport(shapesRef.current, width, height)
-      }
-    }
-  }, [apiRef, shapesRef, canvasOffset, width, height, canvasSelectionPadding])
+  }, [loadImportedDataRef, shapesFromProps])
 
   const appClassName = `${className}${isLayoutPanelShown ? ' react-paint-editor-layout-opened' : ''} react-paint-editor-app`
 
