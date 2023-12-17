@@ -428,55 +428,58 @@ const SettingsBar = ({
   return (
     <>
       <div className='react-paint-editor-settings-bar'>
-        {settingsInMenu && nbSettingsTools > 2 && (
-          <Button
-            disabled={disabled}
-            onClick={toggleTools}
-            title="Toggle settings"
-            icon={settingsIcon}
-          />
-        )}
-        {selectedShape ? (
-          <>
-            {selectedShapeTool && (
-              <>
-                {!settingsInMenu && (
-                  <SettingsItems
-                    activeTool={activeTool}
-                    selectedShape={selectedShape}
-                    selectedShapeTool={selectedShapeTool}
-                    disabled={disabled}
-                    selectedSettings={selectedSettings}
-                    setSelectedSettings={setSelectedSettings}
-                    handleShapeStyleChange={handleShapeStyleChange}
-                    handlePolygonLinesCount={handlePolygonLinesCount}
-                    handleShapeFontFamilyChange={handleShapeFontFamilyChange}
-                  />
-                )}
+        <div className='react-paint-editor-settings-shrinkable'>
 
-                <DeleteButton
-                  disabled={disabled}
-                  selectedShape={selectedShape}
-                  removeShape={removeShape}
-                />
-              </>
-            )}
-          </>
-        ) : (
-          !settingsInMenu && (
-            <SettingsItems
-              activeTool={activeTool}
-              selectedShape={selectedShape}
-              selectedShapeTool={selectedShapeTool}
+          {settingsInMenu && nbSettingsTools > 2 && (
+            <Button
               disabled={disabled}
-              selectedSettings={selectedSettings}
-              setSelectedSettings={setSelectedSettings}
-              handleShapeStyleChange={handleShapeStyleChange}
-              handlePolygonLinesCount={handlePolygonLinesCount}
-              handleShapeFontFamilyChange={handleShapeFontFamilyChange}
+              onClick={toggleTools}
+              title="Toggle settings"
+              icon={settingsIcon}
             />
-          )
-        )}
+          )}
+          {selectedShape ? (
+            <>
+              {selectedShapeTool && (
+                <>
+                  {!settingsInMenu && (
+                    <SettingsItems
+                      activeTool={activeTool}
+                      selectedShape={selectedShape}
+                      selectedShapeTool={selectedShapeTool}
+                      disabled={disabled}
+                      selectedSettings={selectedSettings}
+                      setSelectedSettings={setSelectedSettings}
+                      handleShapeStyleChange={handleShapeStyleChange}
+                      handlePolygonLinesCount={handlePolygonLinesCount}
+                      handleShapeFontFamilyChange={handleShapeFontFamilyChange}
+                    />
+                  )}
+
+                  <DeleteButton
+                    disabled={disabled}
+                    selectedShape={selectedShape}
+                    removeShape={removeShape}
+                  />
+                </>
+              )}
+            </>
+          ) : (
+            !settingsInMenu && (
+              <SettingsItems
+                activeTool={activeTool}
+                selectedShape={selectedShape}
+                selectedShapeTool={selectedShapeTool}
+                disabled={disabled}
+                selectedSettings={selectedSettings}
+                setSelectedSettings={setSelectedSettings}
+                handleShapeStyleChange={handleShapeStyleChange}
+                handlePolygonLinesCount={handlePolygonLinesCount}
+                handleShapeFontFamilyChange={handleShapeFontFamilyChange}
+              />
+            )
+          )}
+        </div>
         <div className='react-paint-editor-settings-separator' />
         {layersManipulation && (
           <LayoutButton

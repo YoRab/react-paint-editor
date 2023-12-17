@@ -8,8 +8,10 @@
     box-sizing: border-box;
 }
 
-.react-paint-editor-settings-separator {
+.react-paint-editor-settings-shrinkable {
     flex: 1;
+    position: relative;
+    height: 100%;
 }
 
 .react-paint-editor-settings-modal {
