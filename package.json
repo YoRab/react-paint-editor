@@ -1,12 +1,12 @@
 {
   "name": "@yorab/react-paint",
-  "version": "0.9.1",
+  "version": "0.9.2",
   "type": "module",
   "keywords": [],
   "author": "Yohann Rabatel",
   "license": "MIT",
-  "main": "./dist/react-paint.js",
-  "module": "./dist/react-paint.umd.cjs",
+  "main": "./dist/react-paint.umd.cjs",
+  "module": "./dist/react-paint.js",
   "types": "./dist/components/App.d.ts",
   "exports": {
     ".": {

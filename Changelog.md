@@ -1,3 +1,7 @@
+# V0.9.2
+
+ - fix mix-up between cjs and esm build
+
 # V0.9.1
 
  - fix toolbar menu creating inner scrollbar
