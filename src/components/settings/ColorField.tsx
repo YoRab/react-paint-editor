@@ -92,13 +92,13 @@ const ColorField = ({
             <Button
               type="color"
               title="Custom color"
-              selected={!_.includes(value, values)}
+              selected={!values.includes(value)}
               value={value}
               onChange={handleChange}>
               <div
                 className='react-paint-editor-colorfield-customcolor'
                 style={{
-                  '--react-paint-editor-colorfield-color-value': _.includes(value, values) ? 'var(--react-paint-editor-app-font-color)' : value
+                  '--react-paint-editor-colorfield-color-value': values.includes(value) ? 'var(--react-paint-editor-app-font-color)' : value
                 }}
               >
                 <span dangerouslySetInnerHTML={{ __html: paletteIcon }} />

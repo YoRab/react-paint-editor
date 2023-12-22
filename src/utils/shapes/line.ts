@@ -25,28 +25,15 @@ const buildPath = <T extends DrawableShape<'line'>>(
   currentScale: number,
   selectionPadding: number
 ): T => {
-  const arrows = _.flow(
-    (arrows: DrawableShape<'triangle'>[]) => {
-      if (line.style?.lineArrow === 1 || line.style?.lineArrow === 3) {
-        const rotation = Math.PI / 2 - getAngleFromVector({ targetVector: [line.points[0], line.points[1]] })
-        return [
-          ...arrows,
-          createTriangle(buildTriangleOnLine(line.points[0], rotation, line.style))
-        ]
-      }
-      return arrows
-    },
-    (arrows: DrawableShape<'triangle'>[]) => {
-      if (line.style?.lineArrow === 2 || line.style?.lineArrow === 3) {
-        const rotation = Math.PI / 2 - getAngleFromVector({ targetVector: [line.points[1], line.points[0]] })
-        return [
-          ...arrows,
-          createTriangle(buildTriangleOnLine(line.points[1], rotation, line.style))
-        ]
-      }
-      return arrows
-    }
-  )([])
+  const arrows = []
+  if (line.style?.lineArrow === 1 || line.style?.lineArrow === 3) {
+    const rotation = Math.PI / 2 - getAngleFromVector({ targetVector: [line.points[0], line.points[1]] })
+    arrows.push(createTriangle(buildTriangleOnLine(line.points[0], rotation, line.style)))
+  }
+  if (line.style?.lineArrow === 2 || line.style?.lineArrow === 3) {
+    const rotation = Math.PI / 2 - getAngleFromVector({ targetVector: [line.points[1], line.points[0]] })
+    arrows.push(createTriangle(buildTriangleOnLine(line.points[1], rotation, line.style)))
+  }
 
   return {
     ...line,

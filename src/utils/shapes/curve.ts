@@ -39,10 +39,7 @@ export const createCurve = (
       toolId: shape.id,
       type: shape.type,
       id: _.uniqueId(`${shape.type}_`),
-      points: _.flow(
-        _.range(0),
-        _.map(() => cursorPosition)
-      )(shape.settings.pointsCount.default),
+      points: new Array(shape.settings.pointsCount.default).fill(cursorPosition),
       rotation: 0,
       style: {
         globalAlpha: shape.settings.opacity.default,

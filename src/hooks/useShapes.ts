@@ -6,7 +6,7 @@ import { refreshShape } from '../utils/shapes/index'
 import { PICTURE_DEFAULT_SIZE } from '../constants/picture'
 
 const useShapes = (
-  onDataChanged: () => void = _.noop,
+  onDataChanged: (() => void) | undefined,
   selectionPadding: number,
   canvasSize: {
     width: number
@@ -15,7 +15,7 @@ const useShapes = (
   }
 ) => {
   const shapesRef = useRef<ShapeEntity[]>([])
-  const onDataChangedRef = useRef<() => void>(onDataChanged)
+  const onDataChangedRef = useRef<(() => void) | undefined>(onDataChanged)
   onDataChangedRef.current = onDataChanged
 
   const [selectedShape, setSelectedShape] = useState<ShapeEntity | undefined>(undefined)
@@ -206,7 +206,7 @@ const useShapes = (
   )
 
   useEffect(() => {
-    onDataChangedRef.current()
+    onDataChangedRef.current?.()
   }, [savedShapes])
 
   useEffect(() => {
