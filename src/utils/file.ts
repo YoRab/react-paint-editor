@@ -10,7 +10,7 @@ import { initCanvasContext } from './canvas'
 import { migrateShapesV065 } from './migration'
 import { drawShape } from './shapes'
 import { PICTURE_DEFAULT_SIZE } from '../constants/picture'
-import { compact } from 'src/utils/array'
+import { compact } from '../utils/array'
 
 export const addSizeAndConvertSvgToObjectUrl = (svgFileContent: string) => {
   const parser = new DOMParser()

@@ -1,5 +1,4 @@
 import { GridFormatType } from '../../constants/app'
-import _ from 'lodash/fp'
 import { SelectionModeResize } from '../../types/Mode'
 import type {
   Point,
@@ -20,6 +19,7 @@ import { createTriangle, drawTriangle } from './triangle'
 import { createLinePath } from '../../utils/shapes/path'
 import { createLineSelectionPath } from '../../utils/selection/lineSelection'
 import { set } from '../../utils/object'
+import { uniqueId } from '../../utils/util'
 
 const buildPath = <T extends DrawableShape<'line'>>(
   line: T,
@@ -59,7 +59,7 @@ export const createLine = (
   const lineShape = {
     toolId: shape.id,
     type: shape.type,
-    id: _.uniqueId(`${shape.type}_`),
+    id: uniqueId(`${shape.type}_`),
     points: [cursorPosition, cursorPosition] as const,
     rotation: 0,
     style: {

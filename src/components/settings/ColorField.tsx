@@ -1,9 +1,9 @@
-import _ from 'lodash/fp'
 import React, { useState } from 'react'
 import Button from '../../components/common/Button'
 import Panel from '../../components/common/Panel'
 import { paletteIcon, noStrokeIcon, noFillIcon } from '../../constants/icons'
 import './ColorField.css'
+import { uniqueId } from '../../utils/util'
 
 type ShapeStyleColorType = {
   selectedSettings: string | undefined
@@ -28,7 +28,7 @@ const ColorField = ({
   value = '',
   valueChanged
 }: ShapeStyleColorType) => {
-  const [customKey] = useState(_.uniqueId('settings_'))
+  const [customKey] = useState(uniqueId('settings_'))
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const parsedValue = +event.target.value
     valueChanged(field, isNaN(parsedValue) ? event.target.value : parsedValue)

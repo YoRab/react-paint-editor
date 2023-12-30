@@ -1,5 +1,4 @@
 import { GridFormatType } from '../../constants/app'
-import _ from 'lodash/fp'
 import { SelectionModeResize } from '../../types/Mode'
 import type {
   Point,
@@ -12,6 +11,7 @@ import { roundForGrid, roundValues } from '../../utils/transform'
 import { getShapeInfos } from '../../utils/shapes/index'
 import { createRecSelectionPath, resizeRectSelection } from '../../utils/selection/rectSelection'
 import { set } from '../../utils/object'
+import { uniqueId } from '../../utils/util'
 
 const scalePoint = (point: Point, minX: number, minY: number, scaleX: number = 1, scaleY: number = 1): Point => {
   return [
@@ -74,7 +74,7 @@ export const createBrush = (
     {
       toolId: shape.id,
       type: shape.type,
-      id: _.uniqueId(`${shape.type}_`),
+      id: uniqueId(`${shape.type}_`),
       points: [[cursorPosition]],
       rotation: 0,
       scaleX: 1,

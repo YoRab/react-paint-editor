@@ -1,7 +1,7 @@
 import { SNACKBAR_DEFAULT_SETTINGS } from '../constants/snackbar'
-import _ from 'lodash/fp'
 import { useEffect, useRef, useState } from 'react'
 import type { SnackBarType, SnackbarTypeType } from '../types/snackbar'
+import { uniqueId } from '../utils/util'
 
 const useSnackbar = () => {
   const timers = useRef<NodeJS.Timeout[]>([])
@@ -21,7 +21,7 @@ const useSnackbar = () => {
     text: string
   }) => {
     const newSnackbar = {
-      id: _.uniqueId('snackbar_'),
+      id: uniqueId('snackbar_'),
       duration,
       type,
       text

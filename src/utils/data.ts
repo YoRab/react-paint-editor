@@ -1,8 +1,8 @@
-import _ from 'lodash/fp'
 import type { DrawableShape, DrawableShapeJson, ExportDataType, ShapeEntity } from '../types/Shapes'
 import { getBase64Image } from './file'
 import { refreshShape } from './shapes'
-import { omit } from 'src/utils/object'
+import { omit } from '../utils/object'
+import { uniqueId } from '../utils/util'
 
 export const cleanShapesBeforeExport = (shapes: DrawableShape[]): DrawableShapeJson[] => {
   const propsToOmit = ['img', 'id', 'selection', 'path']
@@ -32,7 +32,7 @@ export const addDefaultAndTempShapeProps = (
   selectionPadding: number
 ) => {
   return refreshShape(
-    { ...shape, id: _.uniqueId(`${shape.type}_`) } as ShapeEntity,
+    { ...shape, id: uniqueId(`${shape.type}_`) } as ShapeEntity,
     currentScale,
     selectionPadding
   )

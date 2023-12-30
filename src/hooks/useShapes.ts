@@ -181,7 +181,7 @@ const useShapes = (
   const toggleShapeVisibility = useCallback(
     (shape: ShapeEntity) => {
       const shapes = shapesRef.current
-      const shapeIndex = shapes.findIndex(shape => shape.id === shape.id)
+      const shapeIndex = shapes.findIndex(item => item.id === shape.id)
       if (shapeIndex < 0) return
       const newShape = set('visible', shape.visible === false, shape)
       setSelectedShape(prevSelectedShape =>
@@ -195,7 +195,7 @@ const useShapes = (
   const toggleShapeLock = useCallback(
     (shape: ShapeEntity) => {
       const shapes = shapesRef.current
-      const shapeIndex = shapes.findIndex(shape => shape.id === shape.id)
+      const shapeIndex = shapes.findIndex(item => item.id === shape.id)
       if (shapeIndex < 0) return
       const newShape = set('locked', !shape.locked, shape)
       setSelectedShape(prevSelectedShape =>

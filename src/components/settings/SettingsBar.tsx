@@ -1,4 +1,3 @@
-import _ from 'lodash/fp'
 import React, { useState } from 'react'
 import type { ShapeEntity } from '../../types/Shapes'
 import { updatePolygonLinesCount } from '../../utils/shapes/polygon'

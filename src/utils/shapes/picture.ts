@@ -1,4 +1,3 @@
-import _ from 'lodash/fp'
 import { fitContentInsideContainer, roundForGrid } from '../transform'
 import type {
   DrawableShape,
@@ -13,6 +12,7 @@ import { getRectBorder, resizeRect } from './rectangle'
 import { SelectionModeResize } from '../../types/Mode'
 import { GridFormatType } from '../../constants/app'
 import { createRecSelectionPath } from '../../utils/selection/rectSelection'
+import { uniqueId } from '../../utils/util'
 
 const buildPath = <T extends DrawableShape<'picture'>>(
   shape: T,
@@ -46,7 +46,7 @@ const createPictureShape = (
   return buildPath({
     toolId: DEFAULT_SHAPE_PICTURE.id,
     type: 'picture',
-    id: _.uniqueId(`${'picture'}_`),
+    id: uniqueId(`${'picture'}_`),
     x: (maxPictureWidth - width) / 2,
     y: (maxPictureHeight - height) / 2,
     width,

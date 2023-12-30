@@ -1,4 +1,3 @@
-import _ from 'lodash/fp'
 import { roundForGrid, roundRotationForGrid } from '../transform'
 import type { Point, DrawableShape, Rect, ShapeEntity } from '../../types/Shapes'
 import type { CustomTool } from '../../types/tools'
@@ -78,6 +77,7 @@ import { SelectionModeData, SelectionModeResize } from '../../types/Mode'
 import { transformCanvas, updateCanvasContext } from '../../utils/canvas'
 import { drawSelectionRect } from '../../utils/selection/rectSelection'
 import { drawLineSelection } from '../../utils/selection/lineSelection'
+import { uniqueId } from '../../utils/util'
 
 export const createShape = (
   ctx: CanvasRenderingContext2D,
@@ -511,6 +511,6 @@ export const copyShape = (
 ) => {
   return {
     ...translateShape([20, 20], shape, [0, 0], gridFormat, currentScale, selectionPadding),
-    id: _.uniqueId(`${shape.type}_`)
+    id: uniqueId(`${shape.type}_`)
   } as ShapeEntity
 }

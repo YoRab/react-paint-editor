@@ -1,5 +1,4 @@
 import { GridFormatType } from '../../constants/app'
-import _ from 'lodash/fp'
 import { SelectionModeResize } from '../../types/Mode'
 import type {
   Point,
@@ -15,6 +14,7 @@ import { getShapeInfos } from '.'
 import { createLineSelectionPath } from '../../utils/selection/lineSelection'
 import { createPolygonPath } from '../../utils/shapes/path'
 import { set } from '../../utils/object'
+import { uniqueId } from '../../utils/util'
 
 const buildPath = <T extends DrawableShape<'polygon'>>(
   shape: T,
@@ -44,7 +44,7 @@ export const createPolygon = (
     {
       toolId: shape.id,
       type: shape.type,
-      id: _.uniqueId(`${shape.type}_`),
+      id: uniqueId(`${shape.type}_`),
       points: new Array(shape.settings.pointsCount.default).fill(cursorPosition),
       rotation: 0,
       style: {

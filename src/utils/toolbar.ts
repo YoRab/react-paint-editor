@@ -14,7 +14,7 @@ import {
   DEFAULT_SHAPE_TEXT,
   DEFAULT_SHAPE_PICTURE
 } from '../constants/tools'
-import { compact } from 'src/utils/array'
+import { compact } from '../utils/array'
 
 export const getCurrentStructure = (
   availableTools: CustomTool[],

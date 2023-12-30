@@ -1,8 +1,8 @@
-import _ from 'lodash/fp'
 import React, { useState } from 'react'
 import Button from '../../components/common/Button'
 import Panel from '../../components/common/Panel'
 import './SelectField.css'
+import { uniqueId } from '../../utils/util'
 
 type SelectFieldType = {
   CustomOption: React.FC<{
@@ -31,7 +31,7 @@ const SelectField = ({
   defaultValue,
   valueChanged
 }: SelectFieldType) => {
-  const [customKey] = useState(_.uniqueId('settings_'))
+  const [customKey] = useState(uniqueId('settings_'))
 
   const handleClick = (value: string | number) => {
     valueChanged(field, value)
