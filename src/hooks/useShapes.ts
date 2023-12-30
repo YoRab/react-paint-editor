@@ -107,7 +107,7 @@ const useShapes = (
       setSelectedShape(prevSelectedShape =>
         prevSelectedShape?.id === shape.id ? undefined : prevSelectedShape
       )
-      shapesRef.current = _.remove({ id: shape.id }, shapesRef.current)
+      shapesRef.current = shapesRef.current.filter(item => item.id !== shape.id)
       saveShapes()
     },
     [saveShapes]
@@ -155,8 +155,8 @@ const useShapes = (
   const moveShapes = useCallback(
     (firstShapeId: string, lastShapeId: string) => {
       const shapes = shapesRef.current
-      const firstShapeIndex = _.findIndex({ id: firstShapeId }, shapes)
-      const lastShapeIndex = _.findIndex({ id: lastShapeId }, shapes)
+      const firstShapeIndex = shapes.findIndex(shape => shape.id === firstShapeId)
+      const lastShapeIndex = shapes.findIndex(shape => shape.id === lastShapeId)
 
       // todo utils
       if (firstShapeIndex < lastShapeIndex) {
@@ -181,7 +181,7 @@ const useShapes = (
   const toggleShapeVisibility = useCallback(
     (shape: ShapeEntity) => {
       const shapes = shapesRef.current
-      const shapeIndex = _.findIndex({ id: shape.id }, shapes)
+      const shapeIndex = shapes.findIndex(shape => shape.id === shape.id)
       if (shapeIndex < 0) return
       const newShape = set('visible', shape.visible === false, shape)
       setSelectedShape(prevSelectedShape =>
@@ -195,7 +195,7 @@ const useShapes = (
   const toggleShapeLock = useCallback(
     (shape: ShapeEntity) => {
       const shapes = shapesRef.current
-      const shapeIndex = _.findIndex({ id: shape.id }, shapes)
+      const shapeIndex = shapes.findIndex(shape => shape.id === shape.id)
       if (shapeIndex < 0) return
       const newShape = set('locked', !shape.locked, shape)
       setSelectedShape(prevSelectedShape =>

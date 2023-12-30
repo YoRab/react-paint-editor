@@ -356,15 +356,16 @@ const SettingsBar = ({
   }
 
   const selectedShapeTool = selectedShape
-    ? _.find({ id: selectedShape.toolId }, availableTools) ||
-    _.find({ type: selectedShape.type }, availableTools)
+    ? availableTools.find(tool => tool.id === selectedShape.toolId) ||
+    availableTools.find(tool => tool.type === selectedShape.type)
     : undefined
+
 
   const nbSettingsTools =
     (selectedShapeTool
-      ? _.size(selectedShapeTool.settings) + 1
+      ? Object.keys(selectedShapeTool.settings).length + 1
       : 'settings' in activeTool
-        ? _.size(activeTool.settings)
+        ? Object.keys(activeTool.settings).length
         : 0) + (layersManipulation ? 1 : 0)
 
   const settingsBreakpoint = nbSettingsTools * SETTING_WIDTH
