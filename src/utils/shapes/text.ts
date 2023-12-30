@@ -78,7 +78,9 @@ export const createText = (
       style: {
         globalAlpha: shape.settings.opacity.default,
         strokeColor: shape.settings.strokeColor.default,
-        fontFamily: shape.settings.fontFamily.default
+        fontFamily: shape.settings.fontFamily.default,
+        fontItalic: shape.settings.fontItalic.default,
+        fontBold: shape.settings.fontBold.default
       }
     },
     currentScale,
