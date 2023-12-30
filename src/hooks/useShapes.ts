@@ -4,6 +4,7 @@ import _ from 'lodash/fp'
 import { createPicture } from '../utils/shapes/picture'
 import { refreshShape } from '../utils/shapes/index'
 import { PICTURE_DEFAULT_SIZE } from '../constants/picture'
+import { omit } from 'src/utils/object'
 
 const useShapes = (
   onDataChanged: (() => void) | undefined,
@@ -94,7 +95,7 @@ const useShapes = (
 
   const updateShapes = useCallback(
     (newShapes: ShapeEntity[]) => {
-      const pureShapes = newShapes.map(shape => _.omit(['chosen'], shape)) as ShapeEntity[]
+      const pureShapes = newShapes.map(shape => omit(['chosen'], shape))
       shapesRef.current = pureShapes
       saveShapes()
     },
@@ -160,17 +161,17 @@ const useShapes = (
       // todo utils
       if (firstShapeIndex < lastShapeIndex) {
         updateShapes([
-          ..._.slice(0, firstShapeIndex, shapes),
-          ..._.slice(firstShapeIndex + 1, lastShapeIndex + 1, shapes),
+          ...shapes.slice(0, firstShapeIndex),
+          ...shapes.slice(firstShapeIndex + 1, lastShapeIndex + 1),
           shapes[firstShapeIndex],
-          ..._.slice(lastShapeIndex + 1, shapes.length, shapes)
+          ...shapes.slice(lastShapeIndex + 1, shapes.length)
         ])
       } else {
         updateShapes([
-          ..._.slice(0, lastShapeIndex, shapes),
+          ...shapes.slice(0, lastShapeIndex),
           shapes[firstShapeIndex],
-          ..._.slice(lastShapeIndex, firstShapeIndex, shapes),
-          ..._.slice(firstShapeIndex + 1, shapes.length, shapes)
+          ...shapes.slice(lastShapeIndex, firstShapeIndex),
+          ...shapes.slice(firstShapeIndex + 1, shapes.length)
         ])
       }
     },
