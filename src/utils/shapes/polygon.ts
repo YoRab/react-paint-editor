@@ -14,6 +14,7 @@ import { roundForGrid } from '../../utils/transform'
 import { getShapeInfos } from '.'
 import { createLineSelectionPath } from '../../utils/selection/lineSelection'
 import { createPolygonPath } from '../../utils/shapes/path'
+import { set } from '../../utils/object'
 
 const buildPath = <T extends DrawableShape<'polygon'>>(
   shape: T,
@@ -138,7 +139,7 @@ export const resizePolygon = (
     center,
     canvasOffset
   )
-  const updatedShape = _.set(
+  const updatedShape = set(
     ['points', selectionMode.anchor],
     cursorPositionBeforeResize,
     originalShape

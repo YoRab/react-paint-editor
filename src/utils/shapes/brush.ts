@@ -11,6 +11,7 @@ import type { ToolsSettingsType } from '../../types/tools'
 import { roundForGrid, roundValues } from '../../utils/transform'
 import { getShapeInfos } from '../../utils/shapes/index'
 import { createRecSelectionPath, resizeRectSelection } from '../../utils/selection/rectSelection'
+import { set } from '../../utils/object'
 
 const scalePoint = (point: Point, minX: number, minY: number, scaleX: number = 1, scaleY: number = 1): Point => {
   return [
@@ -196,7 +197,7 @@ export const addNewPointToShape = <T extends DrawableShape<'brush'>>(
   const brushShape = {
     ...shape,
     ...{
-      points: _.set(
+      points: set(
         shape.points.length - 1,
         [
           ...shape.points[shape.points.length - 1],
@@ -218,7 +219,7 @@ export const addNewPointGroupToShape = <T extends DrawableShape<'brush'>>(
   const brushShape = {
     ...shape,
     ...{
-      points: _.set(
+      points: set(
         shape.points.length,
         [[Math.round(cursorPosition[0]), Math.round(cursorPosition[1])]],
         shape.points

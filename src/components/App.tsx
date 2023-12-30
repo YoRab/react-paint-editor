@@ -27,6 +27,7 @@ import { SELECTION_TOOL } from '../constants/tools'
 import _ from 'lodash/fp'
 import { DEFAULT_OPTIONS, GridFormatType, OptionalAppOptionsType } from '../constants/app'
 import './App.css'
+import { set } from '../utils/object'
 
 
 type AppType = {
@@ -184,12 +185,12 @@ const App = ({
     (toolId: string, field: string, value: string | number | boolean) => {
       setAvailableTools(availableTools =>
         availableTools.map(tool =>
-          tool.id === toolId ? _.set(['settings', field, 'default'], value, tool) : tool
+          tool.id === toolId ? set(['settings', field, 'default'], value, tool) : tool
         )
       )
       setActiveTool(activeTool =>
         activeTool.id === toolId
-          ? _.set(['settings', field, 'default'], value, activeTool)
+          ? set(['settings', field, 'default'], value, activeTool)
           : activeTool
       )
     },

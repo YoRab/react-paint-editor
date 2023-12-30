@@ -18,6 +18,7 @@ import Modal from '../../components/common/Modal'
 import { calculateTextFontSize } from '../../utils/shapes/text'
 import { refreshShape } from '../../utils/shapes'
 import './SettingsBar.css'
+import { set } from '../../utils/object'
 
 const SETTING_WIDTH = 40
 
@@ -373,7 +374,7 @@ const SettingsBar = ({
   const handleShapeStyleChange = (field: string, value: string | number | boolean) => {
     if (selectedShape) {
       updateShape(
-        refreshShape(_.set(['style', field], value, selectedShape), currentScale, selectionPadding),
+        refreshShape(set(['style', field], value, selectedShape), currentScale, selectionPadding),
         true
       )
       updateToolSettings(selectedShape.toolId || activeTool.id, field, value)
@@ -387,7 +388,7 @@ const SettingsBar = ({
       if (selectedShape.type !== 'text') return
       const ctx = canvas?.getContext('2d')
       if (!ctx) return
-      const newShape = _.set(['style', field], value, selectedShape)
+      const newShape = set(['style', field], value, selectedShape)
       const fontSize = calculateTextFontSize(
         ctx,
         newShape.value,

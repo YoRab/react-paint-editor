@@ -19,6 +19,7 @@ import { getShapeInfos } from '../../utils/shapes/index'
 import { createTriangle, drawTriangle } from './triangle'
 import { createLinePath } from '../../utils/shapes/path'
 import { createLineSelectionPath } from '../../utils/selection/lineSelection'
+import { set } from '../../utils/object'
 
 const buildPath = <T extends DrawableShape<'line'>>(
   line: T,
@@ -162,7 +163,7 @@ export const resizeLine = <U extends DrawableShape<'line'>>(
     center,
     canvasOffset
   )
-  const updatedShape = _.set(
+  const updatedShape = set(
     ['points', selectionMode.anchor],
     cursorPositionBeforeResize,
     originalShape

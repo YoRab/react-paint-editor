@@ -9,6 +9,7 @@ import { getShapeInfos } from '../../utils/shapes/index'
 import { getPolygonBorder } from './polygon'
 import { createLineSelectionPath } from '../../utils/selection/lineSelection'
 import { createCurvePath } from '../../utils/shapes/path'
+import { set } from '../../utils/object'
 
 const buildPath = <T extends DrawableShape<'curve'>>(
   shape: T,
@@ -78,7 +79,7 @@ export const resizeCurve = (
     center,
     canvasOffset
   )
-  const updatedShape = _.set(
+  const updatedShape = set(
     ['points', selectionMode.anchor],
     cursorPositionBeforeResize,
     originalShape

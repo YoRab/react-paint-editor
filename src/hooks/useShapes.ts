@@ -4,7 +4,7 @@ import _ from 'lodash/fp'
 import { createPicture } from '../utils/shapes/picture'
 import { refreshShape } from '../utils/shapes/index'
 import { PICTURE_DEFAULT_SIZE } from '../constants/picture'
-import { omit } from 'src/utils/object'
+import { omit, set } from '../utils/object'
 
 const useShapes = (
   onDataChanged: (() => void) | undefined,
@@ -118,7 +118,7 @@ const useShapes = (
       const newCursor = getNewCursor(prevSavedShaped)
       shapesRef.current = prevSavedShaped.states[newCursor].shapes
       setSelectedShape(prevSavedShaped.states[newCursor].selectedShape)
-      return _.set('cursor', newCursor, prevSavedShaped)
+      return set('cursor', newCursor, prevSavedShaped)
     })
   }, [])
 
@@ -183,11 +183,11 @@ const useShapes = (
       const shapes = shapesRef.current
       const shapeIndex = _.findIndex({ id: shape.id }, shapes)
       if (shapeIndex < 0) return
-      const newShape = _.set('visible', shape.visible === false, shape)
+      const newShape = set('visible', shape.visible === false, shape)
       setSelectedShape(prevSelectedShape =>
         prevSelectedShape?.id === newShape.id ? newShape : prevSelectedShape
       )
-      updateShapes(_.set(shapeIndex, newShape, shapes))
+      updateShapes(set(shapeIndex, newShape, shapes))
     },
     [updateShapes]
   )
@@ -197,11 +197,11 @@ const useShapes = (
       const shapes = shapesRef.current
       const shapeIndex = _.findIndex({ id: shape.id }, shapes)
       if (shapeIndex < 0) return
-      const newShape = _.set('locked', !shape.locked, shape)
+      const newShape = set('locked', !shape.locked, shape)
       setSelectedShape(prevSelectedShape =>
         prevSelectedShape?.id === newShape.id ? newShape : prevSelectedShape
       )
-      updateShapes(_.set(shapeIndex, newShape, shapes))
+      updateShapes(set(shapeIndex, newShape, shapes))
     },
     [updateShapes]
   )
