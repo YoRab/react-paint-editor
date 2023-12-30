@@ -376,7 +376,7 @@ const SettingsBar = ({
         refreshShape(_.set(['style', field], value, selectedShape), currentScale, selectionPadding),
         true
       )
-      updateToolSettings(selectedShape.toolId || activeTool.id, field, value)
+      selectedShapeTool && updateToolSettings(selectedShapeTool.id, field, value)
     } else {
       updateToolSettings(activeTool.id, field, value)
     }
@@ -406,7 +406,7 @@ const SettingsBar = ({
         selectionPadding
       )
       updateShape(resizedShape, true)
-      updateToolSettings(selectedShape.toolId || activeTool.id, field, value)
+      selectedShapeTool && updateToolSettings(selectedShapeTool.id, field, value)
     } else {
       updateToolSettings(activeTool.id, field, value)
     }
@@ -419,7 +419,7 @@ const SettingsBar = ({
         updatePolygonLinesCount(selectedShape, value as number, currentScale, selectionPadding),
         true
       )
-      updateToolSettings(selectedShape.toolId || activeTool.id, field, value)
+      selectedShapeTool && updateToolSettings(selectedShapeTool.id, field, value)
     } else {
       updateToolSettings(activeTool.id, field, value)
     }
