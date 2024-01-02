@@ -45,7 +45,7 @@ export const createRectangle = <T extends 'rect' | 'square'>(
     height: 0,
     rotation: 0,
     style: {
-      globalAlpha: shape.settings.opacity.default,
+      opacity: shape.settings.opacity.default,
       fillColor: shape.settings.fillColor.default,
       strokeColor: shape.settings.strokeColor.default,
       lineWidth: shape.settings.lineWidth.default,

@@ -75,7 +75,7 @@ export const createLine = (
     points: [cursorPosition, cursorPosition] as const,
     rotation: 0,
     style: {
-      globalAlpha: shape.settings.opacity.default,
+      opacity: shape.settings.opacity.default,
       strokeColor: shape.settings.strokeColor.default,
       lineWidth: shape.settings.lineWidth.default,
       lineDash: shape.settings.lineDash.default,

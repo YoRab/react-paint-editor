@@ -79,7 +79,7 @@ export const createBrush = (
       scaleX: 1,
       scaleY: 1,
       style: {
-        globalAlpha: shape.settings.opacity.default,
+        opacity: shape.settings.opacity.default,
         strokeColor: shape.settings.strokeColor.default,
         lineWidth: shape.settings.lineWidth.default,
         lineDash: shape.settings.lineDash.default
