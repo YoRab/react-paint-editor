@@ -54,7 +54,7 @@ export type Ellipse = {
 
 export type StyleShape = {
   fillColor?: string
-  globalAlpha?: number
+  opacity?: number
   strokeColor?: string
   lineWidth?: number
   lineDash?: number
