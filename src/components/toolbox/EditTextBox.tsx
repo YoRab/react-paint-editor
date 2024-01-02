@@ -81,7 +81,7 @@ const EditTextBox = ({
         '--react-paint-editor-toolbox-edittextbox-fontsize': `${shape.fontSize * scaleRatio}px`,
         '--react-paint-editor-toolbox-edittextbox-padding': `${selectionPadding * scaleRatio}px`,
         '--react-paint-editor-toolbox-edittextbox-color': shape.style?.strokeColor ?? 'inherit',
-        '--react-paint-editor-toolbox-edittextbox-opacity': (shape.style?.globalAlpha ?? 100) / 100,
+        '--react-paint-editor-toolbox-edittextbox-opacity': (shape.style?.opacity ?? 100) / 100,
         '--react-paint-editor-toolbox-edittextbox-fontfamily': shape.style?.fontFamily ?? STYLE_FONT_DEFAULT
       }}
     />

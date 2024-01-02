@@ -76,9 +76,11 @@ export const createText = (
       height: fontSize * (DEFAULT_TEXT_VALUE.length || 1),
       rotation: 0,
       style: {
-        globalAlpha: shape.settings.opacity.default,
+        opacity: shape.settings.opacity.default,
         strokeColor: shape.settings.strokeColor.default,
-        fontFamily: shape.settings.fontFamily.default
+        fontFamily: shape.settings.fontFamily.default,
+        fontItalic: shape.settings.fontItalic.default,
+        fontBold: shape.settings.fontBold.default
       }
     },
     currentScale,

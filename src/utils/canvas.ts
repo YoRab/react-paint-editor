@@ -11,7 +11,7 @@ export const updateCanvasContext = (
   ctx: CanvasRenderingContext2D,
   style: {
     fillColor?: string
-    globalAlpha?: number
+    opacity?: number
     strokeColor?: string
     lineWidth?: number
     lineDash?: number
@@ -19,12 +19,12 @@ export const updateCanvasContext = (
 ) => {
   const {
     fillColor = 'transparent',
-    globalAlpha = 100,
+    opacity = 100,
     strokeColor = SELECTION_DEFAULT_COLOR,
     lineWidth = SELECTION_DEFAULT_WIDTH,
     lineDash = 0
   } = style
-  globalAlpha !== undefined && (ctx.globalAlpha = globalAlpha / 100)
+  opacity !== undefined && (ctx.globalAlpha = opacity / 100)
   fillColor && (ctx.fillStyle = fillColor)
   strokeColor && (ctx.strokeStyle = strokeColor)
   lineWidth && (ctx.lineWidth = lineWidth)

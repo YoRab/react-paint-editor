@@ -43,7 +43,7 @@ export const createCurve = (
       points: new Array(shape.settings.pointsCount.default).fill(cursorPosition),
       rotation: 0,
       style: {
-        globalAlpha: shape.settings.opacity.default,
+        opacity: shape.settings.opacity.default,
         fillColor: shape.settings.fillColor.default,
         strokeColor: shape.settings.strokeColor.default,
         lineWidth: shape.settings.lineWidth.default,

@@ -2063,7 +2063,7 @@ export const EXAMPLE_DEFAULT: DrawableShapeJson[] = [
     style: {
       fillColor: 'transparent',
       strokeColor: '#296818',
-      globalAlpha: 100,
+      opacity: 100,
       lineWidth: 10,
       lineDash: 2,
       lineArrow: 0,
@@ -2089,7 +2089,7 @@ export const EXAMPLE_DEFAULT: DrawableShapeJson[] = [
     style: {
       fillColor: 'white',
       strokeColor: 'transparent',
-      globalAlpha: 60,
+      opacity: 60,
       lineWidth: 1,
       lineDash: 0,
       lineArrow: 0,
@@ -2115,7 +2115,7 @@ export const EXAMPLE_DEFAULT: DrawableShapeJson[] = [
     style: {
       fillColor: 'white',
       strokeColor: 'transparent',
-      globalAlpha: 60,
+      opacity: 60,
       lineWidth: 1,
       lineDash: 0,
       lineArrow: 0,
@@ -2141,7 +2141,7 @@ export const EXAMPLE_DEFAULT: DrawableShapeJson[] = [
     style: {
       fillColor: 'white',
       strokeColor: 'transparent',
-      globalAlpha: 60,
+      opacity: 60,
       lineWidth: 1,
       lineDash: 0,
       lineArrow: 0,
@@ -2159,7 +2159,7 @@ export const EXAMPLE_DEFAULT: DrawableShapeJson[] = [
     style: {
       fillColor: 'yellow',
       strokeColor: 'transparent',
-      globalAlpha: 100,
+      opacity: 100,
       lineWidth: 1,
       lineDash: 0,
       lineArrow: 0,
@@ -2182,7 +2182,7 @@ export const EXAMPLE_DEFAULT: DrawableShapeJson[] = [
     style: {
       fillColor: 'green',
       strokeColor: '#14bd30',
-      globalAlpha: 100,
+      opacity: 100,
       lineWidth: 10,
       lineDash: 0,
       lineArrow: 0,
@@ -2201,7 +2201,7 @@ export const EXAMPLE_DEFAULT: DrawableShapeJson[] = [
     style: {
       fillColor: '#6a4e01',
       strokeColor: 'transparent',
-      globalAlpha: 100,
+      opacity: 100,
       lineWidth: 1,
       lineDash: 0,
       lineArrow: 0,
@@ -2220,7 +2220,7 @@ export const EXAMPLE_DEFAULT: DrawableShapeJson[] = [
     style: {
       fillColor: '#23ace7',
       strokeColor: 'transparent',
-      globalAlpha: 100,
+      opacity: 100,
       lineWidth: 1,
       lineDash: 0,
       lineArrow: 0,

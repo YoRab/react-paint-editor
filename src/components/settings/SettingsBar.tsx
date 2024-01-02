@@ -189,8 +189,8 @@ const SettingsItems = ({
               step={selectedShapeTool.settings.opacity.step}
               unity="%"
               disabled={disabled}
-              field="globalAlpha"
-              value={selectedShape.style?.globalAlpha ?? 100}
+              field="opacity"
+              value={selectedShape.style?.opacity ?? 100}
               valueChanged={handleShapeStyleChange}
             />
           )}
@@ -377,7 +377,7 @@ const SettingsBar = ({
         refreshShape(set(['style', field], value, selectedShape), currentScale, selectionPadding),
         true
       )
-      updateToolSettings(selectedShape.toolId || activeTool.id, field, value)
+      selectedShapeTool && updateToolSettings(selectedShapeTool.id, field, value)
     } else {
       updateToolSettings(activeTool.id, field, value)
     }
@@ -407,7 +407,7 @@ const SettingsBar = ({
         selectionPadding
       )
       updateShape(resizedShape, true)
-      updateToolSettings(selectedShape.toolId || activeTool.id, field, value)
+      selectedShapeTool && updateToolSettings(selectedShapeTool.id, field, value)
     } else {
       updateToolSettings(activeTool.id, field, value)
     }
@@ -420,7 +420,7 @@ const SettingsBar = ({
         updatePolygonLinesCount(selectedShape, value as number, currentScale, selectionPadding),
         true
       )
-      updateToolSettings(selectedShape.toolId || activeTool.id, field, value)
+      selectedShapeTool && updateToolSettings(selectedShapeTool.id, field, value)
     } else {
       updateToolSettings(activeTool.id, field, value)
     }
