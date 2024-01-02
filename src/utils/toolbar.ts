@@ -1,5 +1,4 @@
 import type { ShapeType } from '../types/Shapes'
-import _ from 'lodash/fp'
 import type { CustomTool, CustomToolInput } from '../types/tools'
 import type { RecursivePartial } from '../types/utils'
 import {
@@ -15,6 +14,7 @@ import {
   DEFAULT_SHAPE_PICTURE
 } from '../constants/tools'
 import { compact } from '../utils/array'
+import { mergeWith } from '../utils/object'
 
 export const getCurrentStructure = (
   availableTools: CustomTool[],
@@ -59,23 +59,23 @@ export const sanitizeTools = (tools: RecursivePartial<CustomToolInput>[], withPi
     if (typeof tool !== 'object') return null
     switch (tool.type) {
       case 'brush':
-        return _.mergeWith(customizer, DEFAULT_SHAPE_BRUSH, tool)
+        return mergeWith(customizer, DEFAULT_SHAPE_BRUSH, tool) as CustomTool
       case 'circle':
-        return _.mergeWith(customizer, DEFAULT_SHAPE_CIRCLE, tool)
+        return mergeWith(customizer, DEFAULT_SHAPE_CIRCLE, tool) as CustomTool
       case 'curve':
-        return _.mergeWith(customizer, DEFAULT_SHAPE_CURVE, tool)
+        return mergeWith(customizer, DEFAULT_SHAPE_CURVE, tool) as CustomTool
       case 'ellipse':
-        return _.mergeWith(customizer, DEFAULT_SHAPE_ELLIPSE, tool)
+        return mergeWith(customizer, DEFAULT_SHAPE_ELLIPSE, tool) as CustomTool
       case 'line':
-        return _.mergeWith(customizer, DEFAULT_SHAPE_LINE, tool)
+        return mergeWith(customizer, DEFAULT_SHAPE_LINE, tool) as CustomTool
       case 'polygon':
-        return _.mergeWith(customizer, DEFAULT_SHAPE_POLYGON, tool)
+        return mergeWith(customizer, DEFAULT_SHAPE_POLYGON, tool) as CustomTool
       case 'rect':
-        return _.mergeWith(customizer, DEFAULT_SHAPE_RECT, tool)
+        return mergeWith(customizer, DEFAULT_SHAPE_RECT, tool) as CustomTool
       case 'square':
-        return _.mergeWith(customizer, DEFAULT_SHAPE_SQUARE, tool)
+        return mergeWith(customizer, DEFAULT_SHAPE_SQUARE, tool) as CustomTool
       case 'text':
-        return _.mergeWith(customizer, DEFAULT_SHAPE_TEXT, tool)
+        return mergeWith(customizer, DEFAULT_SHAPE_TEXT, tool) as CustomTool
     }
     return null
   })
