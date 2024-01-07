@@ -1,4 +1,3 @@
-import _ from 'lodash/fp'
 import React, { useState } from 'react'
 import type { ShapeEntity } from '../../types/Shapes'
 import { updatePolygonLinesCount } from '../../utils/shapes/polygon'
@@ -18,6 +17,7 @@ import Modal from '../../components/common/Modal'
 import { calculateTextFontSize } from '../../utils/shapes/text'
 import { refreshShape } from '../../utils/shapes'
 import './SettingsBar.css'
+import { set } from '../../utils/object'
 
 const SETTING_WIDTH = 40
 
@@ -355,15 +355,16 @@ const SettingsBar = ({
   }
 
   const selectedShapeTool = selectedShape
-    ? _.find({ id: selectedShape.toolId }, availableTools) ||
-    _.find({ type: selectedShape.type }, availableTools)
+    ? availableTools.find(tool => tool.id === selectedShape.toolId) ||
+    availableTools.find(tool => tool.type === selectedShape.type)
     : undefined
+
 
   const nbSettingsTools =
     (selectedShapeTool
-      ? _.size(selectedShapeTool.settings) + 1
+      ? Object.keys(selectedShapeTool.settings).length + 1
       : 'settings' in activeTool
-        ? _.size(activeTool.settings)
+        ? Object.keys(activeTool.settings).length
         : 0) + (layersManipulation ? 1 : 0)
 
   const settingsBreakpoint = nbSettingsTools * SETTING_WIDTH
@@ -373,7 +374,7 @@ const SettingsBar = ({
   const handleShapeStyleChange = (field: string, value: string | number | boolean) => {
     if (selectedShape) {
       updateShape(
-        refreshShape(_.set(['style', field], value, selectedShape), currentScale, selectionPadding),
+        refreshShape(set(['style', field], value, selectedShape), currentScale, selectionPadding),
         true
       )
       selectedShapeTool && updateToolSettings(selectedShapeTool.id, field, value)
@@ -387,7 +388,7 @@ const SettingsBar = ({
       if (selectedShape.type !== 'text') return
       const ctx = canvas?.getContext('2d')
       if (!ctx) return
-      const newShape = _.set(['style', field], value, selectedShape)
+      const newShape = set(['style', field], value, selectedShape)
       const fontSize = calculateTextFontSize(
         ctx,
         newShape.value,

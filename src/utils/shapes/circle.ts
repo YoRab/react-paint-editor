@@ -1,5 +1,4 @@
 import { GridFormatType } from '../../constants/app'
-import _ from 'lodash/fp'
 import { SelectionModeResize } from '../../types/Mode'
 import type {
   Point,
@@ -12,6 +11,7 @@ import type { ToolsSettingsType } from '../../types/tools'
 import { roundForGrid } from '../../utils/transform'
 import { createCirclePath } from './path'
 import { createRecSelectionPath, resizeRectSelection } from '../../utils/selection/rectSelection'
+import { uniqueId } from '../../utils/util'
 
 const buildPath = <T extends DrawableShape<'circle'>>(
   shape: T,
@@ -41,7 +41,7 @@ export const createCircle = (
     {
       toolId: shape.id,
       type: shape.type,
-      id: _.uniqueId(`${shape.type}_`),
+      id: uniqueId(`${shape.type}_`),
       x: cursorPosition[0],
       y: cursorPosition[1],
       radius: 0,

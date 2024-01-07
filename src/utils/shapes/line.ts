@@ -1,5 +1,4 @@
 import { GridFormatType } from '../../constants/app'
-import _ from 'lodash/fp'
 import { SelectionModeResize } from '../../types/Mode'
 import type {
   Point,
@@ -19,34 +18,23 @@ import { getShapeInfos } from '../../utils/shapes/index'
 import { createTriangle, drawTriangle } from './triangle'
 import { createLinePath } from '../../utils/shapes/path'
 import { createLineSelectionPath } from '../../utils/selection/lineSelection'
+import { set } from '../../utils/object'
+import { uniqueId } from '../../utils/util'
 
 const buildPath = <T extends DrawableShape<'line'>>(
   line: T,
   currentScale: number,
   selectionPadding: number
 ): T => {
-  const arrows = _.flow(
-    (arrows: DrawableShape<'triangle'>[]) => {
-      if (line.style?.lineArrow === 1 || line.style?.lineArrow === 3) {
-        const rotation = Math.PI / 2 - getAngleFromVector({ targetVector: [line.points[0], line.points[1]] })
-        return [
-          ...arrows,
-          createTriangle(buildTriangleOnLine(line.points[0], rotation, line.style))
-        ]
-      }
-      return arrows
-    },
-    (arrows: DrawableShape<'triangle'>[]) => {
-      if (line.style?.lineArrow === 2 || line.style?.lineArrow === 3) {
-        const rotation = Math.PI / 2 - getAngleFromVector({ targetVector: [line.points[1], line.points[0]] })
-        return [
-          ...arrows,
-          createTriangle(buildTriangleOnLine(line.points[1], rotation, line.style))
-        ]
-      }
-      return arrows
-    }
-  )([])
+  const arrows = []
+  if (line.style?.lineArrow === 1 || line.style?.lineArrow === 3) {
+    const rotation = Math.PI / 2 - getAngleFromVector({ targetVector: [line.points[0], line.points[1]] })
+    arrows.push(createTriangle(buildTriangleOnLine(line.points[0], rotation, line.style)))
+  }
+  if (line.style?.lineArrow === 2 || line.style?.lineArrow === 3) {
+    const rotation = Math.PI / 2 - getAngleFromVector({ targetVector: [line.points[1], line.points[0]] })
+    arrows.push(createTriangle(buildTriangleOnLine(line.points[1], rotation, line.style)))
+  }
 
   return {
     ...line,
@@ -71,7 +59,7 @@ export const createLine = (
   const lineShape = {
     toolId: shape.id,
     type: shape.type,
-    id: _.uniqueId(`${shape.type}_`),
+    id: uniqueId(`${shape.type}_`),
     points: [cursorPosition, cursorPosition] as const,
     rotation: 0,
     style: {
@@ -175,7 +163,7 @@ export const resizeLine = <U extends DrawableShape<'line'>>(
     center,
     canvasOffset
   )
-  const updatedShape = _.set(
+  const updatedShape = set(
     ['points', selectionMode.anchor],
     cursorPositionBeforeResize,
     originalShape

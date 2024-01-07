@@ -22,9 +22,6 @@
     "package.json",
     "dist/"
   ],
-  "dependencies": {
-    "lodash": "4.17.21"
-  },
   "devDependencies": {
     "@storybook/addon-essentials": "7.6.3",
     "@storybook/addon-interactions": "7.6.3",
@@ -34,7 +31,6 @@
     "@storybook/react-vite": "7.6.3",
     "@storybook/test": "^7.6.3",
     "@storybook/testing-library": "0.2.2",
-    "@types/lodash": "4.14.196",
     "@types/node": "20.4.5",
     "@types/react": "18.2.17",
     "@types/react-dom": "18.2.7",

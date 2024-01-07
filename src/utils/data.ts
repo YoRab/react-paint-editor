@@ -1,18 +1,19 @@
-import _ from 'lodash/fp'
 import type { DrawableShape, DrawableShapeJson, ExportDataType, ShapeEntity } from '../types/Shapes'
 import { getBase64Image } from './file'
 import { refreshShape } from './shapes'
+import { omit } from '../utils/object'
+import { uniqueId } from '../utils/util'
 
-export const cleanShapesBeforeExport = (shapes: DrawableShape[]) => {
+export const cleanShapesBeforeExport = (shapes: DrawableShape[]): DrawableShapeJson[] => {
   const propsToOmit = ['img', 'id', 'selection', 'path']
   return shapes.map(shape => {
     if (shape.type === 'picture') {
       if (!shape.src.startsWith('http')) {
-        return _.omit(propsToOmit, { ...shape, src: getBase64Image(shape.img) })
+        return omit(propsToOmit, { ...shape, src: getBase64Image(shape.img) })
       }
     }
-    return _.omit(propsToOmit, shape)
-  }) as DrawableShapeJson[]
+    return omit(propsToOmit, shape)
+  })
 }
 
 export const buildDataToExport = (shapes: DrawableShape[], width: number, height: number) => {
@@ -31,7 +32,7 @@ export const addDefaultAndTempShapeProps = (
   selectionPadding: number
 ) => {
   return refreshShape(
-    { ...shape, id: _.uniqueId(`${shape.type}_`) } as ShapeEntity,
+    { ...shape, id: uniqueId(`${shape.type}_`) } as ShapeEntity,
     currentScale,
     selectionPadding
   )

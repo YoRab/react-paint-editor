@@ -1,12 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { ShapeEntity } from '../types/Shapes'
-import _ from 'lodash/fp'
 import { createPicture } from '../utils/shapes/picture'
 import { refreshShape } from '../utils/shapes/index'
 import { PICTURE_DEFAULT_SIZE } from '../constants/picture'
+import { isEqual, omit, set } from '../utils/object'
 
 const useShapes = (
-  onDataChanged: () => void = _.noop,
+  onDataChanged: (() => void) | undefined,
   selectionPadding: number,
   canvasSize: {
     width: number
@@ -15,7 +15,7 @@ const useShapes = (
   }
 ) => {
   const shapesRef = useRef<ShapeEntity[]>([])
-  const onDataChangedRef = useRef<() => void>(onDataChanged)
+  const onDataChangedRef = useRef<(() => void) | undefined>(onDataChanged)
   onDataChangedRef.current = onDataChanged
 
   const [selectedShape, setSelectedShape] = useState<ShapeEntity | undefined>(undefined)
@@ -37,11 +37,10 @@ const useShapes = (
 
   const saveShapes = useCallback(() => {
     setSavedShapes(prevSavedShaped => {
-      return _.isEqual(
+      return isEqual(
         prevSavedShaped.states[prevSavedShaped.cursor].shapes,
         shapesRef.current
-      )
-        ? prevSavedShaped
+      ) ? prevSavedShaped
         : {
           states: [
             ...prevSavedShaped.states.slice(0, prevSavedShaped.cursor + 1),
@@ -94,7 +93,7 @@ const useShapes = (
 
   const updateShapes = useCallback(
     (newShapes: ShapeEntity[]) => {
-      const pureShapes = newShapes.map(shape => _.omit(['chosen'], shape)) as ShapeEntity[]
+      const pureShapes = newShapes.map(shape => omit(['chosen'], shape))
       shapesRef.current = pureShapes
       saveShapes()
     },
@@ -106,7 +105,7 @@ const useShapes = (
       setSelectedShape(prevSelectedShape =>
         prevSelectedShape?.id === shape.id ? undefined : prevSelectedShape
       )
-      shapesRef.current = _.remove({ id: shape.id }, shapesRef.current)
+      shapesRef.current = shapesRef.current.filter(item => item.id !== shape.id)
       saveShapes()
     },
     [saveShapes]
@@ -117,7 +116,7 @@ const useShapes = (
       const newCursor = getNewCursor(prevSavedShaped)
       shapesRef.current = prevSavedShaped.states[newCursor].shapes
       setSelectedShape(prevSavedShaped.states[newCursor].selectedShape)
-      return _.set('cursor', newCursor, prevSavedShaped)
+      return set('cursor', newCursor, prevSavedShaped)
     })
   }, [])
 
@@ -154,23 +153,23 @@ const useShapes = (
   const moveShapes = useCallback(
     (firstShapeId: string, lastShapeId: string) => {
       const shapes = shapesRef.current
-      const firstShapeIndex = _.findIndex({ id: firstShapeId }, shapes)
-      const lastShapeIndex = _.findIndex({ id: lastShapeId }, shapes)
+      const firstShapeIndex = shapes.findIndex(shape => shape.id === firstShapeId)
+      const lastShapeIndex = shapes.findIndex(shape => shape.id === lastShapeId)
 
       // todo utils
       if (firstShapeIndex < lastShapeIndex) {
         updateShapes([
-          ..._.slice(0, firstShapeIndex, shapes),
-          ..._.slice(firstShapeIndex + 1, lastShapeIndex + 1, shapes),
+          ...shapes.slice(0, firstShapeIndex),
+          ...shapes.slice(firstShapeIndex + 1, lastShapeIndex + 1),
           shapes[firstShapeIndex],
-          ..._.slice(lastShapeIndex + 1, shapes.length, shapes)
+          ...shapes.slice(lastShapeIndex + 1, shapes.length)
         ])
       } else {
         updateShapes([
-          ..._.slice(0, lastShapeIndex, shapes),
+          ...shapes.slice(0, lastShapeIndex),
           shapes[firstShapeIndex],
-          ..._.slice(lastShapeIndex, firstShapeIndex, shapes),
-          ..._.slice(firstShapeIndex + 1, shapes.length, shapes)
+          ...shapes.slice(lastShapeIndex, firstShapeIndex),
+          ...shapes.slice(firstShapeIndex + 1, shapes.length)
         ])
       }
     },
@@ -180,13 +179,13 @@ const useShapes = (
   const toggleShapeVisibility = useCallback(
     (shape: ShapeEntity) => {
       const shapes = shapesRef.current
-      const shapeIndex = _.findIndex({ id: shape.id }, shapes)
+      const shapeIndex = shapes.findIndex(item => item.id === shape.id)
       if (shapeIndex < 0) return
-      const newShape = _.set('visible', shape.visible === false, shape)
+      const newShape = set('visible', shape.visible === false, shape)
       setSelectedShape(prevSelectedShape =>
         prevSelectedShape?.id === newShape.id ? newShape : prevSelectedShape
       )
-      updateShapes(_.set(shapeIndex, newShape, shapes))
+      updateShapes(set(shapeIndex, newShape, shapes))
     },
     [updateShapes]
   )
@@ -194,19 +193,19 @@ const useShapes = (
   const toggleShapeLock = useCallback(
     (shape: ShapeEntity) => {
       const shapes = shapesRef.current
-      const shapeIndex = _.findIndex({ id: shape.id }, shapes)
+      const shapeIndex = shapes.findIndex(item => item.id === shape.id)
       if (shapeIndex < 0) return
-      const newShape = _.set('locked', !shape.locked, shape)
+      const newShape = set('locked', !shape.locked, shape)
       setSelectedShape(prevSelectedShape =>
         prevSelectedShape?.id === newShape.id ? newShape : prevSelectedShape
       )
-      updateShapes(_.set(shapeIndex, newShape, shapes))
+      updateShapes(set(shapeIndex, newShape, shapes))
     },
     [updateShapes]
   )
 
   useEffect(() => {
-    onDataChangedRef.current()
+    onDataChangedRef.current?.()
   }, [savedShapes])
 
   useEffect(() => {

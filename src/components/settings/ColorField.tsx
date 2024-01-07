@@ -1,9 +1,9 @@
-import _ from 'lodash/fp'
 import React, { useState } from 'react'
 import Button from '../../components/common/Button'
 import Panel from '../../components/common/Panel'
 import { paletteIcon, noStrokeIcon, noFillIcon } from '../../constants/icons'
 import './ColorField.css'
+import { uniqueId } from '../../utils/util'
 
 type ShapeStyleColorType = {
   selectedSettings: string | undefined
@@ -28,10 +28,10 @@ const ColorField = ({
   value = '',
   valueChanged
 }: ShapeStyleColorType) => {
-  const [customKey] = useState(_.uniqueId('settings_'))
+  const [customKey] = useState(uniqueId('settings_'))
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const parsedValue = _.toNumber(event.target.value)
-    valueChanged(field, _.isNaN(parsedValue) ? event.target.value : parsedValue)
+    const parsedValue = +event.target.value
+    valueChanged(field, isNaN(parsedValue) ? event.target.value : parsedValue)
   }
 
   const handleClick = (value: string) => {
@@ -46,7 +46,7 @@ const ColorField = ({
 
   const isPanelVisible = selectedSettings === customKey
 
-  if (_.isEmpty(values)) return null
+  if (!values.length) return null
 
   return (
     <>
@@ -92,13 +92,13 @@ const ColorField = ({
             <Button
               type="color"
               title="Custom color"
-              selected={!_.includes(value, values)}
+              selected={!values.includes(value)}
               value={value}
               onChange={handleChange}>
               <div
                 className='react-paint-editor-colorfield-customcolor'
                 style={{
-                  '--react-paint-editor-colorfield-color-value': _.includes(value, values) ? 'var(--react-paint-editor-app-font-color)' : value
+                  '--react-paint-editor-colorfield-color-value': values.includes(value) ? 'var(--react-paint-editor-app-font-color)' : value
                 }}
               >
                 <span dangerouslySetInnerHTML={{ __html: paletteIcon }} />

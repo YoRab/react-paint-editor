@@ -1,5 +1,4 @@
 import type { GridFormatType } from '../../constants/app'
-import _ from 'lodash/fp'
 import type { SelectionModeResize } from '../../types/Mode'
 import type { Point, DrawableShape, ShapeEntity, Rect } from '../../types/Shapes'
 import type { ToolsSettingsType } from '../../types/tools'
@@ -7,6 +6,7 @@ import { getPointPositionBeforeCanvasTransformation } from '../../utils/intersec
 import { roundForGrid } from '../../utils/transform'
 import { createRecPath } from './path'
 import { createRecSelectionPath, resizeRectSelection } from '../../utils/selection/rectSelection'
+import { uniqueId } from '../../utils/util'
 
 type rectish = 'text' | 'rect' | 'square' | 'picture'
 
@@ -38,7 +38,7 @@ export const createRectangle = <T extends 'rect' | 'square'>(
   const recShape = {
     toolId: shape.id,
     type: shape.type,
-    id: _.uniqueId(`${shape.type}_`),
+    id: uniqueId(`${shape.type}_`),
     x: cursorPosition[0],
     y: cursorPosition[1],
     width: 0,

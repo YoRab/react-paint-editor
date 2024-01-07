@@ -1,8 +1,8 @@
-import _ from 'lodash/fp'
 import React, { useState } from 'react'
 import Button from '../../components/common/Button'
 import Panel from '../../components/common/Panel'
 import './RangeField.css'
+import { uniqueId } from '../../utils/util'
 
 type ShapeStyleColorType = {
   selectedSettings: string | undefined
@@ -34,7 +34,7 @@ const RangeField = ({
   valueChanged
 }: ShapeStyleColorType) => {
   const roundValue = Math.round(value)
-  const [customKey] = useState(_.uniqueId('settings_'))
+  const [customKey] = useState(uniqueId('settings_'))
 
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const parsedValue = +event.target.value

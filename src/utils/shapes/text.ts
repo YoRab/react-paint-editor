@@ -1,4 +1,3 @@
-import _ from 'lodash/fp'
 import type {
   Point,
   DrawableShape,
@@ -14,6 +13,7 @@ import { getShapeInfos } from '../../utils/shapes/index'
 import { GridFormatType } from '../../constants/app'
 import { roundForGrid } from '../../utils/transform'
 import { createRecSelectionPath } from '../../utils/selection/rectSelection'
+import { uniqueId } from '../../utils/util'
 
 const DEFAULT_TEXT_VALUE: string[] = ['Texte']
 
@@ -67,7 +67,7 @@ export const createText = (
     {
       toolId: shape.id,
       type: shape.type,
-      id: _.uniqueId(`${shape.type}_`),
+      id: uniqueId(`${shape.type}_`),
       x: cursorPosition[0],
       y: cursorPosition[1],
       value: DEFAULT_TEXT_VALUE,

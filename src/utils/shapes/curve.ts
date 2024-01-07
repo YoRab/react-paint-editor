@@ -1,5 +1,4 @@
 import { GridFormatType } from '../../constants/app'
-import _ from 'lodash/fp'
 import { SelectionModeResize } from '../../types/Mode'
 import type { Point, DrawableShape, ShapeEntity } from '../../types/Shapes'
 import type { ToolsSettingsType } from '../../types/tools'
@@ -9,6 +8,8 @@ import { getShapeInfos } from '../../utils/shapes/index'
 import { getPolygonBorder } from './polygon'
 import { createLineSelectionPath } from '../../utils/selection/lineSelection'
 import { createCurvePath } from '../../utils/shapes/path'
+import { set } from '../../utils/object'
+import { uniqueId } from '../../utils/util'
 
 const buildPath = <T extends DrawableShape<'curve'>>(
   shape: T,
@@ -38,11 +39,8 @@ export const createCurve = (
     {
       toolId: shape.id,
       type: shape.type,
-      id: _.uniqueId(`${shape.type}_`),
-      points: _.flow(
-        _.range(0),
-        _.map(() => cursorPosition)
-      )(shape.settings.pointsCount.default),
+      id: uniqueId(`${shape.type}_`),
+      points: new Array(shape.settings.pointsCount.default).fill(cursorPosition),
       rotation: 0,
       style: {
         opacity: shape.settings.opacity.default,
@@ -81,7 +79,7 @@ export const resizeCurve = (
     center,
     canvasOffset
   )
-  const updatedShape = _.set(
+  const updatedShape = set(
     ['points', selectionMode.anchor],
     cursorPositionBeforeResize,
     originalShape

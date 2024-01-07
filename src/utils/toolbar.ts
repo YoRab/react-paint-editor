@@ -1,5 +1,4 @@
 import type { ShapeType } from '../types/Shapes'
-import _ from 'lodash/fp'
 import type { CustomTool, CustomToolInput } from '../types/tools'
 import type { RecursivePartial } from '../types/utils'
 import {
@@ -14,6 +13,8 @@ import {
   DEFAULT_SHAPE_TEXT,
   DEFAULT_SHAPE_PICTURE
 } from '../constants/tools'
+import { compact } from '../utils/array'
+import { mergeWith } from '../utils/object'
 
 export const getCurrentStructure = (
   availableTools: CustomTool[],
@@ -25,60 +26,59 @@ export const getCurrentStructure = (
       vertical: boolean
     }
   )[]
-) => {
-  return _.flow(
-    _.flatMap((group: ShapeType | { title: string; vertical: boolean; toolsType: ShapeType[] }) => {
-      if (!_.isObject(group)) {
-        return _.filter({ type: group }, availableTools)
-      }
-      const toolsType = _.filter(tool => _.includes(tool.type, group.toolsType), availableTools)
-      if (!toolsType) return null
-      return { ...group, toolsType }
-    }),
-    _.compact
-  )(defaultStructure) as unknown as (
-    | CustomTool
-    | {
-      title: string
-      toolsType: CustomTool[]
-      vertical: boolean
+): (CustomTool |
+{
+  title: string
+  toolsType: CustomTool[]
+  vertical: boolean
+})[] => {
+
+  const structure = defaultStructure.flatMap((group): CustomTool | CustomTool[] | {
+    toolsType: CustomTool[];
+    title: string;
+    vertical: boolean;
+  } | null => {
+    if (typeof group !== 'object') {
+      return availableTools.filter(tool => tool.type === group)
     }
-  )[]
+    const toolsType = availableTools.filter(tool => group.toolsType.includes(tool.type))
+    if (!toolsType) return null
+    return { ...group, toolsType }
+  })
+  return compact(structure)
 }
 
-export const sanitizeTools = (tools: RecursivePartial<CustomToolInput>[], withPicture = false) => {
+export const sanitizeTools = (tools: RecursivePartial<CustomToolInput>[], withPicture = false): CustomTool[] => {
   const customizer = (objValue: unknown, srcValue: unknown) => {
-    if (_.isArray(objValue)) {
+    if (Array.isArray(objValue)) {
       return srcValue
     }
   }
 
-  return _.flow(
-    _.map((tool: RecursivePartial<CustomToolInput>) => {
-      if (!_.isObject(tool)) return null
-      switch (tool.type) {
-        case 'brush':
-          return _.mergeWith(customizer, DEFAULT_SHAPE_BRUSH, tool)
-        case 'circle':
-          return _.mergeWith(customizer, DEFAULT_SHAPE_CIRCLE, tool)
-        case 'curve':
-          return _.mergeWith(customizer, DEFAULT_SHAPE_CURVE, tool)
-        case 'ellipse':
-          return _.mergeWith(customizer, DEFAULT_SHAPE_ELLIPSE, tool)
-        case 'line':
-          return _.mergeWith(customizer, DEFAULT_SHAPE_LINE, tool)
-        case 'polygon':
-          return _.mergeWith(customizer, DEFAULT_SHAPE_POLYGON, tool)
-        case 'rect':
-          return _.mergeWith(customizer, DEFAULT_SHAPE_RECT, tool)
-        case 'square':
-          return _.mergeWith(customizer, DEFAULT_SHAPE_SQUARE, tool)
-        case 'text':
-          return _.mergeWith(customizer, DEFAULT_SHAPE_TEXT, tool)
-      }
-      return null
-    }),
-    tools => (withPicture ? [...tools, DEFAULT_SHAPE_PICTURE] : tools),
-    _.compact
-  )(tools) as CustomTool[]
+  const customTools = tools.map((tool: RecursivePartial<CustomToolInput>) => {
+    if (typeof tool !== 'object') return null
+    switch (tool.type) {
+      case 'brush':
+        return mergeWith(customizer, DEFAULT_SHAPE_BRUSH, tool) as CustomTool
+      case 'circle':
+        return mergeWith(customizer, DEFAULT_SHAPE_CIRCLE, tool) as CustomTool
+      case 'curve':
+        return mergeWith(customizer, DEFAULT_SHAPE_CURVE, tool) as CustomTool
+      case 'ellipse':
+        return mergeWith(customizer, DEFAULT_SHAPE_ELLIPSE, tool) as CustomTool
+      case 'line':
+        return mergeWith(customizer, DEFAULT_SHAPE_LINE, tool) as CustomTool
+      case 'polygon':
+        return mergeWith(customizer, DEFAULT_SHAPE_POLYGON, tool) as CustomTool
+      case 'rect':
+        return mergeWith(customizer, DEFAULT_SHAPE_RECT, tool) as CustomTool
+      case 'square':
+        return mergeWith(customizer, DEFAULT_SHAPE_SQUARE, tool) as CustomTool
+      case 'text':
+        return mergeWith(customizer, DEFAULT_SHAPE_TEXT, tool) as CustomTool
+    }
+    return null
+  })
+
+  return compact(withPicture ? [...customTools, DEFAULT_SHAPE_PICTURE] : customTools)
 }

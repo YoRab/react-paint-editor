@@ -1,8 +1,6 @@
 import { ShapeTypeArray } from '../constants/shapes'
-import _ from 'lodash/fp'
 import type {
   DrawableShape,
-  DrawableShapeJson,
   ExportDataType,
   Point,
   ShapeEntity
@@ -12,6 +10,7 @@ import { initCanvasContext } from './canvas'
 import { migrateShapesV065 } from './migration'
 import { drawShape } from './shapes'
 import { PICTURE_DEFAULT_SIZE } from '../constants/picture'
+import { compact } from '../utils/array'
 
 export const addSizeAndConvertSvgToObjectUrl = (svgFileContent: string) => {
   const parser = new DOMParser()
@@ -117,50 +116,46 @@ export const decodeImportedData = async (
   selectionPadding: number
 ) => {
   const promisesArray: Promise<void>[] = []
-  const jsonShapes = shapesForJson.shapes
-  const shapes: ShapeEntity[] = _.flow(
-    (shapes: typeof jsonShapes) => migrateShapesV065(shapes),
-    _.map((shape: DrawableShapeJson) => {
-      if (!ShapeTypeArray.includes(shape.type)) return null
-      if (shape.type === 'picture') {
-        const img = new Image()
-        const newPromise = new Promise<void>((resolve, reject) => {
-          img.onload = () => {
-            URL.revokeObjectURL(img.src)
-            resolve()
-          }
 
-          img.onerror = () => {
-            reject(new Error('Some images could not be loaded'))
-          }
-        })
-        promisesArray.push(newPromise)
-
-        if (shape.src.startsWith('http')) {
-          fetchAndStringify(shape.src)
-            .then(picData => {
-              img.src = picData
-            })
-            .catch(() => {
-              img.src = '' // to trigger onerror
-            })
-        } else {
-          img.src = shape.src
+  const jsonShapes = migrateShapesV065(shapesForJson.shapes)
+  const shapes: ShapeEntity[] = compact(jsonShapes.map(shape => {
+    if (!shape || !ShapeTypeArray.includes(shape.type)) return null
+    if (shape.type === 'picture') {
+      const img = new Image()
+      const newPromise = new Promise<void>((resolve, reject) => {
+        img.onload = () => {
+          URL.revokeObjectURL(img.src)
+          resolve()
         }
 
-        return addDefaultAndTempShapeProps(
-          {
-            ...shape,
-            img
-          },
-          currentScale,
-          selectionPadding
-        )
+        img.onerror = () => {
+          reject(new Error('Some images could not be loaded'))
+        }
+      })
+      promisesArray.push(newPromise)
+      if (shape.src.startsWith('http')) {
+        fetchAndStringify(shape.src)
+          .then(picData => {
+            img.src = picData
+          })
+          .catch(() => {
+            img.src = '' // to trigger onerror
+          })
+      } else {
+        img.src = shape.src
       }
-      return addDefaultAndTempShapeProps(shape, currentScale, selectionPadding)
-    }),
-    _.compact
-  )(jsonShapes)
+
+      return addDefaultAndTempShapeProps(
+        {
+          ...shape,
+          img
+        },
+        currentScale,
+        selectionPadding
+      )
+    }
+    return addDefaultAndTempShapeProps(shape, currentScale, selectionPadding)
+  }))
 
   await Promise.all(promisesArray)
   return shapes

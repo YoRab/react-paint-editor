@@ -1,5 +1,4 @@
 import { GridFormatType } from '../../constants/app'
-import _ from 'lodash/fp'
 import { SelectionModeResize } from '../../types/Mode'
 import type {
   Point,
@@ -14,6 +13,8 @@ import { roundForGrid } from '../../utils/transform'
 import { getShapeInfos } from '.'
 import { createLineSelectionPath } from '../../utils/selection/lineSelection'
 import { createPolygonPath } from '../../utils/shapes/path'
+import { set } from '../../utils/object'
+import { uniqueId } from '../../utils/util'
 
 const buildPath = <T extends DrawableShape<'polygon'>>(
   shape: T,
@@ -43,11 +44,8 @@ export const createPolygon = (
     {
       toolId: shape.id,
       type: shape.type,
-      id: _.uniqueId(`${shape.type}_`),
-      points: _.flow(
-        _.range(0),
-        _.map(() => cursorPosition)
-      )(shape.settings.pointsCount.default),
+      id: uniqueId(`${shape.type}_`),
+      points: new Array(shape.settings.pointsCount.default).fill(cursorPosition),
       rotation: 0,
       style: {
         opacity: shape.settings.opacity.default,
@@ -74,26 +72,11 @@ export const drawPolygon = (
 }
 
 export const getPolygonBorder = (polygon: Polygon, selectionPadding: number): Rect => {
-  const minX: number = _.flow(
-    _.map((point: Point) => point[0]),
-    _.min,
-    _.add(-selectionPadding)
-  )(polygon.points)
-  const maxX: number = _.flow(
-    _.map((point: Point) => point[0]),
-    _.max,
-    _.add(selectionPadding)
-  )(polygon.points)
-  const minY: number = _.flow(
-    _.map((point: Point) => point[1]),
-    _.min,
-    _.add(-selectionPadding)
-  )(polygon.points)
-  const maxY: number = _.flow(
-    _.map((point: Point) => point[1]),
-    _.max,
-    _.add(selectionPadding)
-  )(polygon.points)
+  const minX = Math.min(...polygon.points.map(point => point[0])) - selectionPadding
+  const maxX = Math.max(...polygon.points.map(point => point[0])) + selectionPadding
+
+  const minY = Math.min(...polygon.points.map(point => point[1])) - selectionPadding
+  const maxY = Math.max(...polygon.points.map(point => point[1])) + selectionPadding
 
   return { x: minX, width: maxX - minX, y: minY, height: maxY - minY }
 }
@@ -156,7 +139,7 @@ export const resizePolygon = (
     center,
     canvasOffset
   )
-  const updatedShape = _.set(
+  const updatedShape = set(
     ['points', selectionMode.anchor],
     cursorPositionBeforeResize,
     originalShape
@@ -190,15 +173,13 @@ export const updatePolygonLinesCount = <T extends DrawableShape<'polygon'>>(
   } else {
     //TODO : better distribution for new points
     const nbPointsToAdd = newPointsCount - currentPointsCount
-    const newPoints = _.flow(
-      _.range(0),
-      _.map(index => [
-        shape.points[0][0] +
-        ((shape.points[1][0] - shape.points[0][0]) * (index + 1)) / (nbPointsToAdd + 1),
-        shape.points[0][1] +
-        ((shape.points[1][1] - shape.points[0][1]) * (index + 1)) / (nbPointsToAdd + 1)
-      ])
-    )(nbPointsToAdd) as Point[]
+    const newPoints: Point[] = new Array(nbPointsToAdd).fill(undefined).map((_val, index) => [
+      shape.points[0][0] +
+      ((shape.points[1][0] - shape.points[0][0]) * (index + 1)) / (nbPointsToAdd + 1),
+      shape.points[0][1] +
+      ((shape.points[1][1] - shape.points[0][1]) * (index + 1)) / (nbPointsToAdd + 1)
+    ])
+
     const totalPoints = [
       shape.points[0],
       ...newPoints,

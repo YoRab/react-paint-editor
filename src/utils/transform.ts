@@ -1,7 +1,6 @@
 import type { SelectionModeData } from '../types/Mode'
 import type { Point, ShapeEntity } from '../types/Shapes'
 import type { GridFormatType } from '../constants/app'
-import _ from 'lodash/fp'
 import { GRID_ROTATION_STEPS, GRID_STEP } from '../constants/style'
 import { resizeShape, rotateShape, translateShape } from './shapes'
 import { addNewPointToShape } from './shapes/brush'
