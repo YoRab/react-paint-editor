@@ -16,19 +16,19 @@ export const set = <T extends Record<string, any> | unknown[]>(
     const result = (Array.isArray(obj) ? [...obj] : { ...obj }) as T;
     const chunks = Array.isArray(path) ? path : typeof path === 'string' ? path.split('.') : [path];
     chunks.reduce<Record<string, any>>((acc, chunk, index) => {
-        acc[chunk] ??= {};
+        acc[chunk] = isRecord(acc[chunk]) ? { ...acc[chunk] } : Array.isArray(acc[chunk]) ? [...acc[chunk]] : (acc[chunk] === undefined || acc[chunk] === null) ? {} : acc[chunk];
         if (index === chunks.length - 1) acc[chunk] = value;
         return acc[chunk];
-    }, result);
+    }, result) as T;
     return result
 }
 
-const mergeCheckIsRecord = (value: unknown): value is Record<string, unknown> => {
-    return typeof value === 'object' && value !== null;
+const isRecord = (value: unknown): value is Record<string, unknown> => {
+    return typeof value === 'object' && !Array.isArray(value) && value !== null;
 }
 
 export const mergeWith = (customMergeFn: (objValue: unknown, srcValue: unknown, key: string) => unknown, target: unknown, source: unknown): unknown => {
-    if (!mergeCheckIsRecord(target) || !mergeCheckIsRecord(source)) {
+    if (!isRecord(target) || !isRecord(source)) {
         return source
     }
 
@@ -45,4 +45,30 @@ export const mergeWith = (customMergeFn: (objValue: unknown, srcValue: unknown, 
     }
 
     return merged;
+};
+
+export const isEqual = (a: unknown, b: unknown): boolean => {
+    if (a === b) {
+        return true;
+    }
+
+    if (typeof a !== 'object' || typeof b !== 'object' || a === null || b === null) {
+        return false;
+    }
+
+    const keysA = Object.keys(a);
+    const keysB = Object.keys(b);
+
+    if (keysA.length !== keysB.length) {
+        return false;
+    }
+
+    for (const key of keysA) {
+        //@ts-ignore
+        if (!keysB.includes(key) || !isEqual(a[key], b[key])) {
+            return false;
+        }
+    }
+
+    return true;
 };

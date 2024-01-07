@@ -1,10 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { ShapeEntity } from '../types/Shapes'
-import _ from 'lodash/fp'
 import { createPicture } from '../utils/shapes/picture'
 import { refreshShape } from '../utils/shapes/index'
 import { PICTURE_DEFAULT_SIZE } from '../constants/picture'
-import { omit, set } from '../utils/object'
+import { isEqual, omit, set } from '../utils/object'
 
 const useShapes = (
   onDataChanged: (() => void) | undefined,
@@ -38,11 +37,10 @@ const useShapes = (
 
   const saveShapes = useCallback(() => {
     setSavedShapes(prevSavedShaped => {
-      return _.isEqual(
+      return isEqual(
         prevSavedShaped.states[prevSavedShaped.cursor].shapes,
         shapesRef.current
-      )
-        ? prevSavedShaped
+      ) ? prevSavedShaped
         : {
           states: [
             ...prevSavedShaped.states.slice(0, prevSavedShaped.cursor + 1),
