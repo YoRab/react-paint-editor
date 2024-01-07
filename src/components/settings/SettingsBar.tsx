@@ -372,11 +372,11 @@ const SettingsBar = ({
 
   const settingsInMenu = width < settingsBreakpoint
 
-  const handleShapeStyleChange = (field: string, value: string | number | boolean) => {
+  const handleShapeStyleChange = (field: string, value: string | number | boolean, needHistorySave = true) => {
     if (selectedShape) {
       updateShape(
         refreshShape(set(['style', field], value, selectedShape), currentScale, selectionPadding),
-        true
+        needHistorySave
       )
       selectedShapeTool && updateToolSettings(selectedShapeTool.id, field, value)
     } else {
