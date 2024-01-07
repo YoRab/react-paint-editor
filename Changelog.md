@@ -1,3 +1,9 @@
+# V0.9.3
+ - Remove lodash from dependencies
+ - fix settings targetting bad tools
+ - fix curve tool points count not being updatable
+ - BREAKING CHANGE : rename globalAlpha shape prop to opacity to fix confusion between them
+
 # V0.9.2
 
  - fix mix-up between cjs and esm build
