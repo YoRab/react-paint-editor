@@ -2,6 +2,7 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import tsconfigPaths from 'vite-tsconfig-paths'
 import { resolve } from 'path'
+import terser from '@rollup/plugin-terser';
 
 // https://vitejs.dev/config/
 export default defineConfig({
@@ -19,7 +20,8 @@ export default defineConfig({
       output: {
         assetFileNames: 'react-paint.css',
         generatedCode: "es2015"
-      }
+      },
+      plugins: [terser()]
     }
   },
   plugins: [react(), tsconfigPaths()],
