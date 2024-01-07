@@ -18,6 +18,7 @@ import { calculateTextFontSize } from '../../utils/shapes/text'
 import { refreshShape } from '../../utils/shapes'
 import './SettingsBar.css'
 import { set } from '../../utils/object'
+import { updateCurveLinesCount } from 'src/utils/shapes/curve'
 
 const SETTING_WIDTH = 40
 
@@ -415,9 +416,10 @@ const SettingsBar = ({
 
   const handlePolygonLinesCount = (field: string, value: string | number) => {
     if (selectedShape) {
-      if (selectedShape.type !== 'polygon') return
+      if (selectedShape.type !== "polygon" && selectedShape.type !== "curve") return
       updateShape(
-        updatePolygonLinesCount(selectedShape, value as number, currentScale, selectionPadding),
+        (selectedShape.type === "polygon" ? updatePolygonLinesCount(selectedShape, value as number, currentScale, selectionPadding) :
+          updateCurveLinesCount(selectedShape, value as number, currentScale, selectionPadding)),
         true
       )
       selectedShapeTool && updateToolSettings(selectedShapeTool.id, field, value)

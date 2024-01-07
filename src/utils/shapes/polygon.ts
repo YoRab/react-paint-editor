@@ -153,7 +153,7 @@ export const updatePolygonLinesCount = <T extends DrawableShape<'polygon'>>(
   newPointsCount: number,
   currentScale: number,
   selectionPadding: number
-) => {
+): T => {
   const currentPointsCount = shape.points.length
   if (currentPointsCount === newPointsCount) return shape
   if (currentPointsCount > newPointsCount) {
