@@ -64,8 +64,6 @@ export const checkPositionIntersection = (
 ): false | HoverModeData => {
   if (shape.locked) return false
 
-  const scaleWithMinCap = Math.min(1, currentScale)
-
   const { borders, center } = getShapeInfos(shape, selectionPadding)
 
   const newPosition = getPointPositionAfterCanvasTransformation(
@@ -81,10 +79,10 @@ export const checkPositionIntersection = (
         if (
           isPointInsideRect(
             {
-              x: shape.points[i][0] - SELECTION_ANCHOR_SIZE / 2 / scaleWithMinCap,
-              y: shape.points[i][1] - SELECTION_ANCHOR_SIZE / 2 / scaleWithMinCap,
-              width: SELECTION_ANCHOR_SIZE / scaleWithMinCap,
-              height: SELECTION_ANCHOR_SIZE / scaleWithMinCap
+              x: shape.points[i][0] - SELECTION_ANCHOR_SIZE / 2 / currentScale,
+              y: shape.points[i][1] - SELECTION_ANCHOR_SIZE / 2 / currentScale,
+              width: SELECTION_ANCHOR_SIZE / currentScale,
+              height: SELECTION_ANCHOR_SIZE / currentScale
             },
             newPosition
           )
@@ -96,13 +94,13 @@ export const checkPositionIntersection = (
       if (
         isPointInsideRect(
           {
-            x: borders.x + borders.width / 2 - SELECTION_ANCHOR_SIZE / 2 / scaleWithMinCap,
+            x: borders.x + borders.width / 2 - SELECTION_ANCHOR_SIZE / 2 / currentScale,
             y:
               borders.y -
-              SELECTION_ANCHOR_SIZE / scaleWithMinCap -
-              SELECTION_ROTATED_ANCHOR_POSITION / scaleWithMinCap,
-            width: SELECTION_ANCHOR_SIZE / scaleWithMinCap,
-            height: SELECTION_ANCHOR_SIZE / scaleWithMinCap
+              SELECTION_ANCHOR_SIZE / currentScale -
+              SELECTION_ROTATED_ANCHOR_POSITION / currentScale,
+            width: SELECTION_ANCHOR_SIZE / currentScale,
+            height: SELECTION_ANCHOR_SIZE / currentScale
           },
           newPosition
         )
@@ -117,13 +115,13 @@ export const checkPositionIntersection = (
               x:
                 borders.x +
                 borders.width * anchorPosition[0] -
-                SELECTION_ANCHOR_SIZE / 2 / scaleWithMinCap,
+                SELECTION_ANCHOR_SIZE / 2 / currentScale,
               y:
                 borders.y +
                 borders.height * anchorPosition[1] -
-                SELECTION_ANCHOR_SIZE / 2 / scaleWithMinCap,
-              width: SELECTION_ANCHOR_SIZE / scaleWithMinCap,
-              height: SELECTION_ANCHOR_SIZE / scaleWithMinCap
+                SELECTION_ANCHOR_SIZE / 2 / currentScale,
+              width: SELECTION_ANCHOR_SIZE / currentScale,
+              height: SELECTION_ANCHOR_SIZE / currentScale
             },
             newPosition
           )
