@@ -1,4 +1,4 @@
-import { Point, Rect } from '../types/Shapes'
+import { Circle, Point, Rect } from '../types/Shapes'
 type Vector = [Point, Point]
 
 export const degreesToRadians = (degrees: number) => degrees * (Math.PI / 180)
@@ -13,6 +13,15 @@ export const isPointInsideRect = (rect: Rect, point: Point) => {
     point[1] <= rect.y + rect.height
   )
 }
+
+export const isCircleIntersectRect = (rect: Rect, circle: Circle) => {
+  const distX = circle.x - Math.min(Math.max(circle.x, rect.x), rect.x + rect.width);
+  const distY = circle.y - Math.min(Math.max(circle.y, rect.y), rect.y + rect.height);
+  const distance = Math.sqrt((distX * distX) + (distY * distY));
+
+  return distance <= circle.radius
+}
+
 
 export const rotatePoint = ({
   origin = [0, 0],
