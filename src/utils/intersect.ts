@@ -4,9 +4,9 @@ import {
   SELECTION_ROTATED_ANCHOR_POSITION
 } from '../constants/shapes'
 import type { HoverModeData } from '../types/Mode'
-import type { Point, DrawableShape } from '../types/Shapes'
+import type { Point, DrawableShape, Rect } from '../types/Shapes'
 import { getShapeInfos } from './shapes'
-import { rotatePoint, isPointInsideRect } from './trigo'
+import { rotatePoint, isPointInsideRect, isCircleIntersectRect } from './trigo'
 
 export const getCursorPosition = (
   e: MouseEvent | TouchEvent,
@@ -28,6 +28,10 @@ export const getCursorPosition = (
     ((clientX - canvasBoundingRect.left) * (givenWidth / canvasBoundingRect.width)) / scaleRatio,
     ((clientY - canvasBoundingRect.top) * (givenHeight / canvasBoundingRect.height)) / scaleRatio
   ]
+}
+
+export const isTouchGesture = (e: MouseEvent | TouchEvent): e is TouchEvent => {
+  return 'touches' in e
 }
 
 export const getPointPositionAfterCanvasTransformation = (
@@ -54,13 +58,17 @@ export const getPointPositionBeforeCanvasTransformation = (
     rotation: -shapeRotation
   })
 
+
+const isPartOfRect = (rect: Rect, point: Point, radius: number) => radius ? isCircleIntersectRect(rect, { x: point[0], y: point[1], radius }) : isPointInsideRect(rect, point)
+
 export const checkPositionIntersection = (
   shape: DrawableShape,
   position: Point,
   canvasOffset: Point,
   selectionPadding: number,
-  currentScale = 1,
-  checkAnchors = false
+  currentScale: number,
+  checkAnchors = false,
+  radius = 0,
 ): false | HoverModeData => {
   if (shape.locked) return false
 
@@ -77,14 +85,15 @@ export const checkPositionIntersection = (
     if (shape.type === 'line' || shape.type === 'polygon' || shape.type === 'curve') {
       for (let i = 0; i < shape.points.length; i++) {
         if (
-          isPointInsideRect(
+          isPartOfRect(
             {
               x: shape.points[i][0] - SELECTION_ANCHOR_SIZE / 2 / currentScale,
               y: shape.points[i][1] - SELECTION_ANCHOR_SIZE / 2 / currentScale,
               width: SELECTION_ANCHOR_SIZE / currentScale,
               height: SELECTION_ANCHOR_SIZE / currentScale
             },
-            newPosition
+            newPosition,
+            radius
           )
         ) {
           return { mode: 'resize', anchor: i }
@@ -92,7 +101,7 @@ export const checkPositionIntersection = (
       }
     } else {
       if (
-        isPointInsideRect(
+        isPartOfRect(
           {
             x: borders.x + borders.width / 2 - SELECTION_ANCHOR_SIZE / 2 / currentScale,
             y:
@@ -102,7 +111,8 @@ export const checkPositionIntersection = (
             width: SELECTION_ANCHOR_SIZE / currentScale,
             height: SELECTION_ANCHOR_SIZE / currentScale
           },
-          newPosition
+          newPosition,
+          radius
         )
       ) {
         return { mode: 'rotate' }
@@ -110,7 +120,7 @@ export const checkPositionIntersection = (
 
       for (const anchorPosition of SELECTION_RESIZE_ANCHOR_POSITIONS) {
         if (
-          isPointInsideRect(
+          isPartOfRect(
             {
               x:
                 borders.x +
@@ -123,7 +133,8 @@ export const checkPositionIntersection = (
               width: SELECTION_ANCHOR_SIZE / currentScale,
               height: SELECTION_ANCHOR_SIZE / currentScale
             },
-            newPosition
+            newPosition,
+            radius
           )
         ) {
           return { mode: 'resize', anchor: anchorPosition }
@@ -132,5 +143,5 @@ export const checkPositionIntersection = (
     }
   }
 
-  return isPointInsideRect(borders, newPosition) ? { mode: 'translate' } : false
+  return isPartOfRect(borders, newPosition, radius) ? { mode: 'translate' } : false
 }

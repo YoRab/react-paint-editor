@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { selectShape } from '../utils/selection'
 import type { Point, ShapeEntity, ShapeType } from '../types/Shapes'
-import { checkPositionIntersection, getCursorPosition } from '../utils/intersect'
+import { checkPositionIntersection, getCursorPosition, isTouchGesture } from '../utils/intersect'
 import type { HoverModeData, SelectionModeData } from '../types/Mode'
 import { transformShape } from '../utils/transform'
 import type { CustomTool, ToolsType } from '../types/tools'
@@ -229,7 +229,8 @@ const useDrawableCanvas = ({
           scaleRatio,
           canvasOffset,
           selectedShape,
-          selectionPadding
+          selectionPadding,
+          isTouchGesture(e)
         )
         setSelectedShape(shape)
         setSelectionMode(mode)
@@ -340,7 +341,7 @@ const useDrawableCanvas = ({
             scaleRatio
           )
           if (
-            checkPositionIntersection(selectedShape, cursorPosition, canvasOffset, selectionPadding)
+            checkPositionIntersection(selectedShape, cursorPosition, canvasOffset, selectionPadding, scaleRatio)
           ) {
             setSelectionMode({
               mode: 'textedition',
