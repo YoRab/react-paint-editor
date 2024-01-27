@@ -41,7 +41,8 @@ export const selectShape = (
   currentScale: number,
   canvasOffset: Point,
   selectedShape: ShapeEntity | undefined,
-  selectionPadding: number
+  selectionPadding: number,
+  isTouchGesture: boolean
 ): { mode: SelectionModeData<Point | number>; shape: ShapeEntity | undefined } => {
   if (selectedShape) {
     const positionIntersection = checkPositionIntersection(
@@ -50,7 +51,8 @@ export const selectShape = (
       canvasOffset,
       selectionPadding,
       currentScale,
-      true
+      true,
+      isTouchGesture ? 20 : undefined
     ) || {
       mode: 'default'
     }
@@ -74,7 +76,17 @@ export const selectShape = (
       currentScale,
       false
     )
-  })
+  }) ?? (!selectedShape || isTouchGesture) ? shapes.find(shape => { // another round with radius if no shape was selected for tiny shapes and mobile
+    return !!checkPositionIntersection(
+      shape,
+      cursorPosition,
+      canvasOffset,
+      selectionPadding,
+      currentScale,
+      false,
+      20
+    )
+  }) : undefined
   if (!!foundShape) {
     return {
       shape: foundShape,
