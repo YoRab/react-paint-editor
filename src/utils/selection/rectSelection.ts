@@ -22,14 +22,14 @@ export const createRecSelectionPath = (
                 [borders.x + borders.width / 2, borders.y],
                 [
                     borders.x + borders.width / 2,
-                    borders.y - SELECTION_ANCHOR_SIZE / 2 - SELECTION_ROTATED_ANCHOR_POSITION / currentScale
+                    borders.y - (SELECTION_ANCHOR_SIZE / 2 + SELECTION_ROTATED_ANCHOR_POSITION) / currentScale
                 ]
             ]
         }),
         anchors: [
             createCirclePath({
                 x: borders.x + borders.width / 2,
-                y: borders.y - SELECTION_ANCHOR_SIZE / 2 - SELECTION_ROTATED_ANCHOR_POSITION / currentScale,
+                y: borders.y - (SELECTION_ANCHOR_SIZE / 2 + SELECTION_ROTATED_ANCHOR_POSITION) / currentScale,
                 radius: SELECTION_ANCHOR_SIZE / 2 / currentScale
             }),
             ...SELECTION_RESIZE_ANCHOR_POSITIONS.map(anchorPosition =>
