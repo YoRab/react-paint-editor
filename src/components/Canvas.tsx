@@ -177,7 +177,6 @@ const Canvas = React.forwardRef<HTMLCanvasElement, DrawerType>(
       selectionPadding,
       isShiftPressed
     })
-    console.log(hoverMode)
 
     const { scaleRatio: currentScale } = canvasSize
 
