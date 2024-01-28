@@ -25,6 +25,7 @@ const handleMove = (
   height: number,
   scaleRatio: number,
   setHoverMode: React.Dispatch<React.SetStateAction<HoverModeData>>,
+  refreshHoveredShape: (cursorPosition: Point, canvasOffset: Point, currentScale: number) => void,
   updateSingleShape: (updatedShape: ShapeEntity) => void,
   setCanvasOffset: React.Dispatch<React.SetStateAction<Point>>,
   setSelectedShape: React.Dispatch<React.SetStateAction<ShapeEntity | undefined>>,
@@ -38,10 +39,12 @@ const handleMove = (
       cursorPosition[1] - canvasOffsetStartPosition[1]
     ])
   }
-  if (selectedShape == undefined) return
-  if (selectedShape.locked) return
 
   const cursorPosition = getCursorPosition(e, canvasRef.current, width, height, scaleRatio)
+  refreshHoveredShape(cursorPosition, canvasOffset, scaleRatio)
+
+  if (selectedShape == undefined) return
+  if (selectedShape.locked) return
 
   if (selectionMode.mode === 'default' || selectionMode.mode === 'textedition') {
     const positionIntersection = checkPositionIntersection(
@@ -89,6 +92,7 @@ type UseCanvasType = {
   setSelectedShape: React.Dispatch<React.SetStateAction<ShapeEntity | undefined>>
   activeTool: ToolsType
   setActiveTool: React.Dispatch<React.SetStateAction<ToolsType>>
+  refreshHoveredShape: (cursorPosition: Point, canvasOffset: Point, currentScale: number) => void
   canvasOffsetStartPosition: Point | undefined
   setCanvasOffsetStartPosition: React.Dispatch<React.SetStateAction<Point | undefined>>
   gridFormat: GridFormatType
@@ -109,6 +113,7 @@ const useDrawableCanvas = ({
   canvasSize,
   drawCanvasRef,
   setActiveTool,
+  refreshHoveredShape,
   shapes,
   selectionMode,
   activeTool,
@@ -147,6 +152,7 @@ const useDrawableCanvas = ({
           height,
           scaleRatio,
           setHoverMode,
+          refreshHoveredShape,
           updateSingleShape,
           setCanvasOffset,
           setSelectedShape,
@@ -157,10 +163,8 @@ const useDrawableCanvas = ({
     if (isInsideComponent) {
       document.addEventListener('mousemove', handleMouseMove)
       document.addEventListener('touchmove', handleMouseMove)
-    }
 
-    return () => {
-      if (isInsideComponent) {
+      return () => {
         document.removeEventListener('mousemove', handleMouseMove)
         document.removeEventListener('touchmove', handleMouseMove)
       }
@@ -181,6 +185,7 @@ const useDrawableCanvas = ({
     activeTool,
     setCanvasOffset,
     setSelectedShape,
+    refreshHoveredShape,
     selectionPadding,
     isShiftPressed
   ])
