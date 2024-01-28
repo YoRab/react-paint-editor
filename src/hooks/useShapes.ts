@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import type { ShapeEntity } from '../types/Shapes'
+import type { Point, ShapeEntity } from '../types/Shapes'
 import { createPicture } from '../utils/shapes/picture'
 import { refreshShape } from '../utils/shapes/index'
 import { PICTURE_DEFAULT_SIZE } from '../constants/picture'
 import { isEqual, omit, set } from '../utils/object'
+import { checkPositionIntersection } from 'src/utils/intersect'
 
 const useShapes = (
   onDataChanged: (() => void) | undefined,
@@ -19,6 +20,7 @@ const useShapes = (
   onDataChangedRef.current = onDataChanged
 
   const [selectedShape, setSelectedShape] = useState<ShapeEntity | undefined>(undefined)
+  const [hoveredShape, setHoveredShape] = useState<ShapeEntity | undefined>(undefined)
 
   const [savedShapes, setSavedShapes] = useState<{
     states: {
@@ -56,6 +58,20 @@ const useShapes = (
 
   const addShape = useCallback((newShape: ShapeEntity) => {
     shapesRef.current = [newShape, ...shapesRef.current]
+  }, [])
+
+  const refreshHoveredShape = useCallback((cursorPosition: Point, canvasOffset: Point, currentScale: number) => {
+    const foundShape = shapesRef.current.find(shape => {
+      return !!checkPositionIntersection(
+        shape,
+        cursorPosition,
+        canvasOffset,
+        selectionPadding,
+        currentScale,
+        false
+      )
+    })
+    setHoveredShape(foundShape)
   }, [])
 
   const addPictureShape = useCallback(
@@ -222,11 +238,13 @@ const useShapes = (
   return {
     shapesRef,
     selectedShape,
+    hoveredShape,
     addShape,
     addPictureShape,
     moveShapes,
     saveShapes,
     setSelectedShape,
+    refreshHoveredShape,
     toggleShapeVisibility,
     toggleShapeLock,
     removeShape,

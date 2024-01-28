@@ -166,8 +166,11 @@ export const resizeBrush = (
   const shapeWidth = Math.max(0, borderWidth - 2 * selectionPadding)
   const shapeHeight = Math.max(0, borderHeight - 2 * selectionPadding)
 
-  const scaleX = shapeWidth / originalShapeWidth
-  const scaleY = shapeHeight / originalShapeHeight
+  const scaleX = originalShapeWidth ? shapeWidth / originalShapeWidth : 1
+  const scaleY = originalShapeHeight ? shapeHeight / originalShapeHeight : 1
+
+  if (!originalShapeWidth || !originalShapeHeight)
+    return originalShape
 
   const diffX = roundValues(borderX - originalBorders.x)
   const diffY = roundValues(borderY - originalBorders.y)

@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useImperativeHandle, useRef } from 'react'
 import type { Point, ShapeEntity } from '../types/Shapes'
 import { initCanvasContext } from '../utils/canvas'
-import type { SelectionModeData } from '../types/Mode'
+import type { HoverModeData, SelectionModeData } from '../types/Mode'
 import EditTextBox from './toolbox/EditTextBox'
 import useDrawableCanvas from '../hooks/useDrawableCanvas'
 import type { ToolsType } from '../types/tools'
@@ -49,10 +49,25 @@ const renderSelectionCanvas = (
   selectionPadding: number,
   selectionWidth: number,
   selectionColor: string,
-  selectedShape: ShapeEntity | undefined
+  selectedShape: ShapeEntity | undefined,
+  hoveredShape: ShapeEntity | undefined,
 ) => {
   const { width, height, scaleRatio } = canvasSize
   selectionCtx.clearRect(0, 0, width, height)
+
+  hoveredShape &&
+    hoveredShape.id !== selectedShape?.id && activeTool.type === "selection" && selectionMode.mode === "default" &&
+    drawShapeSelection({
+      ctx: selectionCtx,
+      shape: hoveredShape,
+      currentScale: scaleRatio,
+      canvasOffset,
+      selectionPadding,
+      selectionWidth,
+      selectionColor,
+      withAnchors: false
+    })
+
   selectedShape &&
     activeTool.type !== 'brush' &&
     drawShapeSelection({
@@ -86,6 +101,8 @@ type DrawerType = {
   updateSingleShape: (updatedShape: ShapeEntity) => void
   selectedShape: ShapeEntity | undefined
   setSelectedShape: React.Dispatch<React.SetStateAction<ShapeEntity | undefined>>
+  hoveredShape: ShapeEntity | undefined
+  refreshHoveredShape: (cursorPosition: Point, canvasOffset: Point, currentScale: number) => void
   activeTool: ToolsType
   setActiveTool: React.Dispatch<React.SetStateAction<ToolsType>>
   canvasOffsetStartPosition: Point | undefined
@@ -110,6 +127,8 @@ const Canvas = React.forwardRef<HTMLCanvasElement, DrawerType>(
       updateSingleShape,
       selectedShape,
       setSelectedShape,
+      hoveredShape,
+      refreshHoveredShape,
       saveShapes,
       activeTool,
       setActiveTool,
@@ -148,6 +167,7 @@ const Canvas = React.forwardRef<HTMLCanvasElement, DrawerType>(
       selectionCanvasRef,
       canvasOffsetStartPosition,
       setSelectedShape,
+      refreshHoveredShape,
       setCanvasOffsetStartPosition,
       updateSingleShape,
       gridFormat,
@@ -218,10 +238,12 @@ const Canvas = React.forwardRef<HTMLCanvasElement, DrawerType>(
             selectionPadding,
             selectionWidth,
             selectionColor,
-            selectedShape
+            selectedShape,
+            hoveredShape,
           )
         )
     }, [
+      hoveredShape,
       selectionMode,
       selectedShape,
       activeTool,

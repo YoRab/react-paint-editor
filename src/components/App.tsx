@@ -153,10 +153,12 @@ const App = ({
   const {
     shapesRef,
     selectedShape,
+    hoveredShape,
     addShape,
     addPictureShape,
     moveShapes,
     setSelectedShape,
+    refreshHoveredShape,
     removeShape,
     updateShape,
     backwardShape,
@@ -449,6 +451,8 @@ const App = ({
           updateSingleShape={updateShape}
           selectedShape={selectedShape}
           setSelectedShape={setSelectedShape}
+          hoveredShape={hoveredShape}
+          refreshHoveredShape={refreshHoveredShape}
           canvasOffset={canvasOffset}
           setCanvasOffset={setCanvasOffset}
           saveShapes={saveShapes}

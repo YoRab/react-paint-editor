@@ -76,7 +76,7 @@ export const selectShape = (
       currentScale,
       false
     )
-  }) ?? (!selectedShape || isTouchGesture) ? shapes.find(shape => { // another round with radius if no shape was selected for tiny shapes and mobile
+  }) ?? ((!selectedShape || isTouchGesture) ? shapes.find(shape => { // another round with radius if no shape was selected for tiny shapes and mobile
     return !!checkPositionIntersection(
       shape,
       cursorPosition,
@@ -86,7 +86,7 @@ export const selectShape = (
       false,
       20
     )
-  }) : undefined
+  }) : undefined)
   if (!!foundShape) {
     return {
       shape: foundShape,
