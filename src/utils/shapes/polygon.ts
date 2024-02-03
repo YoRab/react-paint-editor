@@ -89,26 +89,32 @@ export const translatePolygon = <U extends DrawableShape<'polygon'>>(
   currentScale: number,
   selectionPadding: number
 ) => {
-  if (gridFormat) {
-    const { borders } = getShapeInfos(originalShape, selectionPadding)
-    const translationX =
-      roundForGrid(borders.x + cursorPosition[0] - originalCursorPosition[0], gridFormat) -
-      borders.x
-    const translationY =
-      roundForGrid(borders.y + cursorPosition[1] - originalCursorPosition[1], gridFormat) -
-      borders.y
-    return {
-      ...originalShape,
-      points: originalShape.points.map(([x, y]) => [x + translationX, y + translationY])
-    }
-  }
+  const { borders } = getShapeInfos(originalShape, selectionPadding)
+
   return buildPath(
     {
       ...originalShape,
-      points: originalShape.points.map(([x, y]) => [
-        roundForGrid(x + cursorPosition[0] - originalCursorPosition[0], gridFormat),
-        roundForGrid(y + cursorPosition[1] - originalCursorPosition[1], gridFormat)
-      ]) as Point[]
+      points: originalShape.points.map(([x, y]) =>
+        gridFormat
+          ? [
+            x +
+            roundForGrid(
+              borders.x + cursorPosition[0] - originalCursorPosition[0],
+              gridFormat
+            ) -
+            borders.x,
+            y +
+            roundForGrid(
+              borders.y + cursorPosition[1] - originalCursorPosition[1],
+              gridFormat
+            ) -
+            borders.y
+          ]
+          : [
+            roundForGrid(x + cursorPosition[0] - originalCursorPosition[0], gridFormat),
+            roundForGrid(y + cursorPosition[1] - originalCursorPosition[1], gridFormat)
+          ]
+      )
     },
     currentScale,
     selectionPadding
