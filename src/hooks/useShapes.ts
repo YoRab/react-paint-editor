@@ -5,6 +5,7 @@ import { refreshShape } from '../utils/shapes/index'
 import { PICTURE_DEFAULT_SIZE } from '../constants/picture'
 import { isEqual, omit, set } from '../utils/object'
 import { checkPositionIntersection } from 'src/utils/intersect'
+import { DRAWCANVAS_CLASSNAME, SELECTIONCANVAS_CLASSNAME } from 'src/constants/app'
 
 const useShapes = (
   onDataChanged: (() => void) | undefined,
@@ -60,7 +61,12 @@ const useShapes = (
     shapesRef.current = [newShape, ...shapesRef.current]
   }, [])
 
-  const refreshHoveredShape = useCallback((cursorPosition: Point, canvasOffset: Point, currentScale: number) => {
+  const refreshHoveredShape = useCallback((e: MouseEvent | TouchEvent, cursorPosition: Point, canvasOffset: Point, currentScale: number) => {
+    if (e.target && 'className' in e.target && ![DRAWCANVAS_CLASSNAME, SELECTIONCANVAS_CLASSNAME].includes(e.target.className as string)) {
+      setHoveredShape(undefined)
+      return
+    }
+
     const foundShape = shapesRef.current.find(shape => {
       return !!checkPositionIntersection(
         shape,

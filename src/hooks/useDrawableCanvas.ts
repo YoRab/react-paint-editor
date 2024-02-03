@@ -25,7 +25,7 @@ const handleMove = (
   height: number,
   scaleRatio: number,
   setHoverMode: React.Dispatch<React.SetStateAction<HoverModeData>>,
-  refreshHoveredShape: (cursorPosition: Point, canvasOffset: Point, currentScale: number) => void,
+  refreshHoveredShape: (e: MouseEvent | TouchEvent, cursorPosition: Point, canvasOffset: Point, currentScale: number) => void,
   updateSingleShape: (updatedShape: ShapeEntity) => void,
   setCanvasOffset: React.Dispatch<React.SetStateAction<Point>>,
   setSelectedShape: React.Dispatch<React.SetStateAction<ShapeEntity | undefined>>,
@@ -41,7 +41,7 @@ const handleMove = (
   }
 
   const cursorPosition = getCursorPosition(e, canvasRef.current, width, height, scaleRatio)
-  refreshHoveredShape(cursorPosition, canvasOffset, scaleRatio)
+  refreshHoveredShape(e, cursorPosition, canvasOffset, scaleRatio)
 
   if (selectedShape === undefined) return
   if (selectedShape.locked) return
@@ -92,7 +92,7 @@ type UseCanvasType = {
   setSelectedShape: React.Dispatch<React.SetStateAction<ShapeEntity | undefined>>
   activeTool: ToolsType
   setActiveTool: React.Dispatch<React.SetStateAction<ToolsType>>
-  refreshHoveredShape: (cursorPosition: Point, canvasOffset: Point, currentScale: number) => void
+  refreshHoveredShape: (e: MouseEvent | TouchEvent, cursorPosition: Point, canvasOffset: Point, currentScale: number) => void
   canvasOffsetStartPosition: Point | undefined
   setCanvasOffsetStartPosition: React.Dispatch<React.SetStateAction<Point | undefined>>
   gridFormat: GridFormatType

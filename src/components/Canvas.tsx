@@ -5,7 +5,7 @@ import type { HoverModeData, SelectionModeData } from '../types/Mode'
 import EditTextBox from './toolbox/EditTextBox'
 import useDrawableCanvas from '../hooks/useDrawableCanvas'
 import type { ToolsType } from '../types/tools'
-import type { GridFormatType } from '../constants/app'
+import { DRAWCANVAS_CLASSNAME, SELECTIONCANVAS_CLASSNAME, type GridFormatType } from '../constants/app'
 import { drawShapeSelection, drawShape, refreshShape } from '../utils/shapes'
 import { resizeTextShapeWithNewContent } from '../utils/shapes/text'
 import { drawGrid } from '../utils/grid'
@@ -102,7 +102,7 @@ type DrawerType = {
   selectedShape: ShapeEntity | undefined
   setSelectedShape: React.Dispatch<React.SetStateAction<ShapeEntity | undefined>>
   hoveredShape: ShapeEntity | undefined
-  refreshHoveredShape: (cursorPosition: Point, canvasOffset: Point, currentScale: number) => void
+  refreshHoveredShape: (e: MouseEvent | TouchEvent, cursorPosition: Point, canvasOffset: Point, currentScale: number) => void
   activeTool: ToolsType
   setActiveTool: React.Dispatch<React.SetStateAction<ToolsType>>
   canvasOffsetStartPosition: Point | undefined
@@ -258,7 +258,7 @@ const Canvas = React.forwardRef<HTMLCanvasElement, DrawerType>(
       <div className='react-paint-editor-canvas-box'>
         <div className='react-paint-editor-canvas-container' data-grow={canGrow}>
           <canvas
-            className='react-paint-editor-canvas-drawcanvas'
+            className={DRAWCANVAS_CLASSNAME}
             ref={drawCanvasRef}
             data-grow={canGrow}
             width={canvasSize.width}
@@ -266,7 +266,7 @@ const Canvas = React.forwardRef<HTMLCanvasElement, DrawerType>(
           />
           {isEditMode && (
             <canvas
-              className='react-paint-editor-canvas-selectioncanvas'
+              className={SELECTIONCANVAS_CLASSNAME}
               ref={selectionCanvasRef}
               width={canvasSize.width}
               height={canvasSize.height}
