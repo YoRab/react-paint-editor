@@ -10,6 +10,9 @@ import { DEFAULT_SHAPE_TOOLS } from './tools'
 
 export const APP_NAME = 'react_paint'
 
+export const DRAWCANVAS_CLASSNAME = 'react-paint-editor-canvas-drawcanvas'
+export const SELECTIONCANVAS_CLASSNAME = 'react-paint-editor-canvas-selectioncanvas'
+
 export const GRID_NONE = 0
 export const GRID_SMALL = 1
 export const GRID_MEDIUM = 2
