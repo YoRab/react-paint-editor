@@ -379,7 +379,7 @@ const App = ({
     if (shapesFromProps !== undefined) {
       void loadImportedDataRef.current({ shapes: shapesFromProps } as ExportDataType)
     }
-  }, [loadImportedDataRef, shapesFromProps])
+  }, [shapesFromProps])
 
   const appClassName = `${className}${isLayoutPanelShown ? ' react-paint-editor-layout-opened' : ''} react-paint-editor-app`
 

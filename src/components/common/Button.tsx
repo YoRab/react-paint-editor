@@ -49,35 +49,34 @@ const Button = React.forwardRef<HTMLButtonElement | HTMLInputElement, ButtonType
           </span>
         </label>
       )
-    } else {
-      const {
-        hidden = false,
-        disabled = false,
-        selected = false,
-        icon,
-        children,
-        type = 'button',
-        className = '',
-        ...fileProps
-      } = props as ButtonType
-
-      return (
-        <button
-          className={`react-paint-editor-button ${className}`}
-          ref={ref as React.ForwardedRef<HTMLButtonElement>}
-          disabled={disabled}
-          data-disabled={+disabled}
-          data-selected={+selected}
-          data-hidden={+hidden}
-          type={type}
-          {...fileProps}>
-          <span className='react-paint-editor-button-content'>
-            {children && <span className='react-paint-editor-button-children'>{children}</span>}
-            {icon && <span className='react-paint-editor-button-icon' dangerouslySetInnerHTML={{ __html: icon }} />}
-          </span>
-        </button>
-      )
     }
+    const {
+      hidden = false,
+      disabled = false,
+      selected = false,
+      icon,
+      children,
+      type = 'button',
+      className = '',
+      ...fileProps
+    } = props as ButtonType
+
+    return (
+      <button
+        className={`react-paint-editor-button ${className}`}
+        ref={ref as React.ForwardedRef<HTMLButtonElement>}
+        disabled={disabled}
+        data-disabled={+disabled}
+        data-selected={+selected}
+        data-hidden={+hidden}
+        type={type}
+        {...fileProps}>
+        <span className='react-paint-editor-button-content'>
+          {children && <span className='react-paint-editor-button-children'>{children}</span>}
+          {icon && <span className='react-paint-editor-button-icon' dangerouslySetInnerHTML={{ __html: icon }} />}
+        </span>
+      </button>
+    )
   }
 )
 

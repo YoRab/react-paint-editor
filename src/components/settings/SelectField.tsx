@@ -65,7 +65,7 @@ const SelectField = ({
                   key={value}
                   title={`${value}`}
                   onClick={() => handleClick(value)}
-                  selected={defaultValue == value}
+                  selected={defaultValue === value}
                   style={{
                     '--react-paint-editor-button-padding': '16px'
                   }}>

@@ -88,7 +88,8 @@ const useKeyboard = ({
           e.stopPropagation()
           backwardShape()
           return
-        } else if (e.key === KeyboardCode.Y || e.key === KeyboardCode.y) {
+        }
+        if (e.key === KeyboardCode.Y || e.key === KeyboardCode.y) {
           e.preventDefault()
           e.stopPropagation()
           forwardShape()

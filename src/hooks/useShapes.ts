@@ -72,7 +72,7 @@ const useShapes = (
       )
     })
     setHoveredShape(foundShape)
-  }, [])
+  }, [selectionPadding])
 
   const addPictureShape = useCallback(
     async (
@@ -220,6 +220,7 @@ const useShapes = (
     [updateShapes]
   )
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: function must be called everytime savedShapes is updated
   useEffect(() => {
     onDataChangedRef.current?.()
   }, [savedShapes])

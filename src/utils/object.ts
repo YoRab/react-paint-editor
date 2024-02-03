@@ -1,9 +1,9 @@
 export const omit = <T extends Record<string, unknown>>(keys: string[], obj: T): T => {
     const result = { ...obj };
 
-    keys.forEach(key => {
+    for (const key of keys) {
         delete result[key];
-    });
+    }
 
     return result;
 }

@@ -15,7 +15,8 @@ export const getNewSelectionData = (
       cursorStartPosition: cursorPosition,
       originalShape: selectedShape
     }
-  } else if (hoverMode.mode === 'rotate') {
+  }
+  if (hoverMode.mode === 'rotate') {
     const { center: centerBeforeResize } = getShapeInfos(selectedShape, selectionPadding)
     const center: Point = [centerBeforeResize[0], centerBeforeResize[1]]
     return {
@@ -24,7 +25,8 @@ export const getNewSelectionData = (
       originalShape: selectedShape,
       center
     }
-  } else if (hoverMode.mode === 'resize') {
+  }
+  if (hoverMode.mode === 'resize') {
     return {
       mode: 'resize',
       cursorStartPosition: cursorPosition,
@@ -87,7 +89,7 @@ export const selectShape = (
       20
     )
   }) : undefined)
-  if (!!foundShape) {
+  if (foundShape) {
     return {
       shape: foundShape,
       mode: {
@@ -96,12 +98,11 @@ export const selectShape = (
         originalShape: foundShape
       }
     }
-  } else {
-    return {
-      shape: undefined,
-      mode: {
-        mode: 'default'
-      }
+  }
+  return {
+    shape: undefined,
+    mode: {
+      mode: 'default'
     }
   }
 }

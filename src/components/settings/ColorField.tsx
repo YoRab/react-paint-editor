@@ -31,7 +31,7 @@ const ColorField = ({
   const [customKey] = useState(uniqueId('settings_'))
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const parsedValue = +event.target.value
-    valueChanged(field, isNaN(parsedValue) ? event.target.value : parsedValue)
+    valueChanged(field, Number.isNaN(parsedValue) ? event.target.value : parsedValue)
   }
 
   const handleClick = (value: string) => {
@@ -69,7 +69,7 @@ const ColorField = ({
             {values.map((color, index) => (
               <Button
                 title={color}
-                key={index}
+                key={color}
                 selected={color === value}
                 color={color}
                 icon={

@@ -30,16 +30,16 @@ export const createBrushPath = (brush: DrawableShape<'brush'>, selectionPadding:
 
   const path = new Path2D()
 
-  brush.points.forEach(points => {
+  for (const points of brush.points) {
     if (points.length === 1) {
       path.rect(...points[0], 1, 1)
     } else {
       path.moveTo(...points[0])
-      points.slice(1).forEach(point => {
+      for (const point of points.slice(1)) {
         path.lineTo(...point)
-      })
+      }
     }
-  })
+  }
 
   return path
 }
@@ -71,9 +71,9 @@ export const createPolygonPath = (polygon: DrawableShape<'polygon'>) => {
   const path = new Path2D()
 
   path.moveTo(...polygon.points[0])
-  polygon.points.slice(1).forEach(point => {
+  for (const point of polygon.points.slice(1)) {
     path.lineTo(...point)
-  })
+  }
   path.lineTo(...polygon.points[0])
 
   return path

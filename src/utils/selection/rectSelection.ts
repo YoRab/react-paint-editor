@@ -93,23 +93,22 @@ const getSelectionData = ({
     anchor: number
 }): [number, number] => {
     switch (anchor) {
-        case 0:
+        case 0: {
             if (invertedAxe) {
                 const shapeSize = borderSize - 2 * selectionPadding
                 return [borderStart + shapeSize, vector - shapeSize]
-            } else {
-                const newWidth = Math.max(2 * selectionPadding, borderSize - vector)
-                return [borderStart + borderSize - newWidth, newWidth]
             }
+            const newWidth = Math.max(2 * selectionPadding, borderSize - vector)
+            return [borderStart + borderSize - newWidth, newWidth]
+        }
         case 0.5:
             return [borderStart, borderSize]
         case 1:
             if (invertedAxe) {
                 const offset = borderSize + vector
                 return [borderStart + offset, 2 * selectionPadding - offset]
-            } else {
-                return [borderStart, Math.max(2 * selectionPadding, borderSize + vector)]
             }
+            return [borderStart, Math.max(2 * selectionPadding, borderSize + vector)]
         default:
             return [0, 0]
     }
@@ -133,7 +132,10 @@ const resizeRectSelectionKeepingRatio = (
     const originalRatio = ((borders.width - selectionPadding * 2) || 1) / ((borders.height - selectionPadding * 2) || 1)
     const calculatedRatio = ((borderWidth - selectionPadding * 2) / (borderHeight - selectionPadding * 2))
 
-    let trueBorderX, trueBorderY, trueBorderWidth, trueBorderHeight
+    let trueBorderX: number
+    let trueBorderY: number
+    let trueBorderWidth: number
+    let trueBorderHeight: number
 
     if (selectionMode.anchor[0] !== 0.5 && selectionMode.anchor[1] !== 0.5) {
         if (calculatedRatio < originalRatio) {

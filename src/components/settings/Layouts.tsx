@@ -159,7 +159,7 @@ const Layouts = ({
               className='react-paint-editor-layouts-grid-button'
               selected={gridFormat === 0}
               disabled={disabled}
-              onClick={() => setGridFormat(0)}></Button>
+              onClick={() => setGridFormat(0)} />
             {['S', 'M', 'L'].map((value, index) => (
               <Button
                 key={value}

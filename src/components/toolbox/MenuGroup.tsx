@@ -89,7 +89,7 @@ const MenuGroup = ({
     })
   }
 
-  const isActive = group?.tools?.some(tool => tool == activeTool.type)
+  const isActive = group?.tools?.some(tool => tool === activeTool.type)
 
   const groupIcon = (isActive ? activeTool.icon : group.img) ?? group.title
 

@@ -101,19 +101,18 @@ export const translatePolygon = <U extends DrawableShape<'polygon'>>(
       ...originalShape,
       points: originalShape.points.map(([x, y]) => [x + translationX, y + translationY])
     }
-  } else {
-    return buildPath(
-      {
-        ...originalShape,
-        points: originalShape.points.map(([x, y]) => [
-          roundForGrid(x + cursorPosition[0] - originalCursorPosition[0], gridFormat),
-          roundForGrid(y + cursorPosition[1] - originalCursorPosition[1], gridFormat)
-        ]) as Point[]
-      },
-      currentScale,
-      selectionPadding
-    )
   }
+  return buildPath(
+    {
+      ...originalShape,
+      points: originalShape.points.map(([x, y]) => [
+        roundForGrid(x + cursorPosition[0] - originalCursorPosition[0], gridFormat),
+        roundForGrid(y + cursorPosition[1] - originalCursorPosition[1], gridFormat)
+      ]) as Point[]
+    },
+    currentScale,
+    selectionPadding
+  )
 }
 
 export const resizePolygon = (
@@ -170,33 +169,32 @@ export const updatePolygonLinesCount = <T extends DrawableShape<'polygon'>>(
       currentScale,
       selectionPadding
     )
-  } else {
-    //TODO : better distribution for new points
-    const nbPointsToAdd = newPointsCount - currentPointsCount
-    const newPoints: Point[] = new Array(nbPointsToAdd).fill(undefined).map((_val, index) => [
-      shape.points[0][0] +
-      ((shape.points[1][0] - shape.points[0][0]) * (index + 1)) / (nbPointsToAdd + 1),
-      shape.points[0][1] +
-      ((shape.points[1][1] - shape.points[0][1]) * (index + 1)) / (nbPointsToAdd + 1)
-    ])
-
-    const totalPoints = [
-      shape.points[0],
-      ...newPoints,
-      ...shape.points.slice(1, shape.points.length)
-    ]
-
-    return buildPath(
-      {
-        ...shape,
-        points: totalPoints,
-        style: {
-          ...shape.style,
-          pointsCount: totalPoints.length
-        }
-      },
-      currentScale,
-      selectionPadding
-    )
   }
+  //TODO : better distribution for new points
+  const nbPointsToAdd = newPointsCount - currentPointsCount
+  const newPoints: Point[] = new Array(nbPointsToAdd).fill(undefined).map((_val, index) => [
+    shape.points[0][0] +
+    ((shape.points[1][0] - shape.points[0][0]) * (index + 1)) / (nbPointsToAdd + 1),
+    shape.points[0][1] +
+    ((shape.points[1][1] - shape.points[0][1]) * (index + 1)) / (nbPointsToAdd + 1)
+  ])
+
+  const totalPoints = [
+    shape.points[0],
+    ...newPoints,
+    ...shape.points.slice(1, shape.points.length)
+  ]
+
+  return buildPath(
+    {
+      ...shape,
+      points: totalPoints,
+      style: {
+        ...shape.style,
+        pointsCount: totalPoints.length
+      }
+    },
+    currentScale,
+    selectionPadding
+  )
 }

@@ -44,7 +44,7 @@ const FontFamilyField = ({
       field="fontFamily"
       values={values}
       defaultValue={defaultValue}
-      valueChanged={valueChanged}></SelectField>
+      valueChanged={valueChanged} />
   )
 }
 
