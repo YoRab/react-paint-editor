@@ -20,7 +20,7 @@ export const addSizeAndConvertSvgToObjectUrl = (svgFileContent: string) => {
   const svgWidth = inlineSVG.getAttribute('width')
   const svgHeight = inlineSVG.getAttribute('height')
 
-  let svgContentToConvert
+  let svgContentToConvert: string
   if (svgWidth || svgHeight) {
     svgContentToConvert = svgFileContent
   } else {
@@ -69,7 +69,7 @@ export const getBase64Image = (img: HTMLImageElement) => {
 }
 
 const encodeObjectToString = (objectToEncode: unknown) => {
-  return 'data:text/plain;charset=utf-8,' + encodeURIComponent(JSON.stringify(objectToEncode))
+  return `data:text/plain;charset=utf-8,${encodeURIComponent(JSON.stringify(objectToEncode))}`
 }
 
 export const getCanvasImage = (

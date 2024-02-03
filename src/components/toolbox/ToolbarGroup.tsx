@@ -86,11 +86,11 @@ const ToolbarGroup = ({
   const groupIcon =
     (localActiveTool
       ? localActiveTool.icon
-      : group.toolsType && group.toolsType[0] && group.toolsType[0].icon) ?? group.title
+      : group.toolsType?.[0]?.icon) ?? group.title
 
   const openPanel = () => {
     if (localActiveTool) setActiveToolFromId(localActiveTool.id)
-    else group.toolsType && group.toolsType[0] && setActiveTool(group.toolsType[0])
+    else group.toolsType?.[0] && setActiveTool(group.toolsType[0])
     startTransition(() => {
       setIsOpen(true)
     })

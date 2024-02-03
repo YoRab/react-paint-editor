@@ -13,7 +13,7 @@ import { createRecSelectionPath, resizeRectSelection } from '../../utils/selecti
 import { set } from '../../utils/object'
 import { uniqueId } from '../../utils/util'
 
-const scalePoint = (point: Point, minX: number, minY: number, scaleX: number = 1, scaleY: number = 1): Point => {
+const scalePoint = (point: Point, minX: number, minY: number, scaleX = 1, scaleY = 1): Point => {
   return [
     minX + ((point[0] - minX) * scaleX),
     minY + ((point[1] - minY) * scaleY)
@@ -32,16 +32,16 @@ const createBrushPath = (brush: DrawableShape<'brush'>) => {
 
   const path = new Path2D()
 
-  brush.points.forEach(points => {
+  for (const points of brush.points) {
     if (points.length === 1) {
       path.rect(...scalePoint(points[0], minX, minY, brush.scaleX, brush.scaleY), 1, 1)
     } else {
       path.moveTo(...scalePoint(points[0], minX, minY, brush.scaleX, brush.scaleY))
-      points.slice(1).forEach(point => {
+      for (const point of points.slice(1)) {
         path.lineTo(...scalePoint(point, minX, minY, brush.scaleX, brush.scaleY))
-      })
+      }
     }
-  })
+  }
 
   return path
 }

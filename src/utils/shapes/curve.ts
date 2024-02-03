@@ -159,33 +159,32 @@ export const updateCurveLinesCount = <T extends DrawableShape<'curve'>>(
       currentScale,
       selectionPadding
     )
-  } else {
-    //TODO : better distribution for new points
-    const nbPointsToAdd = newPointsCount - currentPointsCount
-    const newPoints: Point[] = new Array(nbPointsToAdd).fill(undefined).map((_val, index) => [
-      shape.points[0][0] +
-      ((shape.points[1][0] - shape.points[0][0]) * (index + 1)) / (nbPointsToAdd + 1),
-      shape.points[0][1] +
-      ((shape.points[1][1] - shape.points[0][1]) * (index + 1)) / (nbPointsToAdd + 1)
-    ])
-
-    const totalPoints = [
-      shape.points[0],
-      ...newPoints,
-      ...shape.points.slice(1, shape.points.length)
-    ]
-
-    return buildPath(
-      {
-        ...shape,
-        points: totalPoints,
-        style: {
-          ...shape.style,
-          pointsCount: totalPoints.length
-        }
-      },
-      currentScale,
-      selectionPadding
-    )
   }
+  //TODO : better distribution for new points
+  const nbPointsToAdd = newPointsCount - currentPointsCount
+  const newPoints: Point[] = new Array(nbPointsToAdd).fill(undefined).map((_val, index) => [
+    shape.points[0][0] +
+    ((shape.points[1][0] - shape.points[0][0]) * (index + 1)) / (nbPointsToAdd + 1),
+    shape.points[0][1] +
+    ((shape.points[1][1] - shape.points[0][1]) * (index + 1)) / (nbPointsToAdd + 1)
+  ])
+
+  const totalPoints = [
+    shape.points[0],
+    ...newPoints,
+    ...shape.points.slice(1, shape.points.length)
+  ]
+
+  return buildPath(
+    {
+      ...shape,
+      points: totalPoints,
+      style: {
+        ...shape.style,
+        pointsCount: totalPoints.length
+      }
+    },
+    currentScale,
+    selectionPadding
+  )
 }

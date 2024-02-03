@@ -16,7 +16,8 @@ export const getNormalizedSize = (
   const newRatio = width / height
   if (newRatio > originalRatio || height < 0) {
     return width > originalWidth ? [width, width / originalRatio] : [height * originalRatio, height]
-  } else if (newRatio < originalRatio) {
+  }
+  if (newRatio < originalRatio) {
     return height > originalHeight
       ? [height * originalRatio, height]
       : [width, width / originalRatio]
@@ -28,14 +29,14 @@ export const roundValues = (prop: number, precision = 2): number => {
   return Math.round(prop * 10 ** precision) / 10 ** precision
 }
 
-export const roundForGrid = (value: number, gridFormat: GridFormatType, gridOffset: number = 0) => {
+export const roundForGrid = (value: number, gridFormat: GridFormatType, gridOffset = 0) => {
   if (!gridFormat) return roundValues(value)
   const valueWithOffset = value + gridOffset
   const step = valueWithOffset >= 0 ? GRID_STEP[gridFormat - 1] : -GRID_STEP[gridFormat - 1]
   return valueWithOffset + step / 2 - ((valueWithOffset + step / 2) % step) - gridOffset
 }
 
-export const roundRotationForGrid = (rotation: number, gridFormat: GridFormatType, gridOffset: number = 0) => {
+export const roundRotationForGrid = (rotation: number, gridFormat: GridFormatType, gridOffset = 0) => {
   if (!gridFormat) return roundValues(rotation, 3)
   return rotation + Math.PI / GRID_ROTATION_STEPS / 2 - ((rotation + Math.PI / GRID_ROTATION_STEPS / 2) % (Math.PI / GRID_ROTATION_STEPS))
 }
@@ -109,10 +110,9 @@ export const fitContentInsideContainer = (
   if (contentRatio > containerRatio) {
     const newWidth = shouldFillContainer ? containerWidth : Math.min(contentWidth, containerWidth)
     return [newWidth, newWidth / contentRatio]
-  } else {
-    const newHeight = shouldFillContainer
-      ? containerHeight
-      : Math.min(contentHeight, containerHeight)
-    return [newHeight * contentRatio, newHeight]
   }
+  const newHeight = shouldFillContainer
+    ? containerHeight
+    : Math.min(contentHeight, containerHeight)
+  return [newHeight * contentRatio, newHeight]
 }

@@ -43,7 +43,7 @@ const handleMove = (
   const cursorPosition = getCursorPosition(e, canvasRef.current, width, height, scaleRatio)
   refreshHoveredShape(cursorPosition, canvasOffset, scaleRatio)
 
-  if (selectedShape == undefined) return
+  if (selectedShape === undefined) return
   if (selectedShape.locked) return
 
   if (selectionMode.mode === 'default' || selectionMode.mode === 'textedition') {
@@ -174,7 +174,6 @@ const useDrawableCanvas = ({
     selectionCanvasRef,
     selectedShape,
     selectionMode,
-    setHoverMode,
     gridFormat,
     canvasOffset,
     canvasOffsetStartPosition,

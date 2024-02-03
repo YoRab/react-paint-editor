@@ -25,13 +25,12 @@ export const createLineSelectionPath = (
                         width: SELECTION_ANCHOR_SIZE / currentScale,
                         height: SELECTION_ANCHOR_SIZE / currentScale
                     })
-                } else {
-                    return createCirclePath({
-                        x: point[0],
-                        y: point[1],
-                        radius: SELECTION_ANCHOR_SIZE / 2 / currentScale
-                    })
                 }
+                return createCirclePath({
+                    x: point[0],
+                    y: point[1],
+                    radius: SELECTION_ANCHOR_SIZE / 2 / currentScale
+                })
             })
         ]
     }

@@ -44,7 +44,7 @@ const LineArrowField = ({
       field="lineArrow"
       values={values}
       defaultValue={defaultValue}
-      valueChanged={valueChanged}></SelectField>
+      valueChanged={valueChanged} />
   )
 }
 
