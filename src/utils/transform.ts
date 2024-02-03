@@ -26,7 +26,7 @@ export const getNormalizedSize = (
 }
 
 export const roundValues = (prop: number, precision = 2): number => {
-  return Math.round(prop * 10 ** precision) / 10 ** precision
+  return Math.round(prop * (10 ** precision)) / (10 ** precision)
 }
 
 export const roundForGrid = (value: number, gridFormat: GridFormatType, gridOffset = 0) => {
