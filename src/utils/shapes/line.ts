@@ -12,7 +12,7 @@ import type {
 import type { ToolsSettingsType } from '../../types/tools'
 import { updateCanvasContext } from '../../utils/canvas'
 import { getPointPositionAfterCanvasTransformation } from '../../utils/intersect'
-import { roundForGrid } from '../../utils/transform'
+import { roundForGrid, shortenLine } from '../../utils/transform'
 import { getAngleFromVector, rotatePoint } from '../../utils/trigo'
 import { getShapeInfos } from '../../utils/shapes/index'
 import { createTriangle, drawTriangle } from './triangle'
@@ -27,20 +27,34 @@ const buildPath = <T extends DrawableShape<'line'>>(
   selectionPadding: number
 ): T => {
   const arrows = []
-  if (line.style?.lineArrow === 1 || line.style?.lineArrow === 3) {
+  let path: Path2D
+
+  if (line.style?.lineArrow === 1 || line.style?.lineArrow === 2 || line.style?.lineArrow === 3) {
     const rotation = Math.PI / 2 - getAngleFromVector({ targetVector: [line.points[0], line.points[1]] })
-    arrows.push(createTriangle(buildTriangleOnLine(line.points[0], rotation, line.style)))
-  }
-  if (line.style?.lineArrow === 2 || line.style?.lineArrow === 3) {
-    const rotation = Math.PI / 2 - getAngleFromVector({ targetVector: [line.points[1], line.points[0]] })
-    arrows.push(createTriangle(buildTriangleOnLine(line.points[1], rotation, line.style)))
+
+    if (line.style?.lineArrow === 1 || line.style?.lineArrow === 3) {
+      arrows.push(createTriangle(buildTriangleOnLine(line.points[0], rotation, line.style)))
+    }
+    if (line.style?.lineArrow === 2 || line.style?.lineArrow === 3) {
+      arrows.push(createTriangle(buildTriangleOnLine(line.points[1], rotation + Math.PI, line.style)))
+    }
+
+    const arrowLength = 10 + (line.style?.lineWidth ?? 0) * 2
+    const newLine = shortenLine({ line, size: arrowLength, direction: line.style?.lineArrow === 1 ? 'start' : line.style?.lineArrow === 2 ? 'end' : 'both' })
+    path = createLinePath(newLine)
+  } else {
+    path = createLinePath(line)
   }
 
   return {
     ...line,
-    path: createLinePath(line),
+    path,
     selection: createLineSelectionPath(line, currentScale, selectionPadding),
-    arrows
+    arrows,
+    style: {
+      ...line.style,
+      lineCap: line.style?.lineArrow ? 'butt' : 'round'
+    }
   }
 }
 
@@ -75,13 +89,13 @@ export const createLine = (
 
 export const buildTriangleOnLine = (center: Point, rotation: number, lineStyle: StyleShape) => {
   const trianglePoints = [
-    rotatePoint({ point: [0, -(10 + (lineStyle.lineWidth ?? 0) * 1)], rotation }),
+    rotatePoint({ point: [0, 0], rotation }),
     rotatePoint({
-      point: [-(5 + (lineStyle.lineWidth ?? 0) * 1), 5 + (lineStyle.lineWidth ?? 0) * 2],
+      point: [-(5 + (lineStyle.lineWidth ?? 0)), 10 + (lineStyle.lineWidth ?? 0) * 2],
       rotation
     }),
     rotatePoint({
-      point: [5 + (lineStyle.lineWidth ?? 0) * 1, 5 + (lineStyle.lineWidth ?? 0) * 2],
+      point: [5 + (lineStyle.lineWidth ?? 0), 10 + (lineStyle.lineWidth ?? 0) * 2],
       rotation
     })
   ]
