@@ -18,24 +18,26 @@ export const updateCanvasContext = (
     strokeColor?: string;
     lineWidth?: number;
     lineDash?: number;
+    lineCap?: CanvasLineCap
   } = {},
 ) => {
   const {
+    lineCap = 'round',
     fillColor = "transparent",
     opacity = 100,
     strokeColor = SELECTION_DEFAULT_COLOR,
     lineWidth = SELECTION_DEFAULT_WIDTH,
     lineDash = 0,
   } = style;
-  if (opacity !== undefined) ctx.globalAlpha = opacity / 100;
-  if (fillColor) ctx.fillStyle = fillColor;
-  if (strokeColor) ctx.strokeStyle = strokeColor;
-  if (lineWidth) ctx.lineWidth = lineWidth;
-  if (lineDash !== undefined && lineWidth)
-    ctx.setLineDash([
-      LINE_DASH_DATA[lineDash][0] * lineWidth,
-      LINE_DASH_DATA[lineDash][1] * lineWidth,
-    ]);
+  ctx.lineCap = lineCap
+  ctx.globalAlpha = opacity / 100;
+  ctx.fillStyle = fillColor;
+  ctx.strokeStyle = strokeColor;
+  ctx.lineWidth = lineWidth;
+  ctx.setLineDash([
+    LINE_DASH_DATA[lineDash][0] * lineWidth,
+    LINE_DASH_DATA[lineDash][1] * lineWidth,
+  ]);
 };
 
 export const transformCanvas = (

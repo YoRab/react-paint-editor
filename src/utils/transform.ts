@@ -1,10 +1,11 @@
 import type { SelectionModeData } from '../types/Mode'
-import type { Point, ShapeEntity } from '../types/Shapes'
+import type { DrawableShape, Line, Point, ShapeEntity } from '../types/Shapes'
 import type { GridFormatType } from '../constants/app'
 import { GRID_ROTATION_STEPS, GRID_STEP } from '../constants/style'
 import { resizeShape, rotateShape, translateShape } from './shapes'
 import { addNewPointToShape } from './shapes/brush'
 import { PICTURE_DEFAULT_SIZE } from '../constants/picture'
+import { getAngleFromVector, rotatePoint } from 'src/utils/trigo'
 
 export const getNormalizedSize = (
   originalWidth: number,
@@ -115,4 +116,31 @@ export const fitContentInsideContainer = (
     ? containerHeight
     : Math.min(contentHeight, containerHeight)
   return [newHeight * contentRatio, newHeight]
+}
+
+
+export const shortenLine = ({ line, size, direction }: { line: DrawableShape<'line'>, size: number, direction: 'start' | 'end' | 'both' }): Line => {
+  const rotation = Math.PI / 2 - getAngleFromVector({ targetVector: [line.points[0], line.points[1]] })
+
+  const origin: Point = [line.points[0][0] + (line.points[1][0] - line.points[0][0]) / 2, line.points[0][1] + (line.points[1][1] - line.points[0][1]) / 2]
+
+  let firstPoint: Point
+  if (['start', 'both'].includes(direction)) {
+    const rotatedPoint = rotatePoint({ point: line.points[0], origin, rotation: -rotation })
+    firstPoint = rotatePoint({ point: [rotatedPoint[0], rotatedPoint[1] + size], origin, rotation: rotation })
+  } else {
+    firstPoint = [...line.points[0]]
+  }
+
+  let lastPoint: Point
+  if (['end', 'both'].includes(direction)) {
+    const rotatedPoint = rotatePoint({ point: line.points[1], origin, rotation: -rotation })
+    lastPoint = rotatePoint({ point: [rotatedPoint[0], rotatedPoint[1] - size], origin, rotation: rotation })
+  } else {
+    lastPoint = [...line.points[1]]
+  }
+
+  return {
+    points: [firstPoint, lastPoint]
+  }
 }
