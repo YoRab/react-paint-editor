@@ -5,7 +5,7 @@ import { omit } from '../utils/object'
 import { uniqueId } from '../utils/util'
 
 export const cleanShapesBeforeExport = (shapes: DrawableShape[]): DrawableShapeJson[] => {
-  const propsToOmit = ['img', 'id', 'selection', 'path']
+  const propsToOmit = ['img', 'id', 'selection', 'path', 'arrows']
   return shapes.map(shape => {
     if (shape.type === 'picture') {
       if (!shape.src.startsWith('http')) {
