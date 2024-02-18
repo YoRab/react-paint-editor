@@ -1,45 +1,24 @@
-import type {
-	Point,
-	DrawableShape,
-	Text,
-	Rect,
-	ShapeEntity,
-} from "../../types/Shapes";
-import type { ToolsSettingsType } from "../../types/tools";
-import {
-	STYLE_FONT_DEFAULT,
-	STYLE_FONT_SIZE_DEFAULT,
-} from "../../constants/style";
-import { SelectionModeResize } from "../../types/Mode";
-import { getRectOppositeAnchorAbsolutePosition } from "./rectangle";
-import { getShapeInfos } from "../../utils/shapes/index";
-import { GridFormatType } from "../../constants/app";
-import { roundForGrid } from "../../utils/transform";
-import {
-	createRecSelectionPath,
-	resizeRectSelection,
-} from "../../utils/selection/rectSelection";
-import { uniqueId } from "../../utils/util";
+import type { Point, DrawableShape, Text, Rect, ShapeEntity } from '../../types/Shapes'
+import type { ToolsSettingsType } from '../../types/tools'
+import { STYLE_FONT_DEFAULT, STYLE_FONT_SIZE_DEFAULT } from '../../constants/style'
+import { SelectionModeResize } from '../../types/Mode'
+import { getRectOppositeAnchorAbsolutePosition } from './rectangle'
+import { getShapeInfos } from '../../utils/shapes/index'
+import { GridFormatType } from '../../constants/app'
+import { roundForGrid } from '../../utils/transform'
+import { createRecSelectionPath, resizeRectSelection } from '../../utils/selection/rectSelection'
+import { uniqueId } from '../../utils/util'
 
-const DEFAULT_TEXT_VALUE: string[] = ["Texte"];
+const DEFAULT_TEXT_VALUE: string[] = ['Texte']
 
-const buildPath = <T extends DrawableShape<"text">>(
-	shape: T,
-	currentScale: number,
-	selectionPadding: number,
-): T => {
+const buildPath = <T extends DrawableShape<'text'>>(shape: T, currentScale: number, selectionPadding: number): T => {
 	return {
 		...shape,
-		selection: createRecSelectionPath(
-			undefined,
-			shape,
-			currentScale,
-			selectionPadding,
-		),
-	};
-};
+		selection: createRecSelectionPath(undefined, shape, currentScale, selectionPadding)
+	}
+}
 
-export const refreshText = buildPath;
+export const refreshText = buildPath
 
 export const calculateTextFontSize = (
 	ctx: CanvasRenderingContext2D,
@@ -47,37 +26,33 @@ export const calculateTextFontSize = (
 	maxWidth: number,
 	fontBold: boolean,
 	fontItalic: boolean,
-	fontFamily: string | undefined = STYLE_FONT_DEFAULT,
+	fontFamily: string | undefined = STYLE_FONT_DEFAULT
 ) => {
-	ctx.font = `${fontItalic ? "italic" : ""} ${
-		fontBold ? "bold" : ""
-	} 1px ${fontFamily}`;
+	ctx.font = `${fontItalic ? 'italic' : ''} ${fontBold ? 'bold' : ''} 1px ${fontFamily}`
 
-	const measuredFontsSizes = text.map(
-		(value: string) => maxWidth / ctx.measureText(value).width,
-	);
-	return Math.min(...measuredFontsSizes) || STYLE_FONT_SIZE_DEFAULT;
-};
+	const measuredFontsSizes = text.map((value: string) => maxWidth / ctx.measureText(value).width)
+	return Math.min(...measuredFontsSizes) || STYLE_FONT_SIZE_DEFAULT
+}
 
 export const createText = (
 	ctx: CanvasRenderingContext2D,
 	shape: {
-		id: string;
-		type: "text";
-		settings: ToolsSettingsType<"text">;
+		id: string
+		type: 'text'
+		settings: ToolsSettingsType<'text'>
 	},
 	cursorPosition: Point,
 	currentScale: number,
-	selectionPadding: number,
-): ShapeEntity<"text"> => {
+	selectionPadding: number
+): ShapeEntity<'text'> => {
 	const fontSize = calculateTextFontSize(
 		ctx,
 		DEFAULT_TEXT_VALUE,
 		50,
 		shape.settings?.fontBold.default ?? false,
 		shape.settings?.fontItalic.default ?? false,
-		shape.settings.fontFamily.default,
-	);
+		shape.settings.fontFamily.default
+	)
 	return buildPath(
 		{
 			toolId: shape.id,
@@ -95,86 +70,72 @@ export const createText = (
 				strokeColor: shape.settings.strokeColor.default,
 				fontFamily: shape.settings.fontFamily.default,
 				fontItalic: shape.settings.fontItalic.default,
-				fontBold: shape.settings.fontBold.default,
-			},
+				fontBold: shape.settings.fontBold.default
+			}
 		},
 		currentScale,
-		selectionPadding,
-	);
-};
-
-export const drawText = (
-	ctx: CanvasRenderingContext2D,
-	text: DrawableShape<"text">,
-): void => {
-	if (
-		ctx.globalAlpha === 0 ||
-		!text.style?.strokeColor ||
-		text.style.strokeColor === "transparent"
+		selectionPadding
 	)
-		return;
+}
 
-	ctx.font = `${text.style?.fontItalic ? "italic" : ""} ${
-		text.style?.fontBold ? "bold" : ""
-	} ${text.fontSize}px ${text.style?.fontFamily ?? STYLE_FONT_DEFAULT}`;
-	ctx.textBaseline = "top";
-	ctx.fillStyle = text.style.strokeColor;
+export const drawText = (ctx: CanvasRenderingContext2D, text: DrawableShape<'text'>): void => {
+	if (ctx.globalAlpha === 0 || !text.style?.strokeColor || text.style.strokeColor === 'transparent') return
+
+	ctx.font = `${text.style?.fontItalic ? 'italic' : ''} ${text.style?.fontBold ? 'bold' : ''} ${text.fontSize}px ${
+		text.style?.fontFamily ?? STYLE_FONT_DEFAULT
+	}`
+	ctx.textBaseline = 'top'
+	ctx.fillStyle = text.style.strokeColor
 	for (let i = 0; i < text.value.length; i++) {
-		ctx.fillText(text.value[i], text.x, text.y + i * text.fontSize, text.width);
+		ctx.fillText(text.value[i], text.x, text.y + i * text.fontSize, text.width)
 	}
-};
+}
 
 export const getTextBorder = (text: Text, selectionPadding: number): Rect => {
 	return {
 		x: text.x - selectionPadding,
 		width: text.width + selectionPadding * 2,
 		y: text.y - selectionPadding,
-		height: text.height + selectionPadding * 2,
-	};
-};
+		height: text.height + selectionPadding * 2
+	}
+}
 
-export const translateText = <U extends DrawableShape<"text">>(
+export const translateText = <U extends DrawableShape<'text'>>(
 	cursorPosition: Point,
 	originalShape: U,
 	originalCursorPosition: Point,
 	gridFormat: GridFormatType,
 	currentScale: number,
-	selectionPadding: number,
+	selectionPadding: number
 ) => {
 	return buildPath(
 		{
 			...originalShape,
-			x: roundForGrid(
-				originalShape.x + cursorPosition[0] - originalCursorPosition[0],
-				gridFormat,
-			),
-			y: roundForGrid(
-				originalShape.y + cursorPosition[1] - originalCursorPosition[1],
-				gridFormat,
-			),
+			x: roundForGrid(originalShape.x + cursorPosition[0] - originalCursorPosition[0], gridFormat),
+			y: roundForGrid(originalShape.y + cursorPosition[1] - originalCursorPosition[1], gridFormat)
 		},
 		currentScale,
-		selectionPadding,
-	);
-};
+		selectionPadding
+	)
+}
 
 export const resizeText = (
 	ctx: CanvasRenderingContext2D,
 	cursorPosition: Point,
-	originalShape: DrawableShape<"text">,
+	originalShape: DrawableShape<'text'>,
 	selectionMode: SelectionModeResize,
 	gridFormat: GridFormatType,
 	selectionPadding: number,
-	currentScale: number,
-): DrawableShape<"text"> => {
+	currentScale: number
+): DrawableShape<'text'> => {
 	const { borderX, borderHeight, borderY, borderWidth } = resizeRectSelection(
 		cursorPosition,
 		originalShape,
 		selectionMode,
 		gridFormat,
 		selectionPadding,
-		true,
-	);
+		true
+	)
 
 	const newRect = buildPath(
 		{
@@ -182,11 +143,11 @@ export const resizeText = (
 			width: Math.max(0, borderWidth - 2 * selectionPadding),
 			height: Math.max(0, borderHeight - 2 * selectionPadding),
 			x: borderX + selectionPadding,
-			y: borderY + selectionPadding,
+			y: borderY + selectionPadding
 		},
 		currentScale,
-		selectionPadding,
-	);
+		selectionPadding
+	)
 
 	return {
 		...newRect,
@@ -196,10 +157,10 @@ export const resizeText = (
 			newRect.width,
 			newRect.style?.fontBold ?? false,
 			newRect.style?.fontItalic ?? false,
-			newRect.style?.fontFamily,
-		),
-	} as DrawableShape<"text">;
-};
+			newRect.style?.fontFamily
+		)
+	} as DrawableShape<'text'>
+}
 
 const calculateTextWidth = (
 	ctx: CanvasRenderingContext2D,
@@ -207,66 +168,51 @@ const calculateTextWidth = (
 	fontSize: number,
 	fontBold: boolean,
 	fontItalic: boolean,
-	fontFamily: string | undefined = STYLE_FONT_DEFAULT,
+	fontFamily: string | undefined = STYLE_FONT_DEFAULT
 ) => {
-	ctx.font = `${fontItalic ? "italic" : ""} ${
-		fontBold ? "bold" : ""
-	} ${fontSize}px ${fontFamily}`;
-	const measuredText = text.map(
-		(value: string) => ctx.measureText(value).width,
-	);
-	return Math.max(...measuredText) || 20;
-};
+	ctx.font = `${fontItalic ? 'italic' : ''} ${fontBold ? 'bold' : ''} ${fontSize}px ${fontFamily}`
+	const measuredText = text.map((value: string) => ctx.measureText(value).width)
+	return Math.max(...measuredText) || 20
+}
 
-export const resizeTextShapeWithNewContent = <U extends DrawableShape<"text">>(
+export const resizeTextShapeWithNewContent = <U extends DrawableShape<'text'>>(
 	ctx: CanvasRenderingContext2D,
 	shape: U,
 	newValue: string[],
 	selectionPadding: number,
-	canvasOffset: Point,
+	canvasOffset: Point
 ): U => {
-	const newShape = { ...shape, value: newValue };
+	const newShape = { ...shape, value: newValue }
 	const newWidth = calculateTextWidth(
 		ctx,
 		newShape.value,
 		newShape.fontSize,
 		newShape.style?.fontBold ?? false,
 		newShape.style?.fontItalic ?? false,
-		newShape.style?.fontFamily,
-	);
-	const newHeight = newShape.fontSize * newShape.value.length;
+		newShape.style?.fontFamily
+	)
+	const newHeight = newShape.fontSize * newShape.value.length
 
 	const resizedShape = {
 		...newShape,
 		width: newWidth,
-		height: newHeight,
-	};
+		height: newHeight
+	}
 
-	const { center } = getShapeInfos(shape, selectionPadding);
+	const { center } = getShapeInfos(shape, selectionPadding)
 
-	const { center: shapeWithNewDimensionsCenter } = getShapeInfos(
-		resizedShape,
-		selectionPadding,
-	);
+	const { center: shapeWithNewDimensionsCenter } = getShapeInfos(resizedShape, selectionPadding)
 
-	const [oppTrueX, oppTrueY] = getRectOppositeAnchorAbsolutePosition(
-		[1, 1],
-		center,
-		shape,
-		canvasOffset,
-	);
+	const [oppTrueX, oppTrueY] = getRectOppositeAnchorAbsolutePosition([1, 1], center, shape, canvasOffset)
 
-	const [newOppTrueX, newOppTrueY] = getRectOppositeAnchorAbsolutePosition(
-		[1, 1],
-		shapeWithNewDimensionsCenter,
-		resizedShape,
-		canvasOffset,
-		[false, false],
-	);
+	const [newOppTrueX, newOppTrueY] = getRectOppositeAnchorAbsolutePosition([1, 1], shapeWithNewDimensionsCenter, resizedShape, canvasOffset, [
+		false,
+		false
+	])
 
 	return {
 		...resizedShape,
 		x: resizedShape.x - (newOppTrueX - oppTrueX),
-		y: resizedShape.y - (newOppTrueY - oppTrueY),
-	};
-};
+		y: resizedShape.y - (newOppTrueY - oppTrueY)
+	}
+}

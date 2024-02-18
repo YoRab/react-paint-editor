@@ -1,70 +1,57 @@
 {
-  "name": "@yorab/react-paint",
-  "version": "0.9.3",
-  "type": "module",
-  "keywords": [],
-  "author": "Yohann Rabatel",
-  "license": "MIT",
-  "main": "./dist/react-paint.umd.cjs",
-  "module": "./dist/react-paint.js",
-  "types": "./dist/components/App.d.ts",
-  "exports": {
-    ".": {
-      "import": "./dist/react-paint.js",
-      "require": "./dist/react-paint.umd.cjs",
-      "types": "./dist/components/App.d.ts"
-    },
-    "./react-paint.css": "./dist/react-paint.css"
-  },
-  "files": [
-    "README.md",
-    "LICENSE.txt",
-    "package.json",
-    "dist/"
-  ],
-  "devDependencies": {
-    "@rollup/plugin-terser": "^0.4.4",
-    "@storybook/addon-essentials": "7.6.3",
-    "@storybook/addon-interactions": "7.6.3",
-    "@storybook/addon-links": "7.6.3",
-    "@storybook/blocks": "7.6.3",
-    "@storybook/react": "7.6.3",
-    "@storybook/react-vite": "7.6.3",
-    "@storybook/test": "^7.6.3",
-    "@storybook/testing-library": "0.2.2",
-    "@types/node": "20.4.5",
-    "@types/react": "18.2.17",
-    "@types/react-dom": "18.2.7",
-    "@typescript-eslint/eslint-plugin": "6.0.0",
-    "@typescript-eslint/parser": "6.0.0",
-    "@vitejs/plugin-react": "4.2.0",
-    "eslint": "8.45.0",
-    "eslint-config-prettier": "8.9.0",
-    "eslint-import-resolver-typescript": "3.5.5",
-    "eslint-plugin-import": "2.28.0",
-    "eslint-plugin-prettier": "5.0.0",
-    "eslint-plugin-react-hooks": "4.6.0",
-    "eslint-plugin-storybook": "0.6.15",
-    "lightningcss": "1.21.5",
-    "prettier": "3.0.0",
-    "react": "18.2.0",
-    "react-dom": "18.2.0",
-    "storybook": "7.6.3",
-    "typescript": "5.3.2",
-    "vite": "5.0.12",
-    "vite-tsconfig-paths": "4.2.0"
-  },
-  "peerDependencies": {
-    "react": "18.x",
-    "react-dom": "18.x"
-  },
-  "scripts": {
-    "declarationfiles": "npx tsc --project tsconfig.prod.json",
-    "start": "storybook dev -p 6006",
-    "build-storybook": "storybook build",
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "vite build && npm run declarationfiles",
-    "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
-    "publishnpm": "npm run build && npm publish --access public"
-  }
+	"name": "@yorab/react-paint",
+	"version": "0.9.3",
+	"type": "module",
+	"keywords": [],
+	"author": "Yohann Rabatel",
+	"license": "MIT",
+	"main": "./dist/react-paint.umd.cjs",
+	"module": "./dist/react-paint.js",
+	"types": "./dist/components/App.d.ts",
+	"exports": {
+		".": {
+			"import": "./dist/react-paint.js",
+			"require": "./dist/react-paint.umd.cjs",
+			"types": "./dist/components/App.d.ts"
+		},
+		"./react-paint.css": "./dist/react-paint.css"
+	},
+	"files": ["README.md", "LICENSE.txt", "package.json", "dist/"],
+	"devDependencies": {
+		"@biomejs/biome": "1.5.3",
+		"@rollup/plugin-terser": "^0.4.4",
+		"@storybook/addon-essentials": "7.6.3",
+		"@storybook/addon-interactions": "7.6.3",
+		"@storybook/addon-links": "7.6.3",
+		"@storybook/blocks": "7.6.3",
+		"@storybook/react": "7.6.3",
+		"@storybook/react-vite": "7.6.3",
+		"@storybook/test": "7.6.3",
+		"@storybook/testing-library": "0.2.2",
+		"@types/node": "20.4.5",
+		"@types/react": "18.2.17",
+		"@types/react-dom": "18.2.7",
+		"@vitejs/plugin-react": "4.2.0",
+		"lightningcss": "1.21.5",
+		"prettier": "3.0.0",
+		"react": "18.2.0",
+		"react-dom": "18.2.0",
+		"storybook": "7.6.3",
+		"typescript": "5.3.2",
+		"vite": "5.0.12",
+		"vite-tsconfig-paths": "4.2.0"
+	},
+	"peerDependencies": {
+		"react": "18.x",
+		"react-dom": "18.x"
+	},
+	"scripts": {
+		"declarationfiles": "npx tsc --project tsconfig.prod.json",
+		"start": "storybook dev -p 6006",
+		"build-storybook": "storybook build",
+		"test": "echo \"Error: no test specified\" && exit 1",
+		"build": "vite build && npm run declarationfiles",
+		"lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
+		"publishnpm": "npm run build && npm publish --access public"
+	}
 }
