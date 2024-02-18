@@ -1,47 +1,41 @@
-import type { HoverModeData, SelectionModeData } from "../types/Mode";
-import type { Point, ShapeEntity } from "../types/Shapes";
-import {
-	checkPositionIntersection,
-	checkSelectionIntersection,
-} from "./intersect";
-import { getShapeInfos } from "./shapes";
+import type { HoverModeData, SelectionModeData } from '../types/Mode'
+import type { Point, ShapeEntity } from '../types/Shapes'
+import { checkPositionIntersection, checkSelectionIntersection } from './intersect'
+import { getShapeInfos } from './shapes'
 
 export const getNewSelectionData = (
 	hoverMode: HoverModeData,
 	selectedShape: ShapeEntity,
 	cursorPosition: Point,
-	selectionPadding: number,
+	selectionPadding: number
 ): SelectionModeData<Point | number> | undefined => {
-	if (hoverMode.mode === "translate") {
+	if (hoverMode.mode === 'translate') {
 		return {
-			mode: "translate",
+			mode: 'translate',
+			cursorStartPosition: cursorPosition,
+			originalShape: selectedShape
+		}
+	}
+	if (hoverMode.mode === 'rotate') {
+		const { center: centerBeforeResize } = getShapeInfos(selectedShape, selectionPadding)
+		const center: Point = [centerBeforeResize[0], centerBeforeResize[1]]
+		return {
+			mode: 'rotate',
 			cursorStartPosition: cursorPosition,
 			originalShape: selectedShape,
-		};
+			center
+		}
 	}
-	if (hoverMode.mode === "rotate") {
-		const { center: centerBeforeResize } = getShapeInfos(
-			selectedShape,
-			selectionPadding,
-		);
-		const center: Point = [centerBeforeResize[0], centerBeforeResize[1]];
+	if (hoverMode.mode === 'resize') {
 		return {
-			mode: "rotate",
+			mode: 'resize',
 			cursorStartPosition: cursorPosition,
 			originalShape: selectedShape,
-			center,
-		};
+			anchor: hoverMode.anchor
+		}
 	}
-	if (hoverMode.mode === "resize") {
-		return {
-			mode: "resize",
-			cursorStartPosition: cursorPosition,
-			originalShape: selectedShape,
-			anchor: hoverMode.anchor,
-		};
-	}
-	return undefined;
-};
+	return undefined
+}
 
 export const selectShape = (
 	ctx: CanvasRenderingContext2D,
@@ -51,12 +45,12 @@ export const selectShape = (
 	canvasOffset: Point,
 	selectedShape: ShapeEntity | undefined,
 	selectionPadding: number,
-	isTouchGesture: boolean,
+	isTouchGesture: boolean
 ): {
-	mode: SelectionModeData<Point | number>;
-	shape: ShapeEntity | undefined;
+	mode: SelectionModeData<Point | number>
+	shape: ShapeEntity | undefined
 } => {
-	let selectedShapePositionIntersection: false | HoverModeData = false;
+	let selectedShapePositionIntersection: false | HoverModeData = false
 	if (selectedShape) {
 		selectedShapePositionIntersection = checkSelectionIntersection(
 			selectedShape,
@@ -65,66 +59,48 @@ export const selectShape = (
 			selectionPadding,
 			currentScale,
 			true,
-			isTouchGesture ? 20 : undefined,
-		);
+			isTouchGesture ? 20 : undefined
+		)
 
 		const newSelectionMode = getNewSelectionData(
-			selectedShapePositionIntersection || { mode: "default" },
+			selectedShapePositionIntersection || { mode: 'default' },
 			selectedShape,
 			cursorPosition,
-			selectionPadding,
-		);
-		if (
-			newSelectionMode?.mode === "resize" ||
-			newSelectionMode?.mode === "rotate"
-		) {
-			return { shape: selectedShape, mode: newSelectionMode };
+			selectionPadding
+		)
+		if (newSelectionMode?.mode === 'resize' || newSelectionMode?.mode === 'rotate') {
+			return { shape: selectedShape, mode: newSelectionMode }
 		}
 	}
 	const foundShape =
-		shapes.find((shape) => {
+		shapes.find(shape => {
 			return shape.id === selectedShape?.id
 				? !!selectedShapePositionIntersection
-				: !!checkPositionIntersection(
-						ctx,
-						shape,
-						cursorPosition,
-						canvasOffset,
-						selectionPadding,
-						currentScale,
-				  );
+				: !!checkPositionIntersection(ctx, shape, cursorPosition, canvasOffset, selectionPadding, currentScale)
 		}) ??
 		(!selectedShape || isTouchGesture
-			? shapes.find((shape) => {
+			? shapes.find(shape => {
 					// another round with radius if no shape was selected for tiny shapes and mobile
 					return shape.id === selectedShape?.id
 						? !!selectedShapePositionIntersection
-						: !!checkPositionIntersection(
-								ctx,
-								shape,
-								cursorPosition,
-								canvasOffset,
-								selectionPadding,
-								currentScale,
-								20,
-						  );
+						: !!checkPositionIntersection(ctx, shape, cursorPosition, canvasOffset, selectionPadding, currentScale, 20)
 			  })
-			: undefined);
+			: undefined)
 
 	if (foundShape) {
 		return {
 			shape: foundShape,
 			mode: {
-				mode: "translate",
+				mode: 'translate',
 				cursorStartPosition: cursorPosition,
-				originalShape: foundShape,
-			},
-		};
+				originalShape: foundShape
+			}
+		}
 	}
 	return {
 		shape: undefined,
 		mode: {
-			mode: "default",
-		},
-	};
-};
+			mode: 'default'
+		}
+	}
+}

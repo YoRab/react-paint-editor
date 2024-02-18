@@ -1,20 +1,16 @@
-import React, { useEffect, useState } from "react";
-import { selectShape } from "../utils/selection";
-import type { Point, ShapeEntity, ShapeType } from "../types/Shapes";
-import {
-	checkSelectionIntersection,
-	getCursorPosition,
-	isTouchGesture,
-} from "../utils/intersect";
-import type { HoverModeData, SelectionModeData } from "../types/Mode";
-import { transformShape } from "../utils/transform";
-import type { CustomTool, ToolsType } from "../types/tools";
-import { SELECTION_TOOL } from "../constants/tools";
-import useDoubleClick from "../hooks/useDoubleClick";
-import { ShapeTypeArray } from "../constants/shapes";
-import type { GridFormatType } from "../constants/app";
-import { createShape } from "../utils/shapes";
-import { addNewPointGroupToShape } from "../utils/shapes/brush";
+import React, { useEffect, useState } from 'react'
+import { selectShape } from '../utils/selection'
+import type { Point, ShapeEntity, ShapeType } from '../types/Shapes'
+import { checkSelectionIntersection, getCursorPosition, isTouchGesture } from '../utils/intersect'
+import type { HoverModeData, SelectionModeData } from '../types/Mode'
+import { transformShape } from '../utils/transform'
+import type { CustomTool, ToolsType } from '../types/tools'
+import { SELECTION_TOOL } from '../constants/tools'
+import useDoubleClick from '../hooks/useDoubleClick'
+import { ShapeTypeArray } from '../constants/shapes'
+import type { GridFormatType } from '../constants/app'
+import { createShape } from '../utils/shapes'
+import { addNewPointGroupToShape } from '../utils/shapes/brush'
 
 const handleMove = (
 	e: MouseEvent | TouchEvent,
@@ -34,66 +30,39 @@ const handleMove = (
 		ctx: CanvasRenderingContext2D,
 		cursorPosition: Point,
 		canvasOffset: Point,
-		currentScale: number,
+		currentScale: number
 	) => void,
 	updateSingleShape: (updatedShape: ShapeEntity) => void,
 	setCanvasOffset: React.Dispatch<React.SetStateAction<Point>>,
-	setSelectedShape: React.Dispatch<
-		React.SetStateAction<ShapeEntity | undefined>
-	>,
+	setSelectedShape: React.Dispatch<React.SetStateAction<ShapeEntity | undefined>>,
 	selectionPadding: number,
-	isShiftPressed: boolean,
+	isShiftPressed: boolean
 ) => {
-	const drawCtx = canvasRef.current?.getContext("2d");
-	if (!drawCtx) return;
+	const drawCtx = canvasRef.current?.getContext('2d')
+	if (!drawCtx) return
 
-	if (activeTool.type === "move" && canvasOffsetStartPosition !== undefined) {
-		const cursorPosition = getCursorPosition(
-			e,
-			canvasRef.current,
-			width,
-			height,
-			scaleRatio,
-		);
-		setCanvasOffset([
-			cursorPosition[0] - canvasOffsetStartPosition[0],
-			cursorPosition[1] - canvasOffsetStartPosition[1],
-		]);
+	if (activeTool.type === 'move' && canvasOffsetStartPosition !== undefined) {
+		const cursorPosition = getCursorPosition(e, canvasRef.current, width, height, scaleRatio)
+		setCanvasOffset([cursorPosition[0] - canvasOffsetStartPosition[0], cursorPosition[1] - canvasOffsetStartPosition[1]])
 	}
 
-	const cursorPosition = getCursorPosition(
-		e,
-		canvasRef.current,
-		width,
-		height,
-		scaleRatio,
-	);
+	const cursorPosition = getCursorPosition(e, canvasRef.current, width, height, scaleRatio)
 
 	if (!isTouchGesture(e)) {
-		refreshHoveredShape(e, drawCtx, cursorPosition, canvasOffset, scaleRatio);
+		refreshHoveredShape(e, drawCtx, cursorPosition, canvasOffset, scaleRatio)
 	}
 
-	if (selectedShape === undefined) return;
-	if (selectedShape.locked) return;
+	if (selectedShape === undefined) return
+	if (selectedShape.locked) return
 
-	if (
-		selectionMode.mode === "default" ||
-		selectionMode.mode === "textedition"
-	) {
-		const positionIntersection = checkSelectionIntersection(
-			selectedShape,
-			cursorPosition,
-			canvasOffset,
-			selectionPadding,
-			scaleRatio,
-			true,
-		) || {
-			mode: "default",
-		};
-		setHoverMode(positionIntersection);
+	if (selectionMode.mode === 'default' || selectionMode.mode === 'textedition') {
+		const positionIntersection = checkSelectionIntersection(selectedShape, cursorPosition, canvasOffset, selectionPadding, scaleRatio, true) || {
+			mode: 'default'
+		}
+		setHoverMode(positionIntersection)
 	} else {
-		const ctx = canvasRef.current?.getContext("2d");
-		if (!ctx) return;
+		const ctx = canvasRef.current?.getContext('2d')
+		if (!ctx) return
 		const newShape = transformShape(
 			ctx,
 			selectedShape,
@@ -103,54 +72,48 @@ const handleMove = (
 			selectionMode,
 			selectionPadding,
 			isShiftPressed,
-			scaleRatio,
-		);
-		updateSingleShape(newShape);
-		setSelectedShape(newShape);
+			scaleRatio
+		)
+		updateSingleShape(newShape)
+		setSelectedShape(newShape)
 	}
-};
+}
 
 type UseCanvasType = {
-	disabled?: boolean;
+	disabled?: boolean
 	canvasSize: {
-		width: number;
-		height: number;
-		scaleRatio: number;
-	};
-	shapes: ShapeEntity[];
-	saveShapes: () => void;
-	addShape: (newShape: ShapeEntity) => void;
-	updateSingleShape: (updatedShape: ShapeEntity) => void;
-	selectedShape: ShapeEntity | undefined;
-	setSelectedShape: React.Dispatch<
-		React.SetStateAction<ShapeEntity | undefined>
-	>;
-	activeTool: ToolsType;
-	setActiveTool: React.Dispatch<React.SetStateAction<ToolsType>>;
+		width: number
+		height: number
+		scaleRatio: number
+	}
+	shapes: ShapeEntity[]
+	saveShapes: () => void
+	addShape: (newShape: ShapeEntity) => void
+	updateSingleShape: (updatedShape: ShapeEntity) => void
+	selectedShape: ShapeEntity | undefined
+	setSelectedShape: React.Dispatch<React.SetStateAction<ShapeEntity | undefined>>
+	activeTool: ToolsType
+	setActiveTool: React.Dispatch<React.SetStateAction<ToolsType>>
 	refreshHoveredShape: (
 		e: MouseEvent | TouchEvent,
 		ctx: CanvasRenderingContext2D,
 		cursorPosition: Point,
 		canvasOffset: Point,
-		currentScale: number,
-	) => void;
-	canvasOffsetStartPosition: Point | undefined;
-	setCanvasOffsetStartPosition: React.Dispatch<
-		React.SetStateAction<Point | undefined>
-	>;
-	gridFormat: GridFormatType;
-	canvasOffset: Point;
-	setCanvasOffset: React.Dispatch<React.SetStateAction<Point>>;
-	isInsideComponent: boolean;
-	selectionMode: SelectionModeData<number | Point>;
-	setSelectionMode: React.Dispatch<
-		React.SetStateAction<SelectionModeData<number | Point>>
-	>;
-	drawCanvasRef: React.MutableRefObject<HTMLCanvasElement | null>;
-	selectionCanvasRef: React.MutableRefObject<HTMLCanvasElement | null>;
-	selectionPadding: number;
-	isShiftPressed: boolean;
-};
+		currentScale: number
+	) => void
+	canvasOffsetStartPosition: Point | undefined
+	setCanvasOffsetStartPosition: React.Dispatch<React.SetStateAction<Point | undefined>>
+	gridFormat: GridFormatType
+	canvasOffset: Point
+	setCanvasOffset: React.Dispatch<React.SetStateAction<Point>>
+	isInsideComponent: boolean
+	selectionMode: SelectionModeData<number | Point>
+	setSelectionMode: React.Dispatch<React.SetStateAction<SelectionModeData<number | Point>>>
+	drawCanvasRef: React.MutableRefObject<HTMLCanvasElement | null>
+	selectionCanvasRef: React.MutableRefObject<HTMLCanvasElement | null>
+	selectionPadding: number
+	isShiftPressed: boolean
+}
 
 const useDrawableCanvas = ({
 	disabled = false,
@@ -175,14 +138,13 @@ const useDrawableCanvas = ({
 	saveShapes,
 	setSelectionMode,
 	selectionPadding,
-	isShiftPressed,
+	isShiftPressed
 }: UseCanvasType) => {
-	const { width, height, scaleRatio } = canvasSize;
+	const { width, height, scaleRatio } = canvasSize
 	const [hoverMode, setHoverMode] = useState<HoverModeData>({
-		mode: "default",
-	});
-	const { registerDoubleClickEvent, unRegisterDoubleClickEvent } =
-		useDoubleClick();
+		mode: 'default'
+	})
+	const { registerDoubleClickEvent, unRegisterDoubleClickEvent } = useDoubleClick()
 
 	useEffect(() => {
 		const handleMouseMove = (e: MouseEvent | TouchEvent) =>
@@ -205,17 +167,17 @@ const useDrawableCanvas = ({
 					setCanvasOffset,
 					setSelectedShape,
 					selectionPadding,
-					isShiftPressed,
-				),
-			);
+					isShiftPressed
+				)
+			)
 		if (isInsideComponent) {
-			document.addEventListener("mousemove", handleMouseMove);
-			document.addEventListener("touchmove", handleMouseMove);
+			document.addEventListener('mousemove', handleMouseMove)
+			document.addEventListener('touchmove', handleMouseMove)
 
 			return () => {
-				document.removeEventListener("mousemove", handleMouseMove);
-				document.removeEventListener("touchmove", handleMouseMove);
-			};
+				document.removeEventListener('mousemove', handleMouseMove)
+				document.removeEventListener('touchmove', handleMouseMove)
+			}
 		}
 	}, [
 		isInsideComponent,
@@ -234,133 +196,98 @@ const useDrawableCanvas = ({
 		setSelectedShape,
 		refreshHoveredShape,
 		selectionPadding,
-		isShiftPressed,
-	]);
+		isShiftPressed
+	])
 
 	useEffect(() => {
 		const handleMouseUp = () => {
-			if (selectionMode.mode === "textedition") return;
-			if (selectionMode.mode !== "default") {
-				setSelectionMode({ mode: "default" });
-				saveShapes();
+			if (selectionMode.mode === 'textedition') return
+			if (selectionMode.mode !== 'default') {
+				setSelectionMode({ mode: 'default' })
+				saveShapes()
 			}
-		};
+		}
 
 		if (isInsideComponent) {
-			document.addEventListener("mouseup", handleMouseUp);
-			document.addEventListener("touchend", handleMouseUp);
+			document.addEventListener('mouseup', handleMouseUp)
+			document.addEventListener('touchend', handleMouseUp)
 		}
 
 		return () => {
 			if (isInsideComponent) {
-				document.removeEventListener("mouseup", handleMouseUp);
-				document.removeEventListener("touchend", handleMouseUp);
+				document.removeEventListener('mouseup', handleMouseUp)
+				document.removeEventListener('touchend', handleMouseUp)
 			}
-		};
-	}, [isInsideComponent, selectionMode, saveShapes, setSelectionMode]);
+		}
+	}, [isInsideComponent, selectionMode, saveShapes, setSelectionMode])
 
 	useEffect(() => {
-		const ref = selectionCanvasRef.current;
-		if (!ref) return;
-		const ctx = ref.getContext("2d");
-		if (!ctx) return;
-		if (disabled) return;
+		const ref = selectionCanvasRef.current
+		if (!ref) return
+		const ctx = ref.getContext('2d')
+		if (!ctx) return
+		if (disabled) return
 
 		const handleMouseDown = (e: MouseEvent | TouchEvent) => {
-			e.preventDefault();
-			const cursorPosition = getCursorPosition(
-				e,
-				selectionCanvasRef.current,
-				width,
-				height,
-				scaleRatio,
-			);
+			e.preventDefault()
+			const cursorPosition = getCursorPosition(e, selectionCanvasRef.current, width, height, scaleRatio)
 
-			if (activeTool.type === "selection") {
-				const { shape, mode } = selectShape(
-					ctx,
-					shapes,
-					cursorPosition,
-					scaleRatio,
-					canvasOffset,
-					selectedShape,
-					selectionPadding,
-					isTouchGesture(e),
-				);
-				setSelectedShape(shape);
-				setSelectionMode(mode);
-			} else if (activeTool.type === "move") {
-				setCanvasOffsetStartPosition(cursorPosition);
+			if (activeTool.type === 'selection') {
+				const { shape, mode } = selectShape(ctx, shapes, cursorPosition, scaleRatio, canvasOffset, selectedShape, selectionPadding, isTouchGesture(e))
+				setSelectedShape(shape)
+				setSelectionMode(mode)
+			} else if (activeTool.type === 'move') {
+				setCanvasOffsetStartPosition(cursorPosition)
 			}
 
 			if (ShapeTypeArray.includes(activeTool.type as ShapeType)) {
-				const drawCtx = drawCanvasRef.current?.getContext("2d");
-				if (!drawCtx) return;
-				if (activeTool.type === "brush") {
-					if (!!selectedShape && selectedShape.type === "brush") {
-						const newShape = addNewPointGroupToShape(
-							selectedShape,
-							cursorPosition,
-							scaleRatio,
-							selectionPadding,
-						);
-						updateSingleShape(newShape);
-						setSelectedShape(newShape);
+				const drawCtx = drawCanvasRef.current?.getContext('2d')
+				if (!drawCtx) return
+				if (activeTool.type === 'brush') {
+					if (!!selectedShape && selectedShape.type === 'brush') {
+						const newShape = addNewPointGroupToShape(selectedShape, cursorPosition, scaleRatio, selectionPadding)
+						updateSingleShape(newShape)
+						setSelectedShape(newShape)
 					} else {
-						const newShape = createShape(
-							drawCtx,
-							activeTool,
-							cursorPosition,
-							gridFormat,
-							scaleRatio,
-							selectionPadding,
-						);
-						console.log(newShape);
-						if (!newShape) return;
-						addShape(newShape);
-						setSelectedShape(newShape);
+						const newShape = createShape(drawCtx, activeTool, cursorPosition, gridFormat, scaleRatio, selectionPadding)
+						console.log(newShape)
+						if (!newShape) return
+						addShape(newShape)
+						setSelectedShape(newShape)
 					}
 
 					setSelectionMode({
-						mode: "brush",
-					});
-				} else if (activeTool.type !== "picture") {
+						mode: 'brush'
+					})
+				} else if (activeTool.type !== 'picture') {
 					const newShape = createShape(
 						drawCtx,
-						activeTool as Exclude<CustomTool, { type: "picture" }>,
+						activeTool as Exclude<CustomTool, { type: 'picture' }>,
 						cursorPosition,
 						gridFormat,
 						scaleRatio,
-						selectionPadding,
-					);
-					addShape(newShape);
-					setActiveTool(SELECTION_TOOL);
-					setSelectedShape(newShape);
+						selectionPadding
+					)
+					addShape(newShape)
+					setActiveTool(SELECTION_TOOL)
+					setSelectedShape(newShape)
 					setSelectionMode({
-						mode: "resize",
-						cursorStartPosition: [
-							cursorPosition[0] + selectionPadding,
-							cursorPosition[1] + selectionPadding,
-						],
+						mode: 'resize',
+						cursorStartPosition: [cursorPosition[0] + selectionPadding, cursorPosition[1] + selectionPadding],
 						originalShape: newShape,
-						anchor:
-							activeTool.type === "line" ||
-							activeTool.type === "polygon" ||
-							activeTool.type === "curve"
-								? 0
-								: [1, 1],
-					});
+						anchor: activeTool.type === 'line' || activeTool.type === 'polygon' || activeTool.type === 'curve' ? 0 : [1, 1]
+					})
 				}
 			}
-		};
+		}
 
-		ref.addEventListener("mousedown", handleMouseDown, { passive: false });
-		ref.addEventListener("touchstart", handleMouseDown, { passive: false });
+		ref.addEventListener('mousedown', handleMouseDown, { passive: false })
+		ref.addEventListener('touchstart', handleMouseDown, { passive: false })
 
 		return () => {
-			ref.removeEventListener("mousedown", handleMouseDown);
-			ref.removeEventListener("touchstart", handleMouseDown);
-		};
+			ref.removeEventListener('mousedown', handleMouseDown)
+			ref.removeEventListener('touchstart', handleMouseDown)
+		}
 	}, [
 		disabled,
 		selectionCanvasRef,
@@ -379,45 +306,31 @@ const useDrawableCanvas = ({
 		setSelectedShape,
 		setSelectionMode,
 		selectionPadding,
-		gridFormat,
-	]);
+		gridFormat
+	])
 
 	useEffect(() => {
-		const ref = selectionCanvasRef.current;
-		if (!ref) return;
+		const ref = selectionCanvasRef.current
+		if (!ref) return
 
 		const handleDoubleClick = (e: MouseEvent | TouchEvent) => {
-			if (activeTool.type === "selection") {
-				if (selectedShape?.type === "text") {
-					const cursorPosition = getCursorPosition(
-						e,
-						selectionCanvasRef.current,
-						width,
-						height,
-						scaleRatio,
-					);
-					if (
-						checkSelectionIntersection(
-							selectedShape,
-							cursorPosition,
-							canvasOffset,
-							selectionPadding,
-							scaleRatio,
-						)
-					) {
+			if (activeTool.type === 'selection') {
+				if (selectedShape?.type === 'text') {
+					const cursorPosition = getCursorPosition(e, selectionCanvasRef.current, width, height, scaleRatio)
+					if (checkSelectionIntersection(selectedShape, cursorPosition, canvasOffset, selectionPadding, scaleRatio)) {
 						setSelectionMode({
-							mode: "textedition",
-							defaultValue: selectedShape.value,
-						});
+							mode: 'textedition',
+							defaultValue: selectedShape.value
+						})
 					}
 				}
 			}
-		};
+		}
 		if (isInsideComponent) {
-			registerDoubleClickEvent(ref, handleDoubleClick);
+			registerDoubleClickEvent(ref, handleDoubleClick)
 			return () => {
-				unRegisterDoubleClickEvent(ref);
-			};
+				unRegisterDoubleClickEvent(ref)
+			}
 		}
 	}, [
 		registerDoubleClickEvent,
@@ -431,10 +344,10 @@ const useDrawableCanvas = ({
 		scaleRatio,
 		canvasOffset,
 		setSelectionMode,
-		selectionPadding,
-	]);
+		selectionPadding
+	])
 
-	return { hoverMode };
-};
+	return { hoverMode }
+}
 
-export default useDrawableCanvas;
+export default useDrawableCanvas
