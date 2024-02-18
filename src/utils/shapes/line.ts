@@ -49,7 +49,7 @@ const buildPath = <T extends DrawableShape<'line'>>(
   return {
     ...line,
     path,
-    selection: createLineSelectionPath(line, currentScale, selectionPadding),
+    selection: createLineSelectionPath(path, line, currentScale, selectionPadding),
     arrows,
     style: {
       ...line.style,

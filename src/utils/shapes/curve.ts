@@ -16,10 +16,11 @@ const buildPath = <T extends DrawableShape<'curve'>>(
   currentScale: number,
   selectionPadding: number
 ): T => {
+  const path = createCurvePath(shape)
   return {
     ...shape,
-    path: createCurvePath(shape),
-    selection: createLineSelectionPath(shape, currentScale, selectionPadding, true)
+    path,
+    selection: createLineSelectionPath(path, shape, currentScale, selectionPadding, true)
   }
 }
 
