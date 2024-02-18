@@ -21,10 +21,12 @@ const buildPath = <T extends DrawableShape<'polygon'>>(
   currentScale: number,
   selectionPadding: number
 ): T => {
+  const path = createPolygonPath(shape)
+
   return {
     ...shape,
-    path: createPolygonPath(shape),
-    selection: createLineSelectionPath(shape, currentScale, selectionPadding)
+    path,
+    selection: createLineSelectionPath(path, shape, currentScale, selectionPadding)
   }
 }
 

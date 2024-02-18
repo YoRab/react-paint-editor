@@ -2,10 +2,11 @@ import { SELECTION_ANCHOR_SIZE } from "src/constants/shapes"
 import { DrawableShape, Point, SelectionLinesType } from "src/types/Shapes"
 import { updateCanvasContext } from "src/utils/canvas"
 import { getShapeInfos } from "src/utils/shapes"
-import { createCirclePath, createRecPath } from "src/utils/shapes/path"
+import { createCirclePath, createLinePath, createPolygonPath, createRecPath } from "src/utils/shapes/path"
 
 export const createLineSelectionPath = (
-    shape: DrawableShape & {
+    path: Path2D | undefined,
+    shape: DrawableShape<'line' | 'polygon' | 'curve'> & {
         points: readonly Point[]
     },
     currentScale: number,
@@ -16,6 +17,7 @@ export const createLineSelectionPath = (
 
     return {
         border: createRecPath(borders),
+        shapePath: path,
         anchors: [
             ...shape.points.map((point, i) => {
                 if (gravityAnchors && i > 0 && i < shape.points.length - 1) {
@@ -58,7 +60,9 @@ export const drawLineSelection = ({
         strokeColor: selectionColor,
         lineWidth: selectionWidth / currentScale
     })
-    ctx.stroke(shape.selection.border)
+
+    if (shape.selection.shapePath)
+        ctx.stroke(shape.selection.shapePath)
 
     if (!withAnchors || shape.locked) return
 
