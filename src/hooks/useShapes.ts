@@ -1,11 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import type { Point, ShapeEntity } from '../types/Shapes'
-import { createPicture } from '../utils/shapes/picture'
-import { refreshShape } from '../utils/shapes/index'
-import { PICTURE_DEFAULT_SIZE } from '../constants/picture'
-import { isEqual, omit, set } from '../utils/object'
-import { checkPositionIntersection, checkSelectionIntersection } from 'src/utils/intersect'
 import { DRAWCANVAS_CLASSNAME, SELECTIONCANVAS_CLASSNAME } from 'src/constants/app'
+import { checkPositionIntersection, checkSelectionIntersection } from 'src/utils/intersect'
+import { PICTURE_DEFAULT_SIZE } from '../constants/picture'
+import type { Point, ShapeEntity } from '../types/Shapes'
+import { isEqual, omit, set } from '../utils/object'
+import { refreshShape } from '../utils/shapes/index'
+import { createPicture } from '../utils/shapes/picture'
 
 const useShapes = (
 	onDataChanged: (() => void) | undefined,

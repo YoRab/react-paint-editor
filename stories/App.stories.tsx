@@ -1,5 +1,5 @@
-import { fn } from '@storybook/test'
 import type { Meta, StoryObj } from '@storybook/react'
+import { fn } from '@storybook/test'
 import App from '../src/components/App'
 import { EXAMPLE_DEFAULT } from './fixture'
 

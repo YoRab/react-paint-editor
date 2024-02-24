@@ -1,7 +1,7 @@
 import React from 'react'
-import SelectField from './SelectField'
 import { fontIcon } from '../../constants/icons'
 import './FontFamilyField.css'
+import SelectField from './SelectField'
 
 const FontFamilyOption: React.FC<{
 	children?: React.ReactNode

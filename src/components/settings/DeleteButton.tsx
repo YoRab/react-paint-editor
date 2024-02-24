@@ -1,8 +1,8 @@
 import React from 'react'
 
+import Button from '../../components/common/Button'
 import { trashIcon } from '../../constants/icons'
 import type { ShapeEntity } from '../../types/Shapes'
-import Button from '../../components/common/Button'
 
 type DeleteShapeButtonType = {
 	disabled?: boolean

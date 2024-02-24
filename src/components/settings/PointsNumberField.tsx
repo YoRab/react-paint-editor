@@ -1,5 +1,5 @@
-import { polygonIcon } from '../../constants/icons'
 import React from 'react'
+import { polygonIcon } from '../../constants/icons'
 import RangeField from './RangeField'
 
 type PointsNumberFieldType = {

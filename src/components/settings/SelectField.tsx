@@ -1,8 +1,8 @@
 import React, { useState } from 'react'
 import Button from '../../components/common/Button'
 import Panel from '../../components/common/Panel'
-import './SelectField.css'
 import { uniqueId } from '../../utils/util'
+import './SelectField.css'
 
 type SelectFieldType = {
 	CustomOption: React.FC<{

@@ -1,10 +1,10 @@
 import { GridFormatType } from '../../constants/app'
 import { SelectionModeResize } from '../../types/Mode'
-import type { Point, Ellipse, Rect, DrawableShape, ShapeEntity } from '../../types/Shapes'
+import type { DrawableShape, Ellipse, Point, Rect, ShapeEntity } from '../../types/Shapes'
 import type { ToolsSettingsType } from '../../types/tools'
-import { roundForGrid } from '../../utils/transform'
 import { createRecSelectionPath, resizeRectSelection } from '../../utils/selection/rectSelection'
 import { createEllipsePath } from '../../utils/shapes/path'
+import { roundForGrid } from '../../utils/transform'
 import { uniqueId } from '../../utils/util'
 
 const buildPath = <T extends DrawableShape<'ellipse'>>(shape: T, currentScale: number, selectionPadding: number): T => {

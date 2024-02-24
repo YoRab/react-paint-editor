@@ -1,8 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react'
 import Button from '../../components/common/Button'
 import Panel from '../../components/common/Panel'
-import './RangeField.css'
 import { uniqueId } from '../../utils/util'
+import './RangeField.css'
 
 type ShapeStyleColorType = {
 	selectedSettings: string | undefined

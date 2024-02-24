@@ -1,11 +1,11 @@
+import { getAngleFromVector, rotatePoint } from 'src/utils/trigo'
+import type { GridFormatType } from '../constants/app'
+import { PICTURE_DEFAULT_SIZE } from '../constants/picture'
+import { GRID_ROTATION_STEPS, GRID_STEP } from '../constants/style'
 import type { SelectionModeData } from '../types/Mode'
 import type { DrawableShape, Line, Point, ShapeEntity } from '../types/Shapes'
-import type { GridFormatType } from '../constants/app'
-import { GRID_ROTATION_STEPS, GRID_STEP } from '../constants/style'
 import { resizeShape, rotateShape, translateShape } from './shapes'
 import { addNewPointToShape } from './shapes/brush'
-import { PICTURE_DEFAULT_SIZE } from '../constants/picture'
-import { getAngleFromVector, rotatePoint } from 'src/utils/trigo'
 
 export const getNormalizedSize = (originalWidth: number, originalHeight: number, width: number, height: number) => {
 	const originalRatio = originalWidth / originalHeight

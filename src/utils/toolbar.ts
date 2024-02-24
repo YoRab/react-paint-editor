@@ -1,18 +1,18 @@
-import type { ShapeType } from '../types/Shapes'
-import type { CustomTool, CustomToolInput } from '../types/tools'
-import type { RecursivePartial } from '../types/utils'
 import {
 	DEFAULT_SHAPE_BRUSH,
 	DEFAULT_SHAPE_CIRCLE,
 	DEFAULT_SHAPE_CURVE,
 	DEFAULT_SHAPE_ELLIPSE,
 	DEFAULT_SHAPE_LINE,
+	DEFAULT_SHAPE_PICTURE,
 	DEFAULT_SHAPE_POLYGON,
 	DEFAULT_SHAPE_RECT,
 	DEFAULT_SHAPE_SQUARE,
-	DEFAULT_SHAPE_TEXT,
-	DEFAULT_SHAPE_PICTURE
+	DEFAULT_SHAPE_TEXT
 } from '../constants/tools'
+import type { ShapeType } from '../types/Shapes'
+import type { CustomTool, CustomToolInput } from '../types/tools'
+import type { RecursivePartial } from '../types/utils'
 import { compact } from '../utils/array'
 import { mergeWith } from '../utils/object'
 

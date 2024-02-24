@@ -1,12 +1,12 @@
 import React, { useRef, useState } from 'react'
-import type { ShapeEntity } from '../../types/Shapes'
 import useDrag from '../../hooks/useDrag'
+import type { ShapeEntity } from '../../types/Shapes'
 
-import { gridOffIcon, lockedIcon, trashIcon, unlockedIcon, visibilityIcon, visibilityOffIcon } from '../../constants/icons'
-import { getShapePicture } from '../../utils/style'
 import Button from '../../components/common/Button'
 import Panel from '../../components/common/Panel'
 import type { GridFormatType } from '../../constants/app'
+import { gridOffIcon, lockedIcon, trashIcon, unlockedIcon, visibilityIcon, visibilityOffIcon } from '../../constants/icons'
+import { getShapePicture } from '../../utils/style'
 import './Layouts.css'
 
 type LayoutType = {

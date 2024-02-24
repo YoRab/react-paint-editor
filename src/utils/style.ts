@@ -1,5 +1,5 @@
+import { arrowIcon, brushIcon, circleIcon, curveIcon, ellipseIcon, pictureIcon, polygonIcon, recIcon, squareIcon, textIcon } from '../constants/icons'
 import type { ShapeType } from '../types/Shapes'
-import { brushIcon, circleIcon, ellipseIcon, arrowIcon, pictureIcon, polygonIcon, curveIcon, squareIcon, recIcon, textIcon } from '../constants/icons'
 
 export const getShapePicture = (shape: ShapeType) => {
 	switch (shape) {

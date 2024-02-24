@@ -1,9 +1,9 @@
 import React, { useState } from 'react'
 import Button from '../../components/common/Button'
 import Panel from '../../components/common/Panel'
-import { paletteIcon, noStrokeIcon, noFillIcon } from '../../constants/icons'
-import './ColorField.css'
+import { noFillIcon, noStrokeIcon, paletteIcon } from '../../constants/icons'
 import { uniqueId } from '../../utils/util'
+import './ColorField.css'
 
 type ShapeStyleColorType = {
 	selectedSettings: string | undefined

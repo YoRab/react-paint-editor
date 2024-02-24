@@ -1,11 +1,11 @@
 import { GridFormatType } from '../../constants/app'
 import { SelectionModeResize } from '../../types/Mode'
-import type { Point, Rect, DrawableShape, ShapeEntity } from '../../types/Shapes'
+import type { DrawableShape, Point, Rect, ShapeEntity } from '../../types/Shapes'
 import type { ToolsSettingsType } from '../../types/tools'
-import { roundForGrid, roundValues } from '../../utils/transform'
-import { getShapeInfos } from '../../utils/shapes/index'
-import { createRecSelectionPath, resizeRectSelection } from '../../utils/selection/rectSelection'
 import { set } from '../../utils/object'
+import { createRecSelectionPath, resizeRectSelection } from '../../utils/selection/rectSelection'
+import { getShapeInfos } from '../../utils/shapes/index'
+import { roundForGrid, roundValues } from '../../utils/transform'
 import { uniqueId } from '../../utils/util'
 
 const scalePoint = (point: Point, minX: number, minY: number, scaleX = 1, scaleY = 1): Point => {

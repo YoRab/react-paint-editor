@@ -1,5 +1,5 @@
-import { SNACKBAR_DEFAULT_SETTINGS } from '../constants/snackbar'
 import { useEffect, useRef, useState } from 'react'
+import { SNACKBAR_DEFAULT_SETTINGS } from '../constants/snackbar'
 import type { SnackBarType, SnackbarTypeType } from '../types/snackbar'
 import { uniqueId } from '../utils/util'
 

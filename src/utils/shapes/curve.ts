@@ -1,15 +1,15 @@
 import { GridFormatType } from '../../constants/app'
 import { SelectionModeResize } from '../../types/Mode'
-import type { Point, DrawableShape, ShapeEntity } from '../../types/Shapes'
+import type { DrawableShape, Point, ShapeEntity } from '../../types/Shapes'
 import type { ToolsSettingsType } from '../../types/tools'
 import { getPointPositionAfterCanvasTransformation } from '../../utils/intersect'
-import { roundForGrid } from '../../utils/transform'
-import { getShapeInfos } from '../../utils/shapes/index'
-import { getPolygonBorder } from './polygon'
-import { createLineSelectionPath } from '../../utils/selection/lineSelection'
-import { createCurvePath } from '../../utils/shapes/path'
 import { set } from '../../utils/object'
+import { createLineSelectionPath } from '../../utils/selection/lineSelection'
+import { getShapeInfos } from '../../utils/shapes/index'
+import { createCurvePath } from '../../utils/shapes/path'
+import { roundForGrid } from '../../utils/transform'
 import { uniqueId } from '../../utils/util'
+import { getPolygonBorder } from './polygon'
 
 const buildPath = <T extends DrawableShape<'curve'>>(shape: T, currentScale: number, selectionPadding: number): T => {
 	const path = createCurvePath(shape)

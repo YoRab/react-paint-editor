@@ -1,12 +1,12 @@
 import type { GridFormatType } from '../../constants/app'
 import type { SelectionModeResize } from '../../types/Mode'
-import type { Point, DrawableShape, ShapeEntity, Rect } from '../../types/Shapes'
+import type { DrawableShape, Point, Rect, ShapeEntity } from '../../types/Shapes'
 import type { ToolsSettingsType } from '../../types/tools'
 import { getPointPositionBeforeCanvasTransformation } from '../../utils/intersect'
-import { roundForGrid } from '../../utils/transform'
-import { createRecPath } from './path'
 import { createRecSelectionPath, resizeRectSelection } from '../../utils/selection/rectSelection'
+import { roundForGrid } from '../../utils/transform'
 import { uniqueId } from '../../utils/util'
+import { createRecPath } from './path'
 
 type rectish = 'text' | 'rect' | 'square' | 'picture'
 
