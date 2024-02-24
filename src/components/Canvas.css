@@ -40,8 +40,7 @@
     /* prevent scroll on touch */
     display: block;
     grid-area: 1 / 1;
-    ;
-    cursor: var(--react-paint-editor-canvas-cursor)
+    cursor: var(--react-paint-editor-canvas-cursor);
 }
 
 .react-paint-editor-canvas-selectioncanvas[data-grow='true'] {
