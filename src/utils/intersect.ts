@@ -1,8 +1,8 @@
 import { SELECTION_ANCHOR_SIZE, SELECTION_RESIZE_ANCHOR_POSITIONS, SELECTION_ROTATED_ANCHOR_POSITION } from '../constants/shapes'
 import type { HoverModeData } from '../types/Mode'
-import type { Point, DrawableShape, Rect } from '../types/Shapes'
+import type { DrawableShape, Point, Rect } from '../types/Shapes'
 import { getShapeInfos } from './shapes'
-import { rotatePoint, isPointInsideRect, isCircleIntersectRect } from './trigo'
+import { isCircleIntersectRect, isPointInsideRect, rotatePoint } from './trigo'
 
 export const getCursorPosition = (
 	e: MouseEvent | TouchEvent,

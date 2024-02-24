@@ -1,13 +1,13 @@
 import React, { useEffect, useState, useTransition } from 'react'
 import Button from '../../components/common/Button'
 import Panel from '../../components/common/Panel'
-import type { ShapeType } from '../../types/Shapes'
-import Tool from './Tool'
-import LoadFileTool from './LoadFileTool'
 import { publicIcon } from '../../constants/icons'
-import type { ToolsType } from '../../types/tools'
 import { CLEAR_TOOL, EXPORT_TOOL, LOAD_TOOL, REDO_TOOL, SAVE_TOOL, UNDO_TOOL, UPLOAD_PICTURE_TOOL } from '../../constants/tools'
+import type { ShapeType } from '../../types/Shapes'
+import type { ToolsType } from '../../types/tools'
+import LoadFileTool from './LoadFileTool'
 import './MenuGroup.css'
+import Tool from './Tool'
 
 type ToolbarGroupType = {
 	activeTool: ToolsType

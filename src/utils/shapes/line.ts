@@ -1,17 +1,17 @@
 import { GridFormatType } from '../../constants/app'
 import { SelectionModeResize } from '../../types/Mode'
-import type { Point, DrawableShape, Line, Triangle, ShapeEntity, Rect, StyleShape } from '../../types/Shapes'
+import type { DrawableShape, Line, Point, Rect, ShapeEntity, StyleShape, Triangle } from '../../types/Shapes'
 import type { ToolsSettingsType } from '../../types/tools'
 import { updateCanvasContext } from '../../utils/canvas'
 import { getPointPositionAfterCanvasTransformation } from '../../utils/intersect'
+import { set } from '../../utils/object'
+import { createLineSelectionPath } from '../../utils/selection/lineSelection'
+import { getShapeInfos } from '../../utils/shapes/index'
+import { createLinePath } from '../../utils/shapes/path'
 import { roundForGrid, shortenLine } from '../../utils/transform'
 import { getAngleFromVector, rotatePoint } from '../../utils/trigo'
-import { getShapeInfos } from '../../utils/shapes/index'
-import { createTriangle, drawTriangle } from './triangle'
-import { createLinePath } from '../../utils/shapes/path'
-import { createLineSelectionPath } from '../../utils/selection/lineSelection'
-import { set } from '../../utils/object'
 import { uniqueId } from '../../utils/util'
+import { createTriangle, drawTriangle } from './triangle'
 
 const buildPath = <T extends DrawableShape<'line'>>(line: T, currentScale: number, selectionPadding: number): T => {
 	const arrows = []

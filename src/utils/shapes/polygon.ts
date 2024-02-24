@@ -1,13 +1,13 @@
+import { getShapeInfos } from '.'
 import { GridFormatType } from '../../constants/app'
 import { SelectionModeResize } from '../../types/Mode'
-import type { Point, DrawableShape, Polygon, Rect, ShapeEntity } from '../../types/Shapes'
+import type { DrawableShape, Point, Polygon, Rect, ShapeEntity } from '../../types/Shapes'
 import type { ToolsSettingsType } from '../../types/tools'
 import { getPointPositionAfterCanvasTransformation } from '../../utils/intersect'
-import { roundForGrid } from '../../utils/transform'
-import { getShapeInfos } from '.'
+import { set } from '../../utils/object'
 import { createLineSelectionPath } from '../../utils/selection/lineSelection'
 import { createPolygonPath } from '../../utils/shapes/path'
-import { set } from '../../utils/object'
+import { roundForGrid } from '../../utils/transform'
 import { uniqueId } from '../../utils/util'
 
 const buildPath = <T extends DrawableShape<'polygon'>>(shape: T, currentScale: number, selectionPadding: number): T => {

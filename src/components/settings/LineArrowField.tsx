@@ -1,7 +1,7 @@
 import React from 'react'
-import SelectField from './SelectField'
 import { lineEndIcon } from '../../constants/icons'
 import './LineArrowField.css'
+import SelectField from './SelectField'
 
 const LineArrowOption: React.FC<{
 	children?: React.ReactNode

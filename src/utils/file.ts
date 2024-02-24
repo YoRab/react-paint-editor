@@ -1,11 +1,11 @@
+import { PICTURE_DEFAULT_SIZE } from '../constants/picture'
 import { ShapeTypeArray } from '../constants/shapes'
 import type { DrawableShape, ExportDataType, Point, ShapeEntity } from '../types/Shapes'
-import { addDefaultAndTempShapeProps, buildDataToExport } from './data'
+import { compact } from '../utils/array'
 import { initCanvasContext } from './canvas'
+import { addDefaultAndTempShapeProps, buildDataToExport } from './data'
 import { migrateShapesV065 } from './migration'
 import { drawShape } from './shapes'
-import { PICTURE_DEFAULT_SIZE } from '../constants/picture'
-import { compact } from '../utils/array'
 
 export const addSizeAndConvertSvgToObjectUrl = (svgFileContent: string) => {
 	const parser = new DOMParser()

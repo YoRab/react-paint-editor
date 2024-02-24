@@ -1,12 +1,12 @@
-import { rotatePoint } from '../../utils/trigo'
-import type { Point, DrawableShape, Rect, SelectionDefaultType } from '../../types/Shapes'
-import type { SelectionModeResize } from '../../types/Mode'
 import type { GridFormatType } from '../../constants/app'
-import { getShapeInfos } from '../../utils/shapes/index'
-import { createCirclePath, createLinePath, createRecPath } from '../shapes/path'
 import { SELECTION_ANCHOR_SIZE, SELECTION_RESIZE_ANCHOR_POSITIONS, SELECTION_ROTATED_ANCHOR_POSITION } from '../../constants/shapes'
-import { roundForGrid, roundValues } from '../../utils/transform'
+import type { SelectionModeResize } from '../../types/Mode'
+import type { DrawableShape, Point, Rect, SelectionDefaultType } from '../../types/Shapes'
 import { updateCanvasContext } from '../../utils/canvas'
+import { getShapeInfos } from '../../utils/shapes/index'
+import { roundForGrid, roundValues } from '../../utils/transform'
+import { rotatePoint } from '../../utils/trigo'
+import { createCirclePath, createLinePath, createRecPath } from '../shapes/path'
 
 export const createRecSelectionPath = (
 	path: Path2D | undefined,

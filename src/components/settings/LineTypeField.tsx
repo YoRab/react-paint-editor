@@ -1,7 +1,7 @@
 import React from 'react'
-import SelectField from './SelectField'
 import { lineTypeIcon } from '../../constants/icons'
 import './LineTypeField.css'
+import SelectField from './SelectField'
 
 type LineTypeOptionType = {
 	children: string

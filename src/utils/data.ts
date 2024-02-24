@@ -1,8 +1,8 @@
 import type { DrawableShape, DrawableShapeJson, ExportDataType, ShapeEntity } from '../types/Shapes'
-import { getBase64Image } from './file'
-import { refreshShape } from './shapes'
 import { omit } from '../utils/object'
 import { uniqueId } from '../utils/util'
+import { getBase64Image } from './file'
+import { refreshShape } from './shapes'
 
 export const cleanShapesBeforeExport = (shapes: DrawableShape[]): DrawableShapeJson[] => {
 	const propsToOmit = ['img', 'id', 'selection', 'path', 'arrows']

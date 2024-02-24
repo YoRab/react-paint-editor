@@ -1,12 +1,12 @@
-import { fitContentInsideContainer, roundForGrid } from '../transform'
-import type { DrawableShape, Picture, Point, Rect, ShapeEntity } from '../../types/Shapes'
-import { addSizeAndConvertSvgToObjectUrl, fetchAndStringify, isSvg } from '../file'
-import { DEFAULT_SHAPE_PICTURE } from '../../constants/tools'
-import { getRectBorder, resizeRect } from './rectangle'
-import { SelectionModeResize } from '../../types/Mode'
 import { GridFormatType } from '../../constants/app'
+import { DEFAULT_SHAPE_PICTURE } from '../../constants/tools'
+import { SelectionModeResize } from '../../types/Mode'
+import type { DrawableShape, Picture, Point, Rect, ShapeEntity } from '../../types/Shapes'
 import { createRecSelectionPath, resizeRectSelection } from '../../utils/selection/rectSelection'
 import { uniqueId } from '../../utils/util'
+import { addSizeAndConvertSvgToObjectUrl, fetchAndStringify, isSvg } from '../file'
+import { fitContentInsideContainer, roundForGrid } from '../transform'
+import { getRectBorder, resizeRect } from './rectangle'
 
 const buildPath = <T extends DrawableShape<'picture'>>(shape: T, currentScale: number, selectionPadding: number): T => {
 	return {

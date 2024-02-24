@@ -1,13 +1,13 @@
-import type { Point, DrawableShape, Text, Rect, ShapeEntity } from '../../types/Shapes'
-import type { ToolsSettingsType } from '../../types/tools'
+import { GridFormatType } from '../../constants/app'
 import { STYLE_FONT_DEFAULT, STYLE_FONT_SIZE_DEFAULT } from '../../constants/style'
 import { SelectionModeResize } from '../../types/Mode'
-import { getRectOppositeAnchorAbsolutePosition } from './rectangle'
-import { getShapeInfos } from '../../utils/shapes/index'
-import { GridFormatType } from '../../constants/app'
-import { roundForGrid } from '../../utils/transform'
+import type { DrawableShape, Point, Rect, ShapeEntity, Text } from '../../types/Shapes'
+import type { ToolsSettingsType } from '../../types/tools'
 import { createRecSelectionPath, resizeRectSelection } from '../../utils/selection/rectSelection'
+import { getShapeInfos } from '../../utils/shapes/index'
+import { roundForGrid } from '../../utils/transform'
 import { uniqueId } from '../../utils/util'
+import { getRectOppositeAnchorAbsolutePosition } from './rectangle'
 
 const DEFAULT_TEXT_VALUE: string[] = ['Texte']
 

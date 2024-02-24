@@ -1,15 +1,15 @@
 import React, { useCallback, useEffect, useImperativeHandle, useRef } from 'react'
-import type { Point, ShapeEntity } from '../types/Shapes'
-import { initCanvasContext } from '../utils/canvas'
-import type { HoverModeData, SelectionModeData } from '../types/Mode'
-import EditTextBox from './toolbox/EditTextBox'
+import { DRAWCANVAS_CLASSNAME, type GridFormatType, SELECTIONCANVAS_CLASSNAME } from '../constants/app'
 import useDrawableCanvas from '../hooks/useDrawableCanvas'
+import type { HoverModeData, SelectionModeData } from '../types/Mode'
+import type { Point, ShapeEntity } from '../types/Shapes'
 import type { ToolsType } from '../types/tools'
-import { DRAWCANVAS_CLASSNAME, SELECTIONCANVAS_CLASSNAME, type GridFormatType } from '../constants/app'
-import { drawShapeSelection, drawShape, refreshShape } from '../utils/shapes'
-import { resizeTextShapeWithNewContent } from '../utils/shapes/text'
+import { initCanvasContext } from '../utils/canvas'
 import { drawGrid } from '../utils/grid'
+import { drawShape, drawShapeSelection, refreshShape } from '../utils/shapes'
+import { resizeTextShapeWithNewContent } from '../utils/shapes/text'
 import './Canvas.css'
+import EditTextBox from './toolbox/EditTextBox'
 
 const renderDrawCanvas = (
 	drawCtx: CanvasRenderingContext2D,

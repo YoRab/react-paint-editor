@@ -1,11 +1,11 @@
 import { GridFormatType } from '../../constants/app'
 import { SelectionModeResize } from '../../types/Mode'
-import type { Point, Circle, Rect, DrawableShape, ShapeEntity } from '../../types/Shapes'
+import type { Circle, DrawableShape, Point, Rect, ShapeEntity } from '../../types/Shapes'
 import type { ToolsSettingsType } from '../../types/tools'
-import { roundForGrid } from '../../utils/transform'
-import { createCirclePath } from './path'
 import { createRecSelectionPath, resizeRectSelection } from '../../utils/selection/rectSelection'
+import { roundForGrid } from '../../utils/transform'
 import { uniqueId } from '../../utils/util'
+import { createCirclePath } from './path'
 
 const buildPath = <T extends DrawableShape<'circle'>>(shape: T, currentScale: number, selectionPadding: number): T => {
 	const path = createCirclePath(shape)

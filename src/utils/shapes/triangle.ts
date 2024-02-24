@@ -1,5 +1,5 @@
-import { createTrianglePath } from '../../utils/shapes/path'
 import { DrawableShape, Triangle } from '../../types/Shapes'
+import { createTrianglePath } from '../../utils/shapes/path'
 
 const buildPath = (shape: DrawableShape<'triangle'>) => {
 	return {

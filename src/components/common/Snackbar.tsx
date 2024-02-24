@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
-import { STYLE_ZINDEX } from '../../constants/style'
 import { SNACKBAR_DURATION, SNACKBAR_TOGGLE_ANIMATION_DURATION } from '../../constants/snackbar'
+import { STYLE_ZINDEX } from '../../constants/style'
 import type { SnackBarType } from '../../types/snackbar'
 import './Snackbar.css'
 
