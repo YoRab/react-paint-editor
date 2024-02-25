@@ -20,9 +20,9 @@ const useShapes = (
 	const onDataChangedRef = useRef<(() => void) | undefined>(onDataChanged)
 	onDataChangedRef.current = onDataChanged
 
+	const [selectionFrame, setSelectionFrame] = useState<[Point, Point] | undefined>(undefined)
 	const [selectedShape, setSelectedShape] = useState<ShapeEntity | undefined>(undefined)
 	const [hoveredShape, setHoveredShape] = useState<ShapeEntity | undefined>(undefined)
-
 	const [savedShapes, setSavedShapes] = useState<{
 		states: {
 			shapes: ShapeEntity[]
@@ -216,10 +216,29 @@ const useShapes = (
 		)
 	}, [canvasSize, selectionPadding])
 
+	const refreshSelectedShapes = useCallback(
+		(ctx: CanvasRenderingContext2D, cursorPosition: Point, canvasOffset: Point, currentScale: number) => {
+			setSelectionFrame(prev => {
+				if (!prev) return undefined
+				const newSelectionFrame: [Point, Point] = [prev[0], [cursorPosition[0], cursorPosition[1]]]
+
+				const foundShape = shapesRef.current.find(shape => {
+					return !!checkPositionIntersection(ctx, shape, cursorPosition, canvasOffset, selectionPadding, currentScale)
+				})
+				setSelectedShape(foundShape)
+				return newSelectionFrame
+			})
+		},
+		[selectionPadding]
+	)
+
 	return {
 		shapesRef,
 		selectedShape,
 		hoveredShape,
+		selectionFrame,
+		setSelectionFrame,
+		refreshSelectedShapes,
 		addShape,
 		addPictureShape,
 		moveShapes,

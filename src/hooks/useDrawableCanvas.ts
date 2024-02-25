@@ -4,7 +4,7 @@ import { ShapeTypeArray } from '../constants/shapes'
 import { SELECTION_TOOL } from '../constants/tools'
 import useDoubleClick from '../hooks/useDoubleClick'
 import type { HoverModeData, SelectionModeData } from '../types/Mode'
-import type { Point, ShapeEntity, ShapeType } from '../types/Shapes'
+import type { Point, ShapeEntity } from '../types/Shapes'
 import type { CustomTool, ToolsType } from '../types/tools'
 import { checkSelectionIntersection, getCursorPosition, isTouchGesture } from '../utils/intersect'
 import { selectShape } from '../utils/selection'
@@ -35,25 +35,29 @@ const handleMove = (
 	updateSingleShape: (updatedShape: ShapeEntity) => void,
 	setCanvasOffset: React.Dispatch<React.SetStateAction<Point>>,
 	setSelectedShape: React.Dispatch<React.SetStateAction<ShapeEntity | undefined>>,
+	refreshSelectedShapes: (ctx: CanvasRenderingContext2D, cursorPosition: Point, canvasOffset: Point, currentScale: number) => void,
 	selectionPadding: number,
 	isShiftPressed: boolean
 ) => {
 	const drawCtx = canvasRef.current?.getContext('2d')
 	if (!drawCtx) return
 
-	if (activeTool.type === 'move' && canvasOffsetStartPosition !== undefined) {
-		const cursorPosition = getCursorPosition(e, canvasRef.current, width, height, scaleRatio)
-		setCanvasOffset([cursorPosition[0] - canvasOffsetStartPosition[0], cursorPosition[1] - canvasOffsetStartPosition[1]])
-	}
-
 	const cursorPosition = getCursorPosition(e, canvasRef.current, width, height, scaleRatio)
+
+	if (activeTool.type === 'move' && canvasOffsetStartPosition !== undefined) {
+		setCanvasOffset([cursorPosition[0] - canvasOffsetStartPosition[0], cursorPosition[1] - canvasOffsetStartPosition[1]])
+		return
+	}
+	if (selectionMode.mode === 'selectionFrame') {
+		refreshSelectedShapes(drawCtx, cursorPosition, canvasOffset, scaleRatio)
+		return
+	}
 
 	if (!isTouchGesture(e)) {
 		refreshHoveredShape(e, drawCtx, cursorPosition, canvasOffset, scaleRatio)
 	}
 
-	if (selectedShape === undefined) return
-	if (selectedShape.locked) return
+	if (selectedShape === undefined || selectedShape.locked) return
 
 	if (selectionMode.mode === 'default' || selectionMode.mode === 'textedition') {
 		const positionIntersection = checkSelectionIntersection(selectedShape, cursorPosition, canvasOffset, selectionPadding, scaleRatio, true) || {
@@ -101,6 +105,7 @@ type UseCanvasType = {
 		canvasOffset: Point,
 		currentScale: number
 	) => void
+	refreshSelectedShapes: (ctx: CanvasRenderingContext2D, cursorPosition: Point, canvasOffset: Point, currentScale: number) => void
 	canvasOffsetStartPosition: Point | undefined
 	setCanvasOffsetStartPosition: React.Dispatch<React.SetStateAction<Point | undefined>>
 	gridFormat: GridFormatType
@@ -109,6 +114,7 @@ type UseCanvasType = {
 	isInsideComponent: boolean
 	selectionMode: SelectionModeData<number | Point>
 	setSelectionMode: React.Dispatch<React.SetStateAction<SelectionModeData<number | Point>>>
+	setSelectionFrame: React.Dispatch<React.SetStateAction<[Point, Point] | undefined>>
 	drawCanvasRef: React.MutableRefObject<HTMLCanvasElement | null>
 	selectionCanvasRef: React.MutableRefObject<HTMLCanvasElement | null>
 	selectionPadding: number
@@ -130,7 +136,9 @@ const useDrawableCanvas = ({
 	selectedShape,
 	selectionCanvasRef,
 	canvasOffsetStartPosition,
+	refreshSelectedShapes,
 	setSelectedShape,
+	setSelectionFrame,
 	setCanvasOffsetStartPosition,
 	updateSingleShape,
 	gridFormat,
@@ -166,6 +174,7 @@ const useDrawableCanvas = ({
 					updateSingleShape,
 					setCanvasOffset,
 					setSelectedShape,
+					refreshSelectedShapes,
 					selectionPadding,
 					isShiftPressed
 				)
@@ -195,6 +204,7 @@ const useDrawableCanvas = ({
 		setCanvasOffset,
 		setSelectedShape,
 		refreshHoveredShape,
+		refreshSelectedShapes,
 		selectionPadding,
 		isShiftPressed
 	])
@@ -204,6 +214,7 @@ const useDrawableCanvas = ({
 			if (selectionMode.mode === 'textedition') return
 			if (selectionMode.mode !== 'default') {
 				setSelectionMode({ mode: 'default' })
+				setSelectionFrame(undefined)
 				saveShapes()
 			}
 		}
@@ -219,7 +230,7 @@ const useDrawableCanvas = ({
 				document.removeEventListener('touchend', handleMouseUp)
 			}
 		}
-	}, [isInsideComponent, selectionMode, saveShapes, setSelectionMode])
+	}, [isInsideComponent, selectionMode, saveShapes, setSelectionFrame, setSelectionMode])
 
 	useEffect(() => {
 		const ref = selectionCanvasRef.current
@@ -236,11 +247,15 @@ const useDrawableCanvas = ({
 				const { shape, mode } = selectShape(ctx, shapes, cursorPosition, scaleRatio, canvasOffset, selectedShape, selectionPadding, isTouchGesture(e))
 				setSelectedShape(shape)
 				setSelectionMode(mode)
+				if (!shape) {
+					setSelectionFrame([
+						[cursorPosition[0], cursorPosition[1]],
+						[cursorPosition[0], cursorPosition[1]]
+					])
+				}
 			} else if (activeTool.type === 'move') {
 				setCanvasOffsetStartPosition(cursorPosition)
-			}
-
-			if (ShapeTypeArray.includes(activeTool.type as ShapeType)) {
+			} else if (ShapeTypeArray.some(item => item === activeTool.type)) {
 				const drawCtx = drawCanvasRef.current?.getContext('2d')
 				if (!drawCtx) return
 				if (activeTool.type === 'brush') {
@@ -250,7 +265,6 @@ const useDrawableCanvas = ({
 						setSelectedShape(newShape)
 					} else {
 						const newShape = createShape(drawCtx, activeTool, cursorPosition, gridFormat, scaleRatio, selectionPadding)
-						console.log(newShape)
 						if (!newShape) return
 						addShape(newShape)
 						setSelectedShape(newShape)
@@ -305,6 +319,7 @@ const useDrawableCanvas = ({
 		setActiveTool,
 		setSelectedShape,
 		setSelectionMode,
+		setSelectionFrame,
 		selectionPadding,
 		gridFormat
 	])

@@ -39,12 +39,12 @@ export const transformCanvas = (
 	responsiveScale: number,
 	canvasOffset: Point,
 	rotation: number,
-	translation: Point
+	translation?: Point
 ) => {
 	ctx.save()
 	ctx.scale(responsiveScale, responsiveScale)
 	ctx.translate(canvasOffset[0], canvasOffset[1])
-	if (rotation !== 0) {
+	if (rotation !== 0 && translation) {
 		ctx.translate(translation[0], translation[1])
 		ctx.rotate(rotation)
 		ctx.translate(-translation[0], -translation[1])

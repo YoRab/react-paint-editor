@@ -4,6 +4,10 @@ export type SelectionModeDefault = {
 	mode: 'default'
 }
 
+export type SelectionModeSelectionFrame = {
+	mode: 'selectionFrame'
+}
+
 export type SelectionModeBrush = {
 	mode: 'brush'
 }
@@ -34,6 +38,7 @@ export type SelectionModeTranslate = {
 
 export type SelectionModeData<AnchorType extends Point | number> =
 	| SelectionModeDefault
+	| SelectionModeSelectionFrame
 	| SelectionModeBrush
 	| SelectionModeResize<AnchorType>
 	| SelectionModeRotate
@@ -43,6 +48,9 @@ export type SelectionModeData<AnchorType extends Point | number> =
 export type HoverModeData =
 	| {
 			mode: 'default'
+	  }
+	| {
+			mode: 'selectionFrame'
 	  }
 	| {
 			mode: 'resize'

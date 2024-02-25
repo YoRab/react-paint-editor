@@ -100,7 +100,7 @@ export const selectShape = (
 	return {
 		shape: undefined,
 		mode: {
-			mode: 'default'
+			mode: 'selectionFrame'
 		}
 	}
 }
