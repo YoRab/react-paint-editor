@@ -133,8 +133,7 @@ export const checkPositionIntersection = (
 	position: Point,
 	canvasOffset: Point,
 	selectionPadding: number,
-	currentScale: number,
-	radius = 0
+	currentScale: number
 ): false | HoverModeData => {
 	if (shape.locked) return false
 	const { center } = getShapeInfos(shape, selectionPadding)
@@ -146,10 +145,81 @@ export const checkPositionIntersection = (
 		if (checkFill) {
 			return ctx.isPointInPath(shape.path, newPosition[0], newPosition[1]) ? { mode: 'translate' } : false
 		}
-		ctx.lineWidth = (shape.style?.lineWidth ?? 0) + 2 * radius + 15
+		ctx.lineWidth = (shape.style?.lineWidth ?? 0) + 15
 
 		return ctx.isPointInStroke(shape.path, newPosition[0], newPosition[1]) ? { mode: 'translate' } : false
 	}
 
-	return checkSelectionIntersection(shape, position, canvasOffset, selectionPadding, currentScale, false, radius)
+	return checkSelectionIntersection(shape, position, canvasOffset, selectionPadding, currentScale, false)
+}
+
+export function getRectIntersection(rect1: Rect, rect2: Rect): Rect | undefined {
+	const x1 = Math.max(rect1.x, rect2.x)
+	const y1 = Math.max(rect1.y, rect2.y)
+	const x2 = Math.min(rect1.x + (rect1.width || 1), rect2.x + (rect2.width || 1))
+	const y2 = Math.min(rect1.y + (rect1.height || 1), rect2.y + (rect2.height || 1))
+
+	if (x1 < x2 && y1 < y2) {
+		return {
+			x: x1,
+			y: y1,
+			width: x2 - x1,
+			height: y2 - y1
+		}
+	}
+	return undefined
+}
+
+export const checkSelectionFrameCollision = (
+	ctx: CanvasRenderingContext2D,
+	shape: DrawableShape,
+	selectionFrame: [Point, Point],
+	canvasOffset: Point,
+	selectionPadding: number
+): boolean => {
+	const { center, borders } = getShapeInfos(shape, selectionPadding)
+
+	const frame0 = getPointPositionAfterCanvasTransformation(selectionFrame[0], shape.rotation, center, canvasOffset)
+	const frame1 = getPointPositionAfterCanvasTransformation(selectionFrame[1], shape.rotation, center, canvasOffset)
+
+	const minX = Math.round(Math.min(frame0[0], frame1[0]) - selectionPadding / 2)
+	const maxX = Math.round(Math.max(frame0[0], frame1[0]) + selectionPadding)
+	const minY = Math.round(Math.min(frame0[1], frame1[1]) - selectionPadding / 2)
+	const maxY = Math.round(Math.max(frame0[1], frame1[1]) + selectionPadding)
+
+	const collision = getRectIntersection(borders, { x: minX, y: minY, width: maxX - minX, height: maxY - minY })
+	if (!collision) return false
+
+	if (borders.width <= 1 || borders.height <= 1 || !('path' in shape && shape.path)) {
+		return true
+	}
+
+	if (shape.type === 'brush') {
+		for (const points of shape.points) {
+			for (const point of points) {
+				if (isCircleIntersectRect(collision, { x: point[0], y: point[1], radius: (shape.style?.lineWidth ?? 1) / 2 })) {
+					return true
+				}
+			}
+		}
+		return false
+	}
+
+	const collisionOffset = Math.max(1, Math.min(10, Math.round(Math.min(collision.width, collision.height) / 20)))
+
+	ctx.lineWidth = (shape.style?.lineWidth ?? 0) + 10
+	const checkFill = shape.style?.fillColor && shape.style?.fillColor !== 'transparent'
+
+	for (let shiftX = 0; shiftX < collisionOffset; shiftX++) {
+		for (let shiftY = 0; shiftY < collisionOffset; shiftY++) {
+			for (let i = shiftX + collision.x; i < collision.x + collision.width; i += collisionOffset) {
+				for (let j = shiftY + collision.y; j < collision.y + collision.height; j += collisionOffset) {
+					if (checkFill ? ctx.isPointInPath(shape.path, i, j) : ctx.isPointInStroke(shape.path, i, j)) {
+						return true
+					}
+				}
+			}
+		}
+	}
+	return false
 }

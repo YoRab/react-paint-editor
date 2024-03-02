@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { DRAWCANVAS_CLASSNAME, SELECTIONCANVAS_CLASSNAME } from 'src/constants/app'
-import { checkPositionIntersection, checkSelectionIntersection } from 'src/utils/intersect'
+import { checkPositionIntersection, checkSelectionFrameCollision, checkSelectionIntersection } from 'src/utils/intersect'
 import { PICTURE_DEFAULT_SIZE } from '../constants/picture'
 import type { Point, ShapeEntity } from '../types/Shapes'
 import { isEqual, omit, set } from '../utils/object'
@@ -219,13 +219,12 @@ const useShapes = (
 	const refreshSelectedShapes = useCallback(
 		(ctx: CanvasRenderingContext2D, cursorPosition: Point, canvasOffset: Point, currentScale: number) => {
 			setSelectionFrame(prev => {
-				if (!prev) return undefined
-				const newSelectionFrame: [Point, Point] = [prev[0], [cursorPosition[0], cursorPosition[1]]]
+				const newSelectionFrame: [Point, Point] = [prev?.[0] ?? [cursorPosition[0], cursorPosition[1]], [cursorPosition[0], cursorPosition[1]]]
 
-				const foundShape = shapesRef.current.find(shape => {
-					return !!checkPositionIntersection(ctx, shape, cursorPosition, canvasOffset, selectionPadding, currentScale)
+				const foundShape = shapesRef.current.filter(shape => {
+					return checkSelectionFrameCollision(ctx, shape, newSelectionFrame, canvasOffset, selectionPadding)
 				})
-				setSelectedShape(foundShape)
+				setSelectedShape(foundShape?.[0])
 				return newSelectionFrame
 			})
 		},
