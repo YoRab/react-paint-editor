@@ -1,3 +1,4 @@
+import { scalePoint } from '../utils/transform'
 import { SELECTION_ANCHOR_SIZE, SELECTION_RESIZE_ANCHOR_POSITIONS, SELECTION_ROTATED_ANCHOR_POSITION } from '../constants/shapes'
 import type { HoverModeData } from '../types/Mode'
 import type { DrawableShape, Point, Rect } from '../types/Shapes'
@@ -170,6 +171,29 @@ export function getRectIntersection(rect1: Rect, rect2: Rect): Rect | undefined 
 	return undefined
 }
 
+const reactSearch = ({
+	ctx,
+	path,
+	rect,
+	offset,
+	checkFill
+}: { ctx: CanvasRenderingContext2D; path: Path2D; rect: Rect; offset: number; checkFill: boolean }): boolean => {
+	for (let shiftX = 0; shiftX < offset; shiftX += offset / 2) {
+		for (let shiftY = 0; shiftY < offset; shiftY += offset / 2) {
+			for (let i = shiftX + rect.x; i < rect.x + rect.width; i += offset) {
+				for (let j = shiftY + rect.y; j < rect.y + rect.height; j += offset) {
+					if (checkFill ? ctx.isPointInPath(path, i, j) : ctx.isPointInStroke(path, i, j)) {
+						return true
+					}
+				}
+			}
+		}
+	}
+	return false
+}
+
+const COLLISION_OFFSET = 10
+
 export const checkSelectionFrameCollision = (
 	ctx: CanvasRenderingContext2D,
 	shape: DrawableShape,
@@ -187,39 +211,61 @@ export const checkSelectionFrameCollision = (
 	const minY = Math.round(Math.min(frame0[1], frame1[1]) - selectionPadding / 2)
 	const maxY = Math.round(Math.max(frame0[1], frame1[1]) + selectionPadding)
 
-	const collision = getRectIntersection(borders, { x: minX, y: minY, width: maxX - minX, height: maxY - minY })
-	if (!collision) return false
+	const frameRect = { x: minX, y: minY, width: maxX - minX, height: maxY - minY }
+
+	const frameCollision = getRectIntersection(borders, frameRect)
+	if (!frameCollision) return false
 
 	if (borders.width <= 1 || borders.height <= 1 || !('path' in shape && shape.path)) {
 		return true
 	}
 
+	ctx.lineWidth = (shape.style?.lineWidth ?? 0) + COLLISION_OFFSET
+
 	if (shape.type === 'brush') {
+		const brushPoints = shape.points.flat()
+		const brushMinX = Math.min(...brushPoints.map(point => point[0]))
+		const brushMinY = Math.min(...brushPoints.map(point => point[1]))
 		for (const points of shape.points) {
-			for (const point of points) {
-				if (isCircleIntersectRect(collision, { x: point[0], y: point[1], radius: (shape.style?.lineWidth ?? 1) / 2 })) {
+			if (points.length < 1) {
+				break
+			}
+			if (points.length < 2) {
+				const point = scalePoint(points[0], brushMinX, brushMinY, shape.scaleX, shape.scaleY)
+				if (isCircleIntersectRect(frameCollision, { x: point[0], y: point[1], radius: (shape.style?.lineWidth ?? 1) / 2 })) {
 					return true
+				}
+			}
+			for (let i = 0; i < points.length - 1; i++) {
+				const point1 = scalePoint(points[i], brushMinX, brushMinY, shape.scaleX, shape.scaleY)
+				const point2 = scalePoint(points[i + 1], brushMinX, brushMinY, shape.scaleX, shape.scaleY)
+				const pointMinX = Math.min(point1[0], point2[0])
+				const pointMinY = Math.min(point1[1], point2[1])
+
+				const pointsCollision = getRectIntersection(
+					{
+						x: pointMinX,
+						y: pointMinY,
+						width: Math.abs(point1[0] - point2[0]),
+						height: Math.abs(point1[1] - point2[1])
+					},
+					frameRect
+				)
+
+				if (pointsCollision) {
+					const path = new Path2D()
+					path.moveTo(...point1)
+					path.lineTo(...point2)
+
+					const isPathInFrame = reactSearch({ ctx, path, rect: pointsCollision, offset: COLLISION_OFFSET, checkFill: false })
+					if (isPathInFrame) return true
 				}
 			}
 		}
 		return false
 	}
 
-	const collisionOffset = Math.max(1, Math.min(10, Math.round(Math.min(collision.width, collision.height) / 20)))
+	const checkFill = !!(shape.style?.fillColor && shape.style?.fillColor !== 'transparent')
 
-	ctx.lineWidth = (shape.style?.lineWidth ?? 0) + 10
-	const checkFill = shape.style?.fillColor && shape.style?.fillColor !== 'transparent'
-
-	for (let shiftX = 0; shiftX < collisionOffset; shiftX++) {
-		for (let shiftY = 0; shiftY < collisionOffset; shiftY++) {
-			for (let i = shiftX + collision.x; i < collision.x + collision.width; i += collisionOffset) {
-				for (let j = shiftY + collision.y; j < collision.y + collision.height; j += collisionOffset) {
-					if (checkFill ? ctx.isPointInPath(shape.path, i, j) : ctx.isPointInStroke(shape.path, i, j)) {
-						return true
-					}
-				}
-			}
-		}
-	}
-	return false
+	return reactSearch({ ctx, path: shape.path, rect: frameCollision, offset: COLLISION_OFFSET, checkFill })
 }
