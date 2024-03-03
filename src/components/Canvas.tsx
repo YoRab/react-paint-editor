@@ -51,12 +51,14 @@ const renderSelectionCanvas = (
 	selectionColor: string,
 	selectedShape: ShapeEntity | undefined,
 	hoveredShape: ShapeEntity | undefined,
-	selectionFrame: [Point, Point] | undefined
+	selectionFrame: [Point, Point] | undefined,
+	withSkeleton: boolean
 ) => {
 	const { width, height, scaleRatio } = canvasSize
 	selectionCtx.clearRect(0, 0, width, height)
 
-	hoveredShape &&
+	withSkeleton &&
+		hoveredShape &&
 		hoveredShape.id !== selectedShape?.id &&
 		activeTool.type === 'selection' &&
 		selectionMode.mode === 'default' &&
@@ -133,6 +135,8 @@ type DrawerType = {
 	selectionMode: SelectionModeData<number | Point>
 	setSelectionMode: React.Dispatch<React.SetStateAction<SelectionModeData<number | Point>>>
 	isShiftPressed: boolean
+	withFrameSelection: boolean
+	withSkeleton: boolean
 }
 
 const Canvas = React.forwardRef<HTMLCanvasElement, DrawerType>(
@@ -166,7 +170,9 @@ const Canvas = React.forwardRef<HTMLCanvasElement, DrawerType>(
 			selectionColor,
 			selectionPadding,
 			isEditMode,
-			isShiftPressed
+			isShiftPressed,
+			withFrameSelection,
+			withSkeleton
 		},
 		ref
 	) => {
@@ -200,7 +206,8 @@ const Canvas = React.forwardRef<HTMLCanvasElement, DrawerType>(
 			saveShapes,
 			setSelectionMode,
 			selectionPadding,
-			isShiftPressed
+			isShiftPressed,
+			withFrameSelection
 		})
 
 		const { scaleRatio: currentScale } = canvasSize
@@ -248,7 +255,8 @@ const Canvas = React.forwardRef<HTMLCanvasElement, DrawerType>(
 						selectionColor,
 						selectedShape,
 						hoveredShape,
-						selectionFrame
+						selectionFrame,
+						withSkeleton
 					)
 				)
 		}, [
@@ -261,7 +269,8 @@ const Canvas = React.forwardRef<HTMLCanvasElement, DrawerType>(
 			canvasSize,
 			selectionPadding,
 			selectionWidth,
-			selectionColor
+			selectionColor,
+			withSkeleton
 		])
 
 		return (

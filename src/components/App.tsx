@@ -60,6 +60,8 @@ const App = ({
 		withLoadAndSave,
 		withUploadPicture,
 		withUrlPicture,
+		withSkeleton,
+		withFrameSelection,
 		clearCallback,
 		availableTools: availableToolsFromProps
 	} = {
@@ -431,6 +433,8 @@ const App = ({
 					selectionPadding={canvasSelectionPadding}
 					isEditMode={isEditMode}
 					isShiftPressed={isShiftPressed}
+					withFrameSelection={withFrameSelection}
+					withSkeleton={withSkeleton}
 				/>
 				{isEditMode && layersManipulation && (
 					<Layouts

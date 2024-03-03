@@ -45,7 +45,8 @@ export const selectShape = (
 	canvasOffset: Point,
 	selectedShape: ShapeEntity | undefined,
 	selectionPadding: number,
-	isTouchGesture: boolean
+	isTouchGesture: boolean,
+	withFrameSelection: boolean
 ): {
 	mode: SelectionModeData<Point | number>
 	shape: ShapeEntity | undefined
@@ -91,7 +92,7 @@ export const selectShape = (
 	return {
 		shape: undefined,
 		mode: {
-			mode: 'selectionFrame'
+			mode: withFrameSelection ? 'selectionFrame' : 'default'
 		}
 	}
 }

@@ -54,6 +54,8 @@ export const LimitedTools: Story = {
 			withExport: true,
 			withUrlPicture: true,
 			withUploadPicture: false,
+			withSkeleton: false,
+			withFrameSelection: false,
 			availableTools: [
 				//@ts-expect-error wrong tool
 				'circle',

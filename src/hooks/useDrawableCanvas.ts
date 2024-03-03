@@ -119,6 +119,7 @@ type UseCanvasType = {
 	selectionCanvasRef: React.MutableRefObject<HTMLCanvasElement | null>
 	selectionPadding: number
 	isShiftPressed: boolean
+	withFrameSelection: boolean
 }
 
 const useDrawableCanvas = ({
@@ -146,7 +147,8 @@ const useDrawableCanvas = ({
 	saveShapes,
 	setSelectionMode,
 	selectionPadding,
-	isShiftPressed
+	isShiftPressed,
+	withFrameSelection
 }: UseCanvasType) => {
 	const { width, height, scaleRatio } = canvasSize
 	const [hoverMode, setHoverMode] = useState<HoverModeData>({
@@ -244,10 +246,20 @@ const useDrawableCanvas = ({
 			const cursorPosition = getCursorPosition(e, selectionCanvasRef.current, width, height, scaleRatio)
 
 			if (activeTool.type === 'selection') {
-				const { shape, mode } = selectShape(ctx, shapes, cursorPosition, scaleRatio, canvasOffset, selectedShape, selectionPadding, isTouchGesture(e))
+				const { shape, mode } = selectShape(
+					ctx,
+					shapes,
+					cursorPosition,
+					scaleRatio,
+					canvasOffset,
+					selectedShape,
+					selectionPadding,
+					isTouchGesture(e),
+					withFrameSelection
+				)
 				setSelectedShape(shape)
 				setSelectionMode(mode)
-				if (!shape) {
+				if (mode.mode === 'selectionFrame') {
 					setSelectionFrame([
 						[cursorPosition[0], cursorPosition[1]],
 						[cursorPosition[0], cursorPosition[1]]
@@ -321,7 +333,8 @@ const useDrawableCanvas = ({
 		setSelectionMode,
 		setSelectionFrame,
 		selectionPadding,
-		gridFormat
+		gridFormat,
+		withFrameSelection
 	])
 
 	useEffect(() => {
