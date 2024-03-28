@@ -45,7 +45,7 @@
 		"react-dom": "18.x"
 	},
 	"scripts": {
-		"declarationfiles": "npx tsc --project tsconfig.prod.json",
+		"declarationfiles": "npx tsc --project tsconfig.prod.json && node fixDtsPath.js",
 		"start": "storybook dev -p 6006",
 		"build-storybook": "storybook build",
 		"test": "echo \"Error: no test specified\" && exit 1",
