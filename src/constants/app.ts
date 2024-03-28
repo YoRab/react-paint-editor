@@ -61,8 +61,8 @@ export const DEFAULT_OPTIONS: AppOptionsType = {
 	withUrlPicture: false,
 	availableTools: DEFAULT_SHAPE_TOOLS,
 	clearCallback: 'empty',
-	withFrameSelection: true,
-	withSkeleton: true,
+	withFrameSelection: false,
+	withSkeleton: false,
 	uiStyle: {
 		toolbarBackgroundColor: 'white',
 		dividerColor: '#36418129',

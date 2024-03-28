@@ -368,7 +368,7 @@ export const drawSelectionFrame = ({
 	currentScale: number
 	canvasOffset: Point
 }) => {
-	transformCanvas(ctx, currentScale, canvasOffset, 0)
+	transformCanvas(ctx, currentScale, canvasOffset)
 	drawFrame(ctx, selectionFrame, currentScale)
 
 	ctx.restore()
