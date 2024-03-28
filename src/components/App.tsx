@@ -60,6 +60,8 @@ const App = ({
 		withLoadAndSave,
 		withUploadPicture,
 		withUrlPicture,
+		withSkeleton,
+		withFrameSelection,
 		clearCallback,
 		availableTools: availableToolsFromProps
 	} = {
@@ -133,11 +135,14 @@ const App = ({
 	const {
 		shapesRef,
 		selectedShape,
+		selectionFrame,
 		hoveredShape,
 		addShape,
 		addPictureShape,
 		moveShapes,
 		setSelectedShape,
+		setSelectionFrame,
+		refreshSelectedShapes,
 		refreshHoveredShape,
 		removeShape,
 		updateShape,
@@ -410,9 +415,12 @@ const App = ({
 					addShape={addShape}
 					updateSingleShape={updateShape}
 					selectedShape={selectedShape}
+					selectionFrame={selectionFrame}
 					setSelectedShape={setSelectedShape}
+					setSelectionFrame={setSelectionFrame}
 					hoveredShape={hoveredShape}
 					refreshHoveredShape={refreshHoveredShape}
+					refreshSelectedShapes={refreshSelectedShapes}
 					canvasOffset={canvasOffset}
 					setCanvasOffset={setCanvasOffset}
 					saveShapes={saveShapes}
@@ -425,6 +433,8 @@ const App = ({
 					selectionPadding={canvasSelectionPadding}
 					isEditMode={isEditMode}
 					isShiftPressed={isShiftPressed}
+					withFrameSelection={withFrameSelection}
+					withSkeleton={withSkeleton}
 				/>
 				{isEditMode && layersManipulation && (
 					<Layouts

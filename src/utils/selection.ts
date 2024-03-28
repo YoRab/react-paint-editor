@@ -45,7 +45,8 @@ export const selectShape = (
 	canvasOffset: Point,
 	selectedShape: ShapeEntity | undefined,
 	selectionPadding: number,
-	isTouchGesture: boolean
+	isTouchGesture: boolean,
+	withFrameSelection: boolean
 ): {
 	mode: SelectionModeData<Point | number>
 	shape: ShapeEntity | undefined
@@ -72,20 +73,11 @@ export const selectShape = (
 			return { shape: selectedShape, mode: newSelectionMode }
 		}
 	}
-	const foundShape =
-		shapes.find(shape => {
-			return shape.id === selectedShape?.id
-				? !!selectedShapePositionIntersection
-				: !!checkPositionIntersection(ctx, shape, cursorPosition, canvasOffset, selectionPadding, currentScale)
-		}) ??
-		(!selectedShape || isTouchGesture
-			? shapes.find(shape => {
-					// another round with radius if no shape was selected for tiny shapes and mobile
-					return shape.id === selectedShape?.id
-						? !!selectedShapePositionIntersection
-						: !!checkPositionIntersection(ctx, shape, cursorPosition, canvasOffset, selectionPadding, currentScale, 20)
-			  })
-			: undefined)
+	const foundShape = shapes.find(shape => {
+		return shape.id === selectedShape?.id
+			? !!selectedShapePositionIntersection
+			: !!checkPositionIntersection(ctx, shape, cursorPosition, canvasOffset, selectionPadding, currentScale)
+	})
 
 	if (foundShape) {
 		return {
@@ -100,7 +92,7 @@ export const selectShape = (
 	return {
 		shape: undefined,
 		mode: {
-			mode: 'default'
+			mode: withFrameSelection ? 'selectionFrame' : 'default'
 		}
 	}
 }

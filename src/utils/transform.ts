@@ -23,6 +23,9 @@ export const roundValues = (prop: number, precision = 2): number => {
 	return Math.round(prop * 10 ** precision) / 10 ** precision
 }
 
+export const scalePoint = (point: Point, minX: number, minY: number, scaleX = 1, scaleY = 1): Point => {
+	return [minX + (point[0] - minX) * scaleX, minY + (point[1] - minY) * scaleY]
+}
 export const roundForGrid = (value: number, gridFormat: GridFormatType, gridOffset = 0) => {
 	if (!gridFormat) return roundValues(value)
 	const valueWithOffset = value + gridOffset

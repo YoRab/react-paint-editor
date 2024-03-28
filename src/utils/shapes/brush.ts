@@ -5,12 +5,8 @@ import type { ToolsSettingsType } from '../../types/tools'
 import { set } from '../../utils/object'
 import { createRecSelectionPath, resizeRectSelection } from '../../utils/selection/rectSelection'
 import { getShapeInfos } from '../../utils/shapes/index'
-import { roundForGrid, roundValues } from '../../utils/transform'
+import { roundForGrid, roundValues, scalePoint } from '../../utils/transform'
 import { uniqueId } from '../../utils/util'
-
-const scalePoint = (point: Point, minX: number, minY: number, scaleX = 1, scaleY = 1): Point => {
-	return [minX + (point[0] - minX) * scaleX, minY + (point[1] - minY) * scaleY]
-}
 
 const createBrushPath = (brush: DrawableShape<'brush'>) => {
 	if (brush.points.length < 1 || brush.style?.strokeColor === 'transparent') return undefined

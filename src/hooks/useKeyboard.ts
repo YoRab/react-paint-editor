@@ -135,10 +135,8 @@ const useKeyboard = ({
 			document.addEventListener('keyup', handleKeyUp)
 			document.addEventListener(KeyboardCommand.Copy, handleCopy)
 			document.addEventListener(KeyboardCommand.Paste, handlePaste)
-		}
 
-		return () => {
-			if (isInsideComponent) {
+			return () => {
 				document.removeEventListener('keydown', handleKeyDown)
 				document.removeEventListener('keyup', handleKeyUp)
 				document.removeEventListener(KeyboardCommand.Copy, handleCopy)

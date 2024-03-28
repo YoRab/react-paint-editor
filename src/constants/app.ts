@@ -26,6 +26,8 @@ type AppOptionsType = {
 	withLoadAndSave: boolean
 	withUploadPicture: boolean
 	withUrlPicture: boolean
+	withFrameSelection: boolean
+	withSkeleton: boolean
 	clearCallback: 'empty' | 'defaultShapes' | (() => DrawableShapeJson[])
 	uiStyle: {
 		toolbarBackgroundColor: string
@@ -59,6 +61,8 @@ export const DEFAULT_OPTIONS: AppOptionsType = {
 	withUrlPicture: false,
 	availableTools: DEFAULT_SHAPE_TOOLS,
 	clearCallback: 'empty',
+	withFrameSelection: false,
+	withSkeleton: false,
 	uiStyle: {
 		toolbarBackgroundColor: 'white',
 		dividerColor: '#36418129',

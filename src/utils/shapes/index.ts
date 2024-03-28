@@ -1,3 +1,4 @@
+import { drawFrame } from '../../utils/selection/selectionFrame'
 import type { GridFormatType } from '../../constants/app'
 import { SelectionModeData, SelectionModeResize } from '../../types/Mode'
 import type { DrawableShape, Point, Rect, ShapeEntity } from '../../types/Shapes'
@@ -353,6 +354,23 @@ export const drawShapeSelection = ({
 			})
 			break
 	}
+	ctx.restore()
+}
+
+export const drawSelectionFrame = ({
+	ctx,
+	selectionFrame,
+	currentScale = 1,
+	canvasOffset
+}: {
+	ctx: CanvasRenderingContext2D
+	selectionFrame: [Point, Point]
+	currentScale: number
+	canvasOffset: Point
+}) => {
+	transformCanvas(ctx, currentScale, canvasOffset)
+	drawFrame(ctx, selectionFrame, currentScale)
+
 	ctx.restore()
 }
 

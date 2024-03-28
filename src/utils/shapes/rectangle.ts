@@ -29,7 +29,9 @@ export const createRectangle = <T extends 'rect' | 'square'>(
 	},
 	cursorPosition: Point,
 	currentScale: number,
-	selectionPadding: number
+	selectionPadding: number,
+	width = 0,
+	height = 0
 ): ShapeEntity<T> => {
 	const recShape = {
 		toolId: shape.id,
@@ -37,8 +39,8 @@ export const createRectangle = <T extends 'rect' | 'square'>(
 		id: uniqueId(`${shape.type}_`),
 		x: cursorPosition[0],
 		y: cursorPosition[1],
-		width: 0,
-		height: 0,
+		width,
+		height,
 		rotation: 0,
 		style: {
 			opacity: shape.settings.opacity.default,
