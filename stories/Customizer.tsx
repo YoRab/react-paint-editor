@@ -1,5 +1,5 @@
 import React, { useRef, useState } from 'react'
-import App from '../src/components/App'
+import App from '@common/components/App'
 
 const Customizer = () => {
 	const widthRef = useRef<HTMLInputElement>(null)
@@ -73,7 +73,9 @@ const Customizer = () => {
 				<label>
 					Canvas Height : <input type='number' defaultValue={height} ref={heightRef} />
 				</label>
-				<button onClick={updateSize}>Update size</button>
+				<button type='button' onClick={updateSize}>
+					Update size
+				</button>
 			</div>
 			<div>
 				<label>
@@ -152,7 +154,9 @@ const Customizer = () => {
 					Font hover BG color :
 					<input type='color' defaultValue={fontHoverBackgroundColor} ref={fontHoverBackgroundColorRef} />
 				</label>
-				<button onClick={updateStyle}>Update style</button>
+				<button type='button' onClick={updateStyle}>
+					Update style
+				</button>
 			</div>
 			<App
 				width={width}

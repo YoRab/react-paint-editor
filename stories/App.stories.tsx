@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react'
 import { fn } from '@storybook/test'
-import App from '../src/components/App'
+import App from '@common/components/App'
 import { EXAMPLE_DEFAULT } from './fixture'
 
 // More on how to set up stories at: https://storybook.js.org/docs/react/writing-stories/introduction#default-export

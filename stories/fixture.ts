@@ -1,4 +1,4 @@
-import { DrawableShapeJson } from '../src/types/Shapes'
+import { DrawableShapeJson } from '../@common/types/Shapes'
 
 export const EXAMPLE_DEFAULT: DrawableShapeJson[] = [
 	{
