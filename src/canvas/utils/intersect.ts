@@ -1,10 +1,10 @@
 import { scalePoint } from '@canvas/utils/transform'
-import { SELECTION_ANCHOR_SIZE, SELECTION_RESIZE_ANCHOR_POSITIONS, SELECTION_ROTATED_ANCHOR_POSITION } from '@common/constants/shapes'
+import { SELECTION_ANCHOR_SIZE, SELECTION_RESIZE_ANCHOR_POSITIONS, SELECTION_ROTATED_ANCHOR_POSITION } from '@canvas/constants/shapes'
 import type { HoverModeData } from '@common/types/Mode'
 import type { DrawableShape, Point, Rect } from '@common/types/Shapes'
 import { getShapeInfos } from './shapes'
 import { isCircleIntersectRect, isPointInsideRect, rotatePoint } from './trigo'
-import { UtilsSettings } from 'src/constants/app'
+import { UtilsSettings } from '@canvas/constants/app'
 
 export const getCursorPosition = (e: MouseEvent | TouchEvent, canvas: HTMLCanvasElement | null, settings: UtilsSettings): Point => {
 	const { clientX = 0, clientY = 0 } =

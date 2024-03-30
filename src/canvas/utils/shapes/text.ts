@@ -1,4 +1,4 @@
-import { UtilsSettings } from '@common/constants/app'
+import { UtilsSettings } from '@canvas/constants/app'
 import { STYLE_FONT_DEFAULT, STYLE_FONT_SIZE_DEFAULT } from '@editor/constants/style'
 import { SelectionModeResize } from '@common/types/Mode'
 import type { DrawableShape, Point, Rect, ShapeEntity, Text } from '@common/types/Shapes'

@@ -1,11 +1,11 @@
-import { PICTURE_DEFAULT_SIZE } from '@common/constants/picture'
-import { ShapeTypeArray } from '@common/constants/shapes'
+import { PICTURE_DEFAULT_SIZE } from '@canvas/constants/picture'
+import { ShapeTypeArray } from '@canvas/constants/shapes'
 import type { DrawableShape, ExportDataType, ShapeEntity } from '@common/types/Shapes'
 import { compact } from '@common/utils/array'
 import { initCanvasContext } from './canvas'
 import { addDefaultAndTempShapeProps, buildDataToExport } from './data'
 import { drawShape } from './shapes'
-import { UtilsSettings } from '@common/constants/app'
+import { UtilsSettings } from '@canvas/constants/app'
 import { set } from '@common/utils/object'
 
 export const addSizeAndConvertSvgToObjectUrl = (svgFileContent: string) => {

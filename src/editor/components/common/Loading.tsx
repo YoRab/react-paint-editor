@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { LOADING_TRANSITION_DURATION } from '@common/constants/loading'
+import { LOADING_TRANSITION_DURATION } from '@editor/constants/loading'
 import { STYLE_ZINDEX } from '@editor/constants/style'
 import './Loading.css'
 

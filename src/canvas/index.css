@@ -1,0 +1,15 @@
+.react-paint-editor-app-row {
+    position: relative;
+    max-width: 100%;
+    z-index: var(--react-paint-editor-app-row-zindex);
+    aspect-ratio: var(--react-paint-editor-app-row-aspectratio);
+}
+
+
+.react-paint-editor-app-row[data-grow='true'] {
+    width: 100%;
+}
+
+.react-paint-editor-app-row[data-grow='false'] {
+    width: var(--react-paint-editor-app-row-width);
+}

@@ -1,4 +1,4 @@
-import { UtilsSettings } from '@common/constants/app'
+import { UtilsSettings } from '@canvas/constants/app'
 import { Circle, DrawableShape, Line, Rect } from '@common/types/Shapes'
 
 export const createRecPath = (rect: Rect) => {

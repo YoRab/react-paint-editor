@@ -16,7 +16,7 @@ import { drawPicture, getPictureBorder, refreshPicture, resizePicture, translate
 import { createPolygon, drawPolygon, getPolygonBorder, refreshPolygon, resizePolygon, translatePolygon } from './polygon'
 import { createRectangle, drawRect, getRectBorder, refreshRect, resizeRect, translateRect } from './rectangle'
 import { createText, drawText, getTextBorder, refreshText, resizeText, translateText } from './text'
-import { UtilsSettings } from '@common/constants/app'
+import { UtilsSettings } from '@canvas/constants/app'
 
 export const createShape = (
 	ctx: CanvasRenderingContext2D,

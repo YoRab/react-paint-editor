@@ -1,4 +1,4 @@
-import { UtilsSettings } from '@common/constants/app'
+import { UtilsSettings } from '@canvas/constants/app'
 import { DEFAULT_SHAPE_PICTURE } from '@editor/constants/tools'
 import { SelectionModeResize } from '@common/types/Mode'
 import type { DrawableShape, Picture, Point, Rect, ShapeEntity } from '@common/types/Shapes'

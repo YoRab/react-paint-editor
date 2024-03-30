@@ -4,7 +4,7 @@ import type { ShapeEntity } from '@common/types/Shapes'
 
 import Button from '@editor/components/common/Button'
 import Panel from '@editor/components/common/Panel'
-import type { GridFormatType } from '@common/constants/app'
+import type { GridFormatType } from '@canvas/constants/app'
 import { gridOffIcon, lockedIcon, trashIcon, unlockedIcon, visibilityIcon, visibilityOffIcon } from '@editor/constants/icons'
 import { getShapePicture } from '@editor/utils/style'
 import './Layouts.css'

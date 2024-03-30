@@ -10,7 +10,7 @@ export default defineConfig({
 		target: 'es2020',
 		cssMinify: 'lightningcss',
 		lib: {
-			entry: resolve(__dirname, 'src/components/App.tsx'),
+			entry: resolve(__dirname, 'src/canvas/index.tsx'),
 			name: 'react-paint',
 			fileName: 'react-paint'
 		},

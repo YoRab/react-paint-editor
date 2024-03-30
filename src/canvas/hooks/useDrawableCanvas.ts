@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { ShapeTypeArray } from '@common/constants/shapes'
+import { ShapeTypeArray } from '@canvas/constants/shapes'
 import { SELECTION_TOOL } from '@editor/constants/tools'
 import useDoubleClick from '@canvas/hooks/useDoubleClick'
 import type { HoverModeData, SelectionModeData } from '@common/types/Mode'
@@ -10,7 +10,7 @@ import { selectShape } from '@canvas/utils/selection'
 import { createShape } from '@canvas/utils/shapes'
 import { addNewPointGroupToShape } from '@canvas/utils/shapes/brush'
 import { transformShape } from '@canvas/utils/transform'
-import { UtilsSettings } from '@common/constants/app'
+import { UtilsSettings } from '@canvas/constants/app'
 
 const handleMove = (
 	e: MouseEvent | TouchEvent,

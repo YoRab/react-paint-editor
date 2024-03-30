@@ -1,9 +1,9 @@
-import { SELECTION_ANCHOR_SIZE } from '@common/constants/shapes'
+import { SELECTION_ANCHOR_SIZE } from '@canvas/constants/shapes'
 import { DrawableShape, Point, SelectionLinesType } from '@common/types/Shapes'
 import { updateCanvasContext } from '@canvas/utils/canvas'
 import { getShapeInfos } from '@canvas/utils/shapes'
 import { createCirclePath, createRecPath } from '@canvas/utils/shapes/path'
-import { UtilsSettings } from '@common/constants/app'
+import { UtilsSettings } from '@canvas/constants/app'
 
 export const createLineSelectionPath = (
 	path: Path2D | undefined,

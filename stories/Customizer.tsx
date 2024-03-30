@@ -1,5 +1,17 @@
 import React, { useRef, useState } from 'react'
-import App from '@common/components/App'
+import useReactPaint from '@canvas/hooks/useReactPaint'
+import Editor from '@editor/index'
+import Canvas from '@canvas/index'
+
+const ReactPaintWrapper = (args: Parameters<typeof useReactPaint>[0]) => {
+	const props = useReactPaint(args)
+
+	return (
+		<Editor hookProps={props}>
+			<Canvas {...props} />
+		</Editor>
+	)
+}
 
 const Customizer = () => {
 	const widthRef = useRef<HTMLInputElement>(null)
@@ -63,6 +75,33 @@ const Customizer = () => {
 		canvasSelectionWidthRef.current && setcanvasSelectionWidth(+canvasSelectionWidthRef.current.value)
 		canvasSelectionPaddingRef.current && setcanvasSelectionPadding(+canvasSelectionPaddingRef.current.value)
 	}
+
+	const props = useReactPaint({
+		width,
+		height,
+		options: {
+			canGrow: isGrowing,
+			canShrink: isShrinkable,
+			brushAlgo: quadraticBrush ? 'quadratic' : 'simple',
+			uiStyle: {
+				toolbarBackgroundColor,
+				dividerColor,
+				fontRadius,
+				fontDisabledColor,
+				fontDisabledBackgroundColor,
+				fontColor,
+				fontBackgroundColor,
+				fontSelectedColor,
+				fontSelectedBackgroundColor,
+				fontHoverColor,
+				fontHoverBackgroundColor,
+				canvasBackgroundColor,
+				canvasSelectionColor,
+				canvasSelectionWidth,
+				canvasSelectionPadding
+			}
+		}
+	})
 
 	return (
 		<>
@@ -158,32 +197,9 @@ const Customizer = () => {
 					Update style
 				</button>
 			</div>
-			<App
-				width={width}
-				height={height}
-				options={{
-					canGrow: isGrowing,
-					canShrink: isShrinkable,
-					brushAlgo: quadraticBrush ? 'quadratic' : 'simple',
-					uiStyle: {
-						toolbarBackgroundColor,
-						dividerColor,
-						fontRadius,
-						fontDisabledColor,
-						fontDisabledBackgroundColor,
-						fontColor,
-						fontBackgroundColor,
-						fontSelectedColor,
-						fontSelectedBackgroundColor,
-						fontHoverColor,
-						fontHoverBackgroundColor,
-						canvasBackgroundColor,
-						canvasSelectionColor,
-						canvasSelectionWidth,
-						canvasSelectionPadding
-					}
-				}}
-			/>
+			<Editor hookProps={props}>
+				<Canvas {...props} />
+			</Editor>
 		</>
 	)
 }

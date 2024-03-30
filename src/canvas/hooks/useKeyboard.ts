@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { GRID_STEP } from '@editor/constants/style'
 import type { Point, ShapeEntity } from '@common/types/Shapes'
 import { copyShape, translateShape } from '@canvas/utils/shapes'
-import { UtilsSettings } from '@common/constants/app'
+import { UtilsSettings } from '@canvas/constants/app'
 
 const KeyboardCode = {
 	ArrowUp: 'ArrowUp',

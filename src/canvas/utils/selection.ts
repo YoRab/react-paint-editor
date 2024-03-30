@@ -2,7 +2,7 @@ import type { HoverModeData, SelectionModeData } from '@common/types/Mode'
 import type { Point, ShapeEntity } from '@common/types/Shapes'
 import { checkPositionIntersection, checkSelectionIntersection } from './intersect'
 import { getShapeInfos } from './shapes'
-import { UtilsSettings } from '@common/constants/app'
+import { UtilsSettings } from '@canvas/constants/app'
 
 export const getNewSelectionData = (
 	hoverMode: HoverModeData,

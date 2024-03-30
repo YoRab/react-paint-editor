@@ -1,5 +1,5 @@
 import { updateCanvasContext } from '@canvas/utils/canvas'
-import { UtilsSettings } from '@common/constants/app'
+import { UtilsSettings } from '@canvas/constants/app'
 import type { Point } from '@common/types/Shapes'
 export const drawFrame = (ctx: CanvasRenderingContext2D, selectionFrame: [Point, Point], settings: UtilsSettings): void => {
 	updateCanvasContext(ctx, {

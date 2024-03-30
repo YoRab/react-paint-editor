@@ -5,7 +5,7 @@ import { createRecSelectionPath, resizeRectSelection } from '@canvas/utils/selec
 import { roundForGrid } from '@canvas/utils/transform'
 import { uniqueId } from '@canvas/utils/util'
 import { createCirclePath } from './path'
-import { UtilsSettings } from '@common/constants/app'
+import { UtilsSettings } from '@canvas/constants/app'
 
 const buildPath = <T extends DrawableShape<'circle'>>(shape: T, settings: UtilsSettings): T => {
 	const path = createCirclePath(shape)

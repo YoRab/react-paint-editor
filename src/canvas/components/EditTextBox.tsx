@@ -5,7 +5,7 @@ import { getShapeInfos } from '@canvas/utils/shapes'
 import { convertDivContentToStringArray, convertStringArrayToDivContent } from '@common/utils/string'
 import { radiansToDegrees, rotatePoint } from '@canvas/utils/trigo'
 import './EditTextBox.css'
-import { UtilsSettings } from 'src/constants/app'
+import { UtilsSettings } from '@canvas/constants/app'
 
 type EditTextBoxType = {
 	scaleRatio: number

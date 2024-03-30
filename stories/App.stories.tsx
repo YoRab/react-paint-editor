@@ -1,12 +1,25 @@
+import React from 'react'
 import type { Meta, StoryObj } from '@storybook/react'
 import { fn } from '@storybook/test'
-import App from '@common/components/App'
 import { EXAMPLE_DEFAULT } from './fixture'
+import useReactPaint from '@canvas/hooks/useReactPaint'
+import Editor from '@editor/index'
+import Canvas from '@canvas/index'
+
+const ReactPaintWrapper = (args: Parameters<typeof useReactPaint>[0]) => {
+	const props = useReactPaint(args)
+
+	return (
+		<Editor hookProps={props}>
+			<Canvas {...props} />
+		</Editor>
+	)
+}
 
 // More on how to set up stories at: https://storybook.js.org/docs/react/writing-stories/introduction#default-export
 const meta = {
 	title: 'Main/React Paint Editor',
-	component: App,
+	component: ReactPaintWrapper,
 	parameters: {
 		// Optional parameter to center the component in the Canvas. More info: https://storybook.js.org/docs/react/configure/story-layout
 		layout: 'centered'
@@ -15,7 +28,7 @@ const meta = {
 	tags: ['autodocs'],
 	// More on argTypes: https://storybook.js.org/docs/react/api/argtypes
 	argTypes: {}
-} satisfies Meta<typeof App>
+} satisfies Meta<typeof ReactPaintWrapper>
 
 export default meta
 type Story = StoryObj<typeof meta>

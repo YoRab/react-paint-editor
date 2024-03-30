@@ -6,7 +6,7 @@ import { createRecSelectionPath, resizeRectSelection } from '@canvas/utils/selec
 import { roundForGrid } from '@canvas/utils/transform'
 import { uniqueId } from '@canvas/utils/util'
 import { createRecPath } from './path'
-import { UtilsSettings } from '@common/constants/app'
+import { UtilsSettings } from '@canvas/constants/app'
 
 type rectish = 'text' | 'rect' | 'square' | 'picture'
 

@@ -1,4 +1,4 @@
-import { UtilsSettings } from '@common/constants/app'
+import { UtilsSettings } from '@canvas/constants/app'
 import { SelectionModeResize } from '@common/types/Mode'
 import type { DrawableShape, Point, Rect, ShapeEntity } from '@common/types/Shapes'
 import type { ToolsSettingsType } from '@common/types/tools'

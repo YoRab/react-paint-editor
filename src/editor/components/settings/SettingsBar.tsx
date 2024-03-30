@@ -19,7 +19,7 @@ import PointsNumberField from './PointsNumberField'
 import RangeField from './RangeField'
 import './SettingsBar.css'
 import ToggleField from './ToggleField'
-import { UtilsSettings } from 'src/constants/app'
+import { UtilsSettings } from '@canvas/constants/app'
 
 const SETTING_WIDTH = 40
 

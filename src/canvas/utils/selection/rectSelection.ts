@@ -1,5 +1,5 @@
-import type { UtilsSettings } from '@common/constants/app'
-import { SELECTION_ANCHOR_SIZE, SELECTION_RESIZE_ANCHOR_POSITIONS, SELECTION_ROTATED_ANCHOR_POSITION } from '@common/constants/shapes'
+import type { UtilsSettings } from '@canvas/constants/app'
+import { SELECTION_ANCHOR_SIZE, SELECTION_RESIZE_ANCHOR_POSITIONS, SELECTION_ROTATED_ANCHOR_POSITION } from '@canvas/constants/shapes'
 import type { SelectionModeResize } from '@common/types/Mode'
 import type { DrawableShape, Point, Rect, SelectionDefaultType } from '@common/types/Shapes'
 import { updateCanvasContext } from '@canvas/utils/canvas'

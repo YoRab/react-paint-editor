@@ -8,7 +8,7 @@ import { createLineSelectionPath } from '@canvas/utils/selection/lineSelection'
 import { createPolygonPath } from '@canvas/utils/shapes/path'
 import { roundForGrid } from '@canvas/utils/transform'
 import { uniqueId } from '@canvas/utils/util'
-import { UtilsSettings } from '@common/constants/app'
+import { UtilsSettings } from '@canvas/constants/app'
 
 const buildPath = <T extends DrawableShape<'polygon'>>(shape: T, settings: UtilsSettings): T => {
 	const path = createPolygonPath(shape)

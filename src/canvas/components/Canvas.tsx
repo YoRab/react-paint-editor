@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useImperativeHandle, useRef } from 'react'
-import { DRAWCANVAS_CLASSNAME, type UtilsSettings, SELECTIONCANVAS_CLASSNAME } from '@common/constants/app'
+import { DRAWCANVAS_CLASSNAME, type UtilsSettings, SELECTIONCANVAS_CLASSNAME } from '@canvas/constants/app'
 import useDrawableCanvas from '@canvas/hooks/useDrawableCanvas'
 import type { SelectionModeData } from '@common/types/Mode'
 import type { Point, ShapeEntity } from '@common/types/Shapes'

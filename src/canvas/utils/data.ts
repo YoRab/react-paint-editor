@@ -3,7 +3,7 @@ import { omit } from '@common/utils/object'
 import { uniqueId } from '@canvas/utils/util'
 import { getBase64Image } from './file'
 import { refreshShape } from './shapes'
-import { UtilsSettings } from '@common/constants/app'
+import { UtilsSettings } from '@canvas/constants/app'
 
 export const cleanShapesBeforeExport = (shapes: DrawableShape[]): DrawableShapeJson[] => {
 	const propsToOmit = ['img', 'id', 'selection', 'path', 'arrows']

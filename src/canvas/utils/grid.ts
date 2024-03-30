@@ -1,4 +1,4 @@
-import { UtilsSettings } from '@common/constants/app'
+import { UtilsSettings } from '@canvas/constants/app'
 import { GRID_STEP } from '@editor/constants/style'
 
 export const drawGrid = (ctx: CanvasRenderingContext2D, width: number, height: number, settings: UtilsSettings) => {
