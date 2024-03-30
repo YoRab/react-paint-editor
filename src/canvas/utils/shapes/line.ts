@@ -10,7 +10,7 @@ import { getShapeInfos } from '@canvas/utils/shapes/index'
 import { createLinePath } from '@canvas/utils/shapes/path'
 import { roundForGrid, shortenLine } from '@canvas/utils/transform'
 import { getAngleFromVector, rotatePoint } from '@canvas/utils/trigo'
-import { uniqueId } from '@canvas/utils/util'
+import { uniqueId } from '@common/utils/util'
 import { createTriangle, drawTriangle } from './triangle'
 
 const buildPath = <T extends DrawableShape<'line'>>(line: T, settings: UtilsSettings): T => {

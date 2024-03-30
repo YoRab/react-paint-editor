@@ -8,7 +8,7 @@ import { createLineSelectionPath } from '@canvas/utils/selection/lineSelection'
 import { getShapeInfos } from '@canvas/utils/shapes/index'
 import { createCurvePath } from '@canvas/utils/shapes/path'
 import { roundForGrid } from '@canvas/utils/transform'
-import { uniqueId } from '@canvas/utils/util'
+import { uniqueId } from '@common/utils/util'
 import { getPolygonBorder } from './polygon'
 
 const buildPath = <T extends DrawableShape<'curve'>>(shape: T, settings: UtilsSettings): T => {

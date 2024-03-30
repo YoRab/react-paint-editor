@@ -4,7 +4,7 @@ import type { ToolsSettingsType } from '@common/types/tools'
 import { getPointPositionBeforeCanvasTransformation } from '@canvas/utils/intersect'
 import { createRecSelectionPath, resizeRectSelection } from '@canvas/utils/selection/rectSelection'
 import { roundForGrid } from '@canvas/utils/transform'
-import { uniqueId } from '@canvas/utils/util'
+import { uniqueId } from '@common/utils/util'
 import { createRecPath } from './path'
 import { UtilsSettings } from '@canvas/constants/app'
 

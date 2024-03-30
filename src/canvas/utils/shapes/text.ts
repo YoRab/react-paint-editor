@@ -6,7 +6,7 @@ import type { ToolsSettingsType } from '@common/types/tools'
 import { createRecSelectionPath, resizeRectSelection } from '@canvas/utils/selection/rectSelection'
 import { getShapeInfos } from '@canvas/utils/shapes/index'
 import { roundForGrid } from '@canvas/utils/transform'
-import { uniqueId } from '@canvas/utils/util'
+import { uniqueId } from '@common/utils/util'
 import { getRectOppositeAnchorAbsolutePosition } from './rectangle'
 
 const DEFAULT_TEXT_VALUE: string[] = ['Texte']

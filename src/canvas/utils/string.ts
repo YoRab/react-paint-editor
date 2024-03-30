@@ -7,7 +7,7 @@ export const convertStringArrayToDivContent = (toConvert: string[]) => {
 	return toConvert.map(val => `<div>${val === '' ? '<br/>' : val}</div>`).join('')
 }
 
-export const decodeHtmlEntities = (html: string) => {
+const decodeHtmlEntities = (html: string) => {
 	const textareaElement = document.createElement('textarea')
 	textareaElement.innerHTML = html
 	return textareaElement.value

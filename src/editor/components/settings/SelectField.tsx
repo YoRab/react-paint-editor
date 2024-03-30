@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import Button from '@editor/components/common/Button'
 import Panel from '@editor/components/common/Panel'
-import { uniqueId } from '@canvas/utils/util'
+import { uniqueId } from '@common/utils/util'
 import './SelectField.css'
 
 type SelectFieldType = {

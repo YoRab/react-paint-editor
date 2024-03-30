@@ -6,7 +6,7 @@ import { set } from '@common/utils/object'
 import { createRecSelectionPath, resizeRectSelection } from '@canvas/utils/selection/rectSelection'
 import { getShapeInfos } from '@canvas/utils/shapes/index'
 import { roundForGrid, roundValues, scalePoint } from '@canvas/utils/transform'
-import { uniqueId } from '@canvas/utils/util'
+import { uniqueId } from '@common/utils/util'
 
 const createBrushPath = (brush: DrawableShape<'brush'>, { brushAlgo }: UtilsSettings) => {
 	if (brush.points.length < 1 || brush.style?.strokeColor === 'transparent') return undefined

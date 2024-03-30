@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react'
 import Button from '@editor/components/common/Button'
 import Panel from '@editor/components/common/Panel'
-import { uniqueId } from '@canvas/utils/util'
+import { uniqueId } from '@common/utils/util'
 import './RangeField.css'
 
 type ShapeStyleColorType = {

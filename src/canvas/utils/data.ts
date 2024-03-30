@@ -1,6 +1,6 @@
 import type { DrawableShape, DrawableShapeJson, ExportDataType, ShapeEntity } from '@common/types/Shapes'
 import { omit } from '@common/utils/object'
-import { uniqueId } from '@canvas/utils/util'
+import { uniqueId } from '@common/utils/util'
 import { getBase64Image } from './file'
 import { refreshShape } from './shapes'
 import { UtilsSettings } from '@canvas/constants/app'

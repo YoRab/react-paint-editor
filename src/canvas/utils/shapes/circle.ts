@@ -3,7 +3,7 @@ import type { Circle, DrawableShape, Point, Rect, ShapeEntity } from '@common/ty
 import type { ToolsSettingsType } from '@common/types/tools'
 import { createRecSelectionPath, resizeRectSelection } from '@canvas/utils/selection/rectSelection'
 import { roundForGrid } from '@canvas/utils/transform'
-import { uniqueId } from '@canvas/utils/util'
+import { uniqueId } from '@common/utils/util'
 import { createCirclePath } from './path'
 import { UtilsSettings } from '@canvas/constants/app'
 

@@ -51,6 +51,7 @@
 		"test": "echo \"Error: no test specified\" && exit 1",
 		"build": "vite build && npm run declarationfiles",
 		"lint": "npx @biomejs/biome check --apply src stories",
-		"publishnpm": "npm run build && npm publish --access public"
+		"prepublishOnly": "npm run build",
+		"publishnpm": "npm publish --access public"
 	}
 }

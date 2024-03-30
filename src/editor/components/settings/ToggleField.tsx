@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import Button from '@editor/components/common/Button'
-import { uniqueId } from '@canvas/utils/util'
+import { uniqueId } from '@common/utils/util'
 
 type ShapeStyleSelectType = {
 	setSelectedSettings: React.Dispatch<React.SetStateAction<string | undefined>>

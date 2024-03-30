@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { SNACKBAR_DEFAULT_SETTINGS } from '@editor/constants/snackbar'
 import type { SnackBarType, SnackbarTypeType } from '@common/types/snackbar'
-import { uniqueId } from '@canvas/utils/util'
+import { uniqueId } from '@common/utils/util'
 
 const useSnackbar = () => {
 	const timers = useRef<NodeJS.Timeout[]>([])
