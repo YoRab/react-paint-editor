@@ -156,7 +156,7 @@ export type ShapeEntity<T extends Exclude<ShapeType, 'triangle'> = Exclude<Shape
 } & DrawableShape<T>
 
 export type ExportDataType = {
-	shapes: DrawableShapeJson[]
+	shapes?: DrawableShapeJson[]
 	config?: {
 		width: number
 		height: number
