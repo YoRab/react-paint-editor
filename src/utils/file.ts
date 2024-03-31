@@ -4,7 +4,6 @@ import type { DrawableShape, ExportDataType, Point, ShapeEntity } from '../types
 import { compact } from '../utils/array'
 import { initCanvasContext } from './canvas'
 import { addDefaultAndTempShapeProps, buildDataToExport } from './data'
-import { migrateShapesV065 } from './migration'
 import { drawShape } from './shapes'
 
 export const addSizeAndConvertSvgToObjectUrl = (svgFileContent: string) => {
@@ -98,11 +97,11 @@ export const decodeJson = async (file: File) => {
 }
 
 export const decodeImportedData = async (shapesForJson: ExportDataType, currentScale: number, selectionPadding: number) => {
+	if (!shapesForJson.shapes) return []
 	const promisesArray: Promise<void>[] = []
 
-	const jsonShapes = migrateShapesV065(shapesForJson.shapes)
 	const shapes: ShapeEntity[] = compact(
-		jsonShapes.map(shape => {
+		shapesForJson.shapes.map(shape => {
 			if (!shape || !ShapeTypeArray.includes(shape.type)) return null
 			if (shape.type === 'picture') {
 				const img = new Image()
