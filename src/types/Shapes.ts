@@ -146,9 +146,7 @@ export type DrawableShape<T extends ShapeType = ShapeType> = {
 											  }
 										  : never)
 
-export type DrawableShapeJson<T extends ShapeType = ShapeType> = DrawableShape<T> & {
-	translation?: Point
-}
+export type DrawableShapeJson<T extends ShapeType = ShapeType> = DrawableShape<T>
 
 export type ShapeEntity<T extends Exclude<ShapeType, 'triangle'> = Exclude<ShapeType, 'triangle'>> = {
 	id: string
