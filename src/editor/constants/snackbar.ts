@@ -1,4 +1,4 @@
-import type { SnackbarTypeType } from '@common/types/snackbar'
+import type { SnackbarTypeType } from '@editor/types/snackbar'
 
 export const SNACKBAR_DEFAULT_SETTINGS: {
 	type: SnackbarTypeType

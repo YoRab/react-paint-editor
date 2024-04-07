@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { SNACKBAR_DURATION, SNACKBAR_TOGGLE_ANIMATION_DURATION } from '@editor/constants/snackbar'
 import { STYLE_ZINDEX } from '@editor/constants/style'
-import type { SnackBarType } from '@common/types/snackbar'
+import type { SnackBarType } from '@editor/types/snackbar'
 import './Snackbar.css'
 
 type SnackbarContainerType = {
@@ -40,7 +40,7 @@ const Snackbar = ({ type, text, duration }: SnackBarType) => {
 
 const SnackbarContainer = ({ snackbarList }: SnackbarContainerType) => {
 	return (
-		<div className='react-paint-editor-snackbar-container' style={{ '--react-paint-editor-snackbar-zindex': STYLE_ZINDEX.PANEL }}>
+		<div className='react-paint-editor-snackbar-container' style={{ '--react-paint-editor-snackbar-zindex': STYLE_ZINDEX.SNACKBAR }}>
 			{snackbarList.map(snackbar => (
 				<Snackbar key={snackbar.id} {...snackbar} />
 			))}
