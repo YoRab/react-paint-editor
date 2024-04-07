@@ -1,5 +1,5 @@
 import { RefObject, useEffect, useState } from 'react'
-import { isEventInsideNode } from '@canvas/utils/dom'
+import { isEventInsideNode } from '@common/utils/dom'
 
 type UseComponentType = {
 	disabled: boolean

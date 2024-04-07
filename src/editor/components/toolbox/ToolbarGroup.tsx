@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState, useTransition } from 'react'
 import Button from '@editor/components/common/Button'
 import Panel from '@editor/components/common/Panel'
 import type { CustomTool, ToolsType } from '@common/types/tools'
-import { isEventInsideNode } from '@canvas/utils/dom'
+import { isEventInsideNode } from '@common/utils/dom'
 import Tool from './Tool'
 import './ToolbarGroup.css'
 
