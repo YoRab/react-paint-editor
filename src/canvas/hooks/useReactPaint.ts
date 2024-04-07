@@ -1,6 +1,6 @@
 import useShapes from '@canvas/hooks/useShapes'
 import { buildDataToExport } from '@canvas/utils/data'
-import { decodeImportedData, getCanvasImage } from '@canvas/utils/file'
+import { decodeImportedData, decodeJson, downloadFile, encodeShapesInString, getCanvasImage } from '@canvas/utils/file'
 import { DEFAULT_OPTIONS, GridFormatType, OptionalAppOptionsType, UtilsSettings } from '@canvas/constants/app'
 import useComponent from '@canvas/hooks/useComponent'
 import { DrawableShapeJson, ExportDataType, Point, ShapeEntity } from '@common/types/Shapes'
@@ -158,6 +158,22 @@ const useReactPaint = ({
 		[setSelectedShape]
 	)
 
+	const exportData = useCallback(() => {
+		const content = encodeShapesInString(shapesRef.current, width, height)
+		if (!content) {
+			throw new Error("L'encodage a échoué")
+		}
+		downloadFile(content, 'drawing.json')
+	}, [shapesRef, width, height])
+
+	const exportPicture = useCallback(() => {
+		const dataURL = getCanvasImage(shapesRef.current, width, height, settings)
+		if (!dataURL) {
+			throw new Error()
+		}
+		downloadFile(dataURL, 'drawing.png')
+	}, [shapesRef, width, height, settings])
+
 	const getCurrentImage = () => {
 		return canvasRef.current ? getCanvasImage(shapesRef.current, width, height, settings) : undefined
 	}
@@ -176,6 +192,14 @@ const useReactPaint = ({
 			resetCanvas(shapes, clearHistory)
 		},
 		[resetCanvas, settings]
+	)
+
+	const loadFile = useCallback(
+		async (file: File) => {
+			const json = await decodeJson(file)
+			await loadImportedData(json as ExportDataType)
+		},
+		[loadImportedData]
 	)
 
 	const clearCanvas = useCallback(() => {
@@ -227,7 +251,9 @@ const useReactPaint = ({
 		forwardShape,
 		clearShapes,
 		saveShapes,
-		loadImportedData,
+		loadFile,
+		exportData,
+		exportPicture,
 		clearCanvas,
 		refs: {
 			canvas: canvasRef,

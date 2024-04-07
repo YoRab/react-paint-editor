@@ -2,8 +2,6 @@ import React, { ReactNode, useCallback, useState } from 'react'
 import Loading from '@editor/components/common/Loading'
 import { SELECTION_TOOL } from '@editor/constants/tools'
 import useSnackbar from '@editor/hooks/useSnackbar'
-import type { ExportDataType } from '@common/types/Shapes'
-import { decodeJson, downloadFile, encodeShapesInString as encodeProjectDataInString, getCanvasImage } from '@canvas/utils/file'
 import { set } from '@common/utils/object'
 import './index.css'
 import SnackbarContainer from '@editor/components/common/Snackbar'
@@ -47,7 +45,9 @@ const Editor = ({ hookProps, className = '', children }: EditorProps) => {
 		availableTools,
 		gridFormat,
 		setGridFormat,
-		loadImportedData,
+		loadFile,
+		exportPicture,
+		exportData,
 		clearCanvas,
 		settings,
 		canvas: {
@@ -101,11 +101,7 @@ const Editor = ({ hookProps, className = '', children }: EditorProps) => {
 	const exportCanvasInFile = useCallback(() => {
 		setIsLoading(true)
 		try {
-			const dataURL = refs.canvas.current && getCanvasImage(shapesRef.current, width, height, settings)
-			if (!dataURL) {
-				throw new Error()
-			}
-			downloadFile(dataURL, 'drawing.png')
+			exportPicture()
 			setIsLoading(false)
 		} catch (e) {
 			if (e instanceof Error) {
@@ -115,16 +111,12 @@ const Editor = ({ hookProps, className = '', children }: EditorProps) => {
 		} finally {
 			setIsLoading(false)
 		}
-	}, [refs.canvas.current, addSnackbar, shapesRef, width, height, settings])
+	}, [exportPicture, addSnackbar])
 
 	const saveFile = useCallback(() => {
 		setIsLoading(true)
 		try {
-			const content = encodeProjectDataInString(shapesRef.current, width, height)
-			if (!content) {
-				throw new Error("L'encodage a échoué")
-			}
-			downloadFile(content, 'drawing.json')
+			exportData()
 			setIsLoading(false)
 		} catch (e) {
 			if (e instanceof Error) {
@@ -134,14 +126,13 @@ const Editor = ({ hookProps, className = '', children }: EditorProps) => {
 		} finally {
 			setIsLoading(false)
 		}
-	}, [shapesRef, addSnackbar, width, height])
+	}, [exportData, addSnackbar])
 
-	const loadFile = useCallback(
+	const onLoadFile = useCallback(
 		async (file: File) => {
 			setIsLoading(true)
 			try {
-				const json = await decodeJson(file)
-				await loadImportedData(json as ExportDataType)
+				await loadFile(file)
 				addSnackbar({ type: 'success', text: 'Fichier chargé !' })
 			} catch (e) {
 				if (e instanceof Error) {
@@ -152,7 +143,7 @@ const Editor = ({ hookProps, className = '', children }: EditorProps) => {
 				setIsLoading(false)
 			}
 		},
-		[loadImportedData, addSnackbar]
+		[loadFile, addSnackbar]
 	)
 
 	const addPicture = useCallback(
@@ -206,7 +197,7 @@ const Editor = ({ hookProps, className = '', children }: EditorProps) => {
 					setActiveTool={selectTool}
 					exportCanvasInFile={exportCanvasInFile}
 					saveFile={saveFile}
-					loadFile={loadFile}
+					loadFile={onLoadFile}
 					addPicture={addPicture}
 					hasActionToUndo={canGoBackward}
 					hasActionToRedo={canGoForward}
