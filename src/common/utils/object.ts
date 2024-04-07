@@ -38,11 +38,11 @@ export const mergeWith = (
 		return source
 	}
 
-	const merged: Record<string, any> = { ...target }
+	const merged: Record<string, unknown> = { ...target }
 
 	for (const key in source) {
-		if (source.hasOwnProperty(key)) {
-			if (merged.hasOwnProperty(key)) {
+		if (Object.hasOwn(source, key)) {
+			if (Object.hasOwn(merged, key)) {
 				merged[key] = customMergeFn(merged[key], source[key], key) ?? mergeWith(customMergeFn, merged[key], source[key])
 			} else {
 				merged[key] = source[key]
