@@ -15,7 +15,6 @@ export const STYLE_FONT_DEFAULT = 'serif'
 export const STYLE_FONT_SIZE_DEFAULT = 36
 
 export const STYLE_ZINDEX = {
-	APP: 1,
 	LOADING: 2,
 	PANEL: 3,
 	SNACKBAR: 4

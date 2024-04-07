@@ -1,4 +1,4 @@
-import React, { useCallback, useRef, useState } from 'react'
+import React, { CSSProperties, useCallback, useRef, useState } from 'react'
 import useKeyboard from '@canvas/hooks/useKeyboard'
 import useResizeObserver from '@canvas/hooks/useResizeObserver'
 import type { SelectionModeData } from '@common/types/Mode'
@@ -6,10 +6,11 @@ import type { Point, ShapeEntity } from '@common/types/Shapes'
 import Canvas from '@canvas/components/Canvas'
 import type { UseReactPaintReturnType } from '@canvas/hooks/useReactPaint'
 import './index.css'
-import { STYLE_ZINDEX } from '@editor/constants/style'
 
-const App = (props: UseReactPaintReturnType) => {
+const App = (props: UseReactPaintReturnType & { className?: string; style?: CSSProperties }) => {
 	const {
+		className,
+		style,
 		shapesRef,
 		selectedShape,
 		selectionFrame,
@@ -90,12 +91,12 @@ const App = (props: UseReactPaintReturnType) => {
 	return (
 		<div
 			ref={containerRef}
-			className='react-paint-editor-app-row'
+			className={`${className} react-paint-editor-app-row`}
 			data-grow={canGrow}
 			style={{
-				'--react-paint-editor-app-row-zindex': STYLE_ZINDEX.APP,
 				'--react-paint-editor-app-row-width': canvasSize.width,
-				'--react-paint-editor-app-row-aspectratio': `calc(${canvasSize.width} / ${canvasSize.height})`
+				'--react-paint-editor-app-row-aspectratio': `calc(${canvasSize.width} / ${canvasSize.height})`,
+				...style
 			}}
 		>
 			<Canvas
