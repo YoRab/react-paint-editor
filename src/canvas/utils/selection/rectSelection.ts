@@ -252,7 +252,7 @@ export const resizeRectSelection = (
 		)
 	]
 
-	const roundCursorStartPosition = settings.gridFormat
+	const roundCursorStartPosition = settings.gridGap
 		? [
 				selectionMode.anchor[0] === 0 ? borders.x : selectionMode.anchor[0] === 0.5 ? borders.x + borders.width / 2 : borders.x + borders.width,
 				selectionMode.anchor[1] === 0 ? borders.y : selectionMode.anchor[1] === 0.5 ? borders.y + borders.height / 2 : borders.y + borders.height

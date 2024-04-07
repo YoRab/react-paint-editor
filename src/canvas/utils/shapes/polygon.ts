@@ -1,4 +1,4 @@
-import { getShapeInfos } from '.'
+import { getShapeInfos } from '@canvas/utils/shapes/index'
 import { SelectionModeResize } from '@common/types/Mode'
 import type { DrawableShape, Point, Polygon, Rect, ShapeEntity } from '@common/types/Shapes'
 import type { ToolsSettingsType } from '@common/types/tools'
@@ -80,7 +80,7 @@ export const translatePolygon = <U extends DrawableShape<'polygon'>>(
 		{
 			...originalShape,
 			points: originalShape.points.map(([x, y]) =>
-				settings.gridFormat
+				settings.gridGap
 					? [
 							x + roundForGrid(borders.x + cursorPosition[0] - originalCursorPosition[0], settings) - borders.x,
 							y + roundForGrid(borders.y + cursorPosition[1] - originalCursorPosition[1], settings) - borders.y

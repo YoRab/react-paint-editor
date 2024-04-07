@@ -1,7 +1,7 @@
 import useShapes from '@canvas/hooks/useShapes'
 import { buildDataToExport } from '@canvas/utils/data'
 import { decodeImportedData, decodeJson, downloadFile, encodeShapesInString, getCanvasImage } from '@canvas/utils/file'
-import { DEFAULT_OPTIONS, GridFormatType, OptionalAppOptionsType, UtilsSettings } from '@canvas/constants/app'
+import { DEFAULT_OPTIONS, OptionalAppOptionsType, UtilsSettings } from '@canvas/constants/app'
 import useComponent from '@canvas/hooks/useComponent'
 import { DrawableShapeJson, ExportDataType, Point, ShapeEntity } from '@common/types/Shapes'
 import { ToolsType } from '@common/types/tools'
@@ -79,6 +79,7 @@ const useReactPaint = ({
 	}, [])
 
 	const [activeTool, setActiveTool] = useState<ToolsType>(SELECTION_TOOL)
+	const [gridGap, setGridGap] = useState<number>(grid)
 
 	const [canvasSize, setCanvasSize] = useState({
 		width,
@@ -86,7 +87,6 @@ const useReactPaint = ({
 		scaleRatio: 1
 	})
 
-	const [gridFormat, setGridFormat] = useState<GridFormatType>(grid)
 	const [canvasOffset, setCanvasOffset] = useState<Point>([0, 0])
 	const [canvasOffsetStartPosition, setCanvasOffsetStartPosition] = useState<Point | undefined>(undefined)
 
@@ -95,10 +95,10 @@ const useReactPaint = ({
 			brushAlgo,
 			canvasSize,
 			canvasOffset,
-			gridFormat,
+			gridGap,
 			selectionPadding: canvasSelectionPadding
 		}),
-		[canvasSelectionPadding, gridFormat, brushAlgo, canvasOffset, canvasSize]
+		[canvasSelectionPadding, gridGap, brushAlgo, canvasOffset, canvasSize]
 	)
 
 	const [availableTools, setAvailableTools] = useState(sanitizeTools(availableToolsFromProps, withUploadPicture || withUrlPicture))
@@ -278,8 +278,8 @@ const useReactPaint = ({
 		setAvailableTools,
 		settings,
 		api: { getCurrentImage, getCurrentData },
-		gridFormat,
-		setGridFormat,
+		gridGap,
+		setGridGap,
 		canvas: {
 			style: {
 				toolbarBackgroundColor,

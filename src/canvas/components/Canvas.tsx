@@ -23,7 +23,7 @@ const renderDrawCanvas = (
 	} = settings
 	drawCtx.clearRect(0, 0, width, height)
 	initCanvasContext(drawCtx)
-	settings.gridFormat && drawGrid(drawCtx, width, height, settings)
+	settings.gridGap && drawGrid(drawCtx, width, height, settings)
 	for (let i = shapes.length - 1; i >= 0; i--) {
 		if (selectionMode.mode !== 'textedition' || shapes[i] !== selectedShape) {
 			drawShape(drawCtx, shapes[i], settings)
@@ -195,7 +195,6 @@ const Canvas = React.forwardRef<HTMLCanvasElement, DrawerType>(
 
 		useEffect(() => {
 			const drawCtx = drawCanvasRef.current?.getContext('2d')
-
 			drawCtx && window.requestAnimationFrame(() => renderDrawCanvas(drawCtx, selectionMode, settings, shapes, selectedShape))
 		}, [shapes, selectionMode, selectedShape, settings])
 

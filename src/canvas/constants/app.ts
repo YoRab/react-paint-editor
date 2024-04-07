@@ -9,18 +9,11 @@ export const APP_NAME = 'react_paint'
 export const DRAWCANVAS_CLASSNAME = 'react-paint-editor-canvas-drawcanvas'
 export const SELECTIONCANVAS_CLASSNAME = 'react-paint-editor-canvas-selectioncanvas'
 
-export const GRID_NONE = 0
-export const GRID_SMALL = 1
-export const GRID_MEDIUM = 2
-export const GRID_LARGE = 3
-
-export type GridFormatType = typeof GRID_NONE | typeof GRID_SMALL | typeof GRID_MEDIUM | typeof GRID_LARGE
-
 export type BrushAlgo = 'simple' | 'quadratic'
 
 export type UtilsSettings = {
 	brushAlgo: BrushAlgo
-	gridFormat: GridFormatType
+	gridGap: number
 	canvasOffset: Point
 	canvasSize: {
 		width: number
@@ -29,10 +22,9 @@ export type UtilsSettings = {
 	}
 	selectionPadding: number
 }
-
 type AppOptionsType = {
 	layersManipulation: boolean
-	grid: GridFormatType
+	grid: number
 	canGrow: boolean
 	canShrink: boolean
 	availableTools: CustomToolInput[]
@@ -67,7 +59,7 @@ export type OptionalAppOptionsType = RecursivePartial<AppOptionsType>
 
 export const DEFAULT_OPTIONS: AppOptionsType = {
 	layersManipulation: true,
-	grid: GRID_NONE,
+	grid: 0,
 	canGrow: false,
 	canShrink: true,
 	withExport: true,

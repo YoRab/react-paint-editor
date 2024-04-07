@@ -9,6 +9,7 @@ import Layouts from '@editor/components/settings/Layouts'
 import SettingsBar from '@editor/components/settings/SettingsBar'
 import Toolbar from '@editor/components/toolbox/Toolbar'
 import type { UseReactPaintReturnType } from '@canvas/hooks/useReactPaint'
+import { GridLabelType, GridValues } from '@editor/constants/grid'
 
 type EditorProps = {
 	hookProps: UseReactPaintReturnType
@@ -43,8 +44,8 @@ const Editor = ({ hookProps, className = '', children }: EditorProps) => {
 		isEditMode,
 		isDisabled,
 		availableTools,
-		gridFormat,
-		setGridFormat,
+		gridGap,
+		setGridGap,
 		loadFile,
 		exportPicture,
 		exportData,
@@ -77,6 +78,13 @@ const Editor = ({ hookProps, className = '', children }: EditorProps) => {
 
 	const [isLoading, setIsLoading] = useState(false)
 	const [isLayoutPanelShown, setIsLayoutPanelShown] = useState(false)
+
+	const gridFormat: GridLabelType =
+		gridGap >= GridValues.large ? 'large' : gridGap >= GridValues.medium ? 'medium' : gridGap >= GridValues.small ? 'small' : 'none'
+
+	const setGridFormat = (newValue: GridLabelType) => {
+		setGridGap(GridValues[newValue])
+	}
 
 	const { snackbarList, addSnackbar } = useSnackbar()
 

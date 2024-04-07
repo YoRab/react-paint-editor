@@ -1,6 +1,6 @@
 import { getAngleFromVector, rotatePoint } from './trigo'
 import { PICTURE_DEFAULT_SIZE } from '@canvas/constants/picture'
-import { GRID_ROTATION_STEPS, GRID_STEP } from '@editor/constants/style'
+import { GRID_ROTATION_STEPS } from '@editor/constants/style'
 import type { SelectionModeData } from '@common/types/Mode'
 import type { DrawableShape, Line, Point, ShapeEntity } from '@common/types/Shapes'
 import { resizeShape, rotateShape, translateShape } from './shapes'
@@ -27,14 +27,14 @@ export const scalePoint = (point: Point, minX: number, minY: number, scaleX = 1,
 	return [minX + (point[0] - minX) * scaleX, minY + (point[1] - minY) * scaleY]
 }
 export const roundForGrid = (value: number, settings: UtilsSettings, gridOffset = 0) => {
-	if (!settings.gridFormat) return roundValues(value)
+	if (!settings.gridGap) return roundValues(value)
 	const valueWithOffset = value + gridOffset
-	const step = valueWithOffset >= 0 ? GRID_STEP[settings.gridFormat - 1] : -GRID_STEP[settings.gridFormat - 1]
+	const step = valueWithOffset >= 0 ? settings.gridGap : -settings.gridGap
 	return valueWithOffset + step / 2 - ((valueWithOffset + step / 2) % step) - gridOffset
 }
 
 export const roundRotationForGrid = (rotation: number, settings: UtilsSettings, gridOffset = 0) => {
-	if (!settings.gridFormat) return roundValues(rotation, 3)
+	if (!settings.gridGap) return roundValues(rotation, 3)
 	return rotation + Math.PI / GRID_ROTATION_STEPS / 2 - ((rotation + Math.PI / GRID_ROTATION_STEPS / 2) % (Math.PI / GRID_ROTATION_STEPS))
 }
 

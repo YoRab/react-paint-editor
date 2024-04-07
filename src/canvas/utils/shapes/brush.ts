@@ -124,10 +124,10 @@ export const translateBrush = <U extends DrawableShape<'brush'>>(
 	settings: UtilsSettings
 ) => {
 	const { borders } = getShapeInfos(originalShape, settings)
-	const translationX = settings.gridFormat
+	const translationX = settings.gridGap
 		? roundForGrid(borders.x + cursorPosition[0] - originalCursorPosition[0], settings) - borders.x
 		: cursorPosition[0] - originalCursorPosition[0]
-	const translationY = settings.gridFormat
+	const translationY = settings.gridGap
 		? roundForGrid(borders.y + cursorPosition[1] - originalCursorPosition[1], settings) - borders.y
 		: cursorPosition[1] - originalCursorPosition[1]
 	return buildPath(

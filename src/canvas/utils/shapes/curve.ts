@@ -93,7 +93,7 @@ export const translateCurve = <U extends DrawableShape<'curve'>>(
 		{
 			...originalShape,
 			points: originalShape.points.map(([x, y]) =>
-				settings.gridFormat
+				settings.gridGap
 					? [
 							x + roundForGrid(borders.x + cursorPosition[0] - originalCursorPosition[0], settings) - borders.x,
 							y + roundForGrid(borders.y + cursorPosition[1] - originalCursorPosition[1], settings) - borders.y

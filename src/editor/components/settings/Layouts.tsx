@@ -4,10 +4,10 @@ import type { ShapeEntity } from '@common/types/Shapes'
 
 import Button from '@editor/components/common/Button'
 import Panel from '@editor/components/common/Panel'
-import type { GridFormatType } from '@canvas/constants/app'
 import { gridOffIcon, lockedIcon, trashIcon, unlockedIcon, visibilityIcon, visibilityOffIcon } from '@editor/constants/icons'
 import { getShapePicture } from '@editor/utils/style'
 import './Layouts.css'
+import { GridLabelType } from '@editor/constants/grid'
 
 type LayoutType = {
 	disabled?: boolean
@@ -114,8 +114,8 @@ const Layout = ({
 }
 
 type LayoutsType = {
-	gridFormat: GridFormatType
-	setGridFormat: React.Dispatch<React.SetStateAction<GridFormatType>>
+	gridFormat: GridLabelType
+	setGridFormat: (value: GridLabelType) => void
 	disabled?: boolean
 	shapes: ShapeEntity[]
 	removeShape: (shape: ShapeEntity) => void
@@ -151,19 +151,19 @@ const Layouts = ({
 						<Button
 							icon={gridOffIcon}
 							className='react-paint-editor-layouts-grid-button'
-							selected={gridFormat === 0}
+							selected={gridFormat === 'none'}
 							disabled={disabled}
-							onClick={() => setGridFormat(0)}
+							onClick={() => setGridFormat('none')}
 						/>
-						{['S', 'M', 'L'].map((value, index) => (
+						{(['small', 'medium', 'large'] as const).map(value => (
 							<Button
 								key={value}
 								className='react-paint-editor-layouts-grid-button'
-								selected={gridFormat === index + 1}
+								selected={gridFormat === value}
 								disabled={disabled}
-								onClick={() => setGridFormat((index + 1) as GridFormatType)}
+								onClick={() => setGridFormat(value)}
 							>
-								{value}
+								{value.charAt(0).toUpperCase()}
 							</Button>
 						))}
 					</div>

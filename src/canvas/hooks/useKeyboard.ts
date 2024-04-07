@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react'
-import { GRID_STEP } from '@editor/constants/style'
 import type { Point, ShapeEntity } from '@common/types/Shapes'
 import { copyShape, translateShape } from '@canvas/utils/shapes'
 import { UtilsSettings } from '@canvas/constants/app'
@@ -107,10 +106,10 @@ const useKeyboard = ({
 			if (isEditingText) return
 
 			const translationMap: { [key: string]: Point } = {
-				[KeyboardCode.ArrowLeft]: [settings.gridFormat ? -GRID_STEP[settings.gridFormat - 1] : -1, 0],
-				[KeyboardCode.ArrowRight]: [settings.gridFormat ? GRID_STEP[settings.gridFormat - 1] : 1, 0],
-				[KeyboardCode.ArrowDown]: [0, settings.gridFormat ? GRID_STEP[settings.gridFormat - 1] : 1],
-				[KeyboardCode.ArrowUp]: [0, settings.gridFormat ? -GRID_STEP[settings.gridFormat - 1] : -1]
+				[KeyboardCode.ArrowLeft]: [settings.gridGap ? -settings.gridGap : -1, 0],
+				[KeyboardCode.ArrowRight]: [settings.gridGap ? settings.gridGap : 1, 0],
+				[KeyboardCode.ArrowDown]: [0, settings.gridGap ? settings.gridGap : 1],
+				[KeyboardCode.ArrowUp]: [0, settings.gridGap ? -settings.gridGap : -1]
 			}
 			switch (e.key) {
 				case KeyboardCode.ArrowLeft:
