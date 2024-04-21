@@ -219,8 +219,8 @@ const Canvas = React.forwardRef<HTMLCanvasElement, DrawerType>(
 		}, [hoveredShape, selectionFrame, selectionMode, selectedShape, activeTool, settings, selectionWidth, selectionColor, withSkeleton])
 
 		return (
-			<div className='react-paint-editor-canvas-box'>
-				<div className='react-paint-editor-canvas-container' data-grow={canGrow}>
+			<div className='react-paint-canvas-box'>
+				<div className='react-paint-canvas-container' data-grow={canGrow}>
 					<canvas className={DRAWCANVAS_CLASSNAME} ref={drawCanvasRef} data-grow={canGrow} width={canvasSize.width} height={canvasSize.height} />
 					{isEditMode && (
 						<canvas
@@ -230,7 +230,7 @@ const Canvas = React.forwardRef<HTMLCanvasElement, DrawerType>(
 							height={canvasSize.height}
 							data-grow={canGrow}
 							style={{
-								'--react-paint-editor-canvas-cursor':
+								'--react-paint-canvas-cursor':
 									(activeTool.type !== 'selection' && activeTool.type !== 'move') || hoverMode.mode === 'resize'
 										? 'crosshair'
 										: activeTool.type === 'move' || hoverMode.mode === 'translate'

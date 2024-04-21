@@ -4,14 +4,7 @@
     position: relative;
     flex-direction: column;
     font-family: Arial, Helvetica, sans-serif;
-}
-
-.react-paint-editor-app[data-grow='false'] {
-    max-width: min(100%, var(--react-paint-editor-app-canvaswidth));
-}
-
-.react-paint-editor-app[data-shrink='false'] {
-    min-width: var(--react-paint-editor-app-canvaswidth);
+    max-width: min(100%, var(--react-paint-editor-app-maxWidth));
 }
 
 .react-paint-editor-app hr {

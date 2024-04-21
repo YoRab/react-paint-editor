@@ -65,7 +65,7 @@ const Editor = ({ hookProps, className = '', options, children }: EditorProps) =
 		exportData,
 		clearCanvas,
 		settings,
-		canvas: { canGrow, canShrink, layersManipulation, withExport, withLoadAndSave, withUploadPicture, withUrlPicture }
+		canvas: { canGrow, layersManipulation, withExport, withLoadAndSave, withUploadPicture, withUrlPicture }
 	} = hookProps
 
 	const {
@@ -187,10 +187,8 @@ const Editor = ({ hookProps, className = '', options, children }: EditorProps) =
 		<div
 			ref={refs.setEditor}
 			className={appClassName}
-			data-grow={canGrow}
-			data-shrink={canShrink}
 			style={{
-				'--react-paint-editor-app-canvaswidth': `${width}px`,
+				'--react-paint-editor-app-maxWidth': canGrow ? '100%' : `${width}px`,
 				'--react-paint-editor-app-toolbar-bg': toolbarBackgroundColor,
 				'--react-paint-editor-app-divider-color': dividerColor,
 				'--react-paint-editor-app-font-radius': fontRadius,

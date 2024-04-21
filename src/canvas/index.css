@@ -1,14 +1,14 @@
-.react-paint-editor-app-row {
+.react-paint-app-row {
     position: relative;
     max-width: 100%;
-    aspect-ratio: var(--react-paint-editor-app-row-aspectratio);
-}
-
-
-.react-paint-editor-app-row[data-grow='true'] {
+    aspect-ratio: var(--react-paint-app-row-aspectratio);
     width: 100%;
 }
 
-.react-paint-editor-app-row[data-grow='false'] {
-    width: var(--react-paint-editor-app-row-width);
+.react-paint-app-row[data-grow='false'] {
+    max-width: var(--react-paint-app-canvaswidth);
+}
+
+.react-paint-app-row[data-shrink='false'] {
+    min-width: var(--react-paint-app-canvaswidth);
 }

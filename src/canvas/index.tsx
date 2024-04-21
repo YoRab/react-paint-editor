@@ -15,9 +15,8 @@ type AppProps = UseReactPaintReturnType & {
 		canvasBackgroundColor?: string
 	}
 }
-const App = ({ options, ...props }: AppProps) => {
+const App = ({ options, className = '', ...props }: AppProps) => {
 	const {
-		className,
 		style,
 		shapesRef,
 		selectedShape,
@@ -50,7 +49,8 @@ const App = ({ options, ...props }: AppProps) => {
 			selection: { canvasSelectionColor, canvasSelectionWidth },
 			withSkeleton,
 			withFrameSelection,
-			canGrow
+			canGrow,
+			canShrink
 		}
 	} = props
 
@@ -104,12 +104,14 @@ const App = ({ options, ...props }: AppProps) => {
 	return (
 		<div
 			ref={containerRef}
-			className={`${className} react-paint-editor-app-row`}
+			className={`${className} react-paint-app-row`}
 			data-grow={canGrow}
+			data-shrink={canShrink}
 			style={{
-				'--react-paint-editor-app-row-width': canvasSize.width,
-				'--react-paint-editor-app-row-aspectratio': `calc(${canvasSize.width} / ${canvasSize.height})`,
-				'--react-paint-editor-app-canvas-bg': canvasBackgroundColor,
+				'--react-paint-app-row-width': canvasSize.width,
+				'--react-paint-app-canvaswidth': `${width}px`,
+				'--react-paint-app-row-aspectratio': `calc(${canvasSize.width} / ${canvasSize.height})`,
+				'--react-paint-app-canvas-bg': canvasBackgroundColor,
 				...style
 			}}
 		>

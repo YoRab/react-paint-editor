@@ -6,8 +6,8 @@ import { DEFAULT_SHAPE_TOOLS } from '@editor/constants/tools'
 
 export const APP_NAME = 'react_paint'
 
-export const DRAWCANVAS_CLASSNAME = 'react-paint-editor-canvas-drawcanvas'
-export const SELECTIONCANVAS_CLASSNAME = 'react-paint-editor-canvas-selectioncanvas'
+export const DRAWCANVAS_CLASSNAME = 'react-paint-canvas-drawcanvas'
+export const SELECTIONCANVAS_CLASSNAME = 'react-paint-canvas-selectioncanvas'
 
 export type BrushAlgo = 'simple' | 'quadratic'
 
