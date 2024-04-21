@@ -47,7 +47,7 @@ const App = ({ options, ...props }: AppProps) => {
 		isEditMode,
 		isDisabled,
 		canvas: {
-			style: { canvasSelectionColor, canvasSelectionWidth },
+			selection: { canvasSelectionColor, canvasSelectionWidth },
 			withSkeleton,
 			withFrameSelection,
 			canGrow

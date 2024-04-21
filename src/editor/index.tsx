@@ -10,14 +10,28 @@ import SettingsBar from '@editor/components/settings/SettingsBar'
 import Toolbar from '@editor/components/toolbox/Toolbar'
 import type { UseReactPaintReturnType } from '@canvas/hooks/useReactPaint'
 import { GridLabelType, GridValues } from '@editor/constants/grid'
+import { DEFAULT_EDITOR_OPTIONS } from '@editor/constants/options'
 
 type EditorProps = {
 	hookProps: UseReactPaintReturnType
 	className?: string
 	children: ReactNode
+	options?: {
+		toolbarBackgroundColor?: string
+		dividerColor?: string
+		fontRadius?: number
+		fontDisabledColor?: string
+		fontDisabledBackgroundColor?: string
+		fontColor?: string
+		fontBackgroundColor?: string
+		fontSelectedColor?: string
+		fontSelectedBackgroundColor?: string
+		fontHoverColor?: string
+		fontHoverBackgroundColor?: string
+	}
 }
 
-const Editor = ({ hookProps, className = '', children }: EditorProps) => {
+const Editor = ({ hookProps, className = '', options, children }: EditorProps) => {
 	const {
 		shapesRef,
 		addPictureShape,
@@ -51,29 +65,25 @@ const Editor = ({ hookProps, className = '', children }: EditorProps) => {
 		exportData,
 		clearCanvas,
 		settings,
-		canvas: {
-			style: {
-				toolbarBackgroundColor,
-				dividerColor,
-				fontRadius,
-				fontDisabledColor,
-				fontDisabledBackgroundColor,
-				fontColor,
-				fontBackgroundColor,
-				fontSelectedColor,
-				fontSelectedBackgroundColor,
-				fontHoverColor,
-				fontHoverBackgroundColor
-			},
-			canGrow,
-			canShrink,
-			layersManipulation,
-			withExport,
-			withLoadAndSave,
-			withUploadPicture,
-			withUrlPicture
-		}
+		canvas: { canGrow, canShrink, layersManipulation, withExport, withLoadAndSave, withUploadPicture, withUrlPicture }
 	} = hookProps
+
+	const {
+		toolbarBackgroundColor,
+		dividerColor,
+		fontRadius,
+		fontDisabledColor,
+		fontDisabledBackgroundColor,
+		fontColor,
+		fontBackgroundColor,
+		fontSelectedColor,
+		fontSelectedBackgroundColor,
+		fontHoverColor,
+		fontHoverBackgroundColor
+	} = {
+		...DEFAULT_EDITOR_OPTIONS,
+		...options
+	}
 
 	const [isLoading, setIsLoading] = useState(false)
 	const [isLayoutPanelShown, setIsLayoutPanelShown] = useState(false)

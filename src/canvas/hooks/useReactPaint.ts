@@ -47,24 +47,9 @@ const useReactPaint = ({
 		...options
 	}
 
-	const {
-		toolbarBackgroundColor,
-		dividerColor,
-		fontRadius,
-		fontDisabledColor,
-		fontDisabledBackgroundColor,
-		fontColor,
-		fontBackgroundColor,
-		fontSelectedColor,
-		fontSelectedBackgroundColor,
-		fontHoverColor,
-		fontHoverBackgroundColor,
-		canvasSelectionColor,
-		canvasSelectionWidth,
-		canvasSelectionPadding
-	} = {
-		...DEFAULT_OPTIONS.uiStyle,
-		...(options?.uiStyle ?? {})
+	const { canvasSelectionColor, canvasSelectionWidth, canvasSelectionPadding } = {
+		...DEFAULT_OPTIONS.selection,
+		...options?.selection
 	}
 
 	const isEditMode = mode !== 'viewer'
@@ -280,18 +265,7 @@ const useReactPaint = ({
 		gridGap,
 		setGridGap,
 		canvas: {
-			style: {
-				toolbarBackgroundColor,
-				dividerColor,
-				fontRadius,
-				fontDisabledColor,
-				fontDisabledBackgroundColor,
-				fontColor,
-				fontBackgroundColor,
-				fontSelectedColor,
-				fontSelectedBackgroundColor,
-				fontHoverColor,
-				fontHoverBackgroundColor,
+			selection: {
 				canvasSelectionColor,
 				canvasSelectionWidth,
 				canvasSelectionPadding

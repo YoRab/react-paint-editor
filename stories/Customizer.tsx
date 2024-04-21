@@ -83,24 +83,27 @@ const Customizer = () => {
 			canGrow: isGrowing,
 			canShrink: isShrinkable,
 			brushAlgo: quadraticBrush ? 'quadratic' : 'simple',
-			uiStyle: {
-				toolbarBackgroundColor,
-				dividerColor,
-				fontRadius,
-				fontDisabledColor,
-				fontDisabledBackgroundColor,
-				fontColor,
-				fontBackgroundColor,
-				fontSelectedColor,
-				fontSelectedBackgroundColor,
-				fontHoverColor,
-				fontHoverBackgroundColor,
+			selection: {
 				canvasSelectionColor,
 				canvasSelectionWidth,
 				canvasSelectionPadding
 			}
 		}
 	})
+
+	const editorOptions = {
+		toolbarBackgroundColor,
+		dividerColor,
+		fontRadius,
+		fontDisabledColor,
+		fontDisabledBackgroundColor,
+		fontColor,
+		fontBackgroundColor,
+		fontSelectedColor,
+		fontSelectedBackgroundColor,
+		fontHoverColor,
+		fontHoverBackgroundColor
+	}
 
 	const canvasOptions = {
 		canvasBackgroundColor
@@ -200,7 +203,7 @@ const Customizer = () => {
 					Update style
 				</button>
 			</div>
-			<Editor hookProps={props}>
+			<Editor hookProps={props} options={editorOptions}>
 				<Canvas {...props} options={canvasOptions} />
 			</Editor>
 		</>

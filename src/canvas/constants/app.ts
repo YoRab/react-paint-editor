@@ -36,18 +36,7 @@ type AppOptionsType = {
 	withSkeleton: boolean
 	clearCallback: 'empty' | 'defaultShapes' | (() => DrawableShapeJson[])
 	brushAlgo: BrushAlgo
-	uiStyle: {
-		toolbarBackgroundColor: string
-		dividerColor: string
-		fontRadius: number
-		fontDisabledColor: string
-		fontDisabledBackgroundColor: string
-		fontColor: string
-		fontBackgroundColor: string
-		fontSelectedColor: string
-		fontSelectedBackgroundColor: string
-		fontHoverColor: string
-		fontHoverBackgroundColor: string
+	selection: {
 		canvasSelectionColor: string
 		canvasSelectionWidth: number
 		canvasSelectionPadding: number
@@ -70,24 +59,15 @@ export const DEFAULT_OPTIONS: AppOptionsType = {
 	brushAlgo: 'simple',
 	withFrameSelection: false,
 	withSkeleton: false,
-	uiStyle: {
-		toolbarBackgroundColor: 'white',
-		dividerColor: '#36418129',
-		fontRadius: 8,
-		fontDisabledColor: '#3641812b',
-		fontDisabledBackgroundColor: 'transparent',
-		fontColor: '#364181',
-		fontBackgroundColor: 'transparent',
-		fontSelectedColor: 'white',
-		fontSelectedBackgroundColor: '#364181',
-		fontHoverColor: '#364181',
-		fontHoverBackgroundColor: '#afd8d8',
+	selection: {
 		canvasSelectionColor: SELECTION_DEFAULT_COLOR,
 		canvasSelectionWidth: SELECTION_DEFAULT_WIDTH,
 		canvasSelectionPadding: SELECTION_DEFAULT_PADDING
 	}
 }
 
-export const DEFAULT_CANVAS_OPTIONS = {
+export const DEFAULT_CANVAS_OPTIONS: {
+	canvasBackgroundColor: string
+} = {
 	canvasBackgroundColor: 'white'
 }
