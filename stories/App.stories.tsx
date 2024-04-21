@@ -61,7 +61,7 @@ export const LimitedTools: Story = {
 	args: {
 		onDataChanged: fn(),
 		options: {
-			grid: 2,
+			grid: 20,
 			layersManipulation: false,
 			withLoadAndSave: true,
 			withExport: true,
