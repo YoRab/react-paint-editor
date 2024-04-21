@@ -63,8 +63,7 @@ const Editor = ({ hookProps, className = '', children }: EditorProps) => {
 				fontSelectedColor,
 				fontSelectedBackgroundColor,
 				fontHoverColor,
-				fontHoverBackgroundColor,
-				canvasBackgroundColor
+				fontHoverBackgroundColor
 			},
 			canGrow,
 			canShrink,
@@ -192,8 +191,7 @@ const Editor = ({ hookProps, className = '', children }: EditorProps) => {
 				'--react-paint-editor-app-font-selected-color': fontSelectedColor,
 				'--react-paint-editor-app-font-selected-bg': fontSelectedBackgroundColor,
 				'--react-paint-editor-app-font-hover-color': fontHoverColor,
-				'--react-paint-editor-app-font-hover-bg': fontHoverBackgroundColor,
-				'--react-paint-editor-app-canvas-bg': canvasBackgroundColor
+				'--react-paint-editor-app-font-hover-bg': fontHoverBackgroundColor
 			}}
 		>
 			{isEditMode && (

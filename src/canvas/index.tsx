@@ -6,8 +6,16 @@ import type { Point, ShapeEntity } from '@common/types/Shapes'
 import Canvas from '@canvas/components/Canvas'
 import type { UseReactPaintReturnType } from '@canvas/hooks/useReactPaint'
 import './index.css'
+import { DEFAULT_CANVAS_OPTIONS } from '@canvas/constants/app'
 
-const App = (props: UseReactPaintReturnType & { className?: string; style?: CSSProperties }) => {
+type AppProps = UseReactPaintReturnType & {
+	className?: string
+	style?: CSSProperties
+	options?: {
+		canvasBackgroundColor?: string
+	}
+}
+const App = ({ options, ...props }: AppProps) => {
 	const {
 		className,
 		style,
@@ -45,6 +53,11 @@ const App = (props: UseReactPaintReturnType & { className?: string; style?: CSSP
 			canGrow
 		}
 	} = props
+
+	const { canvasBackgroundColor } = {
+		...DEFAULT_CANVAS_OPTIONS,
+		...options
+	}
 
 	const containerRef = useRef<HTMLDivElement>(null)
 
@@ -96,6 +109,7 @@ const App = (props: UseReactPaintReturnType & { className?: string; style?: CSSP
 			style={{
 				'--react-paint-editor-app-row-width': canvasSize.width,
 				'--react-paint-editor-app-row-aspectratio': `calc(${canvasSize.width} / ${canvasSize.height})`,
+				'--react-paint-editor-app-canvas-bg': canvasBackgroundColor,
 				...style
 			}}
 		>

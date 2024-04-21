@@ -48,7 +48,6 @@ type AppOptionsType = {
 		fontSelectedBackgroundColor: string
 		fontHoverColor: string
 		fontHoverBackgroundColor: string
-		canvasBackgroundColor: string
 		canvasSelectionColor: string
 		canvasSelectionWidth: number
 		canvasSelectionPadding: number
@@ -83,9 +82,12 @@ export const DEFAULT_OPTIONS: AppOptionsType = {
 		fontSelectedBackgroundColor: '#364181',
 		fontHoverColor: '#364181',
 		fontHoverBackgroundColor: '#afd8d8',
-		canvasBackgroundColor: 'white',
 		canvasSelectionColor: SELECTION_DEFAULT_COLOR,
 		canvasSelectionWidth: SELECTION_DEFAULT_WIDTH,
 		canvasSelectionPadding: SELECTION_DEFAULT_PADDING
 	}
+}
+
+export const DEFAULT_CANVAS_OPTIONS = {
+	canvasBackgroundColor: 'white'
 }

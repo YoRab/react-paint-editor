@@ -1,6 +1,6 @@
 import { getAngleFromVector, rotatePoint } from './trigo'
 import { PICTURE_DEFAULT_SIZE } from '@canvas/constants/picture'
-import { GRID_ROTATION_STEPS } from '@editor/constants/style'
+import { GRID_ROTATION_STEPS } from '@canvas/constants/grid'
 import type { SelectionModeData } from '@common/types/Mode'
 import type { DrawableShape, Line, Point, ShapeEntity } from '@common/types/Shapes'
 import { resizeShape, rotateShape, translateShape } from './shapes'

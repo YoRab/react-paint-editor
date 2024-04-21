@@ -95,13 +95,16 @@ const Customizer = () => {
 				fontSelectedBackgroundColor,
 				fontHoverColor,
 				fontHoverBackgroundColor,
-				canvasBackgroundColor,
 				canvasSelectionColor,
 				canvasSelectionWidth,
 				canvasSelectionPadding
 			}
 		}
 	})
+
+	const canvasOptions = {
+		canvasBackgroundColor
+	}
 
 	return (
 		<>
@@ -198,7 +201,7 @@ const Customizer = () => {
 				</button>
 			</div>
 			<Editor hookProps={props}>
-				<Canvas {...props} />
+				<Canvas {...props} options={canvasOptions} />
 			</Editor>
 		</>
 	)

@@ -59,7 +59,6 @@ const useReactPaint = ({
 		fontSelectedBackgroundColor,
 		fontHoverColor,
 		fontHoverBackgroundColor,
-		canvasBackgroundColor,
 		canvasSelectionColor,
 		canvasSelectionWidth,
 		canvasSelectionPadding
@@ -293,7 +292,6 @@ const useReactPaint = ({
 				fontSelectedBackgroundColor,
 				fontHoverColor,
 				fontHoverBackgroundColor,
-				canvasBackgroundColor,
 				canvasSelectionColor,
 				canvasSelectionWidth,
 				canvasSelectionPadding
