@@ -1,4 +1,4 @@
-import { GridFormatType } from '../../constants/app'
+import { GridFormatType, UtilsSettings } from '../../constants/app'
 import { STYLE_FONT_DEFAULT, STYLE_FONT_SIZE_DEFAULT } from '../../constants/style'
 import { SelectionModeResize } from '../../types/Mode'
 import type { DrawableShape, Point, Rect, ShapeEntity, Text } from '../../types/Shapes'
@@ -11,10 +11,10 @@ import { getRectOppositeAnchorAbsolutePosition } from './rectangle'
 
 const DEFAULT_TEXT_VALUE: string[] = ['Texte']
 
-const buildPath = <T extends DrawableShape<'text'>>(shape: T, currentScale: number, selectionPadding: number): T => {
+const buildPath = <T extends DrawableShape<'text'>>(shape: T, settings: UtilsSettings): T => {
 	return {
 		...shape,
-		selection: createRecSelectionPath(undefined, shape, currentScale, selectionPadding)
+		selection: createRecSelectionPath(undefined, shape, settings)
 	}
 }
 
@@ -42,8 +42,7 @@ export const createText = (
 		settings: ToolsSettingsType<'text'>
 	},
 	cursorPosition: Point,
-	currentScale: number,
-	selectionPadding: number
+	settings: UtilsSettings
 ): ShapeEntity<'text'> => {
 	const fontSize = calculateTextFontSize(
 		ctx,
@@ -73,8 +72,7 @@ export const createText = (
 				fontBold: shape.settings.fontBold.default
 			}
 		},
-		currentScale,
-		selectionPadding
+		settings
 	)
 }
 
@@ -91,12 +89,12 @@ export const drawText = (ctx: CanvasRenderingContext2D, text: DrawableShape<'tex
 	}
 }
 
-export const getTextBorder = (text: Text, selectionPadding: number): Rect => {
+export const getTextBorder = (text: Text, settings: UtilsSettings): Rect => {
 	return {
-		x: text.x - selectionPadding,
-		width: text.width + selectionPadding * 2,
-		y: text.y - selectionPadding,
-		height: text.height + selectionPadding * 2
+		x: text.x - settings.selectionPadding,
+		width: text.width + settings.selectionPadding * 2,
+		y: text.y - settings.selectionPadding,
+		height: text.height + settings.selectionPadding * 2
 	}
 }
 
@@ -105,8 +103,7 @@ export const translateText = <U extends DrawableShape<'text'>>(
 	originalShape: U,
 	originalCursorPosition: Point,
 	gridFormat: GridFormatType,
-	currentScale: number,
-	selectionPadding: number
+	settings: UtilsSettings
 ) => {
 	return buildPath(
 		{
@@ -114,8 +111,7 @@ export const translateText = <U extends DrawableShape<'text'>>(
 			x: roundForGrid(originalShape.x + cursorPosition[0] - originalCursorPosition[0], gridFormat),
 			y: roundForGrid(originalShape.y + cursorPosition[1] - originalCursorPosition[1], gridFormat)
 		},
-		currentScale,
-		selectionPadding
+		settings
 	)
 }
 
@@ -125,28 +121,26 @@ export const resizeText = (
 	originalShape: DrawableShape<'text'>,
 	selectionMode: SelectionModeResize,
 	gridFormat: GridFormatType,
-	selectionPadding: number,
-	currentScale: number
+	settings: UtilsSettings
 ): DrawableShape<'text'> => {
 	const { borderX, borderHeight, borderY, borderWidth } = resizeRectSelection(
 		cursorPosition,
 		originalShape,
 		selectionMode,
 		gridFormat,
-		selectionPadding,
+		settings,
 		true
 	)
 
 	const newRect = buildPath(
 		{
 			...originalShape,
-			width: Math.max(0, borderWidth - 2 * selectionPadding),
-			height: Math.max(0, borderHeight - 2 * selectionPadding),
-			x: borderX + selectionPadding,
-			y: borderY + selectionPadding
+			width: Math.max(0, borderWidth - 2 * settings.selectionPadding),
+			height: Math.max(0, borderHeight - 2 * settings.selectionPadding),
+			x: borderX + settings.selectionPadding,
+			y: borderY + settings.selectionPadding
 		},
-		currentScale,
-		selectionPadding
+		settings
 	)
 
 	return {
@@ -179,7 +173,7 @@ export const resizeTextShapeWithNewContent = <U extends DrawableShape<'text'>>(
 	ctx: CanvasRenderingContext2D,
 	shape: U,
 	newValue: string[],
-	selectionPadding: number,
+	settings: UtilsSettings,
 	canvasOffset: Point
 ): U => {
 	const newShape = { ...shape, value: newValue }
@@ -199,9 +193,9 @@ export const resizeTextShapeWithNewContent = <U extends DrawableShape<'text'>>(
 		height: newHeight
 	}
 
-	const { center } = getShapeInfos(shape, selectionPadding)
+	const { center } = getShapeInfos(shape, settings)
 
-	const { center: shapeWithNewDimensionsCenter } = getShapeInfos(resizedShape, selectionPadding)
+	const { center: shapeWithNewDimensionsCenter } = getShapeInfos(resizedShape, settings)
 
 	const [oppTrueX, oppTrueY] = getRectOppositeAnchorAbsolutePosition([1, 1], center, shape, canvasOffset)
 

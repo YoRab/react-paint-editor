@@ -1,3 +1,4 @@
+import { UtilsSettings } from 'src/constants/app'
 import { Circle, DrawableShape, Line, Rect } from '../../types/Shapes'
 
 export const createRecPath = (rect: Rect) => {
@@ -25,7 +26,7 @@ export const createLinePath = (line: Line) => {
 	return path
 }
 
-export const createBrushPath = (brush: DrawableShape<'brush'>, selectionPadding: number) => {
+export const createBrushPath = (brush: DrawableShape<'brush'>, settings: UtilsSettings) => {
 	if (brush.points.length < 1 || brush.style?.strokeColor === 'transparent') return undefined
 
 	const path = new Path2D()

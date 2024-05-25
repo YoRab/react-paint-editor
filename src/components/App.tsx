@@ -1,6 +1,6 @@
-import React, { MutableRefObject, useCallback, useEffect, useRef, useState } from 'react'
+import React, { MutableRefObject, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import Loading from '../components/common/Loading'
-import { DEFAULT_OPTIONS, GridFormatType, OptionalAppOptionsType } from '../constants/app'
+import { DEFAULT_OPTIONS, GridFormatType, OptionalAppOptionsType, UtilsSettings } from '../constants/app'
 import { STYLE_ZINDEX } from '../constants/style'
 import { SELECTION_TOOL } from '../constants/tools'
 import useComponent from '../hooks/useComponent'
@@ -94,10 +94,19 @@ const App = ({
 	const componentRef = useRef<HTMLDivElement>(null)
 	const canvasRef = useRef<HTMLCanvasElement>(null)
 	const [canvasSize, setCanvasSize] = useState({
-		width: width,
-		height: height,
+		width,
+		height,
 		scaleRatio: 1
 	})
+
+	const settings: UtilsSettings = useMemo(
+		() => ({
+			algo: 'simple',
+			canvasSize,
+			selectionPadding: canvasSelectionPadding
+		}),
+		[canvasSelectionPadding, canvasSize]
+	)
 
 	const [availableTools, setAvailableTools] = useState(sanitizeTools(availableToolsFromProps, withUploadPicture || withUrlPicture))
 
@@ -123,7 +132,7 @@ const App = ({
 	if (apiRef) {
 		apiRef.current = {
 			getCurrentImage: () => {
-				return canvasRef.current ? getCanvasImage(shapesRef.current, canvasOffset, width, height, canvasSelectionPadding) : undefined
+				return canvasRef.current ? getCanvasImage(shapesRef.current, canvasOffset, width, height, settings) : undefined
 			},
 
 			getCurrentData: () => {
@@ -155,7 +164,7 @@ const App = ({
 		canGoBackward,
 		canGoForward,
 		canClear
-	} = useShapes(onDataChanged, canvasSelectionPadding, canvasSize)
+	} = useShapes(onDataChanged, settings)
 
 	const { snackbarList, addSnackbar } = useSnackbar()
 
@@ -193,10 +202,10 @@ const App = ({
 
 	const loadImportedData = useCallback(
 		async (json: ExportDataType, clearHistory = true) => {
-			const shapes = await decodeImportedData(json, canvasSize.scaleRatio, canvasSelectionPadding)
+			const shapes = await decodeImportedData(json, settings)
 			resetCanvas(shapes, clearHistory)
 		},
-		[resetCanvas, canvasSize, canvasSelectionPadding]
+		[resetCanvas, settings]
 	)
 
 	const clearCanvas = useCallback(() => {
@@ -230,7 +239,7 @@ const App = ({
 	const exportCanvasInFile = useCallback(() => {
 		setIsLoading(true)
 		try {
-			const dataURL = canvasRef.current && getCanvasImage(shapesRef.current, canvasOffset, width, height, canvasSelectionPadding)
+			const dataURL = canvasRef.current && getCanvasImage(shapesRef.current, canvasOffset, width, height, settings)
 			if (!dataURL) {
 				throw new Error()
 			}
@@ -244,7 +253,7 @@ const App = ({
 		} finally {
 			setIsLoading(false)
 		}
-	}, [addSnackbar, shapesRef, canvasOffset, width, height, canvasSelectionPadding])
+	}, [addSnackbar, shapesRef, canvasOffset, width, height, settings])
 
 	const saveFile = useCallback(() => {
 		setIsLoading(true)
@@ -312,11 +321,10 @@ const App = ({
 
 	useKeyboard({
 		isInsideComponent,
-		selectionPadding: canvasSelectionPadding,
 		gridFormat,
 		isEditingText: selectionMode.mode === 'textedition',
+		settings,
 		selectedShape,
-		currentScale: canvasSize.scaleRatio,
 		setSelectedShape,
 		removeShape,
 		pasteShape,
@@ -421,6 +429,7 @@ const App = ({
 					hoveredShape={hoveredShape}
 					refreshHoveredShape={refreshHoveredShape}
 					refreshSelectedShapes={refreshSelectedShapes}
+					settings={settings}
 					canvasOffset={canvasOffset}
 					setCanvasOffset={setCanvasOffset}
 					saveShapes={saveShapes}
@@ -430,7 +439,6 @@ const App = ({
 					setSelectionMode={setSelectionMode}
 					selectionColor={canvasSelectionColor}
 					selectionWidth={canvasSelectionWidth}
-					selectionPadding={canvasSelectionPadding}
 					isEditMode={isEditMode}
 					isShiftPressed={isShiftPressed}
 					withFrameSelection={withFrameSelection}
@@ -460,11 +468,10 @@ const App = ({
 						activeTool={activeTool}
 						availableTools={availableTools}
 						selectedShape={selectedShape}
-						selectionPadding={canvasSelectionPadding}
+						settings={settings}
 						removeShape={removeShape}
 						updateShape={updateShape}
 						canvas={canvasRef.current}
-						currentScale={canvasSize.scaleRatio}
 						layersManipulation={layersManipulation}
 						toggleLayoutPanel={() => {
 							setIsLayoutPanelShown(prev => !prev)

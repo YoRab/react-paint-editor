@@ -1,5 +1,5 @@
 import { getShapeInfos } from '.'
-import { GridFormatType } from '../../constants/app'
+import { GridFormatType, UtilsSettings } from '../../constants/app'
 import { SelectionModeResize } from '../../types/Mode'
 import type { DrawableShape, Point, Polygon, Rect, ShapeEntity } from '../../types/Shapes'
 import type { ToolsSettingsType } from '../../types/tools'
@@ -10,13 +10,13 @@ import { createPolygonPath } from '../../utils/shapes/path'
 import { roundForGrid } from '../../utils/transform'
 import { uniqueId } from '../../utils/util'
 
-const buildPath = <T extends DrawableShape<'polygon'>>(shape: T, currentScale: number, selectionPadding: number): T => {
+const buildPath = <T extends DrawableShape<'polygon'>>(shape: T, settings: UtilsSettings): T => {
 	const path = createPolygonPath(shape)
 
 	return {
 		...shape,
 		path,
-		selection: createLineSelectionPath(path, shape, currentScale, selectionPadding)
+		selection: createLineSelectionPath(path, shape, settings)
 	}
 }
 
@@ -29,8 +29,7 @@ export const createPolygon = (
 		settings: ToolsSettingsType<'polygon'>
 	},
 	cursorPosition: Point,
-	currentScale: number,
-	selectionPadding: number
+	settings: UtilsSettings
 ): ShapeEntity<'polygon'> => {
 	return buildPath(
 		{
@@ -48,8 +47,7 @@ export const createPolygon = (
 				pointsCount: shape.settings.pointsCount.default
 			}
 		},
-		currentScale,
-		selectionPadding
+		settings
 	)
 }
 
@@ -60,12 +58,12 @@ export const drawPolygon = (ctx: CanvasRenderingContext2D, polygon: DrawableShap
 	polygon.style?.strokeColor !== 'transparent' && ctx.stroke(polygon.path)
 }
 
-export const getPolygonBorder = (polygon: Polygon, selectionPadding: number): Rect => {
-	const minX = Math.min(...polygon.points.map(point => point[0])) - selectionPadding
-	const maxX = Math.max(...polygon.points.map(point => point[0])) + selectionPadding
+export const getPolygonBorder = (polygon: Polygon, settings: UtilsSettings): Rect => {
+	const minX = Math.min(...polygon.points.map(point => point[0])) - settings.selectionPadding
+	const maxX = Math.max(...polygon.points.map(point => point[0])) + settings.selectionPadding
 
-	const minY = Math.min(...polygon.points.map(point => point[1])) - selectionPadding
-	const maxY = Math.max(...polygon.points.map(point => point[1])) + selectionPadding
+	const minY = Math.min(...polygon.points.map(point => point[1])) - settings.selectionPadding
+	const maxY = Math.max(...polygon.points.map(point => point[1])) + settings.selectionPadding
 
 	return { x: minX, width: maxX - minX, y: minY, height: maxY - minY }
 }
@@ -75,10 +73,9 @@ export const translatePolygon = <U extends DrawableShape<'polygon'>>(
 	originalShape: U,
 	originalCursorPosition: Point,
 	gridFormat: GridFormatType,
-	currentScale: number,
-	selectionPadding: number
+	settings: UtilsSettings
 ) => {
-	const { borders } = getShapeInfos(originalShape, selectionPadding)
+	const { borders } = getShapeInfos(originalShape, settings)
 
 	return buildPath(
 		{
@@ -95,8 +92,7 @@ export const translatePolygon = <U extends DrawableShape<'polygon'>>(
 					  ]
 			)
 		},
-		currentScale,
-		selectionPadding
+		settings
 	)
 }
 
@@ -106,25 +102,19 @@ export const resizePolygon = (
 	originalShape: DrawableShape<'polygon'>,
 	selectionMode: SelectionModeResize<number>,
 	gridFormat: GridFormatType,
-	selectionPadding: number,
-	currentScale: number
+	settings: UtilsSettings
 ): DrawableShape<'polygon'> => {
 	const roundCursorPosition: Point = [roundForGrid(cursorPosition[0], gridFormat), roundForGrid(cursorPosition[1], gridFormat)]
 
-	const { center } = getShapeInfos(originalShape, selectionPadding)
+	const { center } = getShapeInfos(originalShape, settings)
 
 	const cursorPositionBeforeResize = getPointPositionAfterCanvasTransformation(roundCursorPosition, originalShape.rotation, center, canvasOffset)
 	const updatedShape = set(['points', selectionMode.anchor], cursorPositionBeforeResize, originalShape)
 
-	return buildPath(updatedShape, currentScale, selectionPadding)
+	return buildPath(updatedShape, settings)
 }
 
-export const updatePolygonLinesCount = <T extends DrawableShape<'polygon'>>(
-	shape: T,
-	newPointsCount: number,
-	currentScale: number,
-	selectionPadding: number
-): T => {
+export const updatePolygonLinesCount = <T extends DrawableShape<'polygon'>>(shape: T, newPointsCount: number, settings: UtilsSettings): T => {
 	const currentPointsCount = shape.points.length
 	if (currentPointsCount === newPointsCount) return shape
 	if (currentPointsCount > newPointsCount) {
@@ -138,8 +128,7 @@ export const updatePolygonLinesCount = <T extends DrawableShape<'polygon'>>(
 					pointsCount: totalPoints.length
 				}
 			},
-			currentScale,
-			selectionPadding
+			settings
 		)
 	}
 	//TODO : better distribution for new points
@@ -162,7 +151,6 @@ export const updatePolygonLinesCount = <T extends DrawableShape<'polygon'>>(
 				pointsCount: totalPoints.length
 			}
 		},
-		currentScale,
-		selectionPadding
+		settings
 	)
 }

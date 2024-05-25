@@ -1,4 +1,4 @@
-import { GridFormatType } from '../../constants/app'
+import { GridFormatType, UtilsSettings } from '../../constants/app'
 import { SelectionModeResize } from '../../types/Mode'
 import type { Circle, DrawableShape, Point, Rect, ShapeEntity } from '../../types/Shapes'
 import type { ToolsSettingsType } from '../../types/tools'
@@ -7,12 +7,12 @@ import { roundForGrid } from '../../utils/transform'
 import { uniqueId } from '../../utils/util'
 import { createCirclePath } from './path'
 
-const buildPath = <T extends DrawableShape<'circle'>>(shape: T, currentScale: number, selectionPadding: number): T => {
+const buildPath = <T extends DrawableShape<'circle'>>(shape: T, settings: UtilsSettings): T => {
 	const path = createCirclePath(shape)
 	return {
 		...shape,
 		path,
-		selection: createRecSelectionPath(path, shape, currentScale, selectionPadding)
+		selection: createRecSelectionPath(path, shape, settings)
 	}
 }
 
@@ -25,8 +25,7 @@ export const createCircle = (
 		settings: ToolsSettingsType<'circle'>
 	},
 	cursorPosition: Point,
-	currentScale: number,
-	selectionPadding: number
+	settings: UtilsSettings
 ): ShapeEntity<'circle'> => {
 	return buildPath(
 		{
@@ -45,8 +44,7 @@ export const createCircle = (
 				lineDash: shape.settings.lineDash.default
 			}
 		},
-		currentScale,
-		selectionPadding
+		settings
 	)
 }
 
@@ -56,12 +54,12 @@ export const drawCircle = (ctx: CanvasRenderingContext2D, circle: DrawableShape<
 	circle.style?.strokeColor !== 'transparent' && ctx.stroke(circle.path)
 }
 
-export const getCircleBorder = (circle: Circle, selectionPadding: number): Rect => {
+export const getCircleBorder = (circle: Circle, settings: UtilsSettings): Rect => {
 	return {
-		x: circle.x - circle.radius - selectionPadding,
-		width: (circle.radius + selectionPadding) * 2,
-		y: circle.y - circle.radius - selectionPadding,
-		height: (circle.radius + selectionPadding) * 2
+		x: circle.x - circle.radius - settings.selectionPadding,
+		width: (circle.radius + settings.selectionPadding) * 2,
+		y: circle.y - circle.radius - settings.selectionPadding,
+		height: (circle.radius + settings.selectionPadding) * 2
 	}
 }
 
@@ -70,8 +68,7 @@ export const translateCircle = <U extends DrawableShape<'circle'>>(
 	originalShape: U,
 	originalCursorPosition: Point,
 	gridFormat: GridFormatType,
-	currentScale: number,
-	selectionPadding: number
+	settings: UtilsSettings
 ) => {
 	return buildPath(
 		{
@@ -79,8 +76,7 @@ export const translateCircle = <U extends DrawableShape<'circle'>>(
 			x: roundForGrid(originalShape.x + cursorPosition[0] - originalCursorPosition[0], gridFormat),
 			y: roundForGrid(originalShape.y + cursorPosition[1] - originalCursorPosition[1], gridFormat)
 		},
-		currentScale,
-		selectionPadding
+		settings
 	)
 }
 
@@ -89,26 +85,24 @@ export const resizeCircle = (
 	originalShape: DrawableShape<'circle'>,
 	selectionMode: SelectionModeResize,
 	gridFormat: GridFormatType,
-	selectionPadding: number,
-	currentScale: number
+	settings: UtilsSettings
 ): DrawableShape<'circle'> => {
 	const { borderX, borderHeight, borderY, borderWidth } = resizeRectSelection(
 		cursorPosition,
 		originalShape,
 		selectionMode,
 		gridFormat,
-		selectionPadding,
+		settings,
 		true
 	)
 
 	return buildPath(
 		{
 			...originalShape,
-			radius: Math.max(0, borderWidth / 2 - selectionPadding),
+			radius: Math.max(0, borderWidth / 2 - settings.selectionPadding),
 			x: borderX + borderWidth / 2,
 			y: borderY + borderHeight / 2
 		},
-		currentScale,
-		selectionPadding
+		settings
 	)
 }

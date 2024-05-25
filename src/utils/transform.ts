@@ -1,5 +1,5 @@
 import { getAngleFromVector, rotatePoint } from 'src/utils/trigo'
-import type { GridFormatType } from '../constants/app'
+import type { GridFormatType, UtilsSettings } from '../constants/app'
 import { PICTURE_DEFAULT_SIZE } from '../constants/picture'
 import { GRID_ROTATION_STEPS, GRID_STEP } from '../constants/style'
 import type { SelectionModeData } from '../types/Mode'
@@ -45,37 +45,18 @@ export const transformShape = (
 	gridFormat: GridFormatType,
 	canvasOffset: Point,
 	selectionMode: SelectionModeData<Point | number>,
-	selectionPadding: number,
-	isShiftPressed: boolean,
-	currentScale: number
+	settings: UtilsSettings,
+	isShiftPressed: boolean
 ): ShapeEntity => {
 	switch (selectionMode.mode) {
 		case 'brush':
-			return addNewPointToShape(shape as ShapeEntity<'brush'>, cursorPosition, currentScale, selectionPadding)
+			return addNewPointToShape(shape as ShapeEntity<'brush'>, cursorPosition, settings)
 		case 'translate':
-			return translateShape(
-				cursorPosition,
-				selectionMode.originalShape,
-				selectionMode.cursorStartPosition,
-				gridFormat,
-				currentScale,
-				selectionPadding
-			)
+			return translateShape(cursorPosition, selectionMode.originalShape, selectionMode.cursorStartPosition, gridFormat, settings)
 		case 'rotate':
 			return rotateShape(shape, cursorPosition, selectionMode.originalShape, selectionMode.cursorStartPosition, selectionMode.center, gridFormat)
 		case 'resize':
-			return resizeShape(
-				ctx,
-				shape,
-				cursorPosition,
-				canvasOffset,
-				selectionMode.originalShape,
-				selectionMode,
-				gridFormat,
-				selectionPadding,
-				isShiftPressed,
-				currentScale
-			)
+			return resizeShape(ctx, shape, cursorPosition, canvasOffset, selectionMode.originalShape, selectionMode, gridFormat, settings, isShiftPressed)
 		default:
 			return shape
 	}

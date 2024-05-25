@@ -1,3 +1,4 @@
+import { UtilsSettings } from 'src/constants/app'
 import { SELECTION_ANCHOR_SIZE } from 'src/constants/shapes'
 import { DrawableShape, Point, SelectionLinesType } from 'src/types/Shapes'
 import { updateCanvasContext } from 'src/utils/canvas'
@@ -9,11 +10,10 @@ export const createLineSelectionPath = (
 	shape: DrawableShape<'line' | 'polygon' | 'curve'> & {
 		points: readonly Point[]
 	},
-	currentScale: number,
-	selectionPadding: number,
+	settings: UtilsSettings,
 	gravityAnchors = false
 ): SelectionLinesType => {
-	const { borders } = getShapeInfos(shape, selectionPadding)
+	const { borders } = getShapeInfos(shape, settings)
 
 	return {
 		border: createRecPath(borders),
@@ -24,14 +24,14 @@ export const createLineSelectionPath = (
 					return createRecPath({
 						x: point[0] - SELECTION_ANCHOR_SIZE / 2,
 						y: point[1] - SELECTION_ANCHOR_SIZE / 2,
-						width: SELECTION_ANCHOR_SIZE / currentScale,
-						height: SELECTION_ANCHOR_SIZE / currentScale
+						width: SELECTION_ANCHOR_SIZE / settings.canvasSize.scaleRatio,
+						height: SELECTION_ANCHOR_SIZE / settings.canvasSize.scaleRatio
 					})
 				}
 				return createCirclePath({
 					x: point[0],
 					y: point[1],
-					radius: SELECTION_ANCHOR_SIZE / 2 / currentScale
+					radius: SELECTION_ANCHOR_SIZE / 2 / settings.canvasSize.scaleRatio
 				})
 			})
 		]
@@ -44,21 +44,21 @@ export const drawLineSelection = ({
 	withAnchors,
 	selectionWidth,
 	selectionColor,
-	currentScale = 1
+	settings
 }: {
 	ctx: CanvasRenderingContext2D
 	shape: DrawableShape<'line'> | DrawableShape<'polygon'> | DrawableShape<'curve'>
 	withAnchors: boolean
 	selectionWidth: number
 	selectionColor: string
-	currentScale?: number
+	settings: UtilsSettings
 }) => {
 	if (!shape.selection) return
 
 	updateCanvasContext(ctx, {
 		fillColor: 'transparent',
 		strokeColor: selectionColor,
-		lineWidth: selectionWidth / currentScale
+		lineWidth: selectionWidth / settings.canvasSize.scaleRatio
 	})
 
 	if (shape.selection.shapePath) ctx.stroke(shape.selection.shapePath)
@@ -68,7 +68,7 @@ export const drawLineSelection = ({
 	updateCanvasContext(ctx, {
 		fillColor: 'rgb(255,255,255)',
 		strokeColor: 'rgb(150,150,150)',
-		lineWidth: 2 / currentScale
+		lineWidth: 2 / settings.canvasSize.scaleRatio
 	})
 
 	for (const anchor of shape.selection.anchors) {

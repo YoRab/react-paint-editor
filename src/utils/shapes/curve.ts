@@ -1,4 +1,4 @@
-import { GridFormatType } from '../../constants/app'
+import { GridFormatType, UtilsSettings } from '../../constants/app'
 import { SelectionModeResize } from '../../types/Mode'
 import type { DrawableShape, Point, ShapeEntity } from '../../types/Shapes'
 import type { ToolsSettingsType } from '../../types/tools'
@@ -11,12 +11,12 @@ import { roundForGrid } from '../../utils/transform'
 import { uniqueId } from '../../utils/util'
 import { getPolygonBorder } from './polygon'
 
-const buildPath = <T extends DrawableShape<'curve'>>(shape: T, currentScale: number, selectionPadding: number): T => {
+const buildPath = <T extends DrawableShape<'curve'>>(shape: T, settings: UtilsSettings): T => {
 	const path = createCurvePath(shape)
 	return {
 		...shape,
 		path,
-		selection: createLineSelectionPath(path, shape, currentScale, selectionPadding, true)
+		selection: createLineSelectionPath(path, shape, settings, true)
 	}
 }
 
@@ -29,8 +29,7 @@ export const createCurve = (
 		settings: ToolsSettingsType<'curve'>
 	},
 	cursorPosition: Point,
-	currentScale: number,
-	selectionPadding: number
+	settings: UtilsSettings
 ): ShapeEntity<'curve'> => {
 	return buildPath(
 		{
@@ -48,8 +47,7 @@ export const createCurve = (
 				pointsCount: shape.settings.pointsCount.default
 			}
 		},
-		currentScale,
-		selectionPadding
+		settings
 	)
 }
 
@@ -59,17 +57,16 @@ export const resizeCurve = (
 	originalShape: DrawableShape<'curve'>,
 	selectionMode: SelectionModeResize<number>,
 	gridFormat: GridFormatType,
-	selectionPadding: number,
-	currentScale: number
+	settings: UtilsSettings
 ): DrawableShape<'curve'> => {
 	const roundCursorPosition: Point = [roundForGrid(cursorPosition[0], gridFormat), roundForGrid(cursorPosition[1], gridFormat)]
 
-	const { center } = getShapeInfos(originalShape, selectionPadding)
+	const { center } = getShapeInfos(originalShape, settings)
 
 	const cursorPositionBeforeResize = getPointPositionAfterCanvasTransformation(roundCursorPosition, originalShape.rotation, center, canvasOffset)
 	const updatedShape = set(['points', selectionMode.anchor], cursorPositionBeforeResize, originalShape)
 
-	return buildPath(updatedShape, currentScale, selectionPadding)
+	return buildPath(updatedShape, settings)
 }
 
 export const drawCurve = (ctx: CanvasRenderingContext2D, curve: DrawableShape<'curve'>): void => {
@@ -86,10 +83,9 @@ export const translateCurve = <U extends DrawableShape<'curve'>>(
 	originalShape: U,
 	originalCursorPosition: Point,
 	gridFormat: GridFormatType,
-	currentScale: number,
-	selectionPadding: number
+	settings: UtilsSettings
 ) => {
-	const { borders } = getShapeInfos(originalShape, selectionPadding)
+	const { borders } = getShapeInfos(originalShape, settings)
 
 	return buildPath(
 		{
@@ -106,17 +102,11 @@ export const translateCurve = <U extends DrawableShape<'curve'>>(
 					  ]
 			)
 		},
-		currentScale,
-		selectionPadding
+		settings
 	)
 }
 
-export const updateCurveLinesCount = <T extends DrawableShape<'curve'>>(
-	shape: T,
-	newPointsCount: number,
-	currentScale: number,
-	selectionPadding: number
-): T => {
+export const updateCurveLinesCount = <T extends DrawableShape<'curve'>>(shape: T, newPointsCount: number, settings: UtilsSettings): T => {
 	const currentPointsCount = shape.points.length
 	if (currentPointsCount === newPointsCount) return shape
 	if (currentPointsCount > newPointsCount) {
@@ -130,8 +120,7 @@ export const updateCurveLinesCount = <T extends DrawableShape<'curve'>>(
 					pointsCount: totalPoints.length
 				}
 			},
-			currentScale,
-			selectionPadding
+			settings
 		)
 	}
 	//TODO : better distribution for new points
@@ -154,7 +143,6 @@ export const updateCurveLinesCount = <T extends DrawableShape<'curve'>>(
 				pointsCount: totalPoints.length
 			}
 		},
-		currentScale,
-		selectionPadding
+		settings
 	)
 }

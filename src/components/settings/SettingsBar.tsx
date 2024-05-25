@@ -19,6 +19,7 @@ import PointsNumberField from './PointsNumberField'
 import RangeField from './RangeField'
 import './SettingsBar.css'
 import ToggleField from './ToggleField'
+import { UtilsSettings } from 'src/constants/app'
 
 const SETTING_WIDTH = 40
 
@@ -31,8 +32,7 @@ type SettingsBoxType = {
 	activeTool: ToolsType
 	selectedShape: ShapeEntity | undefined
 	canvas: HTMLCanvasElement | null
-	currentScale: number
-	selectionPadding: number
+	settings: UtilsSettings
 	updateShape: (shape: ShapeEntity, withSave?: boolean) => void
 	removeShape: (shape: ShapeEntity) => void
 	toggleLayoutPanel: () => void
@@ -343,8 +343,7 @@ const SettingsBar = ({
 	activeTool,
 	selectedShape,
 	canvas,
-	currentScale,
-	selectionPadding,
+	settings,
 	updateShape,
 	removeShape
 }: SettingsBoxType) => {
@@ -372,7 +371,7 @@ const SettingsBar = ({
 
 	const handleShapeStyleChange = (field: string, value: string | number | boolean, needHistorySave = true) => {
 		if (selectedShape) {
-			updateShape(refreshShape(set(['style', field], value, selectedShape), currentScale, selectionPadding), needHistorySave)
+			updateShape(refreshShape(set(['style', field], value, selectedShape), settings), needHistorySave)
 			selectedShapeTool && updateToolSettings(selectedShapeTool.id, field, value)
 		} else {
 			updateToolSettings(activeTool.id, field, value)
@@ -399,8 +398,7 @@ const SettingsBar = ({
 					fontSize,
 					height: fontSize * newShape.value.length
 				},
-				currentScale,
-				selectionPadding
+				settings
 			)
 			updateShape(resizedShape, true)
 			selectedShapeTool && updateToolSettings(selectedShapeTool.id, field, value)
@@ -414,8 +412,8 @@ const SettingsBar = ({
 			if (selectedShape.type !== 'polygon' && selectedShape.type !== 'curve') return
 			updateShape(
 				selectedShape.type === 'polygon'
-					? updatePolygonLinesCount(selectedShape, value as number, currentScale, selectionPadding)
-					: updateCurveLinesCount(selectedShape, value as number, currentScale, selectionPadding),
+					? updatePolygonLinesCount(selectedShape, value as number, settings)
+					: updateCurveLinesCount(selectedShape, value as number, settings),
 				true
 			)
 			selectedShapeTool && updateToolSettings(selectedShapeTool.id, field, value)

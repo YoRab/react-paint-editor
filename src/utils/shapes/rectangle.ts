@@ -1,4 +1,4 @@
-import type { GridFormatType } from '../../constants/app'
+import type { GridFormatType, UtilsSettings } from '../../constants/app'
 import type { SelectionModeResize } from '../../types/Mode'
 import type { DrawableShape, Point, Rect, ShapeEntity } from '../../types/Shapes'
 import type { ToolsSettingsType } from '../../types/tools'
@@ -10,12 +10,12 @@ import { createRecPath } from './path'
 
 type rectish = 'text' | 'rect' | 'square' | 'picture'
 
-const buildPath = <T extends DrawableShape<rectish>>(rect: T, currentScale: number, selectionPadding: number): T => {
+const buildPath = <T extends DrawableShape<rectish>>(rect: T, settings: UtilsSettings): T => {
 	const path = createRecPath(rect)
 	return {
 		...rect,
 		path,
-		selection: createRecSelectionPath(path, rect, currentScale, selectionPadding)
+		selection: createRecSelectionPath(path, rect, settings)
 	}
 }
 
@@ -28,8 +28,7 @@ export const createRectangle = <T extends 'rect' | 'square'>(
 		settings: ToolsSettingsType<T>
 	},
 	cursorPosition: Point,
-	currentScale: number,
-	selectionPadding: number,
+	settings: UtilsSettings,
 	width = 0,
 	height = 0
 ): ShapeEntity<T> => {
@@ -50,7 +49,7 @@ export const createRectangle = <T extends 'rect' | 'square'>(
 			lineDash: shape.settings.lineDash.default
 		}
 	} as unknown as ShapeEntity<T>
-	return buildPath(recShape, currentScale, selectionPadding) as ShapeEntity<T>
+	return buildPath(recShape, settings) as ShapeEntity<T>
 }
 
 export const drawRect = (ctx: CanvasRenderingContext2D, shape: DrawableShape<'rect' | 'square'>): void => {
@@ -60,12 +59,12 @@ export const drawRect = (ctx: CanvasRenderingContext2D, shape: DrawableShape<'re
 	shape.style?.strokeColor !== 'transparent' && ctx.stroke(shape.path)
 }
 
-export const getRectBorder = (rect: Rect, selectionPadding: number): Rect => {
+export const getRectBorder = (rect: Rect, settings: UtilsSettings): Rect => {
 	return {
-		x: rect.x - selectionPadding,
-		width: rect.width + selectionPadding * 2,
-		y: rect.y - selectionPadding,
-		height: rect.height + selectionPadding * 2
+		x: rect.x - settings.selectionPadding,
+		width: rect.width + settings.selectionPadding * 2,
+		y: rect.y - settings.selectionPadding,
+		height: rect.height + settings.selectionPadding * 2
 	}
 }
 
@@ -89,8 +88,7 @@ export const translateRect = <T extends 'rect' | 'square', U extends DrawableSha
 	originalShape: U,
 	originalCursorPosition: Point,
 	gridFormat: GridFormatType,
-	currentScale: number,
-	selectionPadding: number
+	settings: UtilsSettings
 ) => {
 	return buildPath(
 		{
@@ -98,8 +96,7 @@ export const translateRect = <T extends 'rect' | 'square', U extends DrawableSha
 			x: roundForGrid(originalShape.x + cursorPosition[0] - originalCursorPosition[0], gridFormat),
 			y: roundForGrid(originalShape.y + cursorPosition[1] - originalCursorPosition[1], gridFormat)
 		},
-		currentScale,
-		selectionPadding
+		settings
 	)
 }
 
@@ -108,8 +105,7 @@ export const resizeRect = <T extends rectish>(
 	originalShape: DrawableShape<T>,
 	selectionMode: SelectionModeResize,
 	gridFormat: GridFormatType,
-	selectionPadding: number,
-	currentScale: number,
+	settings: UtilsSettings,
 	keepRatio = false
 ): DrawableShape<T> => {
 	const { borderX, borderHeight, borderY, borderWidth } = resizeRectSelection(
@@ -117,19 +113,18 @@ export const resizeRect = <T extends rectish>(
 		originalShape,
 		selectionMode,
 		gridFormat,
-		selectionPadding,
+		settings,
 		keepRatio
 	)
 
 	return buildPath(
 		{
 			...originalShape,
-			width: Math.max(0, borderWidth - 2 * selectionPadding),
-			height: Math.max(0, borderHeight - 2 * selectionPadding),
-			x: borderX + selectionPadding,
-			y: borderY + selectionPadding
+			width: Math.max(0, borderWidth - 2 * settings.selectionPadding),
+			height: Math.max(0, borderHeight - 2 * settings.selectionPadding),
+			x: borderX + settings.selectionPadding,
+			y: borderY + settings.selectionPadding
 		},
-		currentScale,
-		selectionPadding
+		settings
 	) as DrawableShape<T>
 }

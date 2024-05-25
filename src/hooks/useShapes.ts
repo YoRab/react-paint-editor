@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { DRAWCANVAS_CLASSNAME, SELECTIONCANVAS_CLASSNAME } from 'src/constants/app'
+import { DRAWCANVAS_CLASSNAME, SELECTIONCANVAS_CLASSNAME, UtilsSettings } from 'src/constants/app'
 import { checkPositionIntersection, checkSelectionFrameCollision, checkSelectionIntersection } from 'src/utils/intersect'
 import { PICTURE_DEFAULT_SIZE } from '../constants/picture'
 import type { Point, ShapeEntity } from '../types/Shapes'
@@ -7,15 +7,7 @@ import { isEqual, omit, set } from '../utils/object'
 import { refreshShape } from '../utils/shapes/index'
 import { createPicture } from '../utils/shapes/picture'
 
-const useShapes = (
-	onDataChanged: (() => void) | undefined,
-	selectionPadding: number,
-	canvasSize: {
-		width: number
-		height: number
-		scaleRatio: number
-	}
-) => {
+const useShapes = (onDataChanged: (() => void) | undefined, settings: UtilsSettings) => {
 	const shapesRef = useRef<ShapeEntity[]>([])
 	const onDataChangedRef = useRef<(() => void) | undefined>(onDataChanged)
 	onDataChangedRef.current = onDataChanged
@@ -60,7 +52,7 @@ const useShapes = (
 	}, [])
 
 	const refreshHoveredShape = useCallback(
-		(e: MouseEvent | TouchEvent, ctx: CanvasRenderingContext2D, cursorPosition: Point, canvasOffset: Point, currentScale: number) => {
+		(e: MouseEvent | TouchEvent, ctx: CanvasRenderingContext2D, cursorPosition: Point, canvasOffset: Point) => {
 			if (e.target && 'className' in e.target && ![DRAWCANVAS_CLASSNAME, SELECTIONCANVAS_CLASSNAME].includes(e.target.className as string)) {
 				setHoveredShape(undefined)
 				return
@@ -68,22 +60,22 @@ const useShapes = (
 
 			const foundShape = shapesRef.current.find(shape => {
 				return shape.id === selectedShape?.id
-					? !!checkSelectionIntersection(selectedShape, cursorPosition, canvasOffset, selectionPadding, currentScale)
-					: !!checkPositionIntersection(ctx, shape, cursorPosition, canvasOffset, selectionPadding, currentScale)
+					? !!checkSelectionIntersection(selectedShape, cursorPosition, canvasOffset, settings)
+					: !!checkPositionIntersection(ctx, shape, cursorPosition, canvasOffset, settings)
 			})
 			setHoveredShape(foundShape)
 		},
-		[selectionPadding, selectedShape]
+		[settings, selectedShape]
 	)
 
 	const addPictureShape = useCallback(
 		async (fileOrUrl: File | string, maxWidth = PICTURE_DEFAULT_SIZE, maxHeight = PICTURE_DEFAULT_SIZE) => {
-			const pictureShape = await createPicture(fileOrUrl, maxWidth, maxHeight, canvasSize.scaleRatio, selectionPadding)
+			const pictureShape = await createPicture(fileOrUrl, maxWidth, maxHeight, settings)
 			addShape(pictureShape)
 			saveShapes()
 			return pictureShape
 		},
-		[addShape, saveShapes, canvasSize, selectionPadding]
+		[addShape, saveShapes, settings]
 	)
 
 	const updateShape = useCallback(
@@ -210,25 +202,25 @@ const useShapes = (
 	}, [savedShapes])
 
 	useEffect(() => {
-		shapesRef.current = shapesRef.current.map(shape => refreshShape(shape, canvasSize.scaleRatio, selectionPadding))
+		shapesRef.current = shapesRef.current.map(shape => refreshShape(shape, settings))
 		setSelectedShape(prevSelectedShape =>
 			prevSelectedShape === undefined ? undefined : shapesRef.current.find(shape => shape.id === prevSelectedShape.id)
 		)
-	}, [canvasSize, selectionPadding])
+	}, [settings])
 
 	const refreshSelectedShapes = useCallback(
-		(ctx: CanvasRenderingContext2D, cursorPosition: Point, canvasOffset: Point, currentScale: number) => {
+		(ctx: CanvasRenderingContext2D, cursorPosition: Point, canvasOffset: Point) => {
 			setSelectionFrame(prev => {
 				const newSelectionFrame: [Point, Point] = [prev?.[0] ?? [cursorPosition[0], cursorPosition[1]], [cursorPosition[0], cursorPosition[1]]]
 
 				const foundShape = shapesRef.current.filter(shape => {
-					return checkSelectionFrameCollision(ctx, shape, newSelectionFrame, canvasOffset, selectionPadding)
+					return checkSelectionFrameCollision(ctx, shape, newSelectionFrame, canvasOffset, settings)
 				})
 				setSelectedShape(foundShape?.[0])
 				return newSelectionFrame
 			})
 		},
-		[selectionPadding]
+		[settings]
 	)
 
 	return {

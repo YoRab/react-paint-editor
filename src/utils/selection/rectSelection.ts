@@ -1,4 +1,4 @@
-import type { GridFormatType } from '../../constants/app'
+import type { GridFormatType, UtilsSettings } from '../../constants/app'
 import { SELECTION_ANCHOR_SIZE, SELECTION_RESIZE_ANCHOR_POSITIONS, SELECTION_ROTATED_ANCHOR_POSITION } from '../../constants/shapes'
 import type { SelectionModeResize } from '../../types/Mode'
 import type { DrawableShape, Point, Rect, SelectionDefaultType } from '../../types/Shapes'
@@ -8,13 +8,8 @@ import { roundForGrid, roundValues } from '../../utils/transform'
 import { rotatePoint } from '../../utils/trigo'
 import { createCirclePath, createLinePath, createRecPath } from '../shapes/path'
 
-export const createRecSelectionPath = (
-	path: Path2D | undefined,
-	rect: DrawableShape,
-	currentScale: number,
-	selectionPadding: number
-): SelectionDefaultType => {
-	const { borders } = getShapeInfos(rect, selectionPadding)
+export const createRecSelectionPath = (path: Path2D | undefined, rect: DrawableShape, settings: UtilsSettings): SelectionDefaultType => {
+	const { borders } = getShapeInfos(rect, settings)
 
 	return {
 		border: createRecPath(borders),
@@ -22,20 +17,20 @@ export const createRecSelectionPath = (
 		line: createLinePath({
 			points: [
 				[borders.x + borders.width / 2, borders.y],
-				[borders.x + borders.width / 2, borders.y - (SELECTION_ANCHOR_SIZE / 2 + SELECTION_ROTATED_ANCHOR_POSITION) / currentScale]
+				[borders.x + borders.width / 2, borders.y - (SELECTION_ANCHOR_SIZE / 2 + SELECTION_ROTATED_ANCHOR_POSITION) / settings.canvasSize.scaleRatio]
 			]
 		}),
 		anchors: [
 			createCirclePath({
 				x: borders.x + borders.width / 2,
-				y: borders.y - (SELECTION_ANCHOR_SIZE / 2 + SELECTION_ROTATED_ANCHOR_POSITION) / currentScale,
-				radius: SELECTION_ANCHOR_SIZE / 2 / currentScale
+				y: borders.y - (SELECTION_ANCHOR_SIZE / 2 + SELECTION_ROTATED_ANCHOR_POSITION) / settings.canvasSize.scaleRatio,
+				radius: SELECTION_ANCHOR_SIZE / 2 / settings.canvasSize.scaleRatio
 			}),
 			...SELECTION_RESIZE_ANCHOR_POSITIONS.map(anchorPosition =>
 				createCirclePath({
 					x: borders.x + borders.width * anchorPosition[0],
 					y: borders.y + borders.height * anchorPosition[1],
-					radius: SELECTION_ANCHOR_SIZE / 2 / currentScale
+					radius: SELECTION_ANCHOR_SIZE / 2 / settings.canvasSize.scaleRatio
 				})
 			)
 		]
@@ -47,7 +42,7 @@ export const drawSelectionRect = (
 	shape: DrawableShape & { selection?: SelectionDefaultType },
 	selectionColor: string,
 	selectionWidth: number,
-	currentScale: number,
+	settings: UtilsSettings,
 	withAnchors: boolean
 ): void => {
 	if (!shape.selection) return
@@ -55,7 +50,7 @@ export const drawSelectionRect = (
 	updateCanvasContext(ctx, {
 		fillColor: 'transparent',
 		strokeColor: selectionColor,
-		lineWidth: selectionWidth / currentScale
+		lineWidth: selectionWidth / settings.canvasSize.scaleRatio
 	})
 	if (shape.selection.shapePath) ctx.stroke(shape.selection.shapePath)
 	else ctx.stroke(shape.selection.border)
@@ -68,7 +63,7 @@ export const drawSelectionRect = (
 	updateCanvasContext(ctx, {
 		fillColor: 'rgb(255,255,255)',
 		strokeColor: 'rgb(150,150,150)',
-		lineWidth: 2 / currentScale
+		lineWidth: 2 / settings.canvasSize.scaleRatio
 	})
 
 	for (const anchor of shape.selection.anchors) {
@@ -81,24 +76,24 @@ const getSelectionData = ({
 	borderStart,
 	borderSize,
 	vector,
-	selectionPadding,
+	settings,
 	invertedAxe,
 	anchor
 }: {
 	borderStart: number
 	borderSize: number
 	vector: number
-	selectionPadding: number
+	settings: UtilsSettings
 	invertedAxe: boolean
 	anchor: number
 }): [number, number] => {
 	switch (anchor) {
 		case 0: {
 			if (invertedAxe) {
-				const shapeSize = borderSize - 2 * selectionPadding
+				const shapeSize = borderSize - 2 * settings.selectionPadding
 				return [borderStart + shapeSize, vector - shapeSize]
 			}
-			const newWidth = Math.max(2 * selectionPadding, borderSize - vector)
+			const newWidth = Math.max(2 * settings.selectionPadding, borderSize - vector)
 			return [borderStart + borderSize - newWidth, newWidth]
 		}
 		case 0.5:
@@ -106,9 +101,9 @@ const getSelectionData = ({
 		case 1:
 			if (invertedAxe) {
 				const offset = borderSize + vector
-				return [borderStart + offset, 2 * selectionPadding - offset]
+				return [borderStart + offset, 2 * settings.selectionPadding - offset]
 			}
-			return [borderStart, Math.max(2 * selectionPadding, borderSize + vector)]
+			return [borderStart, Math.max(2 * settings.selectionPadding, borderSize + vector)]
 		default:
 			return [0, 0]
 	}
@@ -124,8 +119,9 @@ const resizeRectSelectionKeepingRatio = (
 	borderHeight: number,
 	originalShape: DrawableShape,
 	selectionMode: SelectionModeResize,
-	selectionPadding: number
+	settings: UtilsSettings
 ) => {
+	const { selectionPadding } = settings
 	const originalRatio = (borders.width - selectionPadding * 2 || 1) / (borders.height - selectionPadding * 2 || 1)
 	const calculatedRatio = (borderWidth - selectionPadding * 2) / (borderHeight - selectionPadding * 2)
 
@@ -217,7 +213,7 @@ export const resizeRectSelection = (
 	originalShape: DrawableShape,
 	selectionMode: SelectionModeResize,
 	gridFormat: GridFormatType,
-	selectionPadding: number,
+	settings: UtilsSettings,
 	keepRatio = false
 ): {
 	borderX: number
@@ -225,7 +221,7 @@ export const resizeRectSelection = (
 	borderY: number
 	borderWidth: number
 } => {
-	const { center, borders } = getShapeInfos(originalShape, selectionPadding)
+	const { center, borders } = getShapeInfos(originalShape, settings)
 
 	const rotatedCursorPosition = rotatePoint({
 		origin: center,
@@ -244,12 +240,16 @@ export const resizeRectSelection = (
 		roundForGrid(
 			rotatedCursorPosition[0],
 			gridFormat,
-			(selectionMode.anchor[0] === 0 && !isXinverted) || (selectionMode.anchor[0] === 1 && isXinverted) ? selectionPadding : -selectionPadding
+			(selectionMode.anchor[0] === 0 && !isXinverted) || (selectionMode.anchor[0] === 1 && isXinverted)
+				? settings.selectionPadding
+				: -settings.selectionPadding
 		),
 		roundForGrid(
 			rotatedCursorPosition[1],
 			gridFormat,
-			(selectionMode.anchor[1] === 0 && !isYinverted) || (selectionMode.anchor[1] === 1 && isYinverted) ? selectionPadding : -selectionPadding
+			(selectionMode.anchor[1] === 0 && !isYinverted) || (selectionMode.anchor[1] === 1 && isYinverted)
+				? settings.selectionPadding
+				: -settings.selectionPadding
 		)
 	]
 
@@ -270,7 +270,7 @@ export const resizeRectSelection = (
 		borderStart: borders.x,
 		borderSize: borders.width,
 		vector: vector[0],
-		selectionPadding,
+		settings,
 		invertedAxe: isXinverted,
 		anchor: selectionMode.anchor[0]
 	})
@@ -279,7 +279,7 @@ export const resizeRectSelection = (
 		borderStart: borders.y,
 		borderSize: borders.height,
 		vector: vector[1],
-		selectionPadding,
+		settings,
 		invertedAxe: isYinverted,
 		anchor: selectionMode.anchor[1]
 	})
@@ -295,7 +295,7 @@ export const resizeRectSelection = (
 			borderHeight,
 			originalShape,
 			selectionMode,
-			selectionPadding
+			settings
 		)
 		return calculateRectSelectionData(data)
 	}
