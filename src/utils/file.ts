@@ -1,3 +1,4 @@
+import { UtilsSettings } from 'src/constants/app'
 import { PICTURE_DEFAULT_SIZE } from '../constants/picture'
 import { ShapeTypeArray } from '../constants/shapes'
 import type { DrawableShape, ExportDataType, Point, ShapeEntity } from '../types/Shapes'
@@ -64,7 +65,7 @@ const encodeObjectToString = (objectToEncode: unknown) => {
 	return `data:text/plain;charset=utf-8,${encodeURIComponent(JSON.stringify(objectToEncode))}`
 }
 
-export const getCanvasImage = (shapes: DrawableShape[], canvasOffset: Point, width: number, height: number, selectionPadding: number) => {
+export const getCanvasImage = (shapes: DrawableShape[], width: number, height: number, settings: UtilsSettings) => {
 	const newCanvas = document.createElement('canvas')
 	newCanvas.width = width
 	newCanvas.height = height
@@ -73,7 +74,7 @@ export const getCanvasImage = (shapes: DrawableShape[], canvasOffset: Point, wid
 	ctx.clearRect(0, 0, width, height)
 	initCanvasContext(ctx)
 	for (let i = shapes.length - 1; i >= 0; i--) {
-		drawShape(ctx, shapes[i], 1, canvasOffset, selectionPadding)
+		drawShape(ctx, shapes[i], settings)
 	}
 	return newCanvas.toDataURL('image/png')
 }
@@ -96,7 +97,7 @@ export const decodeJson = async (file: File) => {
 	})
 }
 
-export const decodeImportedData = async (shapesForJson: ExportDataType, currentScale: number, selectionPadding: number) => {
+export const decodeImportedData = async (shapesForJson: ExportDataType, settings: UtilsSettings) => {
 	if (!shapesForJson.shapes) return []
 	const promisesArray: Promise<void>[] = []
 
@@ -133,11 +134,10 @@ export const decodeImportedData = async (shapesForJson: ExportDataType, currentS
 						...shape,
 						img
 					},
-					currentScale,
-					selectionPadding
+					settings
 				)
 			}
-			return addDefaultAndTempShapeProps(shape, currentScale, selectionPadding)
+			return addDefaultAndTempShapeProps(shape, settings)
 		})
 	)
 

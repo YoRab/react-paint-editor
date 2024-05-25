@@ -1,4 +1,4 @@
-import { GridFormatType } from '../../constants/app'
+import { UtilsSettings } from '../../constants/app'
 import { SelectionModeResize } from '../../types/Mode'
 import type { DrawableShape, Ellipse, Point, Rect, ShapeEntity } from '../../types/Shapes'
 import type { ToolsSettingsType } from '../../types/tools'
@@ -7,12 +7,12 @@ import { createEllipsePath } from '../../utils/shapes/path'
 import { roundForGrid } from '../../utils/transform'
 import { uniqueId } from '../../utils/util'
 
-const buildPath = <T extends DrawableShape<'ellipse'>>(shape: T, currentScale: number, selectionPadding: number): T => {
+const buildPath = <T extends DrawableShape<'ellipse'>>(shape: T, settings: UtilsSettings): T => {
 	const path = createEllipsePath(shape)
 	return {
 		...shape,
 		path,
-		selection: createRecSelectionPath(path, shape, currentScale, selectionPadding)
+		selection: createRecSelectionPath(path, shape, settings)
 	}
 }
 
@@ -25,8 +25,7 @@ export const createEllipse = (
 		settings: ToolsSettingsType<'ellipse'>
 	},
 	cursorPosition: Point,
-	currentScale: number,
-	selectionPadding: number
+	settings: UtilsSettings
 ): ShapeEntity<'ellipse'> => {
 	return buildPath(
 		{
@@ -46,8 +45,7 @@ export const createEllipse = (
 				lineDash: shape.settings.lineDash.default
 			}
 		},
-		currentScale,
-		selectionPadding
+		settings
 	)
 }
 
@@ -57,12 +55,12 @@ export const drawEllipse = (ctx: CanvasRenderingContext2D, ellipse: DrawableShap
 	ellipse.style?.strokeColor !== 'transparent' && ctx.stroke(ellipse.path)
 }
 
-export const getEllipseBorder = (ellipse: Ellipse, selectionPadding: number): Rect => {
+export const getEllipseBorder = (ellipse: Ellipse, settings: UtilsSettings): Rect => {
 	return {
-		x: ellipse.x - ellipse.radiusX - selectionPadding,
-		width: (ellipse.radiusX + selectionPadding) * 2,
-		y: ellipse.y - ellipse.radiusY - selectionPadding,
-		height: (ellipse.radiusY + selectionPadding) * 2
+		x: ellipse.x - ellipse.radiusX - settings.selectionPadding,
+		width: (ellipse.radiusX + settings.selectionPadding) * 2,
+		y: ellipse.y - ellipse.radiusY - settings.selectionPadding,
+		height: (ellipse.radiusY + settings.selectionPadding) * 2
 	}
 }
 
@@ -70,18 +68,15 @@ export const translateEllipse = <U extends DrawableShape<'ellipse'>>(
 	cursorPosition: Point,
 	originalShape: U,
 	originalCursorPosition: Point,
-	gridFormat: GridFormatType,
-	currentScale: number,
-	selectionPadding: number
+	settings: UtilsSettings
 ) => {
 	return buildPath(
 		{
 			...originalShape,
-			x: roundForGrid(originalShape.x + cursorPosition[0] - originalCursorPosition[0], gridFormat),
-			y: roundForGrid(originalShape.y + cursorPosition[1] - originalCursorPosition[1], gridFormat)
+			x: roundForGrid(originalShape.x + cursorPosition[0] - originalCursorPosition[0], settings),
+			y: roundForGrid(originalShape.y + cursorPosition[1] - originalCursorPosition[1], settings)
 		},
-		currentScale,
-		selectionPadding
+		settings
 	)
 }
 
@@ -89,29 +84,19 @@ export const resizeEllipse = (
 	cursorPosition: Point,
 	originalShape: DrawableShape<'ellipse'>,
 	selectionMode: SelectionModeResize,
-	gridFormat: GridFormatType,
-	selectionPadding: number,
-	currentScale: number,
+	settings: UtilsSettings,
 	keepRatio = false
 ): DrawableShape<'ellipse'> => {
-	const { borderX, borderHeight, borderY, borderWidth } = resizeRectSelection(
-		cursorPosition,
-		originalShape,
-		selectionMode,
-		gridFormat,
-		selectionPadding,
-		keepRatio
-	)
+	const { borderX, borderHeight, borderY, borderWidth } = resizeRectSelection(cursorPosition, originalShape, selectionMode, settings, keepRatio)
 
 	return buildPath(
 		{
 			...originalShape,
-			radiusX: Math.max(0, borderWidth / 2 - selectionPadding),
-			radiusY: Math.max(0, borderHeight / 2 - selectionPadding),
+			radiusX: Math.max(0, borderWidth / 2 - settings.selectionPadding),
+			radiusY: Math.max(0, borderHeight / 2 - settings.selectionPadding),
 			x: borderX + borderWidth / 2,
 			y: borderY + borderHeight / 2
 		},
-		currentScale,
-		selectionPadding
+		settings
 	)
 }

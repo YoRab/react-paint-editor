@@ -1,4 +1,4 @@
-import { GridFormatType } from '../../constants/app'
+import { UtilsSettings } from '../../constants/app'
 import { SelectionModeResize } from '../../types/Mode'
 import type { DrawableShape, Point, Rect, ShapeEntity } from '../../types/Shapes'
 import type { ToolsSettingsType } from '../../types/tools'
@@ -8,7 +8,7 @@ import { getShapeInfos } from '../../utils/shapes/index'
 import { roundForGrid, roundValues, scalePoint } from '../../utils/transform'
 import { uniqueId } from '../../utils/util'
 
-const createBrushPath = (brush: DrawableShape<'brush'>) => {
+const createBrushPath = (brush: DrawableShape<'brush'>, { algo }: UtilsSettings) => {
 	if (brush.points.length < 1 || brush.style?.strokeColor === 'transparent') return undefined
 
 	const brushPoints = brush.points.flat()
@@ -21,12 +21,30 @@ const createBrushPath = (brush: DrawableShape<'brush'>) => {
 	const path = new Path2D()
 
 	for (const points of brush.points) {
+		if (!points.length) return
 		if (points.length === 1) {
 			path.rect(...scalePoint(points[0], minX, minY, brush.scaleX, brush.scaleY), 1, 1)
 		} else {
 			path.moveTo(...scalePoint(points[0], minX, minY, brush.scaleX, brush.scaleY))
-			for (const point of points.slice(1)) {
-				path.lineTo(...scalePoint(point, minX, minY, brush.scaleX, brush.scaleY))
+			switch (algo) {
+				case 'quadratic':
+					for (let i = 0; i < points.slice(1).length - 2; i++) {
+						const scaledPoint = scalePoint(points[i], minX, minY, brush.scaleX, brush.scaleY)
+						const scaledPoint2 = scalePoint(points[i + 1], minX, minY, brush.scaleX, brush.scaleY)
+						const xc = (scaledPoint[0] + scaledPoint2[0]) / 2
+						const yc = (scaledPoint[1] + scaledPoint2[1]) / 2
+						path.quadraticCurveTo(...scaledPoint, xc, yc)
+					}
+					path.quadraticCurveTo(
+						...scalePoint(points[points.length - 2], minX, minY, brush.scaleX, brush.scaleY),
+						...scalePoint(points[points.length - 1], minX, minY, brush.scaleX, brush.scaleY)
+					)
+					break
+				default:
+					for (const point of points.slice(1)) {
+						path.lineTo(...scalePoint(point, minX, minY, brush.scaleX, brush.scaleY))
+					}
+					break
 			}
 		}
 	}
@@ -34,12 +52,12 @@ const createBrushPath = (brush: DrawableShape<'brush'>) => {
 	return path
 }
 
-const buildPath = <T extends DrawableShape<'brush'>>(brush: T, currentScale: number, selectionPadding: number): T => {
-	const path = createBrushPath(brush)
+const buildPath = <T extends DrawableShape<'brush'>>(brush: T, settings: UtilsSettings): T => {
+	const path = createBrushPath(brush, settings)
 	return {
 		...brush,
 		path,
-		selection: createRecSelectionPath(path, brush, currentScale, selectionPadding)
+		selection: createRecSelectionPath(path, brush, settings)
 	}
 }
 
@@ -52,8 +70,7 @@ export const createBrush = (
 		settings: ToolsSettingsType<'brush'>
 	},
 	cursorPosition: Point,
-	currentScale: number,
-	selectionPadding: number
+	settings: UtilsSettings
 ): ShapeEntity<'brush'> => {
 	return buildPath(
 		{
@@ -71,8 +88,7 @@ export const createBrush = (
 				lineDash: shape.settings.lineDash.default
 			}
 		},
-		currentScale,
-		selectionPadding
+		settings
 	)
 }
 
@@ -83,7 +99,7 @@ export const drawBrush = (ctx: CanvasRenderingContext2D, shape: DrawableShape<'b
 	ctx.stroke(shape.path)
 }
 
-export const getBrushBorder = (brush: DrawableShape<'brush'>, selectionPadding: number): Rect => {
+export const getBrushBorder = (brush: DrawableShape<'brush'>, { selectionPadding }: UtilsSettings): Rect => {
 	const brushPoints = brush.points.flat()
 	const minX = Math.min(...brushPoints.map(point => point[0]))
 	const minY = Math.min(...brushPoints.map(point => point[1]))
@@ -105,24 +121,21 @@ export const translateBrush = <U extends DrawableShape<'brush'>>(
 	cursorPosition: Point,
 	originalShape: U,
 	originalCursorPosition: Point,
-	gridFormat: GridFormatType,
-	currentScale: number,
-	selectionPadding: number
+	settings: UtilsSettings
 ) => {
-	const { borders } = getShapeInfos(originalShape, selectionPadding)
-	const translationX = gridFormat
-		? roundForGrid(borders.x + cursorPosition[0] - originalCursorPosition[0], gridFormat) - borders.x
+	const { borders } = getShapeInfos(originalShape, settings)
+	const translationX = settings.gridFormat
+		? roundForGrid(borders.x + cursorPosition[0] - originalCursorPosition[0], settings) - borders.x
 		: cursorPosition[0] - originalCursorPosition[0]
-	const translationY = gridFormat
-		? roundForGrid(borders.y + cursorPosition[1] - originalCursorPosition[1], gridFormat) - borders.y
+	const translationY = settings.gridFormat
+		? roundForGrid(borders.y + cursorPosition[1] - originalCursorPosition[1], settings) - borders.y
 		: cursorPosition[1] - originalCursorPosition[1]
 	return buildPath(
 		{
 			...originalShape,
 			points: originalShape.points.map(coord => coord.map(([x, y]) => [x + translationX, y + translationY])) as Point[][]
 		},
-		currentScale,
-		selectionPadding
+		settings
 	)
 }
 
@@ -130,27 +143,18 @@ export const resizeBrush = (
 	cursorPosition: Point,
 	originalShape: DrawableShape<'brush'>,
 	selectionMode: SelectionModeResize,
-	gridFormat: GridFormatType,
-	selectionPadding: number,
-	currentScale: number,
+	settings: UtilsSettings,
 	keepRatio: boolean
 ): DrawableShape<'brush'> => {
-	const { borders: originalBordersWithoutScale } = getShapeInfos({ ...originalShape, scaleX: 1, scaleY: 1 }, selectionPadding)
-	const { borders: originalBorders } = getShapeInfos(originalShape, selectionPadding)
+	const { borders: originalBordersWithoutScale } = getShapeInfos({ ...originalShape, scaleX: 1, scaleY: 1 }, settings)
+	const { borders: originalBorders } = getShapeInfos(originalShape, settings)
 
-	const { borderX, borderHeight, borderY, borderWidth } = resizeRectSelection(
-		cursorPosition,
-		originalShape,
-		selectionMode,
-		gridFormat,
-		selectionPadding,
-		keepRatio
-	)
+	const { borderX, borderHeight, borderY, borderWidth } = resizeRectSelection(cursorPosition, originalShape, selectionMode, settings, keepRatio)
 
-	const originalShapeWidth = Math.max(0, originalBordersWithoutScale.width - 2 * selectionPadding)
-	const originalShapeHeight = Math.max(0, originalBordersWithoutScale.height - 2 * selectionPadding)
-	const shapeWidth = Math.max(0, borderWidth - 2 * selectionPadding)
-	const shapeHeight = Math.max(0, borderHeight - 2 * selectionPadding)
+	const originalShapeWidth = Math.max(0, originalBordersWithoutScale.width - 2 * settings.selectionPadding)
+	const originalShapeHeight = Math.max(0, originalBordersWithoutScale.height - 2 * settings.selectionPadding)
+	const shapeWidth = Math.max(0, borderWidth - 2 * settings.selectionPadding)
+	const shapeHeight = Math.max(0, borderHeight - 2 * settings.selectionPadding)
 
 	const scaleX = originalShapeWidth ? shapeWidth / originalShapeWidth : 1
 	const scaleY = originalShapeHeight ? shapeHeight / originalShapeHeight : 1
@@ -166,17 +170,11 @@ export const resizeBrush = (
 			scaleX,
 			scaleY
 		},
-		currentScale,
-		selectionPadding
+		settings
 	)
 }
 
-export const addNewPointToShape = <T extends DrawableShape<'brush'>>(
-	shape: T,
-	cursorPosition: Point,
-	currentScale: number,
-	selectionPadding: number
-) => {
+export const addNewPointToShape = <T extends DrawableShape<'brush'>>(shape: T, cursorPosition: Point, settings: UtilsSettings) => {
 	const brushShape = {
 		...shape,
 		...{
@@ -187,20 +185,15 @@ export const addNewPointToShape = <T extends DrawableShape<'brush'>>(
 			)
 		}
 	}
-	return buildPath(brushShape, currentScale, selectionPadding)
+	return buildPath(brushShape, settings)
 }
 
-export const addNewPointGroupToShape = <T extends DrawableShape<'brush'>>(
-	shape: T,
-	cursorPosition: Point,
-	currentScale: number,
-	selectionPadding: number
-): T => {
+export const addNewPointGroupToShape = <T extends DrawableShape<'brush'>>(shape: T, cursorPosition: Point, settings: UtilsSettings): T => {
 	const brushShape = {
 		...shape,
 		...{
 			points: set(shape.points.length, [[Math.round(cursorPosition[0]), Math.round(cursorPosition[1])]], shape.points)
 		}
 	}
-	return buildPath(brushShape, currentScale, selectionPadding)
+	return buildPath(brushShape, settings)
 }

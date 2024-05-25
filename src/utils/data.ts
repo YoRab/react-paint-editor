@@ -1,3 +1,4 @@
+import { UtilsSettings } from 'src/constants/app'
 import type { DrawableShape, DrawableShapeJson, ExportDataType, ShapeEntity } from '../types/Shapes'
 import { omit } from '../utils/object'
 import { uniqueId } from '../utils/util'
@@ -26,6 +27,6 @@ export const buildDataToExport = (shapes: DrawableShape[], width: number, height
 	} as ExportDataType
 }
 
-export const addDefaultAndTempShapeProps = (shape: DrawableShape, currentScale: number, selectionPadding: number) => {
-	return refreshShape({ ...shape, id: uniqueId(`${shape.type}_`) } as ShapeEntity, currentScale, selectionPadding)
+export const addDefaultAndTempShapeProps = (shape: DrawableShape, settings: UtilsSettings) => {
+	return refreshShape({ ...shape, id: uniqueId(`${shape.type}_`) } as ShapeEntity, settings)
 }

@@ -1,4 +1,4 @@
-import type { DrawableShapeJson } from '../types/Shapes'
+import type { DrawableShapeJson, Point } from '../types/Shapes'
 import type { CustomToolInput } from '../types/tools'
 import type { RecursivePartial } from '../types/utils'
 import { SELECTION_DEFAULT_COLOR, SELECTION_DEFAULT_PADDING, SELECTION_DEFAULT_WIDTH } from './shapes'
@@ -16,6 +16,20 @@ export const GRID_LARGE = 3
 
 export type GridFormatType = typeof GRID_NONE | typeof GRID_SMALL | typeof GRID_MEDIUM | typeof GRID_LARGE
 
+export type BrushAlgo = 'simple' | 'quadratic'
+
+export type UtilsSettings = {
+	algo: BrushAlgo
+	gridFormat: GridFormatType
+	canvasOffset: Point
+	canvasSize: {
+		width: number
+		height: number
+		scaleRatio: number
+	}
+	selectionPadding: number
+}
+
 type AppOptionsType = {
 	layersManipulation: boolean
 	grid: GridFormatType
@@ -29,6 +43,7 @@ type AppOptionsType = {
 	withFrameSelection: boolean
 	withSkeleton: boolean
 	clearCallback: 'empty' | 'defaultShapes' | (() => DrawableShapeJson[])
+	brushAlgo: BrushAlgo
 	uiStyle: {
 		toolbarBackgroundColor: string
 		dividerColor: string
@@ -61,6 +76,7 @@ export const DEFAULT_OPTIONS: AppOptionsType = {
 	withUrlPicture: false,
 	availableTools: DEFAULT_SHAPE_TOOLS,
 	clearCallback: 'empty',
+	brushAlgo: 'simple',
 	withFrameSelection: false,
 	withSkeleton: false,
 	uiStyle: {

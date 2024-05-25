@@ -1,5 +1,5 @@
 import { getAngleFromVector, rotatePoint } from 'src/utils/trigo'
-import type { GridFormatType } from '../constants/app'
+import type { UtilsSettings } from '../constants/app'
 import { PICTURE_DEFAULT_SIZE } from '../constants/picture'
 import { GRID_ROTATION_STEPS, GRID_STEP } from '../constants/style'
 import type { SelectionModeData } from '../types/Mode'
@@ -26,15 +26,15 @@ export const roundValues = (prop: number, precision = 2): number => {
 export const scalePoint = (point: Point, minX: number, minY: number, scaleX = 1, scaleY = 1): Point => {
 	return [minX + (point[0] - minX) * scaleX, minY + (point[1] - minY) * scaleY]
 }
-export const roundForGrid = (value: number, gridFormat: GridFormatType, gridOffset = 0) => {
-	if (!gridFormat) return roundValues(value)
+export const roundForGrid = (value: number, settings: UtilsSettings, gridOffset = 0) => {
+	if (!settings.gridFormat) return roundValues(value)
 	const valueWithOffset = value + gridOffset
-	const step = valueWithOffset >= 0 ? GRID_STEP[gridFormat - 1] : -GRID_STEP[gridFormat - 1]
+	const step = valueWithOffset >= 0 ? GRID_STEP[settings.gridFormat - 1] : -GRID_STEP[settings.gridFormat - 1]
 	return valueWithOffset + step / 2 - ((valueWithOffset + step / 2) % step) - gridOffset
 }
 
-export const roundRotationForGrid = (rotation: number, gridFormat: GridFormatType, gridOffset = 0) => {
-	if (!gridFormat) return roundValues(rotation, 3)
+export const roundRotationForGrid = (rotation: number, settings: UtilsSettings, gridOffset = 0) => {
+	if (!settings.gridFormat) return roundValues(rotation, 3)
 	return rotation + Math.PI / GRID_ROTATION_STEPS / 2 - ((rotation + Math.PI / GRID_ROTATION_STEPS / 2) % (Math.PI / GRID_ROTATION_STEPS))
 }
 
@@ -42,40 +42,19 @@ export const transformShape = (
 	ctx: CanvasRenderingContext2D,
 	shape: ShapeEntity,
 	cursorPosition: Point,
-	gridFormat: GridFormatType,
-	canvasOffset: Point,
 	selectionMode: SelectionModeData<Point | number>,
-	selectionPadding: number,
-	isShiftPressed: boolean,
-	currentScale: number
+	settings: UtilsSettings,
+	isShiftPressed: boolean
 ): ShapeEntity => {
 	switch (selectionMode.mode) {
 		case 'brush':
-			return addNewPointToShape(shape as ShapeEntity<'brush'>, cursorPosition, currentScale, selectionPadding)
+			return addNewPointToShape(shape as ShapeEntity<'brush'>, cursorPosition, settings)
 		case 'translate':
-			return translateShape(
-				cursorPosition,
-				selectionMode.originalShape,
-				selectionMode.cursorStartPosition,
-				gridFormat,
-				currentScale,
-				selectionPadding
-			)
+			return translateShape(cursorPosition, selectionMode.originalShape, selectionMode.cursorStartPosition, settings)
 		case 'rotate':
-			return rotateShape(shape, cursorPosition, selectionMode.originalShape, selectionMode.cursorStartPosition, selectionMode.center, gridFormat)
+			return rotateShape(shape, cursorPosition, selectionMode.originalShape, selectionMode.cursorStartPosition, selectionMode.center, settings)
 		case 'resize':
-			return resizeShape(
-				ctx,
-				shape,
-				cursorPosition,
-				canvasOffset,
-				selectionMode.originalShape,
-				selectionMode,
-				gridFormat,
-				selectionPadding,
-				isShiftPressed,
-				currentScale
-			)
+			return resizeShape(ctx, shape, cursorPosition, selectionMode.originalShape, selectionMode, settings, isShiftPressed)
 		default:
 			return shape
 	}

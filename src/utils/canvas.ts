@@ -1,3 +1,4 @@
+import { UtilsSettings } from 'src/constants/app'
 import { SELECTION_DEFAULT_COLOR, SELECTION_DEFAULT_WIDTH } from '../constants/shapes'
 import { LINE_DASH_DATA } from '../constants/style'
 import type { Point } from '../types/Shapes'
@@ -34,16 +35,10 @@ export const updateCanvasContext = (
 	ctx.setLineDash(lineDash === 0 ? [] : [LINE_DASH_DATA[lineDash][0] * lineWidth, LINE_DASH_DATA[lineDash][1] * lineWidth])
 }
 
-export const transformCanvas = (
-	ctx: CanvasRenderingContext2D,
-	responsiveScale: number,
-	canvasOffset: Point,
-	rotation?: number,
-	translation?: Point
-) => {
+export const transformCanvas = (ctx: CanvasRenderingContext2D, settings: UtilsSettings, rotation?: number, translation?: Point) => {
 	ctx.save()
-	ctx.scale(responsiveScale, responsiveScale)
-	ctx.translate(canvasOffset[0], canvasOffset[1])
+	ctx.scale(settings.canvasSize.scaleRatio, settings.canvasSize.scaleRatio)
+	ctx.translate(settings.canvasOffset[0], settings.canvasOffset[1])
 	if (rotation && translation) {
 		ctx.translate(translation[0], translation[1])
 		ctx.rotate(rotation)
