@@ -52,7 +52,7 @@ const useShapes = (onDataChanged: (() => void) | undefined, settings: UtilsSetti
 	}, [])
 
 	const refreshHoveredShape = useCallback(
-		(e: MouseEvent | TouchEvent, ctx: CanvasRenderingContext2D, cursorPosition: Point, canvasOffset: Point) => {
+		(e: MouseEvent | TouchEvent, ctx: CanvasRenderingContext2D, cursorPosition: Point) => {
 			if (e.target && 'className' in e.target && ![DRAWCANVAS_CLASSNAME, SELECTIONCANVAS_CLASSNAME].includes(e.target.className as string)) {
 				setHoveredShape(undefined)
 				return
@@ -60,8 +60,8 @@ const useShapes = (onDataChanged: (() => void) | undefined, settings: UtilsSetti
 
 			const foundShape = shapesRef.current.find(shape => {
 				return shape.id === selectedShape?.id
-					? !!checkSelectionIntersection(selectedShape, cursorPosition, canvasOffset, settings)
-					: !!checkPositionIntersection(ctx, shape, cursorPosition, canvasOffset, settings)
+					? !!checkSelectionIntersection(selectedShape, cursorPosition, settings)
+					: !!checkPositionIntersection(ctx, shape, cursorPosition, settings)
 			})
 			setHoveredShape(foundShape)
 		},
@@ -209,12 +209,12 @@ const useShapes = (onDataChanged: (() => void) | undefined, settings: UtilsSetti
 	}, [settings])
 
 	const refreshSelectedShapes = useCallback(
-		(ctx: CanvasRenderingContext2D, cursorPosition: Point, canvasOffset: Point) => {
+		(ctx: CanvasRenderingContext2D, cursorPosition: Point) => {
 			setSelectionFrame(prev => {
 				const newSelectionFrame: [Point, Point] = [prev?.[0] ?? [cursorPosition[0], cursorPosition[1]], [cursorPosition[0], cursorPosition[1]]]
 
 				const foundShape = shapesRef.current.filter(shape => {
-					return checkSelectionFrameCollision(ctx, shape, newSelectionFrame, canvasOffset, settings)
+					return checkSelectionFrameCollision(ctx, shape, newSelectionFrame, settings)
 				})
 				setSelectedShape(foundShape?.[0])
 				return newSelectionFrame

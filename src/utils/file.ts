@@ -65,7 +65,7 @@ const encodeObjectToString = (objectToEncode: unknown) => {
 	return `data:text/plain;charset=utf-8,${encodeURIComponent(JSON.stringify(objectToEncode))}`
 }
 
-export const getCanvasImage = (shapes: DrawableShape[], canvasOffset: Point, width: number, height: number, settings: UtilsSettings) => {
+export const getCanvasImage = (shapes: DrawableShape[], width: number, height: number, settings: UtilsSettings) => {
 	const newCanvas = document.createElement('canvas')
 	newCanvas.width = width
 	newCanvas.height = height
@@ -74,7 +74,7 @@ export const getCanvasImage = (shapes: DrawableShape[], canvasOffset: Point, wid
 	ctx.clearRect(0, 0, width, height)
 	initCanvasContext(ctx)
 	for (let i = shapes.length - 1; i >= 0; i--) {
-		drawShape(ctx, shapes[i], canvasOffset, settings)
+		drawShape(ctx, shapes[i], settings)
 	}
 	return newCanvas.toDataURL('image/png')
 }

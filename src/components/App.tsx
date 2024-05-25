@@ -100,15 +100,18 @@ const App = ({
 	})
 
 	const [gridFormat, setGridFormat] = useState<GridFormatType>(grid)
+	const [canvasOffset, setCanvasOffset] = useState<Point>([0, 0])
+	const [canvasOffsetStartPosition, setCanvasOffsetStartPosition] = useState<Point | undefined>(undefined)
 
 	const settings: UtilsSettings = useMemo(
 		() => ({
 			algo: 'simple',
 			canvasSize,
+			canvasOffset,
 			gridFormat,
 			selectionPadding: canvasSelectionPadding
 		}),
-		[canvasSelectionPadding, gridFormat, canvasSize]
+		[canvasSelectionPadding, gridFormat, canvasOffset, canvasSize]
 	)
 
 	const [availableTools, setAvailableTools] = useState(sanitizeTools(availableToolsFromProps, withUploadPicture || withUrlPicture))
@@ -121,8 +124,6 @@ const App = ({
 	const [isLoading, setIsLoading] = useState(false)
 
 	const [isLayoutPanelShown, setIsLayoutPanelShown] = useState(false)
-	const [canvasOffset, setCanvasOffset] = useState<Point>([0, 0])
-	const [canvasOffsetStartPosition, setCanvasOffsetStartPosition] = useState<Point | undefined>(undefined)
 	const [activeTool, setActiveTool] = useState<ToolsType>(SELECTION_TOOL)
 
 	const [selectionMode, setSelectionMode] = useState<SelectionModeData<Point | number>>({
@@ -134,7 +135,7 @@ const App = ({
 	if (apiRef) {
 		apiRef.current = {
 			getCurrentImage: () => {
-				return canvasRef.current ? getCanvasImage(shapesRef.current, canvasOffset, width, height, settings) : undefined
+				return canvasRef.current ? getCanvasImage(shapesRef.current, width, height, settings) : undefined
 			},
 
 			getCurrentData: () => {
@@ -241,7 +242,7 @@ const App = ({
 	const exportCanvasInFile = useCallback(() => {
 		setIsLoading(true)
 		try {
-			const dataURL = canvasRef.current && getCanvasImage(shapesRef.current, canvasOffset, width, height, settings)
+			const dataURL = canvasRef.current && getCanvasImage(shapesRef.current, width, height, settings)
 			if (!dataURL) {
 				throw new Error()
 			}
@@ -255,7 +256,7 @@ const App = ({
 		} finally {
 			setIsLoading(false)
 		}
-	}, [addSnackbar, shapesRef, canvasOffset, width, height, settings])
+	}, [addSnackbar, shapesRef, width, height, settings])
 
 	const saveFile = useCallback(() => {
 		setIsLoading(true)
@@ -430,7 +431,6 @@ const App = ({
 					refreshHoveredShape={refreshHoveredShape}
 					refreshSelectedShapes={refreshSelectedShapes}
 					settings={settings}
-					canvasOffset={canvasOffset}
 					setCanvasOffset={setCanvasOffset}
 					saveShapes={saveShapes}
 					ref={canvasRef}

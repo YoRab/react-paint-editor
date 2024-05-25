@@ -1,4 +1,4 @@
-import type { DrawableShapeJson } from '../types/Shapes'
+import type { DrawableShapeJson, Point } from '../types/Shapes'
 import type { CustomToolInput } from '../types/tools'
 import type { RecursivePartial } from '../types/utils'
 import { SELECTION_DEFAULT_COLOR, SELECTION_DEFAULT_PADDING, SELECTION_DEFAULT_WIDTH } from './shapes'
@@ -21,6 +21,7 @@ export type BrushAlgo = 'simple' | 'quadratic'
 export type UtilsSettings = {
 	algo: BrushAlgo
 	gridFormat: GridFormatType
+	canvasOffset: Point
 	canvasSize: {
 		width: number
 		height: number

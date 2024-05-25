@@ -43,7 +43,6 @@ export const selectShape = (
 	shapes: ShapeEntity[],
 	cursorPosition: Point,
 	settings: UtilsSettings,
-	canvasOffset: Point,
 	selectedShape: ShapeEntity | undefined,
 	isTouchGesture: boolean,
 	withFrameSelection: boolean
@@ -53,14 +52,7 @@ export const selectShape = (
 } => {
 	let selectedShapePositionIntersection: false | HoverModeData = false
 	if (selectedShape) {
-		selectedShapePositionIntersection = checkSelectionIntersection(
-			selectedShape,
-			cursorPosition,
-			canvasOffset,
-			settings,
-			true,
-			isTouchGesture ? 20 : undefined
-		)
+		selectedShapePositionIntersection = checkSelectionIntersection(selectedShape, cursorPosition, settings, true, isTouchGesture ? 20 : undefined)
 
 		const newSelectionMode = getNewSelectionData(selectedShapePositionIntersection || { mode: 'default' }, selectedShape, cursorPosition, settings)
 		if (newSelectionMode?.mode === 'resize' || newSelectionMode?.mode === 'rotate') {
@@ -68,9 +60,7 @@ export const selectShape = (
 		}
 	}
 	const foundShape = shapes.find(shape => {
-		return shape.id === selectedShape?.id
-			? !!selectedShapePositionIntersection
-			: !!checkPositionIntersection(ctx, shape, cursorPosition, canvasOffset, settings)
+		return shape.id === selectedShape?.id ? !!selectedShapePositionIntersection : !!checkPositionIntersection(ctx, shape, cursorPosition, settings)
 	})
 
 	if (foundShape) {

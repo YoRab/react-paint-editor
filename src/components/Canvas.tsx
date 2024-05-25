@@ -15,7 +15,6 @@ const renderDrawCanvas = (
 	drawCtx: CanvasRenderingContext2D,
 	selectionMode: SelectionModeData<number | Point>,
 	settings: UtilsSettings,
-	canvasOffset: Point,
 	shapes: ShapeEntity[],
 	selectedShape: ShapeEntity | undefined
 ) => {
@@ -24,10 +23,10 @@ const renderDrawCanvas = (
 	} = settings
 	drawCtx.clearRect(0, 0, width, height)
 	initCanvasContext(drawCtx)
-	settings.gridFormat && drawGrid(drawCtx, width, height, settings, canvasOffset)
+	settings.gridFormat && drawGrid(drawCtx, width, height, settings)
 	for (let i = shapes.length - 1; i >= 0; i--) {
 		if (selectionMode.mode !== 'textedition' || shapes[i] !== selectedShape) {
-			drawShape(drawCtx, shapes[i], canvasOffset, settings)
+			drawShape(drawCtx, shapes[i], settings)
 		}
 	}
 }
@@ -37,7 +36,6 @@ const renderSelectionCanvas = (
 	selectionMode: SelectionModeData<number | Point>,
 	settings: UtilsSettings,
 	activeTool: ToolsType,
-	canvasOffset: Point,
 	selectionWidth: number,
 	selectionColor: string,
 	selectedShape: ShapeEntity | undefined,
@@ -55,7 +53,6 @@ const renderSelectionCanvas = (
 		drawShapeSelection({
 			ctx: selectionCtx,
 			shape: hoveredShape,
-			canvasOffset,
 			settings,
 			selectionWidth,
 			selectionColor,
@@ -67,7 +64,6 @@ const renderSelectionCanvas = (
 		drawShapeSelection({
 			ctx: selectionCtx,
 			shape: selectedShape,
-			canvasOffset,
 			settings,
 			selectionWidth,
 			selectionColor,
@@ -78,8 +74,7 @@ const renderSelectionCanvas = (
 		drawSelectionFrame({
 			ctx: selectionCtx,
 			selectionFrame,
-			settings,
-			canvasOffset
+			settings
 		})
 }
 
@@ -104,19 +99,12 @@ type DrawerType = {
 	setSelectionFrame: React.Dispatch<React.SetStateAction<[Point, Point] | undefined>>
 	hoveredShape: ShapeEntity | undefined
 	selectionFrame: [Point, Point] | undefined
-	refreshHoveredShape: (
-		e: MouseEvent | TouchEvent,
-		ctx: CanvasRenderingContext2D,
-		cursorPosition: Point,
-		canvasOffset: Point,
-		settings: UtilsSettings
-	) => void
-	refreshSelectedShapes: (ctx: CanvasRenderingContext2D, cursorPosition: Point, canvasOffset: Point, settings: UtilsSettings) => void
+	refreshHoveredShape: (e: MouseEvent | TouchEvent, ctx: CanvasRenderingContext2D, cursorPosition: Point, settings: UtilsSettings) => void
+	refreshSelectedShapes: (ctx: CanvasRenderingContext2D, cursorPosition: Point, settings: UtilsSettings) => void
 	activeTool: ToolsType
 	setActiveTool: React.Dispatch<React.SetStateAction<ToolsType>>
 	canvasOffsetStartPosition: Point | undefined
 	setCanvasOffsetStartPosition: React.Dispatch<React.SetStateAction<Point | undefined>>
-	canvasOffset: Point
 	setCanvasOffset: React.Dispatch<React.SetStateAction<Point>>
 	isInsideComponent: boolean
 	selectionMode: SelectionModeData<number | Point>
@@ -147,7 +135,6 @@ const Canvas = React.forwardRef<HTMLCanvasElement, DrawerType>(
 			setActiveTool,
 			canvasOffsetStartPosition,
 			setCanvasOffsetStartPosition,
-			canvasOffset,
 			setCanvasOffset,
 			isInsideComponent,
 			selectionMode,
@@ -186,7 +173,6 @@ const Canvas = React.forwardRef<HTMLCanvasElement, DrawerType>(
 			refreshSelectedShapes,
 			setCanvasOffsetStartPosition,
 			updateSingleShape,
-			canvasOffset,
 			saveShapes,
 			setSelectionMode,
 			isShiftPressed,
@@ -200,18 +186,18 @@ const Canvas = React.forwardRef<HTMLCanvasElement, DrawerType>(
 				const ctx = drawCanvasRef.current?.getContext('2d')
 				if (!ctx) return
 
-				const newShape = refreshShape(resizeTextShapeWithNewContent(ctx, selectedShape, newText, settings, canvasOffset), settings)
+				const newShape = refreshShape(resizeTextShapeWithNewContent(ctx, selectedShape, newText, settings), settings)
 
 				updateSingleShape(newShape)
 			},
-			[updateSingleShape, selectedShape, canvasOffset, settings]
+			[updateSingleShape, selectedShape, settings]
 		)
 
 		useEffect(() => {
 			const drawCtx = drawCanvasRef.current?.getContext('2d')
 
-			drawCtx && window.requestAnimationFrame(() => renderDrawCanvas(drawCtx, selectionMode, settings, canvasOffset, shapes, selectedShape))
-		}, [shapes, selectionMode, selectedShape, canvasOffset, settings])
+			drawCtx && window.requestAnimationFrame(() => renderDrawCanvas(drawCtx, selectionMode, settings, shapes, selectedShape))
+		}, [shapes, selectionMode, selectedShape, settings])
 
 		useEffect(() => {
 			const selectionCtx = selectionCanvasRef.current?.getContext('2d')
@@ -223,7 +209,6 @@ const Canvas = React.forwardRef<HTMLCanvasElement, DrawerType>(
 						selectionMode,
 						settings,
 						activeTool,
-						canvasOffset,
 						selectionWidth,
 						selectionColor,
 						selectedShape,
@@ -232,7 +217,7 @@ const Canvas = React.forwardRef<HTMLCanvasElement, DrawerType>(
 						withSkeleton
 					)
 				)
-		}, [hoveredShape, selectionFrame, selectionMode, selectedShape, activeTool, canvasOffset, settings, selectionWidth, selectionColor, withSkeleton])
+		}, [hoveredShape, selectionFrame, selectionMode, selectedShape, activeTool, settings, selectionWidth, selectionColor, withSkeleton])
 
 		return (
 			<div className='react-paint-editor-canvas-box'>

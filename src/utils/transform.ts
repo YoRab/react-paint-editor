@@ -42,7 +42,6 @@ export const transformShape = (
 	ctx: CanvasRenderingContext2D,
 	shape: ShapeEntity,
 	cursorPosition: Point,
-	canvasOffset: Point,
 	selectionMode: SelectionModeData<Point | number>,
 	settings: UtilsSettings,
 	isShiftPressed: boolean
@@ -55,7 +54,7 @@ export const transformShape = (
 		case 'rotate':
 			return rotateShape(shape, cursorPosition, selectionMode.originalShape, selectionMode.cursorStartPosition, selectionMode.center, settings)
 		case 'resize':
-			return resizeShape(ctx, shape, cursorPosition, canvasOffset, selectionMode.originalShape, selectionMode, settings, isShiftPressed)
+			return resizeShape(ctx, shape, cursorPosition, selectionMode.originalShape, selectionMode, settings, isShiftPressed)
 		default:
 			return shape
 	}

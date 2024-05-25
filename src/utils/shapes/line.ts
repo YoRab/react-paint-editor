@@ -144,7 +144,6 @@ export const translateLine = <U extends DrawableShape<'line'>>(
 
 export const resizeLine = <U extends DrawableShape<'line'>>(
 	cursorPosition: Point,
-	canvasOffset: Point,
 	originalShape: U,
 	selectionMode: SelectionModeResize<number>,
 	settings: UtilsSettings
@@ -153,7 +152,12 @@ export const resizeLine = <U extends DrawableShape<'line'>>(
 
 	const { center } = getShapeInfos(originalShape, settings)
 
-	const cursorPositionBeforeResize = getPointPositionAfterCanvasTransformation(roundCursorPosition, originalShape.rotation, center, canvasOffset)
+	const cursorPositionBeforeResize = getPointPositionAfterCanvasTransformation(
+		roundCursorPosition,
+		originalShape.rotation,
+		center,
+		settings.canvasOffset
+	)
 	const updatedShape = set(['points', selectionMode.anchor], cursorPositionBeforeResize, originalShape)
 
 	return buildPath(updatedShape, settings)

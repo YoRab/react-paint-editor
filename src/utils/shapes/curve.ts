@@ -53,7 +53,6 @@ export const createCurve = (
 
 export const resizeCurve = (
 	cursorPosition: Point,
-	canvasOffset: Point,
 	originalShape: DrawableShape<'curve'>,
 	selectionMode: SelectionModeResize<number>,
 	settings: UtilsSettings
@@ -62,7 +61,12 @@ export const resizeCurve = (
 
 	const { center } = getShapeInfos(originalShape, settings)
 
-	const cursorPositionBeforeResize = getPointPositionAfterCanvasTransformation(roundCursorPosition, originalShape.rotation, center, canvasOffset)
+	const cursorPositionBeforeResize = getPointPositionAfterCanvasTransformation(
+		roundCursorPosition,
+		originalShape.rotation,
+		center,
+		settings.canvasOffset
+	)
 	const updatedShape = set(['points', selectionMode.anchor], cursorPositionBeforeResize, originalShape)
 
 	return buildPath(updatedShape, settings)

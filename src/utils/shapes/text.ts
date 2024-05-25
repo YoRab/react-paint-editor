@@ -164,8 +164,7 @@ export const resizeTextShapeWithNewContent = <U extends DrawableShape<'text'>>(
 	ctx: CanvasRenderingContext2D,
 	shape: U,
 	newValue: string[],
-	settings: UtilsSettings,
-	canvasOffset: Point
+	settings: UtilsSettings
 ): U => {
 	const newShape = { ...shape, value: newValue }
 	const newWidth = calculateTextWidth(
@@ -188,9 +187,9 @@ export const resizeTextShapeWithNewContent = <U extends DrawableShape<'text'>>(
 
 	const { center: shapeWithNewDimensionsCenter } = getShapeInfos(resizedShape, settings)
 
-	const [oppTrueX, oppTrueY] = getRectOppositeAnchorAbsolutePosition([1, 1], center, shape, canvasOffset)
+	const [oppTrueX, oppTrueY] = getRectOppositeAnchorAbsolutePosition([1, 1], center, shape, settings)
 
-	const [newOppTrueX, newOppTrueY] = getRectOppositeAnchorAbsolutePosition([1, 1], shapeWithNewDimensionsCenter, resizedShape, canvasOffset, [
+	const [newOppTrueX, newOppTrueY] = getRectOppositeAnchorAbsolutePosition([1, 1], shapeWithNewDimensionsCenter, resizedShape, settings, [
 		false,
 		false
 	])

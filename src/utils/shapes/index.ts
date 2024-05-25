@@ -46,10 +46,10 @@ export const createShape = (
 	}
 }
 
-export const drawShape = (ctx: CanvasRenderingContext2D, shape: DrawableShape, canvasOffset: Point, settings: UtilsSettings): void => {
+export const drawShape = (ctx: CanvasRenderingContext2D, shape: DrawableShape, settings: UtilsSettings): void => {
 	if (shape.visible === false) return
 	const { center } = getShapeInfos(shape, settings)
-	transformCanvas(ctx, settings, canvasOffset, shape.rotation, center)
+	transformCanvas(ctx, settings, shape.rotation, center)
 	updateCanvasContext(ctx, shape.style)
 
 	switch (shape.type) {
@@ -153,7 +153,6 @@ export const resizeShape = <T extends DrawableShape>(
 	ctx: CanvasRenderingContext2D,
 	shape: T,
 	cursorPosition: Point,
-	canvasOffset: Point,
 	originalShape: T,
 	selectionMode: SelectionModeData<Point | number>,
 	settings: UtilsSettings,
@@ -161,11 +160,11 @@ export const resizeShape = <T extends DrawableShape>(
 ): T => {
 	switch (originalShape.type) {
 		case 'line':
-			return resizeLine(cursorPosition, canvasOffset, originalShape, selectionMode as SelectionModeResize<number>, settings) as T
+			return resizeLine(cursorPosition, originalShape, selectionMode as SelectionModeResize<number>, settings) as T
 		case 'polygon':
-			return resizePolygon(cursorPosition, canvasOffset, originalShape, selectionMode as SelectionModeResize<number>, settings) as T
+			return resizePolygon(cursorPosition, originalShape, selectionMode as SelectionModeResize<number>, settings) as T
 		case 'curve':
-			return resizeCurve(cursorPosition, canvasOffset, originalShape, selectionMode as SelectionModeResize<number>, settings) as T
+			return resizeCurve(cursorPosition, originalShape, selectionMode as SelectionModeResize<number>, settings) as T
 		case 'brush':
 			return resizeBrush(cursorPosition, originalShape, selectionMode as SelectionModeResize, settings, isShiftPressed) as T
 		case 'circle':
@@ -244,7 +243,6 @@ export const refreshShape = (shape: ShapeEntity, settings: UtilsSettings): Shape
 export const drawShapeSelection = ({
 	ctx,
 	shape,
-	canvasOffset,
 	settings,
 	selectionWidth,
 	selectionColor,
@@ -252,14 +250,13 @@ export const drawShapeSelection = ({
 }: {
 	ctx: CanvasRenderingContext2D
 	shape: DrawableShape
-	canvasOffset: Point
 	settings: UtilsSettings
 	selectionWidth: number
 	selectionColor: string
 	withAnchors?: boolean
 }) => {
 	const { center } = getShapeInfos(shape, settings)
-	transformCanvas(ctx, settings, canvasOffset, shape.rotation, center)
+	transformCanvas(ctx, settings, shape.rotation, center)
 
 	switch (shape.type) {
 		case 'rect':
@@ -290,15 +287,13 @@ export const drawShapeSelection = ({
 export const drawSelectionFrame = ({
 	ctx,
 	selectionFrame,
-	settings,
-	canvasOffset
+	settings
 }: {
 	ctx: CanvasRenderingContext2D
 	selectionFrame: [Point, Point]
 	settings: UtilsSettings
-	canvasOffset: Point
 }) => {
-	transformCanvas(ctx, settings, canvasOffset)
+	transformCanvas(ctx, settings)
 	drawFrame(ctx, selectionFrame, settings)
 
 	ctx.restore()

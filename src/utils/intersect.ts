@@ -56,7 +56,6 @@ const isPartOfRect = (rect: Rect, point: Point, radius: number) =>
 export const checkSelectionIntersection = (
 	shape: DrawableShape,
 	position: Point,
-	canvasOffset: Point,
 	settings: UtilsSettings,
 	checkAnchors = false,
 	radius = 0
@@ -67,7 +66,7 @@ export const checkSelectionIntersection = (
 	} = settings
 	const { borders, center } = getShapeInfos(shape, settings)
 
-	const newPosition = getPointPositionAfterCanvasTransformation(position, shape.rotation, center, canvasOffset)
+	const newPosition = getPointPositionAfterCanvasTransformation(position, shape.rotation, center, settings.canvasOffset)
 
 	if (checkAnchors) {
 		if (shape.type === 'line' || shape.type === 'polygon' || shape.type === 'curve') {
@@ -129,13 +128,12 @@ export const checkPositionIntersection = (
 	ctx: CanvasRenderingContext2D,
 	shape: DrawableShape,
 	position: Point,
-	canvasOffset: Point,
 	settings: UtilsSettings
 ): false | HoverModeData => {
 	if (shape.locked) return false
 	const { center } = getShapeInfos(shape, settings)
 
-	const newPosition = getPointPositionAfterCanvasTransformation(position, shape.rotation, center, canvasOffset)
+	const newPosition = getPointPositionAfterCanvasTransformation(position, shape.rotation, center, settings.canvasOffset)
 
 	if ('path' in shape && shape.path) {
 		const checkFill = shape.style?.fillColor && shape.style?.fillColor !== 'transparent'
@@ -147,7 +145,7 @@ export const checkPositionIntersection = (
 		return ctx.isPointInStroke(shape.path, newPosition[0], newPosition[1]) ? { mode: 'translate' } : false
 	}
 
-	return checkSelectionIntersection(shape, position, canvasOffset, settings, false)
+	return checkSelectionIntersection(shape, position, settings, false)
 }
 
 export function getRectIntersection(rect1: Rect, rect2: Rect): Rect | undefined {
@@ -194,10 +192,9 @@ export const checkSelectionFrameCollision = (
 	ctx: CanvasRenderingContext2D,
 	shape: DrawableShape,
 	selectionFrame: [Point, Point],
-	canvasOffset: Point,
 	settings: UtilsSettings
 ): boolean => {
-	const { selectionPadding } = settings
+	const { selectionPadding, canvasOffset } = settings
 	const { center, borders } = getShapeInfos(shape, settings)
 
 	const frame0 = getPointPositionAfterCanvasTransformation(selectionFrame[0], shape.rotation, center, canvasOffset)
