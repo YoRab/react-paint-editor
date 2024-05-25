@@ -1,4 +1,4 @@
-import { GridFormatType, UtilsSettings } from '../../constants/app'
+import { UtilsSettings } from '../../constants/app'
 import { SelectionModeResize } from '../../types/Mode'
 import type { DrawableShape, Point, ShapeEntity } from '../../types/Shapes'
 import type { ToolsSettingsType } from '../../types/tools'
@@ -56,10 +56,9 @@ export const resizeCurve = (
 	canvasOffset: Point,
 	originalShape: DrawableShape<'curve'>,
 	selectionMode: SelectionModeResize<number>,
-	gridFormat: GridFormatType,
 	settings: UtilsSettings
 ): DrawableShape<'curve'> => {
-	const roundCursorPosition: Point = [roundForGrid(cursorPosition[0], gridFormat), roundForGrid(cursorPosition[1], gridFormat)]
+	const roundCursorPosition: Point = [roundForGrid(cursorPosition[0], settings), roundForGrid(cursorPosition[1], settings)]
 
 	const { center } = getShapeInfos(originalShape, settings)
 
@@ -82,7 +81,6 @@ export const translateCurve = <U extends DrawableShape<'curve'>>(
 	cursorPosition: Point,
 	originalShape: U,
 	originalCursorPosition: Point,
-	gridFormat: GridFormatType,
 	settings: UtilsSettings
 ) => {
 	const { borders } = getShapeInfos(originalShape, settings)
@@ -91,14 +89,14 @@ export const translateCurve = <U extends DrawableShape<'curve'>>(
 		{
 			...originalShape,
 			points: originalShape.points.map(([x, y]) =>
-				gridFormat
+				settings.gridFormat
 					? [
-							x + roundForGrid(borders.x + cursorPosition[0] - originalCursorPosition[0], gridFormat) - borders.x,
-							y + roundForGrid(borders.y + cursorPosition[1] - originalCursorPosition[1], gridFormat) - borders.y
+							x + roundForGrid(borders.x + cursorPosition[0] - originalCursorPosition[0], settings) - borders.x,
+							y + roundForGrid(borders.y + cursorPosition[1] - originalCursorPosition[1], settings) - borders.y
 					  ]
 					: [
-							roundForGrid(x + cursorPosition[0] - originalCursorPosition[0], gridFormat),
-							roundForGrid(y + cursorPosition[1] - originalCursorPosition[1], gridFormat)
+							roundForGrid(x + cursorPosition[0] - originalCursorPosition[0], settings),
+							roundForGrid(y + cursorPosition[1] - originalCursorPosition[1], settings)
 					  ]
 			)
 		},

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import type { GridFormatType, UtilsSettings } from '../constants/app'
+import type { UtilsSettings } from '../constants/app'
 import { ShapeTypeArray } from '../constants/shapes'
 import { SELECTION_TOOL } from '../constants/tools'
 import useDoubleClick from '../hooks/useDoubleClick'
@@ -16,7 +16,6 @@ const handleMove = (
 	e: MouseEvent | TouchEvent,
 	canvasRef: React.RefObject<HTMLCanvasElement>,
 	activeTool: ToolsType,
-	gridFormat: GridFormatType,
 	canvasOffset: Point,
 	selectedShape: ShapeEntity | undefined,
 	selectionMode: SelectionModeData<Point | number>,
@@ -64,7 +63,7 @@ const handleMove = (
 	} else {
 		const ctx = canvasRef.current?.getContext('2d')
 		if (!ctx) return
-		const newShape = transformShape(ctx, selectedShape, cursorPosition, gridFormat, canvasOffset, selectionMode, settings, isShiftPressed)
+		const newShape = transformShape(ctx, selectedShape, cursorPosition, canvasOffset, selectionMode, settings, isShiftPressed)
 		updateSingleShape(newShape)
 		setSelectedShape(newShape)
 	}
@@ -90,7 +89,6 @@ type UseCanvasType = {
 	refreshSelectedShapes: (ctx: CanvasRenderingContext2D, cursorPosition: Point, canvasOffset: Point, settings: UtilsSettings) => void
 	canvasOffsetStartPosition: Point | undefined
 	setCanvasOffsetStartPosition: React.Dispatch<React.SetStateAction<Point | undefined>>
-	gridFormat: GridFormatType
 	canvasOffset: Point
 	setCanvasOffset: React.Dispatch<React.SetStateAction<Point>>
 	isInsideComponent: boolean
@@ -123,7 +121,6 @@ const useDrawableCanvas = ({
 	setSelectionFrame,
 	setCanvasOffsetStartPosition,
 	updateSingleShape,
-	gridFormat,
 	canvasOffset,
 	saveShapes,
 	setSelectionMode,
@@ -143,7 +140,6 @@ const useDrawableCanvas = ({
 					e,
 					selectionCanvasRef,
 					activeTool,
-					gridFormat,
 					canvasOffset,
 					selectedShape,
 					selectionMode,
@@ -172,7 +168,6 @@ const useDrawableCanvas = ({
 		selectionCanvasRef,
 		selectedShape,
 		selectionMode,
-		gridFormat,
 		canvasOffset,
 		canvasOffsetStartPosition,
 		updateSingleShape,
@@ -240,7 +235,7 @@ const useDrawableCanvas = ({
 						updateSingleShape(newShape)
 						setSelectedShape(newShape)
 					} else {
-						const newShape = createShape(drawCtx, activeTool, cursorPosition, gridFormat, settings)
+						const newShape = createShape(drawCtx, activeTool, cursorPosition, settings)
 						if (!newShape) return
 						addShape(newShape)
 						setSelectedShape(newShape)
@@ -250,7 +245,7 @@ const useDrawableCanvas = ({
 						mode: 'brush'
 					})
 				} else if (activeTool.type !== 'picture') {
-					const newShape = createShape(drawCtx, activeTool as Exclude<CustomTool, { type: 'picture' }>, cursorPosition, gridFormat, settings)
+					const newShape = createShape(drawCtx, activeTool as Exclude<CustomTool, { type: 'picture' }>, cursorPosition, settings)
 					addShape(newShape)
 					setActiveTool(SELECTION_TOOL)
 					setSelectedShape(newShape)
@@ -287,7 +282,6 @@ const useDrawableCanvas = ({
 		setSelectionMode,
 		setSelectionFrame,
 		settings,
-		gridFormat,
 		withFrameSelection
 	])
 

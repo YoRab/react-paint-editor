@@ -1,4 +1,4 @@
-import type { GridFormatType, UtilsSettings } from '../../constants/app'
+import type { UtilsSettings } from '../../constants/app'
 import type { SelectionModeResize } from '../../types/Mode'
 import type { DrawableShape, Point, Rect, ShapeEntity } from '../../types/Shapes'
 import type { ToolsSettingsType } from '../../types/tools'
@@ -87,14 +87,13 @@ export const translateRect = <T extends 'rect' | 'square', U extends DrawableSha
 	cursorPosition: Point,
 	originalShape: U,
 	originalCursorPosition: Point,
-	gridFormat: GridFormatType,
 	settings: UtilsSettings
 ) => {
 	return buildPath(
 		{
 			...originalShape,
-			x: roundForGrid(originalShape.x + cursorPosition[0] - originalCursorPosition[0], gridFormat),
-			y: roundForGrid(originalShape.y + cursorPosition[1] - originalCursorPosition[1], gridFormat)
+			x: roundForGrid(originalShape.x + cursorPosition[0] - originalCursorPosition[0], settings),
+			y: roundForGrid(originalShape.y + cursorPosition[1] - originalCursorPosition[1], settings)
 		},
 		settings
 	)
@@ -104,18 +103,10 @@ export const resizeRect = <T extends rectish>(
 	cursorPosition: Point,
 	originalShape: DrawableShape<T>,
 	selectionMode: SelectionModeResize,
-	gridFormat: GridFormatType,
 	settings: UtilsSettings,
 	keepRatio = false
 ): DrawableShape<T> => {
-	const { borderX, borderHeight, borderY, borderWidth } = resizeRectSelection(
-		cursorPosition,
-		originalShape,
-		selectionMode,
-		gridFormat,
-		settings,
-		keepRatio
-	)
+	const { borderX, borderHeight, borderY, borderWidth } = resizeRectSelection(cursorPosition, originalShape, selectionMode, settings, keepRatio)
 
 	return buildPath(
 		{

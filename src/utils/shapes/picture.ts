@@ -1,4 +1,4 @@
-import { GridFormatType, UtilsSettings } from '../../constants/app'
+import { UtilsSettings } from '../../constants/app'
 import { DEFAULT_SHAPE_PICTURE } from '../../constants/tools'
 import { SelectionModeResize } from '../../types/Mode'
 import type { DrawableShape, Picture, Point, Rect, ShapeEntity } from '../../types/Shapes'
@@ -6,7 +6,7 @@ import { createRecSelectionPath, resizeRectSelection } from '../../utils/selecti
 import { uniqueId } from '../../utils/util'
 import { addSizeAndConvertSvgToObjectUrl, fetchAndStringify, isSvg } from '../file'
 import { fitContentInsideContainer, roundForGrid } from '../transform'
-import { getRectBorder, resizeRect } from './rectangle'
+import { getRectBorder } from './rectangle'
 
 const buildPath = <T extends DrawableShape<'picture'>>(shape: T, settings: UtilsSettings): T => {
 	return {
@@ -122,14 +122,13 @@ export const translatePicture = <U extends DrawableShape<'picture'>>(
 	cursorPosition: Point,
 	originalShape: U,
 	originalCursorPosition: Point,
-	gridFormat: GridFormatType,
 	settings: UtilsSettings
 ) => {
 	return buildPath(
 		{
 			...originalShape,
-			x: roundForGrid(originalShape.x + cursorPosition[0] - originalCursorPosition[0], gridFormat),
-			y: roundForGrid(originalShape.y + cursorPosition[1] - originalCursorPosition[1], gridFormat)
+			x: roundForGrid(originalShape.x + cursorPosition[0] - originalCursorPosition[0], settings),
+			y: roundForGrid(originalShape.y + cursorPosition[1] - originalCursorPosition[1], settings)
 		},
 		settings
 	)
@@ -139,18 +138,10 @@ export const resizePicture = (
 	cursorPosition: Point,
 	originalShape: DrawableShape<'picture'>,
 	selectionMode: SelectionModeResize,
-	gridFormat: GridFormatType,
 	settings: UtilsSettings,
 	keepRatio: boolean
 ): DrawableShape<'picture'> => {
-	const { borderX, borderHeight, borderY, borderWidth } = resizeRectSelection(
-		cursorPosition,
-		originalShape,
-		selectionMode,
-		gridFormat,
-		settings,
-		true
-	)
+	const { borderX, borderHeight, borderY, borderWidth } = resizeRectSelection(cursorPosition, originalShape, selectionMode, settings, true)
 	return buildPath(
 		{
 			...originalShape,

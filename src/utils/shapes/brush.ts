@@ -1,4 +1,4 @@
-import { BrushAlgo, GridFormatType, UtilsSettings } from '../../constants/app'
+import { UtilsSettings } from '../../constants/app'
 import { SelectionModeResize } from '../../types/Mode'
 import type { DrawableShape, Point, Rect, ShapeEntity } from '../../types/Shapes'
 import type { ToolsSettingsType } from '../../types/tools'
@@ -121,15 +121,14 @@ export const translateBrush = <U extends DrawableShape<'brush'>>(
 	cursorPosition: Point,
 	originalShape: U,
 	originalCursorPosition: Point,
-	gridFormat: GridFormatType,
 	settings: UtilsSettings
 ) => {
 	const { borders } = getShapeInfos(originalShape, settings)
-	const translationX = gridFormat
-		? roundForGrid(borders.x + cursorPosition[0] - originalCursorPosition[0], gridFormat) - borders.x
+	const translationX = settings.gridFormat
+		? roundForGrid(borders.x + cursorPosition[0] - originalCursorPosition[0], settings) - borders.x
 		: cursorPosition[0] - originalCursorPosition[0]
-	const translationY = gridFormat
-		? roundForGrid(borders.y + cursorPosition[1] - originalCursorPosition[1], gridFormat) - borders.y
+	const translationY = settings.gridFormat
+		? roundForGrid(borders.y + cursorPosition[1] - originalCursorPosition[1], settings) - borders.y
 		: cursorPosition[1] - originalCursorPosition[1]
 	return buildPath(
 		{
@@ -144,21 +143,13 @@ export const resizeBrush = (
 	cursorPosition: Point,
 	originalShape: DrawableShape<'brush'>,
 	selectionMode: SelectionModeResize,
-	gridFormat: GridFormatType,
 	settings: UtilsSettings,
 	keepRatio: boolean
 ): DrawableShape<'brush'> => {
 	const { borders: originalBordersWithoutScale } = getShapeInfos({ ...originalShape, scaleX: 1, scaleY: 1 }, settings)
 	const { borders: originalBorders } = getShapeInfos(originalShape, settings)
 
-	const { borderX, borderHeight, borderY, borderWidth } = resizeRectSelection(
-		cursorPosition,
-		originalShape,
-		selectionMode,
-		gridFormat,
-		settings,
-		keepRatio
-	)
+	const { borderX, borderHeight, borderY, borderWidth } = resizeRectSelection(cursorPosition, originalShape, selectionMode, settings, keepRatio)
 
 	const originalShapeWidth = Math.max(0, originalBordersWithoutScale.width - 2 * settings.selectionPadding)
 	const originalShapeHeight = Math.max(0, originalBordersWithoutScale.height - 2 * settings.selectionPadding)

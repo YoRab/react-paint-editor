@@ -20,6 +20,7 @@ export type BrushAlgo = 'simple' | 'quadratic'
 
 export type UtilsSettings = {
 	algo: BrushAlgo
+	gridFormat: GridFormatType
 	canvasSize: {
 		width: number
 		height: number

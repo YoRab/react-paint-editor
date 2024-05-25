@@ -1,4 +1,4 @@
-import { GridFormatType, UtilsSettings } from '../../constants/app'
+import { UtilsSettings } from '../../constants/app'
 import { SelectionModeResize } from '../../types/Mode'
 import type { DrawableShape, Line, Point, Rect, ShapeEntity, StyleShape, Triangle } from '../../types/Shapes'
 import type { ToolsSettingsType } from '../../types/tools'
@@ -128,15 +128,14 @@ export const translateLine = <U extends DrawableShape<'line'>>(
 	cursorPosition: Point,
 	originalShape: U,
 	originalCursorPosition: Point,
-	gridFormat: GridFormatType,
 	settings: UtilsSettings
 ) => {
 	return buildPath(
 		{
 			...originalShape,
 			points: originalShape.points.map(([x, y]) => [
-				roundForGrid(x + cursorPosition[0] - originalCursorPosition[0], gridFormat),
-				roundForGrid(y + cursorPosition[1] - originalCursorPosition[1], gridFormat)
+				roundForGrid(x + cursorPosition[0] - originalCursorPosition[0], settings),
+				roundForGrid(y + cursorPosition[1] - originalCursorPosition[1], settings)
 			]) as [Point, Point]
 		},
 		settings
@@ -148,10 +147,9 @@ export const resizeLine = <U extends DrawableShape<'line'>>(
 	canvasOffset: Point,
 	originalShape: U,
 	selectionMode: SelectionModeResize<number>,
-	gridFormat: GridFormatType,
 	settings: UtilsSettings
 ): U => {
-	const roundCursorPosition: Point = [roundForGrid(cursorPosition[0], gridFormat), roundForGrid(cursorPosition[1], gridFormat)]
+	const roundCursorPosition: Point = [roundForGrid(cursorPosition[0], settings), roundForGrid(cursorPosition[1], settings)]
 
 	const { center } = getShapeInfos(originalShape, settings)
 

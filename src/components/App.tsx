@@ -99,13 +99,16 @@ const App = ({
 		scaleRatio: 1
 	})
 
+	const [gridFormat, setGridFormat] = useState<GridFormatType>(grid)
+
 	const settings: UtilsSettings = useMemo(
 		() => ({
 			algo: 'simple',
 			canvasSize,
+			gridFormat,
 			selectionPadding: canvasSelectionPadding
 		}),
-		[canvasSelectionPadding, canvasSize]
+		[canvasSelectionPadding, gridFormat, canvasSize]
 	)
 
 	const [availableTools, setAvailableTools] = useState(sanitizeTools(availableToolsFromProps, withUploadPicture || withUrlPicture))
@@ -126,7 +129,6 @@ const App = ({
 		mode: 'default'
 	})
 
-	const [gridFormat, setGridFormat] = useState<GridFormatType>(grid)
 	const [isShiftPressed, setShiftPressed] = useState<boolean>(false)
 
 	if (apiRef) {
@@ -321,7 +323,6 @@ const App = ({
 
 	useKeyboard({
 		isInsideComponent,
-		gridFormat,
 		isEditingText: selectionMode.mode === 'textedition',
 		settings,
 		selectedShape,
@@ -412,7 +413,6 @@ const App = ({
 			>
 				<Canvas
 					canGrow={canGrow}
-					gridFormat={gridFormat}
 					disabled={isDisabled}
 					isInsideComponent={isInsideComponent}
 					activeTool={activeTool}

@@ -1,4 +1,4 @@
-import { GridFormatType, UtilsSettings } from '../../constants/app'
+import { UtilsSettings } from '../../constants/app'
 import { SelectionModeResize } from '../../types/Mode'
 import type { DrawableShape, Ellipse, Point, Rect, ShapeEntity } from '../../types/Shapes'
 import type { ToolsSettingsType } from '../../types/tools'
@@ -68,14 +68,13 @@ export const translateEllipse = <U extends DrawableShape<'ellipse'>>(
 	cursorPosition: Point,
 	originalShape: U,
 	originalCursorPosition: Point,
-	gridFormat: GridFormatType,
 	settings: UtilsSettings
 ) => {
 	return buildPath(
 		{
 			...originalShape,
-			x: roundForGrid(originalShape.x + cursorPosition[0] - originalCursorPosition[0], gridFormat),
-			y: roundForGrid(originalShape.y + cursorPosition[1] - originalCursorPosition[1], gridFormat)
+			x: roundForGrid(originalShape.x + cursorPosition[0] - originalCursorPosition[0], settings),
+			y: roundForGrid(originalShape.y + cursorPosition[1] - originalCursorPosition[1], settings)
 		},
 		settings
 	)
@@ -85,18 +84,10 @@ export const resizeEllipse = (
 	cursorPosition: Point,
 	originalShape: DrawableShape<'ellipse'>,
 	selectionMode: SelectionModeResize,
-	gridFormat: GridFormatType,
 	settings: UtilsSettings,
 	keepRatio = false
 ): DrawableShape<'ellipse'> => {
-	const { borderX, borderHeight, borderY, borderWidth } = resizeRectSelection(
-		cursorPosition,
-		originalShape,
-		selectionMode,
-		gridFormat,
-		settings,
-		keepRatio
-	)
+	const { borderX, borderHeight, borderY, borderWidth } = resizeRectSelection(cursorPosition, originalShape, selectionMode, settings, keepRatio)
 
 	return buildPath(
 		{

@@ -1,5 +1,5 @@
 import { drawFrame } from '../../utils/selection/selectionFrame'
-import type { GridFormatType, UtilsSettings } from '../../constants/app'
+import type { UtilsSettings } from '../../constants/app'
 import { SelectionModeData, SelectionModeResize } from '../../types/Mode'
 import type { DrawableShape, Point, Rect, ShapeEntity } from '../../types/Shapes'
 import type { CustomTool } from '../../types/tools'
@@ -22,10 +22,9 @@ export const createShape = (
 	ctx: CanvasRenderingContext2D,
 	shape: Exclude<CustomTool, { type: 'picture' }>,
 	cursorPosition: Point,
-	gridFormat: GridFormatType,
 	settings: UtilsSettings
 ): ShapeEntity => {
-	const roundCursorPosition: Point = [roundForGrid(cursorPosition[0], gridFormat), roundForGrid(cursorPosition[1], gridFormat)]
+	const roundCursorPosition: Point = [roundForGrid(cursorPosition[0], settings), roundForGrid(cursorPosition[1], settings)]
 	switch (shape.type) {
 		case 'brush':
 			return createBrush(shape, roundCursorPosition, settings)
@@ -135,7 +134,7 @@ export const rotateShape = <T extends DrawableShape>(
 	originalShape: T,
 	originalCursorPosition: Point,
 	shapeCenter: Point,
-	gridFormat: GridFormatType
+	settings: UtilsSettings
 ) => {
 	const p1x = shapeCenter[0] - originalCursorPosition[0]
 	const p1y = shapeCenter[1] - originalCursorPosition[1]
@@ -145,7 +144,7 @@ export const rotateShape = <T extends DrawableShape>(
 	return {
 		...shape,
 		...{
-			rotation: roundRotationForGrid(rotation, gridFormat)
+			rotation: roundRotationForGrid(rotation, settings)
 		}
 	}
 }
@@ -157,37 +156,29 @@ export const resizeShape = <T extends DrawableShape>(
 	canvasOffset: Point,
 	originalShape: T,
 	selectionMode: SelectionModeData<Point | number>,
-	gridFormat: GridFormatType,
 	settings: UtilsSettings,
 	isShiftPressed: boolean
 ): T => {
 	switch (originalShape.type) {
 		case 'line':
-			return resizeLine(cursorPosition, canvasOffset, originalShape, selectionMode as SelectionModeResize<number>, gridFormat, settings) as T
+			return resizeLine(cursorPosition, canvasOffset, originalShape, selectionMode as SelectionModeResize<number>, settings) as T
 		case 'polygon':
-			return resizePolygon(cursorPosition, canvasOffset, originalShape, selectionMode as SelectionModeResize<number>, gridFormat, settings) as T
+			return resizePolygon(cursorPosition, canvasOffset, originalShape, selectionMode as SelectionModeResize<number>, settings) as T
 		case 'curve':
-			return resizeCurve(cursorPosition, canvasOffset, originalShape, selectionMode as SelectionModeResize<number>, gridFormat, settings) as T
+			return resizeCurve(cursorPosition, canvasOffset, originalShape, selectionMode as SelectionModeResize<number>, settings) as T
 		case 'brush':
-			return resizeBrush(cursorPosition, originalShape, selectionMode as SelectionModeResize, gridFormat, settings, isShiftPressed) as T
+			return resizeBrush(cursorPosition, originalShape, selectionMode as SelectionModeResize, settings, isShiftPressed) as T
 		case 'circle':
-			return resizeCircle(cursorPosition, originalShape, selectionMode as SelectionModeResize, gridFormat, settings) as T
+			return resizeCircle(cursorPosition, originalShape, selectionMode as SelectionModeResize, settings) as T
 		case 'ellipse':
-			return resizeEllipse(cursorPosition, originalShape, selectionMode as SelectionModeResize, gridFormat, settings, isShiftPressed) as T
+			return resizeEllipse(cursorPosition, originalShape, selectionMode as SelectionModeResize, settings, isShiftPressed) as T
 		case 'rect':
 		case 'square':
-			return resizeRect(
-				cursorPosition,
-				originalShape,
-				selectionMode as SelectionModeResize,
-				gridFormat,
-				settings,
-				shape.type === 'square' || isShiftPressed
-			) as T
+			return resizeRect(cursorPosition, originalShape, selectionMode as SelectionModeResize, settings, shape.type === 'square' || isShiftPressed) as T
 		case 'text':
-			return resizeText(ctx, cursorPosition, originalShape, selectionMode as SelectionModeResize, gridFormat, settings) as T
+			return resizeText(ctx, cursorPosition, originalShape, selectionMode as SelectionModeResize, settings) as T
 		case 'picture':
-			return resizePicture(cursorPosition, originalShape, selectionMode as SelectionModeResize, gridFormat, settings, !isShiftPressed) as T
+			return resizePicture(cursorPosition, originalShape, selectionMode as SelectionModeResize, settings, !isShiftPressed) as T
 		default:
 			return originalShape
 	}
@@ -197,29 +188,28 @@ export const translateShape = (
 	cursorPosition: Point,
 	originalShape: ShapeEntity,
 	originalCursorPosition: Point,
-	gridFormat: GridFormatType,
 	settings: UtilsSettings
 ): ShapeEntity => {
 	switch (originalShape.type) {
 		case 'rect':
 		case 'square':
-			return translateRect(cursorPosition, originalShape, originalCursorPosition, gridFormat, settings)
+			return translateRect(cursorPosition, originalShape, originalCursorPosition, settings)
 		case 'ellipse':
-			return translateEllipse(cursorPosition, originalShape, originalCursorPosition, gridFormat, settings)
+			return translateEllipse(cursorPosition, originalShape, originalCursorPosition, settings)
 		case 'circle':
-			return translateCircle(cursorPosition, originalShape, originalCursorPosition, gridFormat, settings)
+			return translateCircle(cursorPosition, originalShape, originalCursorPosition, settings)
 		case 'picture':
-			return translatePicture(cursorPosition, originalShape, originalCursorPosition, gridFormat, settings)
+			return translatePicture(cursorPosition, originalShape, originalCursorPosition, settings)
 		case 'text':
-			return translateText(cursorPosition, originalShape, originalCursorPosition, gridFormat, settings)
+			return translateText(cursorPosition, originalShape, originalCursorPosition, settings)
 		case 'line':
-			return translateLine(cursorPosition, originalShape, originalCursorPosition, gridFormat, settings)
+			return translateLine(cursorPosition, originalShape, originalCursorPosition, settings)
 		case 'polygon':
-			return translatePolygon(cursorPosition, originalShape, originalCursorPosition, gridFormat, settings)
+			return translatePolygon(cursorPosition, originalShape, originalCursorPosition, settings)
 		case 'curve':
-			return translateCurve(cursorPosition, originalShape, originalCursorPosition, gridFormat, settings)
+			return translateCurve(cursorPosition, originalShape, originalCursorPosition, settings)
 		case 'brush':
-			return translateBrush(cursorPosition, originalShape, originalCursorPosition, gridFormat, settings)
+			return translateBrush(cursorPosition, originalShape, originalCursorPosition, settings)
 		default:
 			return originalShape
 	}
@@ -314,9 +304,9 @@ export const drawSelectionFrame = ({
 	ctx.restore()
 }
 
-export const copyShape = (shape: ShapeEntity, gridFormat: GridFormatType, settings: UtilsSettings) => {
+export const copyShape = (shape: ShapeEntity, settings: UtilsSettings) => {
 	return {
-		...translateShape([20, 20], shape, [0, 0], gridFormat, settings),
+		...translateShape([20, 20], shape, [0, 0], settings),
 		id: uniqueId(`${shape.type}_`)
 	} as ShapeEntity
 }

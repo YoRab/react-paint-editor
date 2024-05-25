@@ -1,4 +1,4 @@
-import { GridFormatType, UtilsSettings } from '../../constants/app'
+import { UtilsSettings } from '../../constants/app'
 import { STYLE_FONT_DEFAULT, STYLE_FONT_SIZE_DEFAULT } from '../../constants/style'
 import { SelectionModeResize } from '../../types/Mode'
 import type { DrawableShape, Point, Rect, ShapeEntity, Text } from '../../types/Shapes'
@@ -102,14 +102,13 @@ export const translateText = <U extends DrawableShape<'text'>>(
 	cursorPosition: Point,
 	originalShape: U,
 	originalCursorPosition: Point,
-	gridFormat: GridFormatType,
 	settings: UtilsSettings
 ) => {
 	return buildPath(
 		{
 			...originalShape,
-			x: roundForGrid(originalShape.x + cursorPosition[0] - originalCursorPosition[0], gridFormat),
-			y: roundForGrid(originalShape.y + cursorPosition[1] - originalCursorPosition[1], gridFormat)
+			x: roundForGrid(originalShape.x + cursorPosition[0] - originalCursorPosition[0], settings),
+			y: roundForGrid(originalShape.y + cursorPosition[1] - originalCursorPosition[1], settings)
 		},
 		settings
 	)
@@ -120,17 +119,9 @@ export const resizeText = (
 	cursorPosition: Point,
 	originalShape: DrawableShape<'text'>,
 	selectionMode: SelectionModeResize,
-	gridFormat: GridFormatType,
 	settings: UtilsSettings
 ): DrawableShape<'text'> => {
-	const { borderX, borderHeight, borderY, borderWidth } = resizeRectSelection(
-		cursorPosition,
-		originalShape,
-		selectionMode,
-		gridFormat,
-		settings,
-		true
-	)
+	const { borderX, borderHeight, borderY, borderWidth } = resizeRectSelection(cursorPosition, originalShape, selectionMode, settings, true)
 
 	const newRect = buildPath(
 		{

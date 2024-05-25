@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import type { GridFormatType, UtilsSettings } from '../constants/app'
+import type { UtilsSettings } from '../constants/app'
 import { GRID_STEP } from '../constants/style'
 import type { Point, ShapeEntity } from '../types/Shapes'
 import { copyShape, translateShape } from '../utils/shapes'
@@ -35,12 +35,10 @@ type UseKeyboardType = {
 	forwardShape: () => void
 	setShiftPressed: (value: React.SetStateAction<boolean>) => void
 	isEditingText: boolean
-	gridFormat: GridFormatType
 	settings: UtilsSettings
 }
 
 const useKeyboard = ({
-	gridFormat,
 	isInsideComponent,
 	selectedShape,
 	isEditingText,
@@ -68,7 +66,7 @@ const useKeyboard = ({
 			if (!copiedShape) return
 			if (isEditingText) return
 			e.preventDefault()
-			pasteShape(copyShape(copiedShape, gridFormat, settings))
+			pasteShape(copyShape(copiedShape, settings))
 		}
 
 		const handleKeyUp = (e: KeyboardEvent) => {
@@ -109,17 +107,17 @@ const useKeyboard = ({
 			if (isEditingText) return
 
 			const translationMap: { [key: string]: Point } = {
-				[KeyboardCode.ArrowLeft]: [gridFormat ? -GRID_STEP[gridFormat - 1] : -1, 0],
-				[KeyboardCode.ArrowRight]: [gridFormat ? GRID_STEP[gridFormat - 1] : 1, 0],
-				[KeyboardCode.ArrowDown]: [0, gridFormat ? GRID_STEP[gridFormat - 1] : 1],
-				[KeyboardCode.ArrowUp]: [0, gridFormat ? -GRID_STEP[gridFormat - 1] : -1]
+				[KeyboardCode.ArrowLeft]: [settings.gridFormat ? -GRID_STEP[settings.gridFormat - 1] : -1, 0],
+				[KeyboardCode.ArrowRight]: [settings.gridFormat ? GRID_STEP[settings.gridFormat - 1] : 1, 0],
+				[KeyboardCode.ArrowDown]: [0, settings.gridFormat ? GRID_STEP[settings.gridFormat - 1] : 1],
+				[KeyboardCode.ArrowUp]: [0, settings.gridFormat ? -GRID_STEP[settings.gridFormat - 1] : -1]
 			}
 			switch (e.key) {
 				case KeyboardCode.ArrowLeft:
 				case KeyboardCode.ArrowRight:
 				case KeyboardCode.ArrowDown:
 				case KeyboardCode.ArrowUp:
-					updateShape(translateShape(translationMap[e.key], selectedShape, [0, 0], gridFormat, settings))
+					updateShape(translateShape(translationMap[e.key], selectedShape, [0, 0], settings))
 					break
 				case KeyboardCode.Delete:
 				case KeyboardCode.Backspace:
@@ -143,7 +141,6 @@ const useKeyboard = ({
 		}
 	}, [
 		isInsideComponent,
-		gridFormat,
 		copiedShape,
 		isEditingText,
 		selectedShape,

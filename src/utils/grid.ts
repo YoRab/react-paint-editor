@@ -1,16 +1,10 @@
-import { GridFormatType, UtilsSettings } from '../constants/app'
+import { UtilsSettings } from '../constants/app'
 import { GRID_STEP } from '../constants/style'
 import type { Point } from '../types/Shapes'
 
-export const drawGrid = (
-	ctx: CanvasRenderingContext2D,
-	width: number,
-	height: number,
-	settings: UtilsSettings,
-	canvasOffset: Point,
-	gridFormat: GridFormatType
-) => {
+export const drawGrid = (ctx: CanvasRenderingContext2D, width: number, height: number, settings: UtilsSettings, canvasOffset: Point) => {
 	const {
+		gridFormat,
 		canvasSize: { scaleRatio }
 	} = settings
 

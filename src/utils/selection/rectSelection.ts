@@ -1,4 +1,4 @@
-import type { GridFormatType, UtilsSettings } from '../../constants/app'
+import type { UtilsSettings } from '../../constants/app'
 import { SELECTION_ANCHOR_SIZE, SELECTION_RESIZE_ANCHOR_POSITIONS, SELECTION_ROTATED_ANCHOR_POSITION } from '../../constants/shapes'
 import type { SelectionModeResize } from '../../types/Mode'
 import type { DrawableShape, Point, Rect, SelectionDefaultType } from '../../types/Shapes'
@@ -212,7 +212,6 @@ export const resizeRectSelection = (
 	cursorPosition: Point,
 	originalShape: DrawableShape,
 	selectionMode: SelectionModeResize,
-	gridFormat: GridFormatType,
 	settings: UtilsSettings,
 	keepRatio = false
 ): {
@@ -239,21 +238,21 @@ export const resizeRectSelection = (
 	const roundCursorPosition: Point = [
 		roundForGrid(
 			rotatedCursorPosition[0],
-			gridFormat,
+			settings,
 			(selectionMode.anchor[0] === 0 && !isXinverted) || (selectionMode.anchor[0] === 1 && isXinverted)
 				? settings.selectionPadding
 				: -settings.selectionPadding
 		),
 		roundForGrid(
 			rotatedCursorPosition[1],
-			gridFormat,
+			settings,
 			(selectionMode.anchor[1] === 0 && !isYinverted) || (selectionMode.anchor[1] === 1 && isYinverted)
 				? settings.selectionPadding
 				: -settings.selectionPadding
 		)
 	]
 
-	const roundCursorStartPosition = gridFormat
+	const roundCursorStartPosition = settings.gridFormat
 		? [
 				selectionMode.anchor[0] === 0 ? borders.x : selectionMode.anchor[0] === 0.5 ? borders.x + borders.width / 2 : borders.x + borders.width,
 				selectionMode.anchor[1] === 0 ? borders.y : selectionMode.anchor[1] === 0.5 ? borders.y + borders.height / 2 : borders.y + borders.height

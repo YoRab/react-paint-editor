@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useImperativeHandle, useRef } from 'react'
-import { DRAWCANVAS_CLASSNAME, type GridFormatType, SELECTIONCANVAS_CLASSNAME, UtilsSettings } from '../constants/app'
+import { DRAWCANVAS_CLASSNAME, SELECTIONCANVAS_CLASSNAME, UtilsSettings } from '../constants/app'
 import useDrawableCanvas from '../hooks/useDrawableCanvas'
 import type { SelectionModeData } from '../types/Mode'
 import type { Point, ShapeEntity } from '../types/Shapes'
@@ -15,7 +15,6 @@ const renderDrawCanvas = (
 	drawCtx: CanvasRenderingContext2D,
 	selectionMode: SelectionModeData<number | Point>,
 	settings: UtilsSettings,
-	gridFormat: GridFormatType,
 	canvasOffset: Point,
 	shapes: ShapeEntity[],
 	selectedShape: ShapeEntity | undefined
@@ -25,7 +24,7 @@ const renderDrawCanvas = (
 	} = settings
 	drawCtx.clearRect(0, 0, width, height)
 	initCanvasContext(drawCtx)
-	gridFormat && drawGrid(drawCtx, width, height, settings, canvasOffset, gridFormat)
+	settings.gridFormat && drawGrid(drawCtx, width, height, settings, canvasOffset)
 	for (let i = shapes.length - 1; i >= 0; i--) {
 		if (selectionMode.mode !== 'textedition' || shapes[i] !== selectedShape) {
 			drawShape(drawCtx, shapes[i], canvasOffset, settings)
@@ -85,7 +84,6 @@ const renderSelectionCanvas = (
 }
 
 type DrawerType = {
-	gridFormat: GridFormatType
 	disabled?: boolean
 	canGrow?: boolean
 	canvasSize: {
@@ -131,7 +129,6 @@ type DrawerType = {
 const Canvas = React.forwardRef<HTMLCanvasElement, DrawerType>(
 	(
 		{
-			gridFormat,
 			canGrow,
 			disabled = false,
 			canvasSize,
@@ -189,7 +186,6 @@ const Canvas = React.forwardRef<HTMLCanvasElement, DrawerType>(
 			refreshSelectedShapes,
 			setCanvasOffsetStartPosition,
 			updateSingleShape,
-			gridFormat,
 			canvasOffset,
 			saveShapes,
 			setSelectionMode,
@@ -214,9 +210,8 @@ const Canvas = React.forwardRef<HTMLCanvasElement, DrawerType>(
 		useEffect(() => {
 			const drawCtx = drawCanvasRef.current?.getContext('2d')
 
-			drawCtx &&
-				window.requestAnimationFrame(() => renderDrawCanvas(drawCtx, selectionMode, settings, gridFormat, canvasOffset, shapes, selectedShape))
-		}, [shapes, gridFormat, selectionMode, selectedShape, canvasOffset, settings])
+			drawCtx && window.requestAnimationFrame(() => renderDrawCanvas(drawCtx, selectionMode, settings, canvasOffset, shapes, selectedShape))
+		}, [shapes, selectionMode, selectedShape, canvasOffset, settings])
 
 		useEffect(() => {
 			const selectionCtx = selectionCanvasRef.current?.getContext('2d')
