@@ -19,7 +19,7 @@ export type GridFormatType = typeof GRID_NONE | typeof GRID_SMALL | typeof GRID_
 export type BrushAlgo = 'simple' | 'quadratic'
 
 export type UtilsSettings = {
-	algo: BrushAlgo
+	brushAlgo: BrushAlgo
 	gridFormat: GridFormatType
 	canvasOffset: Point
 	canvasSize: {

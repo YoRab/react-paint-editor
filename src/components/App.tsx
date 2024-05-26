@@ -53,6 +53,7 @@ const App = ({
 }: AppType) => {
 	const {
 		layersManipulation,
+		brushAlgo,
 		grid,
 		canGrow,
 		canShrink,
@@ -105,13 +106,13 @@ const App = ({
 
 	const settings: UtilsSettings = useMemo(
 		() => ({
-			algo: 'simple',
+			brushAlgo,
 			canvasSize,
 			canvasOffset,
 			gridFormat,
 			selectionPadding: canvasSelectionPadding
 		}),
-		[canvasSelectionPadding, gridFormat, canvasOffset, canvasSize]
+		[canvasSelectionPadding, gridFormat, brushAlgo, canvasOffset, canvasSize]
 	)
 
 	const [availableTools, setAvailableTools] = useState(sanitizeTools(availableToolsFromProps, withUploadPicture || withUrlPicture))

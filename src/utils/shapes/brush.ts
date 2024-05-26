@@ -8,7 +8,7 @@ import { getShapeInfos } from '../../utils/shapes/index'
 import { roundForGrid, roundValues, scalePoint } from '../../utils/transform'
 import { uniqueId } from '../../utils/util'
 
-const createBrushPath = (brush: DrawableShape<'brush'>, { algo }: UtilsSettings) => {
+const createBrushPath = (brush: DrawableShape<'brush'>, { brushAlgo }: UtilsSettings) => {
 	if (brush.points.length < 1 || brush.style?.strokeColor === 'transparent') return undefined
 
 	const brushPoints = brush.points.flat()
@@ -26,7 +26,7 @@ const createBrushPath = (brush: DrawableShape<'brush'>, { algo }: UtilsSettings)
 			path.rect(...scalePoint(points[0], minX, minY, brush.scaleX, brush.scaleY), 1, 1)
 		} else {
 			path.moveTo(...scalePoint(points[0], minX, minY, brush.scaleX, brush.scaleY))
-			switch (algo) {
+			switch (brushAlgo) {
 				case 'quadratic':
 					for (let i = 0; i < points.slice(1).length - 2; i++) {
 						const scaledPoint = scalePoint(points[i], minX, minY, brush.scaleX, brush.scaleY)
