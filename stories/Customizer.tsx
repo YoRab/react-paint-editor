@@ -1,17 +1,5 @@
 import React, { useRef, useState } from 'react'
-import useReactPaint from '@canvas/hooks/useReactPaint'
-import Editor from '@editor/index'
-import Canvas from '@canvas/index'
-
-const ReactPaintWrapper = (args: Parameters<typeof useReactPaint>[0]) => {
-	const props = useReactPaint(args)
-
-	return (
-		<Editor hookProps={props}>
-			<Canvas {...props} />
-		</Editor>
-	)
-}
+import { Canvas, Editor, useReactPaint } from '../src/index'
 
 const Customizer = () => {
 	const widthRef = useRef<HTMLInputElement>(null)
