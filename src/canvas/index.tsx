@@ -8,16 +8,16 @@ import type { UseReactPaintReturnType } from '@canvas/hooks/useReactPaint'
 import './index.css'
 import { DEFAULT_CANVAS_OPTIONS } from '@canvas/constants/app'
 
-type AppProps = UseReactPaintReturnType & {
+type AppProps = {
+	canvasProps: UseReactPaintReturnType
 	className?: string
 	style?: CSSProperties
 	options?: {
 		canvasBackgroundColor?: string
 	}
 }
-const App = ({ options, className = '', ...props }: AppProps) => {
+const App = ({ options, className, style, canvasProps }: AppProps) => {
 	const {
-		style,
 		shapesRef,
 		selectedShape,
 		selectionFrame,
@@ -52,7 +52,7 @@ const App = ({ options, className = '', ...props }: AppProps) => {
 			canGrow,
 			canShrink
 		}
-	} = props
+	} = canvasProps
 
 	const { canvasBackgroundColor } = {
 		...DEFAULT_CANVAS_OPTIONS,
@@ -104,7 +104,7 @@ const App = ({ options, className = '', ...props }: AppProps) => {
 	return (
 		<div
 			ref={containerRef}
-			className={`${className} react-paint-app-row`}
+			className={`react-paint-app-row${className ? ` ${className}` : ''}`}
 			data-grow={canGrow}
 			data-shrink={canShrink}
 			style={{

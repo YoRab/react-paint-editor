@@ -8,8 +8,8 @@ const ReactPaintWrapper = (args: Parameters<typeof useReactPaint>[0]) => {
 	const props = useReactPaint(args)
 
 	return (
-		<Editor hookProps={props}>
-			<Canvas {...props} />
+		<Editor editorProps={props}>
+			<Canvas canvasProps={props} />
 		</Editor>
 	)
 }

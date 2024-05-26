@@ -1,4 +1,4 @@
-import React, { ReactNode, useCallback, useState } from 'react'
+import React, { CSSProperties, ReactNode, useCallback, useState } from 'react'
 import Loading from '@editor/components/common/Loading'
 import { SELECTION_TOOL } from '@editor/constants/tools'
 import useSnackbar from '@editor/hooks/useSnackbar'
@@ -13,8 +13,9 @@ import { GridLabelType, GridValues } from '@editor/constants/grid'
 import { DEFAULT_EDITOR_OPTIONS } from '@editor/constants/options'
 
 type EditorProps = {
-	hookProps: UseReactPaintReturnType
+	editorProps: UseReactPaintReturnType
 	className?: string
+	style?: CSSProperties
 	children: ReactNode
 	options?: {
 		toolbarBackgroundColor?: string
@@ -31,7 +32,7 @@ type EditorProps = {
 	}
 }
 
-const Editor = ({ hookProps, className = '', options, children }: EditorProps) => {
+const Editor = ({ editorProps, className, style, options, children }: EditorProps) => {
 	const {
 		shapesRef,
 		addPictureShape,
@@ -66,7 +67,7 @@ const Editor = ({ hookProps, className = '', options, children }: EditorProps) =
 		clearCanvas,
 		settings,
 		canvas: { canGrow, layersManipulation, withExport, withLoadAndSave, withUploadPicture, withUrlPicture }
-	} = hookProps
+	} = editorProps
 
 	const {
 		toolbarBackgroundColor,
@@ -181,7 +182,7 @@ const Editor = ({ hookProps, className = '', options, children }: EditorProps) =
 		[addPictureShape, selectShape, addSnackbar, width, height]
 	)
 
-	const appClassName = `${className}${isLayoutPanelShown ? ' react-paint-editor-layout-opened' : ''} react-paint-editor-app`
+	const appClassName = `${className ? `${className} ` : ''}${isLayoutPanelShown ? 'react-paint-editor-layout-opened ' : ''}react-paint-editor-app`
 
 	return (
 		<div
@@ -199,7 +200,8 @@ const Editor = ({ hookProps, className = '', options, children }: EditorProps) =
 				'--react-paint-editor-app-font-selected-color': fontSelectedColor,
 				'--react-paint-editor-app-font-selected-bg': fontSelectedBackgroundColor,
 				'--react-paint-editor-app-font-hover-color': fontHoverColor,
-				'--react-paint-editor-app-font-hover-bg': fontHoverBackgroundColor
+				'--react-paint-editor-app-font-hover-bg': fontHoverBackgroundColor,
+				...style
 			}}
 		>
 			{isEditMode && (

@@ -191,8 +191,8 @@ const Customizer = () => {
 					Update style
 				</button>
 			</div>
-			<Editor hookProps={props} options={editorOptions}>
-				<Canvas {...props} options={canvasOptions} />
+			<Editor editorProps={props} options={editorOptions}>
+				<Canvas canvasProps={props} options={canvasOptions} />
 			</Editor>
 		</>
 	)
