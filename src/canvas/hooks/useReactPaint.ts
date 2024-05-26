@@ -72,7 +72,6 @@ const useReactPaint = ({
 	})
 
 	const [canvasOffset, setCanvasOffset] = useState<Point>([0, 0])
-	const [canvasOffsetStartPosition, setCanvasOffsetStartPosition] = useState<Point | undefined>(undefined)
 
 	const settings: UtilsSettings = useMemo(
 		() => ({
