@@ -12,7 +12,7 @@
 		".": {
 			"import": "./dist/react-paint.js",
 			"require": "./dist/react-paint.umd.cjs",
-			"types": "./dist/components/App.d.ts"
+			"types": "./dist/index.d.ts"
 		},
 		"./react-paint.css": "./dist/react-paint.css"
 	},
@@ -45,12 +45,13 @@
 		"react-dom": "18.x"
 	},
 	"scripts": {
-		"declarationfiles": "npx tsc --project tsconfig.prod.json",
+		"declarationfiles": "npx tsc --project tsconfig.prod.json && node fixDtsPath.js",
 		"start": "storybook dev -p 6006",
 		"build-storybook": "storybook build",
 		"test": "echo \"Error: no test specified\" && exit 1",
 		"build": "vite build && npm run declarationfiles",
 		"lint": "npx @biomejs/biome check --apply src stories",
-		"publishnpm": "npm run build && npm publish --access public"
+		"prepublishOnly": "npm run build",
+		"publishnpm": "npm publish --access public"
 	}
 }

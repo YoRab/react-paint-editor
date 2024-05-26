@@ -1,23 +1,9 @@
 {
+  "extends": "./tsconfig.prod.json",
   "compilerOptions": {
-    "target": "es2020",
-    "lib": [
-      "dom",
-      "dom.iterable",
-      "esnext"
-    ],
-    "baseUrl": ".",
-    "skipLibCheck": true,
+    "declaration": false,
     "noEmit": true,
-    "esModuleInterop": true,
-    "allowSyntheticDefaultImports": true,
-    "strict": true,
-    "forceConsistentCasingInFileNames": true,
-    "noFallthroughCasesInSwitch": true,
-    "module": "esnext",
-    "moduleResolution": "node",
-    "resolveJsonModule": true,
-    "jsx": "react"
+    "emitDeclarationOnly": false,
   },
   "include": [
     "src",

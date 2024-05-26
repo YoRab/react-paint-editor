@@ -1,0 +1,154 @@
+import React, { CSSProperties, useCallback, useRef, useState } from 'react'
+import useKeyboard from '@canvas/hooks/useKeyboard'
+import useResizeObserver from '@canvas/hooks/useResizeObserver'
+import type { SelectionModeData } from '@common/types/Mode'
+import type { Point, ShapeEntity } from '@common/types/Shapes'
+import Canvas from '@canvas/components/Canvas'
+import type { UseReactPaintReturnType } from '@canvas/hooks/useReactPaint'
+import './index.css'
+import { DEFAULT_CANVAS_OPTIONS } from '@canvas/constants/app'
+
+type AppProps = {
+	canvasProps: UseReactPaintReturnType
+	className?: string
+	style?: CSSProperties
+	options?: {
+		canvasBackgroundColor?: string
+	}
+}
+const App = ({ options, className, style, canvasProps }: AppProps) => {
+	const {
+		shapesRef,
+		selectedShape,
+		selectionFrame,
+		hoveredShape,
+		addShape,
+		setSelectedShape,
+		setSelectionFrame,
+		refreshSelectedShapes,
+		refreshHoveredShape,
+		removeShape,
+		updateShape,
+		backwardShape,
+		forwardShape,
+		saveShapes,
+		refs,
+		width,
+		height,
+		settings,
+		canvasSize,
+		setCanvasSize,
+		setCanvasOffset,
+		selectShape,
+		activeTool,
+		setActiveTool,
+		isInsideComponent,
+		isEditMode,
+		isDisabled,
+		canvas: {
+			selection: { canvasSelectionColor, canvasSelectionWidth },
+			withSkeleton,
+			withFrameSelection,
+			canGrow,
+			canShrink
+		}
+	} = canvasProps
+
+	const { canvasBackgroundColor } = {
+		...DEFAULT_CANVAS_OPTIONS,
+		...options
+	}
+
+	const containerRef = useRef<HTMLDivElement>(null)
+
+	const [canvasOffsetStartPosition, setCanvasOffsetStartPosition] = useState<Point | undefined>(undefined)
+
+	const [selectionMode, setSelectionMode] = useState<SelectionModeData<Point | number>>({
+		mode: 'default'
+	})
+
+	const [isShiftPressed, setShiftPressed] = useState<boolean>(false)
+
+	const pasteShape = useCallback(
+		(shape: ShapeEntity) => {
+			addShape(shape)
+			selectShape(shape)
+		},
+		[addShape, selectShape]
+	)
+
+	const onResized = useCallback(
+		(measuredWidth: number) => {
+			const scaleRatio = measuredWidth / width
+			setCanvasSize({ width: measuredWidth, height: height * scaleRatio, scaleRatio })
+		},
+		[width, height, setCanvasSize]
+	)
+
+	useKeyboard({
+		isInsideComponent,
+		isEditingText: selectionMode.mode === 'textedition',
+		settings,
+		selectedShape,
+		setSelectedShape,
+		removeShape,
+		pasteShape,
+		updateShape,
+		backwardShape,
+		forwardShape,
+		setShiftPressed
+	})
+
+	useResizeObserver({ element: containerRef, onResized })
+
+	return (
+		<div
+			ref={containerRef}
+			className={`react-paint-app-row${className ? ` ${className}` : ''}`}
+			data-grow={canGrow}
+			data-shrink={canShrink}
+			style={{
+				'--react-paint-app-row-width': canvasSize.width,
+				'--react-paint-app-canvaswidth': `${width}px`,
+				'--react-paint-app-row-aspectratio': `calc(${canvasSize.width} / ${canvasSize.height})`,
+				'--react-paint-app-canvas-bg': canvasBackgroundColor,
+				...style
+			}}
+		>
+			<Canvas
+				ref={refs.canvas}
+				canGrow={canGrow}
+				disabled={isDisabled}
+				isInsideComponent={isInsideComponent}
+				activeTool={activeTool}
+				setActiveTool={setActiveTool}
+				canvasOffsetStartPosition={canvasOffsetStartPosition}
+				setCanvasOffsetStartPosition={setCanvasOffsetStartPosition}
+				shapes={shapesRef.current}
+				addShape={addShape}
+				updateSingleShape={updateShape}
+				selectedShape={selectedShape}
+				selectionFrame={selectionFrame}
+				setSelectedShape={setSelectedShape}
+				setSelectionFrame={setSelectionFrame}
+				hoveredShape={hoveredShape}
+				refreshHoveredShape={refreshHoveredShape}
+				refreshSelectedShapes={refreshSelectedShapes}
+				settings={settings}
+				setCanvasOffset={setCanvasOffset}
+				saveShapes={saveShapes}
+				canvasSize={canvasSize}
+				selectionMode={selectionMode}
+				setSelectionMode={setSelectionMode}
+				selectionColor={canvasSelectionColor}
+				selectionWidth={canvasSelectionWidth}
+				isEditMode={isEditMode}
+				isShiftPressed={isShiftPressed}
+				withFrameSelection={withFrameSelection}
+				withSkeleton={withSkeleton}
+			/>
+		</div>
+	)
+}
+
+export default App

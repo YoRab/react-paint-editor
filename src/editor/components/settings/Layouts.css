@@ -1,0 +1,135 @@
+.react-paint-editor-layouts {
+    display: inline-block;
+    background: var(--react-paint-editor-app-toolbar-bg);
+    box-sizing: border-box;
+    overflow-y: auto;
+    min-width: 200px;
+}
+
+.react-paint-editor-layouts-remove-button.react-paint-editor-layouts-remove-button {
+    margin: 2px 0;
+}
+
+.react-paint-editor-layouts-remove-button.react-paint-editor-layouts-remove-button:not(:hover) {
+    opacity: 0.2;
+}
+
+.react-paint-editor-layout {
+    border: 3px solid transparent;
+    padding: 4px 0px;
+    position: relative;
+    background: var(--react-paint-editor-app-toolbar-bg);
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.react-paint-editor-layout[data-is-over='1'] {
+    border: 3px dotted var(--react-paint-editor-app-font-hover-bg);
+}
+
+.react-paint-editor-layout[data-is-dragging='1'] {
+    opacity: 0.4;
+}
+
+.react-paint-editor-layout[data-selected='1'] {
+    color: var(--react-paint-editor-app-font-selected-color);
+    background: var(--react-paint-editor-app-font-selected-bg);
+}
+
+
+.react-paint-editor-layout[data-selected='1'] .react-paint-editor-layouts-remove-button {
+    color: white;
+}
+
+.react-paint-editor-layout[data-selected='0'][data-disabled='0'] {
+    background: var(--react-paint-editor-app-font-bg);
+    color: var(--react-paint-editor-app-font-color);
+}
+
+.react-paint-editor-layout[data-selected='0'][data-disabled='0']:hover {
+    color: var(--react-paint-editor-app-font-hover-color);
+    background: var(--react-paint-editor-app-font-hover-bg);
+}
+
+.react-paint-editor-layout[data-disabled='1'] {
+    cursor: default;
+    color: var(--react-paint-editor-app-font-disabled-color);
+    background: var(--react-paint-editor-app-font-disabled-bg);
+}
+
+.react-paint-editor-layout[data-disabled='0'] {
+    cursor: move;
+}
+
+.react-paint-editor-layout>span {
+    height: 20px;
+    line-height: 1;
+    color: #8a8a8a;
+}
+
+.react-paint-editor-layout>span>svg {
+    fill: #8a8a8a;
+    width: 20px;
+    height: 20px;
+    padding: 0 4px;
+    transform: scale(0.75);
+}
+
+.react-paint-editor-layouts-visible-button.react-paint-editor-layouts-visible-button {
+    margin: 2px 0;
+}
+
+.react-paint-editor-layouts-visible-button.react-paint-editor-layouts-visible-button[data-visible='false'] {
+    opacity: 0.2;
+}
+
+.react-paint-editor-layouts-locked-button.react-paint-editor-layouts-locked-button {
+    margin: 2px 0;
+}
+
+.react-paint-editor-layouts-locked-button.react-paint-editor-layouts-locked-button[data-locked='false'] {
+    opacity: 0.2;
+}
+
+.react-paint-editor-layouts-grid-button.react-paint-editor-layouts-grid-button span {
+    justify-content: center;
+}
+
+.react-paint-editor-layouts-subtitle {
+    min-width: 60px;
+    font-weight: bold;
+}
+
+.react-paint-editor-layouts-separator {
+    flex: 1;
+}
+
+.react-paint-editor-layouts-panel.react-paint-editor-layouts-panel.react-paint-editor-layouts-panel {
+    bottom: 36px;
+    top: unset;
+}
+
+.react-paint-editor-layouts-panel-content {
+    display: flex;
+    flex-direction: column;
+    max-height: 100%;
+}
+
+.react-paint-editor-layouts-scrolling-content {
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+}
+
+.react-paint-editor-layouts-row {
+    display: flex;
+    align-items: center;
+}
+
+.react-paint-editor-layouts-placeholder {
+    opacity: 0.6;
+    text-align: center;
+    padding: 12px 0px;
+}

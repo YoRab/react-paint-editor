@@ -1,5 +1,5 @@
 import React, { useRef, useState } from 'react'
-import App from '../src/components/App'
+import { Canvas, Editor, useReactPaint } from '../src/index'
 
 const Customizer = () => {
 	const widthRef = useRef<HTMLInputElement>(null)
@@ -64,6 +64,39 @@ const Customizer = () => {
 		canvasSelectionPaddingRef.current && setcanvasSelectionPadding(+canvasSelectionPaddingRef.current.value)
 	}
 
+	const props = useReactPaint({
+		width,
+		height,
+		options: {
+			canGrow: isGrowing,
+			canShrink: isShrinkable,
+			brushAlgo: quadraticBrush ? 'quadratic' : 'simple',
+			selection: {
+				canvasSelectionColor,
+				canvasSelectionWidth,
+				canvasSelectionPadding
+			}
+		}
+	})
+
+	const editorOptions = {
+		toolbarBackgroundColor,
+		dividerColor,
+		fontRadius,
+		fontDisabledColor,
+		fontDisabledBackgroundColor,
+		fontColor,
+		fontBackgroundColor,
+		fontSelectedColor,
+		fontSelectedBackgroundColor,
+		fontHoverColor,
+		fontHoverBackgroundColor
+	}
+
+	const canvasOptions = {
+		canvasBackgroundColor
+	}
+
 	return (
 		<>
 			<div>
@@ -73,7 +106,9 @@ const Customizer = () => {
 				<label>
 					Canvas Height : <input type='number' defaultValue={height} ref={heightRef} />
 				</label>
-				<button onClick={updateSize}>Update size</button>
+				<button type='button' onClick={updateSize}>
+					Update size
+				</button>
 			</div>
 			<div>
 				<label>
@@ -152,34 +187,13 @@ const Customizer = () => {
 					Font hover BG color :
 					<input type='color' defaultValue={fontHoverBackgroundColor} ref={fontHoverBackgroundColorRef} />
 				</label>
-				<button onClick={updateStyle}>Update style</button>
+				<button type='button' onClick={updateStyle}>
+					Update style
+				</button>
 			</div>
-			<App
-				width={width}
-				height={height}
-				options={{
-					canGrow: isGrowing,
-					canShrink: isShrinkable,
-					brushAlgo: quadraticBrush ? 'quadratic' : 'simple',
-					uiStyle: {
-						toolbarBackgroundColor,
-						dividerColor,
-						fontRadius,
-						fontDisabledColor,
-						fontDisabledBackgroundColor,
-						fontColor,
-						fontBackgroundColor,
-						fontSelectedColor,
-						fontSelectedBackgroundColor,
-						fontHoverColor,
-						fontHoverBackgroundColor,
-						canvasBackgroundColor,
-						canvasSelectionColor,
-						canvasSelectionWidth,
-						canvasSelectionPadding
-					}
-				}}
-			/>
+			<Editor editorProps={props} options={editorOptions}>
+				<Canvas canvasProps={props} options={canvasOptions} />
+			</Editor>
 		</>
 	)
 }

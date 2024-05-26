@@ -10,7 +10,7 @@
     "skipLibCheck": true,
     "declaration": true,
     "emitDeclarationOnly": true,
-    "outDir": "dist",
+    "outDir": "declarationfiles",
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
     "strict": true,
@@ -19,7 +19,18 @@
     "module": "esnext",
     "moduleResolution": "node",
     "resolveJsonModule": true,
-    "jsx": "react"
+    "jsx": "react",
+    "paths": {
+      "@editor/*": [
+        "src/editor/*"
+      ],
+      "@canvas/*": [
+        "src/canvas/*"
+      ],
+      "@common/*": [
+        "src/common/*"
+      ]
+    }
   },
   "include": [
     "src"
