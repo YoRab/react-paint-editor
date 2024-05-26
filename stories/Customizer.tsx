@@ -22,6 +22,7 @@ const Customizer = () => {
 
 	const [width, setWidth] = useState(500)
 	const [height, setHeight] = useState(250)
+	const [quadraticBrush, setQuadraticBrush] = useState(false)
 	const [isShrinkable, setIsShrinkable] = useState(true)
 	const [isGrowing, setisGrowing] = useState(false)
 	const [toolbarBackgroundColor, settoolbarBackgroundColor] = useState<string>('#ffffff')
@@ -82,6 +83,12 @@ const Customizer = () => {
 				<label>
 					Can container grow :
 					<input type='checkbox' checked={isGrowing} onChange={e => setisGrowing(e.currentTarget.checked)} />
+				</label>
+			</div>
+			<div>
+				<label>
+					Use quadratic brush :
+					<input type='checkbox' checked={quadraticBrush} onChange={e => setQuadraticBrush(e.currentTarget.checked)} />
 				</label>
 			</div>
 			<div>
@@ -153,6 +160,7 @@ const Customizer = () => {
 				options={{
 					canGrow: isGrowing,
 					canShrink: isShrinkable,
+					brushAlgo: quadraticBrush ? 'quadratic' : 'simple',
 					uiStyle: {
 						toolbarBackgroundColor,
 						dividerColor,

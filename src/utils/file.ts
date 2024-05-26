@@ -6,6 +6,7 @@ import { compact } from '../utils/array'
 import { initCanvasContext } from './canvas'
 import { addDefaultAndTempShapeProps, buildDataToExport } from './data'
 import { drawShape } from './shapes'
+import { set } from '../utils/object'
 
 export const addSizeAndConvertSvgToObjectUrl = (svgFileContent: string) => {
 	const parser = new DOMParser()
@@ -74,7 +75,7 @@ export const getCanvasImage = (shapes: DrawableShape[], width: number, height: n
 	ctx.clearRect(0, 0, width, height)
 	initCanvasContext(ctx)
 	for (let i = shapes.length - 1; i >= 0; i--) {
-		drawShape(ctx, shapes[i], settings)
+		drawShape(ctx, shapes[i], set(['canvasSize', 'scaleRatio'], 1, settings))
 	}
 	return newCanvas.toDataURL('image/png')
 }
