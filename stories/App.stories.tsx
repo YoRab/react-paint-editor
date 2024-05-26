@@ -2,9 +2,7 @@ import React from 'react'
 import type { Meta, StoryObj } from '@storybook/react'
 import { fn } from '@storybook/test'
 import { EXAMPLE_DEFAULT } from './fixture'
-import useReactPaint from '@canvas/hooks/useReactPaint'
-import Editor from '@editor/index'
-import Canvas from '@canvas/index'
+import { Canvas, Editor, useReactPaint } from '../src/index'
 
 const ReactPaintWrapper = (args: Parameters<typeof useReactPaint>[0]) => {
 	const props = useReactPaint(args)

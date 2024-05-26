@@ -12,7 +12,7 @@
 		".": {
 			"import": "./dist/react-paint.js",
 			"require": "./dist/react-paint.umd.cjs",
-			"types": "./dist/components/App.d.ts"
+			"types": "./dist/index.d.ts"
 		},
 		"./react-paint.css": "./dist/react-paint.css"
 	},
