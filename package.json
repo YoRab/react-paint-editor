@@ -45,13 +45,13 @@
     "react-dom": "18.x"
   },
   "scripts": {
-    "declarationfiles": "npx tsc --project tsconfig.prod.json && node fixDtsPath.js",
+    "declarationfiles": "pnpm tsc --project tsconfig.prod.json && node fixDtsPath.js",
     "start": "storybook dev -p 6006",
     "build-storybook": "storybook build",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "vite build && npm run declarationfiles",
-    "lint": "npx @biomejs/biome check --apply src stories",
-    "prepublishOnly": "npm run build",
-    "publishnpm": "npm publish --access public"
+    "build": "vite build && pnpm declarationfiles",
+    "lint": "pnpm biome check --apply src stories",
+    "prepublishOnly": "pnpm build",
+    "publishnpm": "pnpm publish --access public"
   }
 }
