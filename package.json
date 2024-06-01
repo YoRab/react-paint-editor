@@ -18,7 +18,7 @@
   },
   "files": ["README.md", "LICENSE.txt", "package.json", "dist/"],
   "devDependencies": {
-    "@biomejs/biome": "1.6.4",
+    "@biomejs/biome": "1.7.3",
     "@rollup/plugin-terser": "0.4.4",
     "@storybook/addon-essentials": "7.6.3",
     "@storybook/addon-interactions": "7.6.3",
