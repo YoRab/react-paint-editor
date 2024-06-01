@@ -1,11 +1,7 @@
 {
   "compilerOptions": {
     "target": "es2020",
-    "lib": [
-      "dom",
-      "dom.iterable",
-      "esnext"
-    ],
+    "lib": ["dom", "dom.iterable", "esnext"],
     "baseUrl": ".",
     "skipLibCheck": true,
     "declaration": true,
@@ -19,20 +15,12 @@
     "module": "esnext",
     "moduleResolution": "node",
     "resolveJsonModule": true,
-    "jsx": "react",
+    "jsx": "react-jsx",
     "paths": {
-      "@editor/*": [
-        "src/editor/*"
-      ],
-      "@canvas/*": [
-        "src/canvas/*"
-      ],
-      "@common/*": [
-        "src/common/*"
-      ]
+      "@editor/*": ["src/editor/*"],
+      "@canvas/*": ["src/canvas/*"],
+      "@common/*": ["src/common/*"]
     }
   },
-  "include": [
-    "src"
-  ]
+  "include": ["src"]
 }
