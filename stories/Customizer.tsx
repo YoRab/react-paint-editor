@@ -64,7 +64,7 @@ const Customizer = () => {
     canvasSelectionPaddingRef.current && setcanvasSelectionPadding(+canvasSelectionPaddingRef.current.value)
   }
 
-  const props = useReactPaint({
+  const { editorProps, canvasProps } = useReactPaint({
     width,
     height,
     options: {
@@ -191,8 +191,8 @@ const Customizer = () => {
           Update style
         </button>
       </div>
-      <Editor editorProps={props} options={editorOptions}>
-        <Canvas canvasProps={props} options={canvasOptions} />
+      <Editor editorProps={editorProps} options={editorOptions}>
+        <Canvas canvasProps={canvasProps} options={canvasOptions} />
       </Editor>
     </>
   )

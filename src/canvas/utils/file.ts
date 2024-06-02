@@ -1,7 +1,7 @@
 import type { UtilsSettings } from '@canvas/constants/app'
 import { PICTURE_DEFAULT_SIZE } from '@canvas/constants/picture'
 import { ShapeTypeArray } from '@canvas/constants/shapes'
-import type { DrawableShape, ExportDataType, ShapeEntity } from '@common/types/Shapes'
+import type { DrawableShape, ShapeEntity } from '@common/types/Shapes'
 import { compact } from '@common/utils/array'
 import { set } from '@common/utils/object'
 import { initCanvasContext } from './canvas'
@@ -98,12 +98,12 @@ export const decodeJson = async (file: File) => {
   })
 }
 
-export const decodeImportedData = async (shapesForJson: ExportDataType, settings: UtilsSettings) => {
-  if (!shapesForJson.shapes) return []
+export const decodeImportedData = async (shapesForJson: DrawableShape[], settings: UtilsSettings) => {
+  if (!shapesForJson) return []
   const promisesArray: Promise<void>[] = []
 
   const shapes: ShapeEntity[] = compact(
-    shapesForJson.shapes.map(shape => {
+    shapesForJson.map(shape => {
       if (!shape || !ShapeTypeArray.includes(shape.type)) return null
       if (shape.type === 'picture') {
         const img = new Image()

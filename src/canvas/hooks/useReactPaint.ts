@@ -1,10 +1,10 @@
-import { DEFAULT_OPTIONS, type OptionalAppOptionsType, type UtilsSettings } from '@canvas/constants/app'
+import { DEFAULT_OPTIONS, type OptionalOptions, type UtilsSettings } from '@canvas/constants/app'
 import useComponent from '@canvas/hooks/useComponent'
 import useShapes from '@canvas/hooks/useShapes'
 import { buildDataToExport } from '@canvas/utils/data'
 import { decodeImportedData, decodeJson, downloadFile, encodeShapesInString, getCanvasImage } from '@canvas/utils/file'
 import { sanitizeTools } from '@canvas/utils/tools'
-import type { DrawableShapeJson, ExportDataType, Point, ShapeEntity } from '@common/types/Shapes'
+import type { DrawableShape, StateData, Point, ShapeEntity } from '@common/types/Shapes'
 import type { ToolsType } from '@common/types/tools'
 import { SELECTION_TOOL } from '@editor/constants/tools'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
@@ -12,11 +12,10 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 type UseReactPaintProps = {
   width?: number
   height?: number
-  shapes?: DrawableShapeJson[]
-  onDataChanged?: () => void
+  shapes?: DrawableShape[]
   mode?: 'editor' | 'viewer'
   disabled?: boolean
-  options?: OptionalAppOptionsType
+  options?: OptionalOptions
 }
 
 const useReactPaint = ({
@@ -25,7 +24,6 @@ const useReactPaint = ({
   shapes: shapesFromProps,
   mode = 'editor',
   disabled = false,
-  onDataChanged,
   options = DEFAULT_OPTIONS
 }: UseReactPaintProps) => {
   const {
@@ -57,6 +55,7 @@ const useReactPaint = ({
 
   const editorRef = useRef<HTMLElement | null>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
+  const [init, setInit] = useState(false)
 
   const setEditor = useCallback((node: HTMLElement | null) => {
     editorRef.current = node
@@ -92,6 +91,8 @@ const useReactPaint = ({
   })
 
   const {
+    registerEvent,
+    unregisterEvent,
     shapesRef,
     selectedShape,
     selectionFrame,
@@ -114,7 +115,7 @@ const useReactPaint = ({
     canGoBackward,
     canGoForward,
     canClear
-  } = useShapes(onDataChanged, settings)
+  } = useShapes(settings)
 
   const selectTool = useCallback(
     (tool: ToolsType) => {
@@ -124,7 +125,7 @@ const useReactPaint = ({
     [setSelectedShape]
   )
 
-  const resetCanvas = useCallback(
+  const resetCanvasWithShapeEntity = useCallback(
     (shapesToInit: ShapeEntity[] = [], clearHistory = false) => {
       clearShapes(shapesToInit, clearHistory)
       selectTool(SELECTION_TOOL)
@@ -169,117 +170,142 @@ const useReactPaint = ({
     if (!isInsideComponent) setSelectedShape(undefined)
   }, [isInsideComponent, setSelectedShape])
 
-  const loadImportedData = useCallback(
-    async (json: ExportDataType, clearHistory = true) => {
+  const resetCanvas = useCallback(
+    async (json: DrawableShape[], clearHistory = true) => {
       const shapes = await decodeImportedData(json, settings)
-      resetCanvas(shapes, clearHistory)
+      resetCanvasWithShapeEntity(shapes, clearHistory)
     },
-    [resetCanvas, settings]
+    [resetCanvasWithShapeEntity, settings]
   )
+
+  if (!init && shapesFromProps !== undefined) {
+    setInit(true)
+    resetCanvas(shapesFromProps)
+  }
 
   const loadFile = useCallback(
     async (file: File) => {
       const json = await decodeJson(file)
-      await loadImportedData(json as ExportDataType)
+      await resetCanvas((json as StateData).shapes ?? [])
     },
-    [loadImportedData]
+    [resetCanvas]
   )
 
   const clearCanvas = useCallback(() => {
     if (typeof clearCallback !== 'string') {
-      void loadImportedData({ shapes: clearCallback() } as ExportDataType, false)
+      void resetCanvas(clearCallback(), false)
     } else {
       if (clearCallback === 'defaultShapes' && shapesFromProps !== undefined) {
-        void loadImportedData({ shapes: shapesFromProps } as ExportDataType, false)
+        void resetCanvas(shapesFromProps, false)
       } else {
-        resetCanvas()
+        resetCanvasWithShapeEntity()
       }
     }
-  }, [resetCanvas, loadImportedData, shapesFromProps, clearCallback])
-
-  //TODO: temporary hack. Need to be fixed when rewriting api
-  const loadImportedDataRef = useRef(loadImportedData)
-  loadImportedDataRef.current = loadImportedData
-
-  useEffect(() => {
-    if (shapesFromProps !== undefined) {
-      void loadImportedDataRef.current({ shapes: shapesFromProps } as ExportDataType)
-    }
-  }, [shapesFromProps])
+  }, [resetCanvasWithShapeEntity, resetCanvas, shapesFromProps, clearCallback])
 
   useEffect(() => {
     setAvailableTools(sanitizeTools(availableToolsFromProps, withUploadPicture || withUrlPicture))
   }, [availableToolsFromProps, withUploadPicture, withUrlPicture])
 
+  const refs = {
+    canvas: canvasRef,
+    editor: editorRef,
+    setEditor
+  }
+
   return {
-    shapesRef,
-    addPictureShape,
-    moveShapes,
-    toggleShapeVisibility,
-    toggleShapeLock,
-    canGoBackward,
-    canGoForward,
-    canClear,
-    selectedShape,
-    selectionFrame,
-    hoveredShape,
-    addShape,
-    setSelectedShape,
-    setSelectionFrame,
-    refreshSelectedShapes,
-    refreshHoveredShape,
-    removeShape,
-    updateShape,
-    backwardShape,
-    forwardShape,
-    clearShapes,
-    saveShapes,
-    loadFile,
-    exportData,
-    exportPicture,
-    clearCanvas,
-    refs: {
-      canvas: canvasRef,
-      editor: editorRef,
-      setEditor
+    editorProps: {
+      shapesRef,
+      addPictureShape,
+      moveShapes,
+      toggleShapeVisibility,
+      toggleShapeLock,
+      canGoBackward,
+      canGoForward,
+      canClear,
+      selectedShape,
+      removeShape,
+      updateShape,
+      backwardShape,
+      forwardShape,
+      refs,
+      width,
+      height,
+      canvasSize,
+      selectTool,
+      selectShape,
+      activeTool,
+      setActiveTool,
+      setAvailableTools,
+      isEditMode,
+      isDisabled,
+      availableTools,
+      gridGap,
+      setGridGap,
+      loadFile,
+      exportPicture,
+      exportData,
+      clearCanvas,
+      settings,
+      canvas: {
+        selection: {
+          canvasSelectionColor,
+          canvasSelectionWidth,
+          canvasSelectionPadding
+        },
+        withSkeleton,
+        withFrameSelection,
+        canGrow,
+        canShrink,
+        layersManipulation,
+        withExport,
+        withLoadAndSave,
+        withUploadPicture,
+        withUrlPicture,
+        clearCallback
+      }
     },
-    width,
-    height,
-    canvasOffset,
-    canvasSize,
-    setCanvasSize,
-    setCanvasOffset,
-    selectTool,
+    canvasProps: {
+      shapesRef,
+      selectedShape,
+      selectionFrame,
+      hoveredShape,
+      addShape,
+      setSelectedShape,
+      setSelectionFrame,
+      refreshSelectedShapes,
+      refreshHoveredShape,
+      removeShape,
+      updateShape,
+      backwardShape,
+      forwardShape,
+      saveShapes,
+      refs,
+      width,
+      height,
+      settings,
+      canvasSize,
+      setCanvasSize,
+      setCanvasOffset,
+      selectShape,
+      activeTool,
+      setActiveTool,
+      isInsideComponent,
+      isEditMode,
+      isDisabled,
+      canvas: {
+        selection: { canvasSelectionColor, canvasSelectionWidth },
+        withSkeleton,
+        withFrameSelection,
+        canGrow,
+        canShrink
+      }
+    },
+    registerEvent,
+    unregisterEvent,
     resetCanvas,
-    selectShape,
-    activeTool,
-    setActiveTool,
-    isInsideComponent,
-    isEditMode,
-    isDisabled,
-    availableTools,
-    setAvailableTools,
-    settings,
-    api: { getCurrentImage, getCurrentData },
-    gridGap,
-    setGridGap,
-    canvas: {
-      selection: {
-        canvasSelectionColor,
-        canvasSelectionWidth,
-        canvasSelectionPadding
-      },
-      withSkeleton,
-      withFrameSelection,
-      canGrow,
-      canShrink,
-      layersManipulation,
-      withExport,
-      withLoadAndSave,
-      withUploadPicture,
-      withUrlPicture,
-      clearCallback
-    }
+    getCurrentImage,
+    getCurrentData
   }
 }
 

@@ -1,4 +1,4 @@
-import type { DrawableShapeJson, Point } from '@common/types/Shapes'
+import type { DrawableShape, Point } from '@common/types/Shapes'
 import type { CustomToolInput } from '@common/types/tools'
 import type { RecursivePartial } from '@common/types/utils'
 import { DEFAULT_SHAPE_TOOLS } from '@editor/constants/tools'
@@ -34,7 +34,7 @@ type AppOptionsType = {
   withUrlPicture: boolean
   withFrameSelection: boolean
   withSkeleton: boolean
-  clearCallback: 'empty' | 'defaultShapes' | (() => DrawableShapeJson[])
+  clearCallback: 'empty' | 'defaultShapes' | (() => DrawableShape[])
   brushAlgo: BrushAlgo
   selection: {
     canvasSelectionColor: string
@@ -43,7 +43,7 @@ type AppOptionsType = {
   }
 }
 
-export type OptionalAppOptionsType = RecursivePartial<AppOptionsType>
+export type OptionalOptions = RecursivePartial<AppOptionsType>
 
 export const DEFAULT_OPTIONS: AppOptionsType = {
   layersManipulation: true,
