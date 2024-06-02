@@ -1,3 +1,22 @@
+# V0.10.1
+- fix story
+- factorize options bc too much prop drilling
+- add option to use quadratic brush
+
+# V0.10.0
+- fix anchor position and selection with grown canvas
+- improve shape selection for tiny shapes
+- improve shape selection with touch gesture
+- add selection insight when hovering curosr
+- fix hovering calculation
+- fix polygon translation with grid
+- improve line with arrows now stopping at the correct position
+- fix : arrow shapes now omitted from data export
+- fix performance issue with line dash
+- add selection frame (disabled bc does not support multi shapes right now)
+ - BREAKING CHANGE : drop support of 0.6.5 (translation prop no more supported)
+
+
 # V0.9.3
  - Remove lodash from dependencies
  - minify esm build
