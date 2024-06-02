@@ -9,7 +9,7 @@ import React, { type CSSProperties, useCallback, useRef, useState } from 'react'
 import './index.css'
 
 type AppProps = {
-  canvasProps: UseReactPaintReturnType
+  canvasProps: UseReactPaintReturnType['canvasProps']
   className?: string
   style?: CSSProperties
   options?: {

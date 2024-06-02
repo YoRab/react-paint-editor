@@ -1,16 +1,16 @@
 import { DRAWCANVAS_CLASSNAME, SELECTIONCANVAS_CLASSNAME, type UtilsSettings } from '@canvas/constants/app'
 import { PICTURE_DEFAULT_SIZE } from '@canvas/constants/picture'
+import { buildDataToExport } from '@canvas/utils/data'
 import { checkPositionIntersection, checkSelectionFrameCollision, checkSelectionIntersection } from '@canvas/utils/intersect'
 import { refreshShape } from '@canvas/utils/shapes/index'
 import { createPicture } from '@canvas/utils/shapes/picture'
-import type { Point, ShapeEntity } from '@common/types/Shapes'
+import type { StateData, Point, ShapeEntity } from '@common/types/Shapes'
 import { isEqual, omit, set } from '@common/utils/object'
 import { useCallback, useEffect, useRef, useState } from 'react'
 
-const useShapes = (onDataChanged: (() => void) | undefined, settings: UtilsSettings) => {
+const useShapes = (settings: UtilsSettings) => {
   const shapesRef = useRef<ShapeEntity[]>([])
-  const onDataChangedRef = useRef<(() => void) | undefined>(onDataChanged)
-  onDataChangedRef.current = onDataChanged
+  const listeners = useRef<{ dataChanged: ((data: StateData) => void)[] }>({ dataChanged: [] })
 
   const [selectionFrame, setSelectionFrame] = useState<[Point, Point] | undefined>(undefined)
   const [selectedShape, setSelectedShape] = useState<ShapeEntity | undefined>(undefined)
@@ -196,10 +196,32 @@ const useShapes = (onDataChanged: (() => void) | undefined, settings: UtilsSetti
     [updateShapes]
   )
 
+  const registerEvent = useCallback((event: 'dataChanged', fn: (data: StateData) => void) => {
+    if (!Object.hasOwn(listeners.current, event)) return
+    listeners.current[event] = [...listeners.current[event], fn]
+  }, [])
+
+  const unregisterEvent = useCallback((event: 'dataChanged', fn?: (data: StateData) => void) => {
+    if (!Object.hasOwn(listeners.current, event)) return
+    if (fn) {
+      const currentFnIndex = listeners.current[event].findIndex(listener => listener === fn)
+      listeners.current[event] = [...listeners.current[event].slice(0, currentFnIndex), ...listeners.current[event].slice(currentFnIndex + 1)]
+    } else {
+      listeners.current[event] = []
+    }
+  }, [])
+
+  const {
+    canvasSize: { width, height }
+  } = settings
+
   // biome-ignore lint/correctness/useExhaustiveDependencies: function must be called everytime savedShapes is updated
   useEffect(() => {
-    onDataChangedRef.current?.()
-  }, [savedShapes])
+    const shapes = buildDataToExport(shapesRef.current, width, height)
+    for (const listener of listeners.current.dataChanged) {
+      listener(shapes)
+    }
+  }, [width, height, savedShapes])
 
   useEffect(() => {
     shapesRef.current = shapesRef.current.map(shape => refreshShape(shape, settings))
@@ -224,6 +246,8 @@ const useShapes = (onDataChanged: (() => void) | undefined, settings: UtilsSetti
   )
 
   return {
+    registerEvent,
+    unregisterEvent,
     shapesRef,
     selectedShape,
     hoveredShape,

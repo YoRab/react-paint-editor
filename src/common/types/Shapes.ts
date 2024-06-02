@@ -79,6 +79,7 @@ export type SelectionLinesType = {
 }
 
 export type DrawableShape<T extends ShapeType = ShapeType> = {
+  toolId?: string
   visible?: boolean
   locked?: boolean
   rotation: number
@@ -146,15 +147,13 @@ export type DrawableShape<T extends ShapeType = ShapeType> = {
                         }
                       : never)
 
-export type DrawableShapeJson<T extends ShapeType = ShapeType> = DrawableShape<T>
-
 export type ShapeEntity<T extends Exclude<ShapeType, 'triangle'> = Exclude<ShapeType, 'triangle'>> = {
   id: string
   toolId?: string
 } & DrawableShape<T>
 
-export type ExportDataType = {
-  shapes?: DrawableShapeJson[]
+export type StateData = {
+  shapes?: DrawableShape[]
   config?: {
     width: number
     height: number

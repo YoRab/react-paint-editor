@@ -1,15 +1,14 @@
 import type { Meta, StoryObj } from '@storybook/react'
 import { fn } from '@storybook/test'
-import React from 'react'
 import { Canvas, Editor, useReactPaint } from '../src/index'
-import { EXAMPLE_DEFAULT } from './fixture'
+import { TREE_AND_CLOUDS } from './fixture'
 
 const ReactPaintWrapper = (args: Parameters<typeof useReactPaint>[0]) => {
-  const props = useReactPaint(args)
+  const { editorProps, canvasProps } = useReactPaint(args)
 
   return (
-    <Editor editorProps={props}>
-      <Canvas canvasProps={props} />
+    <Editor editorProps={editorProps}>
+      <Canvas canvasProps={canvasProps} />
     </Editor>
   )
 }
@@ -32,15 +31,12 @@ export default meta
 type Story = StoryObj<typeof meta>
 
 export const Default: Story = {
-  args: {
-    onDataChanged: fn()
-  }
+  args: {}
 }
 
 export const FromFile: Story = {
   args: {
-    onDataChanged: fn(),
-    shapes: EXAMPLE_DEFAULT,
+    shapes: TREE_AND_CLOUDS,
     options: {
       clearCallback: 'defaultShapes'
     }
@@ -49,8 +45,7 @@ export const FromFile: Story = {
 
 export const ViewerMode: Story = {
   args: {
-    onDataChanged: fn(),
-    shapes: EXAMPLE_DEFAULT,
+    shapes: TREE_AND_CLOUDS,
     mode: 'viewer'
   }
 }

@@ -13,7 +13,7 @@ import React, { type CSSProperties, type ReactNode, useCallback, useState } from
 import './index.css'
 
 type EditorProps = {
-  editorProps: UseReactPaintReturnType
+  editorProps: UseReactPaintReturnType['editorProps']
   className?: string
   style?: CSSProperties
   children: ReactNode

@@ -1,11 +1,11 @@
 import type { UtilsSettings } from '@canvas/constants/app'
-import type { DrawableShape, DrawableShapeJson, ExportDataType, ShapeEntity } from '@common/types/Shapes'
+import type { DrawableShape, StateData, ShapeEntity } from '@common/types/Shapes'
 import { omit } from '@common/utils/object'
 import { uniqueId } from '@common/utils/util'
 import { getBase64Image } from './file'
 import { refreshShape } from './shapes'
 
-export const cleanShapesBeforeExport = (shapes: DrawableShape[]): DrawableShapeJson[] => {
+export const cleanShapesBeforeExport = (shapes: DrawableShape[]): DrawableShape[] => {
   const propsToOmit = ['img', 'id', 'selection', 'path', 'arrows']
   return shapes.map(shape => {
     if (shape.type === 'picture') {
@@ -24,7 +24,7 @@ export const buildDataToExport = (shapes: DrawableShape[], width: number, height
       width,
       height
     }
-  } as ExportDataType
+  } as StateData
 }
 
 export const addDefaultAndTempShapeProps = (shape: DrawableShape, settings: UtilsSettings) => {
