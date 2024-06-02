@@ -1,3 +1,13 @@
+# V0.11.0
+- up tooling : vite, biome, storybook, typescript, etc. 
+- start logic separation between canvas and editor
+- init new useReactPaint hook
+- fix shapes prop triggering dataChanged callback resulting in potential loop
+- fix clearCallback with custom fn breaking history stack
+- export types who might be used by client
+- init documentation in README
+- BREAKING CHANGE :new API !
+
 # V0.10.1
 - fix story
 - factorize options bc too much prop drilling
@@ -14,7 +24,7 @@
 - fix : arrow shapes now omitted from data export
 - fix performance issue with line dash
 - add selection frame (disabled bc does not support multi shapes right now)
- - BREAKING CHANGE : drop support of 0.6.5 (translation prop no more supported)
+- BREAKING CHANGE : drop support of 0.6.5 (translation prop no more supported)
 
 
 # V0.9.3
