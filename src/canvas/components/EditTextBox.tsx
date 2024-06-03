@@ -1,6 +1,5 @@
 import type { UtilsSettings } from '@canvas/constants/app'
 import { getShapeInfos } from '@canvas/utils/shapes'
-import { convertDivContentToStringArray, convertStringArrayToDivContent } from '@canvas/utils/string'
 import { radiansToDegrees, rotatePoint } from '@canvas/utils/trigo'
 import type { DrawableShape } from '@common/types/Shapes'
 import { STYLE_FONT_DEFAULT } from '@editor/constants/style'
@@ -23,7 +22,8 @@ const EditTextBox = ({ disabled = false, scaleRatio, shape, defaultValue, update
   const saveShapesRef = useRef(saveShapes)
 
   const updateContentEditable = (e: React.ChangeEvent<HTMLDivElement>) => {
-    updateValue(convertDivContentToStringArray(e.target.innerHTML))
+    const divContent = Array.from(e.target.childNodes).map(node => node.childNodes[0].nodeValue ?? '')
+    updateValue(divContent)
   }
 
   useEffect(() => {
@@ -37,7 +37,17 @@ const EditTextBox = ({ disabled = false, scaleRatio, shape, defaultValue, update
     }
 
     currentNode.addEventListener('paste', handlePaste)
-    currentNode.innerHTML = convertStringArrayToDivContent(defaultValue)
+
+    currentNode.innerText = ''
+    for (const rowValue of defaultValue) {
+      const rowDiv = document.createElement('div')
+      if (rowValue === '') {
+        rowDiv.innerHTML = '<br/>'
+      } else {
+        rowDiv.innerText = rowValue
+      }
+      currentNode.appendChild(rowDiv)
+    }
     currentNode.focus()
 
     return () => {
