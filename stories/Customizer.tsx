@@ -25,6 +25,7 @@ const Customizer = () => {
   const [quadraticBrush, setQuadraticBrush] = useState(false)
   const [isShrinkable, setIsShrinkable] = useState(true)
   const [isGrowing, setisGrowing] = useState(false)
+  const [withSkeleton, setWithSkeleton] = useState(false)
   const [toolbarBackgroundColor, settoolbarBackgroundColor] = useState<string>('#ffffff')
   const [dividerColor, setdividerColor] = useState<string>('#36418129')
   const [fontRadius, setfontRadius] = useState<number>(8)
@@ -70,6 +71,7 @@ const Customizer = () => {
     options: {
       canGrow: isGrowing,
       canShrink: isShrinkable,
+      withSkeleton,
       brushAlgo: quadraticBrush ? 'quadratic' : 'simple',
       selection: {
         canvasSelectionColor,
@@ -124,6 +126,10 @@ const Customizer = () => {
         <label>
           Use quadratic brush :
           <input type='checkbox' checked={quadraticBrush} onChange={e => setQuadraticBrush(e.currentTarget.checked)} />
+        </label>
+        <label>
+          With skeleton :
+          <input type='checkbox' checked={withSkeleton} onChange={e => setWithSkeleton(e.currentTarget.checked)} />
         </label>
       </div>
       <div>
