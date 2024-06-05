@@ -5,6 +5,7 @@
   "keywords": [],
   "author": "Yohann Rabatel",
   "license": "MIT",
+  "packageManager": "pnpm@9.1.4",
   "main": "./dist/react-paint.umd.cjs",
   "module": "./dist/react-paint.js",
   "types": "./dist/components/App.d.ts",
