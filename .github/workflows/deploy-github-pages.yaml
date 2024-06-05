@@ -20,5 +20,6 @@ jobs:
           node-version: '18.x'
       - uses: bitovi/github-actions-storybook-to-github-pages@v1.0.3
         with:
+          install_command: pnpm install
           path: storybook-static
           checkout: false
