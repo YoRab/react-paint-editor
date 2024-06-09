@@ -132,6 +132,25 @@ you will find other usages in <a href="https://github.com/YoRab/react-paint-edit
 | `getCurrentImage` | `() => string \| undefined` | Returns a data URL containing the content of the current canvas as a PNG image, or undefined if an error occured |
 | `getCurrentData` | `() => StateData` | Returns the current state of the canvas  |
 
+#### `OptionalOptions`
+
+| Parameter | Type | Description | Default value |
+| :--- | :--- | :--- | :--- |
+| `layersManipulation` | `boolean` | *Optional*. Show panel to manipulate layers | `true` |
+| `grid` | `number` | *Optional*. Size in px for grid cells. Set to 0 to hide grid | `0` |
+| `canGrow` | `boolean` | *Optional*. Allow canvas to upscale and grow to fit container | `false` |
+| `canShrink` | `boolean` | *Optional*. Allow canvas to downscale and shrink to fit container | `true` |
+| `withExport` | `boolean` | *Optional*. Show button to manually export to PNG | `true` |
+| `withLoadAndSave` | `boolean` | *Optional*.Show button to manually save or load data  | `true` |
+| `withUploadPicture` | `boolean` | *Optional*. Show button to add picture shape stored in base64 | `true` |
+| `withUrlPicture` | `boolean` | *Optional*.Show button to add picture shape with only the url stored. Need connectivity to be displayed | `false` |
+| `withFrameSelection` | `boolean` | *Optional*.Enable frame selection. **Currently, does not support multi shapes selection** | `false` |
+| `withSkeleton` | `boolean` | *Optional*. Display skeleton when hovering shape | `false` |
+| `clearCallback` | `'empty' \| 'defaultShapes' \| (() => DrawableShape[])` | *Optional*. Set clear button behavior. `empty` clear all shapes, `defaultShapes` uses shapes given in props. It is also possible to set a function returning an array of shapes | `empty` |
+| `brushAlgo` | `'simple' \| 'quadratic'` | *Optional*. Choose which algorithm to display brush shape. `simple` displays path as is, `quadratic` uses quadratic bézier curves  | `simple` |
+| `canvasSelectionPadding` | `boolean` | *Optional*. Padding between shape and selection frame | `0` |
+
+
 #### Canvas
 
 ##### Parameters
@@ -141,7 +160,7 @@ you will find other usages in <a href="https://github.com/YoRab/react-paint-edit
 | `canvasProps` | `object` | **Required**. Set of properties coming from useReactPaint |  |
 | `className` | `string` | *Optional*. Classname for canvas parent node | `undefined` |
 | `style` | `CSSProperties` | *Optional*. css properties to inject to canvas parent node | `undefined` |
-| `options` | `{canvasBackgroundColor?: string}` | *Optional*. Set of properties to use to customize canvas style | `{canvasBackgroundColor: 'white'}` |
+| `options` | `{canvasBackgroundColor?: string; canvasSelectionColor?: string; canvasSelectionWidth?: number}` | *Optional*. Set of properties to use to customize canvas style | `{canvasBackgroundColor: 'white'; canvasSelectionColor: 'blue'; canvasSelectionWidth: 2}` |
 
 
 #### Editor
@@ -160,8 +179,6 @@ you will find other usages in <a href="https://github.com/YoRab/react-paint-edit
 
 #### `DrawableShape`
 #### `StateData`
-#### `OptionalOptions`
-
 
 ## Changelog
 https://github.com/YoRab/react-paint-editor/blob/main/Changelog.md

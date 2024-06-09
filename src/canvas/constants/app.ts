@@ -36,11 +36,7 @@ type AppOptionsType = {
   withSkeleton: boolean
   clearCallback: 'empty' | 'defaultShapes' | (() => DrawableShape[])
   brushAlgo: BrushAlgo
-  selection: {
-    canvasSelectionColor: string
-    canvasSelectionWidth: number
-    canvasSelectionPadding: number
-  }
+  canvasSelectionPadding: number
 }
 
 export type OptionalOptions = RecursivePartial<AppOptionsType>
@@ -59,15 +55,15 @@ export const DEFAULT_OPTIONS: AppOptionsType = {
   brushAlgo: 'simple',
   withFrameSelection: false,
   withSkeleton: false,
-  selection: {
-    canvasSelectionColor: SELECTION_DEFAULT_COLOR,
-    canvasSelectionWidth: SELECTION_DEFAULT_WIDTH,
-    canvasSelectionPadding: SELECTION_DEFAULT_PADDING
-  }
+  canvasSelectionPadding: SELECTION_DEFAULT_PADDING
 }
 
 export const DEFAULT_CANVAS_OPTIONS: {
   canvasBackgroundColor: string
+  canvasSelectionColor: string
+  canvasSelectionWidth: number
 } = {
-  canvasBackgroundColor: 'white'
+  canvasBackgroundColor: 'white',
+  canvasSelectionColor: SELECTION_DEFAULT_COLOR,
+  canvasSelectionWidth: SELECTION_DEFAULT_WIDTH
 }
