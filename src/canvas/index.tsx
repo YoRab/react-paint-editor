@@ -14,6 +14,8 @@ type AppProps = {
   style?: CSSProperties
   options?: {
     canvasBackgroundColor?: string
+    canvasSelectionColor?: string
+    canvasSelectionWidth?: number
   }
 }
 const App = ({ options, className, style, canvasProps }: AppProps) => {
@@ -45,16 +47,10 @@ const App = ({ options, className, style, canvasProps }: AppProps) => {
     isInsideComponent,
     isEditMode,
     isDisabled,
-    canvas: {
-      selection: { canvasSelectionColor, canvasSelectionWidth },
-      withSkeleton,
-      withFrameSelection,
-      canGrow,
-      canShrink
-    }
+    canvas: { withSkeleton, withFrameSelection, canGrow, canShrink }
   } = canvasProps
 
-  const { canvasBackgroundColor } = {
+  const { canvasBackgroundColor, canvasSelectionColor, canvasSelectionWidth } = {
     ...DEFAULT_CANVAS_OPTIONS,
     ...options
   }

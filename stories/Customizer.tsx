@@ -73,11 +73,7 @@ const Customizer = () => {
       canShrink: isShrinkable,
       withSkeleton,
       brushAlgo: quadraticBrush ? 'quadratic' : 'simple',
-      selection: {
-        canvasSelectionColor,
-        canvasSelectionWidth,
-        canvasSelectionPadding
-      }
+      canvasSelectionPadding
     }
   })
 
@@ -96,7 +92,9 @@ const Customizer = () => {
   }
 
   const canvasOptions = {
-    canvasBackgroundColor
+    canvasBackgroundColor,
+    canvasSelectionColor,
+    canvasSelectionWidth
   }
 
   return (

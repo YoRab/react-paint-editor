@@ -39,15 +39,11 @@ const useReactPaint = ({
     withSkeleton,
     withFrameSelection,
     clearCallback,
-    availableTools: availableToolsFromProps
+    availableTools: availableToolsFromProps,
+    canvasSelectionPadding
   } = {
     ...DEFAULT_OPTIONS,
     ...options
-  }
-
-  const { canvasSelectionColor, canvasSelectionWidth, canvasSelectionPadding } = {
-    ...DEFAULT_OPTIONS.selection,
-    ...options?.selection
   }
 
   const isEditMode = mode !== 'viewer'
@@ -248,21 +244,13 @@ const useReactPaint = ({
       clearCanvas,
       settings,
       canvas: {
-        selection: {
-          canvasSelectionColor,
-          canvasSelectionWidth,
-          canvasSelectionPadding
-        },
-        withSkeleton,
-        withFrameSelection,
         canGrow,
         canShrink,
         layersManipulation,
         withExport,
         withLoadAndSave,
         withUploadPicture,
-        withUrlPicture,
-        clearCallback
+        withUrlPicture
       }
     },
     canvasProps: {
@@ -294,7 +282,6 @@ const useReactPaint = ({
       isEditMode,
       isDisabled,
       canvas: {
-        selection: { canvasSelectionColor, canvasSelectionWidth },
         withSkeleton,
         withFrameSelection,
         canGrow,
