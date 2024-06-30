@@ -51,7 +51,7 @@ const useReactPaint = ({
 
   const editorRef = useRef<HTMLElement | null>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
-  const [init, setInit] = useState(false)
+  const init = useRef(false)
 
   const setEditor = useCallback((node: HTMLElement | null) => {
     editorRef.current = node
@@ -181,8 +181,8 @@ const useReactPaint = ({
     [resetCanvas]
   )
 
-  if (!init) {
-    setInit(true)
+  if (!init.current) {
+    init.current = true
     defaultShapes && resetCanvas(defaultShapes, { clearHistory: true, source: 'remote' })
   }
 
