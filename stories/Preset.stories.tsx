@@ -22,8 +22,8 @@ const Preset = () => {
   }
 
   useEffect(() => {
-    const onDataChanged = (data: StateData) => {
-      console.log('data changed')
+    const onDataChanged = (data: StateData, source: 'user' | 'remote') => {
+      console.log(`data changed from ${source}`)
       setShapes(data.shapes)
     }
     registerEvent('dataChanged', onDataChanged)
