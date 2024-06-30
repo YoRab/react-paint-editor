@@ -21,7 +21,7 @@ type UseReactPaintProps = {
 const useReactPaint = ({
   width = 1000,
   height = 600,
-  shapes: shapesFromProps,
+  shapes: defaultShapes,
   mode = 'editor',
   disabled = false,
   options = DEFAULT_OPTIONS
@@ -174,9 +174,9 @@ const useReactPaint = ({
     [resetCanvasWithShapeEntity, settings]
   )
 
-  if (!init && shapesFromProps !== undefined) {
+  if (!init) {
     setInit(true)
-    resetCanvas(shapesFromProps)
+    defaultShapes && resetCanvas(defaultShapes)
   }
 
   const loadFile = useCallback(
@@ -191,13 +191,13 @@ const useReactPaint = ({
     if (typeof clearCallback !== 'string') {
       void resetCanvas(clearCallback(), false)
     } else {
-      if (clearCallback === 'defaultShapes' && shapesFromProps !== undefined) {
-        void resetCanvas(shapesFromProps, false)
+      if (clearCallback === 'defaultShapes' && defaultShapes !== undefined) {
+        void resetCanvas(defaultShapes, false)
       } else {
         resetCanvasWithShapeEntity()
       }
     }
-  }, [resetCanvasWithShapeEntity, resetCanvas, shapesFromProps, clearCallback])
+  }, [resetCanvasWithShapeEntity, resetCanvas, defaultShapes, clearCallback])
 
   useEffect(() => {
     setAvailableTools(sanitizeTools(availableToolsFromProps, withUploadPicture || withUrlPicture))
