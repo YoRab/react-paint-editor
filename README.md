@@ -82,7 +82,7 @@ const AdvancedUsage = () => {
   }
 
   useEffect(() => {
-    const onDataChanged = (data: StateData) => {
+    const onDataChanged = (data: StateData, source: 'user' | 'remote') => {
       setShapes(data.shapes)
     }
     registerEvent('dataChanged', onDataChanged)
@@ -126,8 +126,8 @@ you will find other usages in <a href="https://github.com/YoRab/react-paint-edit
 | :--- | :--- | :--- |
 | `canvasProps` | `object` | Set of properties to forward to Canvas component |
 | `editorProps` | `object` | Set of properties to forward to Editor component |
-| `registerEvent` | `(event: "dataChanged", listener: (data: StateData) => void) => void` |  registerEvent is used to register a listener for special events triggered by react-paint. The only currently available event is `dataChanged` |
-| `unregisterEvent` | `(event: "dataChanged", listener?: ((data: StateData) => void) \| undefined) => void` | unregisterEvent is used to unregister a listener previously registered. Omitting listener will result in unregistering every listeners for the the given event | 
+| `registerEvent` | `(event: "dataChanged", listener: (data: StateData,  source: 'user' \| 'remote') => void) => void` |  registerEvent is used to register a listener for special events triggered by react-paint. The only currently available event is `dataChanged`. `source` indicates the origin of the state update  |
+| `unregisterEvent` | `(event: "dataChanged", listener?: ((data: StateData,  source: 'user' \| 'remote') => void) \| undefined) => void` | unregisterEvent is used to unregister a listener previously registered. Omitting listener will result in unregistering every listeners for the the given event | 
 | `resetCanvas` | `(shapes: DrawableShape[], clearHistory?: boolean) => Promise<void>` | reset canvas with the given shapes. use `[]` or `undefined` to clear the canvas. Set `false` to `clearHistory` to prevent history stack to be cleared | 
 | `getCurrentImage` | `() => string \| undefined` | Returns a data URL containing the content of the current canvas as a PNG image, or undefined if an error occured |
 | `getCurrentData` | `() => StateData` | Returns the current state of the canvas  |

@@ -21,7 +21,7 @@ type UseReactPaintProps = {
 const useReactPaint = ({
   width = 1000,
   height = 600,
-  shapes: shapesFromProps,
+  shapes: defaultShapes,
   mode = 'editor',
   disabled = false,
   options = DEFAULT_OPTIONS
@@ -51,7 +51,7 @@ const useReactPaint = ({
 
   const editorRef = useRef<HTMLElement | null>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
-  const [init, setInit] = useState(false)
+  const init = useRef(false)
 
   const setEditor = useCallback((node: HTMLElement | null) => {
     editorRef.current = node
@@ -122,8 +122,8 @@ const useReactPaint = ({
   )
 
   const resetCanvasWithShapeEntity = useCallback(
-    (shapesToInit: ShapeEntity[] = [], clearHistory = false) => {
-      clearShapes(shapesToInit, clearHistory)
+    (shapesToInit: ShapeEntity[], options: { clearHistory: boolean; source: 'user' | 'remote' }) => {
+      clearShapes(shapesToInit, options)
       selectTool(SELECTION_TOOL)
       setCanvasOffset([0, 0])
     },
@@ -167,37 +167,44 @@ const useReactPaint = ({
   }, [isInsideComponent, setSelectedShape])
 
   const resetCanvas = useCallback(
-    async (json: DrawableShape[], clearHistory = true) => {
+    async (json: DrawableShape[], options: { clearHistory: boolean; source: 'user' | 'remote' }) => {
       const shapes = await decodeImportedData(json, settings)
-      resetCanvasWithShapeEntity(shapes, clearHistory)
+      resetCanvasWithShapeEntity(shapes, options)
     },
     [resetCanvasWithShapeEntity, settings]
   )
 
-  if (!init && shapesFromProps !== undefined) {
-    setInit(true)
-    resetCanvas(shapesFromProps)
+  const resetCanvasFromRemote = useCallback(
+    (json: DrawableShape[] = [], clearHistory = true) => {
+      resetCanvas(json, { clearHistory, source: 'remote' })
+    },
+    [resetCanvas]
+  )
+
+  if (!init.current) {
+    init.current = true
+    defaultShapes && resetCanvas(defaultShapes, { clearHistory: true, source: 'remote' })
   }
 
   const loadFile = useCallback(
     async (file: File) => {
       const json = await decodeJson(file)
-      await resetCanvas((json as StateData).shapes ?? [])
+      await resetCanvas((json as StateData).shapes ?? [], { clearHistory: true, source: 'remote' })
     },
     [resetCanvas]
   )
 
   const clearCanvas = useCallback(() => {
     if (typeof clearCallback !== 'string') {
-      void resetCanvas(clearCallback(), false)
+      void resetCanvas(clearCallback(), { clearHistory: false, source: 'user' })
     } else {
-      if (clearCallback === 'defaultShapes' && shapesFromProps !== undefined) {
-        void resetCanvas(shapesFromProps, false)
+      if (clearCallback === 'defaultShapes' && defaultShapes !== undefined) {
+        void resetCanvas(defaultShapes, { clearHistory: false, source: 'user' })
       } else {
-        resetCanvasWithShapeEntity()
+        resetCanvasWithShapeEntity([], { clearHistory: false, source: 'user' })
       }
     }
-  }, [resetCanvasWithShapeEntity, resetCanvas, shapesFromProps, clearCallback])
+  }, [resetCanvasWithShapeEntity, resetCanvas, defaultShapes, clearCallback])
 
   useEffect(() => {
     setAvailableTools(sanitizeTools(availableToolsFromProps, withUploadPicture || withUrlPicture))
@@ -290,7 +297,7 @@ const useReactPaint = ({
     },
     registerEvent,
     unregisterEvent,
-    resetCanvas,
+    resetCanvas: resetCanvasFromRemote,
     getCurrentImage,
     getCurrentData
   }

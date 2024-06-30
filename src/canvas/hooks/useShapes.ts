@@ -10,7 +10,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 
 const useShapes = (settings: UtilsSettings) => {
   const shapesRef = useRef<ShapeEntity[]>([])
-  const listeners = useRef<{ dataChanged: ((data: StateData) => void)[] }>({ dataChanged: [] })
+  const listeners = useRef<{ dataChanged: ((data: StateData, source: 'user' | 'remote') => void)[] }>({ dataChanged: [] })
 
   const [selectionFrame, setSelectionFrame] = useState<[Point, Point] | undefined>(undefined)
   const [selectedShape, setSelectedShape] = useState<ShapeEntity | undefined>(undefined)
@@ -19,10 +19,11 @@ const useShapes = (settings: UtilsSettings) => {
     states: {
       shapes: ShapeEntity[]
       selectedShape: ShapeEntity | undefined
+      source: 'user' | 'remote'
     }[]
     cursor: number
   }>({
-    states: [{ shapes: [], selectedShape: undefined }],
+    states: [{ shapes: [], selectedShape: undefined, source: 'user' }],
     cursor: 0
   })
 
@@ -39,7 +40,8 @@ const useShapes = (settings: UtilsSettings) => {
               ...prevSavedShaped.states.slice(0, prevSavedShaped.cursor + 1),
               {
                 shapes: shapesRef.current,
-                selectedShape
+                selectedShape,
+                source: 'user'
               }
             ],
             cursor: prevSavedShaped.cursor + 1
@@ -124,13 +126,13 @@ const useShapes = (settings: UtilsSettings) => {
     moveCursor(prevSavedShaped => Math.min(prevSavedShaped.states.length - 1, prevSavedShaped.cursor + 1))
   }, [moveCursor])
 
-  const clearShapes = useCallback((shapesToInit: ShapeEntity[] = [], clearHistory = false) => {
+  const clearShapes = useCallback((shapesToInit: ShapeEntity[], options: { clearHistory: boolean; source: 'user' | 'remote' }) => {
     setSelectedShape(undefined)
     shapesRef.current = shapesToInit
     setSavedShapes(prevSavedShaped => {
-      return clearHistory
+      return options.clearHistory
         ? {
-            states: [{ shapes: shapesToInit, selectedShape: undefined }],
+            states: [{ shapes: shapesToInit, selectedShape: undefined, source: options.source }],
             cursor: 0
           }
         : {
@@ -138,7 +140,8 @@ const useShapes = (settings: UtilsSettings) => {
               ...prevSavedShaped.states.slice(0, prevSavedShaped.cursor + 1),
               {
                 shapes: shapesToInit,
-                selectedShape: undefined
+                selectedShape: undefined,
+                source: options.source
               }
             ],
             cursor: prevSavedShaped.cursor + 1
@@ -196,12 +199,12 @@ const useShapes = (settings: UtilsSettings) => {
     [updateShapes]
   )
 
-  const registerEvent = useCallback((event: 'dataChanged', fn: (data: StateData) => void) => {
+  const registerEvent = useCallback((event: 'dataChanged', fn: (data: StateData, source: 'user' | 'remote') => void) => {
     if (!Object.hasOwn(listeners.current, event)) return
     listeners.current[event] = [...listeners.current[event], fn]
   }, [])
 
-  const unregisterEvent = useCallback((event: 'dataChanged', fn?: (data: StateData) => void) => {
+  const unregisterEvent = useCallback((event: 'dataChanged', fn?: (data: StateData, source: 'user' | 'remote') => void) => {
     if (!Object.hasOwn(listeners.current, event)) return
     if (fn) {
       const currentFnIndex = listeners.current[event].findIndex(listener => listener === fn)
@@ -215,11 +218,11 @@ const useShapes = (settings: UtilsSettings) => {
     canvasSize: { width, height }
   } = settings
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: function must be called everytime savedShapes is updated
   useEffect(() => {
-    const shapes = buildDataToExport(shapesRef.current, width, height)
+    const currentShapesState = savedShapes.states[savedShapes.cursor]
+    const shapes = buildDataToExport(currentShapesState.shapes, width, height)
     for (const listener of listeners.current.dataChanged) {
-      listener(shapes)
+      listener(shapes, currentShapesState.source)
     }
   }, [width, height, savedShapes])
 
