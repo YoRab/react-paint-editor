@@ -148,6 +148,7 @@ you will find other usages in <a href="https://github.com/YoRab/react-paint-edit
 | `withSkeleton` | `boolean` | *Optional*. Display skeleton when hovering shape | `false` |
 | `clearCallback` | `'empty' \| 'defaultShapes' \| (() => DrawableShape[])` | *Optional*. Set clear button behavior. `empty` clear all shapes, `defaultShapes` uses shapes given in props. It is also possible to set a function returning an array of shapes | `empty` |
 | `brushAlgo` | `'simple' \| 'quadratic'` | *Optional*. Choose which algorithm to display brush shape. `simple` displays path as is, `quadratic` uses quadratic bézier curves  | `simple` |
+| `isBrushShapeDoneOnMouseUp` | `boolean` | *Optional*. Choose whether drawing brush shape after releasing mouse should create a new shape or not | `true` |
 | `canvasSelectionPadding` | `boolean` | *Optional*. Padding between shape and selection frame | `0` |
 
 

@@ -446,7 +446,7 @@ const SettingsBar = ({
                     />
                   )}
 
-                  <DeleteButton disabled={disabled} selectedShape={selectedShape} removeShape={removeShape} />
+                  {activeTool.type === 'selection' && <DeleteButton disabled={disabled} selectedShape={selectedShape} removeShape={removeShape} />}
                 </>
               )}
             </>

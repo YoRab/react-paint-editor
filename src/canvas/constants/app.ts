@@ -13,6 +13,7 @@ export type BrushAlgo = 'simple' | 'quadratic'
 
 export type UtilsSettings = {
   brushAlgo: BrushAlgo
+  isBrushShapeDoneOnMouseUp: boolean
   gridGap: number
   canvasOffset: Point
   canvasSize: {
@@ -36,6 +37,7 @@ type AppOptionsType = {
   withSkeleton: boolean
   clearCallback: 'empty' | 'defaultShapes' | (() => DrawableShape[])
   brushAlgo: BrushAlgo
+  isBrushShapeDoneOnMouseUp: boolean
   canvasSelectionPadding: number
 }
 
@@ -53,8 +55,9 @@ export const DEFAULT_OPTIONS: AppOptionsType = {
   availableTools: DEFAULT_SHAPE_TOOLS,
   clearCallback: 'empty',
   brushAlgo: 'simple',
+  isBrushShapeDoneOnMouseUp: true,
   withFrameSelection: false,
-  withSkeleton: false,
+  withSkeleton: true,
   canvasSelectionPadding: SELECTION_DEFAULT_PADDING
 }
 

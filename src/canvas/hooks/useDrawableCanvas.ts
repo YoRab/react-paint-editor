@@ -24,7 +24,6 @@ const handleMove = (
   refreshHoveredShape: (e: MouseEvent | TouchEvent, ctx: CanvasRenderingContext2D, cursorPosition: Point, settings: UtilsSettings) => void,
   updateSingleShape: (updatedShape: ShapeEntity) => void,
   setCanvasOffset: React.Dispatch<React.SetStateAction<Point>>,
-  setSelectedShape: React.Dispatch<React.SetStateAction<ShapeEntity | undefined>>,
   refreshSelectedShapes: (ctx: CanvasRenderingContext2D, cursorPosition: Point, settings: UtilsSettings) => void,
   settings: UtilsSettings,
   isShiftPressed: boolean
@@ -59,7 +58,6 @@ const handleMove = (
     if (!ctx) return
     const newShape = transformShape(ctx, selectedShape, cursorPosition, selectionMode, settings, isShiftPressed)
     updateSingleShape(newShape)
-    setSelectedShape(newShape)
   }
 }
 
@@ -121,23 +119,20 @@ const useDrawableCanvas = ({
 
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent | TouchEvent) =>
-      window.requestAnimationFrame(() =>
-        handleMove(
-          e,
-          selectionCanvasRef,
-          activeTool,
-          selectedShape,
-          selectionMode,
-          canvasOffsetStartPosition,
-          setHoverMode,
-          refreshHoveredShape,
-          updateSingleShape,
-          setCanvasOffset,
-          setSelectedShape,
-          refreshSelectedShapes,
-          settings,
-          isShiftPressed
-        )
+      handleMove(
+        e,
+        selectionCanvasRef,
+        activeTool,
+        selectedShape,
+        selectionMode,
+        canvasOffsetStartPosition,
+        setHoverMode,
+        refreshHoveredShape,
+        updateSingleShape,
+        setCanvasOffset,
+        refreshSelectedShapes,
+        settings,
+        isShiftPressed
       )
     if (isInsideComponent) {
       document.addEventListener('mousemove', handleMouseMove)
@@ -157,17 +152,19 @@ const useDrawableCanvas = ({
     updateSingleShape,
     activeTool,
     setCanvasOffset,
-    setSelectedShape,
     refreshHoveredShape,
     refreshSelectedShapes,
     settings,
     isShiftPressed
   ])
 
+  const { isBrushShapeDoneOnMouseUp } = settings
+
   useEffect(() => {
     const handleMouseUp = () => {
       if (selectionMode.mode === 'textedition') return
       if (selectionMode.mode !== 'default') {
+        if (selectionMode.mode === 'brush' && isBrushShapeDoneOnMouseUp) setSelectedShape(undefined)
         setSelectionMode({ mode: 'default' })
         setSelectionFrame(undefined)
         saveShapes()
@@ -185,7 +182,7 @@ const useDrawableCanvas = ({
         document.removeEventListener('touchend', handleMouseUp)
       }
     }
-  }, [isInsideComponent, selectionMode, saveShapes, setSelectionFrame, setSelectionMode])
+  }, [isInsideComponent, selectionMode, isBrushShapeDoneOnMouseUp, saveShapes, setSelectionFrame, setSelectionMode, setSelectedShape])
 
   useEffect(() => {
     const ref = selectionCanvasRef.current
@@ -214,10 +211,9 @@ const useDrawableCanvas = ({
         const drawCtx = drawCanvasRef.current?.getContext('2d')
         if (!drawCtx) return
         if (activeTool.type === 'brush') {
-          if (!!selectedShape && selectedShape.type === 'brush') {
+          if (selectedShape?.type === 'brush') {
             const newShape = addNewPointGroupToShape(selectedShape, cursorPosition, settings)
             updateSingleShape(newShape)
-            setSelectedShape(newShape)
           } else {
             const newShape = createShape(drawCtx, activeTool, cursorPosition, settings)
             if (!newShape) return
