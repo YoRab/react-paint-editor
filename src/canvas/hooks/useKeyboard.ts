@@ -116,10 +116,14 @@ const useKeyboard = ({
         case KeyboardCode.ArrowRight:
         case KeyboardCode.ArrowDown:
         case KeyboardCode.ArrowUp:
+          e.preventDefault()
+          e.stopPropagation()
           updateShape(translateShape(translationMap[e.key], selectedShape, [0, 0], settings))
           break
         case KeyboardCode.Delete:
         case KeyboardCode.Backspace:
+          e.preventDefault()
+          e.stopPropagation()
           removeShape(selectedShape)
           break
       }
