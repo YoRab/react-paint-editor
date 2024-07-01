@@ -1,3 +1,13 @@
+# V0.11.1
+ - in text edition mode, fetch dom node value instead of parsing innerHtml to prevent stripping tags
+ - move selection props (BREAKING CHANGE)
+ - do not reset canvas when defaultShapes changes from undefined to other
+ - add source information in dataChange callback
+ - enable withSkeleton by default
+ - add new prop isBrushShapeDoneOnMouseUp to choose whether drawing brush shape after releasing mouse should create a new shape or not (enabled by default so BREAKING CHANGE)
+ - fix window scrolling when translating shape with keyboard
+ - add stories and documentation
+
 # V0.11.0
 - up tooling : vite, biome, storybook, typescript, etc. 
 - start logic separation between canvas and editor
