@@ -29,6 +29,7 @@ const useReactPaint = ({
   const {
     layersManipulation,
     brushAlgo,
+    isBrushShapeDoneOnMouseUp,
     grid,
     canGrow,
     canShrink,
@@ -71,12 +72,13 @@ const useReactPaint = ({
   const settings: UtilsSettings = useMemo(
     () => ({
       brushAlgo,
+      isBrushShapeDoneOnMouseUp,
       canvasSize,
       canvasOffset,
       gridGap,
       selectionPadding: canvasSelectionPadding
     }),
-    [canvasSelectionPadding, gridGap, brushAlgo, canvasOffset, canvasSize]
+    [canvasSelectionPadding, gridGap, brushAlgo, isBrushShapeDoneOnMouseUp, canvasOffset, canvasSize]
   )
 
   const [availableTools, setAvailableTools] = useState(sanitizeTools(availableToolsFromProps, withUploadPicture || withUrlPicture))
