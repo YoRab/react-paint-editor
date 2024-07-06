@@ -4,7 +4,7 @@ import { buildDataToExport } from '@canvas/utils/data'
 import { checkPositionIntersection, checkSelectionFrameCollision, checkSelectionIntersection } from '@canvas/utils/intersect'
 import { refreshShape } from '@canvas/utils/shapes/index'
 import { createPicture } from '@canvas/utils/shapes/picture'
-import type { StateData, Point, ShapeEntity } from '@common/types/Shapes'
+import type { Point, ShapeEntity, StateData } from '@common/types/Shapes'
 import { isEqual, omit, set } from '@common/utils/object'
 import { useCallback, useEffect, useRef, useState } from 'react'
 

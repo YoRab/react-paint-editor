@@ -1,7 +1,7 @@
-import { useEffect, useState } from 'react'
-import { Canvas, Editor, useReactPaint, type DrawableShape, type StateData } from '../src/index'
-import { HELLO_THERE, TREE_AND_CLOUDS } from 'stories/fixture'
 import type { Meta, StoryObj } from '@storybook/react/*'
+import { useEffect, useState } from 'react'
+import { HELLO_THERE, TREE_AND_CLOUDS } from 'stories/fixture'
+import { Canvas, type DrawableShape, Editor, type StateData, useReactPaint } from '../src/index'
 
 const Preset = () => {
   const [preset, setPreset] = useState(0)
