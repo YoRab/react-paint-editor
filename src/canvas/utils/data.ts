@@ -1,5 +1,5 @@
 import type { UtilsSettings } from '@canvas/constants/app'
-import type { DrawableShape, StateData, ShapeEntity } from '@common/types/Shapes'
+import type { DrawableShape, ShapeEntity, StateData } from '@common/types/Shapes'
 import { omit } from '@common/utils/object'
 import { uniqueId } from '@common/utils/util'
 import { getBase64Image } from './file'

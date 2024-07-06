@@ -1,6 +1,6 @@
+import type { Meta, StoryObj } from '@storybook/react/*'
 import { type SyntheticEvent, useState } from 'react'
 import { Canvas, Editor, useReactPaint } from '../src/index'
-import type { Meta, StoryObj } from '@storybook/react/*'
 import './annotations.css'
 
 const PictureAnnotation = () => {
