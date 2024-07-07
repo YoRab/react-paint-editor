@@ -2,7 +2,7 @@ import type { UtilsSettings } from '@canvas/constants/app'
 import type { DrawableShape, ShapeEntity, StateData } from '@common/types/Shapes'
 import { omit } from '@common/utils/object'
 import { uniqueId } from '@common/utils/util'
-import { getBase64Image } from './file'
+import { getStringifiedImage } from './file'
 import { refreshShape } from './shapes'
 
 export const cleanShapesBeforeExport = (shapes: DrawableShape[]): DrawableShape[] => {
@@ -10,7 +10,7 @@ export const cleanShapesBeforeExport = (shapes: DrawableShape[]): DrawableShape[
   return shapes.map(shape => {
     if (shape.type === 'picture') {
       if (!shape.src.startsWith('http')) {
-        return omit(propsToOmit, { ...shape, src: getBase64Image(shape.img) })
+        return omit(propsToOmit, { ...shape, src: getStringifiedImage(shape) })
       }
     }
     return omit(propsToOmit, shape)

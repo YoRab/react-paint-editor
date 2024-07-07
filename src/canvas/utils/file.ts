@@ -62,6 +62,8 @@ export const getBase64Image = (img: HTMLImageElement) => {
   return dataURL
 }
 
+export const getStringifiedImage = (shape: DrawableShape<'picture'>) => (shape.src.includes('<svg') ? shape.src : getBase64Image(shape.img))
+
 const encodeObjectToString = (objectToEncode: unknown) => {
   return `data:text/plain;charset=utf-8,${encodeURIComponent(JSON.stringify(objectToEncode))}`
 }
@@ -126,6 +128,9 @@ export const decodeImportedData = async (shapesForJson: DrawableShape[], setting
             .catch(() => {
               img.src = '' // to trigger onerror
             })
+        } else if (shape.src.includes('<svg')) {
+          const blob = new Blob([shape.src], { type: 'image/svg+xml' })
+          img.src = URL.createObjectURL(blob)
         } else {
           img.src = shape.src
         }

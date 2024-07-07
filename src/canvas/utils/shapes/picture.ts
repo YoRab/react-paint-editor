@@ -51,22 +51,24 @@ const createFilePicture = (
   maxPictureHeight: number,
   settings: UtilsSettings
 ) => {
-  const initSrc = URL.createObjectURL(file)
-  img.onload = async () => {
-    URL.revokeObjectURL(img.src)
-    if (isSvg(file) && !img.width && !img.height) {
-      const svgFileContent = await file.text()
+  if (isSvg(file)) {
+    file.text().then(svgFileContent => {
       const svgUrl = addSizeAndConvertSvgToObjectUrl(svgFileContent)
-
-      if (initSrc === img.src) {
-        img.src = svgUrl
-        return
+      img.onload = async () => {
+        URL.revokeObjectURL(img.src)
+        const pictureShape = createPictureShape(img, svgFileContent, maxPictureWidth, maxPictureHeight, settings)
+        resolve(pictureShape)
       }
+      img.src = svgUrl
+    })
+  } else {
+    img.onload = async () => {
+      URL.revokeObjectURL(img.src)
+      const pictureShape = createPictureShape(img, img.src, maxPictureWidth, maxPictureHeight, settings)
+      resolve(pictureShape)
     }
-    const pictureShape = createPictureShape(img, img.src, maxPictureWidth, maxPictureHeight, settings)
-    resolve(pictureShape)
+    img.src = URL.createObjectURL(file)
   }
-  img.src = initSrc
 }
 
 const createUrlPicture = (
