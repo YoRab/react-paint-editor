@@ -113,7 +113,7 @@ const useReactPaint = ({
     canGoBackward,
     canGoForward,
     canClear
-  } = useShapes(settings)
+  } = useShapes(settings, width, height)
 
   const selectTool = useCallback(
     (tool: ToolsType) => {
@@ -191,17 +191,26 @@ const useReactPaint = ({
   const loadFile = useCallback(
     async (file: File) => {
       const json = await decodeJson(file)
-      await resetCanvas((json as StateData).shapes ?? [], { clearHistory: true, source: 'remote' })
+      await resetCanvas((json as StateData).shapes ?? [], {
+        clearHistory: true,
+        source: 'remote'
+      })
     },
     [resetCanvas]
   )
 
   const clearCanvas = useCallback(() => {
     if (typeof clearCallback !== 'string') {
-      void resetCanvas(clearCallback(), { clearHistory: false, source: 'user' })
+      void resetCanvas(clearCallback(), {
+        clearHistory: false,
+        source: 'user'
+      })
     } else {
       if (clearCallback === 'defaultShapes' && defaultShapes !== undefined) {
-        void resetCanvas(defaultShapes, { clearHistory: false, source: 'user' })
+        void resetCanvas(defaultShapes, {
+          clearHistory: false,
+          source: 'user'
+        })
       } else {
         resetCanvasWithShapeEntity([], { clearHistory: false, source: 'user' })
       }

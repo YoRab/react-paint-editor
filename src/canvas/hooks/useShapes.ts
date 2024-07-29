@@ -8,9 +8,11 @@ import type { Point, ShapeEntity, StateData } from '@common/types/Shapes'
 import { isEqual, omit, set } from '@common/utils/object'
 import { useCallback, useEffect, useRef, useState } from 'react'
 
-const useShapes = (settings: UtilsSettings) => {
+const useShapes = (settings: UtilsSettings, width: number, height: number) => {
   const shapesRef = useRef<ShapeEntity[]>([])
-  const listeners = useRef<{ dataChanged: ((data: StateData, source: 'user' | 'remote') => void)[] }>({ dataChanged: [] })
+  const listeners = useRef<{
+    dataChanged: ((data: StateData, source: 'user' | 'remote') => void)[]
+  }>({ dataChanged: [] })
 
   const [selectionFrame, setSelectionFrame] = useState<[Point, Point] | undefined>(undefined)
   const [selectedShape, setSelectedShape] = useState<ShapeEntity | undefined>(undefined)
@@ -132,7 +134,13 @@ const useShapes = (settings: UtilsSettings) => {
     setSavedShapes(prevSavedShaped => {
       return options.clearHistory
         ? {
-            states: [{ shapes: shapesToInit, selectedShape: undefined, source: options.source }],
+            states: [
+              {
+                shapes: shapesToInit,
+                selectedShape: undefined,
+                source: options.source
+              }
+            ],
             cursor: 0
           }
         : {
@@ -213,10 +221,6 @@ const useShapes = (settings: UtilsSettings) => {
       listeners.current[event] = []
     }
   }, [])
-
-  const {
-    canvasSize: { width, height }
-  } = settings
 
   useEffect(() => {
     const currentShapesState = savedShapes.states[savedShapes.cursor]
