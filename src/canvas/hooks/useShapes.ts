@@ -23,7 +23,7 @@ const useShapes = (settings: UtilsSettings) => {
     }[]
     cursor: number
   }>({
-    states: [{ shapes: [], selectedShape: undefined, source: 'user' }],
+    states: [{ shapes: [], selectedShape: undefined, source: 'remote' }],
     cursor: 0
   })
 

@@ -1,24 +1,24 @@
 import type { Meta, StoryObj } from '@storybook/react/*'
 import { useEffect, useState } from 'react'
-import { HELLO_THERE, TREE_AND_CLOUDS } from 'stories/fixture'
+import { HELLO_THERE, TREE_AND_CLOUDS, WITH_PICTURE } from 'stories/fixture'
 import { Canvas, type DrawableShape, Editor, type StateData, useReactPaint } from '../src/index'
 
 const Preset = () => {
   const [preset, setPreset] = useState(0)
-  const [shapes, setShapes] = useState<DrawableShape[] | undefined>(TREE_AND_CLOUDS)
+  const [shapes, setShapes] = useState<DrawableShape[] | undefined>(WITH_PICTURE)
 
   const { registerEvent, unregisterEvent, resetCanvas, editorProps, canvasProps } = useReactPaint({
     shapes,
     options: {
       clearCallback: () => {
-        return [TREE_AND_CLOUDS, HELLO_THERE][preset]
+        return [WITH_PICTURE, TREE_AND_CLOUDS, HELLO_THERE][preset]
       }
     }
   })
 
   const choosePreset = (preset: number) => {
     setPreset(preset)
-    resetCanvas([TREE_AND_CLOUDS, HELLO_THERE][preset])
+    resetCanvas([WITH_PICTURE, TREE_AND_CLOUDS, HELLO_THERE][preset])
   }
 
   useEffect(() => {
@@ -40,6 +40,9 @@ const Preset = () => {
         </button>
         <button type='button' onClick={() => choosePreset(1)}>
           preset 2
+        </button>
+        <button type='button' onClick={() => choosePreset(2)}>
+          preset 3
         </button>
       </div>
       <Editor editorProps={editorProps}>
