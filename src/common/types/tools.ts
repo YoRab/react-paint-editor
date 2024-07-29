@@ -2,11 +2,50 @@ import type { ShapeType } from './Shapes'
 
 export type CustomToolInput = {
   id: string
-  type: ShapeType
   icon?: string
   label?: string
-  settings?: ToolsSettingsType<ShapeType>
-}
+} & (
+  | {
+      type: 'brush'
+      settings: ToolsSettingsType<'brush'>
+    }
+  | {
+      type: 'circle'
+      settings: ToolsSettingsType<'circle'>
+    }
+  | {
+      type: 'ellipse'
+      settings: ToolsSettingsType<'ellipse'>
+    }
+  | {
+      type: 'rect'
+      settings: ToolsSettingsType<'rect'>
+    }
+  | {
+      type: 'square'
+      settings: ToolsSettingsType<'square'>
+    }
+  | {
+      type: 'line'
+      settings: ToolsSettingsType<'line'>
+    }
+  | {
+      type: 'polygon'
+      settings: ToolsSettingsType<'polygon'>
+    }
+  | {
+      type: 'curve'
+      settings: ToolsSettingsType<'curve'>
+    }
+  | {
+      type: 'text'
+      settings: ToolsSettingsType<'text'>
+    }
+  | {
+      type: 'picture'
+      settings: ToolsSettingsType<'picture'>
+    }
+)
 
 export type CustomTool = {
   id: string
@@ -61,6 +100,7 @@ export type SettingsOpacity = {
     max: number
     step: number
     default: number
+    hidden?: boolean
   }
 }
 
@@ -68,6 +108,7 @@ export type SettingsStrokeColor = {
   strokeColor: {
     values: string[]
     default: string
+    hidden?: boolean
   }
 }
 
@@ -75,6 +116,7 @@ export type SettingsFillColor = {
   fillColor: {
     values: string[]
     default: string
+    hidden?: boolean
   }
 }
 
@@ -84,6 +126,7 @@ export type SettingsLineWidth = {
     max: number
     step: number
     default: number
+    hidden?: boolean
   }
 }
 
@@ -91,6 +134,7 @@ export type SettingsLineDash = {
   lineDash: {
     values: number[]
     default: number
+    hidden?: boolean
   }
 }
 
@@ -98,6 +142,7 @@ export type SettingsLineArrow = {
   lineArrow: {
     values: number[]
     default: number
+    hidden?: boolean
   }
 }
 
@@ -105,14 +150,17 @@ export type SettingsFont = {
   fontFamily: {
     values: string[]
     default: string
+    hidden?: boolean
   }
   fontBold: {
     values: boolean[]
     default: boolean
+    hidden?: boolean
   }
   fontItalic: {
     values: boolean[]
     default: boolean
+    hidden?: boolean
   }
 }
 
@@ -122,6 +170,7 @@ export type SettingsPointsCount = {
     max: number
     step: number
     default: number
+    hidden?: boolean
   }
 }
 
@@ -178,7 +227,7 @@ export type ToolsSettingsType<T extends ShapeType> = T extends 'rect'
                     ? ToolsTriangleSettings
                     : T extends 'picture'
                       ? ToolsPictureSettings
-                      : unknown // default
+                      : never // default
 
 export type ActionsType = 'selection' | 'undo' | 'redo' | 'clear' | 'export' | 'loadfile' | 'savefile' | 'move' | 'uploadpicture' | 'addurlpicture'
 

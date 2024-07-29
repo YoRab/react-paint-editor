@@ -66,7 +66,7 @@ const SettingsItems = ({
     <>
       {selectedShapeTool && (
         <>
-          {'strokeColor' in selectedShapeTool.settings && (
+          {'strokeColor' in selectedShapeTool.settings && !selectedShapeTool.settings.strokeColor.hidden && (
             <ColorField
               selectedSettings={selectedSettings}
               setSelectedSettings={setSelectedSettings}
@@ -80,7 +80,7 @@ const SettingsItems = ({
             />
           )}
 
-          {'fillColor' in selectedShapeTool.settings && (
+          {'fillColor' in selectedShapeTool.settings && !selectedShapeTool.settings.fillColor.hidden && (
             <ColorField
               selectedSettings={selectedSettings}
               setSelectedSettings={setSelectedSettings}
@@ -93,7 +93,7 @@ const SettingsItems = ({
             />
           )}
 
-          {'lineWidth' in selectedShapeTool.settings && (
+          {'lineWidth' in selectedShapeTool.settings && !selectedShapeTool.settings.lineWidth.hidden && (
             <RangeField
               selectedSettings={selectedSettings}
               setSelectedSettings={setSelectedSettings}
@@ -110,7 +110,7 @@ const SettingsItems = ({
             />
           )}
 
-          {'lineDash' in selectedShapeTool.settings && (
+          {'lineDash' in selectedShapeTool.settings && !selectedShapeTool.settings.lineDash.hidden && (
             <LineTypeField
               selectedSettings={selectedSettings}
               setSelectedSettings={setSelectedSettings}
@@ -121,7 +121,7 @@ const SettingsItems = ({
             />
           )}
 
-          {'lineArrow' in selectedShapeTool.settings && (
+          {'lineArrow' in selectedShapeTool.settings && !selectedShapeTool.settings.lineArrow.hidden && (
             <LineArrowField
               selectedSettings={selectedSettings}
               setSelectedSettings={setSelectedSettings}
@@ -132,7 +132,7 @@ const SettingsItems = ({
             />
           )}
 
-          {'pointsCount' in selectedShapeTool.settings && (
+          {'pointsCount' in selectedShapeTool.settings && !selectedShapeTool.settings.pointsCount.hidden && (
             <PointsNumberField
               selectedSettings={selectedSettings}
               setSelectedSettings={setSelectedSettings}
@@ -145,7 +145,7 @@ const SettingsItems = ({
             />
           )}
 
-          {'fontFamily' in selectedShapeTool.settings && (
+          {'fontFamily' in selectedShapeTool.settings && !selectedShapeTool.settings.fontFamily.hidden && (
             <FontFamilyField
               selectedSettings={selectedSettings}
               setSelectedSettings={setSelectedSettings}
@@ -156,7 +156,7 @@ const SettingsItems = ({
             />
           )}
 
-          {'fontBold' in selectedShapeTool.settings && (
+          {'fontBold' in selectedShapeTool.settings && !selectedShapeTool.settings.fontBold.hidden && (
             <ToggleField
               setSelectedSettings={setSelectedSettings}
               disabled={disabled}
@@ -168,7 +168,7 @@ const SettingsItems = ({
             />
           )}
 
-          {'fontItalic' in selectedShapeTool.settings && (
+          {'fontItalic' in selectedShapeTool.settings && !selectedShapeTool.settings.fontItalic.hidden && (
             <ToggleField
               setSelectedSettings={setSelectedSettings}
               disabled={disabled}
@@ -180,7 +180,7 @@ const SettingsItems = ({
             />
           )}
 
-          {'opacity' in selectedShapeTool.settings && (
+          {'opacity' in selectedShapeTool.settings && !selectedShapeTool.settings.opacity.hidden && (
             <RangeField
               selectedSettings={selectedSettings}
               setSelectedSettings={setSelectedSettings}
@@ -201,7 +201,7 @@ const SettingsItems = ({
     </>
   ) : 'settings' in activeTool ? (
     <>
-      {'strokeColor' in activeTool.settings && (
+      {'strokeColor' in activeTool.settings && !activeTool.settings.strokeColor.hidden && (
         <ColorField
           selectedSettings={selectedSettings}
           setSelectedSettings={setSelectedSettings}
@@ -215,7 +215,7 @@ const SettingsItems = ({
         />
       )}
 
-      {'fillColor' in activeTool.settings && (
+      {'fillColor' in activeTool.settings && !activeTool.settings.fillColor.hidden && (
         <ColorField
           selectedSettings={selectedSettings}
           setSelectedSettings={setSelectedSettings}
@@ -228,7 +228,7 @@ const SettingsItems = ({
         />
       )}
 
-      {'lineWidth' in activeTool.settings && (
+      {'lineWidth' in activeTool.settings && !activeTool.settings.lineWidth.hidden && (
         <RangeField
           selectedSettings={selectedSettings}
           setSelectedSettings={setSelectedSettings}
@@ -245,7 +245,7 @@ const SettingsItems = ({
         />
       )}
 
-      {'lineDash' in activeTool.settings && (
+      {'lineDash' in activeTool.settings && !activeTool.settings.lineDash.hidden && (
         <LineTypeField
           selectedSettings={selectedSettings}
           setSelectedSettings={setSelectedSettings}
@@ -256,7 +256,7 @@ const SettingsItems = ({
         />
       )}
 
-      {'lineArrow' in activeTool.settings && (
+      {'lineArrow' in activeTool.settings && !activeTool.settings.lineArrow.hidden && (
         <LineArrowField
           selectedSettings={selectedSettings}
           setSelectedSettings={setSelectedSettings}
@@ -266,7 +266,7 @@ const SettingsItems = ({
           values={activeTool.settings.lineArrow.values}
         />
       )}
-      {'pointsCount' in activeTool.settings && (
+      {'pointsCount' in activeTool.settings && !activeTool.settings.pointsCount.hidden && (
         <PointsNumberField
           selectedSettings={selectedSettings}
           setSelectedSettings={setSelectedSettings}
@@ -279,7 +279,7 @@ const SettingsItems = ({
         />
       )}
 
-      {'fontFamily' in activeTool.settings && (
+      {'fontFamily' in activeTool.settings && !activeTool.settings.fontFamily.hidden && (
         <FontFamilyField
           selectedSettings={selectedSettings}
           setSelectedSettings={setSelectedSettings}
@@ -290,7 +290,7 @@ const SettingsItems = ({
         />
       )}
 
-      {'fontBold' in activeTool.settings && (
+      {'fontBold' in activeTool.settings && !activeTool.settings.fontBold.hidden && (
         <ToggleField
           setSelectedSettings={setSelectedSettings}
           disabled={disabled}
@@ -302,7 +302,7 @@ const SettingsItems = ({
         />
       )}
 
-      {'fontItalic' in activeTool.settings && (
+      {'fontItalic' in activeTool.settings && !activeTool.settings.fontItalic.hidden && (
         <ToggleField
           setSelectedSettings={setSelectedSettings}
           disabled={disabled}
@@ -314,7 +314,7 @@ const SettingsItems = ({
         />
       )}
 
-      {'opacity' in activeTool.settings && (
+      {'opacity' in activeTool.settings && !activeTool.settings.opacity.hidden && (
         <RangeField
           selectedSettings={selectedSettings}
           setSelectedSettings={setSelectedSettings}
