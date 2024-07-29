@@ -90,7 +90,8 @@ export const LimitedTools: Story = {
               min: 2,
               max: 20,
               step: 2,
-              default: 4
+              default: 4,
+              hidden: true
             },
             strokeColor: {
               values: [
@@ -107,13 +108,18 @@ export const LimitedTools: Story = {
                 '#55779E',
                 '#000000'
               ],
-              default: '#002E4D'
+              default: '#002E4D',
+              hidden: true
             },
             opacity: {
               min: 0,
               max: 100,
               step: 5,
-              default: 100
+              default: 100,
+              hidden: true
+            },
+            lineDash: {
+              hidden: true
             }
           }
         },
@@ -296,6 +302,10 @@ export const LimitedTools: Story = {
               max: 100,
               step: 5,
               default: 100
+            },
+            fontItalic: {
+              default: true,
+              hidden: true
             }
           }
         }
