@@ -156,13 +156,13 @@ const useReactPaint = ({
     downloadFile(dataURL, 'drawing.png')
   }, [shapesRef, width, height, settings])
 
-  const getCurrentImage = () => {
+  const getCurrentImage = useCallback(() => {
     return canvasRef.current ? getCanvasImage(shapesRef.current, width, height, settings) : undefined
-  }
+  }, [shapesRef, width, height, settings])
 
-  const getCurrentData = () => {
+  const getCurrentData = useCallback(() => {
     return buildDataToExport(shapesRef.current, width, height)
-  }
+  }, [shapesRef, width, height])
 
   useEffect(() => {
     if (!isInsideComponent) setSelectedShape(undefined)
@@ -176,12 +176,12 @@ const useReactPaint = ({
     [resetCanvasWithShapeEntity, settings]
   )
 
-  const resetCanvasFromRemote = useCallback(
-    (json: DrawableShape[] = [], clearHistory = true) => {
-      resetCanvas(json, { clearHistory, source: 'remote' })
-    },
-    [resetCanvas]
-  )
+  const resetCanvasRef = useRef<typeof resetCanvas>()
+  resetCanvasRef.current = resetCanvas
+
+  const resetCanvasFromRemote = useCallback((json: DrawableShape[] = [], clearHistory = true) => {
+    resetCanvasRef.current?.(json, { clearHistory, source: 'remote' })
+  }, [])
 
   if (!init.current) {
     init.current = true
