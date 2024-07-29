@@ -227,7 +227,7 @@ export type ToolsSettingsType<T extends ShapeType> = T extends 'rect'
                     ? ToolsTriangleSettings
                     : T extends 'picture'
                       ? ToolsPictureSettings
-                      : never // default
+                      : never
 
 export type ActionsType = 'selection' | 'undo' | 'redo' | 'clear' | 'export' | 'loadfile' | 'savefile' | 'move' | 'uploadpicture' | 'addurlpicture'
 
