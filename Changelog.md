@@ -1,3 +1,7 @@
+# V0.11.4
+- fix callback immutability
+- fix datachanged callback providing wrong canvas size
+
 # V0.11.3
 - fix dataChanged callback triggering 'user' source at init if defaultShape contains picture
 
