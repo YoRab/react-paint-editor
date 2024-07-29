@@ -2390,3 +2390,16 @@ export const HELLO_THERE: DrawableShape[] = [
     style: { opacity: 100, strokeColor: 'black', fontFamily: 'serif', fontItalic: false, fontBold: false }
   }
 ]
+
+export const WITH_PICTURE: DrawableShape[] = [
+  {
+    toolId: 'react-paint-picture',
+    type: 'picture',
+    x: 0,
+    y: 44.16666666666666,
+    width: 1000,
+    height: 511.6666666666667,
+    src: 'https://upload.wikimedia.org/wikipedia/commons/7/7e/Bronze_au_cheavl_et_%C3%A0_la_rouelle_frapp%C3%A9_par_les_L%C3%A9xoviens.jpg',
+    rotation: 0
+  }
+]
