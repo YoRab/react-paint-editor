@@ -1,3 +1,11 @@
+# V0.11.3
+- fix dataChanged callback triggering 'user' source at init if defaultShape contains picture
+
+# V0.11.2
+- store svg file as svg content instead of base64 to keep format
+- fix types path in package json
+- Add 'hide'' settings prop
+
 # V0.11.1
  - in text edition mode, fetch dom node value instead of parsing innerHtml to prevent stripping tags
  - move selection props (BREAKING CHANGE)
