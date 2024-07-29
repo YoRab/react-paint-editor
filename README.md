@@ -150,6 +150,9 @@ you will find other usages in <a href="https://github.com/YoRab/react-paint-edit
 | `brushAlgo` | `'simple' \| 'quadratic'` | *Optional*. Choose which algorithm to display brush shape. `simple` displays path as is, `quadratic` uses quadratic bézier curves  | `simple` |
 | `isBrushShapeDoneOnMouseUp` | `boolean` | *Optional*. Choose whether drawing brush shape after releasing mouse should create a new shape or not | `true` |
 | `canvasSelectionPadding` | `boolean` | *Optional*. Padding between shape and selection frame | `0` |
+| `availableTools` | `CustomToolInput[]` | *Optional*. List of available tools. See CustomTool for more details | `` |
+
+
 
 
 #### Canvas
@@ -180,6 +183,194 @@ you will find other usages in <a href="https://github.com/YoRab/react-paint-edit
 
 #### `DrawableShape`
 #### `StateData`
+
+#### `CustomTool`
+
+```
+ type CustomTool = {
+  id: string
+  icon: string
+  label: string
+} & (
+  | {
+      type: 'brush'
+      settings: ToolsSettingsType<'brush'>
+    }
+  | {
+      type: 'circle'
+      settings: ToolsSettingsType<'circle'>
+    }
+  | {
+      type: 'ellipse'
+      settings: ToolsSettingsType<'ellipse'>
+    }
+  | {
+      type: 'rect'
+      settings: ToolsSettingsType<'rect'>
+    }
+  | {
+      type: 'square'
+      settings: ToolsSettingsType<'square'>
+    }
+  | {
+      type: 'line'
+      settings: ToolsSettingsType<'line'>
+    }
+  | {
+      type: 'polygon'
+      settings: ToolsSettingsType<'polygon'>
+    }
+  | {
+      type: 'curve'
+      settings: ToolsSettingsType<'curve'>
+    }
+  | {
+      type: 'text'
+      settings: ToolsSettingsType<'text'>
+    }
+  | {
+      type: 'picture'
+      settings: ToolsSettingsType<'picture'>
+    }
+)
+
+type SettingsOpacity = {
+  opacity: {
+    min: number
+    max: number
+    step: number
+    default: number
+    hidden?: boolean
+  }
+}
+
+type SettingsStrokeColor = {
+  strokeColor: {
+    values: string[]
+    default: string
+    hidden?: boolean
+  }
+}
+
+type SettingsFillColor = {
+  fillColor: {
+    values: string[]
+    default: string
+    hidden?: boolean
+  }
+}
+
+type SettingsLineWidth = {
+  lineWidth: {
+    min: number
+    max: number
+    step: number
+    default: number
+    hidden?: boolean
+  }
+}
+
+type SettingsLineDash = {
+  lineDash: {
+    values: number[]
+    default: number
+    hidden?: boolean
+  }
+}
+
+type SettingsLineArrow = {
+  lineArrow: {
+    values: number[]
+    default: number
+    hidden?: boolean
+  }
+}
+
+type SettingsFont = {
+  fontFamily: {
+    values: string[]
+    default: string
+    hidden?: boolean
+  }
+  fontBold: {
+    values: boolean[]
+    default: boolean
+    hidden?: boolean
+  }
+  fontItalic: {
+    values: boolean[]
+    default: boolean
+    hidden?: boolean
+  }
+}
+
+type SettingsPointsCount = {
+  pointsCount: {
+    min: number
+    max: number
+    step: number
+    default: number
+    hidden?: boolean
+  }
+}
+
+type ToolsRectSettings = SettingsStrokeColor & SettingsFillColor & SettingsOpacity & SettingsLineWidth & SettingsLineDash
+
+type ToolsSquareSettings = SettingsStrokeColor & SettingsFillColor & SettingsOpacity & SettingsLineWidth & SettingsLineDash
+
+type ToolsCircleSettings = SettingsStrokeColor & SettingsFillColor & SettingsOpacity & SettingsLineWidth & SettingsLineDash
+
+type ToolsEllipseSettings = SettingsStrokeColor & SettingsFillColor & SettingsOpacity & SettingsLineWidth & SettingsLineDash
+
+type ToolsTextSettings = SettingsOpacity & SettingsStrokeColor & SettingsFont
+
+type ToolsLineSettings = SettingsOpacity & SettingsStrokeColor & SettingsLineWidth & SettingsLineDash & SettingsLineArrow
+
+type ToolsBrushSettings = SettingsOpacity & SettingsStrokeColor & SettingsLineWidth & SettingsLineDash
+
+type ToolsPolygonSettings = SettingsOpacity &
+  SettingsStrokeColor &
+  SettingsFillColor &
+  SettingsLineWidth &
+  SettingsLineDash &
+  SettingsPointsCount
+
+type ToolsCurveSettings = SettingsOpacity &
+  SettingsStrokeColor &
+  SettingsFillColor &
+  SettingsLineWidth &
+  SettingsLineDash &
+  SettingsPointsCount
+
+type ToolsTriangleSettings = SettingsStrokeColor & SettingsFillColor & SettingsOpacity & SettingsLineWidth & SettingsLineDash
+
+type ToolsPictureSettings = SettingsOpacity
+
+type ToolsSettingsType<T extends ShapeType> = T extends 'rect'
+  ? ToolsRectSettings
+  : T extends 'square'
+    ? ToolsSquareSettings
+    : T extends 'circle'
+      ? ToolsCircleSettings
+      : T extends 'ellipse'
+        ? ToolsEllipseSettings
+        : T extends 'text'
+          ? ToolsTextSettings
+          : T extends 'line'
+            ? ToolsLineSettings
+            : T extends 'brush'
+              ? ToolsBrushSettings
+              : T extends 'polygon'
+                ? ToolsPolygonSettings
+                : T extends 'curve'
+                  ? ToolsCurveSettings
+                  : T extends 'triangle'
+                    ? ToolsTriangleSettings
+                    : T extends 'picture'
+                      ? ToolsPictureSettings
+                      : never
+
+```
 
 ## Changelog
 https://github.com/YoRab/react-paint-editor/blob/main/Changelog.md
