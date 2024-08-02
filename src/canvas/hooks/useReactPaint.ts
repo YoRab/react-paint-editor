@@ -183,7 +183,7 @@ const useReactPaint = ({
     resetCanvasRef.current?.(json, { clearHistory, source: 'remote' })
   }, [])
 
-  if (!init.current) {
+  if (!init.current && typeof Image !== 'undefined') {
     init.current = true
     defaultShapes && resetCanvas(defaultShapes, { clearHistory: true, source: 'remote' })
   }
