@@ -7,6 +7,14 @@ import type React from 'react'
 import { useEffect, useMemo, useRef } from 'react'
 import './EditTextBox.css'
 
+const getNodeValue = (node: ChildNode): string => {
+  return node.childNodes.length
+    ? Array.from(node.childNodes)
+        .map(childNode => getNodeValue(childNode))
+        .join('')
+    : node.nodeValue ?? ''
+}
+
 type EditTextBoxType = {
   scaleRatio: number
   disabled?: boolean
@@ -22,7 +30,7 @@ const EditTextBox = ({ disabled = false, scaleRatio, shape, defaultValue, update
   const saveShapesRef = useRef(saveShapes)
 
   const updateContentEditable = (e: React.ChangeEvent<HTMLDivElement>) => {
-    const divContent = Array.from(e.target.childNodes).map(node => node.childNodes[0].nodeValue ?? '')
+    const divContent = Array.from(e.target.childNodes).map(node => getNodeValue(node))
     updateValue(divContent)
   }
 
