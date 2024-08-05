@@ -1,3 +1,9 @@
+# V0.11.6
+- fix getting node value for editbox
+
+# V0.11.5
+- add test for Image api before using it to prevent Server Side Rendering to break
+
 # V0.11.4
 - fix callback immutability
 - fix datachanged callback providing wrong canvas size
