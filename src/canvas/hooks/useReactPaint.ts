@@ -183,10 +183,11 @@ const useReactPaint = ({
     resetCanvasRef.current?.(json, { clearHistory, source: 'remote' })
   }, [])
 
-  if (!init.current && typeof Image !== 'undefined') {
+  useEffect(() => {
+    if (init.current) return
     init.current = true
-    defaultShapes && resetCanvas(defaultShapes, { clearHistory: true, source: 'remote' })
-  }
+    defaultShapes && resetCanvasRef.current?.(defaultShapes, { clearHistory: true, source: 'remote' })
+  }, [defaultShapes])
 
   const loadFile = useCallback(
     async (file: File) => {

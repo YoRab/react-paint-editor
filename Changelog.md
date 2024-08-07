@@ -1,3 +1,6 @@
+# V0.11.7
+- fix redering loop
+
 # V0.11.6
 - fix getting node value for editbox
 
