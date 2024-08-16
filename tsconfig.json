@@ -5,5 +5,5 @@
     "noEmit": true,
     "emitDeclarationOnly": false
   },
-  "include": ["src", "stories"]
+  "include": ["src", "stories", "tests"]
 }

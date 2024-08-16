@@ -39,7 +39,8 @@
     "storybook": "8.1.11",
     "typescript": "5.5.3",
     "vite": "5.3.3",
-    "vite-tsconfig-paths": "4.3.2"
+    "vite-tsconfig-paths": "4.3.2",
+    "vitest": "2.0.5"
   },
   "peerDependencies": {
     "react": "18.x",
@@ -49,7 +50,7 @@
     "declarationfiles": "pnpm tsc --project tsconfig.prod.json && node fixDtsPath.js",
     "start": "storybook dev -p 6006",
     "build-storybook": "storybook build",
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "vitest",
     "build": "vite build && pnpm declarationfiles",
     "lint": "pnpm biome check --write src stories",
     "prepublishOnly": "pnpm build",
