@@ -41,8 +41,10 @@ export const mergeWith = (
   const merged: Record<string, unknown> = { ...target }
 
   for (const key in source) {
-    if (Object.hasOwn(source, key)) {
-      if (Object.hasOwn(merged, key)) {
+    // biome-ignore lint/suspicious/noPrototypeBuiltins: be compliant with es2020
+    if (source.hasOwnProperty(key)) {
+      // biome-ignore lint/suspicious/noPrototypeBuiltins: be compliant with es2020
+      if (merged.hasOwnProperty(key)) {
         merged[key] = customMergeFn(merged[key], source[key], key) ?? mergeWith(customMergeFn, merged[key], source[key])
       } else {
         merged[key] = source[key]
