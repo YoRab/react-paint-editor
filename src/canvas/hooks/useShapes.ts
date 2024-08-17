@@ -208,12 +208,14 @@ const useShapes = (settings: UtilsSettings, width: number, height: number) => {
   )
 
   const registerEvent = useCallback((event: 'dataChanged', fn: (data: StateData, source: 'user' | 'remote') => void) => {
-    if (!Object.hasOwn(listeners.current, event)) return
+    // biome-ignore lint/suspicious/noPrototypeBuiltins: be compliant with es2020
+    if (!listeners.current.hasOwnProperty(event)) return
     listeners.current[event] = [...listeners.current[event], fn]
   }, [])
 
   const unregisterEvent = useCallback((event: 'dataChanged', fn?: (data: StateData, source: 'user' | 'remote') => void) => {
-    if (!Object.hasOwn(listeners.current, event)) return
+    // biome-ignore lint/suspicious/noPrototypeBuiltins: be compliant with es2020
+    if (!listeners.current.hasOwnProperty(event)) return
     if (fn) {
       const currentFnIndex = listeners.current[event].findIndex(listener => listener === fn)
       listeners.current[event] = [...listeners.current[event].slice(0, currentFnIndex), ...listeners.current[event].slice(currentFnIndex + 1)]
