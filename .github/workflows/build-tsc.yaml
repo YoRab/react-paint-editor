@@ -1,4 +1,4 @@
-name: Run unit tests
+name: Run tsc check
 
 on:
   pull_request:
@@ -25,4 +25,4 @@ jobs:
         run: pnpm install
 
       - name: Run tests
-        run: pnpm test
+        run: pnpm tsc --project tsconfig.json
