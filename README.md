@@ -1,4 +1,4 @@
-# React Paint V0.11.7
+# React Paint
 
 An open-source canvas-based library for React used for image annotation or as a digital whiteboard
 
