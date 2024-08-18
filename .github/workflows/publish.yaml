@@ -35,7 +35,7 @@ jobs:
           git tag -f ${TAG_VERSION}
           git push origin HEAD:main --tags
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
 
       # - name: Publish to npm
       #   run: pnpm publishnpm
