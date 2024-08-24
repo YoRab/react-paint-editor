@@ -71,7 +71,42 @@ export const Default: Story = {
   parameters: {
     docs: {
       source: {
-        code: `const PictureWithAnnotations = ({ src, alt }: { src: string; alt: string }) => {
+        code: `
+        
+        /* CSS */
+
+.grid {
+    display: flex;
+    flex-wrap: wrap;
+}
+
+.pic-container {
+    position: relative;
+    padding: 36px 0;
+}
+
+.picture {
+    max-width: 100%;
+}
+
+.annotations {
+    position: absolute;
+    left: 0;
+    right: 0
+}
+
+.annotations.editor {
+    top: 0;
+    bottom: 0;
+}
+
+.view {
+    top: 36px;
+    bottom: 36px;
+}
+
+/* TSX */
+  const PictureWithAnnotations = ({ src, alt }: { src: string; alt: string }) => {
   const [isEdit, setIsEdit] = useState(false)
   const [dimensions, setDimensions] = useState<[number, number]>()
   const { editorProps, canvasProps } = useReactPaint({
