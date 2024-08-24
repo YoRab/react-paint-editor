@@ -72,7 +72,7 @@ export const isEqual = (a: unknown, b: unknown): boolean => {
   }
 
   for (const key of keysA) {
-    //@ts-ignore
+    //@ts-ignore unchecked access is intentional
     if (!keysB.includes(key) || !isEqual(a[key], b[key])) {
       return false
     }

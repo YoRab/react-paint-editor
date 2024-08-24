@@ -5,6 +5,7 @@ import { checkPositionIntersection, checkSelectionFrameCollision, checkSelection
 import { refreshShape } from '@canvas/utils/shapes/index'
 import { createPicture } from '@canvas/utils/shapes/picture'
 import type { Point, ShapeEntity, StateData } from '@common/types/Shapes'
+import { moveItemPosition } from '@common/utils/array'
 import { isEqual, omit, set } from '@common/utils/object'
 import { useCallback, useEffect, useRef, useState } from 'react'
 
@@ -158,27 +159,12 @@ const useShapes = (settings: UtilsSettings, width: number, height: number) => {
   }, [])
 
   const moveShapes = useCallback(
-    (firstShapeId: string, lastShapeId: string) => {
+    (startPositionShapeId: string, endPositionShapeId: string) => {
       const shapes = shapesRef.current
-      const firstShapeIndex = shapes.findIndex(shape => shape.id === firstShapeId)
-      const lastShapeIndex = shapes.findIndex(shape => shape.id === lastShapeId)
+      const startPositionShapeIndex = shapes.findIndex(shape => shape.id === startPositionShapeId)
+      const endPositionShapeIndex = shapes.findIndex(shape => shape.id === endPositionShapeId)
 
-      // todo utils
-      if (firstShapeIndex < lastShapeIndex) {
-        updateShapes([
-          ...shapes.slice(0, firstShapeIndex),
-          ...shapes.slice(firstShapeIndex + 1, lastShapeIndex + 1),
-          shapes[firstShapeIndex],
-          ...shapes.slice(lastShapeIndex + 1, shapes.length)
-        ])
-      } else {
-        updateShapes([
-          ...shapes.slice(0, lastShapeIndex),
-          shapes[firstShapeIndex],
-          ...shapes.slice(lastShapeIndex, firstShapeIndex),
-          ...shapes.slice(firstShapeIndex + 1, shapes.length)
-        ])
-      }
+      updateShapes(moveItemPosition(shapes, startPositionShapeIndex, endPositionShapeIndex))
     },
     [updateShapes]
   )
