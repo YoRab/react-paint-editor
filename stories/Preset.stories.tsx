@@ -69,5 +69,58 @@ export default meta
 type Story = StoryObj<typeof meta>
 
 export const Default: Story = {
-  args: {}
+  args: {},
+  parameters: {
+    docs: {
+      source: {
+        code: ` const [preset, setPreset] = useState(0)
+  const [shapes, setShapes] = useState<DrawableShape[] | undefined>(WITH_PICTURE)
+
+  const { registerEvent, unregisterEvent, resetCanvas, editorProps, canvasProps } = useReactPaint({
+    shapes,
+    options: {
+      clearCallback: () => {
+        return [WITH_PICTURE, TREE_AND_CLOUDS, HELLO_THERE][preset]
+      }
+    }
+  })
+
+  const choosePreset = (preset: number) => {
+    setPreset(preset)
+    resetCanvas([WITH_PICTURE, TREE_AND_CLOUDS, HELLO_THERE][preset])
+  }
+
+  useEffect(() => {
+    const onDataChanged = (data: StateData, source: 'user' | 'remote') => {
+      console.log(\`data changed from \${source}\`)
+      setShapes(data.shapes)
+    }
+    registerEvent('dataChanged', onDataChanged)
+    return () => {
+      unregisterEvent('dataChanged', onDataChanged)
+    }
+  }, [registerEvent, unregisterEvent])
+
+  return (
+    <>
+      <div>
+        <button type='button' onClick={() => choosePreset(0)}>
+          preset 1
+        </button>
+        <button type='button' onClick={() => choosePreset(1)}>
+          preset 2
+        </button>
+        <button type='button' onClick={() => choosePreset(2)}>
+          preset 3
+        </button>
+      </div>
+      <Editor editorProps={editorProps}>
+        <Canvas canvasProps={canvasProps} />
+      </Editor>
+    </>
+  )`,
+        language: 'tsx'
+      }
+    }
+  }
 }

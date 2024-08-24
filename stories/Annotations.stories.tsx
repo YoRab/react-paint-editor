@@ -3,17 +3,6 @@ import { type SyntheticEvent, useState } from 'react'
 import { Canvas, Editor, useReactPaint } from '../src/index'
 import './annotations.css'
 
-const PictureAnnotation = () => {
-  return (
-    <div className='grid'>
-      <PictureWithAnnotations src='https://picsum.photos/600/300?random=1' alt='First pic' />
-      <PictureWithAnnotations src='https://picsum.photos/600/300?random=2' alt='Second pic' />
-      <PictureWithAnnotations src='https://picsum.photos/600/300?random=3' alt='Third pic' />
-      <PictureWithAnnotations src='https://picsum.photos/600/300?random=4' alt='Fourth pic' />
-    </div>
-  )
-}
-
 const PictureWithAnnotations = ({ src, alt }: { src: string; alt: string }) => {
   const [isEdit, setIsEdit] = useState(false)
   const [dimensions, setDimensions] = useState<[number, number]>()
@@ -50,6 +39,17 @@ const PictureWithAnnotations = ({ src, alt }: { src: string; alt: string }) => {
   )
 }
 
+const PictureAnnotation = () => {
+  return (
+    <div className='grid'>
+      <PictureWithAnnotations src='https://picsum.photos/600/300?random=1' alt='First pic' />
+      <PictureWithAnnotations src='https://picsum.photos/600/300?random=2' alt='Second pic' />
+      <PictureWithAnnotations src='https://picsum.photos/600/300?random=3' alt='Third pic' />
+      <PictureWithAnnotations src='https://picsum.photos/600/300?random=4' alt='Fourth pic' />
+    </div>
+  )
+}
+
 // More on how to set up stories at: https://storybook.js.org/docs/react/writing-stories/introduction#default-export
 const meta = {
   title: 'Main/Picture annotation',
@@ -67,5 +67,58 @@ export default meta
 type Story = StoryObj<typeof meta>
 
 export const Default: Story = {
-  args: {}
+  args: {},
+  parameters: {
+    docs: {
+      source: {
+        code: `const PictureWithAnnotations = ({ src, alt }: { src: string; alt: string }) => {
+  const [isEdit, setIsEdit] = useState(false)
+  const [dimensions, setDimensions] = useState<[number, number]>()
+  const { editorProps, canvasProps } = useReactPaint({
+    mode: isEdit ? 'editor' : 'viewer',
+    width: dimensions?.[0],
+    height: dimensions?.[1]
+  })
+
+  const canvasOptions = {
+    canvasBackgroundColor: 'transparent'
+  }
+
+  const onPictureLoad = (e: SyntheticEvent<HTMLImageElement, Event>) => {
+    setDimensions([e.currentTarget.naturalWidth, e.currentTarget.naturalHeight])
+  }
+
+  return (
+    <div>
+      <div>
+        <button type='button' onClick={() => setIsEdit(prev => !prev)}>
+          toggle edition
+        </button>
+      </div>
+      <div className='pic-container'>
+        <img src={src} alt={alt} className='picture' onLoad={onPictureLoad} />
+        {dimensions && (
+          <Editor editorProps={editorProps} className={\`annotations \${isEdit ? 'editor' : 'view'}\`}>
+            <Canvas canvasProps={canvasProps} options={canvasOptions} />
+          </Editor>
+        )}
+      </div>
+    </div>
+  )
+}
+
+const PictureAnnotation = () => {
+  return (
+    <div className='grid'>
+      <PictureWithAnnotations src='https://picsum.photos/600/300?random=1' alt='First pic' />
+      <PictureWithAnnotations src='https://picsum.photos/600/300?random=2' alt='Second pic' />
+      <PictureWithAnnotations src='https://picsum.photos/600/300?random=3' alt='Third pic' />
+      <PictureWithAnnotations src='https://picsum.photos/600/300?random=4' alt='Fourth pic' />
+    </div>
+  )
+}`,
+        language: 'tsx'
+      }
+    }
+  }
 }
