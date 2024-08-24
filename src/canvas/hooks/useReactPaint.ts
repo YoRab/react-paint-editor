@@ -25,7 +25,7 @@ const useReactPaint = ({
   mode = 'editor',
   disabled = false,
   options = DEFAULT_OPTIONS
-}: UseReactPaintProps) => {
+}: UseReactPaintProps = {}) => {
   const {
     layersManipulation,
     brushAlgo,
