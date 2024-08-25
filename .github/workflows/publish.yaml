@@ -3,7 +3,7 @@ name: Publish to npm
 on:
   push:
     tags:
-      - 'v*.*.*'
+      - "v*.*.*"
 
 jobs:
   publish:
@@ -18,24 +18,87 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '18.x'
+          node-version: "18.x"
 
       - name: Install dependencies
         run: pnpm install
 
-      - name: Update package.json version and push changes
+      - name: Update package.json version
         run: |
           TAG_VERSION=$(echo ${GITHUB_REF#refs/tags/})
           echo "Updating package.json to version ${TAG_VERSION}"
           pnpm version ${TAG_VERSION} --no-git-tag-version
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Commit and push version changes to a new branch
+        run: |
+          TAG_VERSION=$(echo ${GITHUB_REF#refs/tags/})
+          BRANCH_NAME="update-version-${TAG_VERSION}"
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
+          git checkout -b $BRANCH_NAME
           git add package.json
           git commit -m "Update version to ${TAG_VERSION}"
-          git tag -f ${TAG_VERSION}
-          git push origin HEAD:main --tags
+          git push origin $BRANCH_NAME
         env:
-          GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create a pull request
+        uses: actions/github-script@v6
+        with:
+          script: |
+            TAG_VERSION=$(echo ${GITHUB_REF#refs/tags/})
+            const branchName = `update-version-${TAG_VERSION}`;
+            const baseBranch = 'main';
+            const title = `Update version to ${TAG_VERSION}`;
+            const body = `This PR updates the package.json to version ${TAG_VERSION}.`;
+
+            await github.rest.pulls.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: title,
+              body: body,
+              head: branchName,
+              base: baseBranch,
+            });
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Merge the pull request
+        uses: actions/github-script@v6
+        with:
+          script: |
+            TAG_VERSION=$(echo ${GITHUB_REF#refs/tags/})
+            const branchName = `update-version-${TAG_VERSION}`;
+            const pulls = await github.rest.pulls.list({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              head: `${context.repo.owner}:${branchName}`,
+              state: 'open',
+            });
+
+            if (pulls.data.length > 0) {
+              const pullRequest = pulls.data[0];
+              await github.rest.pulls.merge({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                pull_number: pullRequest.number,
+              });
+            }
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Checkout main branch and update the tag
+        run: |
+          git fetch origin main
+          git checkout main
+          TAG_VERSION=$(echo ${GITHUB_REF#refs/tags/})
+          echo "Updating main branch to tag ${TAG_VERSION}"
+          git tag -f ${TAG_VERSION}
+          git push origin ${TAG_VERSION} --force
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       # - name: Publish to npm
       #   run: pnpm publishnpm
