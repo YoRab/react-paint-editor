@@ -1,12 +1,15 @@
 name: Publish to npm
 
 on:
-  push:
-    tags:
-      - "v*.*.*"
+  workflow_dispatch:
+    inputs:
+      tag_input:
+        description: "Tag version"
+        required: true
+        default: "v0.0.0"
 
 jobs:
-  publish:
+  run-with-input:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -25,21 +28,19 @@ jobs:
 
       - name: Update package.json version
         run: |
-          TAG_VERSION=$(echo ${GITHUB_REF#refs/tags/})
-          echo "Updating package.json to version ${TAG_VERSION}"
-          pnpm version ${TAG_VERSION} --no-git-tag-version
+          echo "Updating package.json to version ${{ github.event.inputs.text_input }}"
+          pnpm version ${{ github.event.inputs.text_input }} --no-git-tag-version
         env:
           GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
 
       - name: Commit and push version changes to a new branch
         run: |
-          TAG_VERSION=$(echo ${GITHUB_REF#refs/tags/})
-          BRANCH_NAME="update-version-${TAG_VERSION}"
+          BRANCH_NAME="update-version-${{ github.event.inputs.text_input }}"
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git checkout -b $BRANCH_NAME
           git add package.json
-          git commit -m "Update version to ${TAG_VERSION}"
+          git commit -m "Update version to ${{ github.event.inputs.text_input }}"
           git push origin $BRANCH_NAME
         env:
           GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
@@ -48,7 +49,7 @@ jobs:
         uses: actions/github-script@v6
         with:
           script: |
-            const TAG_VERSION = process.env.GITHUB_REF.replace('refs/tags/', '');
+            const TAG_VERSION = '${{ github.event.inputs.tag_input }}';
             const branchName = `update-version-${TAG_VERSION}`;
             const baseBranch = 'main';
             const title = `Update version to ${TAG_VERSION}`;
@@ -69,7 +70,7 @@ jobs:
         uses: actions/github-script@v6
         with:
           script: |
-            const TAG_VERSION = process.env.GITHUB_REF.replace('refs/tags/', '');
+            const TAG_VERSION = '${{ github.event.inputs.tag_input }}';
             const branchName = `update-version-${TAG_VERSION}`;
             const pulls = await github.rest.pulls.list({
               owner: context.repo.owner,
@@ -93,10 +94,9 @@ jobs:
         run: |
           git fetch origin main
           git checkout main
-          TAG_VERSION=$(echo ${GITHUB_REF#refs/tags/})
-          echo "Updating main branch to tag ${TAG_VERSION}"
-          git tag -f ${TAG_VERSION}
-          git push origin ${TAG_VERSION} --force
+          echo "Creating and pushing tag ${{ github.event.inputs.tag_input }}"
+          git tag  ${{ github.event.inputs.tag_input }}
+          git push origin  ${{ github.event.inputs.tag_input }}
         env:
           GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
 
