@@ -38,6 +38,7 @@ jobs:
           BRANCH_NAME="update-version-${{ github.event.inputs.tag_input }}"
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
+          git remote set-url origin https://x-access-token:${{ secrets.PAT_TOKEN }}@github.com/${{ github.repository }}.git
           git checkout -b $BRANCH_NAME
           git add package.json
           git commit -m "Update version to ${{ github.event.inputs.tag_input }}"
