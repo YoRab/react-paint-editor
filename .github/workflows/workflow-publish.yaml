@@ -94,6 +94,7 @@ jobs:
         run: |
           git fetch origin main
           git checkout main
+          git pull origin main
           echo "Creating and pushing tag ${{ github.event.inputs.tag_input }}"
           git tag  ${{ github.event.inputs.tag_input }}
           git push origin  ${{ github.event.inputs.tag_input }}
