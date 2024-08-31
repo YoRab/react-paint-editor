@@ -28,19 +28,19 @@ jobs:
 
       - name: Update package.json version
         run: |
-          echo "Updating package.json to version ${{ github.event.inputs.text_input }}"
-          pnpm version ${{ github.event.inputs.text_input }} --no-git-tag-version
+          echo "Updating package.json to version ${{ github.event.inputs.tag_input }}"
+          pnpm version ${{ github.event.inputs.tag_input }} --no-git-tag-version
         env:
           GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
 
       - name: Commit and push version changes to a new branch
         run: |
-          BRANCH_NAME="update-version-${{ github.event.inputs.text_input }}"
+          BRANCH_NAME="update-version-${{ github.event.inputs.tag_input }}"
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git checkout -b $BRANCH_NAME
           git add package.json
-          git commit -m "Update version to ${{ github.event.inputs.text_input }}"
+          git commit -m "Update version to ${{ github.event.inputs.tag_input }}"
           git push origin $BRANCH_NAME
         env:
           GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
