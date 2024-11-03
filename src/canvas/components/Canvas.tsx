@@ -230,16 +230,15 @@ const Canvas = React.forwardRef<HTMLCanvasElement, DrawerType>(
               height={canvasSize.height}
               data-grow={canGrow}
               style={{
-                '--react-paint-canvas-cursor':
-                  (activeTool.type !== 'selection' && activeTool.type !== 'move') || hoverMode.mode === 'resize'
+                '--react-paint-canvas-cursor': canvasOffsetStartData
+                  ? 'grabbing'
+                  : (activeTool.type !== 'selection' && activeTool.type !== 'move') || hoverMode.mode === 'resize'
                     ? 'crosshair'
                     : hoverMode.mode === 'translate'
                       ? 'move'
-                      : canvasOffsetStartData
-                        ? 'grabbing'
-                        : hoverMode.mode === 'rotate' || activeTool.type === 'move'
-                          ? 'grab'
-                          : 'default'
+                      : hoverMode.mode === 'rotate' || activeTool.type === 'move'
+                        ? 'grab'
+                        : 'default'
               }}
             />
           )}
