@@ -53,7 +53,7 @@
     "build-storybook": "storybook build",
     "test": "vitest",
     "build": "vite build",
-    "lint": "pnpm biome check --write src stories",
+    "lint": "pnpm biome check --write src stories tests",
     "prepublishOnly": "pnpm build && pnpm declarationfiles",
     "publishnpm": "pnpm publish --access public"
   }

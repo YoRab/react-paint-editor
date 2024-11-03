@@ -12,7 +12,7 @@ const getNodeValue = (node: ChildNode): string => {
     ? Array.from(node.childNodes)
         .map(childNode => getNodeValue(childNode))
         .join('')
-    : node.nodeValue ?? ''
+    : (node.nodeValue ?? '')
 }
 
 type EditTextBoxType = {

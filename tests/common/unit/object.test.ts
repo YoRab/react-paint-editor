@@ -1,5 +1,5 @@
-import { describe, it, expect } from 'vitest'
-import { omit, set, mergeWith, isEqual } from '@common/utils/object'
+import { isEqual, mergeWith, omit, set } from '@common/utils/object'
+import { describe, expect, it } from 'vitest'
 
 describe('common/utils/object', () => {
   describe('omit', () => {

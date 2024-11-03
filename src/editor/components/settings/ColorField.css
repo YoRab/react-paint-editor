@@ -1,45 +1,45 @@
 .react-paint-editor-colorfield-color {
-    width: 20px;
-    height: 20px;
-    box-sizing: border-box;
-    border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  box-sizing: border-box;
+  border-radius: 50%;
 }
 
 .react-paint-editor-colorfield-color[data-mode='fill'] {
-    border: 1px solid #80808038;
-    background: var(--react-paint-editor-colorfield-color-value);
+  border: 1px solid #80808038;
+  background: var(--react-paint-editor-colorfield-color-value);
 }
 
 .react-paint-editor-colorfield-color[data-mode='stroke'] {
-    border: 4px solid #80808038;
+  border: 4px solid #80808038;
 }
 
 .react-paint-editor-colorfield-color[data-mode='stroke']:after {
-    content: '';
-    display: block;
-    border-radius: 100%;
-    border: 2px solid var(--react-paint-editor-colorfield-color-value);
-    position: relative;
-    width: 18px;
-    height: 18px;
-    left: -3px;
-    top: -3px;
-    box-sizing: border-box;
+  content: '';
+  display: block;
+  border-radius: 100%;
+  border: 2px solid var(--react-paint-editor-colorfield-color-value);
+  position: relative;
+  width: 18px;
+  height: 18px;
+  left: -3px;
+  top: -3px;
+  box-sizing: border-box;
 }
 
 .react-paint-editor-colorfield-wrapper {
-    display: flex;
-    flex-wrap: wrap;
+  display: flex;
+  flex-wrap: wrap;
 }
 
 .react-paint-editor-colorfield-customcolor {
-    width: 20px;
-    height: 20px;
-    box-sizing: border-box;
-    border-radius: 50%;
-    color: var(--react-paint-editor-colorfield-color-value);
-    display: flex;
-    align-items: baseline;
-    justify-content: center;
-    font-weight: bold;
+  width: 20px;
+  height: 20px;
+  box-sizing: border-box;
+  border-radius: 50%;
+  color: var(--react-paint-editor-colorfield-color-value);
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  font-weight: bold;
 }

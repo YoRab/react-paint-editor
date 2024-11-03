@@ -1,5 +1,5 @@
-import { describe, it, expect } from 'vitest'
 import { uniqueId } from '@common/utils/util'
+import { describe, expect, it } from 'vitest'
 
 describe('uniqueId', () => {
   it('should generate unique IDs with a given prefix', () => {

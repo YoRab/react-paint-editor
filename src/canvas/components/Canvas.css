@@ -1,48 +1,48 @@
 .react-paint-canvas-box {
-    flex: 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .react-paint-canvas-container {
-    position: relative;
-    background-color: var(--react-paint-app-canvas-bg);
-    background-repeat: repeat;
-    background-size: 16px;
-    overflow: hidden;
-    display: grid;
+  position: relative;
+  background-color: var(--react-paint-app-canvas-bg);
+  background-repeat: repeat;
+  background-size: 16px;
+  overflow: hidden;
+  display: grid;
 }
 
 .react-paint-canvas-container[data-grow='true'] {
-    width: 100%;
-    height: 100%;
+  width: 100%;
+  height: 100%;
 }
 
 .react-paint-canvas-drawcanvas {
-    user-select: none;
-    max-width: 100%;
-    touch-action: none;
-    /* prevent scroll on touch */
-    display: block;
-    grid-area: 1 / 1;
+  user-select: none;
+  max-width: 100%;
+  touch-action: none;
+  /* prevent scroll on touch */
+  display: block;
+  grid-area: 1 / 1;
 }
 
 .react-paint-canvas-drawcanvas[data-grow='true'] {
-    width: 100%;
+  width: 100%;
 }
 
 .react-paint-canvas-selectioncanvas {
-    user-select: none;
-    position: relative;
-    max-width: 100%;
-    /* prevent scroll on touch */
-    touch-action: none;
-    display: block;
-    grid-area: 1 / 1;
-    cursor: var(--react-paint-canvas-cursor);
+  user-select: none;
+  position: relative;
+  max-width: 100%;
+  /* prevent scroll on touch */
+  touch-action: none;
+  display: block;
+  grid-area: 1 / 1;
+  cursor: var(--react-paint-canvas-cursor);
 }
 
 .react-paint-canvas-selectioncanvas[data-grow='true'] {
-    width: 100%;
+  width: 100%;
 }
