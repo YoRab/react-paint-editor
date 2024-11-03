@@ -1,3 +1,12 @@
+# V0.11.21
+- up dependancies
+- use Biome to lint CSS
+- expose specific drawable shape to fix picture shape who sould not have img property outside of react paint
+- update text shape initialization for a bigger shape
+- move logic to utils
+- init unit tests
+- add github action to CI
+
 # V0.11.7
 - fix redering loop
 
