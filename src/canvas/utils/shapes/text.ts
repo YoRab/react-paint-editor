@@ -10,6 +10,7 @@ import { STYLE_FONT_DEFAULT, STYLE_FONT_SIZE_DEFAULT } from '@editor/constants/s
 import { getRectOppositeAnchorAbsolutePosition } from './rectangle'
 
 const DEFAULT_TEXT_VALUE: string[] = ['Texte']
+const DEFAULT_TEXT_WIDTH = 150
 
 const buildPath = <T extends DrawableShape<'text'>>(shape: T, settings: UtilsSettings): T => {
   return {
@@ -47,22 +48,25 @@ export const createText = (
   const fontSize = calculateTextFontSize(
     ctx,
     DEFAULT_TEXT_VALUE,
-    50,
+    DEFAULT_TEXT_WIDTH,
     shape.settings?.fontBold.default ?? false,
     shape.settings?.fontItalic.default ?? false,
     shape.settings.fontFamily.default
   )
+
+  const defaultHeight = fontSize * (DEFAULT_TEXT_VALUE.length || 1)
+
   return buildPath(
     {
       toolId: shape.id,
       type: shape.type,
       id: uniqueId(`${shape.type}_`),
-      x: cursorPosition[0],
-      y: cursorPosition[1],
+      x: cursorPosition[0] - DEFAULT_TEXT_WIDTH,
+      y: cursorPosition[1] - defaultHeight,
       value: DEFAULT_TEXT_VALUE,
       fontSize,
-      width: 50,
-      height: fontSize * (DEFAULT_TEXT_VALUE.length || 1),
+      width: DEFAULT_TEXT_WIDTH,
+      height: defaultHeight,
       rotation: 0,
       style: {
         opacity: shape.settings.opacity.default,
