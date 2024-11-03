@@ -1,7 +1,7 @@
 import type { UtilsSettings } from '@canvas/constants/app'
 import { PICTURE_DEFAULT_SIZE } from '@canvas/constants/picture'
 import { ShapeTypeArray } from '@canvas/constants/shapes'
-import type { DrawableShape, ShapeEntity } from '@common/types/Shapes'
+import type { DrawableShape, ExportedDrawableShape, ShapeEntity } from '@common/types/Shapes'
 import { compact } from '@common/utils/array'
 import { set } from '@common/utils/object'
 import { initCanvasContext } from './canvas'
@@ -100,7 +100,7 @@ export const decodeJson = async (file: File) => {
   })
 }
 
-export const decodeImportedData = async (shapesForJson: DrawableShape[], settings: UtilsSettings) => {
+export const decodeImportedData = async (shapesForJson: ExportedDrawableShape[], settings: UtilsSettings) => {
   if (!shapesForJson) return []
   const promisesArray: Promise<void>[] = []
 

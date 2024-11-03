@@ -1,4 +1,4 @@
-import type { DrawableShape, Point } from '@common/types/Shapes'
+import type { DrawableShape, ExportedDrawableShape, Point } from '@common/types/Shapes'
 import type { CustomToolInput } from '@common/types/tools'
 import type { RecursivePartial } from '@common/types/utils'
 import { DEFAULT_SHAPE_TOOLS } from '@editor/constants/tools'
@@ -35,7 +35,7 @@ type AppOptionsType = {
   withUrlPicture: boolean
   withFrameSelection: boolean
   withSkeleton: boolean
-  clearCallback: 'empty' | 'defaultShapes' | (() => DrawableShape[])
+  clearCallback: 'empty' | 'defaultShapes' | (() => ExportedDrawableShape[])
   brushAlgo: BrushAlgo
   isBrushShapeDoneOnMouseUp: boolean
   canvasSelectionPadding: number

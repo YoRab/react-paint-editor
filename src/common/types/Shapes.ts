@@ -147,6 +147,8 @@ export type DrawableShape<T extends ShapeType = ShapeType> = {
                         }
                       : never)
 
+export type ExportedDrawableShape<T extends ShapeType = ShapeType> = T extends 'picture' ? Omit<DrawableShape<'picture'>, 'img'> : DrawableShape<T>
+
 export type ShapeEntity<T extends Exclude<ShapeType, 'triangle'> = Exclude<ShapeType, 'triangle'>> = {
   id: string
   toolId?: string

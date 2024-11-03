@@ -50,7 +50,7 @@ const createFilePicture = (
   maxPictureWidth: number,
   maxPictureHeight: number,
   settings: UtilsSettings
-) => {
+): void => {
   if (isSvg(file)) {
     file.text().then(svgFileContent => {
       const svgUrl = addSizeAndConvertSvgToObjectUrl(svgFileContent)
@@ -78,7 +78,7 @@ const createUrlPicture = (
   maxPictureWidth: number,
   maxPictureHeight: number,
   settings: UtilsSettings
-) => {
+): void => {
   img.onload = () => {
     URL.revokeObjectURL(img.src)
     const pictureShape = createPictureShape(img, url, maxPictureWidth, maxPictureHeight, settings)
@@ -94,7 +94,12 @@ const createUrlPicture = (
     })
 }
 
-export const createPicture = (fileOrUrl: File | string, maxPictureWidth: number, maxPictureHeight: number, settings: UtilsSettings) => {
+export const createPicture = (
+  fileOrUrl: File | string,
+  maxPictureWidth: number,
+  maxPictureHeight: number,
+  settings: UtilsSettings
+): Promise<ShapeEntity<'picture'>> => {
   return new Promise<ShapeEntity<'picture'>>((resolve, reject) => {
     const img = new Image()
 
