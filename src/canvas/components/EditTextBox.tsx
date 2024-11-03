@@ -89,8 +89,8 @@ const EditTextBox = ({ disabled = false, scaleRatio, shape, defaultValue, update
       contentEditable={!disabled}
       onInput={updateContentEditable}
       style={{
-        '--react-paint-editor-toolbox-edittextbox-transform': `translate3D(${position[0] * scaleRatio}px, ${
-          position[1] * scaleRatio
+        '--react-paint-editor-toolbox-edittextbox-transform': `translate3D(${(position[0] + settings.canvasOffset[0]) * scaleRatio}px, ${
+          (position[1] + settings.canvasOffset[1]) * scaleRatio
         }px, 0) rotate(${radiansToDegrees(shape.rotation)}deg)`,
         '--react-paint-editor-toolbox-edittextbox-fontsize': `${shape.fontSize * scaleRatio}px`,
         '--react-paint-editor-toolbox-edittextbox-padding': `${settings.selectionPadding * scaleRatio}px`,
