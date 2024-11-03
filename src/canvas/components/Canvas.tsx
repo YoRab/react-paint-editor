@@ -103,8 +103,8 @@ type DrawerType = {
   refreshSelectedShapes: (ctx: CanvasRenderingContext2D, cursorPosition: Point, settings: UtilsSettings) => void
   activeTool: ToolsType
   setActiveTool: React.Dispatch<React.SetStateAction<ToolsType>>
-  canvasOffsetStartPosition: Point | undefined
-  setCanvasOffsetStartPosition: React.Dispatch<React.SetStateAction<Point | undefined>>
+  canvasOffsetStartData: { start: Point; originalOffset: Point } | undefined
+  setCanvasOffsetStartData: React.Dispatch<React.SetStateAction<{ start: Point; originalOffset: Point } | undefined>>
   setCanvasOffset: React.Dispatch<React.SetStateAction<Point>>
   isInsideComponent: boolean
   selectionMode: SelectionModeData<number | Point>
@@ -133,8 +133,8 @@ const Canvas = React.forwardRef<HTMLCanvasElement, DrawerType>(
       saveShapes,
       activeTool,
       setActiveTool,
-      canvasOffsetStartPosition,
-      setCanvasOffsetStartPosition,
+      canvasOffsetStartData,
+      setCanvasOffsetStartData,
       setCanvasOffset,
       isInsideComponent,
       selectionMode,
@@ -166,12 +166,12 @@ const Canvas = React.forwardRef<HTMLCanvasElement, DrawerType>(
       setCanvasOffset,
       selectedShape,
       selectionCanvasRef,
-      canvasOffsetStartPosition,
+      canvasOffsetStartData,
+      setCanvasOffsetStartData,
       setSelectedShape,
       setSelectionFrame,
       refreshHoveredShape,
       refreshSelectedShapes,
-      setCanvasOffsetStartPosition,
       updateSingleShape,
       saveShapes,
       setSelectionMode,
@@ -230,12 +230,13 @@ const Canvas = React.forwardRef<HTMLCanvasElement, DrawerType>(
               height={canvasSize.height}
               data-grow={canGrow}
               style={{
-                '--react-paint-canvas-cursor':
-                  (activeTool.type !== 'selection' && activeTool.type !== 'move') || hoverMode.mode === 'resize'
+                '--react-paint-canvas-cursor': canvasOffsetStartData
+                  ? 'grabbing'
+                  : (activeTool.type !== 'selection' && activeTool.type !== 'move') || hoverMode.mode === 'resize'
                     ? 'crosshair'
-                    : activeTool.type === 'move' || hoverMode.mode === 'translate'
+                    : hoverMode.mode === 'translate'
                       ? 'move'
-                      : hoverMode.mode === 'rotate'
+                      : hoverMode.mode === 'rotate' || activeTool.type === 'move'
                         ? 'grab'
                         : 'default'
               }}

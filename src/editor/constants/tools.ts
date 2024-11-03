@@ -20,6 +20,7 @@ import {
   cursorIcon,
   curveIcon,
   exportFileIcon,
+  moveIcon,
   openFileIcon,
   pictureIcon,
   polygonIcon,
@@ -435,7 +436,7 @@ export const SAVE_TOOL: ActionsTool = {
 export const MOVE_TOOL: ActionsTool = {
   id: `${PREFIX_ID}move`,
   type: 'move',
-  icon: cursorIcon,
+  icon: moveIcon,
   label: 'Move'
 }
 

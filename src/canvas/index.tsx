@@ -8,6 +8,8 @@ import type { Point, ShapeEntity } from '@common/types/Shapes'
 import React, { type CSSProperties, useCallback, useRef, useState } from 'react'
 import './index.css'
 
+const ZOOM_FACTOR = 1
+
 type AppProps = {
   canvasProps: UseReactPaintReturnType['canvasProps']
   className?: string
@@ -57,7 +59,7 @@ const App = ({ options, className, style, canvasProps }: AppProps) => {
 
   const containerRef = useRef<HTMLDivElement>(null)
 
-  const [canvasOffsetStartPosition, setCanvasOffsetStartPosition] = useState<Point | undefined>(undefined)
+  const [canvasOffsetStartData, setCanvasOffsetStartData] = useState<{ start: Point; originalOffset: Point } | undefined>(undefined)
 
   const [selectionMode, setSelectionMode] = useState<SelectionModeData<Point | number>>({
     mode: 'default'
@@ -75,8 +77,9 @@ const App = ({ options, className, style, canvasProps }: AppProps) => {
 
   const onResized = useCallback(
     (measuredWidth: number) => {
-      const scaleRatio = measuredWidth / width
-      setCanvasSize({ width: measuredWidth, height: height * scaleRatio, scaleRatio })
+      const measuredHeight = (height * measuredWidth) / width
+      const scaleRatio = (measuredWidth / width) * ZOOM_FACTOR
+      setCanvasSize({ width: measuredWidth, height: measuredHeight, scaleRatio })
     },
     [width, height, setCanvasSize]
   )
@@ -118,8 +121,8 @@ const App = ({ options, className, style, canvasProps }: AppProps) => {
         isInsideComponent={isInsideComponent}
         activeTool={activeTool}
         setActiveTool={setActiveTool}
-        canvasOffsetStartPosition={canvasOffsetStartPosition}
-        setCanvasOffsetStartPosition={setCanvasOffsetStartPosition}
+        canvasOffsetStartData={canvasOffsetStartData}
+        setCanvasOffsetStartData={setCanvasOffsetStartData}
         shapes={shapesRef.current}
         addShape={addShape}
         updateSingleShape={updateShape}
