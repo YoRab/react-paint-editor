@@ -4,7 +4,7 @@ import useShapes from '@canvas/hooks/useShapes'
 import { buildDataToExport } from '@canvas/utils/data'
 import { decodeImportedData, decodeJson, downloadFile, encodeShapesInString, getCanvasImage } from '@canvas/utils/file'
 import { sanitizeTools } from '@canvas/utils/tools'
-import type { DrawableShape, Point, ShapeEntity, StateData } from '@common/types/Shapes'
+import type { DrawableShape, ExportedDrawableShape, Point, ShapeEntity, StateData } from '@common/types/Shapes'
 import type { ToolsType } from '@common/types/tools'
 import { SELECTION_TOOL } from '@editor/constants/tools'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
@@ -12,7 +12,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 type UseReactPaintProps = {
   width?: number
   height?: number
-  shapes?: DrawableShape[]
+  shapes?: ExportedDrawableShape[]
   mode?: 'editor' | 'viewer'
   disabled?: boolean
   options?: OptionalOptions
@@ -169,7 +169,7 @@ const useReactPaint = ({
   }, [isInsideComponent, setSelectedShape])
 
   const resetCanvas = useCallback(
-    async (json: DrawableShape[], options: { clearHistory: boolean; source: 'user' | 'remote' }) => {
+    async (json: ExportedDrawableShape[], options: { clearHistory: boolean; source: 'user' | 'remote' }) => {
       const shapes = await decodeImportedData(json, settings)
       resetCanvasWithShapeEntity(shapes, options)
     },
@@ -179,7 +179,7 @@ const useReactPaint = ({
   const resetCanvasRef = useRef<typeof resetCanvas>()
   resetCanvasRef.current = resetCanvas
 
-  const resetCanvasFromRemote = useCallback((json: DrawableShape[] = [], clearHistory = true) => {
+  const resetCanvasFromRemote = useCallback((json: ExportedDrawableShape[] = [], clearHistory = true) => {
     resetCanvasRef.current?.(json, { clearHistory, source: 'remote' })
   }, [])
 

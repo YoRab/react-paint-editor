@@ -2392,7 +2392,6 @@ export const HELLO_THERE: DrawableShape[] = [
 ]
 
 export const WITH_PICTURE: DrawableShape[] = [
-  //@ts-ignore TODO need to fix type here
   {
     toolId: 'react-paint-picture',
     type: 'picture',
