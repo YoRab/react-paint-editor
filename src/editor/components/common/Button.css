@@ -1,80 +1,79 @@
 .react-paint-editor-button {
-    min-width: 32px;
-    height: 32px;
-    font-size: 14px;
-    display: inline-flex;
-    vertical-align: middle;
-    box-sizing: border-box;
-    align-items: center;
-    justify-content: center;
-    background: none;
-    border: none;
-    cursor: pointer;
-    border-radius: var(--react-paint-editor-app-font-radius);
-    color: var(--react-paint-editor-app-font-color);
-    margin: 2px 4px;
-    padding: var(--react-paint-editor-button-padding, 0);
+  min-width: 32px;
+  height: 32px;
+  font-size: 14px;
+  display: inline-flex;
+  vertical-align: middle;
+  box-sizing: border-box;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  cursor: pointer;
+  border-radius: var(--react-paint-editor-app-font-radius);
+  color: var(--react-paint-editor-app-font-color);
+  margin: 2px 4px;
+  padding: var(--react-paint-editor-button-padding, 0);
 }
 
 .react-paint-editor-button[data-selected='1'] {
-    color: var(--react-paint-editor-app-font-selected-color);
-    background: var(--react-paint-editor-app-font-selected-bg);
+  color: var(--react-paint-editor-app-font-selected-color);
+  background: var(--react-paint-editor-app-font-selected-bg);
 }
 
 .react-paint-editor-button[data-hidden='1'] {
-    visibility: hidden;
+  visibility: hidden;
 }
 
 .react-paint-editor-button[data-disabled='1'] {
-    cursor: default;
-    color: var(--react-paint-editor-app-font-disabled-color);
-    background: var(--react-paint-editor-app-font-disabled-bg);
+  cursor: default;
+  color: var(--react-paint-editor-app-font-disabled-color);
+  background: var(--react-paint-editor-app-font-disabled-bg);
 }
 
 .react-paint-editor-button[data-selected='0'][data-disabled='0'] {
-    background: var(--react-paint-editor-app-font-bg);
-    color: var(--react-paint-editor-app-font-color);
+  background: var(--react-paint-editor-app-font-bg);
+  color: var(--react-paint-editor-app-font-color);
 }
 
 .react-paint-editor-button[data-selected='0'][data-disabled='0']:hover {
-    color: var(--react-paint-editor-app-font-hover-color);
-    background: var(--react-paint-editor-app-font-hover-bg);
+  color: var(--react-paint-editor-app-font-hover-color);
+  background: var(--react-paint-editor-app-font-hover-bg);
 }
 
 .react-paint-editor-button[data-disabled='0'] {
-    cursor: pointer;
+  cursor: pointer;
 }
 
 .react-paint-editor-button svg {
-    fill: currentColor;
-    width: 20px;
-    height: 20px;
+  fill: currentColor;
+  width: 20px;
+  height: 20px;
 }
 
 .react-paint-editor-button input {
-    display: none;
+  display: none;
 }
 
-
 .react-paint-editor-button-content {
-    width: 100%;
-    box-sizing: border-box;
-    display: flex;
-    padding: 2px 6px;
+  width: 100%;
+  box-sizing: border-box;
+  display: flex;
+  padding: 2px 6px;
 }
 
 .react-paint-editor-button-icon {
-    display: flex;
-    align-items: center;
+  display: flex;
+  align-items: center;
 }
 
 .react-paint-editor-button-children {
-    flex: 1;
-    text-align: left;
-    display: flex;
-    align-items: center;
+  flex: 1;
+  text-align: left;
+  display: flex;
+  align-items: center;
 }
 
-.react-paint-editor-button-children+.react-paint-editor-button-icon {
-    margin-left: 12px;
+.react-paint-editor-button-children + .react-paint-editor-button-icon {
+  margin-left: 12px;
 }

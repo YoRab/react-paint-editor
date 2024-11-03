@@ -1,21 +1,21 @@
 .react-paint-editor-settings-bar {
-    user-select: none;
-    display: flex;
-    background: var(--react-paint-editor-app-toolbar-bg);
-    position: relative;
-    height: 36px;
-    border-top: 1px solid var(--react-paint-editor-app-divider-color);
-    box-sizing: border-box;
+  user-select: none;
+  display: flex;
+  background: var(--react-paint-editor-app-toolbar-bg);
+  position: relative;
+  height: 36px;
+  border-top: 1px solid var(--react-paint-editor-app-divider-color);
+  box-sizing: border-box;
 }
 
 .react-paint-editor-settings-shrinkable {
-    flex: 1;
-    position: relative;
-    height: 100%;
-    text-align: left;
+  flex: 1;
+  position: relative;
+  height: 100%;
+  text-align: left;
 }
 
 .react-paint-editor-settings-modal {
-    grid-template-columns: repeat(auto-fill, 40px);
-    width: 100%;
+  grid-template-columns: repeat(auto-fill, 40px);
+  width: 100%;
 }

@@ -1,14 +1,14 @@
 .react-paint-editor-app {
-    display: flex;
-    color: var(--react-paint-editor-app-font-color);
-    position: relative;
-    flex-direction: column;
-    font-family: Arial, Helvetica, sans-serif;
-    max-width: min(100%, var(--react-paint-editor-app-maxWidth));
+  display: flex;
+  color: var(--react-paint-editor-app-font-color);
+  position: relative;
+  flex-direction: column;
+  font-family: Arial, Helvetica, sans-serif;
+  max-width: min(100%, var(--react-paint-editor-app-maxWidth));
 }
 
 .react-paint-editor-app hr {
-    width: 100%;
-    border: none;
-    border-top: 1px solid var(--react-paint-editor-app-divider-color);
+  width: 100%;
+  border: none;
+  border-top: 1px solid var(--react-paint-editor-app-divider-color);
 }

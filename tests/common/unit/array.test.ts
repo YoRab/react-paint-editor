@@ -1,5 +1,5 @@
-import { describe, it, expect } from 'vitest'
 import { compact, moveItemPosition } from '@common/utils/array'
+import { describe, expect, it } from 'vitest'
 
 describe('compact', () => {
   it('should remove undefined and null values from an array', () => {

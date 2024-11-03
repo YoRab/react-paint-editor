@@ -1,10 +1,10 @@
 .react-paint-editor-toolbox-pictureinput-modal form {
-    grid-template-columns: 3fr 1fr 1fr;
+  grid-template-columns: 3fr 1fr 1fr;
 }
 
 .react-paint-editor-toolbox-pictureinput-modal form input {
-    color: var(--react-paint-editor-app-font-color);
-    border: 1px solid var(--react-paint-editor-app-font-color);
-    background: var(--react-paint-editor-app-toolbar-bg);
-    outline: none;
+  color: var(--react-paint-editor-app-font-color);
+  border: 1px solid var(--react-paint-editor-app-font-color);
+  background: var(--react-paint-editor-app-toolbar-bg);
+  outline: none;
 }
