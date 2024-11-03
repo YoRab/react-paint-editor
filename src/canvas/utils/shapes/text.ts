@@ -191,12 +191,9 @@ export const resizeTextShapeWithNewContent = <U extends DrawableShape<'text'>>(
 
   const { center: shapeWithNewDimensionsCenter } = getShapeInfos(resizedShape, settings)
 
-  const [oppTrueX, oppTrueY] = getRectOppositeAnchorAbsolutePosition([1, 1], center, shape, settings)
+  const [oppTrueX, oppTrueY] = getRectOppositeAnchorAbsolutePosition([1, 1], center, shape)
 
-  const [newOppTrueX, newOppTrueY] = getRectOppositeAnchorAbsolutePosition([1, 1], shapeWithNewDimensionsCenter, resizedShape, settings, [
-    false,
-    false
-  ])
+  const [newOppTrueX, newOppTrueY] = getRectOppositeAnchorAbsolutePosition([1, 1], shapeWithNewDimensionsCenter, resizedShape, [false, false])
 
   return {
     ...resizedShape,
