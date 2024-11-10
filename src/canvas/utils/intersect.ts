@@ -17,8 +17,10 @@ export const getCursorPosition = (e: MouseEvent | TouchEvent, canvas: HTMLCanvas
     height: settings.canvasSize.height
   }
   return [
-    ((clientX - canvasBoundingRect.left) * (settings.canvasSize.width / canvasBoundingRect.width)) / settings.canvasSize.scaleRatio,
-    ((clientY - canvasBoundingRect.top) * (settings.canvasSize.height / canvasBoundingRect.height)) / settings.canvasSize.scaleRatio
+    ((clientX - canvasBoundingRect.left) * (settings.canvasSize.width / canvasBoundingRect.width)) / settings.canvasSize.scaleRatio -
+      settings.canvasOffset[0],
+    ((clientY - canvasBoundingRect.top) * (settings.canvasSize.height / canvasBoundingRect.height)) / settings.canvasSize.scaleRatio -
+      settings.canvasOffset[1]
   ]
 }
 
@@ -26,26 +28,16 @@ export const isTouchGesture = (e: MouseEvent | TouchEvent): e is TouchEvent => {
   return 'touches' in e
 }
 
-export const getPointPositionAfterCanvasTransformation = (
-  point: Point,
-  shapeRotation: number,
-  [originX, originY]: Point,
-  [canvasOffsetX, canvasOffsetY]: Point
-): Point =>
+export const getPointPositionAfterCanvasTransformation = (point: Point, shapeRotation: number, [originX, originY]: Point): Point =>
   rotatePoint({
-    origin: [originX - canvasOffsetX, originY - canvasOffsetY],
+    origin: [originX, originY],
     point,
     rotation: shapeRotation
   })
 
-export const getPointPositionBeforeCanvasTransformation = (
-  point: Point,
-  shapeRotation: number,
-  [originX, originY]: Point,
-  [canvasOffsetX, canvasOffsetY]: Point
-): Point =>
+export const getPointPositionBeforeCanvasTransformation = (point: Point, shapeRotation: number, [originX, originY]: Point): Point =>
   rotatePoint({
-    origin: [originX - canvasOffsetX, originY - canvasOffsetY],
+    origin: [originX, originY],
     point,
     rotation: -shapeRotation
   })
@@ -66,7 +58,7 @@ export const checkSelectionIntersection = (
   } = settings
   const { borders, center } = getShapeInfos(shape, settings)
 
-  const newPosition = getPointPositionAfterCanvasTransformation(position, shape.rotation, center, settings.canvasOffset)
+  const newPosition = getPointPositionAfterCanvasTransformation(position, shape.rotation, center)
 
   if (checkAnchors) {
     if (shape.type === 'line' || shape.type === 'polygon' || shape.type === 'curve') {
@@ -133,7 +125,7 @@ export const checkPositionIntersection = (
   if (shape.locked) return false
   const { center } = getShapeInfos(shape, settings)
 
-  const newPosition = getPointPositionAfterCanvasTransformation(position, shape.rotation, center, settings.canvasOffset)
+  const newPosition = getPointPositionAfterCanvasTransformation(position, shape.rotation, center)
 
   if ('path' in shape && shape.path) {
     const checkFill = shape.style?.fillColor && shape.style?.fillColor !== 'transparent'
@@ -194,11 +186,11 @@ export const checkSelectionFrameCollision = (
   selectionFrame: [Point, Point],
   settings: UtilsSettings
 ): boolean => {
-  const { selectionPadding, canvasOffset } = settings
+  const { selectionPadding } = settings
   const { center, borders } = getShapeInfos(shape, settings)
 
-  const frame0 = getPointPositionAfterCanvasTransformation(selectionFrame[0], shape.rotation, center, canvasOffset)
-  const frame1 = getPointPositionAfterCanvasTransformation(selectionFrame[1], shape.rotation, center, canvasOffset)
+  const frame0 = getPointPositionAfterCanvasTransformation(selectionFrame[0], shape.rotation, center)
+  const frame1 = getPointPositionAfterCanvasTransformation(selectionFrame[1], shape.rotation, center)
 
   const minX = Math.round(Math.min(frame0[0], frame1[0]) - selectionPadding / 2)
   const maxX = Math.round(Math.max(frame0[0], frame1[0]) + selectionPadding)

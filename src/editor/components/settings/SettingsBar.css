@@ -19,3 +19,15 @@
   grid-template-columns: repeat(auto-fill, 40px);
   width: 100%;
 }
+
+.react-paint-editor-zoom-button {
+  margin: 0;
+}
+
+.react-paint-editor-zoom-button .react-paint-editor-button-children {
+  justify-content: center;
+}
+
+.react-paint-editor-zoom-button-value {
+  min-width: 60px;
+}

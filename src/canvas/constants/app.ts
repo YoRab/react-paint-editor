@@ -16,6 +16,7 @@ export type UtilsSettings = {
   isBrushShapeDoneOnMouseUp: boolean
   gridGap: number
   canvasOffset: Point
+  canvasZoom: number
   canvasSize: {
     width: number
     height: number

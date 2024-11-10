@@ -57,7 +57,7 @@ const App = ({ options, className, style, canvasProps }: AppProps) => {
 
   const containerRef = useRef<HTMLDivElement>(null)
 
-  const [canvasOffsetStartPosition, setCanvasOffsetStartPosition] = useState<Point | undefined>(undefined)
+  const [canvasOffsetStartData, setCanvasOffsetStartData] = useState<{ start: Point; originalOffset: Point } | undefined>(undefined)
 
   const [selectionMode, setSelectionMode] = useState<SelectionModeData<Point | number>>({
     mode: 'default'
@@ -75,8 +75,9 @@ const App = ({ options, className, style, canvasProps }: AppProps) => {
 
   const onResized = useCallback(
     (measuredWidth: number) => {
+      const measuredHeight = (height * measuredWidth) / width
       const scaleRatio = measuredWidth / width
-      setCanvasSize({ width: measuredWidth, height: height * scaleRatio, scaleRatio })
+      setCanvasSize({ width: measuredWidth, height: measuredHeight, scaleRatio })
     },
     [width, height, setCanvasSize]
   )
@@ -118,8 +119,8 @@ const App = ({ options, className, style, canvasProps }: AppProps) => {
         isInsideComponent={isInsideComponent}
         activeTool={activeTool}
         setActiveTool={setActiveTool}
-        canvasOffsetStartPosition={canvasOffsetStartPosition}
-        setCanvasOffsetStartPosition={setCanvasOffsetStartPosition}
+        canvasOffsetStartData={canvasOffsetStartData}
+        setCanvasOffsetStartData={setCanvasOffsetStartData}
         shapes={shapesRef.current}
         addShape={addShape}
         updateSingleShape={updateShape}
