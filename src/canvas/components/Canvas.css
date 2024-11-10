@@ -22,8 +22,8 @@
 .react-paint-canvas-drawcanvas {
   user-select: none;
   max-width: 100%;
-  touch-action: none;
   /* prevent scroll on touch */
+  touch-action: none;
   display: block;
   grid-area: 1 / 1;
 }
