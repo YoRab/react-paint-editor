@@ -22,7 +22,7 @@ const handleMove = (
   setHoverMode: React.Dispatch<React.SetStateAction<HoverModeData>>,
   refreshHoveredShape: (e: MouseEvent | TouchEvent, ctx: CanvasRenderingContext2D, cursorPosition: Point, settings: UtilsSettings) => void,
   updateSingleShape: (updatedShape: ShapeEntity) => void,
-  setCanvasOffset: React.Dispatch<React.SetStateAction<Point>>,
+  setCanvasOffset: (offset: Point) => void,
   refreshSelectedShapes: (ctx: CanvasRenderingContext2D, cursorPosition: Point, settings: UtilsSettings) => void,
   settings: UtilsSettings,
   isShiftPressed: boolean
@@ -77,7 +77,7 @@ type UseCanvasType = {
   refreshSelectedShapes: (ctx: CanvasRenderingContext2D, cursorPosition: Point, settings: UtilsSettings) => void
   canvasOffsetStartData: { start: Point; originalOffset: Point } | undefined
   setCanvasOffsetStartData: React.Dispatch<React.SetStateAction<{ start: Point; originalOffset: Point } | undefined>>
-  setCanvasOffset: React.Dispatch<React.SetStateAction<Point>>
+  setCanvasOffset: (offset: Point) => void
   isInsideComponent: boolean
   selectionMode: SelectionModeData<number | Point>
   setSelectionMode: React.Dispatch<React.SetStateAction<SelectionModeData<number | Point>>>
@@ -213,7 +213,7 @@ const useDrawableCanvas = ({
       const isWheelPressed = 'button' in e ? e.button === 1 : e.touches.length > 1
 
       if (isWheelPressed || activeTool.type === 'move') {
-        setCanvasOffsetStartData(prev => ({ start: cursorPosition, originalOffset: settings.canvasOffset }))
+        setCanvasOffsetStartData({ start: cursorPosition, originalOffset: settings.canvasOffset })
         return
       }
 

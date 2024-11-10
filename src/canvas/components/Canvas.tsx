@@ -105,7 +105,7 @@ type DrawerType = {
   setActiveTool: React.Dispatch<React.SetStateAction<ToolsType>>
   canvasOffsetStartData: { start: Point; originalOffset: Point } | undefined
   setCanvasOffsetStartData: React.Dispatch<React.SetStateAction<{ start: Point; originalOffset: Point } | undefined>>
-  setCanvasOffset: React.Dispatch<React.SetStateAction<Point>>
+  setCanvasOffset: (offset: Point) => void
   isInsideComponent: boolean
   selectionMode: SelectionModeData<number | Point>
   setSelectionMode: React.Dispatch<React.SetStateAction<SelectionModeData<number | Point>>>

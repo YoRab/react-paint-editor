@@ -66,6 +66,7 @@ const Editor = ({ editorProps, className, style, options, children }: EditorProp
     exportData,
     clearCanvas,
     settings,
+    setCanvasZoom,
     canvas: { canGrow, layersManipulation, withExport, withLoadAndSave, withUploadPicture, withUrlPicture }
   } = editorProps
 
@@ -246,6 +247,8 @@ const Editor = ({ editorProps, className, style, options, children }: EditorProp
       {isEditMode && (
         <>
           <SettingsBar
+            isEditMode={isEditMode}
+            setCanvasZoom={setCanvasZoom}
             width={canvasSize.width}
             disabled={isDisabled}
             activeTool={activeTool}
