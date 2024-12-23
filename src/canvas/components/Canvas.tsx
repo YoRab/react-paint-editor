@@ -7,7 +7,7 @@ import { resizeTextShapeWithNewContent } from '@canvas/utils/shapes/text'
 import type { SelectionModeData } from '@common/types/Mode'
 import type { Point, ShapeEntity } from '@common/types/Shapes'
 import type { ToolsType } from '@common/types/tools'
-import React, { useCallback, useEffect, useImperativeHandle, useRef } from 'react'
+import React, { type ReactNode, useCallback, useEffect, useImperativeHandle, useRef } from 'react'
 import './Canvas.css'
 import EditTextBox from './EditTextBox'
 
@@ -85,6 +85,7 @@ type DrawerType = {
     width: number
     height: number
     scaleRatio: number
+    scaleRatioWithNoZoom: number
   }
   selectionColor: string
   selectionWidth: number
@@ -217,10 +218,30 @@ const Canvas = React.forwardRef<HTMLCanvasElement, DrawerType>(
           )
         )
     }, [hoveredShape, selectionFrame, selectionMode, selectedShape, activeTool, settings, selectionWidth, selectionColor, withSkeleton])
-
     return (
       <div className='react-paint-canvas-box'>
         <div className='react-paint-canvas-container' data-grow={canGrow}>
+          {/* <img
+            src='https://picsum.photos/1000/600?random=1'
+            alt='First pic'
+            className='react-paint-canvas-picture'
+            style={{
+              '--react-paint-canvas-zoom': settings.canvasZoom,
+              '--react-paint-canvas-offset-x': settings.canvasOffset[0],
+              '--react-paint-canvas-offset-y': settings.canvasOffset[1]
+            }}
+          /> */}
+          {/* <div
+            className='react-paint-canvas-picture'
+            style={{
+              '--react-paint-canvas-zoom': settings.canvasZoom,
+              '--react-paint-canvas-offset-x': settings.canvasOffset[0],
+              '--react-paint-canvas-offset-y': settings.canvasOffset[1]
+            }}
+          >
+            <button>dsfdfdsf</button>
+          </div> */}
+
           <canvas className={DRAWCANVAS_CLASSNAME} ref={drawCanvasRef} data-grow={canGrow} width={canvasSize.width} height={canvasSize.height} />
           {isEditMode && (
             <canvas
@@ -244,7 +265,6 @@ const Canvas = React.forwardRef<HTMLCanvasElement, DrawerType>(
           )}
           {isEditMode && selectionMode.mode === 'textedition' && selectedShape?.type === 'text' && (
             <EditTextBox
-              scaleRatio={canvasSize.scaleRatio}
               disabled={disabled}
               shape={selectedShape}
               defaultValue={selectionMode.defaultValue}

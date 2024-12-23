@@ -9,7 +9,10 @@ const PictureWithAnnotations = ({ src, alt }: { src: string; alt: string }) => {
   const { editorProps, canvasProps } = useReactPaint({
     mode: isEdit ? 'editor' : 'viewer',
     width: dimensions?.[0],
-    height: dimensions?.[1]
+    height: dimensions?.[1],
+    options: {
+      canZoom: 'always'
+    }
   })
 
   const canvasOptions = {
@@ -28,7 +31,19 @@ const PictureWithAnnotations = ({ src, alt }: { src: string; alt: string }) => {
         </button>
       </div>
       <div className='pic-container'>
-        <img src={src} alt={alt} className='picture' onLoad={onPictureLoad} />
+        <img
+          src={src}
+          alt={alt}
+          className='picture react-paint-canvas-picture'
+          style={{
+            '--react-paint-canvas-zoom': editorProps.settings.canvasZoom,
+            '--react-paint-canvas-offset-x': editorProps.settings.canvasOffset[0],
+            '--react-paint-canvas-offset-y': editorProps.settings.canvasOffset[1],
+            '--react-paint-app-canvaswidth': canvasProps.width,
+            '--react-paint-app-canvasheight': canvasProps.height
+          }}
+          onLoad={onPictureLoad}
+        />
         {dimensions && (
           <Editor editorProps={editorProps} className={`annotations ${isEdit ? 'editor' : 'view'}`}>
             <Canvas canvasProps={canvasProps} options={canvasOptions} />

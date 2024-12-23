@@ -16,7 +16,6 @@ const getNodeValue = (node: ChildNode): string => {
 }
 
 type EditTextBoxType = {
-  scaleRatio: number
   disabled?: boolean
   shape: DrawableShape<'text'>
   defaultValue: string[]
@@ -25,7 +24,7 @@ type EditTextBoxType = {
   saveShapes: () => void
 }
 
-const EditTextBox = ({ disabled = false, scaleRatio, shape, defaultValue, updateValue, saveShapes, settings }: EditTextBoxType) => {
+const EditTextBox = ({ disabled = false, shape, defaultValue, updateValue, saveShapes, settings }: EditTextBoxType) => {
   const ref = useRef<HTMLDivElement>(null)
   const saveShapesRef = useRef(saveShapes)
 
@@ -89,11 +88,11 @@ const EditTextBox = ({ disabled = false, scaleRatio, shape, defaultValue, update
       contentEditable={!disabled}
       onInput={updateContentEditable}
       style={{
-        '--react-paint-editor-toolbox-edittextbox-transform': `translate3D(${(position[0] + settings.canvasOffset[0]) * scaleRatio}px, ${
-          (position[1] + settings.canvasOffset[1]) * scaleRatio
+        '--react-paint-editor-toolbox-edittextbox-transform': `translate3D(${(position[0] + settings.canvasOffset[0]) * settings.canvasSize.scaleRatio}px, ${
+          (position[1] + settings.canvasOffset[1]) * settings.canvasSize.scaleRatio
         }px, 0) rotate(${radiansToDegrees(shape.rotation)}deg)`,
-        '--react-paint-editor-toolbox-edittextbox-fontsize': `${shape.fontSize * scaleRatio}px`,
-        '--react-paint-editor-toolbox-edittextbox-padding': `${settings.selectionPadding * scaleRatio}px`,
+        '--react-paint-editor-toolbox-edittextbox-fontsize': `${shape.fontSize * settings.canvasSize.scaleRatio}px`,
+        '--react-paint-editor-toolbox-edittextbox-padding': `${settings.selectionPadding * settings.canvasSize.scaleRatio}px`,
         '--react-paint-editor-toolbox-edittextbox-color': shape.style?.strokeColor ?? 'inherit',
         '--react-paint-editor-toolbox-edittextbox-opacity': (shape.style?.opacity ?? 100) / 100,
         '--react-paint-editor-toolbox-edittextbox-fontfamily': shape.style?.fontFamily ?? STYLE_FONT_DEFAULT

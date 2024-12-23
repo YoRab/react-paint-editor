@@ -11,6 +11,9 @@ import { SELECTION_TOOL } from '@editor/constants/tools'
 import useSnackbar from '@editor/hooks/useSnackbar'
 import React, { type CSSProperties, type ReactNode, useCallback, useState } from 'react'
 import './index.css'
+import Panel from '@editor/components/common/Panel'
+import Button from '@editor/components/common/Button'
+import { zoomIn, zoomOut } from '@editor/constants/icons'
 
 type EditorProps = {
   editorProps: UseReactPaintReturnType['editorProps']
@@ -89,6 +92,7 @@ const Editor = ({ editorProps, className, style, options, children }: EditorProp
 
   const [isLoading, setIsLoading] = useState(false)
   const [isLayoutPanelShown, setIsLayoutPanelShown] = useState(false)
+  const [isZoomPanelShown, setIsZoomPanelShown] = useState(settings.canZoom === 'always')
 
   const gridFormat: GridLabelType =
     gridGap >= GridValues.large ? 'large' : gridGap >= GridValues.medium ? 'medium' : gridGap >= GridValues.small ? 'small' : 'none'
@@ -207,6 +211,7 @@ const Editor = ({ editorProps, className, style, options, children }: EditorProp
     >
       {isEditMode && (
         <Toolbar
+          settings={settings}
           width={canvasSize.width}
           disabled={isDisabled}
           activeTool={activeTool}
@@ -244,10 +249,18 @@ const Editor = ({ editorProps, className, style, options, children }: EditorProp
           isLayoutPanelShown={isLayoutPanelShown}
         />
       )}
+      {isZoomPanelShown && (
+        <Panel alignment='left' className='react-paint-editor-layouts-panel'>
+          <Button className='react-paint-editor-zoom-button' icon={zoomOut} onClick={() => setCanvasZoom(settings.canvasZoom / 1.25)} />
+          <Button className='react-paint-editor-zoom-button react-paint-editor-zoom-button-value' onClick={() => setCanvasZoom(1)}>
+            {Math.round(settings.canvasZoom * 100)}%
+          </Button>
+          <Button className='react-paint-editor-zoom-button' icon={zoomIn} onClick={() => setCanvasZoom(settings.canvasZoom * 1.25)} />
+        </Panel>
+      )}
       {isEditMode && (
         <>
           <SettingsBar
-            isEditMode={isEditMode}
             setCanvasZoom={setCanvasZoom}
             width={canvasSize.width}
             disabled={isDisabled}
@@ -262,6 +275,8 @@ const Editor = ({ editorProps, className, style, options, children }: EditorProp
             toggleLayoutPanel={() => {
               setIsLayoutPanelShown(prev => !prev)
             }}
+            isZoomPanelShown={isZoomPanelShown}
+            setIsZoomPanelShown={setIsZoomPanelShown}
             updateToolSettings={updateToolSettings}
           />
           <Loading isLoading={isLoading} />
