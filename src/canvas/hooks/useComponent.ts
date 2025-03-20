@@ -3,7 +3,7 @@ import { type RefObject, useEffect, useState } from 'react'
 
 type UseComponentType = {
   disabled: boolean
-  componentRef: RefObject<HTMLElement>
+  componentRef: RefObject<HTMLElement | null>
 }
 
 const useComponent = ({ disabled, componentRef }: UseComponentType) => {

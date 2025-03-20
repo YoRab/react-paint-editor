@@ -1,7 +1,7 @@
 import { useEffect } from 'react'
 
 type UseResizeObserverType = {
-  element: React.RefObject<HTMLElement>
+  element: React.RefObject<HTMLElement | null>
   onResized: (width: number, height: number) => unknown
 }
 
