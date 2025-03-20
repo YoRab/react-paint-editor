@@ -15,7 +15,7 @@ import { useEffect, useState } from 'react'
 
 const handleMove = (
   e: MouseEvent | TouchEvent,
-  canvasRef: React.RefObject<HTMLCanvasElement>,
+  canvasRef: React.RefObject<HTMLCanvasElement | null>,
   activeTool: ToolsType,
   selectedShape: ShapeEntity | undefined,
   selectionMode: SelectionModeData<Point | number>,
