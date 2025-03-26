@@ -1,7 +1,8 @@
-import { ZOOM_STEP_DEFAULT, ZOOM_STEPS } from '@canvas/constants/zoom'
+import { ZOOM_BG_COLOR, ZOOM_STEP_DEFAULT, ZOOM_STEPS } from '@canvas/constants/zoom'
 import type { CanvasSize, Size } from '@common/types/Canvas'
-import type { Point } from '@common/types/Shapes'
+import type { Point, Rect } from '@common/types/Shapes'
 import { clamp } from '@common/utils/util'
+import type { UtilsSettings } from '@canvas/constants/app'
 
 export const getNewOffset = ({
   size,
@@ -38,15 +39,6 @@ const calculateNewZoomAndOffset = ({
   offset: Point
   zoom: number
 } => {
-  // console.log(currentOffset[0] - (canvasSize.realWidth / currentZoom - canvasSize.realWidth / newZoom) / 2)
-  // console.log(canvasSize.realWidth / newZoom - canvasSize.realWidth)
-  // console.log(
-  //   clamp(
-  //     currentOffset[0] - (canvasSize.realWidth / currentZoom - canvasSize.realWidth / newZoom) / 2,
-  //     canvasSize.realWidth / newZoom - canvasSize.realWidth,
-  //     0
-  //   )
-  // )
   if (size === 'infinite' || newZoom < 1)
     return {
       offset: [
@@ -93,4 +85,61 @@ export const getNewZoomAndOffset = ({
     currentZoom,
     newZoom
   })
+}
+
+export const getCurrentView = (settings: UtilsSettings): Rect => {
+  const {
+    canvasSize: { width, height, scaleRatioWithNoZoom },
+    canvasZoom,
+    canvasOffset
+  } = settings
+
+  return {
+    x: -canvasOffset[0],
+    y: -canvasOffset[1],
+    width: width / canvasZoom / scaleRatioWithNoZoom,
+    height: height / canvasZoom / scaleRatioWithNoZoom
+  }
+}
+
+export const getMaskRect = (settings: UtilsSettings) => {
+  const {
+    canvasSize: { width, height, scaleRatioWithNoZoom },
+    canvasZoom,
+    canvasOffset
+  } = settings
+
+  return {
+    x: canvasOffset[0] * canvasZoom * scaleRatioWithNoZoom,
+    y: canvasOffset[1] * canvasZoom * scaleRatioWithNoZoom,
+    width: width * canvasZoom,
+    height: height * canvasZoom
+  }
+}
+
+export const clipMask = (ctx: CanvasRenderingContext2D, settings: UtilsSettings) => {
+  const { canvasZoom, size } = settings
+
+  if (size !== 'fixed' || canvasZoom >= 1) return
+  const maskRect = getMaskRect(settings)
+  ctx.beginPath()
+  ctx.rect(maskRect.x, maskRect.y, maskRect.width, maskRect.height)
+  ctx.closePath()
+  ctx.clip()
+}
+
+export const drawMask = (ctx: CanvasRenderingContext2D, settings: UtilsSettings): void => {
+  const {
+    canvasZoom,
+    size,
+    canvasSize: { width, height }
+  } = settings
+
+  if (size !== 'fixed' || canvasZoom >= 1) return
+
+  ctx.fillStyle = ZOOM_BG_COLOR
+  ctx.fillRect(0, 0, width, height)
+  const maskRect = getMaskRect(settings)
+  ctx.clearRect(maskRect.x, maskRect.y, maskRect.width, maskRect.height)
+  clipMask(ctx, settings)
 }

@@ -7,9 +7,10 @@ import { resizeTextShapeWithNewContent } from '@canvas/utils/shapes/text'
 import type { SelectionModeData } from '@common/types/Mode'
 import type { Point, ShapeEntity } from '@common/types/Shapes'
 import type { ToolsType } from '@common/types/tools'
-import React, { type ReactNode, useCallback, useEffect, useImperativeHandle, useRef } from 'react'
+import React, { useCallback, useEffect, useImperativeHandle, useRef } from 'react'
 import './Canvas.css'
 import EditTextBox from './EditTextBox'
+import { clipMask, drawMask } from '@canvas/utils/zoom'
 
 const renderDrawCanvas = (
   drawCtx: CanvasRenderingContext2D,
@@ -18,12 +19,9 @@ const renderDrawCanvas = (
   shapes: ShapeEntity[],
   selectedShape: ShapeEntity | undefined
 ) => {
-  const {
-    canvasSize: { width, height }
-  } = settings
-  drawCtx.clearRect(0, 0, width, height)
   initCanvasContext(drawCtx)
-  settings.gridGap && drawGrid(drawCtx, width, height, settings)
+  drawMask(drawCtx, settings)
+  drawGrid(drawCtx, settings)
   for (let i = shapes.length - 1; i >= 0; i--) {
     if (selectionMode.mode !== 'textedition' || shapes[i] !== selectedShape) {
       drawShape(drawCtx, shapes[i], settings)
@@ -43,7 +41,8 @@ const renderSelectionCanvas = (
   selectionFrame: [Point, Point] | undefined,
   withSkeleton: boolean
 ) => {
-  selectionCtx.clearRect(0, 0, settings.canvasSize.width, settings.canvasSize.height)
+  selectionCtx.reset()
+  clipMask(selectionCtx, settings)
 
   withSkeleton &&
     hoveredShape &&
