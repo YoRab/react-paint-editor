@@ -5,7 +5,7 @@ import type { UseReactPaintReturnType } from '@canvas/hooks/useReactPaint'
 import useResizeObserver from '@canvas/hooks/useResizeObserver'
 import type { SelectionModeData } from '@common/types/Mode'
 import type { Point, ShapeEntity } from '@common/types/Shapes'
-import React, { type CSSProperties, useCallback, useRef, useState } from 'react'
+import { type CSSProperties, type ReactNode, useCallback, useRef, useState } from 'react'
 import './index.css'
 
 type AppProps = {
@@ -41,6 +41,7 @@ const App = ({ options, className, style, canvasProps }: AppProps) => {
     canvasSize,
     setCanvasSize,
     setCanvasOffset,
+    setCanvasZoom,
     selectShape,
     activeTool,
     setActiveTool,
@@ -77,7 +78,7 @@ const App = ({ options, className, style, canvasProps }: AppProps) => {
     (measuredWidth: number) => {
       const measuredHeight = (height * measuredWidth) / width
       const scaleRatio = measuredWidth / width
-      setCanvasSize({ width: measuredWidth, height: measuredHeight, scaleRatio })
+      setCanvasSize({ realWidth: width, realHeight: height, width: measuredWidth, height: measuredHeight, scaleRatio })
     },
     [width, height, setCanvasSize]
   )
@@ -93,9 +94,10 @@ const App = ({ options, className, style, canvasProps }: AppProps) => {
     updateShape,
     backwardShape,
     forwardShape,
-    setShiftPressed
+    setShiftPressed,
+    setCanvasOffset,
+    setCanvasZoom
   })
-
   useResizeObserver({ element: containerRef, onResized })
 
   return (
@@ -106,7 +108,8 @@ const App = ({ options, className, style, canvasProps }: AppProps) => {
       data-shrink={canShrink}
       style={{
         '--react-paint-app-row-width': canvasSize.width,
-        '--react-paint-app-canvaswidth': `${width}px`,
+        '--react-paint-app-canvaswidth': width,
+        '--react-paint-app-canvasheight': height,
         '--react-paint-app-row-aspectratio': `calc(${canvasSize.width} / ${canvasSize.height})`,
         '--react-paint-app-canvas-bg': canvasBackgroundColor,
         ...style

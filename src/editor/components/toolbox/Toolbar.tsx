@@ -12,6 +12,7 @@ import PictureUrlModal from './PictureUrlInput'
 import Tool from './Tool'
 import './Toolbar.css'
 import ToolbarGroup from './ToolbarGroup'
+import type { UtilsSettings } from '@canvas/constants/app'
 
 const TOOL_WIDTH = 40
 
@@ -61,9 +62,11 @@ type ToolboxType = {
   withExport: boolean
   withUrlPicture: boolean
   withUploadPicture: boolean
+  settings: UtilsSettings
 }
 
 const Toolbar = ({
+  settings,
   width,
   disabled = false,
   activeTool,
@@ -135,7 +138,9 @@ const Toolbar = ({
             isActive={activeTool.id === SELECTION_TOOL.id}
             setActive={setActiveTool}
           />
-          <Tool type={MOVE_TOOL} disabled={disabled} img={MOVE_TOOL.icon} isActive={activeTool.id === MOVE_TOOL.id} setActive={setActiveTool} />
+          {(settings.size === 'infinite' || settings.canZoom !== 'never') && (
+            <Tool type={MOVE_TOOL} disabled={disabled} img={MOVE_TOOL.icon} isActive={activeTool.id === MOVE_TOOL.id} setActive={setActiveTool} />
+          )}
           {toolsInMenu ? (
             <Button disabled={disabled} onClick={toggleTools} title='Toggle tools' icon={shapesIcon} selected={isAnyToolSelected} />
           ) : (

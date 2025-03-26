@@ -4,7 +4,9 @@ import useShapes from '@canvas/hooks/useShapes'
 import { buildDataToExport } from '@canvas/utils/data'
 import { decodeImportedData, decodeJson, downloadFile, encodeShapesInString, getCanvasImage } from '@canvas/utils/file'
 import { sanitizeTools } from '@canvas/utils/tools'
-import type { DrawableShape, ExportedDrawableShape, Point, ShapeEntity, StateData } from '@common/types/Shapes'
+import { getNewOffset, getNewZoomAndOffset } from '@canvas/utils/zoom'
+import type { CanvasSize } from '@common/types/Canvas'
+import type { ExportedDrawableShape, Point, ShapeEntity, StateData } from '@common/types/Shapes'
 import type { ToolsType } from '@common/types/tools'
 import { SELECTION_TOOL } from '@editor/constants/tools'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
@@ -41,7 +43,9 @@ const useReactPaint = ({
     withFrameSelection,
     clearCallback,
     availableTools: availableToolsFromProps,
-    canvasSelectionPadding
+    canvasSelectionPadding,
+    size,
+    canZoom
   } = {
     ...DEFAULT_OPTIONS,
     ...options
@@ -61,7 +65,9 @@ const useReactPaint = ({
   const [activeTool, setActiveTool] = useState<ToolsType>(SELECTION_TOOL)
   const [gridGap, setGridGap] = useState<number>(grid)
 
-  const [canvasSize, setCanvasSize] = useState({
+  const [canvasSize, setCanvasSize] = useState<CanvasSize>({
+    realWidth: width,
+    realHeight: height,
     width,
     height,
     scaleRatio: 1
@@ -70,23 +76,18 @@ const useReactPaint = ({
   const [canvasTransformation, setCanvasTransformation] = useState<{ offset: Point; zoom: number }>({ offset: [0, 0], zoom: 1 })
   const { offset: canvasOffset, zoom: canvasZoom } = canvasTransformation
 
-  const setCanvasOffset = useCallback((offset: Point) => {
-    setCanvasTransformation(prev => ({ ...prev, offset }))
-  }, [])
+  const setCanvasOffset = useCallback(
+    (newOffset: Point) => {
+      setCanvasTransformation(({ zoom }) => getNewOffset({ zoom, size, canvasSize, newOffset }))
+    },
+    [canvasSize, size]
+  )
 
   const setCanvasZoom = useCallback(
-    (newZoom: number) => {
-      return setCanvasTransformation(({ offset, zoom }) => {
-        return {
-          offset: [
-            offset[0] - (canvasSize.width / zoom - canvasSize.width / newZoom) / 2,
-            offset[1] - (canvasSize.height / zoom - canvasSize.height / newZoom) / 2
-          ],
-          zoom: newZoom
-        }
-      })
+    (action: 'unzoom' | 'zoom' | 'default'): void => {
+      setCanvasTransformation(({ offset, zoom }) => getNewZoomAndOffset({ size, canvasSize, currentOffset: offset, currentZoom: zoom, action }))
     },
-    [canvasSize]
+    [canvasSize, size]
   )
 
   const settings: UtilsSettings = useMemo(
@@ -94,16 +95,21 @@ const useReactPaint = ({
       brushAlgo,
       isBrushShapeDoneOnMouseUp,
       canvasSize: {
+        realWidth: canvasSize.realWidth,
+        realHeight: canvasSize.realHeight,
         width: canvasSize.width,
         height: canvasSize.height,
+        scaleRatioWithNoZoom: canvasSize.scaleRatio,
         scaleRatio: canvasSize.scaleRatio * canvasZoom
       },
+      size,
+      canZoom,
       canvasOffset,
       canvasZoom,
       gridGap,
       selectionPadding: canvasSelectionPadding
     }),
-    [canvasSelectionPadding, gridGap, brushAlgo, isBrushShapeDoneOnMouseUp, canvasZoom, canvasOffset, canvasSize]
+    [canvasSelectionPadding, gridGap, brushAlgo, isBrushShapeDoneOnMouseUp, canvasZoom, canvasOffset, canvasSize, size, canZoom]
   )
 
   const [availableTools, setAvailableTools] = useState(sanitizeTools(availableToolsFromProps, withUploadPicture || withUrlPicture))
@@ -338,7 +344,9 @@ const useReactPaint = ({
     unregisterEvent,
     resetCanvas: resetCanvasFromRemote,
     getCurrentImage,
-    getCurrentData
+    getCurrentData,
+    setCanvasOffset,
+    setCanvasZoom
   }
 }
 

@@ -1,11 +1,14 @@
 import type { UtilsSettings } from '@canvas/constants/app'
 
-export const drawGrid = (ctx: CanvasRenderingContext2D, width: number, height: number, settings: UtilsSettings) => {
+export const drawGrid = (ctx: CanvasRenderingContext2D, settings: UtilsSettings) => {
   const {
+    canvasSize: { width, height },
     gridGap,
     canvasOffset,
     canvasSize: { scaleRatio }
   } = settings
+
+  if (!gridGap) return
   ctx.strokeStyle = 'rgb(220,220,220)'
   ctx.lineWidth = 1
   ctx.save()

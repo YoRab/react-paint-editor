@@ -10,6 +10,7 @@ import type { ToolsType } from '@common/types/tools'
 import React, { useCallback, useEffect, useImperativeHandle, useRef } from 'react'
 import './Canvas.css'
 import EditTextBox from './EditTextBox'
+import { clipMask, drawMask } from '@canvas/utils/zoom'
 
 const renderDrawCanvas = (
   drawCtx: CanvasRenderingContext2D,
@@ -18,12 +19,9 @@ const renderDrawCanvas = (
   shapes: ShapeEntity[],
   selectedShape: ShapeEntity | undefined
 ) => {
-  const {
-    canvasSize: { width, height }
-  } = settings
-  drawCtx.clearRect(0, 0, width, height)
   initCanvasContext(drawCtx)
-  settings.gridGap && drawGrid(drawCtx, width, height, settings)
+  drawMask(drawCtx, settings)
+  drawGrid(drawCtx, settings)
   for (let i = shapes.length - 1; i >= 0; i--) {
     if (selectionMode.mode !== 'textedition' || shapes[i] !== selectedShape) {
       drawShape(drawCtx, shapes[i], settings)
@@ -43,7 +41,8 @@ const renderSelectionCanvas = (
   selectionFrame: [Point, Point] | undefined,
   withSkeleton: boolean
 ) => {
-  selectionCtx.clearRect(0, 0, settings.canvasSize.width, settings.canvasSize.height)
+  selectionCtx.reset()
+  clipMask(selectionCtx, settings)
 
   withSkeleton &&
     hoveredShape &&
@@ -85,6 +84,7 @@ type DrawerType = {
     width: number
     height: number
     scaleRatio: number
+    scaleRatioWithNoZoom: number
   }
   selectionColor: string
   selectionWidth: number
@@ -217,10 +217,30 @@ const Canvas = React.forwardRef<HTMLCanvasElement, DrawerType>(
           )
         )
     }, [hoveredShape, selectionFrame, selectionMode, selectedShape, activeTool, settings, selectionWidth, selectionColor, withSkeleton])
-
     return (
       <div className='react-paint-canvas-box'>
         <div className='react-paint-canvas-container' data-grow={canGrow}>
+          {/* <img
+            src='https://picsum.photos/1000/600?random=1'
+            alt='First pic'
+            className='react-paint-canvas-picture'
+            style={{
+              '--react-paint-canvas-zoom': settings.canvasZoom,
+              '--react-paint-canvas-offset-x': settings.canvasOffset[0],
+              '--react-paint-canvas-offset-y': settings.canvasOffset[1]
+            }}
+          /> */}
+          {/* <div
+            className='react-paint-canvas-picture'
+            style={{
+              '--react-paint-canvas-zoom': settings.canvasZoom,
+              '--react-paint-canvas-offset-x': settings.canvasOffset[0],
+              '--react-paint-canvas-offset-y': settings.canvasOffset[1]
+            }}
+          >
+            <button>dsfdfdsf</button>
+          </div> */}
+
           <canvas className={DRAWCANVAS_CLASSNAME} ref={drawCanvasRef} data-grow={canGrow} width={canvasSize.width} height={canvasSize.height} />
           {isEditMode && (
             <canvas
@@ -244,7 +264,6 @@ const Canvas = React.forwardRef<HTMLCanvasElement, DrawerType>(
           )}
           {isEditMode && selectionMode.mode === 'textedition' && selectedShape?.type === 'text' && (
             <EditTextBox
-              scaleRatio={canvasSize.scaleRatio}
               disabled={disabled}
               shape={selectedShape}
               defaultValue={selectionMode.defaultValue}
