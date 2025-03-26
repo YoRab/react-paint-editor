@@ -238,7 +238,7 @@ const useReactPaint = ({
     [resetCanvasWithShapeEntity, settings]
   )
 
-  const resetCanvasRef = useRef<typeof resetCanvas>()
+  const resetCanvasRef = useRef<typeof resetCanvas>(resetCanvas)
   resetCanvasRef.current = resetCanvas
 
   const resetCanvasFromRemote = useCallback((json: ExportedDrawableShape[] = [], clearHistory = true) => {

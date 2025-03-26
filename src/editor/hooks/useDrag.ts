@@ -4,7 +4,7 @@ import type { ShapeEntity } from '@common/types/Shapes'
 
 type useDragType = {
   disabled?: boolean
-  ref: RefObject<HTMLDivElement>
+  ref: RefObject<HTMLDivElement | null>
   shape: ShapeEntity
   layoutDragging: string | undefined
   setLayoutDragging: (shapeId: string | undefined) => void
