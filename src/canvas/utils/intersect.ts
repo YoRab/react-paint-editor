@@ -132,7 +132,7 @@ export const checkPositionIntersection = (
     if (checkFill) {
       return ctx.isPointInPath(shape.path, newPosition[0], newPosition[1]) ? { mode: 'translate' } : false
     }
-    ctx.lineWidth = (shape.style?.lineWidth ?? 0) + 15
+    ctx.lineWidth = (shape.style?.lineWidth ?? 0) + 15 / settings.canvasZoom
 
     return ctx.isPointInStroke(shape.path, newPosition[0], newPosition[1]) ? { mode: 'translate' } : false
   }
