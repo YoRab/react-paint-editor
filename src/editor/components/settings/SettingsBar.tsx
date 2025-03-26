@@ -21,7 +21,7 @@ import PointsNumberField from './PointsNumberField'
 import RangeField from './RangeField'
 import './SettingsBar.css'
 import ToggleField from './ToggleField'
-
+import Panel from '@editor/components/common/Panel'
 const SETTING_WIDTH = 40
 
 type SettingsBoxType = {
@@ -37,6 +37,8 @@ type SettingsBoxType = {
   updateShape: (shape: ShapeEntity, withSave?: boolean) => void
   removeShape: (shape: ShapeEntity) => void
   toggleLayoutPanel: () => void
+  isEditMode: boolean
+  setCanvasZoom: (zoom: number) => void
 }
 
 type SettingsItemsType = {
@@ -346,7 +348,9 @@ const SettingsBar = ({
   canvas,
   settings,
   updateShape,
-  removeShape
+  removeShape,
+  isEditMode,
+  setCanvasZoom
 }: SettingsBoxType) => {
   const [selectedSettings, setSelectedSettings] = useState<string | undefined>(undefined)
   const [isMenuOpen, setIsMenuOpen] = useState(false)
@@ -426,6 +430,19 @@ const SettingsBar = ({
   return (
     <>
       <div className='react-paint-editor-settings-bar'>
+        {isEditMode && (
+          <Panel alignment='left' position='bottom'>
+            <Button className='react-paint-editor-zoom-button' onClick={() => setCanvasZoom(settings.canvasZoom / 1.25)}>
+              -
+            </Button>
+            <Button className='react-paint-editor-zoom-button react-paint-editor-zoom-button-value' onClick={() => setCanvasZoom(1)}>
+              {Math.round(settings.canvasZoom * 100)}%
+            </Button>
+            <Button className='react-paint-editor-zoom-button' onClick={() => setCanvasZoom(settings.canvasZoom * 1.25)}>
+              +
+            </Button>
+          </Panel>
+        )}
         <div className='react-paint-editor-settings-shrinkable'>
           {settingsInMenu && nbSettingsTools > 2 && <Button disabled={disabled} onClick={toggleTools} title='Toggle settings' icon={settingsIcon} />}
           {selectedShape ? (

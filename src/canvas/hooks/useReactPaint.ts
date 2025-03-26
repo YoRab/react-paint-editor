@@ -67,18 +67,43 @@ const useReactPaint = ({
     scaleRatio: 1
   })
 
-  const [canvasOffset, setCanvasOffset] = useState<Point>([0, 0])
+  const [canvasTransformation, setCanvasTransformation] = useState<{ offset: Point; zoom: number }>({ offset: [0, 0], zoom: 1 })
+  const { offset: canvasOffset, zoom: canvasZoom } = canvasTransformation
+
+  const setCanvasOffset = useCallback((offset: Point) => {
+    setCanvasTransformation(prev => ({ ...prev, offset }))
+  }, [])
+
+  const setCanvasZoom = useCallback(
+    (newZoom: number) => {
+      return setCanvasTransformation(({ offset, zoom }) => {
+        return {
+          offset: [
+            offset[0] - (canvasSize.width / zoom - canvasSize.width / newZoom) / 2,
+            offset[1] - (canvasSize.height / zoom - canvasSize.height / newZoom) / 2
+          ],
+          zoom: newZoom
+        }
+      })
+    },
+    [canvasSize]
+  )
 
   const settings: UtilsSettings = useMemo(
     () => ({
       brushAlgo,
       isBrushShapeDoneOnMouseUp,
-      canvasSize,
+      canvasSize: {
+        width: canvasSize.width,
+        height: canvasSize.height,
+        scaleRatio: canvasSize.scaleRatio * canvasZoom
+      },
       canvasOffset,
+      canvasZoom,
       gridGap,
       selectionPadding: canvasSelectionPadding
     }),
-    [canvasSelectionPadding, gridGap, brushAlgo, isBrushShapeDoneOnMouseUp, canvasOffset, canvasSize]
+    [canvasSelectionPadding, gridGap, brushAlgo, isBrushShapeDoneOnMouseUp, canvasZoom, canvasOffset, canvasSize]
   )
 
   const [availableTools, setAvailableTools] = useState(sanitizeTools(availableToolsFromProps, withUploadPicture || withUrlPicture))
@@ -127,7 +152,7 @@ const useReactPaint = ({
     (shapesToInit: ShapeEntity[], options: { clearHistory: boolean; source: 'user' | 'remote' }) => {
       clearShapes(shapesToInit, options)
       selectTool(SELECTION_TOOL)
-      setCanvasOffset([0, 0])
+      setCanvasTransformation({ offset: [0, 0], zoom: 1 })
     },
     [selectTool, clearShapes]
   )
@@ -262,6 +287,7 @@ const useReactPaint = ({
       exportData,
       clearCanvas,
       settings,
+      setCanvasZoom,
       canvas: {
         canGrow,
         canShrink,
@@ -294,6 +320,7 @@ const useReactPaint = ({
       canvasSize,
       setCanvasSize,
       setCanvasOffset,
+      setCanvasZoom,
       selectShape,
       activeTool,
       setActiveTool,
