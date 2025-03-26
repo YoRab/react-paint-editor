@@ -40,7 +40,7 @@ type SettingsBarType = {
   toggleLayoutPanel: () => void
   isZoomPanelShown: boolean
   setIsZoomPanelShown: React.Dispatch<React.SetStateAction<boolean>>
-  setCanvasZoom: (zoom: number) => void
+  setCanvasZoom: (action: 'unzoom' | 'zoom' | 'default') => void
 }
 
 type SettingsItemsType = {

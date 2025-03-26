@@ -251,11 +251,11 @@ const Editor = ({ editorProps, className, style, options, children }: EditorProp
       )}
       {isZoomPanelShown && (
         <Panel alignment='left' className='react-paint-editor-layouts-panel'>
-          <Button className='react-paint-editor-zoom-button' icon={zoomOut} onClick={() => setCanvasZoom(settings.canvasZoom / 1.25)} />
-          <Button className='react-paint-editor-zoom-button react-paint-editor-zoom-button-value' onClick={() => setCanvasZoom(1)}>
+          <Button className='react-paint-editor-zoom-button' icon={zoomOut} onClick={() => setCanvasZoom('unzoom')} />
+          <Button className='react-paint-editor-zoom-button react-paint-editor-zoom-button-value' onClick={() => setCanvasZoom('default')}>
             {Math.round(settings.canvasZoom * 100)}%
           </Button>
-          <Button className='react-paint-editor-zoom-button' icon={zoomIn} onClick={() => setCanvasZoom(settings.canvasZoom * 1.25)} />
+          <Button className='react-paint-editor-zoom-button' icon={zoomIn} onClick={() => setCanvasZoom('zoom')} />
         </Panel>
       )}
       {isEditMode && (

@@ -4,9 +4,10 @@ import useShapes from '@canvas/hooks/useShapes'
 import { buildDataToExport } from '@canvas/utils/data'
 import { decodeImportedData, decodeJson, downloadFile, encodeShapesInString, getCanvasImage } from '@canvas/utils/file'
 import { sanitizeTools } from '@canvas/utils/tools'
+import { getNewOffset, getNewZoomAndOffset } from '@canvas/utils/zoom'
+import type { CanvasSize } from '@common/types/Canvas'
 import type { ExportedDrawableShape, Point, ShapeEntity, StateData } from '@common/types/Shapes'
 import type { ToolsType } from '@common/types/tools'
-import { clamp } from '@common/utils/util'
 import { SELECTION_TOOL } from '@editor/constants/tools'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
@@ -64,7 +65,7 @@ const useReactPaint = ({
   const [activeTool, setActiveTool] = useState<ToolsType>(SELECTION_TOOL)
   const [gridGap, setGridGap] = useState<number>(grid)
 
-  const [canvasSize, setCanvasSize] = useState({
+  const [canvasSize, setCanvasSize] = useState<CanvasSize>({
     realWidth: width,
     realHeight: height,
     width,
@@ -76,47 +77,15 @@ const useReactPaint = ({
   const { offset: canvasOffset, zoom: canvasZoom } = canvasTransformation
 
   const setCanvasOffset = useCallback(
-    ([x, y]: Point) => {
-      setCanvasTransformation(({ zoom }) => {
-        if (size === 'infinite') return { zoom, offset: [x, y] }
-        const clampedOffest: Point = [
-          clamp(x, canvasSize.realWidth / zoom - canvasSize.realWidth, 0),
-          clamp(y, canvasSize.realHeight / zoom - canvasSize.realHeight, 0)
-        ]
-        return { zoom, offset: clampedOffest }
-      })
+    (newOffset: Point) => {
+      setCanvasTransformation(({ zoom }) => getNewOffset({ zoom, size, canvasSize, newOffset }))
     },
     [canvasSize, size]
   )
 
   const setCanvasZoom = useCallback(
-    (newZoom: number) => {
-      const clampedZoom = clamp(newZoom, 1, 10)
-      return setCanvasTransformation(({ offset, zoom }) => {
-        if (size === 'infinite')
-          return {
-            offset: [
-              offset[0] - (canvasSize.realWidth / zoom - canvasSize.realWidth / clampedZoom) / 2,
-              offset[1] - (canvasSize.realHeight / zoom - canvasSize.realHeight / clampedZoom) / 2
-            ],
-            zoom: clampedZoom
-          }
-        return {
-          offset: [
-            clamp(
-              offset[0] - (canvasSize.realWidth / zoom - canvasSize.realWidth / clampedZoom) / 2,
-              canvasSize.realWidth / clampedZoom - canvasSize.realWidth,
-              0
-            ),
-            clamp(
-              offset[1] - (canvasSize.realHeight / zoom - canvasSize.realHeight / clampedZoom) / 2,
-              canvasSize.realHeight / clampedZoom - canvasSize.realHeight,
-              0
-            )
-          ],
-          zoom: clampedZoom
-        }
-      })
+    (action: 'unzoom' | 'zoom' | 'default'): void => {
+      setCanvasTransformation(({ offset, zoom }) => getNewZoomAndOffset({ size, canvasSize, currentOffset: offset, currentZoom: zoom, action }))
     },
     [canvasSize, size]
   )

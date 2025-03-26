@@ -3,6 +3,7 @@ import type { CustomToolInput } from '@common/types/tools'
 import type { RecursivePartial } from '@common/types/utils'
 import { DEFAULT_SHAPE_TOOLS } from '@editor/constants/tools'
 import { SELECTION_DEFAULT_COLOR, SELECTION_DEFAULT_PADDING, SELECTION_DEFAULT_WIDTH } from './shapes'
+import type { Size } from '@common/types/Canvas'
 
 export const APP_NAME = 'react_paint'
 
@@ -45,7 +46,7 @@ type AppOptionsType = {
   brushAlgo: BrushAlgo
   isBrushShapeDoneOnMouseUp: boolean
   canvasSelectionPadding: number
-  size: 'infinite' | 'fixed'
+  size: Size
   canZoom: 'never' | 'always'
 }
 

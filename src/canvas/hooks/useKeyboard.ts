@@ -35,7 +35,7 @@ type UseKeyboardType = {
   setShiftPressed: (value: React.SetStateAction<boolean>) => void
   isEditingText: boolean
   settings: UtilsSettings
-  setCanvasZoom: (newZoom: number) => void
+  setCanvasZoom: (action: 'unzoom' | 'zoom' | 'default') => void
   setCanvasOffset: (offset: Point) => void
 }
 
