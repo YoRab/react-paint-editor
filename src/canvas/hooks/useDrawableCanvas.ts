@@ -6,6 +6,7 @@ import { selectShape } from '@canvas/utils/selection'
 import { createShape } from '@canvas/utils/shapes'
 import { addNewPointGroupToShape } from '@canvas/utils/shapes/brush'
 import { transformShape } from '@canvas/utils/transform'
+import { isCursorInsideMask } from '@canvas/utils/zoom'
 import type { HoverModeData, SelectionModeData } from '@common/types/Mode'
 import type { Point, ShapeEntity } from '@common/types/Shapes'
 import type { CustomTool, ToolsType } from '@common/types/tools'
@@ -49,8 +50,13 @@ const handleMove = (
   }
 
   if (selectedShape === undefined || selectedShape.locked) return
-
   if (selectionMode.mode === 'default' || selectionMode.mode === 'textedition') {
+    if (!isCursorInsideMask(cursorPosition, settings)) {
+      setHoverMode({
+        mode: 'default'
+      })
+      return
+    }
     const positionIntersection = checkSelectionIntersection(selectedShape, cursorPosition, settings, true) || {
       mode: 'default'
     }
@@ -217,6 +223,14 @@ const useDrawableCanvas = ({
         return
       }
 
+      if (!isCursorInsideMask(cursorPosition, settings)) {
+        setSelectedShape(undefined)
+        setSelectionMode({
+          mode: 'default'
+        })
+        return
+      }
+
       if (activeTool.type === 'selection') {
         const { shape, mode } = selectShape(ctx, shapes, cursorPosition, settings, selectedShape, isTouchGesture(e), withFrameSelection)
         setSelectedShape(shape)
@@ -292,6 +306,9 @@ const useDrawableCanvas = ({
       if (activeTool.type === 'selection') {
         if (selectedShape?.type === 'text') {
           const cursorPosition = getCursorPosition(e, selectionCanvasRef.current, settings)
+
+          if (!isCursorInsideMask(cursorPosition, settings)) return
+
           if (checkSelectionIntersection(selectedShape, cursorPosition, settings)) {
             setSelectionMode({
               mode: 'textedition',

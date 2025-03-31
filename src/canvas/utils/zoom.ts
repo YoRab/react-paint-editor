@@ -143,3 +143,13 @@ export const drawMask = (ctx: CanvasRenderingContext2D, settings: UtilsSettings)
   ctx.clearRect(maskRect.x, maskRect.y, maskRect.width, maskRect.height)
   clipMask(ctx, settings)
 }
+
+export const isCursorInsideMask = (cursorPosition: Point, settings: UtilsSettings): boolean => {
+  return (
+    settings.size !== 'fixed' ||
+    (cursorPosition[0] > 0 &&
+      cursorPosition[0] < settings.canvasSize.realWidth &&
+      cursorPosition[1] > 0 &&
+      cursorPosition[1] < settings.canvasSize.realHeight)
+  )
+}
