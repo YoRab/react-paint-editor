@@ -99,7 +99,7 @@ type DrawerType = {
   setSelectionFrame: React.Dispatch<React.SetStateAction<[Point, Point] | undefined>>
   hoveredShape: ShapeEntity | undefined
   selectionFrame: [Point, Point] | undefined
-  refreshHoveredShape: (e: MouseEvent | TouchEvent, ctx: CanvasRenderingContext2D, cursorPosition: Point, settings: UtilsSettings) => void
+  refreshHoveredShape: (e: MouseEvent | TouchEvent, ctx: CanvasRenderingContext2D, cursorPosition: Point, isInsideMask: boolean) => void
   refreshSelectedShapes: (ctx: CanvasRenderingContext2D, cursorPosition: Point, settings: UtilsSettings) => void
   activeTool: ToolsType
   setActiveTool: React.Dispatch<React.SetStateAction<ToolsType>>
@@ -252,13 +252,15 @@ const Canvas = React.forwardRef<HTMLCanvasElement, DrawerType>(
               style={{
                 '--react-paint-canvas-cursor': canvasOffsetStartData
                   ? 'grabbing'
-                  : (activeTool.type !== 'selection' && activeTool.type !== 'move') || hoverMode.mode === 'resize'
-                    ? 'crosshair'
-                    : hoverMode.mode === 'translate'
-                      ? 'move'
-                      : hoverMode.mode === 'rotate' || activeTool.type === 'move'
-                        ? 'grab'
-                        : 'default'
+                  : hoverMode.outOfView
+                    ? 'default'
+                    : (activeTool.type !== 'selection' && activeTool.type !== 'move') || hoverMode.mode === 'resize'
+                      ? 'crosshair'
+                      : hoverMode.mode === 'translate'
+                        ? 'move'
+                        : hoverMode.mode === 'rotate' || activeTool.type === 'move'
+                          ? 'grab'
+                          : 'default'
               }}
             />
           )}

@@ -21,7 +21,7 @@ const handleMove = (
   selectionMode: SelectionModeData<Point | number>,
   canvasOffsetStartData: { start: Point; originalOffset: Point } | undefined,
   setHoverMode: React.Dispatch<React.SetStateAction<HoverModeData>>,
-  refreshHoveredShape: (e: MouseEvent | TouchEvent, ctx: CanvasRenderingContext2D, cursorPosition: Point, settings: UtilsSettings) => void,
+  refreshHoveredShape: (e: MouseEvent | TouchEvent, ctx: CanvasRenderingContext2D, cursorPosition: Point, isInsideMask: boolean) => void,
   updateSingleShape: (updatedShape: ShapeEntity) => void,
   setCanvasOffset: (offset: Point) => void,
   refreshSelectedShapes: (ctx: CanvasRenderingContext2D, cursorPosition: Point, settings: UtilsSettings) => void,
@@ -45,13 +45,22 @@ const handleMove = (
     return
   }
 
+  const isInsideMask = isCursorInsideMask(cursorPosition, settings)
+
   if (!isTouchGesture(e)) {
-    refreshHoveredShape(e, drawCtx, cursorPosition, settings)
+    refreshHoveredShape(e, drawCtx, cursorPosition, isInsideMask)
   }
 
-  if (selectedShape === undefined || selectedShape.locked) return
+  if (selectedShape === undefined || selectedShape.locked) {
+    setHoverMode({
+      mode: 'default',
+      outOfView: !isInsideMask
+    })
+    return
+  }
+
   if (selectionMode.mode === 'default' || selectionMode.mode === 'textedition') {
-    if (!isCursorInsideMask(cursorPosition, settings)) {
+    if (!isInsideMask) {
       setHoverMode({
         mode: 'default'
       })
@@ -79,7 +88,7 @@ type UseCanvasType = {
   setSelectedShape: React.Dispatch<React.SetStateAction<ShapeEntity | undefined>>
   activeTool: ToolsType
   setActiveTool: React.Dispatch<React.SetStateAction<ToolsType>>
-  refreshHoveredShape: (e: MouseEvent | TouchEvent, ctx: CanvasRenderingContext2D, cursorPosition: Point, settings: UtilsSettings) => void
+  refreshHoveredShape: (e: MouseEvent | TouchEvent, ctx: CanvasRenderingContext2D, cursorPosition: Point, isInsideMask: boolean) => void
   refreshSelectedShapes: (ctx: CanvasRenderingContext2D, cursorPosition: Point, settings: UtilsSettings) => void
   canvasOffsetStartData: { start: Point; originalOffset: Point } | undefined
   setCanvasOffsetStartData: React.Dispatch<React.SetStateAction<{ start: Point; originalOffset: Point } | undefined>>

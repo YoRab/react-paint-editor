@@ -58,10 +58,10 @@ const useShapes = (settings: UtilsSettings, width: number, height: number) => {
   }, [])
 
   const refreshHoveredShape = useCallback(
-    (e: MouseEvent | TouchEvent, ctx: CanvasRenderingContext2D, cursorPosition: Point) => {
+    (e: MouseEvent | TouchEvent, ctx: CanvasRenderingContext2D, cursorPosition: Point, isInsideMask: boolean) => {
       if (
         (e.target && 'className' in e.target && ![DRAWCANVAS_CLASSNAME, SELECTIONCANVAS_CLASSNAME].includes(e.target.className as string)) ||
-        !isCursorInsideMask(cursorPosition, settings)
+        !isInsideMask
       ) {
         setHoveredShape(undefined)
         return
