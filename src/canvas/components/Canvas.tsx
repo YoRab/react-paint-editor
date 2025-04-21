@@ -79,12 +79,6 @@ const renderSelectionCanvas = (
 
 type DrawerType = {
   canGrow?: boolean
-  canvasSize: {
-    width: number
-    height: number
-    scaleRatio: number
-    scaleRatioWithNoZoom: number
-  }
   selectionColor: string
   selectionWidth: number
   settings: UtilsSettings
@@ -117,7 +111,6 @@ const Canvas = React.forwardRef<HTMLCanvasElement, DrawerType>(
   (
     {
       canGrow,
-      canvasSize,
       shapes,
       addShape,
       updateSingleShape,
@@ -149,6 +142,7 @@ const Canvas = React.forwardRef<HTMLCanvasElement, DrawerType>(
   ) => {
     const drawCanvasRef = useRef<HTMLCanvasElement | null>(null)
     const selectionCanvasRef = useRef<HTMLCanvasElement | null>(null)
+    const canvasSize = settings.canvasSize
 
     useImperativeHandle(ref, () => drawCanvasRef.current!)
 

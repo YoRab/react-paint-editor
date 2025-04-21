@@ -38,7 +38,6 @@ const App = ({ options, className, style, canvasProps }: AppProps) => {
     width,
     height,
     settings,
-    canvasSize,
     setCanvasSize,
     setCanvasOffset,
     setCanvasZoom,
@@ -106,10 +105,10 @@ const App = ({ options, className, style, canvasProps }: AppProps) => {
       data-grow={canGrow}
       data-shrink={canShrink}
       style={{
-        '--react-paint-app-row-width': canvasSize.width,
+        '--react-paint-app-row-width': settings.canvasSize.width,
         '--react-paint-app-canvaswidth': width,
         '--react-paint-app-canvasheight': height,
-        '--react-paint-app-row-aspectratio': `calc(${canvasSize.width} / ${canvasSize.height})`,
+        '--react-paint-app-row-aspectratio': `calc(${settings.canvasSize.width} / ${settings.canvasSize.height})`,
         '--react-paint-app-canvas-bg': canvasBackgroundColor,
         ...style
       }}
@@ -135,7 +134,6 @@ const App = ({ options, className, style, canvasProps }: AppProps) => {
         settings={settings}
         setCanvasOffset={setCanvasOffset}
         saveShapes={saveShapes}
-        canvasSize={canvasSize}
         selectionMode={selectionMode}
         setSelectionMode={setSelectionMode}
         selectionColor={canvasSelectionColor}

@@ -53,7 +53,6 @@ const Editor = ({ editorProps, className, style, options, children }: EditorProp
     refs,
     width,
     height,
-    canvasSize,
     selectTool,
     selectShape,
     activeTool,
@@ -211,7 +210,7 @@ const Editor = ({ editorProps, className, style, options, children }: EditorProp
       {isEditMode && (
         <Toolbar
           settings={settings}
-          width={canvasSize.width}
+          width={settings.canvasSize.width}
           activeTool={activeTool}
           clearCanvas={clearCanvas}
           setActiveTool={selectTool}
@@ -260,7 +259,7 @@ const Editor = ({ editorProps, className, style, options, children }: EditorProp
         <>
           <SettingsBar
             setCanvasZoom={setCanvasZoom}
-            width={canvasSize.width}
+            width={settings.canvasSize.width}
             activeTool={activeTool}
             availableTools={availableTools}
             selectedShape={selectedShape}
