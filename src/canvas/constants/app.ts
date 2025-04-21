@@ -28,7 +28,10 @@ export type UtilsSettings = {
   }
   selectionPadding: number
   size: 'infinite' | 'fixed'
-  canZoom: 'never' | 'always'
+  features: {
+    zoom: boolean
+    edition: boolean
+  }
 }
 type AppOptionsType = {
   layersManipulation: boolean

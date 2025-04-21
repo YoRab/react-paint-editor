@@ -78,7 +78,6 @@ const renderSelectionCanvas = (
 }
 
 type DrawerType = {
-  disabled?: boolean
   canGrow?: boolean
   canvasSize: {
     width: number
@@ -118,7 +117,6 @@ const Canvas = React.forwardRef<HTMLCanvasElement, DrawerType>(
   (
     {
       canGrow,
-      disabled = false,
       canvasSize,
       shapes,
       addShape,
@@ -155,7 +153,6 @@ const Canvas = React.forwardRef<HTMLCanvasElement, DrawerType>(
     useImperativeHandle(ref, () => drawCanvasRef.current!)
 
     const { hoverMode } = useDrawableCanvas({
-      disabled,
       addShape,
       drawCanvasRef,
       setActiveTool,
@@ -266,7 +263,7 @@ const Canvas = React.forwardRef<HTMLCanvasElement, DrawerType>(
           )}
           {isEditMode && selectionMode.mode === 'textedition' && selectedShape?.type === 'text' && (
             <EditTextBox
-              disabled={disabled}
+              disabled={!settings.features.edition}
               shape={selectedShape}
               defaultValue={selectionMode.defaultValue}
               updateValue={updateSelectedShapeText}

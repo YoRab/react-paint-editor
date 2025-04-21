@@ -30,20 +30,22 @@ const PictureWithAnnotations = ({ src, alt }: { src: string; alt: string }) => {
           toggle edition
         </button>
       </div>
-      <div className='pic-container'>
-        <img
-          src={src}
-          alt={alt}
-          className='picture react-paint-canvas-picture'
-          style={{
-            '--react-paint-canvas-zoom': editorProps.settings.canvasZoom,
-            '--react-paint-canvas-offset-x': editorProps.settings.canvasOffset[0],
-            '--react-paint-canvas-offset-y': editorProps.settings.canvasOffset[1],
-            '--react-paint-app-canvaswidth': canvasProps.width,
-            '--react-paint-app-canvasheight': canvasProps.height
-          }}
-          onLoad={onPictureLoad}
-        />
+      <div className='annotations-container'>
+        <div className='pic-container'>
+          <img
+            src={src}
+            alt={alt}
+            className='picture react-paint-canvas-picture'
+            style={{
+              '--react-paint-canvas-zoom': editorProps.settings.canvasZoom,
+              '--react-paint-canvas-offset-x': editorProps.settings.canvasOffset[0],
+              '--react-paint-canvas-offset-y': editorProps.settings.canvasOffset[1],
+              '--react-paint-app-canvaswidth': canvasProps.width,
+              '--react-paint-app-canvasheight': canvasProps.height
+            }}
+            onLoad={onPictureLoad}
+          />
+        </div>
         {dimensions && (
           <Editor editorProps={editorProps} className={`annotations ${isEdit ? 'editor' : 'view'}`}>
             <Canvas canvasProps={canvasProps} options={canvasOptions} />

@@ -44,7 +44,6 @@ const TOOLBAR_STRUCTURE: (
 
 type ToolboxType = {
   width: number
-  disabled?: boolean
   activeTool: ToolsType
   hasActionToUndo?: boolean
   hasActionToRedo?: boolean
@@ -68,7 +67,6 @@ type ToolboxType = {
 const Toolbar = ({
   settings,
   width,
-  disabled = false,
   activeTool,
   hasActionToUndo = false,
   hasActionToRedo = false,
@@ -88,6 +86,7 @@ const Toolbar = ({
   withUploadPicture
 }: ToolboxType) => {
   const currentStructure = getCurrentStructure(availableTools, TOOLBAR_STRUCTURE)
+  const disabled = !settings.features.edition
 
   const fullToolbarSize = (6 + currentStructure.length) * TOOL_WIDTH
   const actionsInMenu = width < fullToolbarSize
@@ -138,7 +137,7 @@ const Toolbar = ({
             isActive={activeTool.id === SELECTION_TOOL.id}
             setActive={setActiveTool}
           />
-          {(settings.size === 'infinite' || settings.canZoom !== 'never') && (
+          {(settings.size === 'infinite' || settings.features.zoom) && (
             <Tool type={MOVE_TOOL} disabled={disabled} img={MOVE_TOOL.icon} isActive={activeTool.id === MOVE_TOOL.id} setActive={setActiveTool} />
           )}
           {toolsInMenu ? (

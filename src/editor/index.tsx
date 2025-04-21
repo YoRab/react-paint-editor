@@ -60,7 +60,6 @@ const Editor = ({ editorProps, className, style, options, children }: EditorProp
     setActiveTool,
     setAvailableTools,
     isEditMode,
-    isDisabled,
     availableTools,
     gridGap,
     setGridGap,
@@ -92,7 +91,7 @@ const Editor = ({ editorProps, className, style, options, children }: EditorProp
 
   const [isLoading, setIsLoading] = useState(false)
   const [isLayoutPanelShown, setIsLayoutPanelShown] = useState(false)
-  const [isZoomPanelShown, setIsZoomPanelShown] = useState(settings.canZoom === 'always')
+  const [isZoomPanelShown, setIsZoomPanelShown] = useState(settings.features.zoom)
 
   const gridFormat: GridLabelType =
     gridGap >= GridValues.large ? 'large' : gridGap >= GridValues.medium ? 'medium' : gridGap >= GridValues.small ? 'small' : 'none'
@@ -213,7 +212,6 @@ const Editor = ({ editorProps, className, style, options, children }: EditorProp
         <Toolbar
           settings={settings}
           width={canvasSize.width}
-          disabled={isDisabled}
           activeTool={activeTool}
           clearCanvas={clearCanvas}
           setActiveTool={selectTool}
@@ -238,7 +236,6 @@ const Editor = ({ editorProps, className, style, options, children }: EditorProp
         <Layouts
           gridFormat={gridFormat}
           setGridFormat={setGridFormat}
-          disabled={isDisabled}
           shapes={shapesRef.current}
           moveShapes={moveShapes}
           selectedShape={selectedShape}
@@ -247,10 +244,11 @@ const Editor = ({ editorProps, className, style, options, children }: EditorProp
           toggleShapeVisibility={toggleShapeVisibility}
           toggleShapeLock={toggleShapeLock}
           isLayoutPanelShown={isLayoutPanelShown}
+          settings={settings}
         />
       )}
       {isZoomPanelShown && (
-        <Panel alignment='left' className='react-paint-editor-layouts-panel'>
+        <Panel alignment='left' className='react-paint-editor-layouts-panel' data-edit={+isEditMode}>
           <Button className='react-paint-editor-zoom-button' icon={zoomOut} onClick={() => setCanvasZoom('unzoom')} />
           <Button className='react-paint-editor-zoom-button react-paint-editor-zoom-button-value' onClick={() => setCanvasZoom('default')}>
             {Math.round(settings.canvasZoom * 100)}%
@@ -263,7 +261,6 @@ const Editor = ({ editorProps, className, style, options, children }: EditorProp
           <SettingsBar
             setCanvasZoom={setCanvasZoom}
             width={canvasSize.width}
-            disabled={isDisabled}
             activeTool={activeTool}
             availableTools={availableTools}
             selectedShape={selectedShape}

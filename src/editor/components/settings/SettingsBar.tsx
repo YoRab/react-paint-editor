@@ -25,24 +25,6 @@ import ZoomButton from '@editor/components/settings/ZoomButton'
 
 const SETTING_WIDTH = 40
 
-type SettingsBarType = {
-  width: number
-  disabled?: boolean
-  availableTools: CustomTool[]
-  updateToolSettings: (toolId: string, field: string, value: string | number | boolean) => void
-  layersManipulation?: boolean
-  activeTool: ToolsType
-  selectedShape: ShapeEntity | undefined
-  canvas: HTMLCanvasElement | null
-  settings: UtilsSettings
-  updateShape: (shape: ShapeEntity, withSave?: boolean) => void
-  removeShape: (shape: ShapeEntity) => void
-  toggleLayoutPanel: () => void
-  isZoomPanelShown: boolean
-  setIsZoomPanelShown: React.Dispatch<React.SetStateAction<boolean>>
-  setCanvasZoom: (action: 'unzoom' | 'zoom' | 'default') => void
-}
-
 type SettingsItemsType = {
   disabled?: boolean
   activeTool: ToolsType
@@ -338,9 +320,25 @@ const SettingsItems = ({
   ) : null
 }
 
+type SettingsBarType = {
+  width: number
+  availableTools: CustomTool[]
+  updateToolSettings: (toolId: string, field: string, value: string | number | boolean) => void
+  layersManipulation?: boolean
+  activeTool: ToolsType
+  selectedShape: ShapeEntity | undefined
+  canvas: HTMLCanvasElement | null
+  settings: UtilsSettings
+  updateShape: (shape: ShapeEntity, withSave?: boolean) => void
+  removeShape: (shape: ShapeEntity) => void
+  toggleLayoutPanel: () => void
+  isZoomPanelShown: boolean
+  setIsZoomPanelShown: React.Dispatch<React.SetStateAction<boolean>>
+  setCanvasZoom: (action: 'unzoom' | 'zoom' | 'default') => void
+}
+
 const SettingsBar = ({
   width,
-  disabled = false,
   availableTools,
   updateToolSettings,
   layersManipulation = false,
@@ -357,8 +355,8 @@ const SettingsBar = ({
   const [selectedSettings, setSelectedSettings] = useState<string | undefined>(undefined)
   const [isMenuOpen, setIsMenuOpen] = useState(false)
 
-  const withZoom = settings.size === 'infinite' || settings.canZoom === 'always'
-
+  const withZoom = settings.size === 'infinite' || settings.features.zoom
+  const disabled = !settings.features.edition
   const toggleTools = () => {
     setIsMenuOpen(prev => !prev)
   }
@@ -442,11 +440,7 @@ const SettingsBar = ({
       <div className='react-paint-editor-settings-bar'>
         <div className='react-paint-editor-settings-shrinkable'>
           {withZoom && (
-            <ZoomButton
-              disabled={disabled}
-              className={isZoomPanelShown ? 'react-paint-editor-bar-zoom-button-opened' : undefined}
-              toggleZoomPanel={toggleZoom}
-            />
+            <ZoomButton className={isZoomPanelShown ? 'react-paint-editor-bar-zoom-button-opened' : undefined} toggleZoomPanel={toggleZoom} />
           )}
           {settingsInMenu && nbSettingsTools > 2 && <Button disabled={disabled} onClick={toggleTools} title='Toggle settings' icon={settingsIcon} />}
           {selectedShape ? (

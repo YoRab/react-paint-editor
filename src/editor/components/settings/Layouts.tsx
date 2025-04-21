@@ -9,6 +9,7 @@ import type { GridLabelType } from '@editor/constants/grid'
 import { gridOffIcon, lockedIcon, trashIcon, unlockedIcon, visibilityIcon, visibilityOffIcon } from '@editor/constants/icons'
 import { getShapePicture } from '@editor/utils/style'
 import './Layouts.css'
+import type { UtilsSettings } from '@canvas/constants/app'
 
 type LayoutType = {
   disabled?: boolean
@@ -117,7 +118,7 @@ const Layout = ({
 type LayoutsType = {
   gridFormat: GridLabelType
   setGridFormat: (value: GridLabelType) => void
-  disabled?: boolean
+  settings: UtilsSettings
   shapes: ShapeEntity[]
   removeShape: (shape: ShapeEntity) => void
   toggleShapeVisibility: (shape: ShapeEntity) => void
@@ -131,7 +132,7 @@ type LayoutsType = {
 const Layouts = ({
   gridFormat,
   setGridFormat,
-  disabled = false,
+  settings,
   shapes,
   removeShape,
   toggleShapeVisibility,
@@ -142,6 +143,8 @@ const Layouts = ({
   isLayoutPanelShown
 }: LayoutsType) => {
   const [layoutDragging, setLayoutDragging] = useState<string | undefined>(undefined)
+
+  const disabled = !settings.features.edition
 
   return isLayoutPanelShown ? (
     <Panel alignment='right' className='react-paint-editor-layouts-panel'>

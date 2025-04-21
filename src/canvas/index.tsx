@@ -47,7 +47,6 @@ const App = ({ options, className, style, canvasProps }: AppProps) => {
     setActiveTool,
     isInsideComponent,
     isEditMode,
-    isDisabled,
     canvas: { withSkeleton, withFrameSelection, canGrow, canShrink }
   } = canvasProps
 
@@ -118,7 +117,6 @@ const App = ({ options, className, style, canvasProps }: AppProps) => {
       <Canvas
         ref={refs.canvas}
         canGrow={canGrow}
-        disabled={isDisabled}
         isInsideComponent={isInsideComponent}
         activeTool={activeTool}
         setActiveTool={setActiveTool}

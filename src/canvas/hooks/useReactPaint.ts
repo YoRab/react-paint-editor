@@ -52,7 +52,6 @@ const useReactPaint = ({
   }
 
   const isEditMode = mode !== 'viewer'
-  const isDisabled = disabled || !isEditMode
 
   const editorRef = useRef<HTMLElement | null>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
@@ -103,19 +102,22 @@ const useReactPaint = ({
         scaleRatio: canvasSize.scaleRatio * canvasZoom
       },
       size,
-      canZoom,
       canvasOffset,
       canvasZoom,
       gridGap,
-      selectionPadding: canvasSelectionPadding
+      selectionPadding: canvasSelectionPadding,
+      features: {
+        edition: isEditMode && !disabled,
+        zoom: canZoom === 'always' && !disabled
+      }
     }),
-    [canvasSelectionPadding, gridGap, brushAlgo, isBrushShapeDoneOnMouseUp, canvasZoom, canvasOffset, canvasSize, size, canZoom]
+    [canvasSelectionPadding, gridGap, brushAlgo, isBrushShapeDoneOnMouseUp, canvasZoom, canvasOffset, canvasSize, size, canZoom, disabled, isEditMode]
   )
 
   const [availableTools, setAvailableTools] = useState(sanitizeTools(availableToolsFromProps, withUploadPicture || withUrlPicture))
 
   const { isInsideComponent } = useComponent({
-    disabled: isDisabled,
+    settings,
     componentRef: editorRef
   })
 
@@ -284,7 +286,6 @@ const useReactPaint = ({
       setActiveTool,
       setAvailableTools,
       isEditMode,
-      isDisabled,
       availableTools,
       gridGap,
       setGridGap,
@@ -332,7 +333,6 @@ const useReactPaint = ({
       setActiveTool,
       isInsideComponent,
       isEditMode,
-      isDisabled,
       canvas: {
         withSkeleton,
         withFrameSelection,
