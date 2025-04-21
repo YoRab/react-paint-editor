@@ -12,6 +12,7 @@ import PictureUrlModal from './PictureUrlInput'
 import Tool from './Tool'
 import './Toolbar.css'
 import ToolbarGroup from './ToolbarGroup'
+import type { UtilsSettings } from '@canvas/constants/app'
 
 const TOOL_WIDTH = 40
 
@@ -43,7 +44,6 @@ const TOOLBAR_STRUCTURE: (
 
 type ToolboxType = {
   width: number
-  disabled?: boolean
   activeTool: ToolsType
   hasActionToUndo?: boolean
   hasActionToRedo?: boolean
@@ -61,11 +61,12 @@ type ToolboxType = {
   withExport: boolean
   withUrlPicture: boolean
   withUploadPicture: boolean
+  settings: UtilsSettings
 }
 
 const Toolbar = ({
+  settings,
   width,
-  disabled = false,
   activeTool,
   hasActionToUndo = false,
   hasActionToRedo = false,
@@ -85,6 +86,7 @@ const Toolbar = ({
   withUploadPicture
 }: ToolboxType) => {
   const currentStructure = getCurrentStructure(availableTools, TOOLBAR_STRUCTURE)
+  const disabled = !settings.features.edition
 
   const fullToolbarSize = (6 + currentStructure.length) * TOOL_WIDTH
   const actionsInMenu = width < fullToolbarSize
@@ -135,7 +137,9 @@ const Toolbar = ({
             isActive={activeTool.id === SELECTION_TOOL.id}
             setActive={setActiveTool}
           />
-          <Tool type={MOVE_TOOL} disabled={disabled} img={MOVE_TOOL.icon} isActive={activeTool.id === MOVE_TOOL.id} setActive={setActiveTool} />
+          {(settings.size === 'infinite' || settings.features.zoom) && (
+            <Tool type={MOVE_TOOL} disabled={disabled} img={MOVE_TOOL.icon} isActive={activeTool.id === MOVE_TOOL.id} setActive={setActiveTool} />
+          )}
           {toolsInMenu ? (
             <Button disabled={disabled} onClick={toggleTools} title='Toggle tools' icon={shapesIcon} selected={isAnyToolSelected} />
           ) : (

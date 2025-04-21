@@ -1,13 +1,16 @@
+import type { UtilsSettings } from '@canvas/constants/app'
 import { isEventInsideNode } from '@common/utils/dom'
 import { type RefObject, useEffect, useState } from 'react'
 
 type UseComponentType = {
-  disabled: boolean
+  settings: UtilsSettings
   componentRef: RefObject<HTMLElement | null>
 }
 
-const useComponent = ({ disabled, componentRef }: UseComponentType) => {
+const useComponent = ({ settings, componentRef }: UseComponentType) => {
   const [isInsideComponent, setIsInsideComponent] = useState(false)
+
+  const disabled = !settings.features.edition && !settings.features.zoom
 
   useEffect(() => {
     if (disabled) {

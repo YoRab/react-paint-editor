@@ -25,14 +25,13 @@ const createPictureShape = (
   settings: UtilsSettings
 ): ShapeEntity<'picture'> => {
   const [width, height] = fitContentInsideContainer(img.width, img.height, maxPictureWidth, maxPictureHeight, true)
-
   return buildPath(
     {
       toolId: DEFAULT_SHAPE_PICTURE.id,
       type: 'picture',
       id: uniqueId(`${'picture'}_`),
-      x: (maxPictureWidth - width) / 2,
-      y: (maxPictureHeight - height) / 2,
+      x: -settings.canvasOffset[0] + settings.canvasSize.realWidth / settings.canvasZoom / 2 - width / 2,
+      y: -settings.canvasOffset[1] + settings.canvasSize.realHeight / settings.canvasZoom / 2 - height / 2,
       width,
       height,
       src: storedSrc,

@@ -17,6 +17,8 @@ import { drawPicture, getPictureBorder, refreshPicture, resizePicture, translate
 import { createPolygon, drawPolygon, getPolygonBorder, refreshPolygon, resizePolygon, translatePolygon } from './polygon'
 import { createRectangle, drawRect, getRectBorder, refreshRect, resizeRect, translateRect } from './rectangle'
 import { createText, drawText, getTextBorder, refreshText, resizeText, translateText } from './text'
+import { getCurrentView } from '@canvas/utils/zoom'
+import { getRectIntersection } from '@canvas/utils/intersect'
 
 export const createShape = (
   ctx: CanvasRenderingContext2D,
@@ -48,7 +50,10 @@ export const createShape = (
 
 export const drawShape = (ctx: CanvasRenderingContext2D, shape: DrawableShape, settings: UtilsSettings): void => {
   if (shape.visible === false) return
-  const { center } = getShapeInfos(shape, settings)
+  const { center, borders } = getShapeInfos(shape, settings)
+  const currentView = getCurrentView(settings)
+  const isInView = !!getRectIntersection(borders, currentView)
+  if (!isInView) return
   transformCanvas(ctx, settings, shape.rotation, center)
   updateCanvasContext(ctx, shape.style)
 

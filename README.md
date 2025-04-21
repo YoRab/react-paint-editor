@@ -1,3 +1,11 @@
+- export all
+
+- Mode annotation
+- zoom en mode viewer
+
+- zoom via ctrl + scroll ou pinch gesture
+- scroll + 3 fingers on mobile pour move
+
 # React Paint
 
 An open-source canvas-based library for React used for image annotation or as a digital whiteboard

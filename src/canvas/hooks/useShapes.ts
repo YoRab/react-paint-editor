@@ -4,6 +4,7 @@ import { buildDataToExport } from '@canvas/utils/data'
 import { checkPositionIntersection, checkSelectionFrameCollision, checkSelectionIntersection } from '@canvas/utils/intersect'
 import { refreshShape } from '@canvas/utils/shapes/index'
 import { createPicture } from '@canvas/utils/shapes/picture'
+import { isCursorInsideMask } from '@canvas/utils/zoom'
 import type { Point, ShapeEntity, StateData } from '@common/types/Shapes'
 import { moveItemPosition } from '@common/utils/array'
 import { isEqual, omit, set } from '@common/utils/object'
@@ -57,8 +58,11 @@ const useShapes = (settings: UtilsSettings, width: number, height: number) => {
   }, [])
 
   const refreshHoveredShape = useCallback(
-    (e: MouseEvent | TouchEvent, ctx: CanvasRenderingContext2D, cursorPosition: Point) => {
-      if (e.target && 'className' in e.target && ![DRAWCANVAS_CLASSNAME, SELECTIONCANVAS_CLASSNAME].includes(e.target.className as string)) {
+    (e: MouseEvent | TouchEvent, ctx: CanvasRenderingContext2D, cursorPosition: Point, isInsideMask: boolean) => {
+      if (
+        (e.target && 'className' in e.target && ![DRAWCANVAS_CLASSNAME, SELECTIONCANVAS_CLASSNAME].includes(e.target.className as string)) ||
+        !isInsideMask
+      ) {
         setHoveredShape(undefined)
         return
       }

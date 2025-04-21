@@ -21,25 +21,9 @@ import PointsNumberField from './PointsNumberField'
 import RangeField from './RangeField'
 import './SettingsBar.css'
 import ToggleField from './ToggleField'
-import Panel from '@editor/components/common/Panel'
-const SETTING_WIDTH = 40
+import ZoomButton from '@editor/components/settings/ZoomButton'
 
-type SettingsBoxType = {
-  width: number
-  disabled?: boolean
-  availableTools: CustomTool[]
-  updateToolSettings: (toolId: string, field: string, value: string | number | boolean) => void
-  layersManipulation?: boolean
-  activeTool: ToolsType
-  selectedShape: ShapeEntity | undefined
-  canvas: HTMLCanvasElement | null
-  settings: UtilsSettings
-  updateShape: (shape: ShapeEntity, withSave?: boolean) => void
-  removeShape: (shape: ShapeEntity) => void
-  toggleLayoutPanel: () => void
-  isEditMode: boolean
-  setCanvasZoom: (zoom: number) => void
-}
+const SETTING_WIDTH = 40
 
 type SettingsItemsType = {
   disabled?: boolean
@@ -336,12 +320,28 @@ const SettingsItems = ({
   ) : null
 }
 
+type SettingsBarType = {
+  width: number
+  availableTools: CustomTool[]
+  updateToolSettings: (toolId: string, field: string, value: string | number | boolean) => void
+  layersManipulation?: boolean
+  activeTool: ToolsType
+  selectedShape: ShapeEntity | undefined
+  canvas: HTMLCanvasElement | null
+  settings: UtilsSettings
+  updateShape: (shape: ShapeEntity, withSave?: boolean) => void
+  removeShape: (shape: ShapeEntity) => void
+  toggleLayoutPanel: () => void
+  isZoomPanelShown: boolean
+  setIsZoomPanelShown: React.Dispatch<React.SetStateAction<boolean>>
+  setCanvasZoom: (action: 'unzoom' | 'zoom' | 'default') => void
+}
+
 const SettingsBar = ({
   width,
-  disabled = false,
   availableTools,
   updateToolSettings,
-  layersManipulation,
+  layersManipulation = false,
   toggleLayoutPanel,
   activeTool,
   selectedShape,
@@ -349,14 +349,20 @@ const SettingsBar = ({
   settings,
   updateShape,
   removeShape,
-  isEditMode,
-  setCanvasZoom
-}: SettingsBoxType) => {
+  isZoomPanelShown,
+  setIsZoomPanelShown
+}: SettingsBarType) => {
   const [selectedSettings, setSelectedSettings] = useState<string | undefined>(undefined)
   const [isMenuOpen, setIsMenuOpen] = useState(false)
 
+  const withZoom = settings.size === 'infinite' || settings.features.zoom
+  const disabled = !settings.features.edition
   const toggleTools = () => {
     setIsMenuOpen(prev => !prev)
+  }
+
+  const toggleZoom = () => {
+    setIsZoomPanelShown(prev => !prev)
   }
 
   const selectedShapeTool = selectedShape
@@ -368,7 +374,9 @@ const SettingsBar = ({
       ? Object.keys(selectedShapeTool.settings).length + 1
       : 'settings' in activeTool
         ? Object.keys(activeTool.settings).length
-        : 0) + (layersManipulation ? 1 : 0)
+        : 0) +
+    +layersManipulation +
+    +withZoom
 
   const settingsBreakpoint = nbSettingsTools * SETTING_WIDTH
 
@@ -430,20 +438,10 @@ const SettingsBar = ({
   return (
     <>
       <div className='react-paint-editor-settings-bar'>
-        {isEditMode && (
-          <Panel alignment='left' position='bottom'>
-            <Button className='react-paint-editor-zoom-button' onClick={() => setCanvasZoom(settings.canvasZoom / 1.25)}>
-              -
-            </Button>
-            <Button className='react-paint-editor-zoom-button react-paint-editor-zoom-button-value' onClick={() => setCanvasZoom(1)}>
-              {Math.round(settings.canvasZoom * 100)}%
-            </Button>
-            <Button className='react-paint-editor-zoom-button' onClick={() => setCanvasZoom(settings.canvasZoom * 1.25)}>
-              +
-            </Button>
-          </Panel>
-        )}
         <div className='react-paint-editor-settings-shrinkable'>
+          {withZoom && (
+            <ZoomButton className={isZoomPanelShown ? 'react-paint-editor-bar-zoom-button-opened' : undefined} toggleZoomPanel={toggleZoom} />
+          )}
           {settingsInMenu && nbSettingsTools > 2 && <Button disabled={disabled} onClick={toggleTools} title='Toggle settings' icon={settingsIcon} />}
           {selectedShape ? (
             <>
