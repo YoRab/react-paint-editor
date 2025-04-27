@@ -1,4 +1,4 @@
-import type { Meta, StoryObj } from '@storybook/react'
+import type { Meta, StoryObj } from '@storybook/react-vite'
 import { Canvas, Editor, useReactPaint } from '../src/index'
 import { TREE_AND_CLOUDS } from './fixture'
 
