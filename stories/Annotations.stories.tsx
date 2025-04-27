@@ -1,4 +1,4 @@
-import type { Meta, StoryObj } from '@storybook/react/*'
+import type { Meta, StoryObj } from '@storybook/react-vite'
 import { type SyntheticEvent, useState } from 'react'
 import { Canvas, Editor, useReactPaint } from '../src/index'
 import './annotations.css'
