@@ -5,10 +5,23 @@ import type { HoverModeData } from '@common/types/Mode'
 import type { DrawableShape, Point, Rect } from '@common/types/Shapes'
 import { getShapeInfos } from './shapes'
 import { isCircleIntersectRect, isPointInsideRect, rotatePoint } from './trigo'
+import type { CanvasSize } from '@common/types/Canvas'
 
-export const getCursorPosition = (e: MouseEvent | TouchEvent, canvas: HTMLCanvasElement | null, settings: UtilsSettings): Point => {
+export const getCursorPosition = (e: MouseEvent | TouchEvent): { clientX: number; clientY: number } => {
   const { clientX = 0, clientY = 0 } =
     'touches' in e && e.touches[0] ? e.touches[0] : 'changedTouches' in e && e.changedTouches[0] ? e.changedTouches[0] : 'clientX' in e ? e : {}
+  return { clientX, clientY }
+}
+
+export const getCursorPositionInElement = (e: MouseEvent | TouchEvent, element: HTMLElement, canvasSize: CanvasSize): Point => {
+  const { clientX, clientY } = getCursorPosition(e)
+
+  const canvasBoundingRect = element.getBoundingClientRect()
+  return [(clientX - canvasBoundingRect.left) / canvasSize.scaleRatio, (clientY - canvasBoundingRect.top) / canvasSize.scaleRatio]
+}
+
+export const getCursorPositionInTransformedCanvas = (e: MouseEvent | TouchEvent, canvas: HTMLElement | null, settings: UtilsSettings): Point => {
+  const { clientX, clientY } = getCursorPosition(e)
 
   const canvasBoundingRect = canvas?.getBoundingClientRect() ?? {
     left: 0,

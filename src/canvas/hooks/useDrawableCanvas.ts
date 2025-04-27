@@ -1,7 +1,7 @@
 import type { UtilsSettings } from '@canvas/constants/app'
 import { ShapeTypeArray } from '@canvas/constants/shapes'
 import useDoubleClick from '@canvas/hooks/useDoubleClick'
-import { checkSelectionIntersection, getCursorPosition, isTouchGesture } from '@canvas/utils/intersect'
+import { checkSelectionIntersection, getCursorPositionInTransformedCanvas, isTouchGesture } from '@canvas/utils/intersect'
 import { selectShape } from '@canvas/utils/selection'
 import { createShape } from '@canvas/utils/shapes'
 import { addNewPointGroupToShape } from '@canvas/utils/shapes/brush'
@@ -30,7 +30,7 @@ const handleMove = (
 ) => {
   const drawCtx = canvasRef.current?.getContext('2d')
   if (!drawCtx) return
-  const cursorPosition = getCursorPosition(e, canvasRef.current, settings)
+  const cursorPosition = getCursorPositionInTransformedCanvas(e, canvasRef.current, settings)
 
   if (canvasOffsetStartData !== undefined) {
     setCanvasOffset([
@@ -95,8 +95,7 @@ type UseCanvasType = {
   selectionMode: SelectionModeData<number | Point>
   setSelectionMode: React.Dispatch<React.SetStateAction<SelectionModeData<number | Point>>>
   setSelectionFrame: React.Dispatch<React.SetStateAction<[Point, Point] | undefined>>
-  drawCanvasRef: React.MutableRefObject<HTMLCanvasElement | null>
-  selectionCanvasRef: React.MutableRefObject<HTMLCanvasElement | null>
+  drawCanvasRef: React.RefObject<HTMLCanvasElement | null>
   isShiftPressed: boolean
   withFrameSelection: boolean
   settings: UtilsSettings
@@ -113,7 +112,6 @@ const useDrawableCanvas = ({
   isInsideComponent,
   setCanvasOffset,
   selectedShape,
-  selectionCanvasRef,
   canvasOffsetStartData,
   refreshSelectedShapes,
   setSelectedShape,
@@ -219,7 +217,7 @@ const useDrawableCanvas = ({
 
     const checkMoveFeature = (e: MouseEvent | TouchEvent): boolean => {
       e.preventDefault()
-      const cursorPosition = getCursorPosition(e, drawCanvasRef.current, settings)
+      const cursorPosition = getCursorPositionInTransformedCanvas(e, drawCanvasRef.current, settings)
 
       const isWheelPressed = 'button' in e ? e.button === 1 : e.touches.length > 1
 
@@ -230,9 +228,10 @@ const useDrawableCanvas = ({
       return false
     }
 
+    const ref = drawCanvasRef.current
+    if (!ref) return
+
     if (onlyCheckZoom) {
-      const ref = drawCanvasRef.current
-      if (!ref) return
       ref.addEventListener('mousedown', checkMoveFeature, { passive: false })
       ref.addEventListener('touchstart', checkMoveFeature, { passive: false })
 
@@ -241,9 +240,6 @@ const useDrawableCanvas = ({
         ref.removeEventListener('touchstart', checkMoveFeature)
       }
     }
-
-    const ref = selectionCanvasRef.current
-    if (!ref) return
     const ctx = ref?.getContext('2d')
     if (!ctx) return
 
@@ -252,7 +248,7 @@ const useDrawableCanvas = ({
 
       if (checkMoveFeature(e)) return
 
-      const cursorPosition = getCursorPosition(e, selectionCanvasRef.current, settings)
+      const cursorPosition = getCursorPositionInTransformedCanvas(e, drawCanvasRef.current, settings)
 
       if (!isCursorInsideMask(cursorPosition, settings)) {
         setSelectedShape(undefined)
@@ -312,7 +308,6 @@ const useDrawableCanvas = ({
       ref.removeEventListener('touchstart', handleMouseDown)
     }
   }, [
-    selectionCanvasRef,
     drawCanvasRef,
     selectedShape,
     activeTool,
@@ -329,13 +324,13 @@ const useDrawableCanvas = ({
   ])
 
   useEffect(() => {
-    const ref = selectionCanvasRef.current
+    const ref = drawCanvasRef.current
     if (!ref) return
 
     const handleDoubleClick = (e: MouseEvent | TouchEvent) => {
       if (activeTool.type === 'selection') {
         if (selectedShape?.type === 'text') {
-          const cursorPosition = getCursorPosition(e, selectionCanvasRef.current, settings)
+          const cursorPosition = getCursorPositionInTransformedCanvas(e, drawCanvasRef.current, settings)
 
           if (!isCursorInsideMask(cursorPosition, settings)) return
 
@@ -354,16 +349,7 @@ const useDrawableCanvas = ({
         unRegisterDoubleClickEvent(ref)
       }
     }
-  }, [
-    registerDoubleClickEvent,
-    unRegisterDoubleClickEvent,
-    isInsideComponent,
-    selectionCanvasRef,
-    activeTool,
-    selectedShape,
-    setSelectionMode,
-    settings
-  ])
+  }, [registerDoubleClickEvent, unRegisterDoubleClickEvent, isInsideComponent, drawCanvasRef, activeTool, selectedShape, setSelectionMode, settings])
 
   return { hoverMode }
 }

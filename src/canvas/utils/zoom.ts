@@ -34,33 +34,28 @@ const calculateNewZoomAndOffset = ({
   canvasSize,
   currentOffset,
   currentZoom,
-  newZoom
-}: { size: Size; canvasSize: CanvasSize; currentOffset: Point; currentZoom: number; newZoom: number }): {
+  zoom,
+  centerPoint: iCenterPoint
+}: { size: Size; canvasSize: CanvasSize; currentOffset: Point; currentZoom: number; zoom: number; centerPoint: Point }): {
   offset: Point
   zoom: number
 } => {
-  if (size === 'infinite' || newZoom < 1)
-    return {
-      offset: [
-        currentOffset[0] - (canvasSize.realWidth / currentZoom - canvasSize.realWidth / newZoom) / 2,
-        currentOffset[1] - (canvasSize.realHeight / currentZoom - canvasSize.realHeight / newZoom) / 2
-      ],
-      zoom: newZoom
-    }
+  const centerPoint: Point = size === 'fixed' && zoom < 1 ? [canvasSize.realWidth / 2, canvasSize.realHeight / 2] : iCenterPoint
+
+  const offsetX = currentOffset[0] - (centerPoint[0] / currentZoom - centerPoint[0] / zoom)
+  const offsetY = currentOffset[1] - (centerPoint[1] / currentZoom - centerPoint[1] / zoom)
+
+  const offset: Point =
+    size === 'infinite' || zoom < 1
+      ? [offsetX, offsetY]
+      : [
+          clamp(offsetX, canvasSize.realWidth / zoom - canvasSize.realWidth, 0),
+          clamp(offsetY, canvasSize.realHeight / zoom - canvasSize.realHeight, 0)
+        ]
+
   return {
-    offset: [
-      clamp(
-        currentOffset[0] - (canvasSize.realWidth / currentZoom - canvasSize.realWidth / newZoom) / 2,
-        canvasSize.realWidth / newZoom - canvasSize.realWidth,
-        0
-      ),
-      clamp(
-        currentOffset[1] - (canvasSize.realHeight / currentZoom - canvasSize.realHeight / newZoom) / 2,
-        canvasSize.realHeight / newZoom - canvasSize.realHeight,
-        0
-      )
-    ],
-    zoom: newZoom
+    offset,
+    zoom
   }
 }
 
@@ -70,20 +65,73 @@ export const getNewZoomAndOffset = ({
   currentOffset,
   currentZoom,
   action
-}: { size: Size; canvasSize: CanvasSize; currentOffset: Point; currentZoom: number; action: 'unzoom' | 'zoom' | 'default' }): {
+}: {
+  size: Size
+  canvasSize: CanvasSize
+  currentOffset: Point
+  currentZoom: number
+  action: 'unzoom' | 'zoom' | 'default'
+}): {
   offset: Point
   zoom: number
 } => {
-  const currentZoomStep = ZOOM_STEPS.findIndex(zoom => zoom >= currentZoom)
   const newZoom =
-    ZOOM_STEPS[action === 'default' ? ZOOM_STEP_DEFAULT : clamp(currentZoomStep + (action === 'unzoom' ? -1 : 1), 0, ZOOM_STEPS.length - 1)]
+    action === 'default'
+      ? ZOOM_STEPS[ZOOM_STEP_DEFAULT]
+      : action === 'zoom'
+        ? ZOOM_STEPS[
+            clamp(
+              ZOOM_STEPS.length -
+                1 -
+                ZOOM_STEPS.slice(0)
+                  .reverse()
+                  .findIndex(zoom => zoom <= currentZoom) +
+                1,
+              0,
+              ZOOM_STEPS.length - 1
+            )
+          ]
+        : ZOOM_STEPS[clamp(ZOOM_STEPS.findIndex(zoom => zoom >= currentZoom) - 1, 0, ZOOM_STEPS.length - 1)]
+
+  const centerPoint: Point = [canvasSize.realWidth / 2, canvasSize.realHeight / 2]
 
   return calculateNewZoomAndOffset({
     size,
     canvasSize,
     currentOffset,
     currentZoom,
-    newZoom
+    zoom: newZoom,
+    centerPoint
+  })
+}
+
+export const getNewZoomAndOffsetFromDelta = ({
+  size,
+  canvasSize,
+  currentOffset,
+  currentZoom,
+  delta,
+  centerPoint
+}: {
+  size: Size
+  canvasSize: CanvasSize
+  currentOffset: Point
+  currentZoom: number
+  delta: number
+  centerPoint: Point
+}): {
+  offset: Point
+  zoom: number
+} => {
+  const newZoom = clamp(currentZoom * (1 - delta / 1000), ZOOM_STEPS[0], ZOOM_STEPS[ZOOM_STEPS.length - 1])
+
+  return calculateNewZoomAndOffset({
+    size,
+    canvasSize,
+    currentOffset,
+    currentZoom,
+    zoom: newZoom,
+    centerPoint
   })
 }
 
@@ -152,4 +200,16 @@ export const isCursorInsideMask = (cursorPosition: Point, settings: UtilsSetting
       cursorPosition[1] > 0 &&
       cursorPosition[1] < settings.canvasSize.realHeight)
   )
+}
+
+export const normalizeWheel = (event: WheelEvent) => {
+  switch (event.deltaMode) {
+    case WheelEvent.DOM_DELTA_LINE: // lines
+      return { deltaX: event.deltaX * 16, deltaY: event.deltaY * 16 }
+    case WheelEvent.DOM_DELTA_PAGE: // pages
+      return { deltaX: event.deltaX * window.innerHeight, deltaY: event.deltaY * window.innerHeight }
+    // case WheelEvent.DOM_DELTA_PIXEL:
+    default:
+      return { deltaX: event.deltaX, deltaY: event.deltaY }
+  }
 }

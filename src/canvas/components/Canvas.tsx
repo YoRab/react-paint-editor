@@ -143,6 +143,7 @@ const Canvas = React.forwardRef<HTMLCanvasElement, DrawerType>(
     const drawCanvasRef = useRef<HTMLCanvasElement | null>(null)
     const selectionCanvasRef = useRef<HTMLCanvasElement | null>(null)
     const canvasSize = settings.canvasSize
+    const withSelectionCanvas = isEditMode
 
     useImperativeHandle(ref, () => drawCanvasRef.current!)
 
@@ -156,7 +157,6 @@ const Canvas = React.forwardRef<HTMLCanvasElement, DrawerType>(
       isInsideComponent,
       setCanvasOffset,
       selectedShape,
-      selectionCanvasRef,
       canvasOffsetStartData,
       setCanvasOffsetStartData,
       setSelectedShape,
@@ -233,7 +233,7 @@ const Canvas = React.forwardRef<HTMLCanvasElement, DrawerType>(
           </div> */}
 
           <canvas className={DRAWCANVAS_CLASSNAME} ref={drawCanvasRef} data-grow={canGrow} width={canvasSize.width} height={canvasSize.height} />
-          {isEditMode && (
+          {withSelectionCanvas && (
             <canvas
               className={SELECTIONCANVAS_CLASSNAME}
               ref={selectionCanvasRef}

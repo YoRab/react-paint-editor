@@ -38,6 +38,7 @@
   user-select: none;
   position: relative;
   max-width: 100%;
+  pointer-events: none;
   /* prevent scroll on touch */
   touch-action: none;
   display: block;
