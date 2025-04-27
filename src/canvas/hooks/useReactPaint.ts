@@ -1,10 +1,12 @@
 import { DEFAULT_OPTIONS, type OptionalOptions, type UtilsSettings } from '@canvas/constants/app'
 import useComponent from '@canvas/hooks/useComponent'
 import useShapes from '@canvas/hooks/useShapes'
+import useZoom from '@canvas/hooks/useZoom'
 import { buildDataToExport } from '@canvas/utils/data'
 import { decodeImportedData, decodeJson, downloadFile, encodeShapesInString, getCanvasImage } from '@canvas/utils/file'
 import { sanitizeTools } from '@canvas/utils/tools'
-import type { DrawableShape, ExportedDrawableShape, Point, ShapeEntity, StateData } from '@common/types/Shapes'
+import type { CanvasSize } from '@common/types/Canvas'
+import type { ExportedDrawableShape, Point, ShapeEntity, StateData } from '@common/types/Shapes'
 import type { ToolsType } from '@common/types/tools'
 import { SELECTION_TOOL } from '@editor/constants/tools'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
@@ -41,14 +43,15 @@ const useReactPaint = ({
     withFrameSelection,
     clearCallback,
     availableTools: availableToolsFromProps,
-    canvasSelectionPadding
+    canvasSelectionPadding,
+    size,
+    canZoom
   } = {
     ...DEFAULT_OPTIONS,
     ...options
   }
 
   const isEditMode = mode !== 'viewer'
-  const isDisabled = disabled || !isEditMode
 
   const editorRef = useRef<HTMLElement | null>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
@@ -61,30 +64,64 @@ const useReactPaint = ({
   const [activeTool, setActiveTool] = useState<ToolsType>(SELECTION_TOOL)
   const [gridGap, setGridGap] = useState<number>(grid)
 
-  const [canvasSize, setCanvasSize] = useState({
+  const [canvasSize, setCanvasSize] = useState<CanvasSize>({
+    realWidth: width,
+    realHeight: height,
     width,
     height,
     scaleRatio: 1
   })
 
-  const [canvasOffset, setCanvasOffset] = useState<Point>([0, 0])
+  const zoomEnabled = canZoom === 'always' && !disabled
+  const { canvasTransformation, setCanvasTransformation, setCanvasOffset, setCanvasZoom } = useZoom({
+    canvasSize,
+    size,
+    canvasRef,
+    zoomEnabled
+  })
 
+  const { offset: canvasOffset, zoom: canvasZoom } = canvasTransformation
   const settings: UtilsSettings = useMemo(
     () => ({
       brushAlgo,
       isBrushShapeDoneOnMouseUp,
-      canvasSize,
+      canvasSize: {
+        realWidth: canvasSize.realWidth,
+        realHeight: canvasSize.realHeight,
+        width: canvasSize.width,
+        height: canvasSize.height,
+        scaleRatioWithNoZoom: canvasSize.scaleRatio,
+        scaleRatio: canvasSize.scaleRatio * canvasZoom
+      },
+      size,
       canvasOffset,
+      canvasZoom,
       gridGap,
-      selectionPadding: canvasSelectionPadding
+      selectionPadding: canvasSelectionPadding,
+      features: {
+        edition: isEditMode && !disabled,
+        zoom: zoomEnabled
+      }
     }),
-    [canvasSelectionPadding, gridGap, brushAlgo, isBrushShapeDoneOnMouseUp, canvasOffset, canvasSize]
+    [
+      canvasSelectionPadding,
+      gridGap,
+      brushAlgo,
+      isBrushShapeDoneOnMouseUp,
+      canvasZoom,
+      canvasOffset,
+      canvasSize,
+      size,
+      disabled,
+      zoomEnabled,
+      isEditMode
+    ]
   )
 
   const [availableTools, setAvailableTools] = useState(sanitizeTools(availableToolsFromProps, withUploadPicture || withUrlPicture))
 
   const { isInsideComponent } = useComponent({
-    disabled: isDisabled,
+    settings,
     componentRef: editorRef
   })
 
@@ -127,9 +164,9 @@ const useReactPaint = ({
     (shapesToInit: ShapeEntity[], options: { clearHistory: boolean; source: 'user' | 'remote' }) => {
       clearShapes(shapesToInit, options)
       selectTool(SELECTION_TOOL)
-      setCanvasOffset([0, 0])
+      setCanvasTransformation({ offset: [0, 0], zoom: 1 })
     },
-    [selectTool, clearShapes]
+    [selectTool, clearShapes, setCanvasTransformation]
   )
 
   const selectShape = useCallback(
@@ -157,7 +194,7 @@ const useReactPaint = ({
   }, [shapesRef, width, height, settings])
 
   const getCurrentImage = useCallback(() => {
-    return canvasRef.current ? getCanvasImage(shapesRef.current, width, height, settings) : undefined
+    return getCanvasImage(shapesRef.current, width, height, settings)
   }, [shapesRef, width, height, settings])
 
   const getCurrentData = useCallback(() => {
@@ -246,14 +283,12 @@ const useReactPaint = ({
       refs,
       width,
       height,
-      canvasSize,
       selectTool,
       selectShape,
       activeTool,
       setActiveTool,
       setAvailableTools,
       isEditMode,
-      isDisabled,
       availableTools,
       gridGap,
       setGridGap,
@@ -262,6 +297,7 @@ const useReactPaint = ({
       exportData,
       clearCanvas,
       settings,
+      setCanvasZoom,
       canvas: {
         canGrow,
         canShrink,
@@ -291,15 +327,14 @@ const useReactPaint = ({
       width,
       height,
       settings,
-      canvasSize,
       setCanvasSize,
       setCanvasOffset,
+      setCanvasZoom,
       selectShape,
       activeTool,
       setActiveTool,
       isInsideComponent,
       isEditMode,
-      isDisabled,
       canvas: {
         withSkeleton,
         withFrameSelection,
@@ -311,7 +346,9 @@ const useReactPaint = ({
     unregisterEvent,
     resetCanvas: resetCanvasFromRemote,
     getCurrentImage,
-    getCurrentData
+    getCurrentData,
+    setCanvasOffset,
+    setCanvasZoom
   }
 }
 

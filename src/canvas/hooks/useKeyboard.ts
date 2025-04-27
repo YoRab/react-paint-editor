@@ -35,6 +35,8 @@ type UseKeyboardType = {
   setShiftPressed: (value: React.SetStateAction<boolean>) => void
   isEditingText: boolean
   settings: UtilsSettings
+  setCanvasZoom: (action: 'unzoom' | 'zoom' | 'default') => void
+  setCanvasOffset: (offset: Point) => void
 }
 
 const useKeyboard = ({
@@ -48,7 +50,9 @@ const useKeyboard = ({
   updateShape,
   backwardShape,
   forwardShape,
-  setShiftPressed
+  setShiftPressed,
+  setCanvasOffset,
+  setCanvasZoom
 }: UseKeyboardType) => {
   const [copiedShape, setCopiedShape] = useState<ShapeEntity | undefined>(undefined)
 

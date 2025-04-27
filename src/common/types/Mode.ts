@@ -45,7 +45,7 @@ export type SelectionModeData<AnchorType extends Point | number> =
   | SelectionModeTranslate
   | SelectionModeEditText
 
-export type HoverModeData =
+export type HoverModeData = { outOfView?: boolean } & (
   | {
       mode: 'default'
     }
@@ -68,3 +68,4 @@ export type HoverModeData =
   | {
       mode: 'textedition'
     }
+)

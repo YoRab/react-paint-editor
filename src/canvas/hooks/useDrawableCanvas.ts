@@ -1,11 +1,12 @@
 import type { UtilsSettings } from '@canvas/constants/app'
 import { ShapeTypeArray } from '@canvas/constants/shapes'
 import useDoubleClick from '@canvas/hooks/useDoubleClick'
-import { checkSelectionIntersection, getCursorPosition, isTouchGesture } from '@canvas/utils/intersect'
+import { checkSelectionIntersection, getCursorPositionInTransformedCanvas, isTouchGesture } from '@canvas/utils/intersect'
 import { selectShape } from '@canvas/utils/selection'
 import { createShape } from '@canvas/utils/shapes'
 import { addNewPointGroupToShape } from '@canvas/utils/shapes/brush'
 import { transformShape } from '@canvas/utils/transform'
+import { isCursorInsideMask } from '@canvas/utils/zoom'
 import type { HoverModeData, SelectionModeData } from '@common/types/Mode'
 import type { Point, ShapeEntity } from '@common/types/Shapes'
 import type { CustomTool, ToolsType } from '@common/types/tools'
@@ -16,25 +17,26 @@ import { useEffect, useState } from 'react'
 const handleMove = (
   e: MouseEvent | TouchEvent,
   canvasRef: React.RefObject<HTMLCanvasElement | null>,
-  activeTool: ToolsType,
   selectedShape: ShapeEntity | undefined,
   selectionMode: SelectionModeData<Point | number>,
-  canvasOffsetStartPosition: Point | undefined,
+  canvasOffsetStartData: { start: Point; originalOffset: Point } | undefined,
   setHoverMode: React.Dispatch<React.SetStateAction<HoverModeData>>,
-  refreshHoveredShape: (e: MouseEvent | TouchEvent, ctx: CanvasRenderingContext2D, cursorPosition: Point, settings: UtilsSettings) => void,
+  refreshHoveredShape: (e: MouseEvent | TouchEvent, ctx: CanvasRenderingContext2D, cursorPosition: Point, isInsideMask: boolean) => void,
   updateSingleShape: (updatedShape: ShapeEntity) => void,
-  setCanvasOffset: React.Dispatch<React.SetStateAction<Point>>,
+  setCanvasOffset: (offset: Point) => void,
   refreshSelectedShapes: (ctx: CanvasRenderingContext2D, cursorPosition: Point, settings: UtilsSettings) => void,
   settings: UtilsSettings,
   isShiftPressed: boolean
 ) => {
   const drawCtx = canvasRef.current?.getContext('2d')
   if (!drawCtx) return
+  const cursorPosition = getCursorPositionInTransformedCanvas(e, canvasRef.current, settings)
 
-  const cursorPosition = getCursorPosition(e, canvasRef.current, settings)
-
-  if (activeTool.type === 'move' && canvasOffsetStartPosition !== undefined) {
-    setCanvasOffset([cursorPosition[0] - canvasOffsetStartPosition[0], cursorPosition[1] - canvasOffsetStartPosition[1]])
+  if (canvasOffsetStartData !== undefined) {
+    setCanvasOffset([
+      cursorPosition[0] + settings.canvasOffset[0] - canvasOffsetStartData.start[0],
+      cursorPosition[1] + settings.canvasOffset[1] - canvasOffsetStartData.start[1]
+    ])
     return
   }
   if (selectionMode.mode === 'selectionFrame') {
@@ -42,13 +44,27 @@ const handleMove = (
     return
   }
 
+  const isInsideMask = isCursorInsideMask(cursorPosition, settings)
+
   if (!isTouchGesture(e)) {
-    refreshHoveredShape(e, drawCtx, cursorPosition, settings)
+    refreshHoveredShape(e, drawCtx, cursorPosition, isInsideMask)
   }
 
-  if (selectedShape === undefined || selectedShape.locked) return
+  if (selectedShape === undefined || selectedShape.locked) {
+    setHoverMode({
+      mode: 'default',
+      outOfView: !isInsideMask
+    })
+    return
+  }
 
   if (selectionMode.mode === 'default' || selectionMode.mode === 'textedition') {
+    if (!isInsideMask) {
+      setHoverMode({
+        mode: 'default'
+      })
+      return
+    }
     const positionIntersection = checkSelectionIntersection(selectedShape, cursorPosition, settings, true) || {
       mode: 'default'
     }
@@ -62,7 +78,6 @@ const handleMove = (
 }
 
 type UseCanvasType = {
-  disabled?: boolean
   shapes: ShapeEntity[]
   saveShapes: () => void
   addShape: (newShape: ShapeEntity) => void
@@ -71,24 +86,22 @@ type UseCanvasType = {
   setSelectedShape: React.Dispatch<React.SetStateAction<ShapeEntity | undefined>>
   activeTool: ToolsType
   setActiveTool: React.Dispatch<React.SetStateAction<ToolsType>>
-  refreshHoveredShape: (e: MouseEvent | TouchEvent, ctx: CanvasRenderingContext2D, cursorPosition: Point, settings: UtilsSettings) => void
+  refreshHoveredShape: (e: MouseEvent | TouchEvent, ctx: CanvasRenderingContext2D, cursorPosition: Point, isInsideMask: boolean) => void
   refreshSelectedShapes: (ctx: CanvasRenderingContext2D, cursorPosition: Point, settings: UtilsSettings) => void
-  canvasOffsetStartPosition: Point | undefined
-  setCanvasOffsetStartPosition: React.Dispatch<React.SetStateAction<Point | undefined>>
-  setCanvasOffset: React.Dispatch<React.SetStateAction<Point>>
+  canvasOffsetStartData: { start: Point; originalOffset: Point } | undefined
+  setCanvasOffsetStartData: React.Dispatch<React.SetStateAction<{ start: Point; originalOffset: Point } | undefined>>
+  setCanvasOffset: (offset: Point) => void
   isInsideComponent: boolean
   selectionMode: SelectionModeData<number | Point>
   setSelectionMode: React.Dispatch<React.SetStateAction<SelectionModeData<number | Point>>>
   setSelectionFrame: React.Dispatch<React.SetStateAction<[Point, Point] | undefined>>
-  drawCanvasRef: React.MutableRefObject<HTMLCanvasElement | null>
-  selectionCanvasRef: React.MutableRefObject<HTMLCanvasElement | null>
+  drawCanvasRef: React.RefObject<HTMLCanvasElement | null>
   isShiftPressed: boolean
   withFrameSelection: boolean
   settings: UtilsSettings
 }
 
 const useDrawableCanvas = ({
-  disabled = false,
   addShape,
   drawCanvasRef,
   setActiveTool,
@@ -99,12 +112,11 @@ const useDrawableCanvas = ({
   isInsideComponent,
   setCanvasOffset,
   selectedShape,
-  selectionCanvasRef,
-  canvasOffsetStartPosition,
+  canvasOffsetStartData,
   refreshSelectedShapes,
   setSelectedShape,
   setSelectionFrame,
-  setCanvasOffsetStartPosition,
+  setCanvasOffsetStartData,
   updateSingleShape,
   saveShapes,
   setSelectionMode,
@@ -121,11 +133,10 @@ const useDrawableCanvas = ({
     const handleMouseMove = (e: MouseEvent | TouchEvent) =>
       handleMove(
         e,
-        selectionCanvasRef,
-        activeTool,
+        drawCanvasRef,
         selectedShape,
         selectionMode,
-        canvasOffsetStartPosition,
+        canvasOffsetStartData,
         setHoverMode,
         refreshHoveredShape,
         updateSingleShape,
@@ -145,12 +156,11 @@ const useDrawableCanvas = ({
     }
   }, [
     isInsideComponent,
-    selectionCanvasRef,
+    drawCanvasRef,
     selectedShape,
     selectionMode,
-    canvasOffsetStartPosition,
+    canvasOffsetStartData,
     updateSingleShape,
-    activeTool,
     setCanvasOffset,
     refreshHoveredShape,
     refreshSelectedShapes,
@@ -162,6 +172,11 @@ const useDrawableCanvas = ({
 
   useEffect(() => {
     const handleMouseUp = () => {
+      if (canvasOffsetStartData) {
+        setCanvasOffsetStartData(undefined)
+        return
+      }
+
       if (selectionMode.mode === 'textedition') return
       if (selectionMode.mode !== 'default') {
         if (selectionMode.mode === 'brush' && isBrushShapeDoneOnMouseUp) setSelectedShape(undefined)
@@ -182,18 +197,66 @@ const useDrawableCanvas = ({
         document.removeEventListener('touchend', handleMouseUp)
       }
     }
-  }, [isInsideComponent, selectionMode, isBrushShapeDoneOnMouseUp, saveShapes, setSelectionFrame, setSelectionMode, setSelectedShape])
+  }, [
+    isInsideComponent,
+    selectionMode,
+    isBrushShapeDoneOnMouseUp,
+    canvasOffsetStartData,
+    setCanvasOffsetStartData,
+    saveShapes,
+    setSelectionFrame,
+    setSelectionMode,
+    setSelectedShape
+  ])
 
   useEffect(() => {
-    const ref = selectionCanvasRef.current
+    const onlyCheckZoom = !settings.features.edition && settings.features.zoom
+    const disableCheck = !settings.features.edition && !settings.features.zoom
+
+    if (disableCheck) return
+
+    const checkMoveFeature = (e: MouseEvent | TouchEvent): boolean => {
+      e.preventDefault()
+      const cursorPosition = getCursorPositionInTransformedCanvas(e, drawCanvasRef.current, settings)
+
+      const isWheelPressed = 'button' in e ? e.button === 1 : e.touches.length > 1
+
+      if (isWheelPressed || activeTool.type === 'move') {
+        setCanvasOffsetStartData({ start: cursorPosition, originalOffset: settings.canvasOffset })
+        return true
+      }
+      return false
+    }
+
+    const ref = drawCanvasRef.current
     if (!ref) return
-    const ctx = ref.getContext('2d')
+
+    if (onlyCheckZoom) {
+      ref.addEventListener('mousedown', checkMoveFeature, { passive: false })
+      ref.addEventListener('touchstart', checkMoveFeature, { passive: false })
+
+      return () => {
+        ref.removeEventListener('mousedown', checkMoveFeature)
+        ref.removeEventListener('touchstart', checkMoveFeature)
+      }
+    }
+    const ctx = ref?.getContext('2d')
     if (!ctx) return
-    if (disabled) return
 
     const handleMouseDown = (e: MouseEvent | TouchEvent) => {
       e.preventDefault()
-      const cursorPosition = getCursorPosition(e, selectionCanvasRef.current, settings)
+
+      if (checkMoveFeature(e)) return
+
+      const cursorPosition = getCursorPositionInTransformedCanvas(e, drawCanvasRef.current, settings)
+
+      if (!isCursorInsideMask(cursorPosition, settings)) {
+        setSelectedShape(undefined)
+        setSelectionMode({
+          mode: 'default'
+        })
+        return
+      }
 
       if (activeTool.type === 'selection') {
         const { shape, mode } = selectShape(ctx, shapes, cursorPosition, settings, selectedShape, isTouchGesture(e), withFrameSelection)
@@ -205,8 +268,6 @@ const useDrawableCanvas = ({
             [cursorPosition[0], cursorPosition[1]]
           ])
         }
-      } else if (activeTool.type === 'move') {
-        setCanvasOffsetStartPosition(cursorPosition)
       } else if (ShapeTypeArray.some(item => item === activeTool.type)) {
         const drawCtx = drawCanvasRef.current?.getContext('2d')
         if (!drawCtx) return
@@ -247,12 +308,10 @@ const useDrawableCanvas = ({
       ref.removeEventListener('touchstart', handleMouseDown)
     }
   }, [
-    disabled,
-    selectionCanvasRef,
     drawCanvasRef,
     selectedShape,
     activeTool,
-    setCanvasOffsetStartPosition,
+    setCanvasOffsetStartData,
     shapes,
     updateSingleShape,
     addShape,
@@ -265,13 +324,16 @@ const useDrawableCanvas = ({
   ])
 
   useEffect(() => {
-    const ref = selectionCanvasRef.current
+    const ref = drawCanvasRef.current
     if (!ref) return
 
     const handleDoubleClick = (e: MouseEvent | TouchEvent) => {
       if (activeTool.type === 'selection') {
         if (selectedShape?.type === 'text') {
-          const cursorPosition = getCursorPosition(e, selectionCanvasRef.current, settings)
+          const cursorPosition = getCursorPositionInTransformedCanvas(e, drawCanvasRef.current, settings)
+
+          if (!isCursorInsideMask(cursorPosition, settings)) return
+
           if (checkSelectionIntersection(selectedShape, cursorPosition, settings)) {
             setSelectionMode({
               mode: 'textedition',
@@ -287,16 +349,7 @@ const useDrawableCanvas = ({
         unRegisterDoubleClickEvent(ref)
       }
     }
-  }, [
-    registerDoubleClickEvent,
-    unRegisterDoubleClickEvent,
-    isInsideComponent,
-    selectionCanvasRef,
-    activeTool,
-    selectedShape,
-    setSelectionMode,
-    settings
-  ])
+  }, [registerDoubleClickEvent, unRegisterDoubleClickEvent, isInsideComponent, drawCanvasRef, activeTool, selectedShape, setSelectionMode, settings])
 
   return { hoverMode }
 }

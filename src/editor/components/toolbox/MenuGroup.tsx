@@ -9,7 +9,7 @@ import LoadFileTool from './LoadFileTool'
 import './MenuGroup.css'
 import Tool from './Tool'
 
-type ToolbarGroupType = {
+type MenuGroupType = {
   activeTool: ToolsType
   withActionsInMenu: boolean
   group: {
@@ -61,7 +61,7 @@ const MenuGroup = ({
   exportCanvasInFile,
   withUploadPicture,
   withUrlPicture
-}: ToolbarGroupType) => {
+}: MenuGroupType) => {
   const [isOpen, setIsOpen] = useState(false)
   const [, startTransition] = useTransition()
 

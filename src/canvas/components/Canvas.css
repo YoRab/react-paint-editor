@@ -20,10 +20,11 @@
 }
 
 .react-paint-canvas-drawcanvas {
+  position: relative;
   user-select: none;
   max-width: 100%;
-  touch-action: none;
   /* prevent scroll on touch */
+  touch-action: none;
   display: block;
   grid-area: 1 / 1;
 }
@@ -33,9 +34,11 @@
 }
 
 .react-paint-canvas-selectioncanvas {
+  position: relative;
   user-select: none;
   position: relative;
   max-width: 100%;
+  pointer-events: none;
   /* prevent scroll on touch */
   touch-action: none;
   display: block;
@@ -45,4 +48,16 @@
 
 .react-paint-canvas-selectioncanvas[data-grow='true'] {
   width: 100%;
+}
+
+.react-paint-canvas-picture {
+  user-select: none;
+  /* prevent scroll on touch */
+  touch-action: none;
+  display: block;
+  grid-area: 1 / 1;
+  width: 100%;
+  transform-origin: left top;
+  transform: scale(var(--react-paint-canvas-zoom)) translate(calc(var(--react-paint-canvas-offset-x) * 100% / var(--react-paint-app-canvaswidth)),
+      calc(var(--react-paint-canvas-offset-y) * 100% / var(--react-paint-app-canvasheight)));
 }

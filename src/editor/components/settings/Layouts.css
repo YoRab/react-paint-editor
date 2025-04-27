@@ -62,13 +62,13 @@
   cursor: move;
 }
 
-.react-paint-editor-layout > span {
+.react-paint-editor-layout>span {
   height: 20px;
   line-height: 1;
   color: #8a8a8a;
 }
 
-.react-paint-editor-layout > span > svg {
+.react-paint-editor-layout>span>svg {
   fill: #8a8a8a;
   width: 20px;
   height: 20px;
@@ -107,6 +107,11 @@
 
 .react-paint-editor-layouts-panel.react-paint-editor-layouts-panel.react-paint-editor-layouts-panel {
   bottom: 36px;
+  top: unset;
+}
+
+.react-paint-editor-layouts-panel.react-paint-editor-layouts-panel.react-paint-editor-layouts-panel[data-edit='0'] {
+  bottom: 0px;
   top: unset;
 }
 
