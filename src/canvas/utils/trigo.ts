@@ -54,3 +54,11 @@ export const getAngleFromVector = ({
   }
   return radian ? targetAngle : radiansToDegrees(targetAngle)
 }
+
+export const getDistanceBetweenPoints = (p1: Point, p2: Point) => {
+  return Math.sqrt((p1[0] - p2[0]) ** 2 + (p1[1] - p2[1]) ** 2)
+}
+
+export const getCenter = (e1: Point, e2: Point): Point => {
+  return [(e1[0] + e2[0]) / 2, (e1[1] + e2[1]) / 2]
+}

@@ -4,7 +4,7 @@ import type { CustomTool } from '@common/types/tools'
 import Button from '@editor/components/common/Button'
 import Modal from '@editor/components/common/Modal'
 import { menuIcon, shapesIcon } from '@editor/constants/icons'
-import { CLEAR_TOOL, REDO_TOOL, SELECTION_TOOL, UNDO_TOOL } from '@editor/constants/tools'
+import { CLEAR_TOOL, MOVE_TOOL, REDO_TOOL, SELECTION_TOOL, UNDO_TOOL } from '@editor/constants/tools'
 import { getCurrentStructure } from '@editor/utils/toolbar'
 import React, { useState } from 'react'
 import MenuGroup from './MenuGroup'
@@ -12,6 +12,7 @@ import PictureUrlModal from './PictureUrlInput'
 import Tool from './Tool'
 import './Toolbar.css'
 import ToolbarGroup from './ToolbarGroup'
+import type { UtilsSettings } from '@canvas/constants/app'
 
 const TOOL_WIDTH = 40
 
@@ -43,7 +44,6 @@ const TOOLBAR_STRUCTURE: (
 
 type ToolboxType = {
   width: number
-  disabled?: boolean
   activeTool: ToolsType
   hasActionToUndo?: boolean
   hasActionToRedo?: boolean
@@ -61,11 +61,12 @@ type ToolboxType = {
   withExport: boolean
   withUrlPicture: boolean
   withUploadPicture: boolean
+  settings: UtilsSettings
 }
 
 const Toolbar = ({
+  settings,
   width,
-  disabled = false,
   activeTool,
   hasActionToUndo = false,
   hasActionToRedo = false,
@@ -85,12 +86,14 @@ const Toolbar = ({
   withUploadPicture
 }: ToolboxType) => {
   const currentStructure = getCurrentStructure(availableTools, TOOLBAR_STRUCTURE)
+  const disabled = !settings.features.edition
 
-  const fullToolbarSize = (5 + currentStructure.length) * TOOL_WIDTH
+  const fullToolbarSize = (6 + currentStructure.length) * TOOL_WIDTH
   const actionsInMenu = width < fullToolbarSize
 
-  const withMenuToolbarSize = (2 + currentStructure.length) * TOOL_WIDTH
+  const withMenuToolbarSize = (3 + currentStructure.length) * TOOL_WIDTH
   const toolsInMenu = width < withMenuToolbarSize
+  const minWidth = 4 * TOOL_WIDTH
 
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [isPictureUrlModalOpen, setIsPictureUrlModalOpen] = useState(false)
@@ -120,14 +123,12 @@ const Toolbar = ({
 
   return (
     <>
-      <div className='react-paint-editor-toolbar-toolbox'>
-        {/* <Tool
-        type="move"
-        label="move"
-        imgSrc={moveIcon}
-        isActive={activeTool === "move"}
-        setActive={setActiveTool}
-      /> */}
+      <div
+        className='react-paint-editor-toolbar-toolbox'
+        style={{
+          '--react-paint-editor-toolbar-minwidth': `${minWidth}px`
+        }}
+      >
         <div className='react-paint-editor-toolbar-shrinkable'>
           <Tool
             type={SELECTION_TOOL}
@@ -136,6 +137,9 @@ const Toolbar = ({
             isActive={activeTool.id === SELECTION_TOOL.id}
             setActive={setActiveTool}
           />
+          {(settings.size === 'infinite' || settings.features.zoom) && (
+            <Tool type={MOVE_TOOL} disabled={disabled} img={MOVE_TOOL.icon} isActive={activeTool.id === MOVE_TOOL.id} setActive={setActiveTool} />
+          )}
           {toolsInMenu ? (
             <Button disabled={disabled} onClick={toggleTools} title='Toggle tools' icon={shapesIcon} selected={isAnyToolSelected} />
           ) : (

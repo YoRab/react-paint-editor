@@ -4,6 +4,7 @@ import type { Point } from '@common/types/Shapes'
 import { LINE_DASH_DATA } from '@editor/constants/style'
 
 export const initCanvasContext = (ctx: CanvasRenderingContext2D) => {
+  ctx.reset()
   ctx.lineCap = 'round'
   ctx.lineJoin = 'round'
 }

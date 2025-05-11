@@ -1,4 +1,4 @@
-import { uniqueId } from '@common/utils/util'
+import { uniqueId, clamp } from '@common/utils/util'
 import { describe, expect, it } from 'vitest'
 
 describe('uniqueId', () => {
@@ -54,5 +54,38 @@ describe('uniqueId', () => {
     // Simulating external reset of the global counter
     const id3 = uniqueId('global_')
     expect(id3).toBe('global_3')
+  })
+})
+
+describe('clamp', () => {
+  it('should return min if the value is less than min', () => {
+    expect(clamp(1, 5, 10)).toBe(5)
+  })
+
+  it('should return max if the value is greater than max', () => {
+    expect(clamp(15, 5, 10)).toBe(10)
+  })
+
+  it('should return the value itself if it is between min and max', () => {
+    expect(clamp(7, 5, 10)).toBe(7)
+  })
+
+  it('should return min if the value is equal to min', () => {
+    expect(clamp(5, 5, 10)).toBe(5)
+  })
+
+  it('should return max if the value is equal to max', () => {
+    expect(clamp(10, 5, 10)).toBe(10)
+  })
+
+  it('handles negative values correctly for min, max, and value', () => {
+    expect(clamp(-3, -10, -5)).toBe(-5)
+    expect(clamp(-7, -10, -5)).toBe(-7)
+    expect(clamp(-15, -10, -5)).toBe(-10)
+  })
+
+  it('works correctly when min and max are equal', () => {
+    expect(clamp(8, 5, 5)).toBe(5)
+    expect(clamp(10, 10, 10)).toBe(10)
   })
 })
