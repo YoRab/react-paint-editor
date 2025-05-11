@@ -46,7 +46,11 @@ const App = ({ options, className, style, canvasProps }: AppProps) => {
     setActiveTool,
     isInsideComponent,
     isEditMode,
-    canvas: { withSkeleton, withFrameSelection, canGrow, canShrink }
+    canvas: { withSkeleton, withFrameSelection, canGrow, canShrink },
+    canvasOffsetStartData,
+    setCanvasOffsetStartData,
+    selectionMode,
+    setSelectionMode
   } = canvasProps
 
   const { canvasBackgroundColor, canvasSelectionColor, canvasSelectionWidth } = {
@@ -55,12 +59,6 @@ const App = ({ options, className, style, canvasProps }: AppProps) => {
   }
 
   const containerRef = useRef<HTMLDivElement>(null)
-
-  const [canvasOffsetStartData, setCanvasOffsetStartData] = useState<{ start: Point; originalOffset: Point } | undefined>(undefined)
-
-  const [selectionMode, setSelectionMode] = useState<SelectionModeData<Point | number>>({
-    mode: 'default'
-  })
 
   const [isShiftPressed, setShiftPressed] = useState<boolean>(false)
 

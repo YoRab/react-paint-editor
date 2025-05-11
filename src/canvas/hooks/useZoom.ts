@@ -1,4 +1,4 @@
-import usePinchZoom from '@canvas/hooks/usePinchZoomAndMove'
+import usePinchZoomAndMove from '@canvas/hooks/usePinchZoomAndMove'
 import { getCursorPositionInElement } from '@canvas/utils/intersect'
 import { getNewOffset, getNewZoomAndOffset, getNewZoomAndOffsetFromDelta, normalizeWheel } from '@canvas/utils/zoom'
 import type { CanvasSize, Size } from '@common/types/Canvas'
@@ -29,7 +29,7 @@ const useZoom = ({ canvasSize, size, zoomEnabled, canvasElt }: UseZoomProps) => 
     [canvasSize, size]
   )
 
-  usePinchZoom({
+  usePinchZoomAndMove({
     canvasElt,
     canvasTransformation,
     canvasSize,

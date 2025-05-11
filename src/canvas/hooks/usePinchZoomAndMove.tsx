@@ -84,7 +84,7 @@ type UsePinchZoomProps = {
   }) => void
 }
 
-const usePinchZoom = ({ canvasElt, canvasTransformation, canvasSize, size, setCanvasTransformation }: UsePinchZoomProps) => {
+const usePinchZoomAndMove = ({ canvasElt, canvasTransformation, canvasSize, size, setCanvasTransformation }: UsePinchZoomProps) => {
   const evCache = useRef<PointerEvent[]>([])
   const [hasFingerOnElement, setHasFingerOnElement] = useState(evCache.current.length > 0)
 
@@ -205,4 +205,4 @@ const usePinchZoom = ({ canvasElt, canvasTransformation, canvasSize, size, setCa
   }, [hasFingerOnElement, scaleOnPosition])
 }
 
-export default usePinchZoom
+export default usePinchZoomAndMove

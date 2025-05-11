@@ -6,6 +6,7 @@ import { buildDataToExport } from '@canvas/utils/data'
 import { decodeImportedData, decodeJson, downloadFile, encodeShapesInString, getCanvasImage } from '@canvas/utils/file'
 import { sanitizeTools } from '@canvas/utils/tools'
 import type { CanvasSize } from '@common/types/Canvas'
+import type { SelectionModeData } from '@common/types/Mode'
 import type { ExportedDrawableShape, Point, ShapeEntity, StateData } from '@common/types/Shapes'
 import type { ToolsType } from '@common/types/tools'
 import { SELECTION_TOOL } from '@editor/constants/tools'
@@ -60,8 +61,11 @@ const useReactPaint = ({
   const setEditor = useCallback((node: HTMLElement | null) => {
     editorRef.current = node
   }, [])
-
+  const [canvasOffsetStartData, setCanvasOffsetStartData] = useState<{ start: Point; originalOffset: Point } | undefined>(undefined)
   const [activeTool, setActiveTool] = useState<ToolsType>(SELECTION_TOOL)
+  const [selectionMode, setSelectionMode] = useState<SelectionModeData<Point | number>>({
+    mode: 'default'
+  })
   const [gridGap, setGridGap] = useState<number>(grid)
 
   const [canvasSize, setCanvasSize] = useState<CanvasSize>({
@@ -340,7 +344,11 @@ const useReactPaint = ({
         withFrameSelection,
         canGrow,
         canShrink
-      }
+      },
+      canvasOffsetStartData,
+      setCanvasOffsetStartData,
+      selectionMode,
+      setSelectionMode
     },
     registerEvent,
     unregisterEvent,
