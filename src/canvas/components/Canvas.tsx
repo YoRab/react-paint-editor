@@ -209,29 +209,23 @@ const Canvas = React.forwardRef<HTMLCanvasElement, DrawerType>(
         )
     }, [hoveredShape, selectionFrame, selectionMode, selectedShape, activeTool, settings, selectionWidth, selectionColor, withSkeleton])
     return (
-      <div className='react-paint-canvas-box'>
+      <div
+        className='react-paint-canvas-box'
+        style={{
+          '--react-paint-canvas-cursor': canvasOffsetStartData
+            ? 'grabbing'
+            : hoverMode.outOfView
+              ? 'default'
+              : (activeTool.type !== 'selection' && activeTool.type !== 'move') || hoverMode.mode === 'resize'
+                ? 'crosshair'
+                : hoverMode.mode === 'translate'
+                  ? 'move'
+                  : hoverMode.mode === 'rotate' || activeTool.type === 'move'
+                    ? 'grab'
+                    : 'default'
+        }}
+      >
         <div className='react-paint-canvas-container' data-grow={canGrow}>
-          {/* <img
-            src='https://picsum.photos/1000/600?random=1'
-            alt='First pic'
-            className='react-paint-canvas-picture'
-            style={{
-              '--react-paint-canvas-zoom': settings.canvasZoom,
-              '--react-paint-canvas-offset-x': settings.canvasOffset[0],
-              '--react-paint-canvas-offset-y': settings.canvasOffset[1]
-            }}
-          /> */}
-          {/* <div
-            className='react-paint-canvas-picture'
-            style={{
-              '--react-paint-canvas-zoom': settings.canvasZoom,
-              '--react-paint-canvas-offset-x': settings.canvasOffset[0],
-              '--react-paint-canvas-offset-y': settings.canvasOffset[1]
-            }}
-          >
-            <button>dsfdfdsf</button>
-          </div> */}
-
           <canvas className={DRAWCANVAS_CLASSNAME} ref={drawCanvasRef} data-grow={canGrow} width={canvasSize.width} height={canvasSize.height} />
           {withSelectionCanvas && (
             <canvas
@@ -240,19 +234,6 @@ const Canvas = React.forwardRef<HTMLCanvasElement, DrawerType>(
               width={canvasSize.width}
               height={canvasSize.height}
               data-grow={canGrow}
-              style={{
-                '--react-paint-canvas-cursor': canvasOffsetStartData
-                  ? 'grabbing'
-                  : hoverMode.outOfView
-                    ? 'default'
-                    : (activeTool.type !== 'selection' && activeTool.type !== 'move') || hoverMode.mode === 'resize'
-                      ? 'crosshair'
-                      : hoverMode.mode === 'translate'
-                        ? 'move'
-                        : hoverMode.mode === 'rotate' || activeTool.type === 'move'
-                          ? 'grab'
-                          : 'default'
-              }}
             />
           )}
           {isEditMode && selectionMode.mode === 'textedition' && selectedShape?.type === 'text' && (

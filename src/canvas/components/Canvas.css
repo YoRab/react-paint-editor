@@ -12,6 +12,7 @@
   background-size: 16px;
   overflow: hidden;
   display: grid;
+  cursor: var(--react-paint-canvas-cursor);
 }
 
 .react-paint-canvas-container[data-grow='true'] {
@@ -43,7 +44,6 @@
   touch-action: none;
   display: block;
   grid-area: 1 / 1;
-  cursor: var(--react-paint-canvas-cursor);
 }
 
 .react-paint-canvas-selectioncanvas[data-grow='true'] {
