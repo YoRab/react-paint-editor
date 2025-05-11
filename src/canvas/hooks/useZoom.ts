@@ -1,17 +1,18 @@
+import usePinchZoom from '@canvas/hooks/usePinchZoomAndMove'
 import { getCursorPositionInElement } from '@canvas/utils/intersect'
 import { getNewOffset, getNewZoomAndOffset, getNewZoomAndOffsetFromDelta, normalizeWheel } from '@canvas/utils/zoom'
 import type { CanvasSize, Size } from '@common/types/Canvas'
 import type { Point } from '@common/types/Shapes'
-import { type RefObject, useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 
 type UseZoomProps = {
   canvasSize: CanvasSize
   size: Size
-  canvasRef: RefObject<HTMLCanvasElement | null>
+  canvasElt: HTMLCanvasElement | null
   zoomEnabled: boolean
 }
 
-const useZoom = ({ canvasSize, size, zoomEnabled, canvasRef }: UseZoomProps) => {
+const useZoom = ({ canvasSize, size, zoomEnabled, canvasElt }: UseZoomProps) => {
   const [canvasTransformation, setCanvasTransformation] = useState<{ offset: Point; zoom: number }>({ offset: [0, 0], zoom: 1 })
 
   const setCanvasOffset = useCallback(
@@ -28,17 +29,23 @@ const useZoom = ({ canvasSize, size, zoomEnabled, canvasRef }: UseZoomProps) => 
     [canvasSize, size]
   )
 
+  usePinchZoom({
+    canvasElt,
+    canvasTransformation,
+    canvasSize,
+    size,
+    setCanvasTransformation
+  })
+
   useEffect(() => {
-    if (!zoomEnabled) return
-    const canvasElement = canvasRef.current
-    if (!canvasElement) return
+    if (!zoomEnabled || !canvasElt) return
 
     const handleWheel = (e: WheelEvent) => {
       const { deltaY } = normalizeWheel(e)
       const isZooming = e.ctrlKey
       if (isZooming) {
         e.preventDefault()
-        const centerPoint = getCursorPositionInElement(e, canvasElement, canvasSize)
+        const centerPoint = getCursorPositionInElement(e, canvasElt, canvasSize)
 
         setCanvasTransformation(({ offset, zoom }) =>
           getNewZoomAndOffsetFromDelta({ size, canvasSize, currentOffset: offset, currentZoom: zoom, delta: deltaY, centerPoint })
@@ -60,12 +67,12 @@ const useZoom = ({ canvasSize, size, zoomEnabled, canvasRef }: UseZoomProps) => 
       })
     }
 
-    canvasElement.addEventListener('wheel', handleWheel, { passive: false })
+    canvasElt.addEventListener('wheel', handleWheel, { passive: false })
 
     return () => {
-      canvasElement.removeEventListener('wheel', handleWheel)
+      canvasElt.removeEventListener('wheel', handleWheel)
     }
-  }, [canvasRef, size, canvasSize, zoomEnabled])
+  }, [canvasElt, size, canvasSize, zoomEnabled])
 
   return {
     setCanvasTransformation,

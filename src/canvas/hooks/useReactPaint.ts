@@ -76,7 +76,7 @@ const useReactPaint = ({
   const { canvasTransformation, setCanvasTransformation, setCanvasOffset, setCanvasZoom } = useZoom({
     canvasSize,
     size,
-    canvasRef,
+    canvasElt: canvasRef.current,
     zoomEnabled
   })
 

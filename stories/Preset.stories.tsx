@@ -10,6 +10,7 @@ const Preset = () => {
   const { registerEvent, unregisterEvent, resetCanvas, editorProps, canvasProps } = useReactPaint({
     shapes,
     options: {
+      canZoom: 'always',
       clearCallback: () => {
         return [WITH_PICTURE, TREE_AND_CLOUDS, HELLO_THERE][preset]
       }

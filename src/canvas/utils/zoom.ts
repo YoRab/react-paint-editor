@@ -29,7 +29,7 @@ export const getNewOffset = ({
   return { zoom, offset: clampedOffest }
 }
 
-const calculateNewZoomAndOffset = ({
+export const calculateNewZoomAndOffset = ({
   size,
   canvasSize,
   currentOffset,
@@ -46,12 +46,14 @@ const calculateNewZoomAndOffset = ({
   const offsetY = currentOffset[1] - (centerPoint[1] / currentZoom - centerPoint[1] / zoom)
 
   const offset: Point =
-    size === 'infinite' || zoom < 1
+    size === 'infinite'
       ? [offsetX, offsetY]
-      : [
-          clamp(offsetX, canvasSize.realWidth / zoom - canvasSize.realWidth, 0),
-          clamp(offsetY, canvasSize.realHeight / zoom - canvasSize.realHeight, 0)
-        ]
+      : zoom < 1
+        ? [-(canvasSize.realWidth - canvasSize.realWidth / zoom) / 2, -(canvasSize.realHeight - canvasSize.realHeight / zoom) / 2]
+        : [
+            clamp(offsetX, canvasSize.realWidth / zoom - canvasSize.realWidth, 0),
+            clamp(offsetY, canvasSize.realHeight / zoom - canvasSize.realHeight, 0)
+          ]
 
   return {
     offset,

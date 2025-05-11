@@ -28,6 +28,8 @@ const handleMove = (
   settings: UtilsSettings,
   isShiftPressed: boolean
 ) => {
+  if (isTouchGesture(e) && e.touches.length > 1) return
+
   const drawCtx = canvasRef.current?.getContext('2d')
   if (!drawCtx) return
   const cursorPosition = getCursorPositionInTransformedCanvas(e, canvasRef.current, settings)
@@ -171,7 +173,9 @@ const useDrawableCanvas = ({
   const { isBrushShapeDoneOnMouseUp } = settings
 
   useEffect(() => {
-    const handleMouseUp = () => {
+    const handleMouseUp = (e: MouseEvent | TouchEvent) => {
+      if (isTouchGesture(e) && e.touches.length > 1) return
+
       if (canvasOffsetStartData) {
         setCanvasOffsetStartData(undefined)
         return
@@ -189,10 +193,8 @@ const useDrawableCanvas = ({
     if (isInsideComponent) {
       document.addEventListener('mouseup', handleMouseUp)
       document.addEventListener('touchend', handleMouseUp)
-    }
 
-    return () => {
-      if (isInsideComponent) {
+      return () => {
         document.removeEventListener('mouseup', handleMouseUp)
         document.removeEventListener('touchend', handleMouseUp)
       }
@@ -219,7 +221,7 @@ const useDrawableCanvas = ({
       e.preventDefault()
       const cursorPosition = getCursorPositionInTransformedCanvas(e, drawCanvasRef.current, settings)
 
-      const isWheelPressed = 'button' in e ? e.button === 1 : e.touches.length > 1
+      const isWheelPressed = 'button' in e && e.button === 1
 
       if (isWheelPressed || activeTool.type === 'move') {
         setCanvasOffsetStartData({ start: cursorPosition, originalOffset: settings.canvasOffset })
@@ -245,7 +247,7 @@ const useDrawableCanvas = ({
 
     const handleMouseDown = (e: MouseEvent | TouchEvent) => {
       e.preventDefault()
-
+      if (isTouchGesture(e) && e.touches.length > 1) return
       if (checkMoveFeature(e)) return
 
       const cursorPosition = getCursorPositionInTransformedCanvas(e, drawCanvasRef.current, settings)
