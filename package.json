@@ -17,13 +17,18 @@
     },
     "./react-paint.css": "./dist/react-paint.css"
   },
-  "files": ["README.md", "LICENSE.txt", "package.json", "dist/"],
+  "files": [
+    "README.md",
+    "LICENSE.txt",
+    "package.json",
+    "dist/"
+  ],
   "devDependencies": {
     "@biomejs/biome": "1.9.4",
     "@rollup/plugin-terser": "0.4.4",
-    "@storybook/addon-docs": "9.0.0-beta.4",
-    "@storybook/addon-links": "^9.0.0-beta.4",
-    "@storybook/react-vite": "^9.0.0-beta.4",
+    "@storybook/addon-docs": "9.0.0",
+    "@storybook/addon-links": "9.0.0",
+    "@storybook/react-vite": "9.0.0",
     "@types/node": "22.14.1",
     "@types/react": "19.1.2",
     "@types/react-dom": "19.1.2",
@@ -32,7 +37,7 @@
     "lightningcss": "1.29.3",
     "react": "18.3.1",
     "react-dom": "18.3.1",
-    "storybook": "^9.0.0-beta.4",
+    "storybook": "9.0.0",
     "typescript": "5.8.3",
     "vite": "6.3.2",
     "vite-tsconfig-paths": "5.1.4",
