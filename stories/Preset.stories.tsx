@@ -1,4 +1,4 @@
-import type { Meta, StoryObj } from '@storybook/react/*'
+import type { Meta, StoryObj } from '@storybook/react-vite'
 import { useEffect, useState } from 'react'
 import { HELLO_THERE, TREE_AND_CLOUDS, WITH_PICTURE } from 'stories/fixture'
 import { Canvas, type DrawableShape, Editor, type StateData, useReactPaint } from '../src/index'
@@ -10,6 +10,7 @@ const Preset = () => {
   const { registerEvent, unregisterEvent, resetCanvas, editorProps, canvasProps } = useReactPaint({
     shapes,
     options: {
+      canZoom: 'always',
       clearCallback: () => {
         return [WITH_PICTURE, TREE_AND_CLOUDS, HELLO_THERE][preset]
       }

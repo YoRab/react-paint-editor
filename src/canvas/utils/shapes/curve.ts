@@ -61,12 +61,7 @@ export const resizeCurve = (
 
   const { center } = getShapeInfos(originalShape, settings)
 
-  const cursorPositionBeforeResize = getPointPositionAfterCanvasTransformation(
-    roundCursorPosition,
-    originalShape.rotation,
-    center,
-    settings.canvasOffset
-  )
+  const cursorPositionBeforeResize = getPointPositionAfterCanvasTransformation(roundCursorPosition, originalShape.rotation, center)
   const updatedShape = set(['points', selectionMode.anchor], cursorPositionBeforeResize, originalShape)
 
   return buildPath(updatedShape, settings)
