@@ -3,7 +3,7 @@ import { getCursorPositionInElement } from '@canvas/utils/intersect'
 import { getNewOffset, getNewZoomAndOffset, getNewZoomAndOffsetFromDelta, normalizeWheel } from '@canvas/utils/zoom'
 import type { CanvasSize, Size } from '@common/types/Canvas'
 import type { Point } from '@common/types/Shapes'
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 
 type UseZoomProps = {
   canvasSize: CanvasSize
@@ -14,6 +14,7 @@ type UseZoomProps = {
 
 const useZoom = ({ canvasSize, size, zoomEnabled, canvasElt }: UseZoomProps) => {
   const [canvasTransformation, setCanvasTransformation] = useState<{ offset: Point; zoom: number }>({ offset: [0, 0], zoom: 1 })
+  const lastTimeWheelEvent = useRef(0)
 
   const setCanvasOffset = useCallback(
     (newOffset: Point) => {
@@ -41,8 +42,9 @@ const useZoom = ({ canvasSize, size, zoomEnabled, canvasElt }: UseZoomProps) => 
     if (!zoomEnabled || !canvasElt) return
 
     const handleWheel = (e: WheelEvent) => {
-      const { deltaX, deltaY } = normalizeWheel(e)
       const isZooming = e.ctrlKey
+      const { deltaX, deltaY } = normalizeWheel(e, e.timeStamp - lastTimeWheelEvent.current)
+      lastTimeWheelEvent.current = e.timeStamp
       if (isZooming) {
         e.preventDefault()
         const centerPoint = getCursorPositionInElement(e, canvasElt, canvasSize)

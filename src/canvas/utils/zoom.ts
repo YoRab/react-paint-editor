@@ -1,7 +1,7 @@
-import { ZOOM_BG_COLOR, ZOOM_STEP_DEFAULT, ZOOM_STEPS } from '@canvas/constants/zoom'
+import { IOS_TRACKPAD_PINCH_FACTOR, ZOOM_BG_COLOR, ZOOM_STEP_DEFAULT, ZOOM_STEPS } from '@canvas/constants/zoom'
 import type { CanvasSize, Size } from '@common/types/Canvas'
 import type { Point, Rect } from '@common/types/Shapes'
-import { clamp } from '@common/utils/util'
+import { clamp, isMacOs } from '@common/utils/util'
 import type { UtilsSettings } from '@canvas/constants/app'
 
 export const getNewOffset = ({
@@ -204,7 +204,11 @@ export const isCursorInsideMask = (cursorPosition: Point, settings: UtilsSetting
   )
 }
 
-export const normalizeWheel = (event: WheelEvent) => {
+export const normalizeWheel = (event: WheelEvent, lastTimeEvent: number) => {
+  const isLikelyTrackpad = Math.abs(event.deltaY) < 50 && lastTimeEvent < 50
+  const isZooming = event.ctrlKey
+  const isMacOsTrackpadPinching = isMacOs() && isLikelyTrackpad && isZooming
+
   switch (event.deltaMode) {
     case WheelEvent.DOM_DELTA_LINE: // lines
       return { deltaX: event.deltaX * 16, deltaY: event.deltaY * 16 }
@@ -212,6 +216,8 @@ export const normalizeWheel = (event: WheelEvent) => {
       return { deltaX: event.deltaX * window.innerHeight, deltaY: event.deltaY * window.innerHeight }
     // case WheelEvent.DOM_DELTA_PIXEL:
     default:
-      return { deltaX: event.deltaX, deltaY: event.deltaY }
+      return isMacOsTrackpadPinching
+        ? { deltaX: event.deltaX * IOS_TRACKPAD_PINCH_FACTOR, deltaY: event.deltaY * IOS_TRACKPAD_PINCH_FACTOR }
+        : { deltaX: event.deltaX, deltaY: event.deltaY }
   }
 }

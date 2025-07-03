@@ -5,3 +5,5 @@ export const ZOOM_STEP_DEFAULT = 4
 export const ZOOM_BG_COLOR = '#f5f5f5'
 
 export const ZOOM_DETECTION_OFFSET = 30
+
+export const IOS_TRACKPAD_PINCH_FACTOR = 5
