@@ -1,4 +1,5 @@
 import type { Circle, Point, Rect } from '@common/types/Shapes'
+
 type Vector = [Point, Point]
 
 export const degreesToRadians = (degrees: number) => degrees * (Math.PI / 180)
@@ -17,15 +18,7 @@ export const isCircleIntersectRect = (rect: Rect, circle: Circle) => {
   return distance <= circle.radius
 }
 
-export const rotatePoint = ({
-  origin = [0, 0],
-  point,
-  rotation
-}: {
-  origin?: Point
-  point: Point
-  rotation: number
-}): Point => {
+export const rotatePoint = ({ origin = [0, 0], point, rotation }: { origin?: Point; point: Point; rotation: number }): Point => {
   const pointFromOrigin = [point[0] - origin[0], point[1] - origin[1]]
   const rotatedPointY = pointFromOrigin[1] * Math.cos(rotation) - pointFromOrigin[0] * Math.sin(rotation)
   const rotatedPointX = pointFromOrigin[1] * Math.sin(rotation) + pointFromOrigin[0] * Math.cos(rotation)

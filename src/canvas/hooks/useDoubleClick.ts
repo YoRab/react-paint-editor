@@ -7,11 +7,11 @@ const useDoubleClick = () => {
   const callbackRef = useRef<((e: MouseEvent | TouchEvent) => void) | undefined>(undefined)
 
   const onClick = (e: MouseEvent | TouchEvent) => {
-    const currentTimestamp = new Date().getTime()
+    const currentTimestamp = Date.now()
     if (lastClickTimestampRef.current && currentTimestamp < lastClickTimestampRef.current + DELTA_TIME_THRESHOLD_MS) {
       callbackRef.current?.(e)
     }
-    lastClickTimestampRef.current = new Date().getTime()
+    lastClickTimestampRef.current = Date.now()
   }
 
   const registerDoubleClickEvent = (element: HTMLElement, callback: (e: MouseEvent | TouchEvent) => void) => {

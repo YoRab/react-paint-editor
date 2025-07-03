@@ -37,7 +37,6 @@
 .react-paint-canvas-selectioncanvas {
   position: relative;
   user-select: none;
-  position: relative;
   max-width: 100%;
   pointer-events: none;
   /* prevent scroll on touch */

@@ -1,13 +1,12 @@
 import type { ShapeEntity } from '@common/types/Shapes'
-import useDrag from '@editor/hooks/useDrag'
-import type React from 'react'
-import { useRef, useState } from 'react'
-
 import Button from '@editor/components/common/Button'
 import Panel from '@editor/components/common/Panel'
 import type { GridLabelType } from '@editor/constants/grid'
 import { gridOffIcon, lockedIcon, trashIcon, unlockedIcon, visibilityIcon, visibilityOffIcon } from '@editor/constants/icons'
+import useDrag from '@editor/hooks/useDrag'
 import { getShapePicture } from '@editor/utils/style'
+import type React from 'react'
+import { useRef, useState } from 'react'
 import './Layouts.css'
 import type { UtilsSettings } from '@canvas/constants/app'
 
@@ -86,6 +85,7 @@ const Layout = ({
       onClick={onSelect}
       data-selected={+selected}
       ref={ref}
+      tabIndex={-1}
     >
       <span dangerouslySetInnerHTML={{ __html: getShapePicture(shape.type) }} />
       <span>{shape.id}</span>

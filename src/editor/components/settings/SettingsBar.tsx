@@ -20,8 +20,8 @@ import LineTypeField from './LineTypeField'
 import PointsNumberField from './PointsNumberField'
 import RangeField from './RangeField'
 import './SettingsBar.css'
-import ToggleField from './ToggleField'
 import ZoomButton from '@editor/components/settings/ZoomButton'
+import ToggleField from './ToggleField'
 
 const SETTING_WIDTH = 40
 
@@ -49,142 +49,140 @@ const SettingsItems = ({
   handleShapeFontFamilyChange
 }: SettingsItemsType) => {
   return selectedShape ? (
-    <>
-      {selectedShapeTool && (
-        <>
-          {'strokeColor' in selectedShapeTool.settings && !selectedShapeTool.settings.strokeColor.hidden && (
-            <ColorField
-              selectedSettings={selectedSettings}
-              setSelectedSettings={setSelectedSettings}
-              title='Couleur du trait'
-              mode='stroke'
-              disabled={disabled}
-              field='strokeColor'
-              value={selectedShape.style?.strokeColor}
-              valueChanged={handleShapeStyleChange}
-              values={selectedShapeTool.settings.strokeColor.values}
-            />
-          )}
+    selectedShapeTool && (
+      <>
+        {'strokeColor' in selectedShapeTool.settings && !selectedShapeTool.settings.strokeColor.hidden && (
+          <ColorField
+            selectedSettings={selectedSettings}
+            setSelectedSettings={setSelectedSettings}
+            title='Couleur du trait'
+            mode='stroke'
+            disabled={disabled}
+            field='strokeColor'
+            value={selectedShape.style?.strokeColor}
+            valueChanged={handleShapeStyleChange}
+            values={selectedShapeTool.settings.strokeColor.values}
+          />
+        )}
 
-          {'fillColor' in selectedShapeTool.settings && !selectedShapeTool.settings.fillColor.hidden && (
-            <ColorField
-              selectedSettings={selectedSettings}
-              setSelectedSettings={setSelectedSettings}
-              title='Couleur de fond'
-              disabled={disabled}
-              field='fillColor'
-              value={selectedShape.style?.fillColor}
-              valueChanged={handleShapeStyleChange}
-              values={selectedShapeTool.settings.fillColor.values}
-            />
-          )}
+        {'fillColor' in selectedShapeTool.settings && !selectedShapeTool.settings.fillColor.hidden && (
+          <ColorField
+            selectedSettings={selectedSettings}
+            setSelectedSettings={setSelectedSettings}
+            title='Couleur de fond'
+            disabled={disabled}
+            field='fillColor'
+            value={selectedShape.style?.fillColor}
+            valueChanged={handleShapeStyleChange}
+            values={selectedShapeTool.settings.fillColor.values}
+          />
+        )}
 
-          {'lineWidth' in selectedShapeTool.settings && !selectedShapeTool.settings.lineWidth.hidden && (
-            <RangeField
-              selectedSettings={selectedSettings}
-              setSelectedSettings={setSelectedSettings}
-              title='Epaisseur du trait'
-              icon={lineWidthIcon}
-              disabled={disabled}
-              field='lineWidth'
-              value={selectedShape.style?.lineWidth}
-              valueChanged={handleShapeStyleChange}
-              unity='px'
-              min={selectedShapeTool.settings.lineWidth.min}
-              max={selectedShapeTool.settings.lineWidth.max}
-              step={selectedShapeTool.settings.lineWidth.step}
-            />
-          )}
+        {'lineWidth' in selectedShapeTool.settings && !selectedShapeTool.settings.lineWidth.hidden && (
+          <RangeField
+            selectedSettings={selectedSettings}
+            setSelectedSettings={setSelectedSettings}
+            title='Epaisseur du trait'
+            icon={lineWidthIcon}
+            disabled={disabled}
+            field='lineWidth'
+            value={selectedShape.style?.lineWidth}
+            valueChanged={handleShapeStyleChange}
+            unity='px'
+            min={selectedShapeTool.settings.lineWidth.min}
+            max={selectedShapeTool.settings.lineWidth.max}
+            step={selectedShapeTool.settings.lineWidth.step}
+          />
+        )}
 
-          {'lineDash' in selectedShapeTool.settings && !selectedShapeTool.settings.lineDash.hidden && (
-            <LineTypeField
-              selectedSettings={selectedSettings}
-              setSelectedSettings={setSelectedSettings}
-              disabled={disabled}
-              defaultValue={selectedShape.style?.lineDash}
-              valueChanged={handleShapeStyleChange}
-              values={selectedShapeTool.settings.lineDash.values}
-            />
-          )}
+        {'lineDash' in selectedShapeTool.settings && !selectedShapeTool.settings.lineDash.hidden && (
+          <LineTypeField
+            selectedSettings={selectedSettings}
+            setSelectedSettings={setSelectedSettings}
+            disabled={disabled}
+            defaultValue={selectedShape.style?.lineDash}
+            valueChanged={handleShapeStyleChange}
+            values={selectedShapeTool.settings.lineDash.values}
+          />
+        )}
 
-          {'lineArrow' in selectedShapeTool.settings && !selectedShapeTool.settings.lineArrow.hidden && (
-            <LineArrowField
-              selectedSettings={selectedSettings}
-              setSelectedSettings={setSelectedSettings}
-              disabled={disabled}
-              defaultValue={selectedShape.style?.lineArrow}
-              valueChanged={handleShapeStyleChange}
-              values={selectedShapeTool.settings.lineArrow.values}
-            />
-          )}
+        {'lineArrow' in selectedShapeTool.settings && !selectedShapeTool.settings.lineArrow.hidden && (
+          <LineArrowField
+            selectedSettings={selectedSettings}
+            setSelectedSettings={setSelectedSettings}
+            disabled={disabled}
+            defaultValue={selectedShape.style?.lineArrow}
+            valueChanged={handleShapeStyleChange}
+            values={selectedShapeTool.settings.lineArrow.values}
+          />
+        )}
 
-          {'pointsCount' in selectedShapeTool.settings && !selectedShapeTool.settings.pointsCount.hidden && (
-            <PointsNumberField
-              selectedSettings={selectedSettings}
-              setSelectedSettings={setSelectedSettings}
-              disabled={disabled}
-              valueChanged={handlePolygonLinesCount}
-              min={selectedShapeTool.settings.pointsCount.min}
-              max={selectedShapeTool.settings.pointsCount.max}
-              step={selectedShapeTool.settings.pointsCount.step}
-              value={selectedShape.style?.pointsCount}
-            />
-          )}
+        {'pointsCount' in selectedShapeTool.settings && !selectedShapeTool.settings.pointsCount.hidden && (
+          <PointsNumberField
+            selectedSettings={selectedSettings}
+            setSelectedSettings={setSelectedSettings}
+            disabled={disabled}
+            valueChanged={handlePolygonLinesCount}
+            min={selectedShapeTool.settings.pointsCount.min}
+            max={selectedShapeTool.settings.pointsCount.max}
+            step={selectedShapeTool.settings.pointsCount.step}
+            value={selectedShape.style?.pointsCount}
+          />
+        )}
 
-          {'fontFamily' in selectedShapeTool.settings && !selectedShapeTool.settings.fontFamily.hidden && (
-            <FontFamilyField
-              selectedSettings={selectedSettings}
-              setSelectedSettings={setSelectedSettings}
-              disabled={disabled}
-              valueChanged={handleShapeFontFamilyChange}
-              values={selectedShapeTool.settings.fontFamily.values}
-              defaultValue={selectedShape.style?.fontFamily}
-            />
-          )}
+        {'fontFamily' in selectedShapeTool.settings && !selectedShapeTool.settings.fontFamily.hidden && (
+          <FontFamilyField
+            selectedSettings={selectedSettings}
+            setSelectedSettings={setSelectedSettings}
+            disabled={disabled}
+            valueChanged={handleShapeFontFamilyChange}
+            values={selectedShapeTool.settings.fontFamily.values}
+            defaultValue={selectedShape.style?.fontFamily}
+          />
+        )}
 
-          {'fontBold' in selectedShapeTool.settings && !selectedShapeTool.settings.fontBold.hidden && (
-            <ToggleField
-              setSelectedSettings={setSelectedSettings}
-              disabled={disabled}
-              field='fontBold'
-              icon={boldIcon}
-              valueChanged={handleShapeFontFamilyChange}
-              values={selectedShapeTool.settings.fontBold.values}
-              value={selectedShape.style?.fontBold}
-            />
-          )}
+        {'fontBold' in selectedShapeTool.settings && !selectedShapeTool.settings.fontBold.hidden && (
+          <ToggleField
+            setSelectedSettings={setSelectedSettings}
+            disabled={disabled}
+            field='fontBold'
+            icon={boldIcon}
+            valueChanged={handleShapeFontFamilyChange}
+            values={selectedShapeTool.settings.fontBold.values}
+            value={selectedShape.style?.fontBold}
+          />
+        )}
 
-          {'fontItalic' in selectedShapeTool.settings && !selectedShapeTool.settings.fontItalic.hidden && (
-            <ToggleField
-              setSelectedSettings={setSelectedSettings}
-              disabled={disabled}
-              field='fontItalic'
-              icon={italicIcon}
-              valueChanged={handleShapeFontFamilyChange}
-              values={selectedShapeTool.settings.fontItalic.values}
-              value={selectedShape.style?.fontItalic}
-            />
-          )}
+        {'fontItalic' in selectedShapeTool.settings && !selectedShapeTool.settings.fontItalic.hidden && (
+          <ToggleField
+            setSelectedSettings={setSelectedSettings}
+            disabled={disabled}
+            field='fontItalic'
+            icon={italicIcon}
+            valueChanged={handleShapeFontFamilyChange}
+            values={selectedShapeTool.settings.fontItalic.values}
+            value={selectedShape.style?.fontItalic}
+          />
+        )}
 
-          {'opacity' in selectedShapeTool.settings && !selectedShapeTool.settings.opacity.hidden && (
-            <RangeField
-              selectedSettings={selectedSettings}
-              setSelectedSettings={setSelectedSettings}
-              title='Opacité'
-              icon={opacityIcon}
-              min={selectedShapeTool.settings.opacity.min}
-              max={selectedShapeTool.settings.opacity.max}
-              step={selectedShapeTool.settings.opacity.step}
-              unity='%'
-              disabled={disabled}
-              field='opacity'
-              value={selectedShape.style?.opacity ?? 100}
-              valueChanged={handleShapeStyleChange}
-            />
-          )}
-        </>
-      )}
-    </>
+        {'opacity' in selectedShapeTool.settings && !selectedShapeTool.settings.opacity.hidden && (
+          <RangeField
+            selectedSettings={selectedSettings}
+            setSelectedSettings={setSelectedSettings}
+            title='Opacité'
+            icon={opacityIcon}
+            min={selectedShapeTool.settings.opacity.min}
+            max={selectedShapeTool.settings.opacity.max}
+            step={selectedShapeTool.settings.opacity.step}
+            unity='%'
+            disabled={disabled}
+            field='opacity'
+            value={selectedShape.style?.opacity ?? 100}
+            valueChanged={handleShapeStyleChange}
+          />
+        )}
+      </>
+    )
   ) : 'settings' in activeTool ? (
     <>
       {'strokeColor' in activeTool.settings && !activeTool.settings.strokeColor.hidden && (
@@ -443,9 +441,8 @@ const SettingsBar = ({
             <ZoomButton className={isZoomPanelShown ? 'react-paint-editor-bar-zoom-button-opened' : undefined} toggleZoomPanel={toggleZoom} />
           )}
           {settingsInMenu && nbSettingsTools > 2 && <Button disabled={disabled} onClick={toggleTools} title='Toggle settings' icon={settingsIcon} />}
-          {selectedShape ? (
-            <>
-              {selectedShapeTool && (
+          {selectedShape
+            ? selectedShapeTool && (
                 <>
                   {!settingsInMenu && (
                     <SettingsItems
@@ -463,29 +460,26 @@ const SettingsBar = ({
 
                   {activeTool.type === 'selection' && <DeleteButton disabled={disabled} selectedShape={selectedShape} removeShape={removeShape} />}
                 </>
+              )
+            : !settingsInMenu && (
+                <SettingsItems
+                  activeTool={activeTool}
+                  selectedShape={selectedShape}
+                  selectedShapeTool={selectedShapeTool}
+                  disabled={disabled}
+                  selectedSettings={selectedSettings}
+                  setSelectedSettings={setSelectedSettings}
+                  handleShapeStyleChange={handleShapeStyleChange}
+                  handlePolygonLinesCount={handlePolygonLinesCount}
+                  handleShapeFontFamilyChange={handleShapeFontFamilyChange}
+                />
               )}
-            </>
-          ) : (
-            !settingsInMenu && (
-              <SettingsItems
-                activeTool={activeTool}
-                selectedShape={selectedShape}
-                selectedShapeTool={selectedShapeTool}
-                disabled={disabled}
-                selectedSettings={selectedSettings}
-                setSelectedSettings={setSelectedSettings}
-                handleShapeStyleChange={handleShapeStyleChange}
-                handlePolygonLinesCount={handlePolygonLinesCount}
-                handleShapeFontFamilyChange={handleShapeFontFamilyChange}
-              />
-            )
-          )}
         </div>
         <div className='react-paint-editor-settings-separator' />
         {layersManipulation && <LayoutButton disabled={disabled} toggleLayoutPanel={toggleLayoutPanel} />}
       </div>
       {isMenuOpen && (
-        <Modal className='react-paint-editor-settings-modal' onClose={toggleTools} position='bottom'>
+        <Modal className='react-paint-editor-settings-modal' onClose={toggleTools} position='bottom' title='Settings'>
           <SettingsItems
             activeTool={activeTool}
             selectedShape={selectedShape}

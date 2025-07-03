@@ -1,6 +1,6 @@
 import { LOADING_TRANSITION_DURATION } from '@editor/constants/loading'
 import { STYLE_ZINDEX } from '@editor/constants/style'
-import React, { useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import './Loading.css'
 
 export type LoadingType = {

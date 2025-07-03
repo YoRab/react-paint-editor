@@ -2,6 +2,14 @@
   display: inline-block;
 }
 
+.react-paint-editor-linetype-option > span {
+  display: inline-block;
+  width: 6px;
+  height: 2px;
+  background: transparent;
+  vertical-align: middle;
+}
+
 .react-paint-editor-linetype-option[data-type='0'] > span {
   background: currentColor;
 }
@@ -22,12 +30,4 @@
 
 .react-paint-editor-linetype-option[data-type='1'] > span:nth-child(2n + 1) {
   background: currentColor;
-}
-
-.react-paint-editor-linetype-option > span {
-  display: inline-block;
-  width: 6px;
-  height: 2px;
-  background: transparent;
-  vertical-align: middle;
 }

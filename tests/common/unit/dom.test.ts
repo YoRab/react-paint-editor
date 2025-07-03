@@ -1,5 +1,6 @@
 import { isEventInsideNode } from '@common/utils/dom'
 import { describe, expect, it } from 'vitest'
+
 /**
  * @vitest-environment jsdom
  */

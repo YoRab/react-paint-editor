@@ -71,7 +71,7 @@ const ColorField = ({
       {isPanelVisible && (
         <Panel title={title} alignment='left'>
           <div className='react-paint-editor-colorfield-wrapper'>
-            {values.map((color, index) => (
+            {values.map(color => (
               <Button
                 title={color}
                 key={color}

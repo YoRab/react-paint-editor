@@ -3,9 +3,8 @@ import { DEFAULT_CANVAS_OPTIONS } from '@canvas/constants/app'
 import useKeyboard from '@canvas/hooks/useKeyboard'
 import type { UseReactPaintReturnType } from '@canvas/hooks/useReactPaint'
 import useResizeObserver from '@canvas/hooks/useResizeObserver'
-import type { SelectionModeData } from '@common/types/Mode'
-import type { Point, ShapeEntity } from '@common/types/Shapes'
-import { type CSSProperties, type ReactNode, useCallback, useRef, useState } from 'react'
+import type { ShapeEntity } from '@common/types/Shapes'
+import { type CSSProperties, useCallback, useRef, useState } from 'react'
 import './index.css'
 
 type AppProps = {
@@ -40,7 +39,6 @@ const App = ({ options, className, style, canvasProps }: AppProps) => {
     settings,
     setCanvasSize,
     setCanvasOffset,
-    setCanvasZoom,
     selectShape,
     activeTool,
     setActiveTool,
@@ -90,9 +88,7 @@ const App = ({ options, className, style, canvasProps }: AppProps) => {
     updateShape,
     backwardShape,
     forwardShape,
-    setShiftPressed,
-    setCanvasOffset,
-    setCanvasZoom
+    setShiftPressed
   })
   useResizeObserver({ element: containerRef, onResized })
 

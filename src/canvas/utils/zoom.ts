@@ -1,15 +1,20 @@
+import type { UtilsSettings } from '@canvas/constants/app'
 import { IOS_TRACKPAD_PINCH_FACTOR, ZOOM_BG_COLOR, ZOOM_STEP_DEFAULT, ZOOM_STEPS } from '@canvas/constants/zoom'
 import type { CanvasSize, Size } from '@common/types/Canvas'
 import type { Point, Rect } from '@common/types/Shapes'
 import { clamp, isMacOs } from '@common/utils/util'
-import type { UtilsSettings } from '@canvas/constants/app'
 
 export const getNewOffset = ({
   size,
   zoom,
   newOffset: [x, y],
   canvasSize
-}: { zoom: number; size: Size; newOffset: Point; canvasSize: CanvasSize }): {
+}: {
+  zoom: number
+  size: Size
+  newOffset: Point
+  canvasSize: CanvasSize
+}): {
   zoom: number
   offset: Point
 } => {
@@ -36,7 +41,14 @@ export const calculateNewZoomAndOffset = ({
   currentZoom,
   zoom,
   centerPoint: iCenterPoint
-}: { size: Size; canvasSize: CanvasSize; currentOffset: Point; currentZoom: number; zoom: number; centerPoint: Point }): {
+}: {
+  size: Size
+  canvasSize: CanvasSize
+  currentOffset: Point
+  currentZoom: number
+  zoom: number
+  centerPoint: Point
+}): {
   offset: Point
   zoom: number
 } => {

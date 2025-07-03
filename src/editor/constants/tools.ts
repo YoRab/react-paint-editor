@@ -30,7 +30,7 @@ import {
   textIcon,
   undoIcon
 } from './icons'
-import { STYLE_COLORS, STYLE_FONTS, STYLE_FONT_DEFAULT, STYLE_LINE_DASH, STYLE_LINE_WITH_ARROW } from './style'
+import { STYLE_COLORS, STYLE_FONT_DEFAULT, STYLE_FONTS, STYLE_LINE_DASH, STYLE_LINE_WITH_ARROW } from './style'
 
 const PREFIX_ID = 'react-paint-'
 

@@ -78,10 +78,7 @@ type UsePinchZoomProps = {
   canvasTransformation: { offset: Point; zoom: number }
   canvasSize: CanvasSize
   size: Size
-  setCanvasTransformation: (transformation: {
-    offset: Point
-    zoom: number
-  }) => void
+  setCanvasTransformation: (transformation: { offset: Point; zoom: number }) => void
 }
 
 const usePinchZoomAndMove = ({ canvasElt, canvasTransformation, canvasSize, size, setCanvasTransformation }: UsePinchZoomProps) => {

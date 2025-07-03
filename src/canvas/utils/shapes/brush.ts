@@ -1,56 +1,13 @@
 import type { UtilsSettings } from '@canvas/constants/app'
 import { createRecSelectionPath, resizeRectSelection } from '@canvas/utils/selection/rectSelection'
 import { getShapeInfos } from '@canvas/utils/shapes/index'
+import { createBrushPath } from '@canvas/utils/shapes/path'
 import { roundForGrid, roundValues, scalePoint } from '@canvas/utils/transform'
 import type { SelectionModeResize } from '@common/types/Mode'
 import type { DrawableShape, Point, Rect, ShapeEntity } from '@common/types/Shapes'
 import type { ToolsSettingsType } from '@common/types/tools'
 import { set } from '@common/utils/object'
 import { uniqueId } from '@common/utils/util'
-
-const createBrushPath = (brush: DrawableShape<'brush'>, { brushAlgo }: UtilsSettings) => {
-  if (brush.points.length < 1 || brush.style?.strokeColor === 'transparent') return undefined
-
-  const brushPoints = brush.points.flat()
-  const brushPointX = brushPoints.map(point => point[0])
-  const brushPointY = brushPoints.map(point => point[1])
-
-  const minX = Math.min(...brushPointX)
-  const minY = Math.min(...brushPointY)
-
-  const path = new Path2D()
-
-  for (const points of brush.points) {
-    if (!points.length) return
-    if (points.length === 1) {
-      path.rect(...scalePoint(points[0], minX, minY, brush.scaleX, brush.scaleY), 1, 1)
-    } else {
-      path.moveTo(...scalePoint(points[0], minX, minY, brush.scaleX, brush.scaleY))
-      switch (brushAlgo) {
-        case 'quadratic':
-          for (let i = 0; i < points.slice(1).length - 2; i++) {
-            const scaledPoint = scalePoint(points[i], minX, minY, brush.scaleX, brush.scaleY)
-            const scaledPoint2 = scalePoint(points[i + 1], minX, minY, brush.scaleX, brush.scaleY)
-            const xc = (scaledPoint[0] + scaledPoint2[0]) / 2
-            const yc = (scaledPoint[1] + scaledPoint2[1]) / 2
-            path.quadraticCurveTo(...scaledPoint, xc, yc)
-          }
-          path.quadraticCurveTo(
-            ...scalePoint(points[points.length - 2], minX, minY, brush.scaleX, brush.scaleY),
-            ...scalePoint(points[points.length - 1], minX, minY, brush.scaleX, brush.scaleY)
-          )
-          break
-        default:
-          for (const point of points.slice(1)) {
-            path.lineTo(...scalePoint(point, minX, minY, brush.scaleX, brush.scaleY))
-          }
-          break
-      }
-    }
-  }
-
-  return path
-}
 
 const buildPath = <T extends DrawableShape<'brush'>>(brush: T, settings: UtilsSettings): T => {
   const path = createBrushPath(brush, settings)

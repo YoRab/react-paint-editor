@@ -1,7 +1,7 @@
 import { SNACKBAR_DURATION, SNACKBAR_TOGGLE_ANIMATION_DURATION } from '@editor/constants/snackbar'
 import { STYLE_ZINDEX } from '@editor/constants/style'
 import type { SnackBarType } from '@editor/types/snackbar'
-import React, { useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import './Snackbar.css'
 
 type SnackbarContainerType = {

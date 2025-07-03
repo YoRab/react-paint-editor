@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react'
+import { useRef, useState } from 'react'
 import { Canvas, Editor, useReactPaint } from '../src/index'
 
 const Customizer = () => {

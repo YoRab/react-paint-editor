@@ -70,7 +70,7 @@ describe('common/utils/object', () => {
 
   describe('mergeWith', () => {
     it('should merge objects using the custom merge function', () => {
-      const customMergeFn = (objValue: any, srcValue: any) => (Array.isArray(objValue) ? objValue.concat(srcValue) : undefined)
+      const customMergeFn = (objValue: unknown, srcValue: unknown) => (Array.isArray(objValue) ? objValue.concat(srcValue) : undefined)
       const obj1 = { a: [1], b: 2 }
       const obj2 = { a: [2], b: 3 }
       const result = mergeWith(customMergeFn, obj1, obj2)
@@ -78,7 +78,7 @@ describe('common/utils/object', () => {
     })
 
     it('should return source if target is not a record', () => {
-      const customMergeFn = (objValue: any, srcValue: any) => undefined
+      const customMergeFn = () => undefined
       const target = null
       const source = { a: 1 }
       const result = mergeWith(customMergeFn, target, source)
@@ -86,7 +86,7 @@ describe('common/utils/object', () => {
     })
 
     it('should return source if source is not a record', () => {
-      const customMergeFn = (objValue: any, srcValue: any) => undefined
+      const customMergeFn = () => undefined
       const target = { a: 1 }
       const source = null
       const result = mergeWith(customMergeFn, target, source)
@@ -94,7 +94,7 @@ describe('common/utils/object', () => {
     })
 
     it('should not mutate the original target object', () => {
-      const customMergeFn = (objValue: any, srcValue: any) => undefined
+      const customMergeFn = () => undefined
       const target = { a: 1, b: 2 }
       const source = { b: 3 }
       const result = mergeWith(customMergeFn, target, source)

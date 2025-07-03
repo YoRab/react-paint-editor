@@ -1,18 +1,17 @@
 import type { ShapeType } from '@common/types/Shapes'
-import type { ToolsType } from '@common/types/tools'
-import type { CustomTool } from '@common/types/tools'
+import type { CustomTool, ToolsType } from '@common/types/tools'
 import Button from '@editor/components/common/Button'
 import Modal from '@editor/components/common/Modal'
 import { menuIcon, shapesIcon } from '@editor/constants/icons'
 import { CLEAR_TOOL, MOVE_TOOL, REDO_TOOL, SELECTION_TOOL, UNDO_TOOL } from '@editor/constants/tools'
 import { getCurrentStructure } from '@editor/utils/toolbar'
-import React, { useState } from 'react'
+import { useState } from 'react'
 import MenuGroup from './MenuGroup'
 import PictureUrlModal from './PictureUrlInput'
 import Tool from './Tool'
 import './Toolbar.css'
-import ToolbarGroup from './ToolbarGroup'
 import type { UtilsSettings } from '@canvas/constants/app'
+import ToolbarGroup from './ToolbarGroup'
 
 const TOOL_WIDTH = 40
 
@@ -143,7 +142,7 @@ const Toolbar = ({
           {toolsInMenu ? (
             <Button disabled={disabled} onClick={toggleTools} title='Toggle tools' icon={shapesIcon} selected={isAnyToolSelected} />
           ) : (
-            currentStructure.map((group, i) => (
+            currentStructure.map(group => (
               <ToolbarGroup
                 disabled={disabled}
                 key={'id' in group ? group.id : group.title}
@@ -205,8 +204,8 @@ const Toolbar = ({
         />
       </div>
       {isMenuOpen && (
-        <Modal className='react-paint-editor-toolbar-modal' onClose={toggleTools}>
-          {availableTools.map((toolType, index) =>
+        <Modal className='react-paint-editor-toolbar-modal' onClose={toggleTools} title='Outils'>
+          {availableTools.map(toolType =>
             toolType.type === 'picture' ? null : (
               <Tool
                 disabled={disabled}

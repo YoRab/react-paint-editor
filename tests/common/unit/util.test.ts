@@ -1,5 +1,5 @@
-import { uniqueId, clamp, isMacOs } from '@common/utils/util'
-import { describe, expect, it, beforeEach, afterEach } from 'vitest'
+import { clamp, isMacOs, uniqueId } from '@common/utils/util'
+import { afterEach, describe, expect, it } from 'vitest'
 
 describe('common/utils/util', () => {
   describe('uniqueId', () => {

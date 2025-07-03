@@ -9,8 +9,8 @@ import type { Point, ShapeEntity } from '@common/types/Shapes'
 import type { ToolsType } from '@common/types/tools'
 import React, { useCallback, useEffect, useImperativeHandle, useRef } from 'react'
 import './Canvas.css'
-import EditTextBox from './EditTextBox'
 import { clipMask, drawMask } from '@canvas/utils/zoom'
+import EditTextBox from './EditTextBox'
 
 const renderDrawCanvas = (
   drawCtx: CanvasRenderingContext2D,

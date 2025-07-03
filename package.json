@@ -17,14 +17,9 @@
     },
     "./react-paint.css": "./dist/react-paint.css"
   },
-  "files": [
-    "README.md",
-    "LICENSE.txt",
-    "package.json",
-    "dist/"
-  ],
+  "files": ["README.md", "LICENSE.txt", "package.json", "dist/"],
   "devDependencies": {
-    "@biomejs/biome": "1.9.4",
+    "@biomejs/biome": "2.0.6",
     "@rollup/plugin-terser": "0.4.4",
     "@storybook/addon-docs": "9.0.0",
     "@storybook/addon-links": "9.0.0",

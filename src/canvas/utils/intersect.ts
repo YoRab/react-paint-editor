@@ -1,11 +1,11 @@
 import type { UtilsSettings } from '@canvas/constants/app'
 import { SELECTION_ANCHOR_SIZE, SELECTION_RESIZE_ANCHOR_POSITIONS, SELECTION_ROTATED_ANCHOR_POSITION } from '@canvas/constants/shapes'
 import { scalePoint } from '@canvas/utils/transform'
+import type { CanvasSize } from '@common/types/Canvas'
 import type { HoverModeData } from '@common/types/Mode'
 import type { DrawableShape, Point, Rect } from '@common/types/Shapes'
 import { getShapeInfos } from './shapes'
 import { isCircleIntersectRect, isPointInsideRect, rotatePoint } from './trigo'
-import type { CanvasSize } from '@common/types/Canvas'
 
 export const getCursorPosition = (e: MouseEvent | TouchEvent): { clientX: number; clientY: number } => {
   const { clientX = 0, clientY = 0 } =
@@ -176,7 +176,13 @@ const reactSearch = ({
   rect,
   offset,
   checkFill
-}: { ctx: CanvasRenderingContext2D; path: Path2D; rect: Rect; offset: number; checkFill: boolean }): boolean => {
+}: {
+  ctx: CanvasRenderingContext2D
+  path: Path2D
+  rect: Rect
+  offset: number
+  checkFill: boolean
+}): boolean => {
   for (let shiftX = 0; shiftX < offset; shiftX += offset / 2) {
     for (let shiftY = 0; shiftY < offset; shiftY += offset / 2) {
       for (let i = shiftX + rect.x; i < rect.x + rect.width; i += offset) {

@@ -9,10 +9,10 @@ import { type GridLabelType, GridValues } from '@editor/constants/grid'
 import { DEFAULT_EDITOR_OPTIONS } from '@editor/constants/options'
 import { SELECTION_TOOL } from '@editor/constants/tools'
 import useSnackbar from '@editor/hooks/useSnackbar'
-import React, { type CSSProperties, type ReactNode, useCallback, useState } from 'react'
+import { type CSSProperties, type ReactNode, useCallback, useState } from 'react'
 import './index.css'
-import Panel from '@editor/components/common/Panel'
 import Button from '@editor/components/common/Button'
+import Panel from '@editor/components/common/Panel'
 import { zoomIn, zoomOut } from '@editor/constants/icons'
 
 type EditorProps = {
