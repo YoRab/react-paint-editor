@@ -41,7 +41,7 @@ const useZoom = ({ canvasSize, size, zoomEnabled, canvasElt }: UseZoomProps) => 
     if (!zoomEnabled || !canvasElt) return
 
     const handleWheel = (e: WheelEvent) => {
-      const { deltaY } = normalizeWheel(e)
+      const { deltaX, deltaY } = normalizeWheel(e)
       const isZooming = e.ctrlKey
       if (isZooming) {
         e.preventDefault()
@@ -53,9 +53,8 @@ const useZoom = ({ canvasSize, size, zoomEnabled, canvasElt }: UseZoomProps) => 
         return
       }
 
-      const horizontalDirection = e.shiftKey
-      const pixelX = horizontalDirection ? deltaY : 0
-      const pixelY = horizontalDirection ? 0 : deltaY
+      const naturalDirection = e.shiftKey
+      const [pixelX, pixelY] = naturalDirection ? [deltaY, deltaX] : [deltaX, deltaY]
 
       setCanvasTransformation(({ offset, zoom }) => {
         const wantedOffset: Point = [offset[0] - pixelX / zoom, offset[1] - pixelY / zoom]
