@@ -76,6 +76,7 @@ const Layout = ({
   })
 
   return (
+    // biome-ignore lint/a11y/noStaticElementInteractions: need to find a proper role or to use a button
     <div
       className='react-paint-editor-layout'
       data-disabled={+disabled}
