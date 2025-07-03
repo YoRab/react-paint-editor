@@ -269,7 +269,26 @@ const useReactPaint = ({
     setEditor
   }
 
+  const annotationsProps = {
+    style: {
+      'user-select': 'none',
+      'touch-action': 'none',
+      display: 'block',
+      'grid-area': '1 / 1',
+      width: '100%',
+      'transform-origin': 'left top',
+      transform:
+        'scale(var(--react-paint-canvas-zoom)) translate(calc(var(--react-paint-canvas-offset-x) * 100% / var(--react-paint-app-canvaswidth)),      calc(var(--react-paint-canvas-offset-y) * 100% / var(--react-paint-app-canvasheight)))',
+      '--react-paint-canvas-zoom': settings.canvasZoom,
+      '--react-paint-canvas-offset-x': settings.canvasOffset[0],
+      '--react-paint-canvas-offset-y': settings.canvasOffset[1],
+      '--react-paint-app-canvaswidth': width,
+      '--react-paint-app-canvasheight': height
+    }
+  }
+
   return {
+    annotationsProps,
     editorProps: {
       shapesRef,
       addPictureShape,

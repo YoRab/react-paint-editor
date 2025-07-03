@@ -1,10 +1,9 @@
 - export all
 
-- Mode annotation
-- zoom en mode viewer
+- Mode annotation / whiteboard
+- stories + doc
 
-- zoom via ctrl + scroll ou pinch gesture
-- scroll + 3 fingers on mobile pour move
+- gros clean
 
 # React Paint
 
@@ -137,7 +136,7 @@ you will find other usages in <a href="https://github.com/YoRab/react-paint-edit
 | `registerEvent` | `(event: "dataChanged", listener: (data: StateData,  source: 'user' \| 'remote') => void) => void` |  registerEvent is used to register a listener for special events triggered by react-paint. The only currently available event is `dataChanged`. `source` indicates the origin of the state update  |
 | `unregisterEvent` | `(event: "dataChanged", listener?: ((data: StateData,  source: 'user' \| 'remote') => void) \| undefined) => void` | unregisterEvent is used to unregister a listener previously registered. Omitting listener will result in unregistering every listeners for the the given event | 
 | `resetCanvas` | `(shapes: DrawableShape[], clearHistory?: boolean) => Promise<void>` | reset canvas with the given shapes. use `[]` or `undefined` to clear the canvas. Set `false` to `clearHistory` to prevent history stack to be cleared | 
-| `getCurrentImage` | `() => string \| undefined` | Returns a data URL containing the content of the current canvas as a PNG image, or undefined if an error occured |
+| `getCurrentImage` | `() => string` | Returns a data URL containing the content of the current canvas as a PNG image |
 | `getCurrentData` | `() => StateData` | Returns the current state of the canvas  |
 
 #### `OptionalOptions`
