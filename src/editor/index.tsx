@@ -119,20 +119,22 @@ const Editor = ({ editorProps, className, style, options, children }: EditorProp
     forwardShape()
   }, [selectTool, forwardShape])
 
-  const exportCanvasInFile = useCallback(() => {
-    setIsLoading(true)
-    try {
-      exportPicture()
-      setIsLoading(false)
-    } catch (e) {
-      if (e instanceof Error) {
-        addSnackbar({ type: 'error', text: "L'export a échoué" })
+  const exportCanvasInFile = useCallback(
+    (view: 'fitToShapes' | 'defaultView' | 'currentZoom') => {
+      setIsLoading(true)
+      try {
+        exportPicture(view)
+      } catch (e) {
+        if (e instanceof Error) {
+          addSnackbar({ type: 'error', text: `L'export a échoué : ${e.message}` })
+        }
+        console.warn(e)
+      } finally {
+        setIsLoading(false)
       }
-      console.warn(e)
-    } finally {
-      setIsLoading(false)
-    }
-  }, [exportPicture, addSnackbar])
+    },
+    [exportPicture, addSnackbar]
+  )
 
   const saveFile = useCallback(() => {
     setIsLoading(true)

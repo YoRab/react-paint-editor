@@ -189,17 +189,20 @@ const useReactPaint = ({
     downloadFile(content, 'drawing.json')
   }, [shapesRef, width, height])
 
-  const exportPicture = useCallback(() => {
-    const dataURL = getCanvasImage(shapesRef.current, width, height, settings)
-    if (!dataURL) {
-      throw new Error()
-    }
-    downloadFile(dataURL, 'drawing.png')
-  }, [shapesRef, width, height, settings])
+  const exportPicture = useCallback(
+    (view: 'fitToShapes' | 'defaultView' | 'currentZoom') => {
+      const dataURL = getCanvasImage({ shapes: shapesRef.current, settings, view })
+      downloadFile(dataURL, 'drawing.png')
+    },
+    [shapesRef, settings]
+  )
 
-  const getCurrentImage = useCallback(() => {
-    return getCanvasImage(shapesRef.current, width, height, settings)
-  }, [shapesRef, width, height, settings])
+  const getCurrentImage = useCallback(
+    (view: 'fitToShapes' | 'defaultView' | 'currentZoom') => {
+      return getCanvasImage({ shapes: shapesRef.current, settings, view })
+    },
+    [shapesRef, settings]
+  )
 
   const getCurrentData = useCallback(() => {
     return buildDataToExport(shapesRef.current, width, height)
@@ -276,7 +279,7 @@ const useReactPaint = ({
       display: 'block',
       'grid-area': '1 / 1',
       width: '100%',
-      'transform-origin': 'left top',
+      transformOrigin: 'left top',
       transform:
         'scale(var(--react-paint-canvas-zoom)) translate(calc(var(--react-paint-canvas-offset-x) * 100% / var(--react-paint-app-canvaswidth)),      calc(var(--react-paint-canvas-offset-y) * 100% / var(--react-paint-app-canvasheight)))',
       '--react-paint-canvas-zoom': settings.canvasZoom,

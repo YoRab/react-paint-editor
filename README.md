@@ -1,9 +1,7 @@
-- export all
-
-- Mode annotation / whiteboard
+- annotationProps ?
+- Modes annotation / whiteboard
 - stories + doc
-
-- gros clean
+- big clean
 
 # React Paint
 
@@ -136,7 +134,7 @@ you will find other usages in <a href="https://github.com/YoRab/react-paint-edit
 | `registerEvent` | `(event: "dataChanged", listener: (data: StateData,  source: 'user' \| 'remote') => void) => void` |  registerEvent is used to register a listener for special events triggered by react-paint. The only currently available event is `dataChanged`. `source` indicates the origin of the state update  |
 | `unregisterEvent` | `(event: "dataChanged", listener?: ((data: StateData,  source: 'user' \| 'remote') => void) \| undefined) => void` | unregisterEvent is used to unregister a listener previously registered. Omitting listener will result in unregistering every listeners for the the given event | 
 | `resetCanvas` | `(shapes: DrawableShape[], clearHistory?: boolean) => Promise<void>` | reset canvas with the given shapes. use `[]` or `undefined` to clear the canvas. Set `false` to `clearHistory` to prevent history stack to be cleared | 
-| `getCurrentImage` | `() => string` | Returns a data URL containing the content of the current canvas as a PNG image |
+| `getCurrentImage` | `(view: 'defaultView' \|  'currentZoom' \| 'fitToShapes') => string` | Returns a data URL containing the content of the current canvas as a PNG image. `defaultView` will export a picture with dimensions based on canvas and no zoom. `currentZoom` will export a picture with dimensions based on canvas and current zoom and offset. `fitToShapes` will export a picture containing all drawn shapes. |
 | `getCurrentData` | `() => StateData` | Returns the current state of the canvas  |
 
 #### `OptionalOptions`

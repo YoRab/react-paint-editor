@@ -1,12 +1,11 @@
 import type { UtilsSettings } from '@canvas/constants/app'
 import { PICTURE_DEFAULT_SIZE } from '@canvas/constants/picture'
 import { ShapeTypeArray } from '@canvas/constants/shapes'
-import type { DrawableShape, ExportedDrawableShape, ShapeEntity } from '@common/types/Shapes'
+import { initCanvasContext } from '@canvas/utils/canvas'
+import { drawShape, getShapeInfos } from '@canvas/utils/shapes'
+import type { DrawableShape, ExportedDrawableShape, Point, ShapeEntity } from '@common/types/Shapes'
 import { compact } from '@common/utils/array'
-import { set } from '@common/utils/object'
-import { initCanvasContext } from './canvas'
 import { addDefaultAndTempShapeProps, buildDataToExport } from './data'
-import { drawShape } from './shapes'
 
 export const addSizeAndConvertSvgToObjectUrl = (svgFileContent: string) => {
   const parser = new DOMParser()
@@ -68,18 +67,93 @@ const encodeObjectToString = (objectToEncode: unknown) => {
   return `data:text/plain;charset=utf-8,${encodeURIComponent(JSON.stringify(objectToEncode))}`
 }
 
-export const getCanvasImage = (shapes: DrawableShape[], width: number, height: number, settings: UtilsSettings) => {
+const getShapesDataUrl = ({ shapes, settings }: { shapes: DrawableShape[]; settings: UtilsSettings }): string => {
   const newCanvas = document.createElement('canvas')
+  const ctx = newCanvas.getContext('2d')
+  if (!ctx) throw new Error('No context found for canvas')
+
+  const { realHeight: height, realWidth: width } = settings.canvasSize
   newCanvas.width = width
   newCanvas.height = height
-  const ctx = newCanvas.getContext('2d')
-  if (!ctx) return ''
   ctx.clearRect(0, 0, width, height)
   initCanvasContext(ctx)
   for (let i = shapes.length - 1; i >= 0; i--) {
-    drawShape(ctx, shapes[i], set(['canvasSize', 'scaleRatio'], 1, settings))
+    drawShape(ctx, shapes[i], settings)
   }
   return newCanvas.toDataURL('image/png')
+}
+
+export const getCanvasImage = ({
+  shapes,
+  settings,
+  view
+}: {
+  shapes: DrawableShape[]
+  settings: UtilsSettings
+  view: 'fitToShapes' | 'defaultView' | 'currentZoom'
+}): string => {
+  if (view === 'fitToShapes' && !shapes.length) throw new Error('No image found to export')
+
+  if (view === 'fitToShapes') {
+    const bordersShapes = shapes.map(shape => {
+      const borders = getShapeInfos(shape, settings).borders
+      const halfLineWidth = (shape.style?.lineWidth ?? 0) / 2
+      return {
+        minX: borders.x - halfLineWidth,
+        minY: borders.y - halfLineWidth,
+        maxX: borders.x + borders.width + halfLineWidth,
+        maxY: borders.y + borders.height + halfLineWidth
+      }
+    })
+    const minX = Math.min(...bordersShapes.map(borders => borders.minX))
+    const maxX = Math.max(...bordersShapes.map(borders => borders.maxX))
+
+    const minY = Math.min(...bordersShapes.map(borders => borders.minY))
+    const maxY = Math.max(...bordersShapes.map(borders => borders.maxY))
+
+    const printSettings = {
+      ...settings,
+      canvasOffset: [-minX, -minY] as Point,
+      canvasZoom: 1,
+      canvasSize: {
+        realWidth: maxX - minX,
+        realHeight: maxY - minY,
+        width: maxX - minX,
+        height: maxY - minY,
+        scaleRatio: 1,
+        scaleRatioWithNoZoom: 1
+      }
+    }
+    return getShapesDataUrl({ shapes, settings: printSettings })
+  }
+
+  if (view === 'defaultView') {
+    const printSettings = {
+      ...settings,
+      canvasOffset: [0, 0] as Point,
+      canvasZoom: 1,
+      canvasSize: {
+        ...settings.canvasSize,
+        width: settings.canvasSize.realWidth,
+        height: settings.canvasSize.realHeight,
+        scaleRatio: 1,
+        scaleRatioWithNoZoom: 1
+      }
+    }
+    return getShapesDataUrl({ shapes, settings: printSettings })
+  }
+
+  const printSettings = {
+    ...settings,
+    canvasSize: {
+      ...settings.canvasSize,
+      width: settings.canvasSize.realWidth,
+      height: settings.canvasSize.realHeight,
+      scaleRatio: settings.canvasZoom,
+      scaleRatioWithNoZoom: 1
+    }
+  }
+  return getShapesDataUrl({ shapes, settings: printSettings })
 }
 
 export const encodeShapesInString = (shapes: DrawableShape[], width: number, height: number) => {

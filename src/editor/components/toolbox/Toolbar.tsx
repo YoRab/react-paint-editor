@@ -11,6 +11,7 @@ import PictureUrlModal from './PictureUrlInput'
 import Tool from './Tool'
 import './Toolbar.css'
 import type { UtilsSettings } from '@canvas/constants/app'
+import ExportModal from '@editor/components/toolbox/ExportModal'
 import ToolbarGroup from './ToolbarGroup'
 
 const TOOL_WIDTH = 40
@@ -54,7 +55,7 @@ type ToolboxType = {
   loadFile: (file: File) => void
   addPicture: (file: File | string) => Promise<void>
   saveFile: () => void
-  exportCanvasInFile: () => void
+  exportCanvasInFile: (view: 'fitToShapes' | 'defaultView' | 'currentZoom') => void
   availableTools: CustomTool[]
   withLoadAndSave: boolean
   withExport: boolean
@@ -96,6 +97,7 @@ const Toolbar = ({
 
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [isPictureUrlModalOpen, setIsPictureUrlModalOpen] = useState(false)
+  const [isExportModalOpen, setIsExportModalOpen] = useState(false)
 
   const toggleTools = () => {
     setIsMenuOpen(prev => !prev)
@@ -107,6 +109,10 @@ const Toolbar = ({
 
   const togglePictureUrlModal = () => {
     setIsPictureUrlModalOpen(prev => !prev)
+  }
+
+  const toggleExportModal = () => {
+    setIsExportModalOpen(prev => !prev)
   }
 
   const setActiveTool = (tool: ToolsType) => {
@@ -190,7 +196,7 @@ const Toolbar = ({
           loadFile={loadFile}
           saveFile={saveFile}
           togglePictureUrlModal={openPictureUrlModal}
-          exportCanvasInFile={exportCanvasInFile}
+          toggleExportModal={toggleExportModal}
           withUploadPicture={withUploadPicture}
           withUrlPicture={withUrlPicture}
           withLoadAndSave={withLoadAndSave}
@@ -221,6 +227,7 @@ const Toolbar = ({
         </Modal>
       )}
       {isPictureUrlModalOpen && <PictureUrlModal togglePictureUrlModal={togglePictureUrlModal} addPicture={addPicture} />}
+      {isExportModalOpen && <ExportModal toggleExportModal={toggleExportModal} exportCanvasInFile={exportCanvasInFile} />}
     </>
   )
 }

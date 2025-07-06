@@ -25,7 +25,7 @@ type MenuGroupType = {
   loadFile: (file: File) => void
   addPicture: (file: File) => Promise<void>
   saveFile: () => void
-  exportCanvasInFile: () => void
+  toggleExportModal: () => void
   togglePictureUrlModal: () => void
   withLoadAndSave: boolean
   withExport: boolean
@@ -58,7 +58,7 @@ const MenuGroup = ({
   loadFile: loadFileFromProps,
   togglePictureUrlModal,
   saveFile,
-  exportCanvasInFile,
+  toggleExportModal,
   withUploadPicture,
   withUrlPicture
 }: MenuGroupType) => {
@@ -180,7 +180,7 @@ const MenuGroup = ({
                 type={EXPORT_TOOL}
                 img={EXPORT_TOOL.icon}
                 isActive={activeTool.id === EXPORT_TOOL.id}
-                setActive={exportCanvasInFile}
+                setActive={toggleExportModal}
               />
             )}
           </div>
