@@ -1,4 +1,4 @@
-import type { Meta, StoryObj } from '@storybook/react'
+import type { Meta, StoryObj } from '@storybook/react-vite'
 import { Canvas, Editor, useReactPaint } from '../src/index'
 import { TREE_AND_CLOUDS } from './fixture'
 
@@ -45,17 +45,47 @@ return (
   }
 }
 
-export const FromFile: Story = {
+export const WhiteBoard: Story = {
   args: {
-    shapes: TREE_AND_CLOUDS,
     options: {
-      clearCallback: 'defaultShapes'
+      size: 'infinite',
+      canZoom: 'always',
+      grid: 20
     }
   },
   parameters: {
     docs: {
       source: {
-        code: `const { editorProps, canvasProps } = useReactPaint({shapes: TREE_AND_CLOUDS, options : {clearCallback: 'defaultShapes'}})
+        code: `const { editorProps, canvasProps } = useReactPaint( {
+    options: {
+      size: 'infinite',
+      canZoom: 'always'
+    }
+      })
+
+return (
+  <Editor editorProps={editorProps}>
+    <Canvas canvasProps={canvasProps} />
+  </Editor>
+)`,
+        language: 'tsx'
+      }
+    }
+  }
+}
+
+export const FromFile: Story = {
+  args: {
+    shapes: TREE_AND_CLOUDS,
+    options: {
+      clearCallback: 'defaultShapes',
+      canZoom: 'always'
+    }
+  },
+  parameters: {
+    docs: {
+      source: {
+        code: `const { editorProps, canvasProps } = useReactPaint({shapes: TREE_AND_CLOUDS, options : {clearCallback: 'defaultShapes',   canZoom: 'always'}})
 
 return (
   <Editor editorProps={editorProps}>
@@ -71,7 +101,10 @@ return (
 export const ViewerMode: Story = {
   args: {
     shapes: TREE_AND_CLOUDS,
-    mode: 'viewer'
+    mode: 'viewer',
+    options: {
+      canZoom: 'always'
+    }
   },
   parameters: {
     docs: {

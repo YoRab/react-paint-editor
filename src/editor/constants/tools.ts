@@ -20,6 +20,7 @@ import {
   cursorIcon,
   curveIcon,
   exportFileIcon,
+  moveIcon,
   openFileIcon,
   pictureIcon,
   polygonIcon,
@@ -29,7 +30,7 @@ import {
   textIcon,
   undoIcon
 } from './icons'
-import { STYLE_COLORS, STYLE_FONTS, STYLE_FONT_DEFAULT, STYLE_LINE_DASH, STYLE_LINE_WITH_ARROW } from './style'
+import { STYLE_COLORS, STYLE_FONT_DEFAULT, STYLE_FONTS, STYLE_LINE_DASH, STYLE_LINE_WITH_ARROW } from './style'
 
 const PREFIX_ID = 'react-paint-'
 
@@ -435,7 +436,7 @@ export const SAVE_TOOL: ActionsTool = {
 export const MOVE_TOOL: ActionsTool = {
   id: `${PREFIX_ID}move`,
   type: 'move',
-  icon: cursorIcon,
+  icon: moveIcon,
   label: 'Move'
 }
 

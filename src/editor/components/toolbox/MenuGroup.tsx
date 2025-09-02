@@ -4,12 +4,12 @@ import Button from '@editor/components/common/Button'
 import Panel from '@editor/components/common/Panel'
 import { publicIcon } from '@editor/constants/icons'
 import { CLEAR_TOOL, EXPORT_TOOL, LOAD_TOOL, REDO_TOOL, SAVE_TOOL, UNDO_TOOL, UPLOAD_PICTURE_TOOL } from '@editor/constants/tools'
-import React, { useEffect, useState, useTransition } from 'react'
+import { useEffect, useState, useTransition } from 'react'
 import LoadFileTool from './LoadFileTool'
 import './MenuGroup.css'
 import Tool from './Tool'
 
-type ToolbarGroupType = {
+type MenuGroupType = {
   activeTool: ToolsType
   withActionsInMenu: boolean
   group: {
@@ -25,7 +25,7 @@ type ToolbarGroupType = {
   loadFile: (file: File) => void
   addPicture: (file: File) => Promise<void>
   saveFile: () => void
-  exportCanvasInFile: () => void
+  toggleExportModal: () => void
   togglePictureUrlModal: () => void
   withLoadAndSave: boolean
   withExport: boolean
@@ -58,10 +58,10 @@ const MenuGroup = ({
   loadFile: loadFileFromProps,
   togglePictureUrlModal,
   saveFile,
-  exportCanvasInFile,
+  toggleExportModal,
   withUploadPicture,
   withUrlPicture
-}: ToolbarGroupType) => {
+}: MenuGroupType) => {
   const [isOpen, setIsOpen] = useState(false)
   const [, startTransition] = useTransition()
 
@@ -180,7 +180,7 @@ const MenuGroup = ({
                 type={EXPORT_TOOL}
                 img={EXPORT_TOOL.icon}
                 isActive={activeTool.id === EXPORT_TOOL.id}
-                setActive={exportCanvasInFile}
+                setActive={toggleExportModal}
               />
             )}
           </div>

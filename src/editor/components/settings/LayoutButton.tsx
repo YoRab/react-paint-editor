@@ -1,6 +1,5 @@
 import Button from '@editor/components/common/Button'
 import { layersIcon } from '@editor/constants/icons'
-import React from 'react'
 import './LayoutButton.css'
 
 type LayoutButtonType = {

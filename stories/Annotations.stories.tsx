@@ -1,4 +1,4 @@
-import type { Meta, StoryObj } from '@storybook/react/*'
+import type { Meta, StoryObj } from '@storybook/react-vite'
 import { type SyntheticEvent, useState } from 'react'
 import { Canvas, Editor, useReactPaint } from '../src/index'
 import './annotations.css'
@@ -6,10 +6,13 @@ import './annotations.css'
 const PictureWithAnnotations = ({ src, alt }: { src: string; alt: string }) => {
   const [isEdit, setIsEdit] = useState(false)
   const [dimensions, setDimensions] = useState<[number, number]>()
-  const { editorProps, canvasProps } = useReactPaint({
+  const { editorProps, canvasProps, annotationsProps } = useReactPaint({
     mode: isEdit ? 'editor' : 'viewer',
     width: dimensions?.[0],
-    height: dimensions?.[1]
+    height: dimensions?.[1],
+    options: {
+      canZoom: isEdit ? 'always' : 'never'
+    }
   })
 
   const canvasOptions = {
@@ -27,8 +30,10 @@ const PictureWithAnnotations = ({ src, alt }: { src: string; alt: string }) => {
           toggle edition
         </button>
       </div>
-      <div className='pic-container'>
-        <img src={src} alt={alt} className='picture' onLoad={onPictureLoad} />
+      <div className='annotations-container'>
+        <div className='pic-container'>
+          <img src={src} alt={alt} style={annotationsProps.style} className='picture' onLoad={onPictureLoad} />
+        </div>
         {dimensions && (
           <Editor editorProps={editorProps} className={`annotations ${isEdit ? 'editor' : 'view'}`}>
             <Canvas canvasProps={canvasProps} options={canvasOptions} />

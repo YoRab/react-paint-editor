@@ -9,8 +9,11 @@ import { type GridLabelType, GridValues } from '@editor/constants/grid'
 import { DEFAULT_EDITOR_OPTIONS } from '@editor/constants/options'
 import { SELECTION_TOOL } from '@editor/constants/tools'
 import useSnackbar from '@editor/hooks/useSnackbar'
-import React, { type CSSProperties, type ReactNode, useCallback, useState } from 'react'
+import { type CSSProperties, type ReactNode, useCallback, useState } from 'react'
 import './index.css'
+import Button from '@editor/components/common/Button'
+import Panel from '@editor/components/common/Panel'
+import { zoomIn, zoomOut } from '@editor/constants/icons'
 
 type EditorProps = {
   editorProps: UseReactPaintReturnType['editorProps']
@@ -50,14 +53,12 @@ const Editor = ({ editorProps, className, style, options, children }: EditorProp
     refs,
     width,
     height,
-    canvasSize,
     selectTool,
     selectShape,
     activeTool,
     setActiveTool,
     setAvailableTools,
     isEditMode,
-    isDisabled,
     availableTools,
     gridGap,
     setGridGap,
@@ -66,6 +67,7 @@ const Editor = ({ editorProps, className, style, options, children }: EditorProp
     exportData,
     clearCanvas,
     settings,
+    setCanvasZoom,
     canvas: { canGrow, layersManipulation, withExport, withLoadAndSave, withUploadPicture, withUrlPicture }
   } = editorProps
 
@@ -86,9 +88,13 @@ const Editor = ({ editorProps, className, style, options, children }: EditorProp
     ...options
   }
 
+  const withZoom = settings.size === 'infinite' || settings.features.zoom
+
   const [isLoading, setIsLoading] = useState(false)
   const [isLayoutPanelShown, setIsLayoutPanelShown] = useState(false)
+  const [isZoomPanelOpen, setIsZoomPanelShown] = useState(withZoom)
 
+  const isZoomPanelShown = withZoom && isZoomPanelOpen
   const gridFormat: GridLabelType =
     gridGap >= GridValues.large ? 'large' : gridGap >= GridValues.medium ? 'medium' : gridGap >= GridValues.small ? 'small' : 'none'
 
@@ -116,20 +122,22 @@ const Editor = ({ editorProps, className, style, options, children }: EditorProp
     forwardShape()
   }, [selectTool, forwardShape])
 
-  const exportCanvasInFile = useCallback(() => {
-    setIsLoading(true)
-    try {
-      exportPicture()
-      setIsLoading(false)
-    } catch (e) {
-      if (e instanceof Error) {
-        addSnackbar({ type: 'error', text: "L'export a échoué" })
+  const exportCanvasInFile = useCallback(
+    (view: 'fitToShapes' | 'defaultView' | 'currentZoom') => {
+      setIsLoading(true)
+      try {
+        exportPicture(view)
+      } catch (e) {
+        if (e instanceof Error) {
+          addSnackbar({ type: 'error', text: `L'export a échoué : ${e.message}` })
+        }
+        console.warn(e)
+      } finally {
+        setIsLoading(false)
       }
-      console.warn(e)
-    } finally {
-      setIsLoading(false)
-    }
-  }, [exportPicture, addSnackbar])
+    },
+    [exportPicture, addSnackbar]
+  )
 
   const saveFile = useCallback(() => {
     setIsLoading(true)
@@ -206,8 +214,8 @@ const Editor = ({ editorProps, className, style, options, children }: EditorProp
     >
       {isEditMode && (
         <Toolbar
-          width={canvasSize.width}
-          disabled={isDisabled}
+          settings={settings}
+          width={settings.canvasSize.width}
           activeTool={activeTool}
           clearCanvas={clearCanvas}
           setActiveTool={selectTool}
@@ -232,7 +240,6 @@ const Editor = ({ editorProps, className, style, options, children }: EditorProp
         <Layouts
           gridFormat={gridFormat}
           setGridFormat={setGridFormat}
-          disabled={isDisabled}
           shapes={shapesRef.current}
           moveShapes={moveShapes}
           selectedShape={selectedShape}
@@ -241,13 +248,23 @@ const Editor = ({ editorProps, className, style, options, children }: EditorProp
           toggleShapeVisibility={toggleShapeVisibility}
           toggleShapeLock={toggleShapeLock}
           isLayoutPanelShown={isLayoutPanelShown}
+          settings={settings}
         />
+      )}
+      {isZoomPanelShown && (
+        <Panel alignment='left' className='react-paint-editor-layouts-panel' data-edit={+isEditMode}>
+          <Button className='react-paint-editor-zoom-button' icon={zoomOut} onClick={() => setCanvasZoom('unzoom')} />
+          <Button className='react-paint-editor-zoom-button react-paint-editor-zoom-button-value' onClick={() => setCanvasZoom('default')}>
+            {Math.round(settings.canvasZoom * 100)}%
+          </Button>
+          <Button className='react-paint-editor-zoom-button' icon={zoomIn} onClick={() => setCanvasZoom('zoom')} />
+        </Panel>
       )}
       {isEditMode && (
         <>
           <SettingsBar
-            width={canvasSize.width}
-            disabled={isDisabled}
+            setCanvasZoom={setCanvasZoom}
+            width={settings.canvasSize.width}
             activeTool={activeTool}
             availableTools={availableTools}
             selectedShape={selectedShape}
@@ -259,6 +276,8 @@ const Editor = ({ editorProps, className, style, options, children }: EditorProp
             toggleLayoutPanel={() => {
               setIsLayoutPanelShown(prev => !prev)
             }}
+            isZoomPanelShown={isZoomPanelShown}
+            setIsZoomPanelShown={setIsZoomPanelShown}
             updateToolSettings={updateToolSettings}
           />
           <Loading isLoading={isLoading} />

@@ -28,7 +28,7 @@ const PictureUrlModal = ({ togglePictureUrlModal, addPicture }: PictureUrlModalT
   }, [])
 
   return (
-    <Modal className='react-paint-editor-toolbox-pictureinput-modal' onClose={togglePictureUrlModal}>
+    <Modal className='react-paint-editor-toolbox-pictureinput-modal' onClose={togglePictureUrlModal} title='Add picture from URL'>
       <form onSubmit={addPictureFromUrl}>
         <label>
           URL&nbsp;

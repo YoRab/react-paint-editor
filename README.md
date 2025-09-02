@@ -129,7 +129,7 @@ you will find other usages in <a href="https://github.com/YoRab/react-paint-edit
 | `registerEvent` | `(event: "dataChanged", listener: (data: StateData,  source: 'user' \| 'remote') => void) => void` |  registerEvent is used to register a listener for special events triggered by react-paint. The only currently available event is `dataChanged`. `source` indicates the origin of the state update  |
 | `unregisterEvent` | `(event: "dataChanged", listener?: ((data: StateData,  source: 'user' \| 'remote') => void) \| undefined) => void` | unregisterEvent is used to unregister a listener previously registered. Omitting listener will result in unregistering every listeners for the the given event | 
 | `resetCanvas` | `(shapes: DrawableShape[], clearHistory?: boolean) => Promise<void>` | reset canvas with the given shapes. use `[]` or `undefined` to clear the canvas. Set `false` to `clearHistory` to prevent history stack to be cleared | 
-| `getCurrentImage` | `() => string \| undefined` | Returns a data URL containing the content of the current canvas as a PNG image, or undefined if an error occured |
+| `getCurrentImage` | `(view: 'defaultView' \|  'currentZoom' \| 'fitToShapes') => string` | Returns a data URL containing the content of the current canvas as a PNG image. `defaultView` will export a picture with dimensions based on canvas and no zoom. `currentZoom` will export a picture with dimensions based on canvas and current zoom and offset. `fitToShapes` will export a picture containing all drawn shapes. |
 | `getCurrentData` | `() => StateData` | Returns the current state of the canvas  |
 
 #### `OptionalOptions`
@@ -151,6 +151,8 @@ you will find other usages in <a href="https://github.com/YoRab/react-paint-edit
 | `isBrushShapeDoneOnMouseUp` | `boolean` | *Optional*. Choose whether drawing brush shape after releasing mouse should create a new shape or not | `true` |
 | `canvasSelectionPadding` | `boolean` | *Optional*. Padding between shape and selection frame | `0` |
 | `availableTools` | `CustomToolInput[]` | *Optional*. List of available tools. See CustomTool for more details | `` |
+| `size` | `'fixed' \| 'infinite'` | *Optional*. Choose canvas size mode. `fixed` canvas is bound within its width and height, `infinite` canvas has no bound  | `fixed` |
+| `canZoom` | `'never' \| 'always'` | *Optional*. Choose wether zoom is available `never` zoom is not available, `always` zoom is available  | `never` |
 
 
 

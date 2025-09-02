@@ -1,6 +1,5 @@
 import type { ToolsType } from '@common/types/tools'
 import Button from '@editor/components/common/Button'
-import React from 'react'
 
 type ToolComponentType = {
   type: ToolsType

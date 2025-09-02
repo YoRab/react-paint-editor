@@ -1,14 +1,14 @@
 import type { ShapeEntity } from '@common/types/Shapes'
-import useDrag from '@editor/hooks/useDrag'
-import type React from 'react'
-import { useRef, useState } from 'react'
-
 import Button from '@editor/components/common/Button'
 import Panel from '@editor/components/common/Panel'
 import type { GridLabelType } from '@editor/constants/grid'
 import { gridOffIcon, lockedIcon, trashIcon, unlockedIcon, visibilityIcon, visibilityOffIcon } from '@editor/constants/icons'
+import useDrag from '@editor/hooks/useDrag'
 import { getShapePicture } from '@editor/utils/style'
+import type React from 'react'
+import { useRef, useState } from 'react'
 import './Layouts.css'
+import type { UtilsSettings } from '@canvas/constants/app'
 
 type LayoutType = {
   disabled?: boolean
@@ -76,6 +76,7 @@ const Layout = ({
   })
 
   return (
+    // biome-ignore lint/a11y/noStaticElementInteractions: need to find a proper role or to use a button
     <div
       className='react-paint-editor-layout'
       data-disabled={+disabled}
@@ -85,6 +86,7 @@ const Layout = ({
       onClick={onSelect}
       data-selected={+selected}
       ref={ref}
+      tabIndex={-1}
     >
       <span dangerouslySetInnerHTML={{ __html: getShapePicture(shape.type) }} />
       <span>{shape.id}</span>
@@ -117,7 +119,7 @@ const Layout = ({
 type LayoutsType = {
   gridFormat: GridLabelType
   setGridFormat: (value: GridLabelType) => void
-  disabled?: boolean
+  settings: UtilsSettings
   shapes: ShapeEntity[]
   removeShape: (shape: ShapeEntity) => void
   toggleShapeVisibility: (shape: ShapeEntity) => void
@@ -131,7 +133,7 @@ type LayoutsType = {
 const Layouts = ({
   gridFormat,
   setGridFormat,
-  disabled = false,
+  settings,
   shapes,
   removeShape,
   toggleShapeVisibility,
@@ -142,6 +144,8 @@ const Layouts = ({
   isLayoutPanelShown
 }: LayoutsType) => {
   const [layoutDragging, setLayoutDragging] = useState<string | undefined>(undefined)
+
+  const disabled = !settings.features.edition
 
   return isLayoutPanelShown ? (
     <Panel alignment='right' className='react-paint-editor-layouts-panel'>

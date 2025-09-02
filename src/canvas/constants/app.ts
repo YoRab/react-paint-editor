@@ -1,4 +1,5 @@
-import type { DrawableShape, ExportedDrawableShape, Point } from '@common/types/Shapes'
+import type { Size } from '@common/types/Canvas'
+import type { ExportedDrawableShape, Point } from '@common/types/Shapes'
 import type { CustomToolInput } from '@common/types/tools'
 import type { RecursivePartial } from '@common/types/utils'
 import { DEFAULT_SHAPE_TOOLS } from '@editor/constants/tools'
@@ -16,12 +17,21 @@ export type UtilsSettings = {
   isBrushShapeDoneOnMouseUp: boolean
   gridGap: number
   canvasOffset: Point
+  canvasZoom: number
   canvasSize: {
+    realWidth: number
+    realHeight: number
     width: number
     height: number
     scaleRatio: number
+    scaleRatioWithNoZoom: number
   }
   selectionPadding: number
+  size: 'infinite' | 'fixed'
+  features: {
+    zoom: boolean
+    edition: boolean
+  }
 }
 type AppOptionsType = {
   layersManipulation: boolean
@@ -39,6 +49,8 @@ type AppOptionsType = {
   brushAlgo: BrushAlgo
   isBrushShapeDoneOnMouseUp: boolean
   canvasSelectionPadding: number
+  size: Size
+  canZoom: 'never' | 'always'
 }
 
 export type OptionalOptions = RecursivePartial<AppOptionsType>
@@ -58,7 +70,9 @@ export const DEFAULT_OPTIONS: AppOptionsType = {
   isBrushShapeDoneOnMouseUp: true,
   withFrameSelection: false,
   withSkeleton: true,
-  canvasSelectionPadding: SELECTION_DEFAULT_PADDING
+  canvasSelectionPadding: SELECTION_DEFAULT_PADDING,
+  size: 'fixed',
+  canZoom: 'never'
 }
 
 export const DEFAULT_CANVAS_OPTIONS: {

@@ -57,8 +57,11 @@ const useShapes = (settings: UtilsSettings, width: number, height: number) => {
   }, [])
 
   const refreshHoveredShape = useCallback(
-    (e: MouseEvent | TouchEvent, ctx: CanvasRenderingContext2D, cursorPosition: Point) => {
-      if (e.target && 'className' in e.target && ![DRAWCANVAS_CLASSNAME, SELECTIONCANVAS_CLASSNAME].includes(e.target.className as string)) {
+    (e: MouseEvent | TouchEvent, ctx: CanvasRenderingContext2D, cursorPosition: Point, isInsideMask: boolean) => {
+      if (
+        (e.target && 'className' in e.target && ![DRAWCANVAS_CLASSNAME, SELECTIONCANVAS_CLASSNAME].includes(e.target.className as string)) ||
+        !isInsideMask
+      ) {
         setHoveredShape(undefined)
         return
       }
@@ -203,7 +206,7 @@ const useShapes = (settings: UtilsSettings, width: number, height: number) => {
     // biome-ignore lint/suspicious/noPrototypeBuiltins: be compliant with es2020
     if (!listeners.current.hasOwnProperty(event)) return
     if (fn) {
-      const currentFnIndex = listeners.current[event].findIndex(listener => listener === fn)
+      const currentFnIndex = listeners.current[event].indexOf(fn)
       listeners.current[event] = [...listeners.current[event].slice(0, currentFnIndex), ...listeners.current[event].slice(currentFnIndex + 1)]
     } else {
       listeners.current[event] = []

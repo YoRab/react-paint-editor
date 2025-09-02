@@ -1,3 +1,12 @@
+# V0.12.0
+ - up dependancies
+ - add zoom feature with canZoom option and zoom panel
+ - add size option to create infinite whiteboard
+ - add export panel with multiple more options to export current canvas
+ - export annotationProps for background picture to be transformed along the canvas
+ - only draw shapes visible in current view
+ - fix white flash when resizing canvas
+
 # V0.11.21
 - up dependancies
 - use Biome to lint CSS

@@ -6,9 +6,9 @@
 }
 
 .react-paint-app-row[data-grow='false'] {
-  max-width: var(--react-paint-app-canvaswidth);
+  max-width: calc(var(--react-paint-app-canvaswidth) * 1px);
 }
 
 .react-paint-app-row[data-shrink='false'] {
-  min-width: var(--react-paint-app-canvaswidth);
+  min-width: calc(var(--react-paint-app-canvaswidth) * 1px);
 }

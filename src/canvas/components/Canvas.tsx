@@ -9,6 +9,7 @@ import type { Point, ShapeEntity } from '@common/types/Shapes'
 import type { ToolsType } from '@common/types/tools'
 import React, { useCallback, useEffect, useImperativeHandle, useRef } from 'react'
 import './Canvas.css'
+import { clipMask, drawMask } from '@canvas/utils/zoom'
 import EditTextBox from './EditTextBox'
 
 const renderDrawCanvas = (
@@ -18,12 +19,9 @@ const renderDrawCanvas = (
   shapes: ShapeEntity[],
   selectedShape: ShapeEntity | undefined
 ) => {
-  const {
-    canvasSize: { width, height }
-  } = settings
-  drawCtx.clearRect(0, 0, width, height)
   initCanvasContext(drawCtx)
-  settings.gridGap && drawGrid(drawCtx, width, height, settings)
+  drawMask(drawCtx, settings)
+  drawGrid(drawCtx, settings)
   for (let i = shapes.length - 1; i >= 0; i--) {
     if (selectionMode.mode !== 'textedition' || shapes[i] !== selectedShape) {
       drawShape(drawCtx, shapes[i], settings)
@@ -43,7 +41,8 @@ const renderSelectionCanvas = (
   selectionFrame: [Point, Point] | undefined,
   withSkeleton: boolean
 ) => {
-  selectionCtx.clearRect(0, 0, settings.canvasSize.width, settings.canvasSize.height)
+  selectionCtx.reset()
+  clipMask(selectionCtx, settings)
 
   withSkeleton &&
     hoveredShape &&
@@ -79,13 +78,7 @@ const renderSelectionCanvas = (
 }
 
 type DrawerType = {
-  disabled?: boolean
   canGrow?: boolean
-  canvasSize: {
-    width: number
-    height: number
-    scaleRatio: number
-  }
   selectionColor: string
   selectionWidth: number
   settings: UtilsSettings
@@ -99,13 +92,13 @@ type DrawerType = {
   setSelectionFrame: React.Dispatch<React.SetStateAction<[Point, Point] | undefined>>
   hoveredShape: ShapeEntity | undefined
   selectionFrame: [Point, Point] | undefined
-  refreshHoveredShape: (e: MouseEvent | TouchEvent, ctx: CanvasRenderingContext2D, cursorPosition: Point, settings: UtilsSettings) => void
+  refreshHoveredShape: (e: MouseEvent | TouchEvent, ctx: CanvasRenderingContext2D, cursorPosition: Point, isInsideMask: boolean) => void
   refreshSelectedShapes: (ctx: CanvasRenderingContext2D, cursorPosition: Point, settings: UtilsSettings) => void
   activeTool: ToolsType
   setActiveTool: React.Dispatch<React.SetStateAction<ToolsType>>
-  canvasOffsetStartPosition: Point | undefined
-  setCanvasOffsetStartPosition: React.Dispatch<React.SetStateAction<Point | undefined>>
-  setCanvasOffset: React.Dispatch<React.SetStateAction<Point>>
+  canvasOffsetStartData: { start: Point; originalOffset: Point } | undefined
+  setCanvasOffsetStartData: React.Dispatch<React.SetStateAction<{ start: Point; originalOffset: Point } | undefined>>
+  setCanvasOffset: (offset: Point) => void
   isInsideComponent: boolean
   selectionMode: SelectionModeData<number | Point>
   setSelectionMode: React.Dispatch<React.SetStateAction<SelectionModeData<number | Point>>>
@@ -118,8 +111,6 @@ const Canvas = React.forwardRef<HTMLCanvasElement, DrawerType>(
   (
     {
       canGrow,
-      disabled = false,
-      canvasSize,
       shapes,
       addShape,
       updateSingleShape,
@@ -133,8 +124,8 @@ const Canvas = React.forwardRef<HTMLCanvasElement, DrawerType>(
       saveShapes,
       activeTool,
       setActiveTool,
-      canvasOffsetStartPosition,
-      setCanvasOffsetStartPosition,
+      canvasOffsetStartData,
+      setCanvasOffsetStartData,
       setCanvasOffset,
       isInsideComponent,
       selectionMode,
@@ -151,11 +142,12 @@ const Canvas = React.forwardRef<HTMLCanvasElement, DrawerType>(
   ) => {
     const drawCanvasRef = useRef<HTMLCanvasElement | null>(null)
     const selectionCanvasRef = useRef<HTMLCanvasElement | null>(null)
+    const canvasSize = settings.canvasSize
+    const withSelectionCanvas = isEditMode
 
     useImperativeHandle(ref, () => drawCanvasRef.current!)
 
     const { hoverMode } = useDrawableCanvas({
-      disabled,
       addShape,
       drawCanvasRef,
       setActiveTool,
@@ -165,13 +157,12 @@ const Canvas = React.forwardRef<HTMLCanvasElement, DrawerType>(
       isInsideComponent,
       setCanvasOffset,
       selectedShape,
-      selectionCanvasRef,
-      canvasOffsetStartPosition,
+      canvasOffsetStartData,
+      setCanvasOffsetStartData,
       setSelectedShape,
       setSelectionFrame,
       refreshHoveredShape,
       refreshSelectedShapes,
-      setCanvasOffsetStartPosition,
       updateSingleShape,
       saveShapes,
       setSelectionMode,
@@ -217,34 +208,37 @@ const Canvas = React.forwardRef<HTMLCanvasElement, DrawerType>(
           )
         )
     }, [hoveredShape, selectionFrame, selectionMode, selectedShape, activeTool, settings, selectionWidth, selectionColor, withSkeleton])
-
     return (
-      <div className='react-paint-canvas-box'>
+      <div
+        className='react-paint-canvas-box'
+        style={{
+          '--react-paint-canvas-cursor': canvasOffsetStartData
+            ? 'grabbing'
+            : hoverMode.outOfView
+              ? 'default'
+              : (activeTool.type !== 'selection' && activeTool.type !== 'move') || hoverMode.mode === 'resize'
+                ? 'crosshair'
+                : hoverMode.mode === 'translate'
+                  ? 'move'
+                  : hoverMode.mode === 'rotate' || activeTool.type === 'move'
+                    ? 'grab'
+                    : 'default'
+        }}
+      >
         <div className='react-paint-canvas-container' data-grow={canGrow}>
           <canvas className={DRAWCANVAS_CLASSNAME} ref={drawCanvasRef} data-grow={canGrow} width={canvasSize.width} height={canvasSize.height} />
-          {isEditMode && (
+          {withSelectionCanvas && (
             <canvas
               className={SELECTIONCANVAS_CLASSNAME}
               ref={selectionCanvasRef}
               width={canvasSize.width}
               height={canvasSize.height}
               data-grow={canGrow}
-              style={{
-                '--react-paint-canvas-cursor':
-                  (activeTool.type !== 'selection' && activeTool.type !== 'move') || hoverMode.mode === 'resize'
-                    ? 'crosshair'
-                    : activeTool.type === 'move' || hoverMode.mode === 'translate'
-                      ? 'move'
-                      : hoverMode.mode === 'rotate'
-                        ? 'grab'
-                        : 'default'
-              }}
             />
           )}
           {isEditMode && selectionMode.mode === 'textedition' && selectedShape?.type === 'text' && (
             <EditTextBox
-              scaleRatio={canvasSize.scaleRatio}
-              disabled={disabled}
+              disabled={!settings.features.edition}
               shape={selectedShape}
               defaultValue={selectionMode.defaultValue}
               updateValue={updateSelectedShapeText}

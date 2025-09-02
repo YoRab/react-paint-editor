@@ -3,13 +3,19 @@
   flex-wrap: wrap;
 }
 
-.pic-container {
+.annotations-container {
   position: relative;
   padding: 36px 0;
 }
 
+.pic-container {
+  position: relative;
+  overflow: hidden;
+}
+
 .picture {
-  max-width: 100%;
+  display: block;
+  width: 100%;
 }
 
 .annotations {

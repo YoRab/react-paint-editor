@@ -3,9 +3,8 @@ import { DEFAULT_CANVAS_OPTIONS } from '@canvas/constants/app'
 import useKeyboard from '@canvas/hooks/useKeyboard'
 import type { UseReactPaintReturnType } from '@canvas/hooks/useReactPaint'
 import useResizeObserver from '@canvas/hooks/useResizeObserver'
-import type { SelectionModeData } from '@common/types/Mode'
-import type { Point, ShapeEntity } from '@common/types/Shapes'
-import React, { type CSSProperties, useCallback, useRef, useState } from 'react'
+import type { ShapeEntity } from '@common/types/Shapes'
+import { type CSSProperties, useCallback, useRef, useState } from 'react'
 import './index.css'
 
 type AppProps = {
@@ -38,7 +37,6 @@ const App = ({ options, className, style, canvasProps }: AppProps) => {
     width,
     height,
     settings,
-    canvasSize,
     setCanvasSize,
     setCanvasOffset,
     selectShape,
@@ -46,8 +44,11 @@ const App = ({ options, className, style, canvasProps }: AppProps) => {
     setActiveTool,
     isInsideComponent,
     isEditMode,
-    isDisabled,
-    canvas: { withSkeleton, withFrameSelection, canGrow, canShrink }
+    canvas: { withSkeleton, withFrameSelection, canGrow, canShrink },
+    canvasOffsetStartData,
+    setCanvasOffsetStartData,
+    selectionMode,
+    setSelectionMode
   } = canvasProps
 
   const { canvasBackgroundColor, canvasSelectionColor, canvasSelectionWidth } = {
@@ -56,12 +57,6 @@ const App = ({ options, className, style, canvasProps }: AppProps) => {
   }
 
   const containerRef = useRef<HTMLDivElement>(null)
-
-  const [canvasOffsetStartPosition, setCanvasOffsetStartPosition] = useState<Point | undefined>(undefined)
-
-  const [selectionMode, setSelectionMode] = useState<SelectionModeData<Point | number>>({
-    mode: 'default'
-  })
 
   const [isShiftPressed, setShiftPressed] = useState<boolean>(false)
 
@@ -75,8 +70,9 @@ const App = ({ options, className, style, canvasProps }: AppProps) => {
 
   const onResized = useCallback(
     (measuredWidth: number) => {
+      const measuredHeight = (height * measuredWidth) / width
       const scaleRatio = measuredWidth / width
-      setCanvasSize({ width: measuredWidth, height: height * scaleRatio, scaleRatio })
+      setCanvasSize({ realWidth: width, realHeight: height, width: measuredWidth, height: measuredHeight, scaleRatio })
     },
     [width, height, setCanvasSize]
   )
@@ -94,7 +90,6 @@ const App = ({ options, className, style, canvasProps }: AppProps) => {
     forwardShape,
     setShiftPressed
   })
-
   useResizeObserver({ element: containerRef, onResized })
 
   return (
@@ -104,9 +99,10 @@ const App = ({ options, className, style, canvasProps }: AppProps) => {
       data-grow={canGrow}
       data-shrink={canShrink}
       style={{
-        '--react-paint-app-row-width': canvasSize.width,
-        '--react-paint-app-canvaswidth': `${width}px`,
-        '--react-paint-app-row-aspectratio': `calc(${canvasSize.width} / ${canvasSize.height})`,
+        '--react-paint-app-row-width': settings.canvasSize.width,
+        '--react-paint-app-canvaswidth': width,
+        '--react-paint-app-canvasheight': height,
+        '--react-paint-app-row-aspectratio': `calc(${settings.canvasSize.width} / ${settings.canvasSize.height})`,
         '--react-paint-app-canvas-bg': canvasBackgroundColor,
         ...style
       }}
@@ -114,12 +110,11 @@ const App = ({ options, className, style, canvasProps }: AppProps) => {
       <Canvas
         ref={refs.canvas}
         canGrow={canGrow}
-        disabled={isDisabled}
         isInsideComponent={isInsideComponent}
         activeTool={activeTool}
         setActiveTool={setActiveTool}
-        canvasOffsetStartPosition={canvasOffsetStartPosition}
-        setCanvasOffsetStartPosition={setCanvasOffsetStartPosition}
+        canvasOffsetStartData={canvasOffsetStartData}
+        setCanvasOffsetStartData={setCanvasOffsetStartData}
         shapes={shapesRef.current}
         addShape={addShape}
         updateSingleShape={updateShape}
@@ -133,7 +128,6 @@ const App = ({ options, className, style, canvasProps }: AppProps) => {
         settings={settings}
         setCanvasOffset={setCanvasOffset}
         saveShapes={saveShapes}
-        canvasSize={canvasSize}
         selectionMode={selectionMode}
         setSelectionMode={setSelectionMode}
         selectionColor={canvasSelectionColor}

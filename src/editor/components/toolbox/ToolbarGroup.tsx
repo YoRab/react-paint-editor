@@ -2,7 +2,7 @@ import type { CustomTool, ToolsType } from '@common/types/tools'
 import { isEventInsideNode } from '@common/utils/dom'
 import Button from '@editor/components/common/Button'
 import Panel from '@editor/components/common/Panel'
-import React, { useEffect, useRef, useState, useTransition } from 'react'
+import { useEffect, useRef, useState, useTransition } from 'react'
 import Tool from './Tool'
 import './ToolbarGroup.css'
 
@@ -85,7 +85,7 @@ const ToolbarGroup = ({ activeTool, alignment, group, disabled = false, setActiv
       {isOpen && (
         <Panel alignment={alignment} position='top'>
           <div className='react-paint-editor-toolbargroup-panel-content' data-vertical={+group.vertical} ref={panelRef}>
-            {group.toolsType.map((toolType, i) => (
+            {group.toolsType.map(toolType => (
               <Tool
                 disabled={disabled}
                 key={toolType.id}

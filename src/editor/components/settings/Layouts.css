@@ -110,6 +110,11 @@
   top: unset;
 }
 
+.react-paint-editor-layouts-panel.react-paint-editor-layouts-panel.react-paint-editor-layouts-panel[data-edit='0'] {
+  bottom: 0px;
+  top: unset;
+}
+
 .react-paint-editor-layouts-panel-content {
   display: flex;
   flex-direction: column;

@@ -33,7 +33,7 @@ export const roundForGrid = (value: number, settings: UtilsSettings, gridOffset 
   return valueWithOffset + step / 2 - ((valueWithOffset + step / 2) % step) - gridOffset
 }
 
-export const roundRotationForGrid = (rotation: number, settings: UtilsSettings, gridOffset = 0) => {
+export const roundRotationForGrid = (rotation: number, settings: UtilsSettings) => {
   if (!settings.gridGap) return roundValues(rotation, 3)
   return rotation + Math.PI / GRID_ROTATION_STEPS / 2 - ((rotation + Math.PI / GRID_ROTATION_STEPS / 2) % (Math.PI / GRID_ROTATION_STEPS))
 }

@@ -1,9 +1,11 @@
 import type { UtilsSettings } from '@canvas/constants/app'
 import { transformCanvas, updateCanvasContext } from '@canvas/utils/canvas'
+import { getRectIntersection } from '@canvas/utils/intersect'
 import { drawLineSelection } from '@canvas/utils/selection/lineSelection'
 import { drawSelectionRect } from '@canvas/utils/selection/rectSelection'
 import { drawFrame } from '@canvas/utils/selection/selectionFrame'
 import { roundForGrid, roundRotationForGrid } from '@canvas/utils/transform'
+import { getCurrentView } from '@canvas/utils/zoom'
 import type { SelectionModeData, SelectionModeResize } from '@common/types/Mode'
 import type { DrawableShape, Point, Rect, ShapeEntity } from '@common/types/Shapes'
 import type { CustomTool } from '@common/types/tools'
@@ -48,7 +50,10 @@ export const createShape = (
 
 export const drawShape = (ctx: CanvasRenderingContext2D, shape: DrawableShape, settings: UtilsSettings): void => {
   if (shape.visible === false) return
-  const { center } = getShapeInfos(shape, settings)
+  const { center, outerBorders } = getShapeInfos(shape, settings)
+  const currentView = getCurrentView(settings)
+  const isInView = !!getRectIntersection(outerBorders, currentView)
+  if (!isInView) return
   transformCanvas(ctx, settings, shape.rotation, center)
   updateCanvasContext(ctx, shape.style)
 
@@ -122,10 +127,23 @@ const getShapeCenter = (borders: Rect): Point => {
   return [borders.x + borders.width / 2, borders.y + borders.height / 2]
 }
 
-export const getShapeInfos = (shape: DrawableShape, settings: UtilsSettings) => {
+export const getShapeInfos = (
+  shape: DrawableShape,
+  settings: UtilsSettings
+): {
+  borders: Rect
+  outerBorders: Rect
+  center: Point
+} => {
   const borders = getShapeBorders(shape, settings)
+  const outerBorders = {
+    x: borders.x - (shape.style?.lineWidth ?? 0),
+    y: borders.y - (shape.style?.lineWidth ?? 0),
+    width: borders.width + 2 * (shape.style?.lineWidth ?? 0),
+    height: borders.height + 2 * (shape.style?.lineWidth ?? 0)
+  }
   const center = getShapeCenter(borders)
-  return { borders, center }
+  return { borders, outerBorders, center }
 }
 
 export const rotateShape = <T extends DrawableShape>(
@@ -177,7 +195,7 @@ export const resizeShape = <T extends DrawableShape>(
     case 'text':
       return resizeText(ctx, cursorPosition, originalShape, selectionMode as SelectionModeResize, settings) as T
     case 'picture':
-      return resizePicture(cursorPosition, originalShape, selectionMode as SelectionModeResize, settings, !isShiftPressed) as T
+      return resizePicture(cursorPosition, originalShape, selectionMode as SelectionModeResize, settings) as T
     default:
       return originalShape
   }

@@ -1,5 +1,3 @@
-import React from 'react'
-
 import type { ShapeEntity } from '@common/types/Shapes'
 import Button from '@editor/components/common/Button'
 import { trashIcon } from '@editor/constants/icons'

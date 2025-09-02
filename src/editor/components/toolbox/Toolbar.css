@@ -11,6 +11,7 @@
   background: var(--react-paint-editor-app-toolbar-bg);
   border-bottom: 1px solid var(--react-paint-editor-app-divider-color);
   box-sizing: border-box;
+  min-width: var(--react-paint-editor-toolbar-minwidth);
 }
 
 .react-paint-editor-toolbar-modal {

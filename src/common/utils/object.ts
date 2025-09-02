@@ -8,9 +8,11 @@ export const omit = <T extends Record<string, unknown>>(keys: string[], obj: T):
   return result
 }
 
+// biome-ignore lint/suspicious/noExplicitAny: any is used to allow flexibility in the type of the value
 export const set = <T extends Record<string, any> | unknown[]>(path: string | number | (string | number)[], value: unknown, obj: T): T => {
   const result = (Array.isArray(obj) ? [...obj] : { ...obj }) as T
   const chunks = Array.isArray(path) ? path : typeof path === 'string' ? path.split('.') : [path]
+  // biome-ignore lint/suspicious/noExplicitAny: any is used to allow flexibility in the type of the value
   chunks.reduce<Record<string, any>>((acc, chunk, index) => {
     acc[chunk] = isRecord(acc[chunk])
       ? { ...acc[chunk] }
@@ -72,7 +74,7 @@ export const isEqual = (a: unknown, b: unknown): boolean => {
   }
 
   for (const key of keysA) {
-    //@ts-ignore unchecked access is intentional
+    //@ts-expect-error unchecked access is intentional
     if (!keysB.includes(key) || !isEqual(a[key], b[key])) {
       return false
     }
