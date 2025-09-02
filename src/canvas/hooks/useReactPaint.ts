@@ -277,7 +277,6 @@ const useReactPaint = ({
       'user-select': 'none',
       'touch-action': 'none',
       display: 'block',
-      'grid-area': '1 / 1',
       width: '100%',
       transformOrigin: 'left top',
       transform:

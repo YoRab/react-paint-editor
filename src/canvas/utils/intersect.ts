@@ -170,7 +170,7 @@ export function getRectIntersection(rect1: Rect, rect2: Rect): Rect | undefined 
   return undefined
 }
 
-const reactSearch = ({
+const rectSearch = ({
   ctx,
   path,
   rect,
@@ -262,7 +262,7 @@ export const checkSelectionFrameCollision = (
           path.moveTo(...point1)
           path.lineTo(...point2)
 
-          const isPathInFrame = reactSearch({ ctx, path, rect: pointsCollision, offset: COLLISION_OFFSET, checkFill: false })
+          const isPathInFrame = rectSearch({ ctx, path, rect: pointsCollision, offset: COLLISION_OFFSET, checkFill: false })
           if (isPathInFrame) return true
         }
       }
@@ -272,5 +272,5 @@ export const checkSelectionFrameCollision = (
 
   const checkFill = !!(shape.style?.fillColor && shape.style?.fillColor !== 'transparent')
 
-  return reactSearch({ ctx, path: shape.path, rect: frameCollision, offset: COLLISION_OFFSET, checkFill })
+  return rectSearch({ ctx, path: shape.path, rect: frameCollision, offset: COLLISION_OFFSET, checkFill })
 }
