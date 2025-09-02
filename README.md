@@ -1,7 +1,4 @@
-- annotationProps ?
-- Modes annotation / whiteboard
-- stories + doc
-- big clean
+
 
 # React Paint
 

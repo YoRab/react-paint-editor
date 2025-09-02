@@ -11,7 +11,7 @@ const PictureWithAnnotations = ({ src, alt }: { src: string; alt: string }) => {
     width: dimensions?.[0],
     height: dimensions?.[1],
     options: {
-      canZoom: 'always'
+      canZoom: isEdit ? 'always' : 'never'
     }
   })
 
@@ -32,7 +32,7 @@ const PictureWithAnnotations = ({ src, alt }: { src: string; alt: string }) => {
       </div>
       <div className='annotations-container'>
         <div className='pic-container'>
-          <img src={src} alt={alt} className='picture' style={annotationsProps.style} onLoad={onPictureLoad} />
+          <img src={src} alt={alt} style={annotationsProps.style} className='picture' onLoad={onPictureLoad} />
         </div>
         {dimensions && (
           <Editor editorProps={editorProps} className={`annotations ${isEdit ? 'editor' : 'view'}`}>

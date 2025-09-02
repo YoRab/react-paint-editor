@@ -88,10 +88,13 @@ const Editor = ({ editorProps, className, style, options, children }: EditorProp
     ...options
   }
 
+  const withZoom = settings.size === 'infinite' || settings.features.zoom
+
   const [isLoading, setIsLoading] = useState(false)
   const [isLayoutPanelShown, setIsLayoutPanelShown] = useState(false)
-  const [isZoomPanelShown, setIsZoomPanelShown] = useState(settings.features.zoom)
+  const [isZoomPanelOpen, setIsZoomPanelShown] = useState(withZoom)
 
+  const isZoomPanelShown = withZoom && isZoomPanelOpen
   const gridFormat: GridLabelType =
     gridGap >= GridValues.large ? 'large' : gridGap >= GridValues.medium ? 'medium' : gridGap >= GridValues.small ? 'small' : 'none'
 
