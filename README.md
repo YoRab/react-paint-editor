@@ -1,5 +1,3 @@
-
-
 # React Paint
 
 An open-source canvas-based library for React used for image annotation or as a digital whiteboard
@@ -153,6 +151,8 @@ you will find other usages in <a href="https://github.com/YoRab/react-paint-edit
 | `isBrushShapeDoneOnMouseUp` | `boolean` | *Optional*. Choose whether drawing brush shape after releasing mouse should create a new shape or not | `true` |
 | `canvasSelectionPadding` | `boolean` | *Optional*. Padding between shape and selection frame | `0` |
 | `availableTools` | `CustomToolInput[]` | *Optional*. List of available tools. See CustomTool for more details | `` |
+| `size` | `'fixed' \| 'infinite'` | *Optional*. Choose canvas size mode. `fixed` canvas is bound within its width and height, `infinite` canvas has no bound  | `fixed` |
+| `canZoom` | `'never' \| 'always'` | *Optional*. Choose wether zoom is available `never` zoom is not available, `always` zoom is available  | `never` |
 
 
 
