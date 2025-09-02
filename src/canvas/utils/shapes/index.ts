@@ -50,9 +50,9 @@ export const createShape = (
 
 export const drawShape = (ctx: CanvasRenderingContext2D, shape: DrawableShape, settings: UtilsSettings): void => {
   if (shape.visible === false) return
-  const { center, borders } = getShapeInfos(shape, settings)
+  const { center, outerBorders } = getShapeInfos(shape, settings)
   const currentView = getCurrentView(settings)
-  const isInView = !!getRectIntersection(borders, currentView)
+  const isInView = !!getRectIntersection(outerBorders, currentView)
   if (!isInView) return
   transformCanvas(ctx, settings, shape.rotation, center)
   updateCanvasContext(ctx, shape.style)
@@ -127,10 +127,23 @@ const getShapeCenter = (borders: Rect): Point => {
   return [borders.x + borders.width / 2, borders.y + borders.height / 2]
 }
 
-export const getShapeInfos = (shape: DrawableShape, settings: UtilsSettings) => {
+export const getShapeInfos = (
+  shape: DrawableShape,
+  settings: UtilsSettings
+): {
+  borders: Rect
+  outerBorders: Rect
+  center: Point
+} => {
   const borders = getShapeBorders(shape, settings)
+  const outerBorders = {
+    x: borders.x - (shape.style?.lineWidth ?? 0),
+    y: borders.y - (shape.style?.lineWidth ?? 0),
+    width: borders.width + 2 * (shape.style?.lineWidth ?? 0),
+    height: borders.height + 2 * (shape.style?.lineWidth ?? 0)
+  }
   const center = getShapeCenter(borders)
-  return { borders, center }
+  return { borders, outerBorders, center }
 }
 
 export const rotateShape = <T extends DrawableShape>(
