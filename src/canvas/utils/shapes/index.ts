@@ -152,7 +152,8 @@ export const rotateShape = <T extends DrawableShape>(
   originalShape: T,
   originalCursorPosition: Point,
   shapeCenter: Point,
-  settings: UtilsSettings
+  settings: UtilsSettings,
+  isShiftPressed: boolean
 ) => {
   const p1x = shapeCenter[0] - originalCursorPosition[0]
   const p1y = shapeCenter[1] - originalCursorPosition[1]
@@ -162,7 +163,7 @@ export const rotateShape = <T extends DrawableShape>(
   return {
     ...shape,
     ...{
-      rotation: roundRotationForGrid(rotation, settings)
+      rotation: roundRotationForGrid(rotation, settings, isShiftPressed)
     }
   }
 }

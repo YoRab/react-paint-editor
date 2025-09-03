@@ -33,8 +33,8 @@ export const roundForGrid = (value: number, settings: UtilsSettings, gridOffset 
   return valueWithOffset + step / 2 - ((valueWithOffset + step / 2) % step) - gridOffset
 }
 
-export const roundRotationForGrid = (rotation: number, settings: UtilsSettings) => {
-  if (!settings.gridGap) return roundValues(rotation, 3)
+export const roundRotationForGrid = (rotation: number, settings: UtilsSettings, isShiftPressed: boolean) => {
+  if (!settings.gridGap && !isShiftPressed) return roundValues(rotation, 3)
   return rotation + Math.PI / GRID_ROTATION_STEPS / 2 - ((rotation + Math.PI / GRID_ROTATION_STEPS / 2) % (Math.PI / GRID_ROTATION_STEPS))
 }
 
@@ -53,7 +53,15 @@ export const transformShape = (
     case 'translate':
       return translateShape(cursorPosition, selectionMode.originalShape, selectionMode.cursorStartPosition, settings)
     case 'rotate':
-      return rotateShape(shape, cursorPosition, selectionMode.originalShape, selectionMode.cursorStartPosition, selectionMode.center, settings)
+      return rotateShape(
+        shape,
+        cursorPosition,
+        selectionMode.originalShape,
+        selectionMode.cursorStartPosition,
+        selectionMode.center,
+        settings,
+        isShiftPressed
+      )
     case 'resize':
       return resizeShape(ctx, shape, cursorPosition, selectionMode.originalShape, selectionMode, settings, isShiftPressed, isAltPressed)
     default:
