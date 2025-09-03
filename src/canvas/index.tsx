@@ -59,6 +59,7 @@ const App = ({ options, className, style, canvasProps }: AppProps) => {
   const containerRef = useRef<HTMLDivElement>(null)
 
   const [isShiftPressed, setShiftPressed] = useState<boolean>(false)
+  const [isAltPressed, setAltPressed] = useState<boolean>(false)
 
   const pasteShape = useCallback(
     (shape: ShapeEntity) => {
@@ -88,7 +89,8 @@ const App = ({ options, className, style, canvasProps }: AppProps) => {
     updateShape,
     backwardShape,
     forwardShape,
-    setShiftPressed
+    setShiftPressed,
+    setAltPressed
   })
   useResizeObserver({ element: containerRef, onResized })
 
@@ -134,6 +136,7 @@ const App = ({ options, className, style, canvasProps }: AppProps) => {
         selectionWidth={canvasSelectionWidth}
         isEditMode={isEditMode}
         isShiftPressed={isShiftPressed}
+        isAltPressed={isAltPressed}
         withFrameSelection={withFrameSelection}
         withSkeleton={withSkeleton}
       />

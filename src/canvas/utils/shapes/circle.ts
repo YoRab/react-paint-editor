@@ -83,9 +83,17 @@ export const resizeCircle = (
   cursorPosition: Point,
   originalShape: DrawableShape<'circle'>,
   selectionMode: SelectionModeResize,
-  settings: UtilsSettings
+  settings: UtilsSettings,
+  resizeFromCenter: boolean
 ): DrawableShape<'circle'> => {
-  const { borderX, borderHeight, borderY, borderWidth } = resizeRectSelection(cursorPosition, originalShape, selectionMode, settings, true)
+  const { borderX, borderHeight, borderY, borderWidth } = resizeRectSelection(
+    cursorPosition,
+    originalShape,
+    selectionMode,
+    settings,
+    true,
+    resizeFromCenter
+  )
 
   return buildPath(
     {

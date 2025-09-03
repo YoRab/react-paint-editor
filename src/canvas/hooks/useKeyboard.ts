@@ -13,6 +13,8 @@ const KeyboardCode = {
   Backspace: 'Backspace',
   Escape: 'Escape',
   Shift: 'Shift',
+  Alt: 'Alt',
+  Option: 'Option',
   z: 'z',
   Z: 'Z',
   y: 'y',
@@ -34,6 +36,7 @@ type UseKeyboardType = {
   backwardShape: () => void
   forwardShape: () => void
   setShiftPressed: (value: React.SetStateAction<boolean>) => void
+  setAltPressed: (value: React.SetStateAction<boolean>) => void
   isEditingText: boolean
   settings: UtilsSettings
 }
@@ -49,7 +52,8 @@ const useKeyboard = ({
   updateShape,
   backwardShape,
   forwardShape,
-  setShiftPressed
+  setShiftPressed,
+  setAltPressed
 }: UseKeyboardType) => {
   const [copiedShape, setCopiedShape] = useState<ShapeEntity | undefined>(undefined)
 
@@ -74,6 +78,10 @@ const useKeyboard = ({
         case KeyboardCode.Shift:
           setShiftPressed(false)
           break
+        case KeyboardCode.Alt:
+        case KeyboardCode.Option:
+          setAltPressed(false)
+          break
       }
     }
 
@@ -96,9 +104,16 @@ const useKeyboard = ({
           return
         }
       }
-
       if (e.key === KeyboardCode.Shift) {
+        e.preventDefault()
+        e.stopPropagation()
         setShiftPressed(true)
+        return
+      }
+      if (e.key === KeyboardCode.Alt || e.key === KeyboardCode.Option) {
+        e.preventDefault()
+        e.stopPropagation()
+        setAltPressed(true)
         return
       }
 
@@ -159,7 +174,8 @@ const useKeyboard = ({
     pasteShape,
     backwardShape,
     forwardShape,
-    setShiftPressed
+    setShiftPressed,
+    setAltPressed
   ])
 
   return {}

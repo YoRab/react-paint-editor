@@ -144,9 +144,17 @@ export const resizePicture = (
   cursorPosition: Point,
   originalShape: DrawableShape<'picture'>,
   selectionMode: SelectionModeResize,
-  settings: UtilsSettings
+  settings: UtilsSettings,
+  resizeFromCenter: boolean
 ): DrawableShape<'picture'> => {
-  const { borderX, borderHeight, borderY, borderWidth } = resizeRectSelection(cursorPosition, originalShape, selectionMode, settings, true)
+  const { borderX, borderHeight, borderY, borderWidth } = resizeRectSelection(
+    cursorPosition,
+    originalShape,
+    selectionMode,
+    settings,
+    true,
+    resizeFromCenter
+  )
   return buildPath(
     {
       ...originalShape,

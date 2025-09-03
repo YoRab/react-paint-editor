@@ -103,6 +103,7 @@ type DrawerType = {
   selectionMode: SelectionModeData<number | Point>
   setSelectionMode: React.Dispatch<React.SetStateAction<SelectionModeData<number | Point>>>
   isShiftPressed: boolean
+  isAltPressed: boolean
   withFrameSelection: boolean
   withSkeleton: boolean
 }
@@ -135,6 +136,7 @@ const Canvas = React.forwardRef<HTMLCanvasElement, DrawerType>(
       settings,
       isEditMode,
       isShiftPressed,
+      isAltPressed,
       withFrameSelection,
       withSkeleton
     },
@@ -167,6 +169,7 @@ const Canvas = React.forwardRef<HTMLCanvasElement, DrawerType>(
       saveShapes,
       setSelectionMode,
       isShiftPressed,
+      isAltPressed,
       withFrameSelection,
       settings
     })
