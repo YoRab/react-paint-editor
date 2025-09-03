@@ -2,7 +2,7 @@ import type { UtilsSettings } from '@canvas/constants/app'
 import { createRecSelectionPath, resizeRectSelection } from '@canvas/utils/selection/rectSelection'
 import { getShapeInfos } from '@canvas/utils/shapes/index'
 import { createBrushPath } from '@canvas/utils/shapes/path'
-import { roundForGrid, roundValues, scalePoint } from '@canvas/utils/transform'
+import { boundVectorToSingleAxis, roundForGrid, roundValues, scalePoint } from '@canvas/utils/transform'
 import type { SelectionModeResize } from '@common/types/Mode'
 import type { DrawableShape, Point, Rect, ShapeEntity } from '@common/types/Shapes'
 import type { ToolsSettingsType } from '@common/types/tools'
@@ -78,15 +78,16 @@ export const translateBrush = <U extends DrawableShape<'brush'>>(
   cursorPosition: Point,
   originalShape: U,
   originalCursorPosition: Point,
-  settings: UtilsSettings
+  settings: UtilsSettings,
+  singleAxis: boolean
 ) => {
   const { borders } = getShapeInfos(originalShape, settings)
-  const translationX = settings.gridGap
-    ? roundForGrid(borders.x + cursorPosition[0] - originalCursorPosition[0], settings) - borders.x
-    : cursorPosition[0] - originalCursorPosition[0]
-  const translationY = settings.gridGap
-    ? roundForGrid(borders.y + cursorPosition[1] - originalCursorPosition[1], settings) - borders.y
-    : cursorPosition[1] - originalCursorPosition[1]
+  const translationVector = boundVectorToSingleAxis(
+    [cursorPosition[0] - originalCursorPosition[0], cursorPosition[1] - originalCursorPosition[1]],
+    singleAxis
+  )
+  const translationX = settings.gridGap ? roundForGrid(borders.x + translationVector[0], settings) - borders.x : translationVector[0]
+  const translationY = settings.gridGap ? roundForGrid(borders.y + translationVector[1], settings) - borders.y : translationVector[1]
   return buildPath(
     {
       ...originalShape,

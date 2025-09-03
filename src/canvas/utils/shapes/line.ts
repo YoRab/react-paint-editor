@@ -4,7 +4,7 @@ import { getPointPositionAfterCanvasTransformation } from '@canvas/utils/interse
 import { createLineSelectionPath } from '@canvas/utils/selection/lineSelection'
 import { getShapeInfos } from '@canvas/utils/shapes/index'
 import { createLinePath } from '@canvas/utils/shapes/path'
-import { roundForGrid, shortenLine } from '@canvas/utils/transform'
+import { boundVectorToSingleAxis, roundForGrid, shortenLine } from '@canvas/utils/transform'
 import { getAngleFromVector, rotatePoint } from '@canvas/utils/trigo'
 import type { SelectionModeResize } from '@common/types/Mode'
 import type { DrawableShape, Line, Point, Rect, ShapeEntity, StyleShape, Triangle } from '@common/types/Shapes'
@@ -128,14 +128,20 @@ export const translateLine = <U extends DrawableShape<'line'>>(
   cursorPosition: Point,
   originalShape: U,
   originalCursorPosition: Point,
-  settings: UtilsSettings
+  settings: UtilsSettings,
+  singleAxis: boolean
 ) => {
+  const translationVector = boundVectorToSingleAxis(
+    [cursorPosition[0] - originalCursorPosition[0], cursorPosition[1] - originalCursorPosition[1]],
+    singleAxis
+  )
+
   return buildPath(
     {
       ...originalShape,
       points: originalShape.points.map(([x, y]) => [
-        roundForGrid(x + cursorPosition[0] - originalCursorPosition[0], settings),
-        roundForGrid(y + cursorPosition[1] - originalCursorPosition[1], settings)
+        roundForGrid(x + translationVector[0], settings),
+        roundForGrid(y + translationVector[1], settings)
       ]) as [Point, Point]
     },
     settings

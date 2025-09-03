@@ -214,28 +214,29 @@ export const translateShape = (
   cursorPosition: Point,
   originalShape: ShapeEntity,
   originalCursorPosition: Point,
-  settings: UtilsSettings
+  settings: UtilsSettings,
+  isShiftPressed: boolean
 ): ShapeEntity => {
   switch (originalShape.type) {
     case 'rect':
     case 'square':
-      return translateRect(cursorPosition, originalShape, originalCursorPosition, settings)
+      return translateRect(cursorPosition, originalShape, originalCursorPosition, settings, isShiftPressed)
     case 'ellipse':
-      return translateEllipse(cursorPosition, originalShape, originalCursorPosition, settings)
+      return translateEllipse(cursorPosition, originalShape, originalCursorPosition, settings, isShiftPressed)
     case 'circle':
-      return translateCircle(cursorPosition, originalShape, originalCursorPosition, settings)
+      return translateCircle(cursorPosition, originalShape, originalCursorPosition, settings, isShiftPressed)
     case 'picture':
-      return translatePicture(cursorPosition, originalShape, originalCursorPosition, settings)
+      return translatePicture(cursorPosition, originalShape, originalCursorPosition, settings, isShiftPressed)
     case 'text':
-      return translateText(cursorPosition, originalShape, originalCursorPosition, settings)
+      return translateText(cursorPosition, originalShape, originalCursorPosition, settings, isShiftPressed)
     case 'line':
-      return translateLine(cursorPosition, originalShape, originalCursorPosition, settings)
+      return translateLine(cursorPosition, originalShape, originalCursorPosition, settings, isShiftPressed)
     case 'polygon':
-      return translatePolygon(cursorPosition, originalShape, originalCursorPosition, settings)
+      return translatePolygon(cursorPosition, originalShape, originalCursorPosition, settings, isShiftPressed)
     case 'curve':
-      return translateCurve(cursorPosition, originalShape, originalCursorPosition, settings)
+      return translateCurve(cursorPosition, originalShape, originalCursorPosition, settings, isShiftPressed)
     case 'brush':
-      return translateBrush(cursorPosition, originalShape, originalCursorPosition, settings)
+      return translateBrush(cursorPosition, originalShape, originalCursorPosition, settings, isShiftPressed)
     default:
       return originalShape
   }
@@ -328,7 +329,7 @@ export const drawSelectionFrame = ({
 
 export const copyShape = (shape: ShapeEntity, settings: UtilsSettings) => {
   return {
-    ...translateShape([20, 20], shape, [0, 0], settings),
+    ...translateShape([20, 20], shape, [0, 0], settings, false),
     id: uniqueId(`${shape.type}_`)
   } as ShapeEntity
 }

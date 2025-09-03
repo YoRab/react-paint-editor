@@ -1,6 +1,6 @@
 import type { UtilsSettings } from '@canvas/constants/app'
 import { createRecSelectionPath, resizeRectSelection } from '@canvas/utils/selection/rectSelection'
-import { roundForGrid } from '@canvas/utils/transform'
+import { boundVectorToSingleAxis, roundForGrid } from '@canvas/utils/transform'
 import type { SelectionModeResize } from '@common/types/Mode'
 import type { Circle, DrawableShape, Point, Rect, ShapeEntity } from '@common/types/Shapes'
 import type { ToolsSettingsType } from '@common/types/tools'
@@ -67,13 +67,19 @@ export const translateCircle = <U extends DrawableShape<'circle'>>(
   cursorPosition: Point,
   originalShape: U,
   originalCursorPosition: Point,
-  settings: UtilsSettings
+  settings: UtilsSettings,
+  singleAxis: boolean
 ) => {
+  const translationVector = boundVectorToSingleAxis(
+    [cursorPosition[0] - originalCursorPosition[0], cursorPosition[1] - originalCursorPosition[1]],
+    singleAxis
+  )
+
   return buildPath(
     {
       ...originalShape,
-      x: roundForGrid(originalShape.x + cursorPosition[0] - originalCursorPosition[0], settings),
-      y: roundForGrid(originalShape.y + cursorPosition[1] - originalCursorPosition[1], settings)
+      x: roundForGrid(originalShape.x + translationVector[0], settings),
+      y: roundForGrid(originalShape.y + translationVector[1], settings)
     },
     settings
   )
