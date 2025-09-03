@@ -1,6 +1,7 @@
 import type { UtilsSettings } from '@canvas/constants/app'
 import { copyShape, translateShape } from '@canvas/utils/shapes'
 import type { Point, ShapeEntity } from '@common/types/Shapes'
+import { isMacOs } from '@common/utils/util'
 import { useEffect, useState } from 'react'
 
 const KeyboardCode = {
@@ -81,10 +82,14 @@ const useKeyboard = ({
         if (e.key === KeyboardCode.Z || e.key === KeyboardCode.z) {
           e.preventDefault()
           e.stopPropagation()
-          backwardShape()
+          if (e.shiftKey) {
+            forwardShape()
+          } else {
+            backwardShape()
+          }
           return
         }
-        if (e.key === KeyboardCode.Y || e.key === KeyboardCode.y) {
+        if (!isMacOs() && (e.key === KeyboardCode.Y || e.key === KeyboardCode.y)) {
           e.preventDefault()
           e.stopPropagation()
           forwardShape()
