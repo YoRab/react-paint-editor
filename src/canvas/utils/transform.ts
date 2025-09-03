@@ -44,7 +44,8 @@ export const transformShape = (
   cursorPosition: Point,
   selectionMode: SelectionModeData<Point | number>,
   settings: UtilsSettings,
-  isShiftPressed: boolean
+  isShiftPressed: boolean,
+  isAltPressed: boolean
 ): ShapeEntity => {
   switch (selectionMode.mode) {
     case 'brush':
@@ -54,7 +55,7 @@ export const transformShape = (
     case 'rotate':
       return rotateShape(shape, cursorPosition, selectionMode.originalShape, selectionMode.cursorStartPosition, selectionMode.center, settings)
     case 'resize':
-      return resizeShape(ctx, shape, cursorPosition, selectionMode.originalShape, selectionMode, settings, isShiftPressed)
+      return resizeShape(ctx, shape, cursorPosition, selectionMode.originalShape, selectionMode, settings, isShiftPressed, isAltPressed)
     default:
       return shape
   }

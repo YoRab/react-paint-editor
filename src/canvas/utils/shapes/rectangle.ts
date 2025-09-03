@@ -103,9 +103,17 @@ export const resizeRect = <T extends rectish>(
   originalShape: DrawableShape<T>,
   selectionMode: SelectionModeResize,
   settings: UtilsSettings,
-  keepRatio = false
+  keepRatio = false,
+  resizeFromCenter = false
 ): DrawableShape<T> => {
-  const { borderX, borderHeight, borderY, borderWidth } = resizeRectSelection(cursorPosition, originalShape, selectionMode, settings, keepRatio)
+  const { borderX, borderHeight, borderY, borderWidth } = resizeRectSelection(
+    cursorPosition,
+    originalShape,
+    selectionMode,
+    settings,
+    keepRatio,
+    resizeFromCenter
+  )
   return buildPath(
     {
       ...originalShape,

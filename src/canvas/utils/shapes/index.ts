@@ -174,7 +174,8 @@ export const resizeShape = <T extends DrawableShape>(
   originalShape: T,
   selectionMode: SelectionModeData<Point | number>,
   settings: UtilsSettings,
-  isShiftPressed: boolean
+  isShiftPressed: boolean,
+  isAltPressed: boolean
 ): T => {
   switch (originalShape.type) {
     case 'line':
@@ -184,18 +185,25 @@ export const resizeShape = <T extends DrawableShape>(
     case 'curve':
       return resizeCurve(cursorPosition, originalShape, selectionMode as SelectionModeResize<number>, settings) as T
     case 'brush':
-      return resizeBrush(cursorPosition, originalShape, selectionMode as SelectionModeResize, settings, isShiftPressed) as T
+      return resizeBrush(cursorPosition, originalShape, selectionMode as SelectionModeResize, settings, isShiftPressed, isAltPressed) as T
     case 'circle':
-      return resizeCircle(cursorPosition, originalShape, selectionMode as SelectionModeResize, settings) as T
+      return resizeCircle(cursorPosition, originalShape, selectionMode as SelectionModeResize, settings, isAltPressed) as T
     case 'ellipse':
-      return resizeEllipse(cursorPosition, originalShape, selectionMode as SelectionModeResize, settings, isShiftPressed) as T
+      return resizeEllipse(cursorPosition, originalShape, selectionMode as SelectionModeResize, settings, isShiftPressed, isAltPressed) as T
     case 'rect':
     case 'square':
-      return resizeRect(cursorPosition, originalShape, selectionMode as SelectionModeResize, settings, shape.type === 'square' || isShiftPressed) as T
+      return resizeRect(
+        cursorPosition,
+        originalShape,
+        selectionMode as SelectionModeResize,
+        settings,
+        shape.type === 'square' || isShiftPressed,
+        isAltPressed
+      ) as T
     case 'text':
-      return resizeText(ctx, cursorPosition, originalShape, selectionMode as SelectionModeResize, settings) as T
+      return resizeText(ctx, cursorPosition, originalShape, selectionMode as SelectionModeResize, settings, isAltPressed) as T
     case 'picture':
-      return resizePicture(cursorPosition, originalShape, selectionMode as SelectionModeResize, settings) as T
+      return resizePicture(cursorPosition, originalShape, selectionMode as SelectionModeResize, settings, isAltPressed) as T
     default:
       return originalShape
   }

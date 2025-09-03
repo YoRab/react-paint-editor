@@ -85,9 +85,17 @@ export const resizeEllipse = (
   originalShape: DrawableShape<'ellipse'>,
   selectionMode: SelectionModeResize,
   settings: UtilsSettings,
-  keepRatio = false
+  keepRatio = false,
+  resizeFromCenter = false
 ): DrawableShape<'ellipse'> => {
-  const { borderX, borderHeight, borderY, borderWidth } = resizeRectSelection(cursorPosition, originalShape, selectionMode, settings, keepRatio)
+  const { borderX, borderHeight, borderY, borderWidth } = resizeRectSelection(
+    cursorPosition,
+    originalShape,
+    selectionMode,
+    settings,
+    keepRatio,
+    resizeFromCenter
+  )
 
   return buildPath(
     {

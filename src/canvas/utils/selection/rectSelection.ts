@@ -208,12 +208,33 @@ const calculateRectSelectionData = ({
   }
 }
 
+const adjustRectSelectionFromCenter = (
+  data: { borderX: number; borderWidth: number; borderY: number; borderHeight: number; center: Point; originalShape: DrawableShape },
+  borders: Rect,
+  isXinverted: boolean,
+  isYinverted: boolean
+) => {
+  const originalCenterX = borders.x + borders.width / 2
+  const originalCenterY = borders.y + borders.height / 2
+  const newWidth = isXinverted ? data.borderWidth * 2 + borders.width : Math.abs(borders.width + (data.borderWidth - borders.width) * 2)
+  const newHeight = isYinverted ? data.borderHeight * 2 + borders.height : Math.abs(borders.height + (data.borderHeight - borders.height) * 2)
+
+  return {
+    ...data,
+    borderHeight: newHeight,
+    borderWidth: newWidth,
+    borderX: originalCenterX - newWidth / 2,
+    borderY: originalCenterY - newHeight / 2
+  }
+}
+
 export const resizeRectSelection = (
   cursorPosition: Point,
   originalShape: DrawableShape,
   selectionMode: SelectionModeResize,
   settings: UtilsSettings,
-  keepRatio = false
+  keepRatio = false,
+  resizeFromCenter = false
 ): {
   borderX: number
   borderHeight: number
@@ -283,28 +304,16 @@ export const resizeRectSelection = (
     anchor: selectionMode.anchor[1]
   })
 
-  if (keepRatio) {
-    const data = resizeRectSelectionKeepingRatio(
-      vector,
-      borders,
-      center,
-      borderX,
-      borderWidth,
-      borderY,
-      borderHeight,
-      originalShape,
-      selectionMode,
-      settings
-    )
-    return calculateRectSelectionData(data)
-  }
+  const data = keepRatio
+    ? resizeRectSelectionKeepingRatio(vector, borders, center, borderX, borderWidth, borderY, borderHeight, originalShape, selectionMode, settings)
+    : {
+        borderX,
+        borderWidth,
+        borderY,
+        borderHeight,
+        center,
+        originalShape
+      }
 
-  return calculateRectSelectionData({
-    borderX,
-    borderWidth,
-    borderY,
-    borderHeight,
-    center,
-    originalShape
-  })
+  return calculateRectSelectionData(resizeFromCenter ? adjustRectSelectionFromCenter(data, borders, isXinverted, isYinverted) : data)
 }

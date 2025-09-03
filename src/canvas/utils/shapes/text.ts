@@ -123,9 +123,17 @@ export const resizeText = (
   cursorPosition: Point,
   originalShape: DrawableShape<'text'>,
   selectionMode: SelectionModeResize,
-  settings: UtilsSettings
+  settings: UtilsSettings,
+  resizeFromCenter: boolean
 ): DrawableShape<'text'> => {
-  const { borderX, borderHeight, borderY, borderWidth } = resizeRectSelection(cursorPosition, originalShape, selectionMode, settings, true)
+  const { borderX, borderHeight, borderY, borderWidth } = resizeRectSelection(
+    cursorPosition,
+    originalShape,
+    selectionMode,
+    settings,
+    true,
+    resizeFromCenter
+  )
 
   const newRect = buildPath(
     {

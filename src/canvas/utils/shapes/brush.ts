@@ -101,12 +101,20 @@ export const resizeBrush = (
   originalShape: DrawableShape<'brush'>,
   selectionMode: SelectionModeResize,
   settings: UtilsSettings,
-  keepRatio: boolean
+  keepRatio: boolean,
+  resizeFromCenter: boolean
 ): DrawableShape<'brush'> => {
   const { borders: originalBordersWithoutScale } = getShapeInfos({ ...originalShape, scaleX: 1, scaleY: 1 }, settings)
   const { borders: originalBorders } = getShapeInfos(originalShape, settings)
 
-  const { borderX, borderHeight, borderY, borderWidth } = resizeRectSelection(cursorPosition, originalShape, selectionMode, settings, keepRatio)
+  const { borderX, borderHeight, borderY, borderWidth } = resizeRectSelection(
+    cursorPosition,
+    originalShape,
+    selectionMode,
+    settings,
+    keepRatio,
+    resizeFromCenter
+  )
 
   const originalShapeWidth = Math.max(0, originalBordersWithoutScale.width - 2 * settings.selectionPadding)
   const originalShapeHeight = Math.max(0, originalBordersWithoutScale.height - 2 * settings.selectionPadding)

@@ -26,7 +26,8 @@ const handleMove = (
   setCanvasOffset: (offset: Point) => void,
   refreshSelectedShapes: (ctx: CanvasRenderingContext2D, cursorPosition: Point, settings: UtilsSettings) => void,
   settings: UtilsSettings,
-  isShiftPressed: boolean
+  isShiftPressed: boolean,
+  isAltPressed: boolean
 ) => {
   if (isTouchGesture(e) && e.touches.length > 1) return
 
@@ -74,7 +75,7 @@ const handleMove = (
   } else {
     const ctx = canvasRef.current?.getContext('2d')
     if (!ctx) return
-    const newShape = transformShape(ctx, selectedShape, cursorPosition, selectionMode, settings, isShiftPressed)
+    const newShape = transformShape(ctx, selectedShape, cursorPosition, selectionMode, settings, isShiftPressed, isAltPressed)
     updateSingleShape(newShape)
   }
 }
@@ -99,6 +100,7 @@ type UseCanvasType = {
   setSelectionFrame: React.Dispatch<React.SetStateAction<[Point, Point] | undefined>>
   drawCanvasRef: React.RefObject<HTMLCanvasElement | null>
   isShiftPressed: boolean
+  isAltPressed: boolean
   withFrameSelection: boolean
   settings: UtilsSettings
 }
@@ -124,6 +126,7 @@ const useDrawableCanvas = ({
   setSelectionMode,
   settings,
   isShiftPressed,
+  isAltPressed,
   withFrameSelection
 }: UseCanvasType) => {
   const [hoverMode, setHoverMode] = useState<HoverModeData>({
@@ -145,7 +148,8 @@ const useDrawableCanvas = ({
       setCanvasOffset,
       refreshSelectedShapes,
       settings,
-      isShiftPressed
+      isShiftPressed,
+      isAltPressed
     )
 
   useEffect(() => {
