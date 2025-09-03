@@ -233,7 +233,7 @@ export const SETTINGS_DEFAULT_POLYGON: ToolsPolygonSettings = {
   },
   fillColor: {
     values: STYLE_COLORS,
-    default: 'black'
+    default: 'transparent'
   },
   opacity: {
     min: 0,
@@ -266,7 +266,7 @@ export const SETTINGS_DEFAULT_CURVE: ToolsCurveSettings = {
   },
   fillColor: {
     values: STYLE_COLORS,
-    default: 'black'
+    default: 'transparent'
   },
   opacity: {
     min: 0,
