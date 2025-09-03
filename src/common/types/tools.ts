@@ -174,6 +174,13 @@ export type SettingsPointsCount = {
   }
 }
 
+export type SettingsClosedPoints = {
+  closedPoints: {
+    default: number
+    hidden?: boolean
+  }
+}
+
 export type ToolsRectSettings = SettingsStrokeColor & SettingsFillColor & SettingsOpacity & SettingsLineWidth & SettingsLineDash
 
 export type ToolsSquareSettings = SettingsStrokeColor & SettingsFillColor & SettingsOpacity & SettingsLineWidth & SettingsLineDash
@@ -192,7 +199,7 @@ export type ToolsPolygonSettings = SettingsOpacity &
   SettingsFillColor &
   SettingsLineWidth &
   SettingsLineDash &
-  SettingsPointsCount
+  SettingsClosedPoints
 
 export type ToolsCurveSettings = SettingsOpacity &
   SettingsStrokeColor &

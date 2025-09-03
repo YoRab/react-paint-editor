@@ -97,7 +97,8 @@ export const createPolygonPath = (polygon: DrawableShape<'polygon'>) => {
   for (const point of polygon.points.slice(1)) {
     path.lineTo(...point)
   }
-  path.lineTo(...polygon.points[0])
+
+  if (polygon.points.length > 2 && polygon.style?.closedPoints === 1) path.lineTo(...polygon.points[0])
 
   return path
 }

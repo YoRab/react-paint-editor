@@ -22,6 +22,7 @@ import RangeField from './RangeField'
 import './SettingsBar.css'
 import ZoomButton from '@editor/components/settings/ZoomButton'
 import ToggleField from './ToggleField'
+import ClosedPointsField from '@editor/components/settings/ClosedPointsField'
 
 const SETTING_WIDTH = 40
 
@@ -127,6 +128,16 @@ const SettingsItems = ({
             max={selectedShapeTool.settings.pointsCount.max}
             step={selectedShapeTool.settings.pointsCount.step}
             value={selectedShape.style?.pointsCount}
+          />
+        )}
+
+        {'closedPoints' in selectedShapeTool.settings && !selectedShapeTool.settings.closedPoints.hidden && (
+          <ClosedPointsField
+            selectedSettings={selectedSettings}
+            setSelectedSettings={setSelectedSettings}
+            disabled={disabled}
+            valueChanged={handleShapeStyleChange}
+            defaultValue={selectedShape.style?.closedPoints}
           />
         )}
 
@@ -260,6 +271,16 @@ const SettingsItems = ({
           max={activeTool.settings.pointsCount.max}
           step={activeTool.settings.pointsCount.step}
           value={activeTool.settings.pointsCount.default}
+        />
+      )}
+
+      {'closedPoints' in activeTool.settings && !activeTool.settings.closedPoints.hidden && (
+        <ClosedPointsField
+          selectedSettings={selectedSettings}
+          setSelectedSettings={setSelectedSettings}
+          disabled={disabled}
+          valueChanged={handleShapeStyleChange}
+          defaultValue={activeTool.settings?.closedPoints.default}
         />
       )}
 

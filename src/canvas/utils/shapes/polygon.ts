@@ -36,7 +36,7 @@ export const createPolygon = (
       toolId: shape.id,
       type: shape.type,
       id: uniqueId(`${shape.type}_`),
-      points: new Array(shape.settings.pointsCount.default).fill(cursorPosition),
+      points: new Array(2).fill(cursorPosition),
       rotation: 0,
       style: {
         opacity: shape.settings.opacity.default,
@@ -44,7 +44,7 @@ export const createPolygon = (
         strokeColor: shape.settings.strokeColor.default,
         lineWidth: shape.settings.lineWidth.default,
         lineDash: shape.settings.lineDash.default,
-        pointsCount: shape.settings.pointsCount.default
+        closedPoints: shape.settings.closedPoints.default
       }
     },
     settings

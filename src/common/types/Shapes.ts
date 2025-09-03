@@ -60,6 +60,7 @@ export type StyleShape = {
   lineDash?: number
   lineArrow?: number
   pointsCount?: number
+  closedPoints?: number
   fontFamily?: string
   fontItalic?: boolean
   fontBold?: boolean
