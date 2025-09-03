@@ -3,7 +3,7 @@ import { getPointPositionAfterCanvasTransformation } from '@canvas/utils/interse
 import { createLineSelectionPath } from '@canvas/utils/selection/lineSelection'
 import { getShapeInfos } from '@canvas/utils/shapes/index'
 import { createCurvePath } from '@canvas/utils/shapes/path'
-import { roundForGrid } from '@canvas/utils/transform'
+import { boundVectorToSingleAxis, roundForGrid } from '@canvas/utils/transform'
 import type { SelectionModeResize } from '@common/types/Mode'
 import type { DrawableShape, Point, ShapeEntity } from '@common/types/Shapes'
 import type { ToolsSettingsType } from '@common/types/tools'
@@ -80,9 +80,14 @@ export const translateCurve = <U extends DrawableShape<'curve'>>(
   cursorPosition: Point,
   originalShape: U,
   originalCursorPosition: Point,
-  settings: UtilsSettings
+  settings: UtilsSettings,
+  singleAxis: boolean
 ) => {
   const { borders } = getShapeInfos(originalShape, settings)
+  const translationVector = boundVectorToSingleAxis(
+    [cursorPosition[0] - originalCursorPosition[0], cursorPosition[1] - originalCursorPosition[1]],
+    singleAxis
+  )
 
   return buildPath(
     {
@@ -90,13 +95,10 @@ export const translateCurve = <U extends DrawableShape<'curve'>>(
       points: originalShape.points.map(([x, y]) =>
         settings.gridGap
           ? [
-              x + roundForGrid(borders.x + cursorPosition[0] - originalCursorPosition[0], settings) - borders.x,
-              y + roundForGrid(borders.y + cursorPosition[1] - originalCursorPosition[1], settings) - borders.y
+              x + roundForGrid(borders.x + translationVector[0], settings) - borders.x,
+              y + roundForGrid(borders.y + translationVector[1], settings) - borders.y
             ]
-          : [
-              roundForGrid(x + cursorPosition[0] - originalCursorPosition[0], settings),
-              roundForGrid(y + cursorPosition[1] - originalCursorPosition[1], settings)
-            ]
+          : [roundForGrid(x + translationVector[0], settings), roundForGrid(y + translationVector[1], settings)]
       )
     },
     settings

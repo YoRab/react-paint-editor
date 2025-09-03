@@ -3,7 +3,7 @@ import { getPointPositionAfterCanvasTransformation } from '@canvas/utils/interse
 import { createLineSelectionPath } from '@canvas/utils/selection/lineSelection'
 import { getShapeInfos } from '@canvas/utils/shapes/index'
 import { createPolygonPath } from '@canvas/utils/shapes/path'
-import { roundForGrid } from '@canvas/utils/transform'
+import { boundVectorToSingleAxis, roundForGrid } from '@canvas/utils/transform'
 import type { SelectionModeResize } from '@common/types/Mode'
 import type { DrawableShape, Point, Polygon, Rect, ShapeEntity } from '@common/types/Shapes'
 import type { ToolsSettingsType } from '@common/types/tools'
@@ -72,8 +72,14 @@ export const translatePolygon = <U extends DrawableShape<'polygon'>>(
   cursorPosition: Point,
   originalShape: U,
   originalCursorPosition: Point,
-  settings: UtilsSettings
+  settings: UtilsSettings,
+  singleAxis: boolean
 ) => {
+  const translationVector = boundVectorToSingleAxis(
+    [cursorPosition[0] - originalCursorPosition[0], cursorPosition[1] - originalCursorPosition[1]],
+    singleAxis
+  )
+
   const { borders } = getShapeInfos(originalShape, settings)
 
   return buildPath(
@@ -82,8 +88,8 @@ export const translatePolygon = <U extends DrawableShape<'polygon'>>(
       points: originalShape.points.map(([x, y]) =>
         settings.gridGap
           ? [
-              x + roundForGrid(borders.x + cursorPosition[0] - originalCursorPosition[0], settings) - borders.x,
-              y + roundForGrid(borders.y + cursorPosition[1] - originalCursorPosition[1], settings) - borders.y
+              x + roundForGrid(borders.x + translationVector[0], settings) - borders.x,
+              y + roundForGrid(borders.y + translationVector[1], settings) - borders.y
             ]
           : [
               roundForGrid(x + cursorPosition[0] - originalCursorPosition[0], settings),

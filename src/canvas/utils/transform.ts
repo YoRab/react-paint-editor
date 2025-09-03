@@ -38,6 +38,13 @@ export const roundRotationForGrid = (rotation: number, settings: UtilsSettings, 
   return rotation + Math.PI / GRID_ROTATION_STEPS / 2 - ((rotation + Math.PI / GRID_ROTATION_STEPS / 2) % (Math.PI / GRID_ROTATION_STEPS))
 }
 
+export const boundVectorToSingleAxis = (vector: Point, isShiftPressed: boolean) => {
+  if (isShiftPressed) {
+    return [Math.abs(vector[0]) > Math.abs(vector[1]) ? vector[0] : 0, Math.abs(vector[1]) > Math.abs(vector[0]) ? vector[1] : 0]
+  }
+  return vector
+}
+
 export const transformShape = (
   ctx: CanvasRenderingContext2D,
   shape: ShapeEntity,
@@ -51,7 +58,7 @@ export const transformShape = (
     case 'brush':
       return addNewPointToShape(shape as ShapeEntity<'brush'>, cursorPosition, settings)
     case 'translate':
-      return translateShape(cursorPosition, selectionMode.originalShape, selectionMode.cursorStartPosition, settings)
+      return translateShape(cursorPosition, selectionMode.originalShape, selectionMode.cursorStartPosition, settings, isShiftPressed)
     case 'rotate':
       return rotateShape(
         shape,

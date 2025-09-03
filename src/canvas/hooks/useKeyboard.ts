@@ -138,7 +138,7 @@ const useKeyboard = ({
         case KeyboardCode.ArrowUp:
           e.preventDefault()
           e.stopPropagation()
-          updateShape(translateShape(translationMap[e.key], selectedShape, [0, 0], settings))
+          updateShape(translateShape(translationMap[e.key], selectedShape, [0, 0], settings, false))
           break
         case KeyboardCode.Delete:
         case KeyboardCode.Backspace:
