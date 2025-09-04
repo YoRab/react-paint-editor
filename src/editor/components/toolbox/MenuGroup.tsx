@@ -142,7 +142,7 @@ const MenuGroup = ({
                 disabled={disabled}
                 loadFile={addPicture}
                 img={UPLOAD_PICTURE_TOOL.icon}
-                accept='image/png, image/gif, image/jpeg, image/svg+xml'
+                accept='image/png, image/gif, image/jpeg, image/svg+xml, image/webp'
               />
             )}
             {withUrlPicture && (
