@@ -59,7 +59,6 @@ export type StyleShape = {
   lineWidth?: number
   lineDash?: number
   lineArrow?: number
-  pointsCount?: number
   closedPoints?: number
   fontFamily?: string
   fontItalic?: boolean

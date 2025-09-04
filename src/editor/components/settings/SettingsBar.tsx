@@ -1,6 +1,6 @@
 import type { UtilsSettings } from '@canvas/constants/app'
 import { refreshShape } from '@canvas/utils/shapes'
-import { updateCurveLinesCount } from '@canvas/utils/shapes/curve'
+import { addCurveLine } from '@canvas/utils/shapes/curve'
 import { addPolygonLine } from '@canvas/utils/shapes/polygon'
 import { calculateTextFontSize } from '@canvas/utils/shapes/text'
 import type { ShapeEntity } from '@common/types/Shapes'
@@ -17,7 +17,6 @@ import FontFamilyField from './FontFamilyField'
 import LayoutButton from './LayoutButton'
 import LineArrowField from './LineArrowField'
 import LineTypeField from './LineTypeField'
-import PointsNumberField from './PointsNumberField'
 import RangeField from './RangeField'
 import './SettingsBar.css'
 import ZoomButton from '@editor/components/settings/ZoomButton'
@@ -115,19 +114,6 @@ const SettingsItems = ({
             defaultValue={selectedShape.style?.lineArrow}
             valueChanged={handleShapeStyleChange}
             values={selectedShapeTool.settings.lineArrow.values}
-          />
-        )}
-
-        {'pointsCount' in selectedShapeTool.settings && !selectedShapeTool.settings.pointsCount.hidden && (
-          <PointsNumberField
-            selectedSettings={selectedSettings}
-            setSelectedSettings={setSelectedSettings}
-            disabled={disabled}
-            valueChanged={handlePolygonLinesCount}
-            min={selectedShapeTool.settings.pointsCount.min}
-            max={selectedShapeTool.settings.pointsCount.max}
-            step={selectedShapeTool.settings.pointsCount.step}
-            value={selectedShape.style?.pointsCount}
           />
         )}
 
@@ -259,18 +245,6 @@ const SettingsItems = ({
           defaultValue={activeTool.settings.lineArrow.default}
           valueChanged={handleShapeStyleChange}
           values={activeTool.settings.lineArrow.values}
-        />
-      )}
-      {'pointsCount' in activeTool.settings && !activeTool.settings.pointsCount.hidden && (
-        <PointsNumberField
-          selectedSettings={selectedSettings}
-          setSelectedSettings={setSelectedSettings}
-          disabled={disabled}
-          valueChanged={handlePolygonLinesCount}
-          min={activeTool.settings.pointsCount.min}
-          max={activeTool.settings.pointsCount.max}
-          step={activeTool.settings.pointsCount.step}
-          value={activeTool.settings.pointsCount.default}
         />
       )}
 
@@ -444,8 +418,8 @@ const SettingsBar = ({
       if (selectedShape.type !== 'polygon' && selectedShape.type !== 'curve') return
       updateShape(
         selectedShape.type === 'polygon'
-          ? addPolygonLine(selectedShape, value as number, settings) // TODO inacurrate, curve to update later
-          : updateCurveLinesCount(selectedShape, value as number, settings),
+          ? addPolygonLine(selectedShape, value as number, settings)
+          : addCurveLine(selectedShape, value as number, settings),
         true
       )
       selectedShapeTool && updateToolSettings(selectedShapeTool.id, field, value)

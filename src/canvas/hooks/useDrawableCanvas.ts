@@ -10,6 +10,7 @@ import {
 import { selectShape } from '@canvas/utils/selection'
 import { createShape } from '@canvas/utils/shapes'
 import { addNewPointGroupToShape } from '@canvas/utils/shapes/brush'
+import { addCurveLine } from '@canvas/utils/shapes/curve'
 import { addPolygonLine } from '@canvas/utils/shapes/polygon'
 import { transformShape } from '@canvas/utils/transform'
 import { isCursorInsideMask } from '@canvas/utils/zoom'
@@ -313,12 +314,16 @@ const useDrawableCanvas = ({
           }
           return
         }
-        if (selectedShape?.type === 'polygon') {
+        if (selectedShape?.type === 'polygon' || selectedShape?.type === 'curve') {
           const cursorPosition = getCursorPositionInTransformedCanvas(e, drawCanvasRef.current, settings)
           if (!isCursorInsideMask(cursorPosition, settings)) return
           const polygonIntersection = checkPolygonLinesSelectionIntersection(drawCtx, selectedShape, cursorPosition, settings)
           if (polygonIntersection) {
-            updateSingleShape(addPolygonLine(selectedShape, polygonIntersection.lineIndex, settings))
+            updateSingleShape(
+              selectedShape?.type === 'polygon'
+                ? addPolygonLine(selectedShape, polygonIntersection.lineIndex, settings)
+                : addCurveLine(selectedShape, polygonIntersection.lineIndex, settings)
+            )
           }
           return
         }

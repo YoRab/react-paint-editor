@@ -132,7 +132,7 @@ export const checkSelectionIntersection = (
 
 export const checkPolygonLinesSelectionIntersection = (
   ctx: CanvasRenderingContext2D,
-  shape: DrawableShape<'polygon'>,
+  shape: DrawableShape<'polygon' | 'curve'>,
   position: Point,
   settings: UtilsSettings,
   radius = 50

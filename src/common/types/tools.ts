@@ -164,16 +164,6 @@ export type SettingsFont = {
   }
 }
 
-export type SettingsPointsCount = {
-  pointsCount: {
-    min: number
-    max: number
-    step: number
-    default: number
-    hidden?: boolean
-  }
-}
-
 export type SettingsClosedPoints = {
   closedPoints: {
     default: number
@@ -206,7 +196,7 @@ export type ToolsCurveSettings = SettingsOpacity &
   SettingsFillColor &
   SettingsLineWidth &
   SettingsLineDash &
-  SettingsPointsCount
+  SettingsClosedPoints
 
 export type ToolsTriangleSettings = SettingsStrokeColor & SettingsFillColor & SettingsOpacity & SettingsLineWidth & SettingsLineDash
 

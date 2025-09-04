@@ -10,6 +10,7 @@ import type { ToolsSettingsType } from '@common/types/tools'
 import { set } from '@common/utils/object'
 import { uniqueId } from '@common/utils/util'
 import { getPolygonBorder } from './polygon'
+import { getCenter } from '@canvas/utils/trigo'
 
 const buildPath = <T extends DrawableShape<'curve'>>(shape: T, settings: UtilsSettings): T => {
   const path = createCurvePath(shape)
@@ -36,7 +37,7 @@ export const createCurve = (
       toolId: shape.id,
       type: shape.type,
       id: uniqueId(`${shape.type}_`),
-      points: new Array(shape.settings.pointsCount.default).fill(cursorPosition),
+      points: new Array(2).fill(cursorPosition),
       rotation: 0,
       style: {
         opacity: shape.settings.opacity.default,
@@ -44,7 +45,7 @@ export const createCurve = (
         strokeColor: shape.settings.strokeColor.default,
         lineWidth: shape.settings.lineWidth.default,
         lineDash: shape.settings.lineDash.default,
-        pointsCount: shape.settings.pointsCount.default
+        closedPoints: shape.settings.closedPoints.default
       }
     },
     settings
@@ -105,42 +106,22 @@ export const translateCurve = <U extends DrawableShape<'curve'>>(
   )
 }
 
-export const updateCurveLinesCount = <T extends DrawableShape<'curve'>>(shape: T, newPointsCount: number, settings: UtilsSettings): T => {
-  const currentPointsCount = shape.points.length
-  if (currentPointsCount === newPointsCount) return shape
-  if (currentPointsCount > newPointsCount) {
-    const totalPoints = shape.points.slice(0, newPointsCount)
-    return buildPath(
-      {
-        ...shape,
-        points: totalPoints,
-        style: {
-          ...shape.style,
-          pointsCount: totalPoints.length
-        }
-      },
-      settings
-    )
-  }
-  //TODO : better distribution for new points
-  const nbPointsToAdd = newPointsCount - currentPointsCount
-  const newPoints: Point[] = new Array(nbPointsToAdd)
-    .fill(undefined)
-    .map((_val, index) => [
-      shape.points[0][0] + ((shape.points[1][0] - shape.points[0][0]) * (index + 1)) / (nbPointsToAdd + 1),
-      shape.points[0][1] + ((shape.points[1][1] - shape.points[0][1]) * (index + 1)) / (nbPointsToAdd + 1)
-    ])
+export const addCurveLine = <T extends DrawableShape<'curve'>>(shape: T, lineIndex: number, settings: UtilsSettings): T => {
+  if (lineIndex < 0 || lineIndex > shape.points.length - 1) return shape
 
-  const totalPoints = [shape.points[0], ...newPoints, ...shape.points.slice(1, shape.points.length)]
+  const totalPoints = [
+    ...shape.points.slice(0, lineIndex + 1),
+    [
+      getCenter(shape.points[lineIndex], shape.points[lineIndex === shape.points.length - 1 ? 0 : lineIndex + 1])[0],
+      getCenter(shape.points[lineIndex], shape.points[lineIndex === shape.points.length - 1 ? 0 : lineIndex + 1])[1]
+    ],
+    ...shape.points.slice(lineIndex + 1)
+  ]
 
   return buildPath(
     {
       ...shape,
-      points: totalPoints,
-      style: {
-        ...shape.style,
-        pointsCount: totalPoints.length
-      }
+      points: totalPoints
     },
     settings
   )

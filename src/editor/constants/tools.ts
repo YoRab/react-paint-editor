@@ -281,11 +281,8 @@ export const SETTINGS_DEFAULT_CURVE: ToolsCurveSettings = {
     values: STYLE_LINE_DASH,
     default: 0
   },
-  pointsCount: {
-    min: 3,
-    max: 10,
-    step: 1,
-    default: 3
+  closedPoints: {
+    default: 0
   }
 }
 
