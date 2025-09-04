@@ -6,6 +6,7 @@ import type { HoverModeData } from '@common/types/Mode'
 import type { DrawableShape, Point, Rect } from '@common/types/Shapes'
 import { getShapeInfos } from './shapes'
 import { isCircleIntersectRect, isPointInsideRect, rotatePoint } from './trigo'
+import { createLinePath } from '@canvas/utils/shapes/path'
 
 export const getCursorPosition = (e: MouseEvent | TouchEvent): { clientX: number; clientY: number } => {
   const { clientX = 0, clientY = 0 } =
@@ -127,6 +128,36 @@ export const checkSelectionIntersection = (
   }
 
   return isPartOfRect(borders, newPosition, radius) ? { mode: 'translate' } : false
+}
+
+export const checkPolygonLinesSelectionIntersection = (
+  ctx: CanvasRenderingContext2D,
+  shape: DrawableShape<'polygon'>,
+  position: Point,
+  settings: UtilsSettings,
+  radius = 50
+): false | { lineIndex: number } => {
+  if (shape.locked || shape.points.length < 2) return false
+
+  const { center } = getShapeInfos(shape, settings)
+
+  const newPosition = getPointPositionAfterCanvasTransformation(position, shape.rotation, center)
+
+  ctx.lineWidth = (shape.style?.lineWidth ?? 0) + radius / settings.canvasZoom
+  for (let i = 0; i < shape.points.length; i++) {
+    if (i === shape.points.length - 1) {
+      if (!shape.style?.closedPoints) return false
+      const path = createLinePath({ points: [shape.points[i], shape.points[0]] })
+      if (ctx.isPointInStroke(path, newPosition[0], newPosition[1])) {
+        return { lineIndex: i }
+      }
+    }
+    const path = createLinePath({ points: [shape.points[i], shape.points[i + 1]] })
+    if (ctx.isPointInStroke(path, newPosition[0], newPosition[1])) {
+      return { lineIndex: i }
+    }
+  }
+  return false
 }
 
 export const checkPositionIntersection = (

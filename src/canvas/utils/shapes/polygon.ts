@@ -4,6 +4,7 @@ import { createLineSelectionPath } from '@canvas/utils/selection/lineSelection'
 import { getShapeInfos } from '@canvas/utils/shapes/index'
 import { createPolygonPath } from '@canvas/utils/shapes/path'
 import { boundVectorToSingleAxis, roundForGrid } from '@canvas/utils/transform'
+import { getCenter } from '@canvas/utils/trigo'
 import type { SelectionModeResize } from '@common/types/Mode'
 import type { DrawableShape, Point, Polygon, Rect, ShapeEntity } from '@common/types/Shapes'
 import type { ToolsSettingsType } from '@common/types/tools'
@@ -117,42 +118,22 @@ export const resizePolygon = (
   return buildPath(updatedShape, settings)
 }
 
-export const updatePolygonLinesCount = <T extends DrawableShape<'polygon'>>(shape: T, newPointsCount: number, settings: UtilsSettings): T => {
-  const currentPointsCount = shape.points.length
-  if (currentPointsCount === newPointsCount) return shape
-  if (currentPointsCount > newPointsCount) {
-    const totalPoints = shape.points.slice(0, newPointsCount)
-    return buildPath(
-      {
-        ...shape,
-        points: totalPoints,
-        style: {
-          ...shape.style,
-          pointsCount: totalPoints.length
-        }
-      },
-      settings
-    )
-  }
-  //TODO : better distribution for new points
-  const nbPointsToAdd = newPointsCount - currentPointsCount
-  const newPoints: Point[] = new Array(nbPointsToAdd)
-    .fill(undefined)
-    .map((_val, index) => [
-      shape.points[0][0] + ((shape.points[1][0] - shape.points[0][0]) * (index + 1)) / (nbPointsToAdd + 1),
-      shape.points[0][1] + ((shape.points[1][1] - shape.points[0][1]) * (index + 1)) / (nbPointsToAdd + 1)
-    ])
+export const addPolygonLine = <T extends DrawableShape<'polygon'>>(shape: T, lineIndex: number, settings: UtilsSettings): T => {
+  if (lineIndex < 0 || lineIndex > shape.points.length - 1) return shape
 
-  const totalPoints = [shape.points[0], ...newPoints, ...shape.points.slice(1, shape.points.length)]
+  const totalPoints = [
+    ...shape.points.slice(0, lineIndex + 1),
+    [
+      getCenter(shape.points[lineIndex], shape.points[lineIndex === shape.points.length - 1 ? 0 : lineIndex + 1])[0],
+      getCenter(shape.points[lineIndex], shape.points[lineIndex === shape.points.length - 1 ? 0 : lineIndex + 1])[1]
+    ],
+    ...shape.points.slice(lineIndex + 1)
+  ]
 
   return buildPath(
     {
       ...shape,
-      points: totalPoints,
-      style: {
-        ...shape.style,
-        pointsCount: totalPoints.length
-      }
+      points: totalPoints
     },
     settings
   )

@@ -1,10 +1,16 @@
 import type { UtilsSettings } from '@canvas/constants/app'
 import { ShapeTypeArray } from '@canvas/constants/shapes'
 import useDoubleClick from '@canvas/hooks/useDoubleClick'
-import { checkSelectionIntersection, getCursorPositionInTransformedCanvas, isTouchGesture } from '@canvas/utils/intersect'
+import {
+  checkPolygonLinesSelectionIntersection,
+  checkSelectionIntersection,
+  getCursorPositionInTransformedCanvas,
+  isTouchGesture
+} from '@canvas/utils/intersect'
 import { selectShape } from '@canvas/utils/selection'
 import { createShape } from '@canvas/utils/shapes'
 import { addNewPointGroupToShape } from '@canvas/utils/shapes/brush'
+import { addPolygonLine } from '@canvas/utils/shapes/polygon'
 import { transformShape } from '@canvas/utils/transform'
 import { isCursorInsideMask } from '@canvas/utils/zoom'
 import type { HoverModeData, SelectionModeData } from '@common/types/Mode'
@@ -289,7 +295,8 @@ const useDrawableCanvas = ({
 
   useEffect(() => {
     const ref = drawCanvasRef.current
-    if (!ref) return
+    const drawCtx = drawCanvasRef.current?.getContext('2d')
+    if (!ref || !drawCtx) return
 
     const handleDoubleClick = (e: MouseEvent | TouchEvent) => {
       if (activeTool.type === 'selection') {
@@ -304,6 +311,16 @@ const useDrawableCanvas = ({
               defaultValue: selectedShape.value
             })
           }
+          return
+        }
+        if (selectedShape?.type === 'polygon') {
+          const cursorPosition = getCursorPositionInTransformedCanvas(e, drawCanvasRef.current, settings)
+          if (!isCursorInsideMask(cursorPosition, settings)) return
+          const polygonIntersection = checkPolygonLinesSelectionIntersection(drawCtx, selectedShape, cursorPosition, settings)
+          if (polygonIntersection) {
+            updateSingleShape(addPolygonLine(selectedShape, polygonIntersection.lineIndex, settings))
+          }
+          return
         }
       }
     }
@@ -313,7 +330,17 @@ const useDrawableCanvas = ({
         unRegisterDoubleClickEvent(ref)
       }
     }
-  }, [registerDoubleClickEvent, unRegisterDoubleClickEvent, isInsideComponent, drawCanvasRef, activeTool, selectedShape, setSelectionMode, settings])
+  }, [
+    updateSingleShape,
+    registerDoubleClickEvent,
+    unRegisterDoubleClickEvent,
+    isInsideComponent,
+    drawCanvasRef,
+    activeTool,
+    selectedShape,
+    setSelectionMode,
+    settings
+  ])
 
   return { hoverMode }
 }

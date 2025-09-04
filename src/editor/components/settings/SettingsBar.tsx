@@ -1,7 +1,7 @@
 import type { UtilsSettings } from '@canvas/constants/app'
 import { refreshShape } from '@canvas/utils/shapes'
 import { updateCurveLinesCount } from '@canvas/utils/shapes/curve'
-import { updatePolygonLinesCount } from '@canvas/utils/shapes/polygon'
+import { addPolygonLine } from '@canvas/utils/shapes/polygon'
 import { calculateTextFontSize } from '@canvas/utils/shapes/text'
 import type { ShapeEntity } from '@common/types/Shapes'
 import type { CustomTool, ToolsType } from '@common/types/tools'
@@ -444,7 +444,7 @@ const SettingsBar = ({
       if (selectedShape.type !== 'polygon' && selectedShape.type !== 'curve') return
       updateShape(
         selectedShape.type === 'polygon'
-          ? updatePolygonLinesCount(selectedShape, value as number, settings)
+          ? addPolygonLine(selectedShape, value as number, settings) // TODO inacurrate, curve to update later
           : updateCurveLinesCount(selectedShape, value as number, settings),
         true
       )
