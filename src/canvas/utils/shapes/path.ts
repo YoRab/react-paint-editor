@@ -72,24 +72,50 @@ export const createBrushPath = (brush: DrawableShape<'brush'>, { brushAlgo }: Ut
 }
 
 export const createCurvePath = (curve: DrawableShape<'curve'>) => {
-  if (curve.points.length < 3) return undefined
+  if (curve.points.length < 2) return undefined
+  if (curve.points.length < 3) return createPolygonPath(curve)
+
+  const mustClosePath = curve.style?.closedPoints === 1 && curve.points.length > 2
+  // Pour une courbe fermée, on doit "boucler" les points pour la continuité
+  // On ajoute les points de début et de fin pour le calcul Catmull-Rom
+  const points = curve.points
+
+  // Pour Catmull-Rom, il faut au moins 4 points (p0, p1, p2, p3)
+  const pts: [number, number][] = mustClosePath
+    ? // Pour une courbe fermée, on duplique les points de début et de fin pour la continuité
+      // Ajoute les deux derniers points au début et les deux premiers à la fin
+      [points[points.length - 2], ...points, points[0], points[1]]
+    : // Pour une courbe ouverte, on duplique les extrémités
+      [points[0], ...points, points[points.length - 1]]
 
   const path = new Path2D()
+  path.moveTo(...points[0])
 
-  path.moveTo(...curve.points[0])
-  for (let i = 1; i < curve.points.length - 1; i++) {
-    path.quadraticCurveTo(
-      ...curve.points[i],
-      curve.points.length - 2 === i ? curve.points[i + 1][0] : (curve.points[i + 1][0] - curve.points[i][0]) / 2 + curve.points[i][0],
-      curve.points.length - 2 === i ? curve.points[i + 1][1] : (curve.points[i + 1][1] - curve.points[i][1]) / 2 + curve.points[i][1]
-    )
+  // Catmull-Rom to Bezier
+  for (let i = 1; i < pts.length - 2; i++) {
+    const p0 = pts[i - 1]
+    const p1 = pts[i]
+    const p2 = pts[i + 1]
+    const p3 = pts[i + 2]
+
+    // Conversion Catmull-Rom -> Bezier
+    const cp1x = p1[0] + (p2[0] - p0[0]) / 6
+    const cp1y = p1[1] + (p2[1] - p0[1]) / 6
+    const cp2x = p2[0] - (p3[0] - p1[0]) / 6
+    const cp2y = p2[1] - (p3[1] - p1[1]) / 6
+
+    path.bezierCurveTo(cp1x, cp1y, cp2x, cp2y, p2[0], p2[1])
+  }
+
+  if (mustClosePath) {
+    path.closePath()
   }
 
   return path
 }
 
-export const createPolygonPath = (polygon: DrawableShape<'polygon'>) => {
-  if (polygon.points.length < 1) return undefined
+export const createPolygonPath = (polygon: DrawableShape<'polygon'> | DrawableShape<'curve'>) => {
+  if (polygon.points.length < 2) return undefined
 
   const path = new Path2D()
 
