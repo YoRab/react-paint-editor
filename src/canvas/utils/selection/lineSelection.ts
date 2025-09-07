@@ -10,8 +10,7 @@ export const createLineSelectionPath = (
   shape: DrawableShape<'line' | 'polygon' | 'curve'> & {
     points: readonly Point[]
   },
-  settings: UtilsSettings,
-  gravityAnchors = false
+  settings: UtilsSettings
 ): SelectionLinesType => {
   const { borders } = getShapeInfos(shape, settings)
 
@@ -19,21 +18,13 @@ export const createLineSelectionPath = (
     border: createRecPath(borders),
     shapePath: path,
     anchors: [
-      ...shape.points.map((point, i) => {
-        if (gravityAnchors && i > 0 && i < shape.points.length - 1) {
-          return createRecPath({
-            x: point[0] - SELECTION_ANCHOR_SIZE / 2,
-            y: point[1] - SELECTION_ANCHOR_SIZE / 2,
-            width: SELECTION_ANCHOR_SIZE / settings.canvasSize.scaleRatio,
-            height: SELECTION_ANCHOR_SIZE / settings.canvasSize.scaleRatio
-          })
-        }
-        return createCirclePath({
+      ...shape.points.map(point =>
+        createCirclePath({
           x: point[0],
           y: point[1],
           radius: SELECTION_ANCHOR_SIZE / 2 / settings.canvasSize.scaleRatio
         })
-      })
+      )
     ]
   }
 }

@@ -17,7 +17,7 @@ const buildPath = <T extends DrawableShape<'curve'>>(shape: T, settings: UtilsSe
   return {
     ...shape,
     path,
-    selection: createLineSelectionPath(path, shape, settings, true)
+    selection: createLineSelectionPath(path, shape, settings)
   }
 }
 
@@ -125,4 +125,18 @@ export const addCurveLine = <T extends DrawableShape<'curve'>>(shape: T, lineInd
     },
     settings
   )
+}
+
+export const addCurvePoint = <T extends DrawableShape<'curve'>>(shape: T, cursorPosition: Point, settings: UtilsSettings): T => {
+  const roundCursorPosition: Point = [roundForGrid(cursorPosition[0], settings), roundForGrid(cursorPosition[1], settings)]
+
+  const { center } = getShapeInfos(shape, settings)
+
+  const cursorPositionBeforeResize = getPointPositionAfterCanvasTransformation(roundCursorPosition, shape.rotation, center)
+  const updatedShape = {
+    ...shape,
+    points: [...shape.points, cursorPositionBeforeResize]
+  }
+
+  return buildPath(updatedShape, settings)
 }
