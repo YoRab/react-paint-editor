@@ -51,7 +51,7 @@ const SHAPES_INIT = [
       lineWidth: 1,
       lineDash: 0,
       lineArrow: 0,
-      pointsCount: 3,
+     closedPoints: 1,
       fontFamily: 'serif'
     }
   }
@@ -306,11 +306,8 @@ type SettingsFont = {
   }
 }
 
-type SettingsPointsCount = {
-  pointsCount: {
-    min: number
-    max: number
-    step: number
+type SettingsClosedPoints = {
+  closedPoints: {
     default: number
     hidden?: boolean
   }
@@ -335,14 +332,14 @@ type ToolsPolygonSettings = SettingsOpacity &
   SettingsFillColor &
   SettingsLineWidth &
   SettingsLineDash &
-  SettingsPointsCount
+  SettingsClosedPoints
 
 type ToolsCurveSettings = SettingsOpacity &
   SettingsStrokeColor &
   SettingsFillColor &
   SettingsLineWidth &
   SettingsLineDash &
-  SettingsPointsCount
+  SettingsClosedPoints
 
 type ToolsTriangleSettings = SettingsStrokeColor & SettingsFillColor & SettingsOpacity & SettingsLineWidth & SettingsLineDash
 

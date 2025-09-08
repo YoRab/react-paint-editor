@@ -29,10 +29,12 @@ export type Triangle = {
 
 export type Polygon = {
   points: Point[]
+  tempPoint?: Point
 }
 
 export type Curve = {
   points: Point[]
+  tempPoint?: Point
 }
 
 export type Brush = {
@@ -59,7 +61,7 @@ export type StyleShape = {
   lineWidth?: number
   lineDash?: number
   lineArrow?: number
-  pointsCount?: number
+  closedPoints?: number
   fontFamily?: string
   fontItalic?: boolean
   fontBold?: boolean

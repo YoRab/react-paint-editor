@@ -1,8 +1,11 @@
 import type { UtilsSettings } from '@canvas/constants/app'
 import { copyShape, translateShape } from '@canvas/utils/shapes'
+import type { SelectionModeData } from '@common/types/Mode'
 import type { Point, ShapeEntity } from '@common/types/Shapes'
 import { isMacOs } from '@common/utils/util'
+import { SELECTION_TOOL } from '@editor/constants/tools'
 import { useEffect, useState } from 'react'
+import type { ToolsType } from '@common/types/tools'
 
 const KeyboardCode = {
   ArrowUp: 'ArrowUp',
@@ -38,6 +41,9 @@ type UseKeyboardType = {
   setShiftPressed: (value: React.SetStateAction<boolean>) => void
   setAltPressed: (value: React.SetStateAction<boolean>) => void
   isEditingText: boolean
+  setActiveTool: (tool: ToolsType) => void
+  setSelectionMode: (mode: SelectionModeData<number | Point>) => void
+  setSelectionFrame: (frame: [Point, Point] | undefined) => void
   settings: UtilsSettings
 }
 
@@ -47,6 +53,9 @@ const useKeyboard = ({
   isEditingText,
   settings,
   setSelectedShape,
+  setActiveTool,
+  setSelectionMode,
+  setSelectionFrame,
   removeShape,
   pasteShape,
   updateShape,
@@ -121,6 +130,9 @@ const useKeyboard = ({
 
       if (e.key === KeyboardCode.Escape) {
         setSelectedShape(undefined)
+        setActiveTool(SELECTION_TOOL)
+        setSelectionMode({ mode: 'default' })
+        setSelectionFrame(undefined)
         return
       }
       if (isEditingText) return
@@ -175,7 +187,10 @@ const useKeyboard = ({
     backwardShape,
     forwardShape,
     setShiftPressed,
-    setAltPressed
+    setAltPressed,
+    setActiveTool,
+    setSelectionMode,
+    setSelectionFrame
   ])
 
   return {}

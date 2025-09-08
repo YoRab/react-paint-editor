@@ -1,10 +1,17 @@
 import type { UtilsSettings } from '@canvas/constants/app'
 import { ShapeTypeArray } from '@canvas/constants/shapes'
 import useDoubleClick from '@canvas/hooks/useDoubleClick'
-import { checkSelectionIntersection, getCursorPositionInTransformedCanvas, isTouchGesture } from '@canvas/utils/intersect'
+import {
+  checkPolygonLinesSelectionIntersection,
+  checkSelectionIntersection,
+  getCursorPositionInTransformedCanvas,
+  isTouchGesture
+} from '@canvas/utils/intersect'
 import { selectShape } from '@canvas/utils/selection'
 import { createShape } from '@canvas/utils/shapes'
 import { addNewPointGroupToShape } from '@canvas/utils/shapes/brush'
+import { addCurveLine, addCurvePoint } from '@canvas/utils/shapes/curve'
+import { addPolygonLine, addPolygonPoint } from '@canvas/utils/shapes/polygon'
 import { transformShape } from '@canvas/utils/transform'
 import { isCursorInsideMask } from '@canvas/utils/zoom'
 import type { HoverModeData, SelectionModeData } from '@common/types/Mode'
@@ -27,7 +34,8 @@ const handleMove = (
   refreshSelectedShapes: (ctx: CanvasRenderingContext2D, cursorPosition: Point, settings: UtilsSettings) => void,
   settings: UtilsSettings,
   isShiftPressed: boolean,
-  isAltPressed: boolean
+  isAltPressed: boolean,
+  setSelectedShape: React.Dispatch<React.SetStateAction<ShapeEntity | undefined>>
 ) => {
   if (isTouchGesture(e) && e.touches.length > 1) return
 
@@ -45,6 +53,18 @@ const handleMove = (
   if (selectionMode.mode === 'selectionFrame') {
     refreshSelectedShapes(drawCtx, cursorPosition, settings)
     return
+  }
+  if (selectionMode.mode === 'preview') {
+    if (selectedShape?.type === 'curve') {
+      const newShape = addCurvePoint(selectedShape, cursorPosition, settings, true)
+      setSelectedShape(newShape)
+      return
+    }
+    if (selectedShape?.type === 'polygon') {
+      const newShape = addPolygonPoint(selectedShape, cursorPosition, settings, true)
+      setSelectedShape(newShape)
+      return
+    }
   }
 
   const isInsideMask = isCursorInsideMask(cursorPosition, settings)
@@ -84,7 +104,7 @@ type UseCanvasType = {
   shapes: ShapeEntity[]
   saveShapes: () => void
   addShape: (newShape: ShapeEntity) => void
-  updateSingleShape: (updatedShape: ShapeEntity) => void
+  updateSingleShape: (updatedShape: ShapeEntity, withSave?: boolean) => void
   selectedShape: ShapeEntity | undefined
   setSelectedShape: React.Dispatch<React.SetStateAction<ShapeEntity | undefined>>
   activeTool: ToolsType
@@ -149,7 +169,8 @@ const useDrawableCanvas = ({
       refreshSelectedShapes,
       settings,
       isShiftPressed,
-      isAltPressed
+      isAltPressed,
+      setSelectedShape
     )
 
   useEffect(() => {
@@ -172,12 +193,28 @@ const useDrawableCanvas = ({
   handleUpRef.current = (e: MouseEvent | TouchEvent) => {
     if (isTouchGesture(e) && e.touches.length > 1) return
 
+    const isRightClick = 'button' in e && e.button === 2
+    if (isRightClick) {
+      // TODO context menu
+      setSelectedShape(undefined)
+      setActiveTool(SELECTION_TOOL)
+      setSelectionMode({ mode: 'default' })
+      setSelectionFrame(undefined)
+      return
+    }
+
     if (canvasOffsetStartData) {
       setCanvasOffsetStartData(undefined)
       return
     }
 
     if (selectionMode.mode === 'textedition') return
+    if (selectionMode.mode === 'preview') return
+    if (selectionMode.mode === 'resize' && selectionMode.isCreating && (selectedShape?.type === 'polygon' || selectedShape?.type === 'curve')) {
+      setSelectionMode({ mode: 'preview' })
+      saveShapes()
+      return
+    }
     if (selectionMode.mode !== 'default') {
       if (selectionMode.mode === 'brush' && isBrushShapeDoneOnMouseUp) setSelectedShape(undefined)
       setSelectionMode({ mode: 'default' })
@@ -213,6 +250,9 @@ const useDrawableCanvas = ({
     const cursorPosition = getCursorPositionInTransformedCanvas(e, drawCanvasRef.current, settings)
 
     const isWheelPressed = 'button' in e && e.button === 1
+    const isRightClick = 'button' in e && e.button === 2
+
+    if (isRightClick) return
 
     if (isWheelPressed || activeTool.type === 'move') {
       setCanvasOffsetStartData({ start: cursorPosition, originalOffset: settings.canvasOffset })
@@ -256,16 +296,24 @@ const useDrawableCanvas = ({
         setSelectionMode({
           mode: 'brush'
         })
+      } else if (selectionMode.mode === 'preview' && (selectedShape?.type === 'polygon' || selectedShape?.type === 'curve')) {
+        const newShape =
+          selectedShape?.type === 'polygon'
+            ? addPolygonPoint(selectedShape, cursorPosition, settings)
+            : addCurvePoint(selectedShape, cursorPosition, settings)
+        setSelectedShape(newShape)
+        updateSingleShape(newShape, true)
       } else if (activeTool.type !== 'picture') {
         const newShape = createShape(drawCtx, activeTool as Exclude<CustomTool, { type: 'picture' }>, cursorPosition, settings)
         addShape(newShape)
-        setActiveTool(SELECTION_TOOL)
+        activeTool.type !== 'polygon' && activeTool.type !== 'curve' && setActiveTool(SELECTION_TOOL)
         setSelectedShape(newShape)
         setSelectionMode({
           mode: 'resize',
+          isCreating: true,
           cursorStartPosition: [cursorPosition[0] + settings.selectionPadding, cursorPosition[1] + settings.selectionPadding],
           originalShape: newShape,
-          anchor: activeTool.type === 'line' || activeTool.type === 'polygon' || activeTool.type === 'curve' ? 0 : [1, 1]
+          anchor: newShape.type === 'line' ? 0 : newShape.type === 'polygon' || newShape.type === 'curve' ? newShape.points.length - 1 : [1, 1]
         })
       }
     }
@@ -289,7 +337,8 @@ const useDrawableCanvas = ({
 
   useEffect(() => {
     const ref = drawCanvasRef.current
-    if (!ref) return
+    const drawCtx = drawCanvasRef.current?.getContext('2d')
+    if (!ref || !drawCtx) return
 
     const handleDoubleClick = (e: MouseEvent | TouchEvent) => {
       if (activeTool.type === 'selection') {
@@ -304,6 +353,20 @@ const useDrawableCanvas = ({
               defaultValue: selectedShape.value
             })
           }
+          return
+        }
+        if (selectedShape?.type === 'polygon' || selectedShape?.type === 'curve') {
+          const cursorPosition = getCursorPositionInTransformedCanvas(e, drawCanvasRef.current, settings)
+          if (!isCursorInsideMask(cursorPosition, settings)) return
+          const polygonIntersection = checkPolygonLinesSelectionIntersection(drawCtx, selectedShape, cursorPosition, settings)
+          if (polygonIntersection) {
+            updateSingleShape(
+              selectedShape?.type === 'polygon'
+                ? addPolygonLine(selectedShape, polygonIntersection.lineIndex, settings)
+                : addCurveLine(selectedShape, polygonIntersection.lineIndex, settings)
+            )
+          }
+          return
         }
       }
     }
@@ -313,7 +376,17 @@ const useDrawableCanvas = ({
         unRegisterDoubleClickEvent(ref)
       }
     }
-  }, [registerDoubleClickEvent, unRegisterDoubleClickEvent, isInsideComponent, drawCanvasRef, activeTool, selectedShape, setSelectionMode, settings])
+  }, [
+    updateSingleShape,
+    registerDoubleClickEvent,
+    unRegisterDoubleClickEvent,
+    isInsideComponent,
+    drawCanvasRef,
+    activeTool,
+    selectedShape,
+    setSelectionMode,
+    settings
+  ])
 
   return { hoverMode }
 }

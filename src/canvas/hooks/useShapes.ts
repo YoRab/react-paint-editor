@@ -223,9 +223,7 @@ const useShapes = (settings: UtilsSettings, width: number, height: number) => {
 
   useEffect(() => {
     shapesRef.current = shapesRef.current.map(shape => refreshShape(shape, settings))
-    setSelectedShape(prevSelectedShape =>
-      prevSelectedShape === undefined ? undefined : shapesRef.current.find(shape => shape.id === prevSelectedShape.id)
-    )
+    setSelectedShape(prevSelectedShape => (prevSelectedShape === undefined ? undefined : refreshShape(prevSelectedShape, settings)))
   }, [settings])
 
   const refreshSelectedShapes = useCallback(

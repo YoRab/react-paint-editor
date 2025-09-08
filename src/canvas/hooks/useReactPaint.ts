@@ -164,6 +164,13 @@ const useReactPaint = ({
     [setSelectedShape]
   )
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: shape selection should reset selection mode when it is preview
+  useEffect(() => {
+    if (selectionMode.mode === 'preview') {
+      return () => setSelectionMode(old => (old.mode === 'preview' ? { mode: 'default' } : old))
+    }
+  }, [selectedShape?.id, selectionMode.mode === 'preview'])
+
   const resetCanvasWithShapeEntity = useCallback(
     (shapesToInit: ShapeEntity[], options: { clearHistory: boolean; source: 'user' | 'remote' }) => {
       clearShapes(shapesToInit, options)
@@ -175,8 +182,10 @@ const useReactPaint = ({
 
   const selectShape = useCallback(
     (shape: ShapeEntity) => {
-      setActiveTool(SELECTION_TOOL)
-      setSelectedShape(shape)
+      setSelectedShape(old => {
+        if (old?.id !== shape.id) setActiveTool(SELECTION_TOOL)
+        return shape
+      })
     },
     [setSelectedShape]
   )

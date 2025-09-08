@@ -90,7 +90,10 @@ const App = ({ options, className, style, canvasProps }: AppProps) => {
     backwardShape,
     forwardShape,
     setShiftPressed,
-    setAltPressed
+    setAltPressed,
+    setActiveTool,
+    setSelectionMode,
+    setSelectionFrame
   })
   useResizeObserver({ element: containerRef, onResized })
 
