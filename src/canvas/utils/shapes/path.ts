@@ -72,13 +72,13 @@ export const createBrushPath = (brush: DrawableShape<'brush'>, { brushAlgo }: Ut
 }
 
 export const createCurvePath = (curve: DrawableShape<'curve'>) => {
-  if (curve.points.length < 2) return undefined
-  if (curve.points.length < 3) return createPolygonPath(curve)
+  const points = curve.tempPoint ? [...curve.points, curve.tempPoint] : curve.points
+  if (points.length < 2) return undefined
+  if (points.length < 3) return createPolygonPath(curve)
 
-  const mustClosePath = curve.style?.closedPoints === 1 && curve.points.length > 2
+  const mustClosePath = curve.style?.closedPoints === 1 && points.length > 2
   // Pour une courbe fermée, on doit "boucler" les points pour la continuité
   // On ajoute les points de début et de fin pour le calcul Catmull-Rom
-  const points = curve.points
 
   // Pour Catmull-Rom, il faut au moins 4 points (p0, p1, p2, p3)
   const pts: [number, number][] = mustClosePath
@@ -115,16 +115,18 @@ export const createCurvePath = (curve: DrawableShape<'curve'>) => {
 }
 
 export const createPolygonPath = (polygon: DrawableShape<'polygon'> | DrawableShape<'curve'>) => {
-  if (polygon.points.length < 2) return undefined
+  const points = polygon.tempPoint ? [...polygon.points, polygon.tempPoint] : polygon.points
+
+  if (points.length < 2) return undefined
 
   const path = new Path2D()
 
-  path.moveTo(...polygon.points[0])
-  for (const point of polygon.points.slice(1)) {
+  path.moveTo(...points[0])
+  for (const point of points.slice(1)) {
     path.lineTo(...point)
   }
 
-  if (polygon.points.length > 2 && polygon.style?.closedPoints === 1) path.lineTo(...polygon.points[0])
+  if (points.length > 2 && polygon.style?.closedPoints === 1) path.lineTo(...points[0])
 
   return path
 }

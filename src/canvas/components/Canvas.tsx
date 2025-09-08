@@ -23,9 +23,8 @@ const renderDrawCanvas = (
   drawMask(drawCtx, settings)
   drawGrid(drawCtx, settings)
   for (let i = shapes.length - 1; i >= 0; i--) {
-    if (selectionMode.mode !== 'textedition' || shapes[i] !== selectedShape) {
-      drawShape(drawCtx, shapes[i], settings)
-    }
+    if (selectionMode.mode === 'textedition' && shapes[i] === selectedShape) continue
+    drawShape(drawCtx, shapes[i].id === selectedShape?.id ? selectedShape : shapes[i], settings)
   }
 }
 
@@ -86,7 +85,7 @@ type DrawerType = {
   shapes: ShapeEntity[]
   saveShapes: () => void
   addShape: (newShape: ShapeEntity) => void
-  updateSingleShape: (updatedShape: ShapeEntity) => void
+  updateSingleShape: (updatedShape: ShapeEntity, withSave?: boolean) => void
   selectedShape: ShapeEntity | undefined
   setSelectedShape: React.Dispatch<React.SetStateAction<ShapeEntity | undefined>>
   setSelectionFrame: React.Dispatch<React.SetStateAction<[Point, Point] | undefined>>
@@ -187,6 +186,13 @@ const Canvas = React.forwardRef<HTMLCanvasElement, DrawerType>(
       [updateSingleShape, selectedShape, settings]
     )
 
+    const preventRightClick = (e: React.MouseEvent | React.TouchEvent) => {
+      if (!isEditMode) return
+      e.preventDefault()
+      e.stopPropagation()
+      return false
+    }
+
     useEffect(() => {
       const drawCtx = drawCanvasRef.current?.getContext('2d')
       drawCtx && window.requestAnimationFrame(() => renderDrawCanvas(drawCtx, selectionMode, settings, shapes, selectedShape))
@@ -229,7 +235,14 @@ const Canvas = React.forwardRef<HTMLCanvasElement, DrawerType>(
         }}
       >
         <div className='react-paint-canvas-container' data-grow={canGrow}>
-          <canvas className={DRAWCANVAS_CLASSNAME} ref={drawCanvasRef} data-grow={canGrow} width={canvasSize.width} height={canvasSize.height} />
+          <canvas
+            className={DRAWCANVAS_CLASSNAME}
+            ref={drawCanvasRef}
+            data-grow={canGrow}
+            width={canvasSize.width}
+            height={canvasSize.height}
+            onContextMenu={preventRightClick}
+          />
           {withSelectionCanvas && (
             <canvas
               className={SELECTIONCANVAS_CLASSNAME}
@@ -237,6 +250,7 @@ const Canvas = React.forwardRef<HTMLCanvasElement, DrawerType>(
               width={canvasSize.width}
               height={canvasSize.height}
               data-grow={canGrow}
+              onContextMenu={preventRightClick}
             />
           )}
           {isEditMode && selectionMode.mode === 'textedition' && selectedShape?.type === 'text' && (

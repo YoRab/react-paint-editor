@@ -6,7 +6,7 @@ import { getStringifiedImage } from './file'
 import { refreshShape } from './shapes'
 
 export const cleanShapesBeforeExport = (shapes: DrawableShape[]): DrawableShape[] => {
-  const propsToOmit = ['img', 'id', 'selection', 'path', 'arrows']
+  const propsToOmit = ['img', 'id', 'selection', 'path', 'arrows', 'tempPoint']
   return shapes.map(shape => {
     if (shape.type === 'picture') {
       if (!shape.src.startsWith('http')) {

@@ -112,16 +112,6 @@ const Editor = ({ editorProps, className, style, options, children }: EditorProp
     [setActiveTool, setAvailableTools]
   )
 
-  const undoAction = useCallback(() => {
-    selectTool(SELECTION_TOOL)
-    backwardShape()
-  }, [selectTool, backwardShape])
-
-  const redoAction = useCallback(() => {
-    selectTool(SELECTION_TOOL)
-    forwardShape()
-  }, [selectTool, forwardShape])
-
   const exportCanvasInFile = useCallback(
     (view: 'fitToShapes' | 'defaultView' | 'currentZoom') => {
       setIsLoading(true)
@@ -226,8 +216,8 @@ const Editor = ({ editorProps, className, style, options, children }: EditorProp
           hasActionToUndo={canGoBackward}
           hasActionToRedo={canGoForward}
           hasActionToClear={canClear}
-          undoAction={undoAction}
-          redoAction={redoAction}
+          undoAction={backwardShape}
+          redoAction={forwardShape}
           availableTools={availableTools}
           withExport={withExport}
           withLoadAndSave={withLoadAndSave}

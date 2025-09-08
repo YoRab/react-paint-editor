@@ -138,3 +138,24 @@ export const addPolygonLine = <T extends DrawableShape<'polygon'>>(shape: T, lin
     settings
   )
 }
+
+export const addPolygonPoint = <T extends DrawableShape<'polygon'>>(
+  shape: T,
+  cursorPosition: Point,
+  settings: UtilsSettings,
+  temporary = false
+): T => {
+  const roundCursorPosition: Point = [roundForGrid(cursorPosition[0], settings), roundForGrid(cursorPosition[1], settings)]
+
+  const { center } = getShapeInfos(shape, settings)
+
+  const cursorPositionBeforeResize = getPointPositionAfterCanvasTransformation(roundCursorPosition, shape.rotation, center)
+
+  const updatedShape = {
+    ...shape,
+    points: temporary ? shape.points : [...shape.points, cursorPositionBeforeResize],
+    tempPoint: temporary ? cursorPositionBeforeResize : undefined
+  }
+
+  return buildPath(updatedShape, settings)
+}

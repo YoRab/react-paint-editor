@@ -29,10 +29,12 @@ export type Triangle = {
 
 export type Polygon = {
   points: Point[]
+  tempPoint?: Point
 }
 
 export type Curve = {
   points: Point[]
+  tempPoint?: Point
 }
 
 export type Brush = {

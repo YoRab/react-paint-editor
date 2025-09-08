@@ -12,6 +12,10 @@ export type SelectionModeBrush = {
   mode: 'brush'
 }
 
+export type SelectionModePreview = {
+  mode: 'preview'
+}
+
 export type SelectionModeEditText = {
   mode: 'textedition'
   defaultValue: string[]
@@ -19,6 +23,7 @@ export type SelectionModeEditText = {
 
 export type SelectionModeResize<AnchorType extends Point | number = Point> = {
   mode: 'resize'
+  isCreating: boolean
   cursorStartPosition: Point
   originalShape: ShapeEntity
   anchor: AnchorType
@@ -44,6 +49,7 @@ export type SelectionModeData<AnchorType extends Point | number> =
   | SelectionModeRotate
   | SelectionModeTranslate
   | SelectionModeEditText
+  | SelectionModePreview
 
 export type HoverModeData = { outOfView?: boolean } & (
   | {
