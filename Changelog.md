@@ -1,3 +1,13 @@
+# V0.13.0
+- Improve curve and polygon tool with new interactions
+- Improve curve renderer to move from control points to real curve points
+- Use right click in edit mode to unselect shapes
+- Adapt CMD + Opt + Z shortcut for macos
+- add alt shortcut to resize shapes from center
+- add rotation steps when pressing shift
+- translate along one single axis when shift is pressed
+- accept webp format for picture shape
+
 # V0.12.0
  - up dependancies
  - add zoom feature with canZoom option and zoom panel
