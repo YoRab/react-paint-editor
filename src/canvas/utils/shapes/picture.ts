@@ -122,7 +122,7 @@ export const drawPicture = (ctx: CanvasRenderingContext2D, picture: DrawableShap
   ctx.drawImage(picture.img, picture.x, picture.y, picture.width, picture.height)
 }
 
-export const getPictureBorder = (picture: Picture, settings: UtilsSettings): Rect => getRectBorder(picture, settings)
+export const getPictureBorder = (picture: Picture, settings: Pick<UtilsSettings, 'selectionPadding'>): Rect => getRectBorder(picture, settings)
 
 export const translatePicture = <U extends DrawableShape<'picture'>>(
   cursorPosition: Point,

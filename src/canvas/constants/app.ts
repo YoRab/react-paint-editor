@@ -68,7 +68,7 @@ export const DEFAULT_OPTIONS: AppOptionsType = {
   clearCallback: 'empty',
   brushAlgo: 'simple',
   isBrushShapeDoneOnMouseUp: true,
-  withFrameSelection: false,
+  withFrameSelection: true,
   withSkeleton: true,
   canvasSelectionPadding: SELECTION_DEFAULT_PADDING,
   size: 'fixed',

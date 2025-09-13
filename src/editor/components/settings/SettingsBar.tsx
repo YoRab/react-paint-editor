@@ -1,7 +1,7 @@
 import type { UtilsSettings } from '@canvas/constants/app'
 import { refreshShape } from '@canvas/utils/shapes'
 import { calculateTextFontSize } from '@canvas/utils/shapes/text'
-import type { ShapeEntity } from '@common/types/Shapes'
+import type { ShapeEntity, SelectionType } from '@common/types/Shapes'
 import type { CustomTool, ToolsType } from '@common/types/tools'
 import { set } from '@common/utils/object'
 import Button from '@editor/components/common/Button'
@@ -20,13 +20,14 @@ import './SettingsBar.css'
 import ZoomButton from '@editor/components/settings/ZoomButton'
 import ToggleField from './ToggleField'
 import ClosedPointsField from '@editor/components/settings/ClosedPointsField'
+import { getSelectedShapes } from '@canvas/utils/selection'
 
 const SETTING_WIDTH = 40
 
 type SettingsItemsType = {
   disabled?: boolean
   activeTool: ToolsType
-  selectedShape: ShapeEntity | undefined
+  selectedShape: SelectionType | undefined
   selectedShapeTool: CustomTool | undefined
   selectedSettings: string | undefined
   setSelectedSettings: React.Dispatch<React.SetStateAction<string | undefined>>
@@ -315,11 +316,11 @@ type SettingsBarType = {
   updateToolSettings: (toolId: string, field: string, value: string | number | boolean) => void
   layersManipulation?: boolean
   activeTool: ToolsType
-  selectedShape: ShapeEntity | undefined
+  selectedShape: SelectionType | undefined
   canvas: HTMLCanvasElement | null
   settings: UtilsSettings
-  updateShape: (shape: ShapeEntity, withSave?: boolean) => void
-  removeShape: (shape: ShapeEntity) => void
+  updateShape: (shape: ShapeEntity[], withSave?: boolean) => void
+  removeShape: (shape: ShapeEntity[]) => void
   toggleLayoutPanel: () => void
   isZoomPanelShown: boolean
   setIsZoomPanelShown: React.Dispatch<React.SetStateAction<boolean>>
@@ -354,9 +355,11 @@ const SettingsBar = ({
     setIsZoomPanelShown(prev => !prev)
   }
 
-  const selectedShapeTool = selectedShape
-    ? availableTools.find(tool => tool.id === selectedShape.toolId) || availableTools.find(tool => tool.type === selectedShape.type)
-    : undefined
+  const selectedShapeTool =
+    getSelectedShapes(selectedShape).length === 1
+      ? availableTools.find(tool => tool.id === getSelectedShapes(selectedShape)[0]?.toolId) ||
+        availableTools.find(tool => tool.type === getSelectedShapes(selectedShape)[0]?.type)
+      : undefined
 
   const nbSettingsTools =
     (selectedShapeTool
@@ -372,8 +375,11 @@ const SettingsBar = ({
   const settingsInMenu = width < settingsBreakpoint
 
   const handleShapeStyleChange = (field: string, value: string | number | boolean, needHistorySave = true) => {
-    if (selectedShape) {
-      updateShape(refreshShape(set(['style', field], value, selectedShape), settings), needHistorySave)
+    if (getSelectedShapes(selectedShape).length) {
+      const refreshedShapes = getSelectedShapes(selectedShape).map(shape => {
+        return refreshShape(set(['style', field], value, shape), settings)
+      })
+      updateShape(refreshedShapes, needHistorySave)
       selectedShapeTool && updateToolSettings(selectedShapeTool.id, field, value)
     } else {
       updateToolSettings(activeTool.id, field, value)
@@ -381,28 +387,31 @@ const SettingsBar = ({
   }
 
   const handleShapeFontFamilyChange = (field: string, value: string | number | boolean) => {
-    if (selectedShape) {
-      if (selectedShape.type !== 'text') return
-      const ctx = canvas?.getContext('2d')
-      if (!ctx) return
-      const newShape = set(['style', field], value, selectedShape)
-      const fontSize = calculateTextFontSize(
-        ctx,
-        newShape.value,
-        newShape.width,
-        newShape.style?.fontBold ?? false,
-        newShape.style?.fontItalic ?? false,
-        newShape.style?.fontFamily
-      )
-      const resizedShape = refreshShape(
-        {
-          ...newShape,
-          fontSize,
-          height: fontSize * newShape.value.length
-        },
-        settings
-      )
-      updateShape(resizedShape, true)
+    if (getSelectedShapes(selectedShape).length) {
+      const refreshedShapes = getSelectedShapes(selectedShape).map(shape => {
+        if (shape.type !== 'text') return shape
+        const ctx = canvas?.getContext('2d')
+        if (!ctx) return shape
+        const newShape = set(['style', field], value, shape)
+        const fontSize = calculateTextFontSize(
+          ctx,
+          newShape.value,
+          newShape.width,
+          newShape.style?.fontBold ?? false,
+          newShape.style?.fontItalic ?? false,
+          newShape.style?.fontFamily
+        )
+        return refreshShape(
+          {
+            ...newShape,
+            fontSize,
+            height: fontSize * newShape.value.length
+          },
+          settings
+        )
+      })
+
+      updateShape(refreshedShapes, true)
       selectedShapeTool && updateToolSettings(selectedShapeTool.id, field, value)
     } else {
       updateToolSettings(activeTool.id, field, value)

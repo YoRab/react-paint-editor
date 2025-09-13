@@ -39,7 +39,7 @@ const App = ({ options, className, style, canvasProps }: AppProps) => {
     settings,
     setCanvasSize,
     setCanvasOffset,
-    selectShape,
+    selectShapes,
     activeTool,
     setActiveTool,
     isInsideComponent,
@@ -61,12 +61,12 @@ const App = ({ options, className, style, canvasProps }: AppProps) => {
   const [isShiftPressed, setShiftPressed] = useState<boolean>(false)
   const [isAltPressed, setAltPressed] = useState<boolean>(false)
 
-  const pasteShape = useCallback(
-    (shape: ShapeEntity) => {
-      addShape(shape)
-      selectShape(shape)
+  const pasteShapes = useCallback(
+    (shapes: ShapeEntity[]) => {
+      addShape(shapes)
+      selectShapes(shapes)
     },
-    [addShape, selectShape]
+    [addShape, selectShapes]
   )
 
   const onResized = useCallback(
@@ -85,8 +85,8 @@ const App = ({ options, className, style, canvasProps }: AppProps) => {
     selectedShape,
     setSelectedShape,
     removeShape,
-    pasteShape,
-    updateShape,
+    pasteShapes,
+    updateShapes: updateShape,
     backwardShape,
     forwardShape,
     setShiftPressed,
@@ -121,7 +121,7 @@ const App = ({ options, className, style, canvasProps }: AppProps) => {
         canvasOffsetStartData={canvasOffsetStartData}
         setCanvasOffsetStartData={setCanvasOffsetStartData}
         shapes={shapesRef.current}
-        addShape={addShape}
+        addShapes={addShape}
         updateSingleShape={updateShape}
         selectedShape={selectedShape}
         selectionFrame={selectionFrame}

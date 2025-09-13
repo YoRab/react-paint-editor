@@ -54,7 +54,7 @@ export const drawCircle = (ctx: CanvasRenderingContext2D, circle: DrawableShape<
   circle.style?.strokeColor !== 'transparent' && ctx.stroke(circle.path)
 }
 
-export const getCircleBorder = (circle: Circle, settings: UtilsSettings): Rect => {
+export const getCircleBorder = (circle: Circle, settings: Pick<UtilsSettings, 'selectionPadding'>): Rect => {
   return {
     x: circle.x - circle.radius - settings.selectionPadding,
     width: (circle.radius + settings.selectionPadding) * 2,

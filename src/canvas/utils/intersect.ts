@@ -3,10 +3,12 @@ import { SELECTION_ANCHOR_SIZE, SELECTION_RESIZE_ANCHOR_POSITIONS, SELECTION_ROT
 import { scalePoint } from '@canvas/utils/transform'
 import type { CanvasSize } from '@common/types/Canvas'
 import type { HoverModeData } from '@common/types/Mode'
-import type { DrawableShape, Point, Rect } from '@common/types/Shapes'
+import type { DrawableShape, Point, Rect, SelectionType } from '@common/types/Shapes'
 import { getShapeInfos } from './shapes'
 import { isCircleIntersectRect, isPointInsideRect, rotatePoint } from './trigo'
-import { catmullRomToBezier, createLinePath, getCatmullRomPoints } from '@canvas/utils/shapes/path'
+import { catmullRomToBezier, getCatmullRomPoints } from '@canvas/utils/shapes/path'
+import { createLinePath } from '@canvas/utils/shapes/path'
+import { getSelectedShapes } from '@canvas/utils/selection'
 
 export const getCursorPosition = (e: MouseEvent | TouchEvent): { clientX: number; clientY: number } => {
   const { clientX = 0, clientY = 0 } =
@@ -61,7 +63,7 @@ const isPartOfRect = (rect: Rect, point: Point, radius: number) =>
 
 export const checkSelectionIntersection = (
   ctx: CanvasRenderingContext2D,
-  shape: DrawableShape,
+  shape: SelectionType,
   position: Point,
   settings: UtilsSettings,
   checkAnchors = false,
@@ -74,15 +76,18 @@ export const checkSelectionIntersection = (
   const { borders, center } = getShapeInfos(shape, settings)
 
   const newPosition = getPointPositionAfterCanvasTransformation(position, shape.rotation, center)
-
+  const shapesToCheck = getSelectedShapes(shape)
   if (checkAnchors) {
-    if (shape.type === 'line' || shape.type === 'polygon' || shape.type === 'curve') {
-      for (let i = 0; i < shape.points.length; i++) {
+    if (
+      shapesToCheck.length === 1 &&
+      (shapesToCheck[0]?.type === 'line' || shapesToCheck[0]?.type === 'polygon' || shapesToCheck[0]?.type === 'curve')
+    ) {
+      for (let i = 0; i < shapesToCheck[0].points.length; i++) {
         if (
           isPartOfRect(
             {
-              x: shape.points[i][0] - SELECTION_ANCHOR_SIZE / 2 / scaleRatio,
-              y: shape.points[i][1] - SELECTION_ANCHOR_SIZE / 2 / scaleRatio,
+              x: shapesToCheck[0]!.points[i]![0] - SELECTION_ANCHOR_SIZE / 2 / scaleRatio,
+              y: shapesToCheck[0]!.points[i]![1] - SELECTION_ANCHOR_SIZE / 2 / scaleRatio,
               width: SELECTION_ANCHOR_SIZE / scaleRatio,
               height: SELECTION_ANCHOR_SIZE / scaleRatio
             },
@@ -150,7 +155,7 @@ export const checkPolygonLinesSelectionIntersection = (
   ctx.lineWidth = (shape.style?.lineWidth ?? 0) + radius / settings.canvasZoom
   const points = shape.style?.closedPoints ? [...shape.points, shape.points[0]] : shape.points
   for (let i = 0; i < points.length - 1; i++) {
-    const path = createLinePath({ points: [points[i], points[i + 1]] })
+    const path = createLinePath({ points: [points[i]!, points[i + 1]!] })
     if (ctx.isPointInStroke(path, newPosition[0], newPosition[1])) {
       return { lineIndex: i }
     }
@@ -175,12 +180,12 @@ export const checkCurveLinesSelectionIntersection = (
   ctx.lineWidth = (shape.style?.lineWidth ?? 0) + radius / settings.canvasZoom
   const points = getCatmullRomPoints(shape, shape.points)
   const path = new Path2D()
-  path.moveTo(...points[0])
+  path.moveTo(...points[0]!)
   for (let i = 1; i < points.length - 2; i++) {
-    const p0 = points[i - 1]
-    const p1 = points[i]
-    const p2 = points[i + 1]
-    const p3 = points[i + 2]
+    const p0 = points[i - 1]!
+    const p1 = points[i]!
+    const p2 = points[i + 1]!
+    const p3 = points[i + 2]!
     catmullRomToBezier(path, p0, p1, p2, p3)
     if (ctx.isPointInStroke(path, newPosition[0], newPosition[1])) {
       return { lineIndex: i - 1 }
@@ -191,7 +196,7 @@ export const checkCurveLinesSelectionIntersection = (
 
 export const checkPositionIntersection = (
   ctx: CanvasRenderingContext2D,
-  shape: DrawableShape,
+  shape: SelectionType,
   position: Point,
   settings: UtilsSettings
 ): false | HoverModeData => {
@@ -296,14 +301,14 @@ export const checkSelectionFrameCollision = (
         break
       }
       if (points.length < 2) {
-        const point = scalePoint(points[0], brushMinX, brushMinY, shape.scaleX, shape.scaleY)
+        const point = scalePoint(points[0]!, brushMinX, brushMinY, shape.scaleX, shape.scaleY)
         if (isCircleIntersectRect(frameCollision, { x: point[0], y: point[1], radius: (shape.style?.lineWidth ?? 1) / 2 })) {
           return true
         }
       }
       for (let i = 0; i < points.length - 1; i++) {
-        const point1 = scalePoint(points[i], brushMinX, brushMinY, shape.scaleX, shape.scaleY)
-        const point2 = scalePoint(points[i + 1], brushMinX, brushMinY, shape.scaleX, shape.scaleY)
+        const point1 = scalePoint(points[i]!, brushMinX, brushMinY, shape.scaleX, shape.scaleY)
+        const point2 = scalePoint(points[i + 1]!, brushMinX, brushMinY, shape.scaleX, shape.scaleY)
         const pointMinX = Math.min(point1[0], point2[0])
         const pointMinY = Math.min(point1[1], point2[1])
 

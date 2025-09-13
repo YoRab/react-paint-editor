@@ -42,21 +42,21 @@ export const createBrushPath = (brush: DrawableShape<'brush'>, { brushAlgo }: Ut
   for (const points of brush.points) {
     if (!points.length) return
     if (points.length === 1) {
-      path.rect(...scalePoint(points[0], minX, minY, brush.scaleX, brush.scaleY), 1, 1)
+      path.rect(...scalePoint(points[0]!, minX, minY, brush.scaleX, brush.scaleY), 1, 1)
     } else {
-      path.moveTo(...scalePoint(points[0], minX, minY, brush.scaleX, brush.scaleY))
+      path.moveTo(...scalePoint(points[0]!, minX, minY, brush.scaleX, brush.scaleY))
       switch (brushAlgo) {
         case 'quadratic':
           for (let i = 0; i < points.slice(1).length - 2; i++) {
-            const scaledPoint = scalePoint(points[i], minX, minY, brush.scaleX, brush.scaleY)
-            const scaledPoint2 = scalePoint(points[i + 1], minX, minY, brush.scaleX, brush.scaleY)
+            const scaledPoint = scalePoint(points[i]!, minX, minY, brush.scaleX, brush.scaleY)
+            const scaledPoint2 = scalePoint(points[i + 1]!, minX, minY, brush.scaleX, brush.scaleY)
             const xc = (scaledPoint[0] + scaledPoint2[0]) / 2
             const yc = (scaledPoint[1] + scaledPoint2[1]) / 2
             path.quadraticCurveTo(...scaledPoint, xc, yc)
           }
           path.quadraticCurveTo(
-            ...scalePoint(points[points.length - 2], minX, minY, brush.scaleX, brush.scaleY),
-            ...scalePoint(points[points.length - 1], minX, minY, brush.scaleX, brush.scaleY)
+            ...scalePoint(points[points.length - 2]!, minX, minY, brush.scaleX, brush.scaleY),
+            ...scalePoint(points[points.length - 1]!, minX, minY, brush.scaleX, brush.scaleY)
           )
           break
         default:
@@ -77,12 +77,12 @@ export const getCatmullRomPoints = (curve: DrawableShape<'curve'>, points: Point
   // On ajoute les points de début et de fin pour le calcul Catmull-Rom
 
   // Pour Catmull-Rom, il faut au moins 4 points (p0, p1, p2, p3)
-  const pts: [number, number][] = mustClosePath
+  const pts: Point[] = mustClosePath
     ? // Pour une courbe fermée, on duplique les points de début et de fin pour la continuité
       // Ajoute les deux derniers points au début et les deux premiers à la fin
-      [points[points.length - 2], ...points, points[0], points[1]]
+      [points[points.length - 2]!, ...points, points[0]!, points[1]!]
     : // Pour une courbe ouverte, on duplique les extrémités
-      [points[0], ...points, points[points.length - 1]]
+      [points[0]!, ...points, points[points.length - 1]!]
   return pts
 }
 
@@ -103,15 +103,15 @@ export const createCurvePath = (curve: DrawableShape<'curve'>) => {
   const mustClosePath = curve.style?.closedPoints === 1 && points.length > 2
 
   const path = new Path2D()
-  path.moveTo(...points[0])
+  path.moveTo(...points[0]!)
 
   // Catmull-Rom to Bezier
   const pts = getCatmullRomPoints(curve, points)
   for (let i = 1; i < pts.length - 2; i++) {
-    const p0 = pts[i - 1]
-    const p1 = pts[i]
-    const p2 = pts[i + 1]
-    const p3 = pts[i + 2]
+    const p0 = pts[i - 1]!
+    const p1 = pts[i]!
+    const p2 = pts[i + 1]!
+    const p3 = pts[i + 2]!
     catmullRomToBezier(path, p0, p1, p2, p3)
   }
 
@@ -129,12 +129,12 @@ export const createPolygonPath = (polygon: DrawableShape<'polygon'> | DrawableSh
 
   const path = new Path2D()
 
-  path.moveTo(...points[0])
+  path.moveTo(...points[0]!)
   for (const point of points.slice(1)) {
     path.lineTo(...point)
   }
 
-  if (points.length > 2 && polygon.style?.closedPoints === 1) path.lineTo(...points[0])
+  if (points.length > 2 && polygon.style?.closedPoints === 1) path.lineTo(...points[0]!)
 
   return path
 }
