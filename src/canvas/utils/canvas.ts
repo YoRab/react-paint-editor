@@ -33,10 +33,10 @@ export const updateCanvasContext = (
   ctx.fillStyle = fillColor
   ctx.strokeStyle = strokeColor
   ctx.lineWidth = lineWidth
-  ctx.setLineDash(lineDash === 0 ? [] : [LINE_DASH_DATA[lineDash][0] * lineWidth, LINE_DASH_DATA[lineDash][1] * lineWidth])
+  ctx.setLineDash(lineDash === 0 ? [] : [LINE_DASH_DATA[lineDash]![0]! * lineWidth, LINE_DASH_DATA[lineDash]![1]! * lineWidth])
 }
 
-export const transformCanvas = (ctx: CanvasRenderingContext2D, settings: UtilsSettings, rotation?: number, translation?: Point) => {
+export const transformCanvas = (ctx: CanvasRenderingContext2D, settings: UtilsSettings, rotation?: number, translation?: Point): void => {
   ctx.save()
   ctx.scale(settings.canvasSize.scaleRatio, settings.canvasSize.scaleRatio)
   ctx.translate(settings.canvasOffset[0], settings.canvasOffset[1])
