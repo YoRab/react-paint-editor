@@ -7,7 +7,6 @@ import SettingsBar from '@editor/components/settings/SettingsBar'
 import Toolbar from '@editor/components/toolbox/Toolbar'
 import { type GridLabelType, GridValues } from '@editor/constants/grid'
 import { DEFAULT_EDITOR_OPTIONS } from '@editor/constants/options'
-import { SELECTION_TOOL } from '@editor/constants/tools'
 import useSnackbar from '@editor/hooks/useSnackbar'
 import { type CSSProperties, type ReactNode, useCallback, useState } from 'react'
 import './index.css'
@@ -54,7 +53,7 @@ const Editor = ({ editorProps, className, style, options, children }: EditorProp
     width,
     height,
     selectTool,
-    selectShape,
+    selectShapes,
     activeTool,
     setActiveTool,
     setAvailableTools,
@@ -167,7 +166,7 @@ const Editor = ({ editorProps, className, style, options, children }: EditorProp
       setIsLoading(true)
       try {
         const pictureShape = await addPictureShape(fileOrUrl, width, height)
-        selectShape(pictureShape)
+        selectShapes([pictureShape])
       } catch (e) {
         if (e instanceof Error) {
           addSnackbar({ type: 'error', text: 'Le chargement a échoué' })
@@ -177,7 +176,7 @@ const Editor = ({ editorProps, className, style, options, children }: EditorProp
         setIsLoading(false)
       }
     },
-    [addPictureShape, selectShape, addSnackbar, width, height]
+    [addPictureShape, selectShapes, addSnackbar, width, height]
   )
 
   const appClassName = `${className ? `${className} ` : ''}${isLayoutPanelShown ? 'react-paint-editor-layout-opened ' : ''}react-paint-editor-app`
@@ -232,9 +231,9 @@ const Editor = ({ editorProps, className, style, options, children }: EditorProp
           setGridFormat={setGridFormat}
           shapes={shapesRef.current}
           moveShapes={moveShapes}
-          selectedShape={selectedShape}
+          selectedShapes={selectedShape}
           removeShape={removeShape}
-          selectShape={selectShape}
+          selectShapes={selectShapes}
           toggleShapeVisibility={toggleShapeVisibility}
           toggleShapeLock={toggleShapeLock}
           isLayoutPanelShown={isLayoutPanelShown}

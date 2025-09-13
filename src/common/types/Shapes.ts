@@ -147,13 +147,19 @@ export type DrawableShape<T extends ShapeType = ShapeType> = {
                           scaleX?: number
                           scaleY?: number
                         }
-                      : never)
+                      : T extends 'group'
+                        ? Rect & {
+                            type: 'group'
+                            selection?: SelectionDefaultType
+                            path?: Path2D
+                            shapes: ShapeEntity[]
+                          }
+                        : never)
 
 export type ExportedDrawableShape<T extends ShapeType = ShapeType> = T extends 'picture' ? Omit<DrawableShape<'picture'>, 'img'> : DrawableShape<T>
 
 export type ShapeEntity<T extends Exclude<ShapeType, 'triangle'> = Exclude<ShapeType, 'triangle'>> = {
   id: string
-  toolId?: string
 } & DrawableShape<T>
 
 export type StateData = {
@@ -163,3 +169,5 @@ export type StateData = {
     height: number
   }
 }
+
+export type SelectionType = ShapeEntity

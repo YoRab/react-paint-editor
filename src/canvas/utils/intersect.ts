@@ -3,10 +3,11 @@ import { SELECTION_ANCHOR_SIZE, SELECTION_RESIZE_ANCHOR_POSITIONS, SELECTION_ROT
 import { scalePoint } from '@canvas/utils/transform'
 import type { CanvasSize } from '@common/types/Canvas'
 import type { HoverModeData } from '@common/types/Mode'
-import type { DrawableShape, Point, Rect } from '@common/types/Shapes'
+import type { DrawableShape, Point, Rect, SelectionType } from '@common/types/Shapes'
 import { getShapeInfos } from './shapes'
 import { isCircleIntersectRect, isPointInsideRect, rotatePoint } from './trigo'
 import { createLinePath } from '@canvas/utils/shapes/path'
+import { getSelectedShapes } from '@canvas/utils/selection'
 
 export const getCursorPosition = (e: MouseEvent | TouchEvent): { clientX: number; clientY: number } => {
   const { clientX = 0, clientY = 0 } =
@@ -60,7 +61,7 @@ const isPartOfRect = (rect: Rect, point: Point, radius: number) =>
   radius ? isCircleIntersectRect(rect, { x: point[0], y: point[1], radius }) : isPointInsideRect(rect, point)
 
 export const checkSelectionIntersection = (
-  shape: DrawableShape,
+  shape: SelectionType,
   position: Point,
   settings: UtilsSettings,
   checkAnchors = false,
@@ -73,15 +74,18 @@ export const checkSelectionIntersection = (
   const { borders, center } = getShapeInfos(shape, settings)
 
   const newPosition = getPointPositionAfterCanvasTransformation(position, shape.rotation, center)
-
+  const shapesToCheck = getSelectedShapes(shape)
   if (checkAnchors) {
-    if (shape.type === 'line' || shape.type === 'polygon' || shape.type === 'curve') {
-      for (let i = 0; i < shape.points.length; i++) {
+    if (
+      shapesToCheck.length === 1 &&
+      (shapesToCheck[0]?.type === 'line' || shapesToCheck[0]?.type === 'polygon' || shapesToCheck[0]?.type === 'curve')
+    ) {
+      for (let i = 0; i < shapesToCheck[0].points.length; i++) {
         if (
           isPartOfRect(
             {
-              x: shape.points[i][0] - SELECTION_ANCHOR_SIZE / 2 / scaleRatio,
-              y: shape.points[i][1] - SELECTION_ANCHOR_SIZE / 2 / scaleRatio,
+              x: shapesToCheck[0]!.points[i]![0] - SELECTION_ANCHOR_SIZE / 2 / scaleRatio,
+              y: shapesToCheck[0]!.points[i]![1] - SELECTION_ANCHOR_SIZE / 2 / scaleRatio,
               width: SELECTION_ANCHOR_SIZE / scaleRatio,
               height: SELECTION_ANCHOR_SIZE / scaleRatio
             },
@@ -147,12 +151,12 @@ export const checkPolygonLinesSelectionIntersection = (
   for (let i = 0; i < shape.points.length; i++) {
     if (i === shape.points.length - 1) {
       if (!shape.style?.closedPoints) return false
-      const path = createLinePath({ points: [shape.points[i], shape.points[0]] })
+      const path = createLinePath({ points: [shape.points[i]!, shape.points[0]!] })
       if (ctx.isPointInStroke(path, newPosition[0], newPosition[1])) {
         return { lineIndex: i }
       }
     }
-    const path = createLinePath({ points: [shape.points[i], shape.points[i + 1]] })
+    const path = createLinePath({ points: [shape.points[i]!, shape.points[i + 1]!] })
     if (ctx.isPointInStroke(path, newPosition[0], newPosition[1])) {
       return { lineIndex: i }
     }
@@ -162,7 +166,7 @@ export const checkPolygonLinesSelectionIntersection = (
 
 export const checkPositionIntersection = (
   ctx: CanvasRenderingContext2D,
-  shape: DrawableShape,
+  shape: SelectionType,
   position: Point,
   settings: UtilsSettings
 ): false | HoverModeData => {
@@ -267,14 +271,14 @@ export const checkSelectionFrameCollision = (
         break
       }
       if (points.length < 2) {
-        const point = scalePoint(points[0], brushMinX, brushMinY, shape.scaleX, shape.scaleY)
+        const point = scalePoint(points[0]!, brushMinX, brushMinY, shape.scaleX, shape.scaleY)
         if (isCircleIntersectRect(frameCollision, { x: point[0], y: point[1], radius: (shape.style?.lineWidth ?? 1) / 2 })) {
           return true
         }
       }
       for (let i = 0; i < points.length - 1; i++) {
-        const point1 = scalePoint(points[i], brushMinX, brushMinY, shape.scaleX, shape.scaleY)
-        const point2 = scalePoint(points[i + 1], brushMinX, brushMinY, shape.scaleX, shape.scaleY)
+        const point1 = scalePoint(points[i]!, brushMinX, brushMinY, shape.scaleX, shape.scaleY)
+        const point2 = scalePoint(points[i + 1]!, brushMinX, brushMinY, shape.scaleX, shape.scaleY)
         const pointMinX = Math.min(point1[0], point2[0])
         const pointMinY = Math.min(point1[1], point2[1])
 

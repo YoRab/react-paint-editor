@@ -7,7 +7,7 @@ import { drawFrame } from '@canvas/utils/selection/selectionFrame'
 import { roundForGrid, roundRotationForGrid } from '@canvas/utils/transform'
 import { getCurrentView } from '@canvas/utils/zoom'
 import type { SelectionModeData, SelectionModeResize } from '@common/types/Mode'
-import type { DrawableShape, Point, Rect, ShapeEntity } from '@common/types/Shapes'
+import type { DrawableShape, Point, Rect, ShapeEntity, SelectionType } from '@common/types/Shapes'
 import type { CustomTool } from '@common/types/tools'
 import { uniqueId } from '@common/utils/util'
 import { createBrush, drawBrush, getBrushBorder, refreshBrush, resizeBrush, translateBrush } from './brush'
@@ -19,6 +19,8 @@ import { drawPicture, getPictureBorder, refreshPicture, resizePicture, translate
 import { createPolygon, drawPolygon, getPolygonBorder, refreshPolygon, resizePolygon, translatePolygon } from './polygon'
 import { createRectangle, drawRect, getRectBorder, refreshRect, resizeRect, translateRect } from './rectangle'
 import { createText, drawText, getTextBorder, refreshText, resizeText, translateText } from './text'
+import { getSelectedShapes } from '@canvas/utils/selection'
+import { drawSelectionGroup } from '@canvas/utils/selection/groupSelection'
 
 export const createShape = (
   ctx: CanvasRenderingContext2D,
@@ -92,7 +94,7 @@ export const drawShape = (ctx: CanvasRenderingContext2D, shape: DrawableShape, s
   ctx.restore()
 }
 
-const getShapeBorders = (marker: DrawableShape, settings: UtilsSettings): Rect => {
+const getShapeBorders = (marker: DrawableShape, settings: Pick<UtilsSettings, 'selectionPadding'>): Rect => {
   switch (marker.type) {
     case 'brush':
       return getBrushBorder(marker, settings)
@@ -108,6 +110,7 @@ const getShapeBorders = (marker: DrawableShape, settings: UtilsSettings): Rect =
       return getEllipseBorder(marker, settings)
     case 'rect':
     case 'square':
+    case 'group':
       return getRectBorder(marker, settings)
     case 'text':
       return getTextBorder(marker, settings)
@@ -129,7 +132,7 @@ const getShapeCenter = (borders: Rect): Point => {
 
 export const getShapeInfos = (
   shape: DrawableShape,
-  settings: UtilsSettings
+  settings: Pick<UtilsSettings, 'selectionPadding'>
 ): {
   borders: Rect
   outerBorders: Rect
@@ -242,6 +245,16 @@ export const translateShape = (
   }
 }
 
+export const translateShapes = (
+  cursorPosition: Point,
+  originalShape: SelectionType,
+  originalCursorPosition: Point,
+  settings: UtilsSettings,
+  isShiftPressed: boolean
+): ShapeEntity[] => {
+  return getSelectedShapes(originalShape).map(shape => translateShape(cursorPosition, shape, originalCursorPosition, settings, isShiftPressed))
+}
+
 export const refreshShape = (shape: ShapeEntity, settings: UtilsSettings): ShapeEntity => {
   switch (shape.type) {
     case 'rect':
@@ -277,7 +290,7 @@ export const drawShapeSelection = ({
   withAnchors = true
 }: {
   ctx: CanvasRenderingContext2D
-  shape: DrawableShape
+  shape: SelectionType
   settings: UtilsSettings
   selectionWidth: number
   selectionColor: string
@@ -295,6 +308,9 @@ export const drawShapeSelection = ({
     case 'text':
     case 'brush':
       drawSelectionRect(ctx, shape, selectionColor, selectionWidth, settings, withAnchors)
+      break
+    case 'group':
+      drawSelectionGroup(ctx, shape, selectionColor, selectionWidth, settings, withAnchors)
       break
     case 'polygon':
     case 'line':
@@ -327,9 +343,11 @@ export const drawSelectionFrame = ({
   ctx.restore()
 }
 
-export const copyShape = (shape: ShapeEntity, settings: UtilsSettings) => {
-  return {
-    ...translateShape([20, 20], shape, [0, 0], settings, false),
-    id: uniqueId(`${shape.type}_`)
-  } as ShapeEntity
+export const copyShapes = (groupShape: SelectionType, settings: UtilsSettings): ShapeEntity[] => {
+  return getSelectedShapes(groupShape).map(shape => {
+    return {
+      ...translateShape([20, 20], shape, [0, 0], settings, false),
+      id: uniqueId(`${shape.type}_`)
+    }
+  })
 }

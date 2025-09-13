@@ -7,7 +7,7 @@ type useDragType = {
   shape: ShapeEntity
   layoutDragging: string | undefined
   setLayoutDragging: (shapeId: string | undefined) => void
-  handleSelect: (shape: ShapeEntity) => void
+  handleSelect: (shape: ShapeEntity[]) => void
   onMoveShapes: (firstShapeId: string, lastShapeId: string) => void
 }
 
@@ -34,7 +34,7 @@ const useDrag = ({ disabled = false, ref, shape, layoutDragging, setLayoutDraggi
       return false
     }
     const handleDragStart = (e: DragEvent) => {
-      handleSelect(shape)
+      handleSelect([shape])
       if (!e.dataTransfer) return
       e.dataTransfer.effectAllowed = 'move'
       e.dataTransfer.setData('draggableShapeId', shape.id)

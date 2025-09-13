@@ -59,7 +59,7 @@ export const drawRect = (ctx: CanvasRenderingContext2D, shape: DrawableShape<'re
   shape.style?.strokeColor !== 'transparent' && ctx.stroke(shape.path)
 }
 
-export const getRectBorder = (rect: Rect, settings: UtilsSettings): Rect => {
+export const getRectBorder = (rect: Rect, settings: Pick<UtilsSettings, 'selectionPadding'>): Rect => {
   return {
     x: rect.x - settings.selectionPadding,
     width: rect.width + settings.selectionPadding * 2,

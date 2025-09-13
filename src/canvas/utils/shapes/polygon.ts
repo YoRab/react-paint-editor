@@ -59,7 +59,7 @@ export const drawPolygon = (ctx: CanvasRenderingContext2D, polygon: DrawableShap
   polygon.style?.strokeColor !== 'transparent' && ctx.stroke(polygon.path)
 }
 
-export const getPolygonBorder = (polygon: Polygon, settings: UtilsSettings): Rect => {
+export const getPolygonBorder = (polygon: Polygon, settings: Pick<UtilsSettings, 'selectionPadding'>): Rect => {
   const minX = Math.min(...polygon.points.map(point => point[0])) - settings.selectionPadding
   const maxX = Math.max(...polygon.points.map(point => point[0])) + settings.selectionPadding
 
@@ -124,8 +124,8 @@ export const addPolygonLine = <T extends DrawableShape<'polygon'>>(shape: T, lin
   const totalPoints = [
     ...shape.points.slice(0, lineIndex + 1),
     [
-      getCenter(shape.points[lineIndex], shape.points[lineIndex === shape.points.length - 1 ? 0 : lineIndex + 1])[0],
-      getCenter(shape.points[lineIndex], shape.points[lineIndex === shape.points.length - 1 ? 0 : lineIndex + 1])[1]
+      getCenter(shape.points[lineIndex]!, shape.points[lineIndex === shape.points.length - 1 ? 0 : lineIndex + 1]!)[0],
+      getCenter(shape.points[lineIndex]!, shape.points[lineIndex === shape.points.length - 1 ? 0 : lineIndex + 1]!)[1]
     ],
     ...shape.points.slice(lineIndex + 1)
   ]

@@ -13,7 +13,7 @@ const hasStartZooming = (currentDiff: number, pinchData: PinchData): boolean => 
 const hasStartMoving = (currentCenter: Point, pinchData: PinchData): boolean =>
   Math.abs(getDistanceBetweenPoints(currentCenter, pinchData.startCenter)) > 10
 
-const getDiffAndCenter = (evCache: PointerEvent[]) => {
+const getDiffAndCenter = (evCache: [PointerEvent, PointerEvent]) => {
   const point1: Point = [evCache[0].clientX, evCache[0].clientY]
   const point2: Point = [evCache[1].clientX, evCache[1].clientY]
   const diff = getDistanceBetweenPoints(point1, point2)
@@ -49,7 +49,7 @@ const getCanvasTransformation = ({
   offset: Point
   zoom: number
 } => {
-  const newZoom = isZooming ? clamp((currentDiff / startDiff) * startZoom, ZOOM_STEPS[0], ZOOM_STEPS[ZOOM_STEPS.length - 1]) : startZoom
+  const newZoom = isZooming ? clamp((currentDiff / startDiff) * startZoom, ZOOM_STEPS[0]!, ZOOM_STEPS[ZOOM_STEPS.length - 1]!) : startZoom
 
   const newOffset: Point = isMoving
     ? [
@@ -140,7 +140,7 @@ const usePinchZoomAndMove = ({ canvasElt, canvasTransformation, canvasSize, size
       if (evCache.current.length === 2) {
         ev.stopPropagation()
 
-        const { diff: startDiff, center: startCenter } = getDiffAndCenter(evCache.current)
+        const { diff: startDiff, center: startCenter } = getDiffAndCenter(evCache.current as [PointerEvent, PointerEvent])
 
         pinchData.current = {
           startDiff,
@@ -167,7 +167,7 @@ const usePinchZoomAndMove = ({ canvasElt, canvasTransformation, canvasSize, size
       if (evIndex > -1) evCache.current[evIndex] = ev
 
       if (evCache.current.length === 2 && pinchData.current) {
-        const { diff: currentDiff, center: currentCenter } = getDiffAndCenter(evCache.current)
+        const { diff: currentDiff, center: currentCenter } = getDiffAndCenter(evCache.current as [PointerEvent, PointerEvent])
 
         const isZooming = pinchData.current.isZooming || hasStartZooming(currentDiff, pinchData.current)
         const isMoving = pinchData.current.isMoving || isZooming || hasStartMoving(currentCenter, pinchData.current)

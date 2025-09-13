@@ -55,7 +55,7 @@ export const drawEllipse = (ctx: CanvasRenderingContext2D, ellipse: DrawableShap
   ellipse.style?.strokeColor !== 'transparent' && ctx.stroke(ellipse.path)
 }
 
-export const getEllipseBorder = (ellipse: Ellipse, settings: UtilsSettings): Rect => {
+export const getEllipseBorder = (ellipse: Ellipse, settings: Pick<UtilsSettings, 'selectionPadding'>): Rect => {
   return {
     x: ellipse.x - ellipse.radiusX - settings.selectionPadding,
     width: (ellipse.radiusX + settings.selectionPadding) * 2,

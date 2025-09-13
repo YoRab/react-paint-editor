@@ -112,8 +112,8 @@ export const addCurveLine = <T extends DrawableShape<'curve'>>(shape: T, lineInd
   const totalPoints = [
     ...shape.points.slice(0, lineIndex + 1),
     [
-      getCenter(shape.points[lineIndex], shape.points[lineIndex === shape.points.length - 1 ? 0 : lineIndex + 1])[0],
-      getCenter(shape.points[lineIndex], shape.points[lineIndex === shape.points.length - 1 ? 0 : lineIndex + 1])[1]
+      getCenter(shape.points[lineIndex]!, shape.points[lineIndex === shape.points.length - 1 ? 0 : lineIndex + 1]!)[0],
+      getCenter(shape.points[lineIndex]!, shape.points[lineIndex === shape.points.length - 1 ? 0 : lineIndex + 1]!)[1]
     ],
     ...shape.points.slice(lineIndex + 1)
   ]
