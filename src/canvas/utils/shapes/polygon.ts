@@ -37,7 +37,7 @@ export const createPolygon = (
       toolId: shape.id,
       type: shape.type,
       id: uniqueId(`${shape.type}_`),
-      points: new Array(2).fill(cursorPosition),
+      points: [cursorPosition],
       rotation: 0,
       style: {
         opacity: shape.settings.opacity.default,

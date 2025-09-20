@@ -210,11 +210,6 @@ const useDrawableCanvas = ({
 
     if (selectionMode.mode === 'textedition') return
     if (selectionMode.mode === 'preview') return
-    if (selectionMode.mode === 'resize' && selectionMode.isCreating && (selectedShape?.type === 'polygon' || selectedShape?.type === 'curve')) {
-      setSelectionMode({ mode: 'preview' })
-      saveShapes()
-      return
-    }
     if (selectionMode.mode !== 'default') {
       if (selectionMode.mode === 'brush' && isBrushShapeDoneOnMouseUp) setSelectedShape(undefined)
       setSelectionMode({ mode: 'default' })
@@ -306,15 +301,18 @@ const useDrawableCanvas = ({
       } else if (activeTool.type !== 'picture') {
         const newShape = createShape(drawCtx, activeTool as Exclude<CustomTool, { type: 'picture' }>, cursorPosition, settings)
         addShape(newShape)
-        activeTool.type !== 'polygon' && activeTool.type !== 'curve' && setActiveTool(SELECTION_TOOL)
         setSelectedShape(newShape)
-        setSelectionMode({
-          mode: 'resize',
-          isCreating: true,
-          cursorStartPosition: [cursorPosition[0] + settings.selectionPadding, cursorPosition[1] + settings.selectionPadding],
-          originalShape: newShape,
-          anchor: newShape.type === 'line' ? 0 : newShape.type === 'polygon' || newShape.type === 'curve' ? newShape.points.length - 1 : [1, 1]
-        })
+        if (newShape.type === 'polygon' || newShape.type === 'curve') {
+          setSelectionMode({ mode: 'preview' })
+        } else {
+          setActiveTool(SELECTION_TOOL)
+          setSelectionMode({
+            mode: 'resize',
+            cursorStartPosition: [cursorPosition[0] + settings.selectionPadding, cursorPosition[1] + settings.selectionPadding],
+            originalShape: newShape,
+            anchor: newShape.type === 'line' ? 0 : [1, 1]
+          })
+        }
       }
     }
   }
