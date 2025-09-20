@@ -30,7 +30,6 @@ export const getNewSelectionData = (
   if (hoverMode.mode === 'resize') {
     return {
       mode: 'resize',
-      isCreating: false,
       cursorStartPosition: cursorPosition,
       originalShape: selectedShape,
       anchor: hoverMode.anchor
