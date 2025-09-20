@@ -2,6 +2,7 @@ import type { UtilsSettings } from '@canvas/constants/app'
 import { ShapeTypeArray } from '@canvas/constants/shapes'
 import useDoubleClick from '@canvas/hooks/useDoubleClick'
 import {
+  checkCurveLinesSelectionIntersection,
   checkPolygonLinesSelectionIntersection,
   checkSelectionIntersection,
   getCursorPositionInTransformedCanvas,
@@ -353,17 +354,18 @@ const useDrawableCanvas = ({
           }
           return
         }
-        if (selectedShape?.type === 'polygon' || selectedShape?.type === 'curve') {
+        if (selectedShape?.type === 'polygon') {
           const cursorPosition = getCursorPositionInTransformedCanvas(e, drawCanvasRef.current, settings)
           if (!isCursorInsideMask(cursorPosition, settings)) return
           const polygonIntersection = checkPolygonLinesSelectionIntersection(drawCtx, selectedShape, cursorPosition, settings)
-          if (polygonIntersection) {
-            updateSingleShape(
-              selectedShape?.type === 'polygon'
-                ? addPolygonLine(selectedShape, polygonIntersection.lineIndex, settings)
-                : addCurveLine(selectedShape, polygonIntersection.lineIndex, settings)
-            )
-          }
+          if (polygonIntersection) updateSingleShape(addPolygonLine(selectedShape, polygonIntersection.lineIndex, cursorPosition, settings))
+          return
+        }
+        if (selectedShape?.type === 'curve') {
+          const cursorPosition = getCursorPositionInTransformedCanvas(e, drawCanvasRef.current, settings)
+          if (!isCursorInsideMask(cursorPosition, settings)) return
+          const polygonIntersection = checkCurveLinesSelectionIntersection(drawCtx, selectedShape, cursorPosition, settings)
+          if (polygonIntersection) updateSingleShape(addCurveLine(selectedShape, polygonIntersection.lineIndex, cursorPosition, settings))
           return
         }
       }

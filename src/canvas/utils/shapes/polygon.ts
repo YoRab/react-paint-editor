@@ -4,7 +4,6 @@ import { createLineSelectionPath } from '@canvas/utils/selection/lineSelection'
 import { getShapeInfos } from '@canvas/utils/shapes/index'
 import { createPolygonPath } from '@canvas/utils/shapes/path'
 import { boundVectorToSingleAxis, roundForGrid } from '@canvas/utils/transform'
-import { getCenter } from '@canvas/utils/trigo'
 import type { SelectionModeResize } from '@common/types/Mode'
 import type { DrawableShape, Point, Polygon, Rect, ShapeEntity } from '@common/types/Shapes'
 import type { ToolsSettingsType } from '@common/types/tools'
@@ -118,17 +117,15 @@ export const resizePolygon = (
   return buildPath(updatedShape, settings)
 }
 
-export const addPolygonLine = <T extends DrawableShape<'polygon'>>(shape: T, lineIndex: number, settings: UtilsSettings): T => {
+export const addPolygonLine = <T extends DrawableShape<'polygon'>>(
+  shape: T,
+  lineIndex: number,
+  cursorPosition: Point,
+  settings: UtilsSettings
+): T => {
   if (lineIndex < 0 || lineIndex > shape.points.length - 1) return shape
 
-  const totalPoints = [
-    ...shape.points.slice(0, lineIndex + 1),
-    [
-      getCenter(shape.points[lineIndex], shape.points[lineIndex === shape.points.length - 1 ? 0 : lineIndex + 1])[0],
-      getCenter(shape.points[lineIndex], shape.points[lineIndex === shape.points.length - 1 ? 0 : lineIndex + 1])[1]
-    ],
-    ...shape.points.slice(lineIndex + 1)
-  ]
+  const totalPoints = [...shape.points.slice(0, lineIndex + 1), cursorPosition, ...shape.points.slice(lineIndex + 1)]
 
   return buildPath(
     {
