@@ -48,15 +48,7 @@ export const createShape = (
   }
 }
 
-export const drawShape = (ctx: CanvasRenderingContext2D, shape: DrawableShape, settings: UtilsSettings): void => {
-  if (shape.visible === false) return
-  const { center, outerBorders } = getShapeInfos(shape, settings)
-  const currentView = getCurrentView(settings)
-  const isInView = !!getRectIntersection(outerBorders, currentView)
-  if (!isInView) return
-  transformCanvas(ctx, settings, shape.rotation, center)
-  updateCanvasContext(ctx, shape.style)
-
+const drawShapeByType = (ctx: CanvasRenderingContext2D, shape: DrawableShape): void => {
   switch (shape.type) {
     case 'brush':
       drawBrush(ctx, shape)
@@ -89,6 +81,48 @@ export const drawShape = (ctx: CanvasRenderingContext2D, shape: DrawableShape, s
       drawPicture(ctx, shape)
       break
   }
+}
+
+/**
+ * Renders a shape with opacity on a temporary canvas and then draws it on the main canvas
+ * @param ctx - The main canvas context
+ * @param shape - The shape to draw
+ * @param outerBorders - The outer borders of the shape
+ */
+const drawShapeWithOpacity = (ctx: CanvasRenderingContext2D, shape: DrawableShape, outerBorders: Rect): void => {
+  const tempCanvas = document.createElement('canvas')
+  const tempCtx = tempCanvas.getContext('2d')
+  if (!tempCtx) throw new Error('No context found for canvas')
+  const tempCanvasSize = {
+    width: outerBorders.width * 2,
+    height: outerBorders.height * 2
+  }
+  tempCanvas.width = tempCanvasSize.width
+  tempCanvas.height = tempCanvasSize.height
+  tempCtx.translate(tempCanvasSize.width / 4 - outerBorders.x, tempCanvasSize.height / 4 - outerBorders.y)
+  updateCanvasContext(tempCtx, { ...shape.style, opacity: 100 })
+
+  drawShapeByType(tempCtx, shape)
+
+  ctx.drawImage(tempCanvas, outerBorders.x - tempCanvasSize.width / 4, outerBorders.y - tempCanvasSize.height / 4)
+}
+
+export const drawShape = (ctx: CanvasRenderingContext2D, shape: DrawableShape, settings: UtilsSettings): void => {
+  if (shape.visible === false) return
+  const { center, outerBorders } = getShapeInfos(shape, settings)
+  const currentView = getCurrentView(settings)
+  const isInView = !!getRectIntersection(outerBorders, currentView)
+  if (!isInView) return
+  transformCanvas(ctx, settings, shape.rotation, center)
+  updateCanvasContext(ctx, shape.style)
+
+  if (ctx.globalAlpha !== 1) {
+    drawShapeWithOpacity(ctx, shape, outerBorders)
+    ctx.restore()
+    return
+  }
+  drawShapeByType(ctx, shape)
+
   ctx.restore()
 }
 
