@@ -23,7 +23,6 @@ export type SelectionModeEditText = {
 
 export type SelectionModeResize<AnchorType extends Point | number = Point> = {
   mode: 'resize'
-  isCreating: boolean
   cursorStartPosition: Point
   originalShape: ShapeEntity
   anchor: AnchorType
