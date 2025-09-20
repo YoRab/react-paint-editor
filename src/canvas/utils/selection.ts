@@ -52,7 +52,14 @@ export const selectShape = (
 } => {
   let selectedShapePositionIntersection: false | HoverModeData = false
   if (selectedShape) {
-    selectedShapePositionIntersection = checkSelectionIntersection(selectedShape, cursorPosition, settings, true, isTouchGesture ? 20 : undefined)
+    selectedShapePositionIntersection = checkSelectionIntersection(
+      ctx,
+      selectedShape,
+      cursorPosition,
+      settings,
+      true,
+      isTouchGesture ? 20 : undefined
+    )
 
     const newSelectionMode = getNewSelectionData(selectedShapePositionIntersection || { mode: 'default' }, selectedShape, cursorPosition, settings)
     if (newSelectionMode?.mode === 'resize' || newSelectionMode?.mode === 'rotate') {

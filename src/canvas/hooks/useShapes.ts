@@ -68,7 +68,7 @@ const useShapes = (settings: UtilsSettings, width: number, height: number) => {
 
       const foundShape = shapesRef.current.find(shape => {
         return shape.id === selectedShape?.id
-          ? !!checkSelectionIntersection(selectedShape, cursorPosition, settings)
+          ? !!checkSelectionIntersection(ctx, selectedShape, cursorPosition, settings)
           : !!checkPositionIntersection(ctx, shape, cursorPosition, settings)
       })
       setHoveredShape(foundShape)
