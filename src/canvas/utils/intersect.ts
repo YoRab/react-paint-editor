@@ -60,6 +60,7 @@ const isPartOfRect = (rect: Rect, point: Point, radius: number) =>
   radius ? isCircleIntersectRect(rect, { x: point[0], y: point[1], radius }) : isPointInsideRect(rect, point)
 
 export const checkSelectionIntersection = (
+  ctx: CanvasRenderingContext2D,
   shape: DrawableShape,
   position: Point,
   settings: UtilsSettings,
@@ -127,7 +128,10 @@ export const checkSelectionIntersection = (
     }
   }
 
-  return isPartOfRect(borders, newPosition, radius) ? { mode: 'translate' } : false
+  if (isPartOfRect(borders, newPosition, radius)) return { mode: 'translate' }
+  if (shape.type === 'curve' && 'path' in shape && shape.path && ctx.isPointInPath(shape.path, newPosition[0], newPosition[1]))
+    return { mode: 'translate' }
+  return false
 }
 
 export const checkPolygonLinesSelectionIntersection = (
@@ -206,7 +210,7 @@ export const checkPositionIntersection = (
     return ctx.isPointInStroke(shape.path, newPosition[0], newPosition[1]) ? { mode: 'translate' } : false
   }
 
-  return checkSelectionIntersection(shape, position, settings, false)
+  return checkSelectionIntersection(ctx, shape, position, settings, false)
 }
 
 export function getRectIntersection(rect1: Rect, rect2: Rect): Rect | undefined {

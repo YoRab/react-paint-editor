@@ -89,7 +89,7 @@ const handleMove = (
       })
       return
     }
-    const positionIntersection = checkSelectionIntersection(selectedShape, cursorPosition, settings, true) || {
+    const positionIntersection = checkSelectionIntersection(drawCtx, selectedShape, cursorPosition, settings, true) || {
       mode: 'default'
     }
     setHoverMode(positionIntersection)
@@ -346,7 +346,7 @@ const useDrawableCanvas = ({
 
           if (!isCursorInsideMask(cursorPosition, settings)) return
 
-          if (checkSelectionIntersection(selectedShape, cursorPosition, settings)) {
+          if (checkSelectionIntersection(drawCtx, selectedShape, cursorPosition, settings)) {
             setSelectionMode({
               mode: 'textedition',
               defaultValue: selectedShape.value
