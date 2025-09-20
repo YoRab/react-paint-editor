@@ -6,7 +6,7 @@ import type { HoverModeData } from '@common/types/Mode'
 import type { DrawableShape, Point, Rect } from '@common/types/Shapes'
 import { getShapeInfos } from './shapes'
 import { isCircleIntersectRect, isPointInsideRect, rotatePoint } from './trigo'
-import { createLinePath } from '@canvas/utils/shapes/path'
+import { catmullRomToBezier, createLinePath, getCatmullRomPoints } from '@canvas/utils/shapes/path'
 
 export const getCursorPosition = (e: MouseEvent | TouchEvent): { clientX: number; clientY: number } => {
   const { clientX = 0, clientY = 0 } =
@@ -144,17 +144,42 @@ export const checkPolygonLinesSelectionIntersection = (
   const newPosition = getPointPositionAfterCanvasTransformation(position, shape.rotation, center)
 
   ctx.lineWidth = (shape.style?.lineWidth ?? 0) + radius / settings.canvasZoom
-  for (let i = 0; i < shape.points.length; i++) {
-    if (i === shape.points.length - 1) {
-      if (!shape.style?.closedPoints) return false
-      const path = createLinePath({ points: [shape.points[i], shape.points[0]] })
-      if (ctx.isPointInStroke(path, newPosition[0], newPosition[1])) {
-        return { lineIndex: i }
-      }
-    }
-    const path = createLinePath({ points: [shape.points[i], shape.points[i + 1]] })
+  const points = shape.style?.closedPoints ? [...shape.points, shape.points[0]] : shape.points
+  for (let i = 0; i < points.length - 1; i++) {
+    const path = createLinePath({ points: [points[i], points[i + 1]] })
     if (ctx.isPointInStroke(path, newPosition[0], newPosition[1])) {
       return { lineIndex: i }
+    }
+  }
+  return false
+}
+
+export const checkCurveLinesSelectionIntersection = (
+  ctx: CanvasRenderingContext2D,
+  shape: DrawableShape<'curve'>,
+  position: Point,
+  settings: UtilsSettings,
+  radius = 50
+): false | { lineIndex: number } => {
+  if (shape.locked || shape.points.length < 2) return false
+  if (shape.points.length < 3) return checkPolygonLinesSelectionIntersection(ctx, shape, position, settings, radius)
+
+  const { center } = getShapeInfos(shape, settings)
+
+  const newPosition = getPointPositionAfterCanvasTransformation(position, shape.rotation, center)
+
+  ctx.lineWidth = (shape.style?.lineWidth ?? 0) + radius / settings.canvasZoom
+  const points = getCatmullRomPoints(shape, shape.points)
+  const path = new Path2D()
+  path.moveTo(...points[0])
+  for (let i = 1; i < points.length - 2; i++) {
+    const p0 = points[i - 1]
+    const p1 = points[i]
+    const p2 = points[i + 1]
+    const p3 = points[i + 2]
+    catmullRomToBezier(path, p0, p1, p2, p3)
+    if (ctx.isPointInStroke(path, newPosition[0], newPosition[1])) {
+      return { lineIndex: i - 1 }
     }
   }
   return false

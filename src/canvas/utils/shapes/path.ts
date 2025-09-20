@@ -1,6 +1,6 @@
 import type { UtilsSettings } from '@canvas/constants/app'
 import { scalePoint } from '@canvas/utils/transform'
-import type { Circle, DrawableShape, Line, Rect } from '@common/types/Shapes'
+import type { Circle, DrawableShape, Line, Point, Rect } from '@common/types/Shapes'
 
 export const createRecPath = (rect: Rect) => {
   const path = new Path2D()
@@ -71,11 +71,7 @@ export const createBrushPath = (brush: DrawableShape<'brush'>, { brushAlgo }: Ut
   return path
 }
 
-export const createCurvePath = (curve: DrawableShape<'curve'>) => {
-  const points = curve.tempPoint ? [...curve.points, curve.tempPoint] : curve.points
-  if (points.length < 2) return undefined
-  if (points.length < 3) return createPolygonPath(curve)
-
+export const getCatmullRomPoints = (curve: DrawableShape<'curve'>, points: Point[]) => {
   const mustClosePath = curve.style?.closedPoints === 1 && points.length > 2
   // Pour une courbe fermée, on doit "boucler" les points pour la continuité
   // On ajoute les points de début et de fin pour le calcul Catmull-Rom
@@ -87,24 +83,36 @@ export const createCurvePath = (curve: DrawableShape<'curve'>) => {
       [points[points.length - 2], ...points, points[0], points[1]]
     : // Pour une courbe ouverte, on duplique les extrémités
       [points[0], ...points, points[points.length - 1]]
+  return pts
+}
+
+export const catmullRomToBezier = (path: Path2D, p0: Point, p1: Point, p2: Point, p3: Point) => {
+  // Conversion Catmull-Rom -> Bezier
+  const cp1x = p1[0] + (p2[0] - p0[0]) / 6
+  const cp1y = p1[1] + (p2[1] - p0[1]) / 6
+  const cp2x = p2[0] - (p3[0] - p1[0]) / 6
+  const cp2y = p2[1] - (p3[1] - p1[1]) / 6
+
+  path.bezierCurveTo(cp1x, cp1y, cp2x, cp2y, p2[0], p2[1])
+}
+
+export const createCurvePath = (curve: DrawableShape<'curve'>) => {
+  const points = curve.tempPoint ? [...curve.points, curve.tempPoint] : curve.points
+  if (points.length < 2) return undefined
+  if (points.length < 3) return createPolygonPath(curve)
+  const mustClosePath = curve.style?.closedPoints === 1 && points.length > 2
 
   const path = new Path2D()
   path.moveTo(...points[0])
 
   // Catmull-Rom to Bezier
+  const pts = getCatmullRomPoints(curve, points)
   for (let i = 1; i < pts.length - 2; i++) {
     const p0 = pts[i - 1]
     const p1 = pts[i]
     const p2 = pts[i + 1]
     const p3 = pts[i + 2]
-
-    // Conversion Catmull-Rom -> Bezier
-    const cp1x = p1[0] + (p2[0] - p0[0]) / 6
-    const cp1y = p1[1] + (p2[1] - p0[1]) / 6
-    const cp2x = p2[0] - (p3[0] - p1[0]) / 6
-    const cp2y = p2[1] - (p3[1] - p1[1]) / 6
-
-    path.bezierCurveTo(cp1x, cp1y, cp2x, cp2y, p2[0], p2[1])
+    catmullRomToBezier(path, p0, p1, p2, p3)
   }
 
   if (mustClosePath) {

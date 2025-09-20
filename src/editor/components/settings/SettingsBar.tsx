@@ -1,7 +1,5 @@
 import type { UtilsSettings } from '@canvas/constants/app'
 import { refreshShape } from '@canvas/utils/shapes'
-import { addCurveLine } from '@canvas/utils/shapes/curve'
-import { addPolygonLine } from '@canvas/utils/shapes/polygon'
 import { calculateTextFontSize } from '@canvas/utils/shapes/text'
 import type { ShapeEntity } from '@common/types/Shapes'
 import type { CustomTool, ToolsType } from '@common/types/tools'
@@ -33,7 +31,6 @@ type SettingsItemsType = {
   selectedSettings: string | undefined
   setSelectedSettings: React.Dispatch<React.SetStateAction<string | undefined>>
   handleShapeStyleChange: (field: string, value: string | number | boolean) => void
-  handlePolygonLinesCount: (field: string, value: string | number) => void
   handleShapeFontFamilyChange: (field: string, value: string | number | boolean) => void
 }
 
@@ -45,7 +42,6 @@ const SettingsItems = ({
   selectedSettings,
   setSelectedSettings,
   handleShapeStyleChange,
-  handlePolygonLinesCount,
   handleShapeFontFamilyChange
 }: SettingsItemsType) => {
   return selectedShape ? (
@@ -413,21 +409,6 @@ const SettingsBar = ({
     }
   }
 
-  const handlePolygonLinesCount = (field: string, value: string | number) => {
-    if (selectedShape) {
-      if (selectedShape.type !== 'polygon' && selectedShape.type !== 'curve') return
-      updateShape(
-        selectedShape.type === 'polygon'
-          ? addPolygonLine(selectedShape, value as number, settings)
-          : addCurveLine(selectedShape, value as number, settings),
-        true
-      )
-      selectedShapeTool && updateToolSettings(selectedShapeTool.id, field, value)
-    } else {
-      updateToolSettings(activeTool.id, field, value)
-    }
-  }
-
   return (
     <>
       <div className='react-paint-editor-settings-bar'>
@@ -448,7 +429,6 @@ const SettingsBar = ({
                       selectedSettings={selectedSettings}
                       setSelectedSettings={setSelectedSettings}
                       handleShapeStyleChange={handleShapeStyleChange}
-                      handlePolygonLinesCount={handlePolygonLinesCount}
                       handleShapeFontFamilyChange={handleShapeFontFamilyChange}
                     />
                   )}
@@ -465,7 +445,6 @@ const SettingsBar = ({
                   selectedSettings={selectedSettings}
                   setSelectedSettings={setSelectedSettings}
                   handleShapeStyleChange={handleShapeStyleChange}
-                  handlePolygonLinesCount={handlePolygonLinesCount}
                   handleShapeFontFamilyChange={handleShapeFontFamilyChange}
                 />
               )}
@@ -483,7 +462,6 @@ const SettingsBar = ({
             selectedSettings={selectedSettings}
             setSelectedSettings={setSelectedSettings}
             handleShapeStyleChange={handleShapeStyleChange}
-            handlePolygonLinesCount={handlePolygonLinesCount}
             handleShapeFontFamilyChange={handleShapeFontFamilyChange}
           />
         </Modal>

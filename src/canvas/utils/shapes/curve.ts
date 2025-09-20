@@ -10,7 +10,6 @@ import type { ToolsSettingsType } from '@common/types/tools'
 import { set } from '@common/utils/object'
 import { uniqueId } from '@common/utils/util'
 import { getPolygonBorder } from './polygon'
-import { getCenter } from '@canvas/utils/trigo'
 
 const buildPath = <T extends DrawableShape<'curve'>>(shape: T, settings: UtilsSettings): T => {
   const path = createCurvePath(shape)
@@ -106,17 +105,10 @@ export const translateCurve = <U extends DrawableShape<'curve'>>(
   )
 }
 
-export const addCurveLine = <T extends DrawableShape<'curve'>>(shape: T, lineIndex: number, settings: UtilsSettings): T => {
+export const addCurveLine = <T extends DrawableShape<'curve'>>(shape: T, lineIndex: number, cursorPosition: Point, settings: UtilsSettings): T => {
   if (lineIndex < 0 || lineIndex > shape.points.length - 1) return shape
 
-  const totalPoints = [
-    ...shape.points.slice(0, lineIndex + 1),
-    [
-      getCenter(shape.points[lineIndex], shape.points[lineIndex === shape.points.length - 1 ? 0 : lineIndex + 1])[0],
-      getCenter(shape.points[lineIndex], shape.points[lineIndex === shape.points.length - 1 ? 0 : lineIndex + 1])[1]
-    ],
-    ...shape.points.slice(lineIndex + 1)
-  ]
+  const totalPoints: Point[] = [...shape.points.slice(0, lineIndex + 1), cursorPosition, ...shape.points.slice(lineIndex + 1)]
 
   return buildPath(
     {
