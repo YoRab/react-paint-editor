@@ -1,3 +1,9 @@
+# V0.13.1
+- only create one point when first clicking with curve or polygon tool
+* fix : render shape with alpha in a separate canvas to apply opacity on all the shape at once
+* better double clic detection on curves and more accurate new point position
+* improvement : check curve path for selection detection
+
 # V0.13.0
 - Improve curve and polygon tool with new interactions
 - Improve curve renderer to move from control points to real curve points
