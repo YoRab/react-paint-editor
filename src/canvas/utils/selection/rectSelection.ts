@@ -5,7 +5,7 @@ import { getShapeInfos } from '@canvas/utils/shapes/index'
 import { createCirclePath, createLinePath, createRecPath } from '@canvas/utils/shapes/path'
 import { roundForGrid, roundValues } from '@canvas/utils/transform'
 import { rotatePoint } from '@canvas/utils/trigo'
-import type { SelectionModeResize } from '@common/types/Mode'
+import type { HoverModeData, SelectionModeResize } from '@common/types/Mode'
 import type { DrawableShape, Point, Rect, SelectionDefaultType } from '@common/types/Shapes'
 
 export const createRecSelectionPath = (path: Path2D | undefined, rect: DrawableShape, settings: UtilsSettings): SelectionDefaultType => {
@@ -43,6 +43,7 @@ export const drawSelectionRect = (
   selectionColor: string,
   selectionWidth: number,
   settings: UtilsSettings,
+  hoverMode: HoverModeData,
   withAnchors: boolean
 ): void => {
   if (!shape.selection) return
@@ -63,11 +64,20 @@ export const drawSelectionRect = (
   updateCanvasContext(ctx, {
     fillColor: 'rgb(255,255,255)',
     strokeColor: 'rgb(150,150,150)',
-    lineWidth: 2 / settings.canvasSize.scaleRatio
+    lineWidth: 2 / settings.canvasSize.scaleRatio,
+    shadowColor: selectionColor,
+    shadowBlur: 0
   })
 
-  for (const anchor of shape.selection.anchors) {
-    ctx.fill(anchor)
+  for (let i = 0; i < shape.selection.anchors.length; i++) {
+    const anchor = shape.selection.anchors[i]
+    if ((hoverMode.mode === 'rotate' && i === 0) || (hoverMode.mode === 'resize' && hoverMode.anchor === SELECTION_RESIZE_ANCHOR_POSITIONS[i - 1])) {
+      ctx.shadowBlur = 10
+      ctx.fill(anchor)
+      ctx.shadowBlur = 0
+    } else {
+      ctx.fill(anchor)
+    }
     ctx.stroke(anchor)
   }
 }
