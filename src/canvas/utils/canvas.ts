@@ -18,6 +18,8 @@ export const updateCanvasContext = (
     lineWidth?: number
     lineDash?: number
     lineCap?: CanvasLineCap
+    shadowColor?: string
+    shadowBlur?: number
   } = {}
 ) => {
   const {
@@ -26,7 +28,9 @@ export const updateCanvasContext = (
     opacity = 100,
     strokeColor = SELECTION_DEFAULT_COLOR,
     lineWidth = SELECTION_DEFAULT_WIDTH,
-    lineDash = 0
+    lineDash = 0,
+    shadowColor = 'transparent',
+    shadowBlur = 0
   } = style
   ctx.lineCap = lineCap
   ctx.globalAlpha = opacity / 100
@@ -34,6 +38,8 @@ export const updateCanvasContext = (
   ctx.strokeStyle = strokeColor
   ctx.lineWidth = lineWidth
   ctx.setLineDash(lineDash === 0 ? [] : [LINE_DASH_DATA[lineDash][0] * lineWidth, LINE_DASH_DATA[lineDash][1] * lineWidth])
+  ctx.shadowColor = shadowColor
+  ctx.shadowBlur = shadowBlur
 }
 
 export const transformCanvas = (ctx: CanvasRenderingContext2D, settings: UtilsSettings, rotation?: number, translation?: Point) => {

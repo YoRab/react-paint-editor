@@ -3,6 +3,7 @@ import { SELECTION_ANCHOR_SIZE } from '@canvas/constants/shapes'
 import { updateCanvasContext } from '@canvas/utils/canvas'
 import { getShapeInfos } from '@canvas/utils/shapes'
 import { createCirclePath, createRecPath } from '@canvas/utils/shapes/path'
+import type { HoverModeData } from '@common/types/Mode'
 import type { DrawableShape, Point, SelectionLinesType } from '@common/types/Shapes'
 
 export const createLineSelectionPath = (
@@ -35,6 +36,7 @@ export const drawLineSelection = ({
   withAnchors,
   selectionWidth,
   selectionColor,
+  hoverMode,
   settings
 }: {
   ctx: CanvasRenderingContext2D
@@ -42,6 +44,7 @@ export const drawLineSelection = ({
   withAnchors: boolean
   selectionWidth: number
   selectionColor: string
+  hoverMode: HoverModeData
   settings: UtilsSettings
 }) => {
   if (!shape.selection) return
@@ -59,11 +62,20 @@ export const drawLineSelection = ({
   updateCanvasContext(ctx, {
     fillColor: 'rgb(255,255,255)',
     strokeColor: 'rgb(150,150,150)',
-    lineWidth: 2 / settings.canvasSize.scaleRatio
+    lineWidth: 2 / settings.canvasSize.scaleRatio,
+    shadowColor: selectionColor,
+    shadowBlur: 0
   })
 
-  for (const anchor of shape.selection.anchors) {
-    ctx.fill(anchor)
+  for (let i = 0; i < shape.selection.anchors.length; i++) {
+    const anchor = shape.selection.anchors[i]
+    if (hoverMode.mode === 'resize' && hoverMode.anchor === i) {
+      ctx.shadowBlur = 10
+      ctx.fill(anchor)
+      ctx.shadowBlur = 0
+    } else {
+      ctx.fill(anchor)
+    }
     ctx.stroke(anchor)
   }
 }

@@ -4,7 +4,7 @@ import { initCanvasContext } from '@canvas/utils/canvas'
 import { drawGrid } from '@canvas/utils/grid'
 import { drawSelectionFrame, drawShape, drawShapeSelection, refreshShape } from '@canvas/utils/shapes'
 import { resizeTextShapeWithNewContent } from '@canvas/utils/shapes/text'
-import type { SelectionModeData } from '@common/types/Mode'
+import type { HoverModeData, SelectionModeData } from '@common/types/Mode'
 import type { Point, ShapeEntity } from '@common/types/Shapes'
 import type { ToolsType } from '@common/types/tools'
 import React, { useCallback, useEffect, useImperativeHandle, useRef } from 'react'
@@ -37,6 +37,7 @@ const renderSelectionCanvas = (
   selectionColor: string,
   selectedShape: ShapeEntity | undefined,
   hoveredShape: ShapeEntity | undefined,
+  hoverMode: HoverModeData,
   selectionFrame: [Point, Point] | undefined,
   withSkeleton: boolean
 ) => {
@@ -54,6 +55,7 @@ const renderSelectionCanvas = (
       settings,
       selectionWidth,
       selectionColor,
+      hoverMode,
       withAnchors: false
     })
 
@@ -65,6 +67,7 @@ const renderSelectionCanvas = (
       settings,
       selectionWidth,
       selectionColor,
+      hoverMode,
       withAnchors: selectionMode.mode !== 'textedition'
     })
 
@@ -212,11 +215,12 @@ const Canvas = React.forwardRef<HTMLCanvasElement, DrawerType>(
             selectionColor,
             selectedShape,
             hoveredShape,
+            hoverMode,
             selectionFrame,
             withSkeleton
           )
         )
-    }, [hoveredShape, selectionFrame, selectionMode, selectedShape, activeTool, settings, selectionWidth, selectionColor, withSkeleton])
+    }, [hoveredShape, hoverMode, selectionFrame, selectionMode, selectedShape, activeTool, settings, selectionWidth, selectionColor, withSkeleton])
     return (
       <div
         className='react-paint-canvas-box'
@@ -225,13 +229,15 @@ const Canvas = React.forwardRef<HTMLCanvasElement, DrawerType>(
             ? 'grabbing'
             : hoverMode.outOfView
               ? 'default'
-              : (activeTool.type !== 'selection' && activeTool.type !== 'move') || hoverMode.mode === 'resize'
-                ? 'crosshair'
-                : hoverMode.mode === 'translate'
-                  ? 'move'
-                  : hoverMode.mode === 'rotate' || activeTool.type === 'move'
-                    ? 'grab'
-                    : 'default'
+              : hoverMode.mode === 'resize'
+                ? 'pointer'
+                : activeTool.type !== 'selection' && activeTool.type !== 'move'
+                  ? 'crosshair'
+                  : hoverMode.mode === 'translate'
+                    ? 'move'
+                    : hoverMode.mode === 'rotate' || activeTool.type === 'move'
+                      ? 'grab'
+                      : 'default'
         }}
       >
         <div className='react-paint-canvas-container' data-grow={canGrow}>
