@@ -6,7 +6,7 @@ import { drawSelectionRect } from '@canvas/utils/selection/rectSelection'
 import { drawFrame } from '@canvas/utils/selection/selectionFrame'
 import { roundForGrid, roundRotationForGrid } from '@canvas/utils/transform'
 import { getCurrentView } from '@canvas/utils/zoom'
-import type { SelectionModeData, SelectionModeResize } from '@common/types/Mode'
+import type { HoverModeData, SelectionModeData, SelectionModeResize } from '@common/types/Mode'
 import type { DrawableShape, Point, Rect, ShapeEntity } from '@common/types/Shapes'
 import type { CustomTool } from '@common/types/tools'
 import { uniqueId } from '@common/utils/util'
@@ -308,6 +308,7 @@ export const drawShapeSelection = ({
   settings,
   selectionWidth,
   selectionColor,
+  hoverMode,
   withAnchors = true
 }: {
   ctx: CanvasRenderingContext2D
@@ -315,6 +316,7 @@ export const drawShapeSelection = ({
   settings: UtilsSettings
   selectionWidth: number
   selectionColor: string
+  hoverMode: HoverModeData
   withAnchors?: boolean
 }) => {
   const { center } = getShapeInfos(shape, settings)
@@ -339,6 +341,7 @@ export const drawShapeSelection = ({
         withAnchors,
         selectionWidth,
         selectionColor,
+        hoverMode,
         settings
       })
       break
