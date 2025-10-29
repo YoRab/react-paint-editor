@@ -330,7 +330,7 @@ export const drawShapeSelection = ({
     case 'picture':
     case 'text':
     case 'brush':
-      drawSelectionRect(ctx, shape, selectionColor, selectionWidth, settings, hoverMode, withAnchors)
+      drawSelectionRect(ctx, shape, selectionColor, selectionWidth, settings, withAnchors)
       break
     case 'polygon':
     case 'line':

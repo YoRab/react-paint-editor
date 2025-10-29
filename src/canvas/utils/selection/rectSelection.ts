@@ -43,7 +43,6 @@ export const drawSelectionRect = (
   selectionColor: string,
   selectionWidth: number,
   settings: UtilsSettings,
-  hoverMode: HoverModeData,
   withAnchors: boolean
 ): void => {
   if (!shape.selection) return
@@ -69,15 +68,8 @@ export const drawSelectionRect = (
     shadowBlur: 0
   })
 
-  for (let i = 0; i < shape.selection.anchors.length; i++) {
-    const anchor = shape.selection.anchors[i]
-    if ((hoverMode.mode === 'rotate' && i === 0) || (hoverMode.mode === 'resize' && hoverMode.anchor === SELECTION_RESIZE_ANCHOR_POSITIONS[i - 1])) {
-      ctx.shadowBlur = 10
-      ctx.fill(anchor)
-      ctx.shadowBlur = 0
-    } else {
-      ctx.fill(anchor)
-    }
+  for (const anchor of shape.selection.anchors) {
+    ctx.fill(anchor)
     ctx.stroke(anchor)
   }
 }
