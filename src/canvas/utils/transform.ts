@@ -1,12 +1,12 @@
 import type { UtilsSettings } from '@canvas/constants/app'
 import { GRID_ROTATION_STEPS } from '@canvas/constants/grid'
 import { PICTURE_DEFAULT_SIZE } from '@canvas/constants/picture'
+import { buildShapesGroup, getSelectedShapes } from '@canvas/utils/selection'
 import type { SelectionModeData } from '@common/types/Mode'
-import type { DrawableShape, Line, Point, ShapeEntity, SelectionType } from '@common/types/Shapes'
+import type { DrawableShape, Line, Point, SelectionType, ShapeEntity } from '@common/types/Shapes'
 import { resizeShape, rotateShape, translateShape } from './shapes'
 import { addNewPointToShape } from './shapes/brush'
 import { getAngleFromVector, rotatePoint } from './trigo'
-import { buildShapesGroup, getSelectedShapes } from '@canvas/utils/selection'
 
 export const getNormalizedSize = (originalWidth: number, originalHeight: number, width: number, height: number) => {
   const originalRatio = originalWidth / originalHeight

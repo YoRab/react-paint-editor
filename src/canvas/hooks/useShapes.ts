@@ -5,7 +5,7 @@ import { checkPositionIntersection, checkSelectionFrameCollision } from '@canvas
 import { applyToSelectedShape, buildShapesGroup, getSelectedShapes } from '@canvas/utils/selection'
 import { refreshShape } from '@canvas/utils/shapes/index'
 import { createPicture } from '@canvas/utils/shapes/picture'
-import type { Point, ShapeEntity, SelectionType, StateData } from '@common/types/Shapes'
+import type { Point, SelectionType, ShapeEntity, StateData } from '@common/types/Shapes'
 import { moveItemPosition } from '@common/utils/array'
 import { isEqual, omit, set } from '@common/utils/object'
 import { useCallback, useEffect, useRef, useState } from 'react'

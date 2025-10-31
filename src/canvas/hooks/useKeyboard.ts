@@ -1,12 +1,12 @@
 import type { UtilsSettings } from '@canvas/constants/app'
+import { getSelectedShapes } from '@canvas/utils/selection'
 import { copyShapes, translateShapes } from '@canvas/utils/shapes'
 import type { SelectionModeData } from '@common/types/Mode'
-import type { Point, ShapeEntity, SelectionType } from '@common/types/Shapes'
+import type { Point, SelectionType, ShapeEntity } from '@common/types/Shapes'
+import type { ToolsType } from '@common/types/tools'
 import { isMacOs } from '@common/utils/util'
 import { SELECTION_TOOL } from '@editor/constants/tools'
 import { useEffect, useState } from 'react'
-import type { ToolsType } from '@common/types/tools'
-import { getSelectedShapes } from '@canvas/utils/selection'
 
 const KeyboardCode = {
   ArrowUp: 'ArrowUp',

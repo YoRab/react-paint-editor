@@ -1,11 +1,11 @@
 import type { UtilsSettings } from '@canvas/constants/app'
+import { createRectangle } from '@canvas/utils/shapes/rectangle'
+import { rotatePoint } from '@canvas/utils/trigo'
 import type { HoverModeData, SelectionModeData } from '@common/types/Mode'
-import type { Point, ShapeEntity, Rect, SelectionType } from '@common/types/Shapes'
+import type { Point, Rect, SelectionType, ShapeEntity } from '@common/types/Shapes'
+import { SETTINGS_DEFAULT_RECT } from '@editor/constants/tools'
 import { checkPositionIntersection, checkSelectionIntersection } from './intersect'
 import { getShapeInfos } from './shapes'
-import { createRectangle } from '@canvas/utils/shapes/rectangle'
-import { SETTINGS_DEFAULT_RECT } from '@editor/constants/tools'
-import { rotatePoint } from '@canvas/utils/trigo'
 
 export const getNewSelectionData = (
   hoverMode: HoverModeData,

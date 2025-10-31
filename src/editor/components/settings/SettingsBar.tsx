@@ -1,7 +1,7 @@
 import type { UtilsSettings } from '@canvas/constants/app'
 import { refreshShape } from '@canvas/utils/shapes'
 import { calculateTextFontSize } from '@canvas/utils/shapes/text'
-import type { ShapeEntity, SelectionType } from '@common/types/Shapes'
+import type { SelectionType, ShapeEntity } from '@common/types/Shapes'
 import type { CustomTool, ToolsType } from '@common/types/tools'
 import { set } from '@common/utils/object'
 import Button from '@editor/components/common/Button'
@@ -17,10 +17,10 @@ import LineArrowField from './LineArrowField'
 import LineTypeField from './LineTypeField'
 import RangeField from './RangeField'
 import './SettingsBar.css'
+import { getSelectedShapes } from '@canvas/utils/selection'
+import ClosedPointsField from '@editor/components/settings/ClosedPointsField'
 import ZoomButton from '@editor/components/settings/ZoomButton'
 import ToggleField from './ToggleField'
-import ClosedPointsField from '@editor/components/settings/ClosedPointsField'
-import { getSelectedShapes } from '@canvas/utils/selection'
 
 const SETTING_WIDTH = 40
 

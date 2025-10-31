@@ -1,4 +1,4 @@
-import type { Point, ShapeEntity, SelectionType } from './Shapes'
+import type { Point, SelectionType } from './Shapes'
 
 export type SelectionModeDefault = {
   mode: 'default'

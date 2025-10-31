@@ -1,4 +1,4 @@
-import type { ShapeEntity, SelectionType } from '@common/types/Shapes'
+import type { SelectionType, ShapeEntity } from '@common/types/Shapes'
 import Button from '@editor/components/common/Button'
 import Panel from '@editor/components/common/Panel'
 import type { GridLabelType } from '@editor/constants/grid'

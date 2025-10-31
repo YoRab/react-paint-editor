@@ -1,12 +1,6 @@
 import type { UtilsSettings } from '@canvas/constants/app'
-import { SELECTION_ANCHOR_SIZE, SELECTION_RESIZE_ANCHOR_POSITIONS, SELECTION_ROTATED_ANCHOR_POSITION } from '@canvas/constants/shapes'
 import { updateCanvasContext } from '@canvas/utils/canvas'
-import { getShapeInfos } from '@canvas/utils/shapes/index'
-import { createCirclePath, createLinePath, createRecPath } from '@canvas/utils/shapes/path'
-import { roundForGrid, roundValues } from '@canvas/utils/transform'
-import { rotatePoint } from '@canvas/utils/trigo'
-import type { SelectionModeResize } from '@common/types/Mode'
-import type { DrawableShape, Point, Rect, SelectionDefaultType } from '@common/types/Shapes'
+import type { DrawableShape } from '@common/types/Shapes'
 
 export const drawSelectionGroup = (
   ctx: CanvasRenderingContext2D,

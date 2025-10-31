@@ -1,14 +1,13 @@
 import type { UtilsSettings } from '@canvas/constants/app'
 import { SELECTION_ANCHOR_SIZE, SELECTION_RESIZE_ANCHOR_POSITIONS, SELECTION_ROTATED_ANCHOR_POSITION } from '@canvas/constants/shapes'
+import { getSelectedShapes } from '@canvas/utils/selection'
+import { catmullRomToBezier, createLinePath, getCatmullRomPoints } from '@canvas/utils/shapes/path'
 import { scalePoint } from '@canvas/utils/transform'
 import type { CanvasSize } from '@common/types/Canvas'
 import type { HoverModeData } from '@common/types/Mode'
 import type { DrawableShape, Point, Rect, SelectionType } from '@common/types/Shapes'
 import { getShapeInfos } from './shapes'
 import { isCircleIntersectRect, isPointInsideRect, rotatePoint } from './trigo'
-import { catmullRomToBezier, getCatmullRomPoints } from '@canvas/utils/shapes/path'
-import { createLinePath } from '@canvas/utils/shapes/path'
-import { getSelectedShapes } from '@canvas/utils/selection'
 
 export const getCursorPosition = (e: MouseEvent | TouchEvent): { clientX: number; clientY: number } => {
   const { clientX = 0, clientY = 0 } =
