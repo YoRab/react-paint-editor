@@ -5,7 +5,7 @@ import { getShapeInfos } from '@canvas/utils/shapes/index'
 import { createCirclePath, createLinePath, createRecPath } from '@canvas/utils/shapes/path'
 import { roundForGrid, roundValues } from '@canvas/utils/transform'
 import { rotatePoint } from '@canvas/utils/trigo'
-import type { HoverModeData, SelectionModeResize } from '@common/types/Mode'
+import type { SelectionModeResize } from '@common/types/Mode'
 import type { DrawableShape, Point, Rect, SelectionDefaultType } from '@common/types/Shapes'
 
 export const createRecSelectionPath = (path: Path2D | undefined, rect: DrawableShape, settings: UtilsSettings): SelectionDefaultType => {
@@ -275,7 +275,7 @@ export const resizeRectSelection = (
     )
   ]
 
-  const roundCursorStartPosition = settings.gridGap
+  const roundCursorStartPosition: Point = settings.gridGap
     ? [
         selectionMode.anchor[0] === 0 ? borders.x : selectionMode.anchor[0] === 0.5 ? borders.x + borders.width / 2 : borders.x + borders.width,
         selectionMode.anchor[1] === 0 ? borders.y : selectionMode.anchor[1] === 0.5 ? borders.y + borders.height / 2 : borders.y + borders.height

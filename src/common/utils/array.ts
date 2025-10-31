@@ -10,7 +10,7 @@ export const moveItemPosition = <T>(array: T[], positionToMove: number, position
       ...array.slice(positionToMove + 1, positionToEnd + 1),
       array[positionToMove],
       ...array.slice(positionToEnd + 1, array.length)
-    ]
+    ] as T[]
   }
 
   return [
@@ -18,5 +18,5 @@ export const moveItemPosition = <T>(array: T[], positionToMove: number, position
     array[positionToMove],
     ...array.slice(positionToEnd, positionToMove),
     ...array.slice(positionToMove + 1, array.length)
-  ]
+  ] as T[]
 }

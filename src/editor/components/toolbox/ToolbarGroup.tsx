@@ -59,9 +59,9 @@ const ToolbarGroup = ({ activeTool, alignment, group, disabled = false, setActiv
     return (
       <Tool
         disabled={disabled}
-        type={group.toolsType[0]}
-        img={group.toolsType[0].icon}
-        isActive={activeTool.id === group.toolsType[0].id}
+        type={group.toolsType[0]!}
+        img={group.toolsType[0]!.icon}
+        isActive={activeTool.id === group.toolsType[0]!.id}
         setActive={setActiveTool}
       />
     )

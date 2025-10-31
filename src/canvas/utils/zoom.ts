@@ -91,7 +91,7 @@ export const getNewZoomAndOffset = ({
 } => {
   const newZoom =
     action === 'default'
-      ? ZOOM_STEPS[ZOOM_STEP_DEFAULT]
+      ? ZOOM_STEPS[ZOOM_STEP_DEFAULT]!
       : action === 'zoom'
         ? ZOOM_STEPS[
             clamp(
@@ -104,8 +104,8 @@ export const getNewZoomAndOffset = ({
               0,
               ZOOM_STEPS.length - 1
             )
-          ]
-        : ZOOM_STEPS[clamp(ZOOM_STEPS.findIndex(zoom => zoom >= currentZoom) - 1, 0, ZOOM_STEPS.length - 1)]
+          ]!
+        : ZOOM_STEPS[clamp(ZOOM_STEPS.findIndex(zoom => zoom >= currentZoom) - 1, 0, ZOOM_STEPS.length - 1)]!
 
   const centerPoint: Point = [canvasSize.realWidth / 2, canvasSize.realHeight / 2]
 
@@ -137,7 +137,7 @@ export const getNewZoomAndOffsetFromDelta = ({
   offset: Point
   zoom: number
 } => {
-  const newZoom = clamp(currentZoom * (1 - delta / 1000), ZOOM_STEPS[0], ZOOM_STEPS[ZOOM_STEPS.length - 1])
+  const newZoom = clamp(currentZoom * (1 - delta / 1000), ZOOM_STEPS[0]!, ZOOM_STEPS[ZOOM_STEPS.length - 1]!)
 
   return calculateNewZoomAndOffset({
     size,

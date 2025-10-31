@@ -58,7 +58,7 @@ export const drawPolygon = (ctx: CanvasRenderingContext2D, polygon: DrawableShap
   polygon.style?.strokeColor !== 'transparent' && ctx.stroke(polygon.path)
 }
 
-export const getPolygonBorder = (polygon: Polygon, settings: UtilsSettings): Rect => {
+export const getPolygonBorder = (polygon: Polygon, settings: Pick<UtilsSettings, 'selectionPadding'>): Rect => {
   const minX = Math.min(...polygon.points.map(point => point[0])) - settings.selectionPadding
   const maxX = Math.max(...polygon.points.map(point => point[0])) + settings.selectionPadding
 

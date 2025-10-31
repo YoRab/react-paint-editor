@@ -1,7 +1,7 @@
 import { exec } from 'node:child_process'
-import util from 'node:util'
 import fs from 'node:fs'
 import path from 'node:path'
+import util from 'node:util'
 
 const execp = util.promisify(exec)
 
@@ -27,7 +27,7 @@ for (const fileName of fileNames) {
       str // declarationfiles/index.ts will be resolved to '..' so we always remove the first dot
         .replace(
           /@(editor|common|canvas)/g,
-          (match, group) => `${path.join(path.relative(fileName, 'declarationfiles'), group).slice(1).split(path.sep).join('/')}`
+          (_match, group) => `${path.join(path.relative(fileName, 'declarationfiles'), group).slice(1).split(path.sep).join('/')}`
         )
     )
     .then(outStr => fs.promises.writeFile(fileName, outStr))

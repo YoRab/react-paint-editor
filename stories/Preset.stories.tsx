@@ -12,7 +12,7 @@ const Preset = () => {
     options: {
       canZoom: 'always',
       clearCallback: () => {
-        return [WITH_PICTURE, TREE_AND_CLOUDS, HELLO_THERE][preset]
+        return [WITH_PICTURE, TREE_AND_CLOUDS, HELLO_THERE][preset]!
       }
     }
   })

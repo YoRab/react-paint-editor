@@ -68,7 +68,7 @@ export const drawLineSelection = ({
   })
 
   for (let i = 0; i < shape.selection.anchors.length; i++) {
-    const anchor = shape.selection.anchors[i]
+    const anchor = shape.selection.anchors[i]!
     if (hoverMode.mode === 'resize' && hoverMode.anchor === i) {
       ctx.shadowBlur = 10
       ctx.fill(anchor)

@@ -89,11 +89,11 @@ export const drawText = (ctx: CanvasRenderingContext2D, text: DrawableShape<'tex
   ctx.textBaseline = 'top'
   ctx.fillStyle = text.style.strokeColor
   for (let i = 0; i < text.value.length; i++) {
-    ctx.fillText(text.value[i], text.x, text.y + i * text.fontSize, text.width)
+    ctx.fillText(text.value[i]!, text.x, text.y + i * text.fontSize, text.width)
   }
 }
 
-export const getTextBorder = (text: Text, settings: UtilsSettings): Rect => {
+export const getTextBorder = (text: Text, settings: Pick<UtilsSettings, 'selectionPadding'>): Rect => {
   return {
     x: text.x - settings.selectionPadding,
     width: text.width + settings.selectionPadding * 2,

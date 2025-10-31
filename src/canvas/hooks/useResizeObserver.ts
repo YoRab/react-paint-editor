@@ -16,8 +16,8 @@ const useResizeObserver = ({ onResized, element }: UseResizeObserverType) => {
             width: boxSize.inlineSize,
             height: boxSize.blockSize
           }
-        : (entries?.[0].contentRect ?? {})
-      onResized(width, height)
+        : (entries?.[0]?.contentRect ?? {})
+      width !== undefined && height !== undefined && onResized(width, height)
     })
     resizeObserver.observe(current)
 

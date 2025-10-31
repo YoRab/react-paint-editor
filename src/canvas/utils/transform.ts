@@ -1,8 +1,9 @@
 import type { UtilsSettings } from '@canvas/constants/app'
 import { GRID_ROTATION_STEPS } from '@canvas/constants/grid'
 import { PICTURE_DEFAULT_SIZE } from '@canvas/constants/picture'
+import { buildShapesGroup, getSelectedShapes } from '@canvas/utils/selection'
 import type { SelectionModeData } from '@common/types/Mode'
-import type { DrawableShape, Line, Point, ShapeEntity } from '@common/types/Shapes'
+import type { DrawableShape, Line, Point, SelectionType, ShapeEntity } from '@common/types/Shapes'
 import { resizeShape, rotateShape, translateShape } from './shapes'
 import { addNewPointToShape } from './shapes/brush'
 import { getAngleFromVector, rotatePoint } from './trigo'
@@ -38,7 +39,7 @@ export const roundRotationForGrid = (rotation: number, settings: UtilsSettings, 
   return rotation + Math.PI / GRID_ROTATION_STEPS / 2 - ((rotation + Math.PI / GRID_ROTATION_STEPS / 2) % (Math.PI / GRID_ROTATION_STEPS))
 }
 
-export const boundVectorToSingleAxis = (vector: Point, isShiftPressed: boolean) => {
+export const boundVectorToSingleAxis = (vector: Point, isShiftPressed: boolean): Point => {
   if (isShiftPressed) {
     return [Math.abs(vector[0]) > Math.abs(vector[1]) ? vector[0] : 0, Math.abs(vector[1]) > Math.abs(vector[0]) ? vector[1] : 0]
   }
@@ -47,33 +48,53 @@ export const boundVectorToSingleAxis = (vector: Point, isShiftPressed: boolean) 
 
 export const transformShape = (
   ctx: CanvasRenderingContext2D,
-  shape: ShapeEntity,
+  selectedShape: SelectionType,
   cursorPosition: Point,
   selectionMode: SelectionModeData<Point | number>,
   settings: UtilsSettings,
   isShiftPressed: boolean,
   isAltPressed: boolean
-): ShapeEntity => {
-  switch (selectionMode.mode) {
-    case 'brush':
-      return addNewPointToShape(shape as ShapeEntity<'brush'>, cursorPosition, settings)
-    case 'translate':
-      return translateShape(cursorPosition, selectionMode.originalShape, selectionMode.cursorStartPosition, settings, isShiftPressed)
-    case 'rotate':
-      return rotateShape(
-        shape,
-        cursorPosition,
-        selectionMode.originalShape,
-        selectionMode.cursorStartPosition,
-        selectionMode.center,
-        settings,
-        isShiftPressed
-      )
-    case 'resize':
-      return resizeShape(ctx, shape, cursorPosition, selectionMode.originalShape, selectionMode, settings, isShiftPressed, isAltPressed)
-    default:
-      return shape
-  }
+): SelectionType => {
+  return buildShapesGroup(
+    getSelectedShapes(selectedShape).map(shape => {
+      switch (selectionMode.mode) {
+        case 'brush':
+          return addNewPointToShape(shape as ShapeEntity<'brush'>, cursorPosition, settings)
+        case 'translate':
+          return translateShape(
+            cursorPosition,
+            getSelectedShapes(selectionMode.originalShape).find(originalShape => originalShape.id === shape.id)!,
+            selectionMode.cursorStartPosition,
+            settings,
+            isShiftPressed
+          )
+        case 'rotate':
+          return rotateShape(
+            shape,
+            cursorPosition,
+            getSelectedShapes(selectionMode.originalShape).find(originalShape => originalShape.id === shape.id)!,
+            selectionMode.cursorStartPosition,
+            selectionMode.center,
+            settings,
+            isShiftPressed
+          )
+        case 'resize':
+          return resizeShape(
+            ctx,
+            shape,
+            cursorPosition,
+            getSelectedShapes(selectionMode.originalShape).find(originalShape => originalShape.id === shape.id)!,
+            selectionMode,
+            settings,
+            isShiftPressed,
+            isAltPressed
+          )
+        default:
+          return shape
+      }
+    }),
+    settings
+  )!
 }
 
 export const fitContentInsideContainer = (
@@ -82,7 +103,7 @@ export const fitContentInsideContainer = (
   containerWidth: number,
   containerHeight: number,
   shouldFillContainer = false
-) => {
+): Point => {
   if (!contentWidth || !contentHeight || !containerHeight || !containerWidth) return [PICTURE_DEFAULT_SIZE, PICTURE_DEFAULT_SIZE]
   const contentRatio = contentWidth / contentHeight
   const containerRatio = containerWidth / containerHeight

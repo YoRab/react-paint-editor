@@ -4,6 +4,7 @@ import useShapes from '@canvas/hooks/useShapes'
 import useZoom from '@canvas/hooks/useZoom'
 import { buildDataToExport } from '@canvas/utils/data'
 import { decodeImportedData, decodeJson, downloadFile, encodeShapesInString, getCanvasImage } from '@canvas/utils/file'
+import { buildShapesGroup } from '@canvas/utils/selection'
 import { sanitizeTools } from '@canvas/utils/tools'
 import type { CanvasSize } from '@common/types/Canvas'
 import type { SelectionModeData } from '@common/types/Mode'
@@ -136,7 +137,7 @@ const useReactPaint = ({
     selectedShape,
     selectionFrame,
     hoveredShape,
-    addShape,
+    addShapes: addShape,
     addPictureShape,
     moveShapes,
     setSelectedShape,
@@ -180,14 +181,14 @@ const useReactPaint = ({
     [selectTool, clearShapes, setCanvasTransformation]
   )
 
-  const selectShape = useCallback(
-    (shape: ShapeEntity) => {
+  const selectShapes = useCallback(
+    (shapes: ShapeEntity[]) => {
       setSelectedShape(old => {
-        if (old?.id !== shape.id) setActiveTool(SELECTION_TOOL)
-        return shape
+        if (old?.id !== shapes.map(shape => shape.id).join('-')) setActiveTool(SELECTION_TOOL)
+        return buildShapesGroup(shapes, settings)
       })
     },
-    [setSelectedShape]
+    [setSelectedShape, settings]
   )
 
   const exportData = useCallback(() => {
@@ -316,7 +317,7 @@ const useReactPaint = ({
       width,
       height,
       selectTool,
-      selectShape,
+      selectShapes,
       activeTool,
       setActiveTool,
       setAvailableTools,
@@ -362,7 +363,7 @@ const useReactPaint = ({
       setCanvasSize,
       setCanvasOffset,
       setCanvasZoom,
-      selectShape,
+      selectShapes,
       activeTool,
       setActiveTool,
       isInsideComponent,
