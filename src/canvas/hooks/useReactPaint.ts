@@ -15,12 +15,12 @@ import { SELECTION_TOOL } from '@editor/constants/tools'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 type UseReactPaintProps = {
-  width?: number
-  height?: number
-  shapes?: ExportedDrawableShape[]
-  mode?: 'editor' | 'viewer'
-  disabled?: boolean
-  options?: OptionalOptions
+  width?: number | undefined
+  height?: number | undefined
+  shapes?: ExportedDrawableShape[] | undefined
+  mode?: 'editor' | 'viewer' | undefined
+  disabled?: boolean | undefined
+  options?: OptionalOptions | undefined
 }
 
 const useReactPaint = ({
