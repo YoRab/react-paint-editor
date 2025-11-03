@@ -1,6 +1,7 @@
 import type {
   ActionsTool,
   CustomTool,
+  CustomToolInput,
   ToolsBrushSettings,
   ToolsCircleSettings,
   ToolsCurveSettings,
@@ -365,7 +366,7 @@ export const DEFAULT_SHAPE_TEXT: CustomTool = {
   settings: SETTINGS_DEFAULT_TEXT
 }
 
-export const DEFAULT_SHAPE_TOOLS: CustomTool[] = [
+export const DEFAULT_SHAPE_TOOLS: CustomToolInput[] = [
   DEFAULT_SHAPE_BRUSH,
   DEFAULT_SHAPE_LINE,
   DEFAULT_SHAPE_POLYGON,

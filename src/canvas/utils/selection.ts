@@ -3,6 +3,7 @@ import { createRectangle } from '@canvas/utils/shapes/rectangle'
 import { rotatePoint } from '@canvas/utils/trigo'
 import type { HoverModeData, SelectionModeData } from '@common/types/Mode'
 import type { Point, Rect, SelectionType, ShapeEntity } from '@common/types/Shapes'
+import type { CustomTool } from '@common/types/tools'
 import { SETTINGS_DEFAULT_RECT } from '@editor/constants/tools'
 import { checkPositionIntersection, checkSelectionIntersection } from './intersect'
 import { getShapeInfos } from './shapes'
@@ -147,6 +148,21 @@ export const buildShapesGroup = (shapes: ShapeEntity[], settings: UtilsSettings)
     maxY - minY
   )
 
+  const style = shapes.slice(1)!.reduce((acc, shape) => {
+    const shapeStyle = shape.style ?? {}
+    const newAcc: Record<string, unknown> = {}
+
+    for (const key in shapeStyle) {
+      if (acc[key as keyof typeof acc] === undefined) continue
+      if (shapeStyle[key as keyof typeof acc] === undefined) continue
+
+      if (acc[key as keyof typeof acc] === shapeStyle[key as keyof typeof shapeStyle]) {
+        newAcc[key] = acc[key as keyof typeof acc]!
+      }
+    }
+    return newAcc
+  }, shapes[0]!.style ?? {})
+
   return {
     id: shapes.map(shape => shape.id).join('-'),
     type: 'group',
@@ -158,7 +174,8 @@ export const buildShapesGroup = (shapes: ShapeEntity[], settings: UtilsSettings)
     x: groupRectangle.x,
     y: groupRectangle.y,
     width: groupRectangle.width,
-    height: groupRectangle.height
+    height: groupRectangle.height,
+    style
   }
 }
 
@@ -173,4 +190,63 @@ export const applyToSelectedShape =
 export const getSelectedShapes = (selection: SelectionType | undefined): ShapeEntity[] => {
   if (!selection) return []
   return selection.type === 'group' ? selection.shapes : [selection]
+}
+
+export const getSelectedShapesTools = (selection: SelectionType | undefined, availableTools: CustomTool[]): CustomTool | undefined => {
+  const selectedShapes = getSelectedShapes(selection)
+  const tools = selectedShapes
+    .map(shape => {
+      return availableTools.find(tool => tool.id === shape?.toolId) || availableTools.find(tool => tool.type === shape?.type)
+    })
+    .filter(tool => tool !== undefined)
+  if (!tools.length) return undefined
+  if (tools.length === 1) return tools[0]
+
+  const settings = tools.slice(1)!.reduce((settingsAcc, tool) => {
+    const newSettings: CustomTool['settings'] = {}
+    for (const key in tool.settings) {
+      if (settingsAcc[key as keyof typeof settingsAcc] === undefined) continue
+      if (tool.settings[key as keyof typeof tool.settings]?.hidden || settingsAcc[key as keyof typeof settingsAcc]?.hidden) continue
+
+      const accSet = settingsAcc[key as keyof typeof settingsAcc]!
+      const newSet = tool.settings[key as keyof typeof tool.settings]!
+      const settings: Partial<typeof accSet> = {}
+
+      if (
+        'min' in newSet &&
+        'min' in accSet &&
+        newSet.min === accSet.min &&
+        'max' in newSet &&
+        'max' in accSet &&
+        newSet.max === accSet.max &&
+        'step' in newSet &&
+        'step' in accSet &&
+        newSet.step === accSet.step
+      ) {
+        settings.min = newSet.min
+        settings.max = newSet.max
+        settings.step = newSet.step
+      }
+
+      //@ts-expect-error TODO fix type here
+      if ('values' in newSet && 'values' in accSet && newSet.values?.join(',') === accSet.values?.join(',')) {
+        //@ts-expect-error TODO fix type here
+        settings.values = newSet.values
+      }
+
+      if (Object.keys(settings).length > 0 || key === 'closedPoints') {
+        //@ts-expect-error TODO fix type here
+        newSettings[key as keyof typeof newSettings] = settings
+      }
+    }
+    return newSettings
+  }, tools[0]!.settings)
+
+  return {
+    id: tools.map(tool => tool.id).join('-'),
+    icon: '',
+    label: 'group',
+    type: 'group',
+    settings: settings
+  }
 }

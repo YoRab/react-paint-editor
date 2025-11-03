@@ -17,7 +17,7 @@ import LineArrowField from './LineArrowField'
 import LineTypeField from './LineTypeField'
 import RangeField from './RangeField'
 import './SettingsBar.css'
-import { getSelectedShapes } from '@canvas/utils/selection'
+import { getSelectedShapes, getSelectedShapesTools } from '@canvas/utils/selection'
 import ClosedPointsField from '@editor/components/settings/ClosedPointsField'
 import ZoomButton from '@editor/components/settings/ZoomButton'
 import ToggleField from './ToggleField'
@@ -355,11 +355,7 @@ const SettingsBar = ({
     setIsZoomPanelShown(prev => !prev)
   }
 
-  const selectedShapeTool =
-    getSelectedShapes(selectedShape).length === 1
-      ? availableTools.find(tool => tool.id === getSelectedShapes(selectedShape)[0]?.toolId) ||
-        availableTools.find(tool => tool.type === getSelectedShapes(selectedShape)[0]?.type)
-      : undefined
+  const selectedShapeTool = getSelectedShapesTools(selectedShape, availableTools)
 
   const nbSettingsTools =
     (selectedShapeTool
