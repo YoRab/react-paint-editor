@@ -74,9 +74,9 @@ export const selectShape = (
   }
   const foundShape = shapes.find(shape => {
     return getSelectedShapes(selectedShape).find(selectedShape => shape.id === selectedShape?.id)
-      ? selectedShapePositionIntersection
+      ? selectedShapePositionIntersection && isGroupMode
         ? checkSelectionIntersection(ctx, shape, cursorPosition, settings, true, isTouchGesture ? 20 : undefined)
-        : false
+        : !!selectedShapePositionIntersection
       : !!checkPositionIntersection(ctx, shape, cursorPosition, settings)
   })
   if (foundShape) {
