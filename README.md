@@ -144,7 +144,7 @@ you will find other usages in <a href="https://github.com/YoRab/react-paint-edit
 | `withLoadAndSave` | `boolean` | *Optional*.Show button to manually save or load data  | `true` |
 | `withUploadPicture` | `boolean` | *Optional*. Show button to add picture shape stored in base64 | `true` |
 | `withUrlPicture` | `boolean` | *Optional*.Show button to add picture shape with only the url stored. Need connectivity to be displayed | `false` |
-| `withFrameSelection` | `boolean` | *Optional*.Enable frame selection. **Currently, does not support multi shapes selection** | `false` |
+| `withFrameSelection` | `boolean` | *Optional*.Enable frame selection | `true` |
 | `withSkeleton` | `boolean` | *Optional*. Display skeleton when hovering shape | `false` |
 | `clearCallback` | `'empty' \| 'defaultShapes' \| (() => DrawableShape[])` | *Optional*. Set clear button behavior. `empty` clear all shapes, `defaultShapes` uses shapes given in props. It is also possible to set a function returning an array of shapes | `empty` |
 | `brushAlgo` | `'simple' \| 'quadratic'` | *Optional*. Choose which algorithm to display brush shape. `simple` displays path as is, `quadratic` uses quadratic bézier curves  | `simple` |
