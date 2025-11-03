@@ -92,7 +92,7 @@ const ColorField = ({
                 )}
               </Button>
             ))}
-            <Button type='color' title='Custom color' selected={!values.includes(value)} value={value} onChange={handleChange}>
+            <Button type='color' title='Custom color' selected={value !== '' && !values.includes(value)} value={value} onChange={handleChange}>
               <div
                 className='react-paint-editor-colorfield-customcolor'
                 style={{

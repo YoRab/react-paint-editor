@@ -171,7 +171,7 @@ const SettingsItems = ({
             unity='%'
             disabled={disabled}
             field='opacity'
-            value={selectedShape.style?.opacity ?? 100}
+            value={selectedShape.style?.opacity}
             valueChanged={handleShapeStyleChange}
           />
         )}
