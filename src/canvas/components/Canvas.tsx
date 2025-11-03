@@ -109,6 +109,7 @@ type DrawerType = {
   isAltPressed: boolean
   withFrameSelection: boolean
   withSkeleton: boolean
+  setCanvasMoveAcceleration: React.Dispatch<React.SetStateAction<Point>>
 }
 
 const Canvas = React.forwardRef<HTMLCanvasElement, DrawerType>(
@@ -131,6 +132,7 @@ const Canvas = React.forwardRef<HTMLCanvasElement, DrawerType>(
       canvasOffsetStartData,
       setCanvasOffsetStartData,
       setCanvasOffset,
+      setCanvasMoveAcceleration,
       isInsideComponent,
       selectionMode,
       setSelectionMode,
@@ -171,6 +173,7 @@ const Canvas = React.forwardRef<HTMLCanvasElement, DrawerType>(
       updateSingleShape,
       saveShapes,
       setSelectionMode,
+      setCanvasMoveAcceleration,
       isShiftPressed,
       isAltPressed,
       withFrameSelection,

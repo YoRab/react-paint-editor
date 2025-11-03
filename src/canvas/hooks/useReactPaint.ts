@@ -6,6 +6,7 @@ import { buildDataToExport } from '@canvas/utils/data'
 import { decodeImportedData, decodeJson, downloadFile, encodeShapesInString, getCanvasImage } from '@canvas/utils/file'
 import { buildShapesGroup } from '@canvas/utils/selection'
 import { sanitizeTools } from '@canvas/utils/tools'
+import { getNewOffset } from '@canvas/utils/zoom'
 import type { CanvasSize } from '@common/types/Canvas'
 import type { SelectionModeData } from '@common/types/Mode'
 import type { ExportedDrawableShape, Point, ShapeEntity, StateData } from '@common/types/Shapes'
@@ -165,12 +166,36 @@ const useReactPaint = ({
     [setSelectedShape]
   )
 
+  const [canvasMoveAcceleration, setCanvasMoveAcceleration] = useState<Point>([0, 0])
+
+  const isModePreview = selectionMode.mode === 'preview'
   // biome-ignore lint/correctness/useExhaustiveDependencies: shape selection should reset selection mode when it is preview
   useEffect(() => {
-    if (selectionMode.mode === 'preview') {
+    if (isModePreview) {
       return () => setSelectionMode(old => (old.mode === 'preview' ? { mode: 'default' } : old))
     }
-  }, [selectedShape?.id, selectionMode.mode === 'preview'])
+  }, [selectedShape?.id, isModePreview])
+
+  const isModeSelectionFrame = selectionMode.mode === 'selectionFrame'
+  useEffect(() => {
+    if (isModeSelectionFrame) {
+      return () => setCanvasMoveAcceleration([0, 0])
+    }
+  }, [isModeSelectionFrame])
+
+  useEffect(() => {
+    const hasAcceleration = canvasMoveAcceleration[0] !== 0 || canvasMoveAcceleration[1] !== 0
+
+    if (hasAcceleration) {
+      const interval = setInterval(() => {
+        setCanvasTransformation(({ offset, zoom }) => {
+          const newOffset: Point = [offset[0] - canvasMoveAcceleration[0], offset[1] - canvasMoveAcceleration[1]]
+          return getNewOffset({ zoom, size, canvasSize, newOffset })
+        })
+      }, 20)
+      return () => clearInterval(interval)
+    }
+  }, [canvasMoveAcceleration[0], canvasMoveAcceleration[1], setCanvasTransformation, size, canvasSize])
 
   const resetCanvasWithShapeEntity = useCallback(
     (shapesToInit: ShapeEntity[], options: { clearHistory: boolean; source: 'user' | 'remote' }) => {
@@ -377,7 +402,8 @@ const useReactPaint = ({
       canvasOffsetStartData,
       setCanvasOffsetStartData,
       selectionMode,
-      setSelectionMode
+      setSelectionMode,
+      setCanvasMoveAcceleration
     },
     registerEvent,
     unregisterEvent,

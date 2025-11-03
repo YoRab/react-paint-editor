@@ -48,7 +48,8 @@ const App = ({ options, className, style, canvasProps }: AppProps) => {
     canvasOffsetStartData,
     setCanvasOffsetStartData,
     selectionMode,
-    setSelectionMode
+    setSelectionMode,
+    setCanvasMoveAcceleration
   } = canvasProps
 
   const { canvasBackgroundColor, canvasSelectionColor, canvasSelectionWidth } = {
@@ -135,6 +136,7 @@ const App = ({ options, className, style, canvasProps }: AppProps) => {
         saveShapes={saveShapes}
         selectionMode={selectionMode}
         setSelectionMode={setSelectionMode}
+        setCanvasMoveAcceleration={setCanvasMoveAcceleration}
         selectionColor={canvasSelectionColor}
         selectionWidth={canvasSelectionWidth}
         isEditMode={isEditMode}

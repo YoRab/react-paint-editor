@@ -5,6 +5,7 @@ import {
   checkCurveLinesSelectionIntersection,
   checkPolygonLinesSelectionIntersection,
   checkSelectionIntersection,
+  getCursorPositionInElement,
   getCursorPositionInTransformedCanvas,
   isTouchGesture
 } from '@canvas/utils/intersect'
@@ -18,6 +19,7 @@ import { isCursorInsideMask } from '@canvas/utils/zoom'
 import type { HoverModeData, SelectionModeData } from '@common/types/Mode'
 import type { Point, SelectionType, ShapeEntity } from '@common/types/Shapes'
 import type { CustomTool, ToolsType } from '@common/types/tools'
+import { clamp } from '@common/utils/util'
 import { SELECTION_TOOL } from '@editor/constants/tools'
 import type React from 'react'
 import { useEffect, useRef, useState } from 'react'
@@ -36,7 +38,8 @@ const handleMove = (
   settings: UtilsSettings,
   isShiftPressed: boolean,
   isAltPressed: boolean,
-  setSelectedShape: React.Dispatch<React.SetStateAction<SelectionType | undefined>>
+  setSelectedShape: React.Dispatch<React.SetStateAction<SelectionType | undefined>>,
+  setCanvasMoveAcceleration: React.Dispatch<React.SetStateAction<Point>>
 ) => {
   if (isTouchGesture(e) && e.touches.length > 1) return
 
@@ -44,6 +47,36 @@ const handleMove = (
   if (!drawCtx) return
   const cursorPosition = getCursorPositionInTransformedCanvas(e, canvasRef.current, settings)
 
+  if (selectionMode.mode === 'selectionFrame') {
+    refreshSelectedShapes(drawCtx, cursorPosition, settings)
+    const cursorPositionInCanvasDiv = getCursorPositionInElement(e, canvasRef.current!, settings.canvasSize)
+
+    setCanvasMoveAcceleration([
+      Math.ceil(
+        clamp(
+          cursorPositionInCanvasDiv[0] < 100
+            ? cursorPositionInCanvasDiv[0] - 100
+            : cursorPositionInCanvasDiv[0] > settings.canvasSize.width - 100
+              ? cursorPositionInCanvasDiv[0] - (settings.canvasSize.width - 100)
+              : 0,
+          -150,
+          150
+        ) / 10
+      ),
+      Math.ceil(
+        clamp(
+          cursorPositionInCanvasDiv[1] < 100
+            ? cursorPositionInCanvasDiv[1] - 100
+            : cursorPositionInCanvasDiv[1] > settings.canvasSize.height - 100
+              ? cursorPositionInCanvasDiv[1] - (settings.canvasSize.height - 100)
+              : 0,
+          -150,
+          150
+        ) / 10
+      )
+    ])
+    return
+  }
   if (canvasOffsetStartData !== undefined) {
     setCanvasOffset([
       cursorPosition[0] + settings.canvasOffset[0] - canvasOffsetStartData.start[0],
@@ -51,10 +84,7 @@ const handleMove = (
     ])
     return
   }
-  if (selectionMode.mode === 'selectionFrame') {
-    refreshSelectedShapes(drawCtx, cursorPosition, settings)
-    return
-  }
+
   if (selectionMode.mode === 'preview') {
     const firstShape = getSelectedShapes(selectedShape)[0]
     if (firstShape?.type === 'curve') {
@@ -120,6 +150,7 @@ type UseCanvasType = {
   selectionMode: SelectionModeData<number | Point>
   setSelectionMode: React.Dispatch<React.SetStateAction<SelectionModeData<number | Point>>>
   setSelectionFrame: React.Dispatch<React.SetStateAction<[Point, Point] | undefined>>
+  setCanvasMoveAcceleration: React.Dispatch<React.SetStateAction<Point>>
   drawCanvasRef: React.RefObject<HTMLCanvasElement | null>
   isShiftPressed: boolean
   isAltPressed: boolean
@@ -146,6 +177,7 @@ const useDrawableCanvas = ({
   updateSingleShape,
   saveShapes,
   setSelectionMode,
+  setCanvasMoveAcceleration,
   settings,
   isShiftPressed,
   isAltPressed,
@@ -172,7 +204,8 @@ const useDrawableCanvas = ({
       settings,
       isShiftPressed,
       isAltPressed,
-      setSelectedShape
+      setSelectedShape,
+      setCanvasMoveAcceleration
     )
 
   useEffect(() => {
