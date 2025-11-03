@@ -49,7 +49,11 @@ const App = ({ options, className, style, canvasProps }: AppProps) => {
     setCanvasOffsetStartData,
     selectionMode,
     setSelectionMode,
-    setCanvasMoveAcceleration
+    setCanvasMoveAcceleration,
+    isShiftPressed,
+    isAltPressed,
+    setShiftPressed,
+    setAltPressed
   } = canvasProps
 
   const { canvasBackgroundColor, canvasSelectionColor, canvasSelectionWidth } = {
@@ -58,9 +62,6 @@ const App = ({ options, className, style, canvasProps }: AppProps) => {
   }
 
   const containerRef = useRef<HTMLDivElement>(null)
-
-  const [isShiftPressed, setShiftPressed] = useState<boolean>(false)
-  const [isAltPressed, setAltPressed] = useState<boolean>(false)
 
   const pasteShapes = useCallback(
     (shapes: ShapeEntity[]) => {

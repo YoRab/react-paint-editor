@@ -44,7 +44,7 @@ type UseKeyboardType = {
   isEditingText: boolean
   setActiveTool: (tool: ToolsType) => void
   setSelectionMode: (mode: SelectionModeData<number | Point>) => void
-  setSelectionFrame: (frame: [Point, Point] | undefined) => void
+  setSelectionFrame: (args: { oldSelection: SelectionType | undefined; frame: [Point, Point] } | undefined) => void
   settings: UtilsSettings
 }
 

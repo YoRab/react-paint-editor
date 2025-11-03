@@ -131,6 +131,9 @@ const useReactPaint = ({
     componentRef: editorRef
   })
 
+  const [isShiftPressed, setShiftPressed] = useState<boolean>(false)
+  const [isAltPressed, setAltPressed] = useState<boolean>(false)
+
   const {
     registerEvent,
     unregisterEvent,
@@ -156,7 +159,7 @@ const useReactPaint = ({
     canGoBackward,
     canGoForward,
     canClear
-  } = useShapes(settings, width, height)
+  } = useShapes(settings, width, height, isShiftPressed)
 
   const selectTool = useCallback(
     (tool: ToolsType) => {
@@ -403,7 +406,11 @@ const useReactPaint = ({
       setCanvasOffsetStartData,
       selectionMode,
       setSelectionMode,
-      setCanvasMoveAcceleration
+      setCanvasMoveAcceleration,
+      isShiftPressed,
+      isAltPressed,
+      setShiftPressed,
+      setAltPressed
     },
     registerEvent,
     unregisterEvent,

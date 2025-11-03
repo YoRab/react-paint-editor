@@ -39,7 +39,7 @@ const renderSelectionCanvas = (
   selectedShape: SelectionType | undefined,
   hoveredShape: ShapeEntity | undefined,
   hoverMode: HoverModeData,
-  selectionFrame: [Point, Point] | undefined,
+  selectionFrame: { oldSelection: SelectionType | undefined; frame: [Point, Point] } | undefined,
   withSkeleton: boolean
 ) => {
   selectionCtx.reset()
@@ -92,9 +92,9 @@ type DrawerType = {
   updateSingleShape: (updatedShape: ShapeEntity[], withSave?: boolean) => void
   selectedShape: SelectionType | undefined
   setSelectedShape: React.Dispatch<React.SetStateAction<SelectionType | undefined>>
-  setSelectionFrame: React.Dispatch<React.SetStateAction<[Point, Point] | undefined>>
+  setSelectionFrame: React.Dispatch<React.SetStateAction<{ oldSelection: SelectionType | undefined; frame: [Point, Point] } | undefined>>
   hoveredShape: ShapeEntity | undefined
-  selectionFrame: [Point, Point] | undefined
+  selectionFrame: { oldSelection: SelectionType | undefined; frame: [Point, Point] } | undefined
   refreshHoveredShape: (e: MouseEvent | TouchEvent, ctx: CanvasRenderingContext2D, cursorPosition: Point, isInsideMask: boolean) => void
   refreshSelectedShapes: (ctx: CanvasRenderingContext2D, cursorPosition: Point, settings: UtilsSettings) => void
   activeTool: ToolsType

@@ -50,7 +50,8 @@ export const selectShape = (
   settings: UtilsSettings,
   selectedShape: SelectionType | undefined,
   isTouchGesture: boolean,
-  withFrameSelection: boolean
+  withFrameSelection: boolean,
+  isGroupMode: boolean
 ): {
   mode: SelectionModeData<Point | number>
   shape: SelectionType | undefined
@@ -73,10 +74,27 @@ export const selectShape = (
   }
   const foundShape = shapes.find(shape => {
     return getSelectedShapes(selectedShape).find(selectedShape => shape.id === selectedShape?.id)
-      ? !!selectedShapePositionIntersection
+      ? selectedShapePositionIntersection
+        ? checkSelectionIntersection(ctx, shape, cursorPosition, settings, true, isTouchGesture ? 20 : undefined)
+        : false
       : !!checkPositionIntersection(ctx, shape, cursorPosition, settings)
   })
   if (foundShape) {
+    if (isGroupMode) {
+      const foundShapeGroup = getSelectedShapes(selectedShape).find(shape => shape.id === foundShape?.id)
+        ? buildShapesGroup(omitFromSelectedShapes(selectedShape, foundShape), settings)
+        : buildShapesGroup(addToSelectedShapes(selectedShape, [foundShape]), settings)
+
+      return {
+        shape: foundShapeGroup,
+        mode: {
+          mode: 'translate',
+          cursorStartPosition: cursorPosition,
+          dateStart: Date.now(),
+          originalShape: foundShapeGroup!
+        }
+      }
+    }
     const foundShapeGroup = getSelectedShapes(selectedShape).find(shape => shape.id === foundShape?.id)
       ? selectedShape
       : buildShapesGroup([foundShape], settings)
@@ -87,6 +105,15 @@ export const selectShape = (
         cursorStartPosition: cursorPosition,
         dateStart: Date.now(),
         originalShape: foundShapeGroup!
+      }
+    }
+  }
+
+  if (isGroupMode) {
+    return {
+      shape: selectedShape,
+      mode: {
+        mode: withFrameSelection ? 'selectionFrame' : 'default'
       }
     }
   }
@@ -190,6 +217,15 @@ export const applyToSelectedShape =
 export const getSelectedShapes = (selection: SelectionType | undefined): ShapeEntity[] => {
   if (!selection) return []
   return selection.type === 'group' ? selection.shapes : [selection]
+}
+
+export const addToSelectedShapes = (selection: SelectionType | undefined, shapes: ShapeEntity[]): ShapeEntity[] => {
+  const currentShapes = getSelectedShapes(selection)
+  return [...new Set([...currentShapes, ...shapes])]
+}
+
+export const omitFromSelectedShapes = (selection: SelectionType | undefined, shape: ShapeEntity): ShapeEntity[] => {
+  return getSelectedShapes(selection).filter(selectedShape => selectedShape.id !== shape.id)
 }
 
 export const getSelectedShapesTools = (selection: SelectionType | undefined, availableTools: CustomTool[]): CustomTool | undefined => {

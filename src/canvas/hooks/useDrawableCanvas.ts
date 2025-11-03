@@ -152,7 +152,7 @@ type UseCanvasType = {
   isInsideComponent: boolean
   selectionMode: SelectionModeData<number | Point>
   setSelectionMode: React.Dispatch<React.SetStateAction<SelectionModeData<number | Point>>>
-  setSelectionFrame: React.Dispatch<React.SetStateAction<[Point, Point] | undefined>>
+  setSelectionFrame: React.Dispatch<React.SetStateAction<{ oldSelection: SelectionType | undefined; frame: [Point, Point] } | undefined>>
   setCanvasMoveAcceleration: React.Dispatch<React.SetStateAction<Point>>
   drawCanvasRef: React.RefObject<HTMLCanvasElement | null>
   isShiftPressed: boolean
@@ -248,8 +248,6 @@ const useDrawableCanvas = ({
       return
     }
 
-    // const firstShape = getSelectedShapes(selectedShape)[0]
-
     if (selectionMode.mode === 'textedition') return
     if (selectionMode.mode === 'preview') return
 
@@ -261,10 +259,13 @@ const useDrawableCanvas = ({
       cursorPosition[0] === selectionMode.cursorStartPosition[0] &&
       cursorPosition[1] === selectionMode.cursorStartPosition[1]
     ) {
-      const { shape } = selectShape(ctx, shapes, cursorPosition, settings, undefined, isTouchGesture(e), withFrameSelection)
+      const isGroupMode = e.ctrlKey || e.shiftKey || e.metaKey
+      if (!isGroupMode) {
+        const { shape } = selectShape(ctx, shapes, cursorPosition, settings, undefined, isTouchGesture(e), withFrameSelection, false)
+        setSelectedShape(shape)
+      }
 
       setSelectionMode({ mode: 'default' })
-      setSelectedShape(shape)
       setSelectionFrame(undefined)
       saveShapes()
       return
@@ -324,14 +325,18 @@ const useDrawableCanvas = ({
     }
 
     if (activeTool.type === 'selection') {
-      const { shape, mode } = selectShape(ctx, shapes, cursorPosition, settings, selectedShape, isTouchGesture(e), withFrameSelection)
+      const isGroupMode = e.ctrlKey || e.shiftKey || e.metaKey
+      const { shape, mode } = selectShape(ctx, shapes, cursorPosition, settings, selectedShape, isTouchGesture(e), withFrameSelection, isGroupMode)
       setSelectedShape(shape)
       setSelectionMode(mode)
       if (mode.mode === 'selectionFrame') {
-        setSelectionFrame([
-          [cursorPosition[0], cursorPosition[1]],
-          [cursorPosition[0], cursorPosition[1]]
-        ])
+        setSelectionFrame({
+          oldSelection: shape,
+          frame: [
+            [cursorPosition[0], cursorPosition[1]],
+            [cursorPosition[0], cursorPosition[1]]
+          ]
+        })
       }
     } else if (ShapeTypeArray.some(item => item === activeTool.type)) {
       const firstShape = getSelectedShapes(selectedShape)[0]

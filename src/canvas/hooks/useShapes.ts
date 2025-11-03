@@ -2,7 +2,7 @@ import { DRAWCANVAS_CLASSNAME, SELECTIONCANVAS_CLASSNAME, type UtilsSettings } f
 import { PICTURE_DEFAULT_SIZE } from '@canvas/constants/picture'
 import { buildDataToExport } from '@canvas/utils/data'
 import { checkPositionIntersection, checkSelectionFrameCollision } from '@canvas/utils/intersect'
-import { applyToSelectedShape, buildShapesGroup, getSelectedShapes } from '@canvas/utils/selection'
+import { addToSelectedShapes, applyToSelectedShape, buildShapesGroup, getSelectedShapes } from '@canvas/utils/selection'
 import { refreshShape } from '@canvas/utils/shapes/index'
 import { createPicture } from '@canvas/utils/shapes/picture'
 import type { Point, SelectionType, ShapeEntity, StateData } from '@common/types/Shapes'
@@ -10,13 +10,13 @@ import { moveItemPosition } from '@common/utils/array'
 import { isEqual, omit, set } from '@common/utils/object'
 import { useCallback, useEffect, useRef, useState } from 'react'
 
-const useShapes = (settings: UtilsSettings, width: number, height: number) => {
+const useShapes = (settings: UtilsSettings, width: number, height: number, isShiftPressed: boolean) => {
   const shapesRef = useRef<ShapeEntity[]>([])
   const listeners = useRef<{
     dataChanged: ((data: StateData, source: 'user' | 'remote') => void)[]
   }>({ dataChanged: [] })
 
-  const [selectionFrame, setSelectionFrame] = useState<[Point, Point] | undefined>(undefined)
+  const [selectionFrame, setSelectionFrame] = useState<{ oldSelection: SelectionType | undefined; frame: [Point, Point] } | undefined>(undefined)
   const [selectedShape, setSelectedShape] = useState<SelectionType | undefined>(undefined)
   const [hoveredShape, setHoveredShape] = useState<ShapeEntity | undefined>(undefined)
   const [savedShapes, setSavedShapes] = useState<{
@@ -264,18 +264,18 @@ const useShapes = (settings: UtilsSettings, width: number, height: number) => {
   const refreshSelectedShapes = useCallback(
     (ctx: CanvasRenderingContext2D, cursorPosition: Point) => {
       setSelectionFrame(prev => {
-        const newSelectionFrame: [Point, Point] = [prev?.[0] ?? [cursorPosition[0], cursorPosition[1]], [cursorPosition[0], cursorPosition[1]]]
+        const newSelectionFrame: [Point, Point] = [prev?.frame[0] ?? [cursorPosition[0], cursorPosition[1]], [cursorPosition[0], cursorPosition[1]]]
 
         const foundShapes = shapesRef.current.filter(shape => {
           return checkSelectionFrameCollision(ctx, shape, newSelectionFrame, settings)
         })
 
         const shapesGroup = buildShapesGroup(foundShapes, settings)
-        setSelectedShape(shapesGroup)
-        return newSelectionFrame
+        setSelectedShape(isShiftPressed ? buildShapesGroup(addToSelectedShapes(prev?.oldSelection, foundShapes), settings) : shapesGroup)
+        return { oldSelection: prev?.oldSelection, frame: newSelectionFrame }
       })
     },
-    [settings]
+    [settings, isShiftPressed]
   )
 
   return {

@@ -371,11 +371,11 @@ export const drawSelectionFrame = ({
   settings
 }: {
   ctx: CanvasRenderingContext2D
-  selectionFrame: [Point, Point]
+  selectionFrame: { oldSelection: SelectionType | undefined; frame: [Point, Point] }
   settings: UtilsSettings
 }) => {
   transformCanvas(ctx, settings)
-  drawFrame(ctx, selectionFrame, settings)
+  drawFrame(ctx, selectionFrame.frame, settings)
 
   ctx.restore()
 }
