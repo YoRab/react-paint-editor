@@ -8,7 +8,12 @@ import { rotatePoint } from '@canvas/utils/trigo'
 import type { SelectionModeResize } from '@common/types/Mode'
 import type { DrawableShape, Point, Rect, SelectionDefaultType } from '@common/types/Shapes'
 
-export const createRecSelectionPath = (path: Path2D | undefined, rect: DrawableShape, settings: UtilsSettings): SelectionDefaultType => {
+export const createRecSelectionPath = (
+  path: Path2D | undefined,
+  rect: DrawableShape,
+  settings: UtilsSettings,
+  isGroup = false
+): SelectionDefaultType => {
   const { borders } = getShapeInfos(rect, settings)
 
   return {
@@ -26,13 +31,15 @@ export const createRecSelectionPath = (path: Path2D | undefined, rect: DrawableS
         y: borders.y - (SELECTION_ANCHOR_SIZE / 2 + SELECTION_ROTATED_ANCHOR_POSITION) / settings.canvasSize.scaleRatio,
         radius: SELECTION_ANCHOR_SIZE / 2 / settings.canvasSize.scaleRatio
       }),
-      ...SELECTION_RESIZE_ANCHOR_POSITIONS.map(anchorPosition =>
-        createCirclePath({
-          x: borders.x + borders.width * anchorPosition[0],
-          y: borders.y + borders.height * anchorPosition[1],
-          radius: SELECTION_ANCHOR_SIZE / 2 / settings.canvasSize.scaleRatio
-        })
-      )
+      ...(isGroup
+        ? []
+        : SELECTION_RESIZE_ANCHOR_POSITIONS.map(anchorPosition =>
+            createCirclePath({
+              x: borders.x + borders.width * anchorPosition[0],
+              y: borders.y + borders.height * anchorPosition[1],
+              radius: SELECTION_ANCHOR_SIZE / 2 / settings.canvasSize.scaleRatio
+            })
+          ))
     ]
   }
 }

@@ -112,21 +112,22 @@ export const checkSelectionIntersection = (
       ) {
         return { mode: 'rotate' }
       }
-
-      for (const anchorPosition of SELECTION_RESIZE_ANCHOR_POSITIONS) {
-        if (
-          isPartOfRect(
-            {
-              x: borders.x + borders.width * anchorPosition[0] - SELECTION_ANCHOR_SIZE / 2 / scaleRatio,
-              y: borders.y + borders.height * anchorPosition[1] - SELECTION_ANCHOR_SIZE / 2 / scaleRatio,
-              width: SELECTION_ANCHOR_SIZE / scaleRatio,
-              height: SELECTION_ANCHOR_SIZE / scaleRatio
-            },
-            newPosition,
-            radius
-          )
-        ) {
-          return { mode: 'resize', anchor: anchorPosition }
+      if (shapesToCheck.length === 1) {
+        for (const anchorPosition of SELECTION_RESIZE_ANCHOR_POSITIONS) {
+          if (
+            isPartOfRect(
+              {
+                x: borders.x + borders.width * anchorPosition[0] - SELECTION_ANCHOR_SIZE / 2 / scaleRatio,
+                y: borders.y + borders.height * anchorPosition[1] - SELECTION_ANCHOR_SIZE / 2 / scaleRatio,
+                width: SELECTION_ANCHOR_SIZE / scaleRatio,
+                height: SELECTION_ANCHOR_SIZE / scaleRatio
+              },
+              newPosition,
+              radius
+            )
+          ) {
+            return { mode: 'resize', anchor: anchorPosition }
+          }
         }
       }
     }

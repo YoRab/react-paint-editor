@@ -171,6 +171,7 @@ export const buildShapesGroup = (shapes: ShapeEntity[], settings: UtilsSettings)
     },
     [minX, minY],
     settings,
+    true,
     maxX - minX,
     maxY - minY
   )

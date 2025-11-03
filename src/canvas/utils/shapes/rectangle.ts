@@ -10,12 +10,12 @@ import { createRecPath } from './path'
 
 type rectish = 'text' | 'rect' | 'square' | 'picture'
 
-const buildPath = <T extends DrawableShape<rectish>>(rect: T, settings: UtilsSettings): T => {
+const buildPath = <T extends DrawableShape<rectish>>(rect: T, settings: UtilsSettings, isGroup = false): T => {
   const path = createRecPath(rect)
   return {
     ...rect,
     path,
-    selection: createRecSelectionPath(path, rect, settings)
+    selection: createRecSelectionPath(path, rect, settings, isGroup)
   }
 }
 
@@ -29,6 +29,7 @@ export const createRectangle = <T extends 'rect' | 'square'>(
   },
   cursorPosition: Point,
   settings: UtilsSettings,
+  isGroup = false,
   width = 0,
   height = 0
 ): ShapeEntity<T> => {
@@ -49,7 +50,7 @@ export const createRectangle = <T extends 'rect' | 'square'>(
       lineDash: shape.settings.lineDash.default
     }
   } as unknown as ShapeEntity<T>
-  return buildPath(recShape, settings) as ShapeEntity<T>
+  return buildPath(recShape, settings, isGroup) as ShapeEntity<T>
 }
 
 export const drawRect = (ctx: CanvasRenderingContext2D, shape: DrawableShape<'rect' | 'square'>): void => {
