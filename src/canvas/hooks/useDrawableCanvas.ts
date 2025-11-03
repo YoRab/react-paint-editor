@@ -50,29 +50,32 @@ const handleMove = (
   if (selectionMode.mode === 'selectionFrame') {
     refreshSelectedShapes(drawCtx, cursorPosition, settings)
     const cursorPositionInCanvasDiv = getCursorPositionInElement(e, canvasRef.current!, settings.canvasSize)
-
     setCanvasMoveAcceleration([
       Math.ceil(
         clamp(
-          cursorPositionInCanvasDiv[0] < 100
-            ? cursorPositionInCanvasDiv[0] - 100
-            : cursorPositionInCanvasDiv[0] > settings.canvasSize.width - 100
-              ? cursorPositionInCanvasDiv[0] - (settings.canvasSize.width - 100)
+          cursorPositionInCanvasDiv[0] * settings.canvasZoom < 100
+            ? cursorPositionInCanvasDiv[0] * settings.canvasZoom - 100
+            : cursorPositionInCanvasDiv[0] * settings.canvasZoom > settings.canvasSize.width / settings.canvasSize.scaleRatioWithNoZoom - 100
+              ? cursorPositionInCanvasDiv[0] * settings.canvasZoom - (settings.canvasSize.width / settings.canvasSize.scaleRatioWithNoZoom - 100)
               : 0,
           -150,
           150
-        ) / 10
+        ) /
+          10 /
+          settings.canvasZoom
       ),
       Math.ceil(
         clamp(
-          cursorPositionInCanvasDiv[1] < 100
-            ? cursorPositionInCanvasDiv[1] - 100
-            : cursorPositionInCanvasDiv[1] > settings.canvasSize.height - 100
-              ? cursorPositionInCanvasDiv[1] - (settings.canvasSize.height - 100)
+          cursorPositionInCanvasDiv[1] * settings.canvasZoom < 100
+            ? cursorPositionInCanvasDiv[1] * settings.canvasZoom - 100
+            : cursorPositionInCanvasDiv[1] * settings.canvasZoom > settings.canvasSize.height / settings.canvasSize.scaleRatioWithNoZoom - 100
+              ? cursorPositionInCanvasDiv[1] * settings.canvasZoom - (settings.canvasSize.height / settings.canvasSize.scaleRatioWithNoZoom - 100)
               : 0,
           -150,
           150
-        ) / 10
+        ) /
+          10 /
+          settings.canvasZoom
       )
     ])
     return
