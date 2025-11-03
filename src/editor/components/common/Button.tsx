@@ -2,10 +2,10 @@ import React from 'react'
 import './Button.css'
 
 type CommonType = {
-  hidden?: boolean
-  disabled?: boolean
-  selected?: boolean
-  icon?: string
+  hidden?: boolean | undefined
+  disabled?: boolean | undefined
+  selected?: boolean | undefined
+  icon?: string | undefined
 }
 
 type ButtonType = CommonType & React.ButtonHTMLAttributes<HTMLButtonElement>

@@ -39,7 +39,7 @@ export const createRecSelectionPath = (path: Path2D | undefined, rect: DrawableS
 
 export const drawSelectionRect = (
   ctx: CanvasRenderingContext2D,
-  shape: DrawableShape & { selection?: SelectionDefaultType },
+  shape: DrawableShape & { selection?: SelectionDefaultType | undefined },
   selectionColor: string,
   selectionWidth: number,
   settings: UtilsSettings,

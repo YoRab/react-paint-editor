@@ -12,7 +12,7 @@ const VALUES = [0, 1]
 type ClosedPointsType = {
   selectedSettings: string | undefined
   setSelectedSettings: React.Dispatch<React.SetStateAction<string | undefined>>
-  disabled?: boolean
+  disabled?: boolean | undefined
   defaultValue?: number | undefined
   valueChanged: (field: string, value: string | number) => void
 }

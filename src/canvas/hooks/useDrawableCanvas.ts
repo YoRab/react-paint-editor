@@ -322,6 +322,7 @@ const useDrawableCanvas = ({
         updateSingleShape([newShape], true)
       } else if (activeTool.type !== 'picture') {
         const newShape = createShape(drawCtx, activeTool as Exclude<CustomTool, { type: 'picture' }>, cursorPosition, settings)
+        if (!newShape) return
         addShapes([newShape])
         const newSelectedShapes = buildShapesGroup([newShape], settings)!
         setSelectedShape(newSelectedShapes)

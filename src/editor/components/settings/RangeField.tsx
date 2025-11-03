@@ -9,7 +9,7 @@ type ShapeStyleColorType = {
   selectedSettings: string | undefined
   setSelectedSettings: React.Dispatch<React.SetStateAction<string | undefined>>
   title?: string
-  disabled?: boolean
+  disabled?: boolean | undefined
   field: string
   icon: string
   min?: number

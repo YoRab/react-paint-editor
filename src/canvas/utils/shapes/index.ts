@@ -27,7 +27,7 @@ export const createShape = (
   shape: Exclude<CustomTool, { type: 'picture' }>,
   cursorPosition: Point,
   settings: UtilsSettings
-): ShapeEntity => {
+): ShapeEntity | undefined => {
   const roundCursorPosition: Point = [roundForGrid(cursorPosition[0], settings), roundForGrid(cursorPosition[1], settings)]
   switch (shape.type) {
     case 'brush':

@@ -3,9 +3,9 @@ import { zoomIn } from '@editor/constants/icons'
 import './ZoomButton.css'
 
 type ZoomButtonType = {
-  disabled?: boolean
+  disabled?: boolean | undefined
   toggleZoomPanel: () => void
-  className?: string
+  className?: string | undefined
 }
 
 const ZoomButton = ({ disabled = false, className, toggleZoomPanel }: ZoomButtonType) => {

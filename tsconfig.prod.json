@@ -13,6 +13,7 @@
     "noUncheckedIndexedAccess": true,
     "forceConsistentCasingInFileNames": true,
     "noFallthroughCasesInSwitch": true,
+    "exactOptionalPropertyTypes": true,
     "module": "esnext",
     "moduleResolution": "node",
     "resolveJsonModule": true,

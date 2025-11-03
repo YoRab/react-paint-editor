@@ -11,7 +11,7 @@ type PanelType = {
   className?: string
   fitContainer?: boolean
   position?: 'bottom' | 'top'
-  alignment?: 'left' | 'right' | 'center'
+  alignment?: 'left' | 'right' | 'center' | undefined
 }
 
 const Panel = ({
