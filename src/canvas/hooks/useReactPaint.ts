@@ -77,7 +77,7 @@ const useReactPaint = ({
   })
 
   const zoomEnabled = canZoom === 'always' && !disabled
-  const { canvasTransformation, setCanvasTransformation, setCanvasOffset, setCanvasZoom } = useZoom({
+  const { canvasTransformation, setCanvasTransformation, setCanvasOffset, setCanvasZoom, resetZoom } = useZoom({
     canvasSize,
     size,
     canvasElt: canvasRef.current,
@@ -381,6 +381,7 @@ const useReactPaint = ({
     registerEvent,
     unregisterEvent,
     resetCanvas: resetCanvasFromRemote,
+    resetZoom,
     getCurrentImage,
     getCurrentData,
     setCanvasOffset,
