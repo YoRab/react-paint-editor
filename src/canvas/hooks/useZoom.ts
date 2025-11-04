@@ -5,6 +5,8 @@ import type { CanvasSize, Size } from '@common/types/Canvas'
 import type { Point } from '@common/types/Shapes'
 import { useCallback, useEffect, useRef, useState } from 'react'
 
+const CANVAS_TRANSFORMATION_DEFAULT: { offset: Point; zoom: number } = { offset: [0, 0], zoom: 1 }
+
 type UseZoomProps = {
   canvasSize: CanvasSize
   size: Size
@@ -13,7 +15,7 @@ type UseZoomProps = {
 }
 
 const useZoom = ({ canvasSize, size, zoomEnabled, canvasElt }: UseZoomProps) => {
-  const [canvasTransformation, setCanvasTransformation] = useState<{ offset: Point; zoom: number }>({ offset: [0, 0], zoom: 1 })
+  const [canvasTransformation, setCanvasTransformation] = useState<{ offset: Point; zoom: number }>(CANVAS_TRANSFORMATION_DEFAULT)
   const lastTimeWheelEvent = useRef(0)
 
   const setCanvasOffset = useCallback(
@@ -37,6 +39,10 @@ const useZoom = ({ canvasSize, size, zoomEnabled, canvasElt }: UseZoomProps) => 
     size,
     setCanvasTransformation
   })
+
+  const resetZoom = useCallback(() => {
+    setCanvasTransformation(CANVAS_TRANSFORMATION_DEFAULT)
+  }, [])
 
   useEffect(() => {
     if (!zoomEnabled || !canvasElt) return
@@ -79,6 +85,7 @@ const useZoom = ({ canvasSize, size, zoomEnabled, canvasElt }: UseZoomProps) => 
     setCanvasTransformation,
     setCanvasOffset,
     setCanvasZoom,
+    resetZoom,
     canvasTransformation
   }
 }
