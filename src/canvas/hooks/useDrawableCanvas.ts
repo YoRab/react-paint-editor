@@ -53,28 +53,28 @@ const handleMove = (
     setCanvasMoveAcceleration([
       Math.ceil(
         clamp(
-          cursorPositionInCanvasDiv[0] * settings.canvasZoom < 100
-            ? cursorPositionInCanvasDiv[0] * settings.canvasZoom - 100
-            : cursorPositionInCanvasDiv[0] * settings.canvasZoom > settings.canvasSize.width / settings.canvasSize.scaleRatioWithNoZoom - 100
-              ? cursorPositionInCanvasDiv[0] * settings.canvasZoom - (settings.canvasSize.width / settings.canvasSize.scaleRatioWithNoZoom - 100)
+          cursorPositionInCanvasDiv[0] * settings.canvasZoom < 50
+            ? cursorPositionInCanvasDiv[0] * settings.canvasZoom - 50
+            : cursorPositionInCanvasDiv[0] * settings.canvasZoom > settings.canvasSize.width / settings.canvasSize.scaleRatioWithNoZoom - 50
+              ? cursorPositionInCanvasDiv[0] * settings.canvasZoom - (settings.canvasSize.width / settings.canvasSize.scaleRatioWithNoZoom - 50)
               : 0,
-          -150,
-          150
+          -100,
+          100
         ) /
-          10 /
+          5 /
           settings.canvasZoom
       ),
       Math.ceil(
         clamp(
-          cursorPositionInCanvasDiv[1] * settings.canvasZoom < 100
-            ? cursorPositionInCanvasDiv[1] * settings.canvasZoom - 100
-            : cursorPositionInCanvasDiv[1] * settings.canvasZoom > settings.canvasSize.height / settings.canvasSize.scaleRatioWithNoZoom - 100
-              ? cursorPositionInCanvasDiv[1] * settings.canvasZoom - (settings.canvasSize.height / settings.canvasSize.scaleRatioWithNoZoom - 100)
+          cursorPositionInCanvasDiv[1] * settings.canvasZoom < 50
+            ? cursorPositionInCanvasDiv[1] * settings.canvasZoom - 50
+            : cursorPositionInCanvasDiv[1] * settings.canvasZoom > settings.canvasSize.height / settings.canvasSize.scaleRatioWithNoZoom - 50
+              ? cursorPositionInCanvasDiv[1] * settings.canvasZoom - (settings.canvasSize.height / settings.canvasSize.scaleRatioWithNoZoom - 50)
               : 0,
-          -150,
-          150
+          -100,
+          100
         ) /
-          10 /
+          5 /
           settings.canvasZoom
       )
     ])
