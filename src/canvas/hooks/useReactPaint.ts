@@ -4,7 +4,9 @@ import useShapes from '@canvas/hooks/useShapes'
 import useZoom from '@canvas/hooks/useZoom'
 import { buildDataToExport } from '@canvas/utils/data'
 import { decodeImportedData, decodeJson, downloadFile, encodeShapesInString, getCanvasImage } from '@canvas/utils/file'
+import { buildShapesGroup } from '@canvas/utils/selection'
 import { sanitizeTools } from '@canvas/utils/tools'
+import { getNewOffset } from '@canvas/utils/zoom'
 import type { CanvasSize } from '@common/types/Canvas'
 import type { SelectionModeData } from '@common/types/Mode'
 import type { ExportedDrawableShape, Point, ShapeEntity, StateData } from '@common/types/Shapes'
@@ -13,12 +15,12 @@ import { SELECTION_TOOL } from '@editor/constants/tools'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 type UseReactPaintProps = {
-  width?: number
-  height?: number
-  shapes?: ExportedDrawableShape[]
-  mode?: 'editor' | 'viewer'
-  disabled?: boolean
-  options?: OptionalOptions
+  width?: number | undefined
+  height?: number | undefined
+  shapes?: ExportedDrawableShape[] | undefined
+  mode?: 'editor' | 'viewer' | undefined
+  disabled?: boolean | undefined
+  options?: OptionalOptions | undefined
 }
 
 const useReactPaint = ({
@@ -129,6 +131,9 @@ const useReactPaint = ({
     componentRef: editorRef
   })
 
+  const [isShiftPressed, setShiftPressed] = useState<boolean>(false)
+  const [isAltPressed, setAltPressed] = useState<boolean>(false)
+
   const {
     registerEvent,
     unregisterEvent,
@@ -136,7 +141,7 @@ const useReactPaint = ({
     selectedShape,
     selectionFrame,
     hoveredShape,
-    addShape,
+    addShapes: addShape,
     addPictureShape,
     moveShapes,
     setSelectedShape,
@@ -154,7 +159,7 @@ const useReactPaint = ({
     canGoBackward,
     canGoForward,
     canClear
-  } = useShapes(settings, width, height)
+  } = useShapes(settings, width, height, isShiftPressed)
 
   const selectTool = useCallback(
     (tool: ToolsType) => {
@@ -164,12 +169,36 @@ const useReactPaint = ({
     [setSelectedShape]
   )
 
+  const [canvasMoveAcceleration, setCanvasMoveAcceleration] = useState<Point>([0, 0])
+
+  const isModePreview = selectionMode.mode === 'preview'
   // biome-ignore lint/correctness/useExhaustiveDependencies: shape selection should reset selection mode when it is preview
   useEffect(() => {
-    if (selectionMode.mode === 'preview') {
+    if (isModePreview) {
       return () => setSelectionMode(old => (old.mode === 'preview' ? { mode: 'default' } : old))
     }
-  }, [selectedShape?.id, selectionMode.mode === 'preview'])
+  }, [selectedShape?.id, isModePreview])
+
+  const isModeSelectionFrame = selectionMode.mode === 'selectionFrame'
+  useEffect(() => {
+    if (isModeSelectionFrame) {
+      return () => setCanvasMoveAcceleration([0, 0])
+    }
+  }, [isModeSelectionFrame])
+
+  useEffect(() => {
+    const hasAcceleration = canvasMoveAcceleration[0] !== 0 || canvasMoveAcceleration[1] !== 0
+
+    if (hasAcceleration) {
+      const interval = setInterval(() => {
+        setCanvasTransformation(({ offset, zoom }) => {
+          const newOffset: Point = [offset[0] - canvasMoveAcceleration[0], offset[1] - canvasMoveAcceleration[1]]
+          return getNewOffset({ zoom, size, canvasSize, newOffset })
+        })
+      }, 20)
+      return () => clearInterval(interval)
+    }
+  }, [canvasMoveAcceleration[0], canvasMoveAcceleration[1], setCanvasTransformation, size, canvasSize])
 
   const resetCanvasWithShapeEntity = useCallback(
     (shapesToInit: ShapeEntity[], options: { clearHistory: boolean; source: 'user' | 'remote' }) => {
@@ -180,14 +209,14 @@ const useReactPaint = ({
     [selectTool, clearShapes, setCanvasTransformation]
   )
 
-  const selectShape = useCallback(
-    (shape: ShapeEntity) => {
+  const selectShapes = useCallback(
+    (shapes: ShapeEntity[]) => {
       setSelectedShape(old => {
-        if (old?.id !== shape.id) setActiveTool(SELECTION_TOOL)
-        return shape
+        if (old?.id !== shapes.map(shape => shape.id).join('-')) setActiveTool(SELECTION_TOOL)
+        return buildShapesGroup(shapes, settings)
       })
     },
-    [setSelectedShape]
+    [setSelectedShape, settings]
   )
 
   const exportData = useCallback(() => {
@@ -316,7 +345,7 @@ const useReactPaint = ({
       width,
       height,
       selectTool,
-      selectShape,
+      selectShapes,
       activeTool,
       setActiveTool,
       setAvailableTools,
@@ -362,7 +391,7 @@ const useReactPaint = ({
       setCanvasSize,
       setCanvasOffset,
       setCanvasZoom,
-      selectShape,
+      selectShapes,
       activeTool,
       setActiveTool,
       isInsideComponent,
@@ -376,7 +405,12 @@ const useReactPaint = ({
       canvasOffsetStartData,
       setCanvasOffsetStartData,
       selectionMode,
-      setSelectionMode
+      setSelectionMode,
+      setCanvasMoveAcceleration,
+      isShiftPressed,
+      isAltPressed,
+      setShiftPressed,
+      setAltPressed
     },
     registerEvent,
     unregisterEvent,

@@ -16,4 +16,17 @@ export const SELECTION_RESIZE_ANCHOR_POSITIONS: Point[] = [
   [0, 0.5]
 ]
 
-export const ShapeTypeArray = ['brush', 'rect', 'square', 'line', 'polygon', 'circle', 'curve', 'ellipse', 'picture', 'text', 'triangle'] as const
+export const ShapeTypeArray = [
+  'brush',
+  'rect',
+  'square',
+  'line',
+  'polygon',
+  'circle',
+  'curve',
+  'ellipse',
+  'picture',
+  'text',
+  'triangle',
+  'group'
+] as const

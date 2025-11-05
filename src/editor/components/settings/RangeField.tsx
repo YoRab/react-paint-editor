@@ -9,7 +9,7 @@ type ShapeStyleColorType = {
   selectedSettings: string | undefined
   setSelectedSettings: React.Dispatch<React.SetStateAction<string | undefined>>
   title?: string
-  disabled?: boolean
+  disabled?: boolean | undefined
   field: string
   icon: string
   min?: number
@@ -27,14 +27,15 @@ const RangeField = ({
   icon,
   disabled = false,
   field,
-  value = 1,
+  value,
   min = 1,
   max = 20,
   step = 1,
   unity = '',
   valueChanged
 }: ShapeStyleColorType) => {
-  const roundValue = Math.round(value)
+  const indeterminate = value === undefined
+  const displayedValue = indeterminate ? 'N/A' : `${Math.round(value)}${unity}`
   const [customKey] = useState(uniqueId('settings_'))
   const timeoutCb = useRef<NodeJS.Timeout | null>(null)
 
@@ -71,11 +72,16 @@ const RangeField = ({
         <Panel title={title} alignment='left' fitContainer={true}>
           <div>
             <label className='react-paint-editor-rangefield'>
-              <input type='range' min={min} max={max} step={step} value={value} onChange={handleChange} />
-              <span>
-                {roundValue}
-                {unity}
-              </span>
+              <input
+                type='range'
+                min={min}
+                max={max}
+                step={step}
+                value={value ?? (max + min) / 2}
+                data-indeterminate={+indeterminate}
+                onChange={handleChange}
+              />
+              <span>{displayedValue}</span>
             </label>
           </div>
         </Panel>

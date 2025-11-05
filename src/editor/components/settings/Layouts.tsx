@@ -1,4 +1,4 @@
-import type { ShapeEntity } from '@common/types/Shapes'
+import type { SelectionType, ShapeEntity } from '@common/types/Shapes'
 import Button from '@editor/components/common/Button'
 import Panel from '@editor/components/common/Panel'
 import type { GridLabelType } from '@editor/constants/grid'
@@ -9,6 +9,7 @@ import type React from 'react'
 import { useRef, useState } from 'react'
 import './Layouts.css'
 import type { UtilsSettings } from '@canvas/constants/app'
+import { getSelectedShapes } from '@canvas/utils/selection'
 
 type LayoutType = {
   disabled?: boolean
@@ -16,10 +17,10 @@ type LayoutType = {
   selected: boolean
   layoutDragging: string | undefined
   setLayoutDragging: (shapeId: string | undefined) => void
-  handleRemove: (shape: ShapeEntity) => void
-  handleSelect: (shape: ShapeEntity) => void
-  toggleShapeVisibility: (shape: ShapeEntity) => void
-  toggleShapeLock: (shape: ShapeEntity) => void
+  handleRemove: (shape: ShapeEntity[]) => void
+  handleSelect: (shape: ShapeEntity[]) => void
+  toggleShapeVisibility: (shape: ShapeEntity[]) => void
+  toggleShapeLock: (shape: ShapeEntity[]) => void
   onMoveShapes: (firstShapeId: string, lastShapeId: string) => void
 }
 
@@ -41,28 +42,28 @@ const Layout = ({
     if (disabled) return
     e.preventDefault()
     e.stopPropagation()
-    handleRemove(shape)
+    handleRemove([shape])
   }
 
   const onSelect = (e: React.MouseEvent<HTMLElement>) => {
     if (disabled) return
     e.preventDefault()
     e.stopPropagation()
-    handleSelect(shape)
+    handleSelect([shape])
   }
 
   const onToggleShapeVisibility = (e: React.MouseEvent<HTMLElement>) => {
     if (disabled) return
     e.preventDefault()
     e.stopPropagation()
-    toggleShapeVisibility(shape)
+    toggleShapeVisibility([shape])
   }
 
   const onToggleShapeLock = (e: React.MouseEvent<HTMLElement>) => {
     if (disabled) return
     e.preventDefault()
     e.stopPropagation()
-    toggleShapeLock(shape)
+    toggleShapeLock([shape])
   }
 
   const { isOver } = useDrag({
@@ -121,11 +122,11 @@ type LayoutsType = {
   setGridFormat: (value: GridLabelType) => void
   settings: UtilsSettings
   shapes: ShapeEntity[]
-  removeShape: (shape: ShapeEntity) => void
-  toggleShapeVisibility: (shape: ShapeEntity) => void
-  toggleShapeLock: (shape: ShapeEntity) => void
-  selectedShape: ShapeEntity | undefined
-  selectShape: (shape: ShapeEntity) => void
+  removeShape: (shape: ShapeEntity[]) => void
+  toggleShapeVisibility: (shape: ShapeEntity[]) => void
+  toggleShapeLock: (shape: ShapeEntity[]) => void
+  selectedShapes: SelectionType | undefined
+  selectShapes: (shapes: ShapeEntity[]) => void
   moveShapes: (firstShapeId: string, lastShapeId: string) => void
   isLayoutPanelShown: boolean
 }
@@ -138,9 +139,9 @@ const Layouts = ({
   removeShape,
   toggleShapeVisibility,
   toggleShapeLock,
-  selectedShape,
+  selectedShapes,
   moveShapes,
-  selectShape,
+  selectShapes,
   isLayoutPanelShown
 }: LayoutsType) => {
   const [layoutDragging, setLayoutDragging] = useState<string | undefined>(undefined)
@@ -184,8 +185,8 @@ const Layouts = ({
                   disabled={disabled}
                   layoutDragging={layoutDragging}
                   setLayoutDragging={setLayoutDragging}
-                  selected={selectedShape?.id === shape.id}
-                  handleSelect={selectShape}
+                  selected={getSelectedShapes(selectedShapes).some(s => s.id === shape.id) ?? false}
+                  handleSelect={selectShapes}
                   handleRemove={removeShape}
                   onMoveShapes={moveShapes}
                   toggleShapeVisibility={toggleShapeVisibility}

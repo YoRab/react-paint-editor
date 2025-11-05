@@ -5,10 +5,11 @@ import { drawGrid } from '@canvas/utils/grid'
 import { drawSelectionFrame, drawShape, drawShapeSelection, refreshShape } from '@canvas/utils/shapes'
 import { resizeTextShapeWithNewContent } from '@canvas/utils/shapes/text'
 import type { HoverModeData, SelectionModeData } from '@common/types/Mode'
-import type { Point, ShapeEntity } from '@common/types/Shapes'
+import type { DrawableShape, Point, SelectionType, ShapeEntity } from '@common/types/Shapes'
 import type { ToolsType } from '@common/types/tools'
 import React, { useCallback, useEffect, useImperativeHandle, useRef } from 'react'
 import './Canvas.css'
+import { getSelectedShapes } from '@canvas/utils/selection'
 import { clipMask, drawMask } from '@canvas/utils/zoom'
 import EditTextBox from './EditTextBox'
 
@@ -17,14 +18,14 @@ const renderDrawCanvas = (
   selectionMode: SelectionModeData<number | Point>,
   settings: UtilsSettings,
   shapes: ShapeEntity[],
-  selectedShape: ShapeEntity | undefined
+  selectedShape: SelectionType | undefined
 ) => {
   initCanvasContext(drawCtx)
   drawMask(drawCtx, settings)
   drawGrid(drawCtx, settings)
   for (let i = shapes.length - 1; i >= 0; i--) {
     if (selectionMode.mode === 'textedition' && shapes[i] === selectedShape) continue
-    drawShape(drawCtx, shapes[i].id === selectedShape?.id ? selectedShape : shapes[i], settings)
+    drawShape(drawCtx, getSelectedShapes(selectedShape).find(selected => selected.id === shapes[i]!.id) ?? shapes[i]!, settings)
   }
 }
 
@@ -35,10 +36,10 @@ const renderSelectionCanvas = (
   activeTool: ToolsType,
   selectionWidth: number,
   selectionColor: string,
-  selectedShape: ShapeEntity | undefined,
+  selectedShape: SelectionType | undefined,
   hoveredShape: ShapeEntity | undefined,
   hoverMode: HoverModeData,
-  selectionFrame: [Point, Point] | undefined,
+  selectionFrame: { oldSelection: SelectionType | undefined; frame: [Point, Point] } | undefined,
   withSkeleton: boolean
 ) => {
   selectionCtx.reset()
@@ -46,7 +47,7 @@ const renderSelectionCanvas = (
 
   withSkeleton &&
     hoveredShape &&
-    hoveredShape.id !== selectedShape?.id &&
+    !getSelectedShapes(selectedShape).find(selected => selected.id === hoveredShape.id) &&
     activeTool.type === 'selection' &&
     selectionMode.mode === 'default' &&
     drawShapeSelection({
@@ -87,13 +88,13 @@ type DrawerType = {
   isEditMode: boolean
   shapes: ShapeEntity[]
   saveShapes: () => void
-  addShape: (newShape: ShapeEntity) => void
-  updateSingleShape: (updatedShape: ShapeEntity, withSave?: boolean) => void
-  selectedShape: ShapeEntity | undefined
-  setSelectedShape: React.Dispatch<React.SetStateAction<ShapeEntity | undefined>>
-  setSelectionFrame: React.Dispatch<React.SetStateAction<[Point, Point] | undefined>>
+  addShapes: (newShape: ShapeEntity[]) => void
+  updateSingleShape: (updatedShape: ShapeEntity[], withSave?: boolean) => void
+  selectedShape: SelectionType | undefined
+  setSelectedShape: React.Dispatch<React.SetStateAction<SelectionType | undefined>>
+  setSelectionFrame: React.Dispatch<React.SetStateAction<{ oldSelection: SelectionType | undefined; frame: [Point, Point] } | undefined>>
   hoveredShape: ShapeEntity | undefined
-  selectionFrame: [Point, Point] | undefined
+  selectionFrame: { oldSelection: SelectionType | undefined; frame: [Point, Point] } | undefined
   refreshHoveredShape: (e: MouseEvent | TouchEvent, ctx: CanvasRenderingContext2D, cursorPosition: Point, isInsideMask: boolean) => void
   refreshSelectedShapes: (ctx: CanvasRenderingContext2D, cursorPosition: Point, settings: UtilsSettings) => void
   activeTool: ToolsType
@@ -108,6 +109,7 @@ type DrawerType = {
   isAltPressed: boolean
   withFrameSelection: boolean
   withSkeleton: boolean
+  setCanvasMoveAcceleration: React.Dispatch<React.SetStateAction<Point>>
 }
 
 const Canvas = React.forwardRef<HTMLCanvasElement, DrawerType>(
@@ -115,7 +117,7 @@ const Canvas = React.forwardRef<HTMLCanvasElement, DrawerType>(
     {
       canGrow,
       shapes,
-      addShape,
+      addShapes: addShape,
       updateSingleShape,
       selectedShape,
       setSelectedShape,
@@ -130,6 +132,7 @@ const Canvas = React.forwardRef<HTMLCanvasElement, DrawerType>(
       canvasOffsetStartData,
       setCanvasOffsetStartData,
       setCanvasOffset,
+      setCanvasMoveAcceleration,
       isInsideComponent,
       selectionMode,
       setSelectionMode,
@@ -152,7 +155,7 @@ const Canvas = React.forwardRef<HTMLCanvasElement, DrawerType>(
     useImperativeHandle(ref, () => drawCanvasRef.current!)
 
     const { hoverMode } = useDrawableCanvas({
-      addShape,
+      addShapes: addShape,
       drawCanvasRef,
       setActiveTool,
       shapes,
@@ -170,6 +173,7 @@ const Canvas = React.forwardRef<HTMLCanvasElement, DrawerType>(
       updateSingleShape,
       saveShapes,
       setSelectionMode,
+      setCanvasMoveAcceleration,
       isShiftPressed,
       isAltPressed,
       withFrameSelection,
@@ -177,14 +181,15 @@ const Canvas = React.forwardRef<HTMLCanvasElement, DrawerType>(
     })
     const updateSelectedShapeText = useCallback(
       (newText: string[]) => {
-        if (selectedShape?.type !== 'text') return
+        const firstShape = getSelectedShapes(selectedShape)[0]
+        if (firstShape?.type !== 'text') return
 
         const ctx = drawCanvasRef.current?.getContext('2d')
         if (!ctx) return
 
-        const newShape = refreshShape(resizeTextShapeWithNewContent(ctx, selectedShape, newText, settings), settings)
+        const newShape = refreshShape(resizeTextShapeWithNewContent(ctx, firstShape, newText, settings), settings)
 
-        updateSingleShape(newShape)
+        updateSingleShape([newShape])
       },
       [updateSingleShape, selectedShape, settings]
     )
@@ -259,10 +264,10 @@ const Canvas = React.forwardRef<HTMLCanvasElement, DrawerType>(
               onContextMenu={preventRightClick}
             />
           )}
-          {isEditMode && selectionMode.mode === 'textedition' && selectedShape?.type === 'text' && (
+          {isEditMode && selectionMode.mode === 'textedition' && getSelectedShapes(selectedShape)[0]?.type === 'text' && (
             <EditTextBox
               disabled={!settings.features.edition}
-              shape={selectedShape}
+              shape={getSelectedShapes(selectedShape)[0] as DrawableShape<'text'>}
               defaultValue={selectionMode.defaultValue}
               updateValue={updateSelectedShapeText}
               saveShapes={saveShapes}

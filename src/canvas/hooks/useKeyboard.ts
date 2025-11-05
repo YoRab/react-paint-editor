@@ -1,11 +1,12 @@
 import type { UtilsSettings } from '@canvas/constants/app'
-import { copyShape, translateShape } from '@canvas/utils/shapes'
+import { getSelectedShapes } from '@canvas/utils/selection'
+import { copyShapes, translateShapes } from '@canvas/utils/shapes'
 import type { SelectionModeData } from '@common/types/Mode'
-import type { Point, ShapeEntity } from '@common/types/Shapes'
+import type { Point, SelectionType, ShapeEntity } from '@common/types/Shapes'
+import type { ToolsType } from '@common/types/tools'
 import { isMacOs } from '@common/utils/util'
 import { SELECTION_TOOL } from '@editor/constants/tools'
 import { useEffect, useState } from 'react'
-import type { ToolsType } from '@common/types/tools'
 
 const KeyboardCode = {
   ArrowUp: 'ArrowUp',
@@ -31,11 +32,11 @@ const KeyboardCommand = {
 
 type UseKeyboardType = {
   isInsideComponent: boolean
-  selectedShape: ShapeEntity | undefined
-  pasteShape: (shape: ShapeEntity) => void
-  updateShape: (shape: ShapeEntity) => void
-  setSelectedShape: (value: React.SetStateAction<ShapeEntity | undefined>) => void
-  removeShape: (shape: ShapeEntity) => void
+  selectedShape: SelectionType | undefined
+  pasteShapes: (shape: ShapeEntity[]) => void
+  updateShapes: (shapes: ShapeEntity[]) => void
+  setSelectedShape: (value: React.SetStateAction<SelectionType | undefined>) => void
+  removeShape: (shape: ShapeEntity[]) => void
   backwardShape: () => void
   forwardShape: () => void
   setShiftPressed: (value: React.SetStateAction<boolean>) => void
@@ -43,7 +44,7 @@ type UseKeyboardType = {
   isEditingText: boolean
   setActiveTool: (tool: ToolsType) => void
   setSelectionMode: (mode: SelectionModeData<number | Point>) => void
-  setSelectionFrame: (frame: [Point, Point] | undefined) => void
+  setSelectionFrame: (args: { oldSelection: SelectionType | undefined; frame: [Point, Point] } | undefined) => void
   settings: UtilsSettings
 }
 
@@ -57,14 +58,14 @@ const useKeyboard = ({
   setSelectionMode,
   setSelectionFrame,
   removeShape,
-  pasteShape,
-  updateShape,
+  pasteShapes,
+  updateShapes,
   backwardShape,
   forwardShape,
   setShiftPressed,
   setAltPressed
 }: UseKeyboardType) => {
-  const [copiedShape, setCopiedShape] = useState<ShapeEntity | undefined>(undefined)
+  const [copiedShape, setCopiedShape] = useState<SelectionType | undefined>(undefined)
 
   useEffect(() => {
     const handleCopy = (e: ClipboardEvent) => {
@@ -79,7 +80,7 @@ const useKeyboard = ({
       if (!copiedShape) return
       if (isEditingText) return
       e.preventDefault()
-      pasteShape(copyShape(copiedShape, settings))
+      pasteShapes(copyShapes(copiedShape, settings))
     }
 
     const handleKeyUp = (e: KeyboardEvent) => {
@@ -150,13 +151,13 @@ const useKeyboard = ({
         case KeyboardCode.ArrowUp:
           e.preventDefault()
           e.stopPropagation()
-          updateShape(translateShape(translationMap[e.key], selectedShape, [0, 0], settings, false))
+          updateShapes(translateShapes(translationMap[e.key]!, selectedShape, [0, 0], settings, false))
           break
         case KeyboardCode.Delete:
         case KeyboardCode.Backspace:
           e.preventDefault()
           e.stopPropagation()
-          removeShape(selectedShape)
+          removeShape(getSelectedShapes(selectedShape))
           break
       }
     }
@@ -180,10 +181,10 @@ const useKeyboard = ({
     isEditingText,
     selectedShape,
     settings,
-    updateShape,
+    updateShapes,
     removeShape,
     setSelectedShape,
-    pasteShape,
+    pasteShapes,
     backwardShape,
     forwardShape,
     setShiftPressed,

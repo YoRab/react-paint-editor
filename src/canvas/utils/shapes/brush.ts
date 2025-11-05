@@ -56,7 +56,7 @@ export const drawBrush = (ctx: CanvasRenderingContext2D, shape: DrawableShape<'b
   ctx.stroke(shape.path)
 }
 
-export const getBrushBorder = (brush: DrawableShape<'brush'>, { selectionPadding }: UtilsSettings): Rect => {
+export const getBrushBorder = (brush: DrawableShape<'brush'>, { selectionPadding }: Pick<UtilsSettings, 'selectionPadding'>): Rect => {
   const brushPoints = brush.points.flat()
   const minX = Math.min(...brushPoints.map(point => point[0]))
   const minY = Math.min(...brushPoints.map(point => point[1]))
@@ -146,7 +146,7 @@ export const addNewPointToShape = <T extends DrawableShape<'brush'>>(shape: T, c
     ...{
       points: set(
         shape.points.length - 1,
-        [...shape.points[shape.points.length - 1], [Math.round(cursorPosition[0]), Math.round(cursorPosition[1])]],
+        [...shape.points[shape.points.length - 1]!, [Math.round(cursorPosition[0]), Math.round(cursorPosition[1])]],
         shape.points
       )
     }

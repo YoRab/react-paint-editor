@@ -1,5 +1,5 @@
 import type { ShapeType } from '@common/types/Shapes'
-import { arrowIcon, brushIcon, circleIcon, curveIcon, pictureIcon, polygonIcon, squareIcon, textIcon } from '@editor/constants/icons'
+import { arrowIcon, brushIcon, circleIcon, curveIcon, groupIcon, pictureIcon, polygonIcon, squareIcon, textIcon } from '@editor/constants/icons'
 
 export const getShapePicture = (shape: ShapeType) => {
   switch (shape) {
@@ -23,6 +23,8 @@ export const getShapePicture = (shape: ShapeType) => {
       return textIcon
     case 'picture':
       return pictureIcon
+    case 'group':
+      return groupIcon
     case 'triangle':
       return ''
   }

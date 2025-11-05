@@ -5,41 +5,53 @@ import { getShapeInfos } from '@canvas/utils/shapes/index'
 import { createCirclePath, createLinePath, createRecPath } from '@canvas/utils/shapes/path'
 import { roundForGrid, roundValues } from '@canvas/utils/transform'
 import { rotatePoint } from '@canvas/utils/trigo'
-import type { HoverModeData, SelectionModeResize } from '@common/types/Mode'
+import type { SelectionModeResize } from '@common/types/Mode'
 import type { DrawableShape, Point, Rect, SelectionDefaultType } from '@common/types/Shapes'
 
-export const createRecSelectionPath = (path: Path2D | undefined, rect: DrawableShape, settings: UtilsSettings): SelectionDefaultType => {
+export const createRecSelectionPath = (
+  path: Path2D | undefined,
+  rect: DrawableShape,
+  settings: UtilsSettings,
+  isGroup = false
+): SelectionDefaultType => {
   const { borders } = getShapeInfos(rect, settings)
 
   return {
     border: createRecPath(borders),
     shapePath: path,
-    line: createLinePath({
-      points: [
-        [borders.x + borders.width / 2, borders.y],
-        [borders.x + borders.width / 2, borders.y - (SELECTION_ANCHOR_SIZE / 2 + SELECTION_ROTATED_ANCHOR_POSITION) / settings.canvasSize.scaleRatio]
-      ]
-    }),
-    anchors: [
-      createCirclePath({
-        x: borders.x + borders.width / 2,
-        y: borders.y - (SELECTION_ANCHOR_SIZE / 2 + SELECTION_ROTATED_ANCHOR_POSITION) / settings.canvasSize.scaleRatio,
-        radius: SELECTION_ANCHOR_SIZE / 2 / settings.canvasSize.scaleRatio
-      }),
-      ...SELECTION_RESIZE_ANCHOR_POSITIONS.map(anchorPosition =>
-        createCirclePath({
-          x: borders.x + borders.width * anchorPosition[0],
-          y: borders.y + borders.height * anchorPosition[1],
-          radius: SELECTION_ANCHOR_SIZE / 2 / settings.canvasSize.scaleRatio
-        })
-      )
-    ]
+    line: isGroup
+      ? undefined
+      : createLinePath({
+          points: [
+            [borders.x + borders.width / 2, borders.y],
+            [
+              borders.x + borders.width / 2,
+              borders.y - (SELECTION_ANCHOR_SIZE / 2 + SELECTION_ROTATED_ANCHOR_POSITION) / settings.canvasSize.scaleRatio
+            ]
+          ]
+        }),
+    anchors: isGroup
+      ? []
+      : [
+          createCirclePath({
+            x: borders.x + borders.width / 2,
+            y: borders.y - (SELECTION_ANCHOR_SIZE / 2 + SELECTION_ROTATED_ANCHOR_POSITION) / settings.canvasSize.scaleRatio,
+            radius: SELECTION_ANCHOR_SIZE / 2 / settings.canvasSize.scaleRatio
+          }),
+          ...SELECTION_RESIZE_ANCHOR_POSITIONS.map(anchorPosition =>
+            createCirclePath({
+              x: borders.x + borders.width * anchorPosition[0],
+              y: borders.y + borders.height * anchorPosition[1],
+              radius: SELECTION_ANCHOR_SIZE / 2 / settings.canvasSize.scaleRatio
+            })
+          )
+        ]
   }
 }
 
 export const drawSelectionRect = (
   ctx: CanvasRenderingContext2D,
-  shape: DrawableShape & { selection?: SelectionDefaultType },
+  shape: DrawableShape & { selection?: SelectionDefaultType | undefined },
   selectionColor: string,
   selectionWidth: number,
   settings: UtilsSettings,
@@ -58,7 +70,7 @@ export const drawSelectionRect = (
   if (!withAnchors || shape.locked) return
 
   if (shape.selection.shapePath) ctx.stroke(shape.selection.border)
-  ctx.stroke(shape.selection.line)
+  if (shape.selection.line) ctx.stroke(shape.selection.line)
 
   updateCanvasContext(ctx, {
     fillColor: 'rgb(255,255,255)',
@@ -275,7 +287,7 @@ export const resizeRectSelection = (
     )
   ]
 
-  const roundCursorStartPosition = settings.gridGap
+  const roundCursorStartPosition: Point = settings.gridGap
     ? [
         selectionMode.anchor[0] === 0 ? borders.x : selectionMode.anchor[0] === 0.5 ? borders.x + borders.width / 2 : borders.x + borders.width,
         selectionMode.anchor[1] === 0 ? borders.y : selectionMode.anchor[1] === 0.5 ? borders.y + borders.height / 2 : borders.y + borders.height

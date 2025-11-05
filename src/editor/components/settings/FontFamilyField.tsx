@@ -21,7 +21,7 @@ const FontFamilyOption: React.FC<{
 type FontFamilyFieldType = {
   selectedSettings: string | undefined
   setSelectedSettings: React.Dispatch<React.SetStateAction<string | undefined>>
-  disabled?: boolean
+  disabled?: boolean | undefined
   values: string[]
   defaultValue?: number | string | undefined
   valueChanged: (field: string, value: string | number) => void

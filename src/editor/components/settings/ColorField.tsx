@@ -10,7 +10,7 @@ type ShapeStyleColorType = {
   selectedSettings: string | undefined
   setSelectedSettings: React.Dispatch<React.SetStateAction<string | undefined>>
   title?: string
-  disabled?: boolean
+  disabled?: boolean | undefined
   field: string
   mode?: 'fill' | 'stroke'
   value?: string | undefined
@@ -92,7 +92,7 @@ const ColorField = ({
                 )}
               </Button>
             ))}
-            <Button type='color' title='Custom color' selected={!values.includes(value)} value={value} onChange={handleChange}>
+            <Button type='color' title='Custom color' selected={value !== '' && !values.includes(value)} value={value} onChange={handleChange}>
               <div
                 className='react-paint-editor-colorfield-customcolor'
                 style={{

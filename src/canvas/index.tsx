@@ -4,7 +4,7 @@ import useKeyboard from '@canvas/hooks/useKeyboard'
 import type { UseReactPaintReturnType } from '@canvas/hooks/useReactPaint'
 import useResizeObserver from '@canvas/hooks/useResizeObserver'
 import type { ShapeEntity } from '@common/types/Shapes'
-import { type CSSProperties, useCallback, useRef, useState } from 'react'
+import { type CSSProperties, useCallback, useRef } from 'react'
 import './index.css'
 
 type AppProps = {
@@ -39,7 +39,7 @@ const App = ({ options, className, style, canvasProps }: AppProps) => {
     settings,
     setCanvasSize,
     setCanvasOffset,
-    selectShape,
+    selectShapes,
     activeTool,
     setActiveTool,
     isInsideComponent,
@@ -48,7 +48,12 @@ const App = ({ options, className, style, canvasProps }: AppProps) => {
     canvasOffsetStartData,
     setCanvasOffsetStartData,
     selectionMode,
-    setSelectionMode
+    setSelectionMode,
+    setCanvasMoveAcceleration,
+    isShiftPressed,
+    isAltPressed,
+    setShiftPressed,
+    setAltPressed
   } = canvasProps
 
   const { canvasBackgroundColor, canvasSelectionColor, canvasSelectionWidth } = {
@@ -58,15 +63,12 @@ const App = ({ options, className, style, canvasProps }: AppProps) => {
 
   const containerRef = useRef<HTMLDivElement>(null)
 
-  const [isShiftPressed, setShiftPressed] = useState<boolean>(false)
-  const [isAltPressed, setAltPressed] = useState<boolean>(false)
-
-  const pasteShape = useCallback(
-    (shape: ShapeEntity) => {
-      addShape(shape)
-      selectShape(shape)
+  const pasteShapes = useCallback(
+    (shapes: ShapeEntity[]) => {
+      addShape(shapes)
+      selectShapes(shapes)
     },
-    [addShape, selectShape]
+    [addShape, selectShapes]
   )
 
   const onResized = useCallback(
@@ -85,8 +87,8 @@ const App = ({ options, className, style, canvasProps }: AppProps) => {
     selectedShape,
     setSelectedShape,
     removeShape,
-    pasteShape,
-    updateShape,
+    pasteShapes,
+    updateShapes: updateShape,
     backwardShape,
     forwardShape,
     setShiftPressed,
@@ -121,7 +123,7 @@ const App = ({ options, className, style, canvasProps }: AppProps) => {
         canvasOffsetStartData={canvasOffsetStartData}
         setCanvasOffsetStartData={setCanvasOffsetStartData}
         shapes={shapesRef.current}
-        addShape={addShape}
+        addShapes={addShape}
         updateSingleShape={updateShape}
         selectedShape={selectedShape}
         selectionFrame={selectionFrame}
@@ -135,6 +137,7 @@ const App = ({ options, className, style, canvasProps }: AppProps) => {
         saveShapes={saveShapes}
         selectionMode={selectionMode}
         setSelectionMode={setSelectionMode}
+        setCanvasMoveAcceleration={setCanvasMoveAcceleration}
         selectionColor={canvasSelectionColor}
         selectionWidth={canvasSelectionWidth}
         isEditMode={isEditMode}

@@ -1,4 +1,4 @@
-import type { Point, ShapeEntity } from './Shapes'
+import type { Point, SelectionType } from './Shapes'
 
 export type SelectionModeDefault = {
   mode: 'default'
@@ -24,20 +24,21 @@ export type SelectionModeEditText = {
 export type SelectionModeResize<AnchorType extends Point | number = Point> = {
   mode: 'resize'
   cursorStartPosition: Point
-  originalShape: ShapeEntity
+  originalShape: SelectionType
   anchor: AnchorType
 }
 
 export type SelectionModeRotate = {
   mode: 'rotate'
   cursorStartPosition: Point
-  originalShape: ShapeEntity
+  originalShape: SelectionType
   center: Point
 }
 export type SelectionModeTranslate = {
   mode: 'translate'
   cursorStartPosition: Point
-  originalShape: ShapeEntity
+  originalShape: SelectionType
+  dateStart: number
 }
 
 export type SelectionModeData<AnchorType extends Point | number> =

@@ -5,11 +5,11 @@ import { useState } from 'react'
 
 type ShapeStyleSelectType = {
   setSelectedSettings: React.Dispatch<React.SetStateAction<string | undefined>>
-  disabled?: boolean
+  disabled?: boolean | undefined
   field: string
   icon: string
   values: boolean[]
-  value?: boolean
+  value?: boolean | undefined
   valueChanged: (field: string, value: boolean) => void
 }
 

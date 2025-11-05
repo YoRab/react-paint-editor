@@ -92,6 +92,10 @@ export type CustomTool = {
       type: 'picture'
       settings: ToolsSettingsType<'picture'>
     }
+  | {
+      type: 'group'
+      settings: ToolsSettingsType<'group'>
+    }
 )
 
 export type SettingsOpacity = {
@@ -202,6 +206,10 @@ export type ToolsTriangleSettings = SettingsStrokeColor & SettingsFillColor & Se
 
 export type ToolsPictureSettings = SettingsOpacity
 
+export type ToolsGroupSettings = Partial<
+  SettingsOpacity & SettingsStrokeColor & SettingsFillColor & SettingsLineWidth & SettingsLineDash & SettingsLineArrow
+>
+
 export type ToolsSettingsType<T extends ShapeType> = T extends 'rect'
   ? ToolsRectSettings
   : T extends 'square'
@@ -224,7 +232,9 @@ export type ToolsSettingsType<T extends ShapeType> = T extends 'rect'
                     ? ToolsTriangleSettings
                     : T extends 'picture'
                       ? ToolsPictureSettings
-                      : never
+                      : T extends 'group'
+                        ? ToolsGroupSettings
+                        : never
 
 export type ActionsType = 'selection' | 'undo' | 'redo' | 'clear' | 'export' | 'loadfile' | 'savefile' | 'move' | 'uploadpicture' | 'addurlpicture'
 

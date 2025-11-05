@@ -17,7 +17,7 @@ const LineArrowOption: React.FC<{
 type LineArrowType = {
   selectedSettings: string | undefined
   setSelectedSettings: React.Dispatch<React.SetStateAction<string | undefined>>
-  disabled?: boolean
+  disabled?: boolean | undefined
   values: number[]
   defaultValue?: number | string | undefined
   valueChanged: (field: string, value: string | number) => void

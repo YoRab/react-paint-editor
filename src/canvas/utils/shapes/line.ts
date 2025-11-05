@@ -92,9 +92,9 @@ export const buildTriangleOnLine = (center: Point, rotation: number, lineStyle: 
   ]
   return {
     points: [
-      [center[0] + trianglePoints[0][0], center[1] + trianglePoints[0][1]],
-      [center[0] + trianglePoints[1][0], center[1] + trianglePoints[1][1]],
-      [center[0] + trianglePoints[2][0], center[1] + trianglePoints[2][1]]
+      [center[0] + trianglePoints[0]![0], center[1] + trianglePoints[0]![1]],
+      [center[0] + trianglePoints[1]![0], center[1] + trianglePoints[1]![1]],
+      [center[0] + trianglePoints[2]![0], center[1] + trianglePoints[2]![1]]
     ],
     style: {
       ...lineStyle,
@@ -116,7 +116,7 @@ export const drawLine = (ctx: CanvasRenderingContext2D, shape: DrawableShape<'li
   }
 }
 
-export const getLineBorder = (line: Line, settings: UtilsSettings): Rect => {
+export const getLineBorder = (line: Line, settings: Pick<UtilsSettings, 'selectionPadding'>): Rect => {
   const x = Math.min(line.points[0][0], line.points[1][0]) - settings.selectionPadding
   const width = Math.abs(line.points[0][0] - line.points[1][0]) + settings.selectionPadding * 2
   const y = Math.min(line.points[0][1], line.points[1][1]) - settings.selectionPadding

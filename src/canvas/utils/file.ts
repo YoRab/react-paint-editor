@@ -7,11 +7,11 @@ import type { DrawableShape, ExportedDrawableShape, Point, ShapeEntity } from '@
 import { compact } from '@common/utils/array'
 import { addDefaultAndTempShapeProps, buildDataToExport } from './data'
 
-export const addSizeAndConvertSvgToObjectUrl = (svgFileContent: string) => {
+export const addSizeAndConvertSvgToObjectUrl = (svgFileContent: string): string => {
   const parser = new DOMParser()
   const result = parser.parseFromString(svgFileContent, 'text/xml')
   const inlineSVG = result.getElementsByTagName('svg')[0]
-
+  if (!inlineSVG) return ''
   const svgWidth = inlineSVG.getAttribute('width')
   const svgHeight = inlineSVG.getAttribute('height')
 
@@ -21,8 +21,8 @@ export const addSizeAndConvertSvgToObjectUrl = (svgFileContent: string) => {
   } else {
     const viewBox = inlineSVG.getAttribute('viewBox') ?? `0 0 ${PICTURE_DEFAULT_SIZE} ${PICTURE_DEFAULT_SIZE}`
     const [, , width, height] = viewBox.split(' ')
-    inlineSVG.setAttribute('width', width ?? PICTURE_DEFAULT_SIZE)
-    inlineSVG.setAttribute('height', height ?? PICTURE_DEFAULT_SIZE)
+    inlineSVG.setAttribute('width', width ?? `${PICTURE_DEFAULT_SIZE}`)
+    inlineSVG.setAttribute('height', height ?? `${PICTURE_DEFAULT_SIZE}`)
     svgContentToConvert = new XMLSerializer().serializeToString(inlineSVG)
   }
   const blob = new Blob([svgContentToConvert], { type: 'image/svg+xml' })
@@ -78,7 +78,7 @@ const getShapesDataUrl = ({ shapes, settings }: { shapes: DrawableShape[]; setti
   ctx.clearRect(0, 0, width, height)
   initCanvasContext(ctx)
   for (let i = shapes.length - 1; i >= 0; i--) {
-    drawShape(ctx, shapes[i], settings)
+    drawShape(ctx, shapes[i]!, settings)
   }
   return newCanvas.toDataURL('image/png')
 }
