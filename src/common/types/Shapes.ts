@@ -69,7 +69,7 @@ export type StyleShape = {
 
 export type SelectionDefaultType = {
   border: Path2D
-  line: Path2D
+  line: Path2D | undefined
   shapePath: Path2D | undefined
   anchors: Path2D[]
 }

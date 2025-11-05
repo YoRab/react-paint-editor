@@ -98,21 +98,22 @@ export const checkSelectionIntersection = (
         }
       }
     } else {
-      if (
-        isPartOfRect(
-          {
-            x: borders.x + borders.width / 2 - SELECTION_ANCHOR_SIZE / 2 / scaleRatio,
-            y: borders.y - SELECTION_ANCHOR_SIZE / scaleRatio - SELECTION_ROTATED_ANCHOR_POSITION / scaleRatio,
-            width: SELECTION_ANCHOR_SIZE / scaleRatio,
-            height: SELECTION_ANCHOR_SIZE / scaleRatio
-          },
-          newPosition,
-          radius
-        )
-      ) {
-        return { mode: 'rotate' }
-      }
       if (shapesToCheck.length === 1) {
+        if (
+          isPartOfRect(
+            {
+              x: borders.x + borders.width / 2 - SELECTION_ANCHOR_SIZE / 2 / scaleRatio,
+              y: borders.y - SELECTION_ANCHOR_SIZE / scaleRatio - SELECTION_ROTATED_ANCHOR_POSITION / scaleRatio,
+              width: SELECTION_ANCHOR_SIZE / scaleRatio,
+              height: SELECTION_ANCHOR_SIZE / scaleRatio
+            },
+            newPosition,
+            radius
+          )
+        ) {
+          return { mode: 'rotate' }
+        }
+
         for (const anchorPosition of SELECTION_RESIZE_ANCHOR_POSITIONS) {
           if (
             isPartOfRect(

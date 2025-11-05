@@ -19,28 +19,33 @@ export const createRecSelectionPath = (
   return {
     border: createRecPath(borders),
     shapePath: path,
-    line: createLinePath({
-      points: [
-        [borders.x + borders.width / 2, borders.y],
-        [borders.x + borders.width / 2, borders.y - (SELECTION_ANCHOR_SIZE / 2 + SELECTION_ROTATED_ANCHOR_POSITION) / settings.canvasSize.scaleRatio]
-      ]
-    }),
-    anchors: [
-      createCirclePath({
-        x: borders.x + borders.width / 2,
-        y: borders.y - (SELECTION_ANCHOR_SIZE / 2 + SELECTION_ROTATED_ANCHOR_POSITION) / settings.canvasSize.scaleRatio,
-        radius: SELECTION_ANCHOR_SIZE / 2 / settings.canvasSize.scaleRatio
-      }),
-      ...(isGroup
-        ? []
-        : SELECTION_RESIZE_ANCHOR_POSITIONS.map(anchorPosition =>
+    line: isGroup
+      ? undefined
+      : createLinePath({
+          points: [
+            [borders.x + borders.width / 2, borders.y],
+            [
+              borders.x + borders.width / 2,
+              borders.y - (SELECTION_ANCHOR_SIZE / 2 + SELECTION_ROTATED_ANCHOR_POSITION) / settings.canvasSize.scaleRatio
+            ]
+          ]
+        }),
+    anchors: isGroup
+      ? []
+      : [
+          createCirclePath({
+            x: borders.x + borders.width / 2,
+            y: borders.y - (SELECTION_ANCHOR_SIZE / 2 + SELECTION_ROTATED_ANCHOR_POSITION) / settings.canvasSize.scaleRatio,
+            radius: SELECTION_ANCHOR_SIZE / 2 / settings.canvasSize.scaleRatio
+          }),
+          ...SELECTION_RESIZE_ANCHOR_POSITIONS.map(anchorPosition =>
             createCirclePath({
               x: borders.x + borders.width * anchorPosition[0],
               y: borders.y + borders.height * anchorPosition[1],
               radius: SELECTION_ANCHOR_SIZE / 2 / settings.canvasSize.scaleRatio
             })
-          ))
-    ]
+          )
+        ]
   }
 }
 
@@ -65,7 +70,7 @@ export const drawSelectionRect = (
   if (!withAnchors || shape.locked) return
 
   if (shape.selection.shapePath) ctx.stroke(shape.selection.border)
-  ctx.stroke(shape.selection.line)
+  if (shape.selection.line) ctx.stroke(shape.selection.line)
 
   updateCanvasContext(ctx, {
     fillColor: 'rgb(255,255,255)',

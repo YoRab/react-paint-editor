@@ -25,7 +25,7 @@ export const drawSelectionGroup = (
   if (!withAnchors || shape.locked) return
 
   ctx.stroke(shape.selection.border)
-  ctx.stroke(shape.selection.line)
+  if (shape.selection.line) ctx.stroke(shape.selection.line)
 
   updateCanvasContext(ctx, {
     fillColor: 'rgb(255,255,255)',
