@@ -4,7 +4,7 @@ import useKeyboard from '@canvas/hooks/useKeyboard'
 import type { UseReactPaintReturnType } from '@canvas/hooks/useReactPaint'
 import useResizeObserver from '@canvas/hooks/useResizeObserver'
 import type { ShapeEntity } from '@common/types/Shapes'
-import { type CSSProperties, useCallback, useRef, useState } from 'react'
+import { type CSSProperties, useCallback, useRef } from 'react'
 import './index.css'
 
 type AppProps = {
