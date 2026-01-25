@@ -2,6 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react-vite'
 import { type SyntheticEvent, useState } from 'react'
 import { Canvas, Editor, useReactPaint } from '../src/index'
 import './annotations.css'
+import './button.css'
 
 const PictureWithAnnotations = ({ src, alt }: { src: string; alt: string }) => {
   const [isEdit, setIsEdit] = useState(false)
@@ -26,9 +27,12 @@ const PictureWithAnnotations = ({ src, alt }: { src: string; alt: string }) => {
   return (
     <div>
       <div>
-        <button type='button' onClick={() => setIsEdit(prev => !prev)}>
-          toggle edition
-        </button>
+        <h3>Toggle edit mode</h3>
+        <div className='dynamic-buttons'>
+          <button type='button' className={`dynamic-button ${isEdit ? 'active' : ''}`} onClick={() => setIsEdit(prev => !prev)}>
+            {isEdit ? 'View Mode' : 'Edit Mode'}
+          </button>
+        </div>
       </div>
       <div className='annotations-container'>
         <div className='pic-container'>
@@ -131,9 +135,12 @@ export const Default: Story = {
   return (
     <div>
       <div>
-        <button type='button' onClick={() => setIsEdit(prev => !prev)}>
-          toggle edition
-        </button>
+        <h3>Toggle edit mode</h3>
+        <div className='dynamic-buttons'>
+          <button type='button' className={\`dynamic-button \${isEdit ? 'active' : ''}\`} onClick={() => setIsEdit(prev => !prev)}>
+            {isEdit ? 'View Mode' : 'Edit Mode'}
+          </button>
+        </div>
       </div>
       <div className='pic-container'>
         <img src={src} alt={alt} className='picture' onLoad={onPictureLoad} />

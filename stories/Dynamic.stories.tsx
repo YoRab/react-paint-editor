@@ -2,6 +2,8 @@ import type { Meta, StoryObj } from '@storybook/react-vite'
 import { useEffect, useState } from 'react'
 import { HELLO_THERE, TREE_AND_CLOUDS, WITH_PICTURE } from 'stories/fixture'
 import { Canvas, type DrawableShape, Editor, type StateData, useReactPaint } from '../src/index'
+import './Dynamic.css'
+import './button.css'
 
 const Dynamic = () => {
   const [preset, setPreset] = useState(0)
@@ -36,15 +38,18 @@ const Dynamic = () => {
   return (
     <>
       <div>
-        <button type='button' onClick={() => choosePreset(0)}>
-          preset 1
-        </button>
-        <button type='button' onClick={() => choosePreset(1)}>
-          preset 2
-        </button>
-        <button type='button' onClick={() => choosePreset(2)}>
-          preset 3
-        </button>
+        <h3>Choose a preset to reset the canvas</h3>
+        <div className='dynamic-buttons'>
+          <button type='button' className={`dynamic-button ${preset === 0 ? 'active' : ''}`} onClick={() => choosePreset(0)}>
+            Preset 1
+          </button>
+          <button type='button' className={`dynamic-button ${preset === 1 ? 'active' : ''}`} onClick={() => choosePreset(1)}>
+            Preset 2
+          </button>
+          <button type='button' className={`dynamic-button ${preset === 2 ? 'active' : ''}`} onClick={() => choosePreset(2)}>
+            Preset 3
+          </button>
+        </div>
       </div>
       <Editor editorProps={editorProps}>
         <Canvas canvasProps={canvasProps} />
@@ -104,15 +109,27 @@ export const Default: Story = {
 
   return (
     <>
-      <div>
-        <button type='button' onClick={() => choosePreset(0)}>
-          preset 1
+      <div className="dynamic-buttons">
+        <button
+          type="button"
+          className={\`dynamic-button \${preset === 0 ? 'active' : ''}\`}
+          onClick={() => choosePreset(0)}
+        >
+          Preset 1
         </button>
-        <button type='button' onClick={() => choosePreset(1)}>
-          preset 2
+        <button
+          type="button"
+          className={\`dynamic-button \${preset === 1 ? 'active' : ''}\`}
+          onClick={() => choosePreset(1)}
+        >
+          Preset 2
         </button>
-        <button type='button' onClick={() => choosePreset(2)}>
-          preset 3
+        <button
+          type="button"
+          className={\`dynamic-button \${preset === 2 ? 'active' : ''}\`}
+          onClick={() => choosePreset(2)}
+        >
+          Preset 3
         </button>
       </div>
       <Editor editorProps={editorProps}>
