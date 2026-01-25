@@ -1,0 +1,225 @@
+import { Meta } from "@storybook/addon-docs/blocks";
+import { Source } from '@storybook/addon-docs/blocks';
+import './docs.css'
+import LinkTo from '@storybook/addon-links/react';
+
+
+<Meta title="Getting Started" />
+
+<div className="sb-container">
+  <div className='sb-section-title'>
+    # Getting Started with React Paint
+  </div>
+  
+  <div className="sb-section">
+    <div className="sb-section-item">
+      <h2>Installation</h2>
+      <p>
+        Install React Paint using your preferred package manager:
+      </p>
+      
+      <Source language='bash' code={`npm install @yorab/react-paint`}/>
+      <Source language='bash' code={`yarn add @yorab/react-paint`}/>
+      <Source language='bash' code={`pnpm add @yorab/react-paint`}/>
+      
+      <p>
+        <strong>Note:</strong> React Paint requires <code>react</code> and <code>react-dom</code> (version 18.x) as peer dependencies. Make sure you have them installed in your project.
+      </p>
+      
+      <h2>Import Styles</h2>
+      <p>
+        Don't forget to import the CSS file in your application:
+      </p>
+      
+            <Source language='typescript' code={`import '@yorab/react-paint/react-paint.css'`}/>
+
+      <h2>Basic Usage</h2>
+      <p>
+        Here's the simplest way to get started with React Paint:
+      </p>
+      
+      <Source language='typescript' code={`import { Canvas, Editor, useReactPaint } from '@yorab/react-paint'
+import '@yorab/react-paint/react-paint.css'
+
+function MyPaintApp() {
+  const { editorProps, canvasProps } = useReactPaint()
+
+  return (
+    <Editor editorProps={editorProps}>
+      <Canvas canvasProps={canvasProps} />
+    </Editor>
+  )
+}`} />
+      
+      <p>
+        That's it! You now have a fully functional paint editor with all the default tools and features.
+      </p>
+      
+      <h2>Advanced Usage</h2>
+      <p>
+        For more control, you can configure the canvas size, initial shapes, and various options:
+      </p>
+      
+     <Source language='typescript' code={`import { useEffect, useState } from 'react'
+import { Canvas, Editor, useReactPaint, type DrawableShape, type StateData } from '@yorab/react-paint'
+import '@yorab/react-paint/react-paint.css'
+
+function AdvancedPaintApp() {
+  const [shapes, setShapes] = useState<DrawableShape[]>([])
+
+  const { editorProps, canvasProps, registerEvent, unregisterEvent } = useReactPaint({
+    width: 1920,
+    height: 1080,
+    shapes,
+    options: {
+      canGrow: true,
+      canShrink: true,
+      brushAlgo: 'quadratic',
+      clearCallback: 'empty'
+    }
+  })
+
+  useEffect(() => {
+    const onDataChanged = (data: StateData, source: 'user' | 'remote') => {
+      setShapes(data.shapes)
+    }
+    registerEvent('dataChanged', onDataChanged)
+    
+    return () => {
+      unregisterEvent('dataChanged', onDataChanged)
+    }
+  }, [registerEvent, unregisterEvent])
+
+  return (
+    <Editor editorProps={editorProps}>
+      <Canvas canvasProps={canvasProps} />
+    </Editor>
+  )
+}`} />
+      
+      <h2>Key Concepts</h2>
+      
+      <h3>useReactPaint Hook</h3>
+      <p>
+        The <code>useReactPaint</code> hook is the core of React Paint. It returns:
+      </p>
+      <ul>
+        <li><code>editorProps</code> - Props to pass to the <code>Editor</code> component</li>
+        <li><code>canvasProps</code> - Props to pass to the <code>Canvas</code> component</li>
+        <li><code>registerEvent</code> - Function to listen to events (like <code>dataChanged</code>)</li>
+        <li><code>unregisterEvent</code> - Function to stop listening to events</li>
+        <li><code>resetCanvas</code> - Function to reset the canvas with new shapes</li>
+        <li><code>getCurrentImage</code> - Function to export the canvas as a PNG image</li>
+        <li><code>getCurrentData</code> - Function to get the current state of the canvas</li>
+      </ul>
+      
+      <h3>Editor Component</h3>
+      <p>
+        The <code>Editor</code> component provides the toolbar with all drawing tools, settings, and controls. It must wrap the <code>Canvas</code> component.
+      </p>
+      
+      <h3>Canvas Component</h3>
+      <p>
+        The <code>Canvas</code> component is where all the drawing happens. It handles mouse/touch interactions, rendering, and shape manipulation.
+      </p>
+      
+      <h2>Configuration Options</h2>
+      <p>
+        React Paint offers extensive configuration through the <code>options</code> parameter:
+      </p>
+      <ul>
+        <li><strong>Canvas Size</strong> - Set <code>width</code> and <code>height</code> for fixed-size canvas, or use <code>size: 'infinite'</code> for unlimited canvas</li>
+        <li><strong>Zoom & Pan</strong> - Enable with <code>canZoom: 'always'</code> and control growth/shrink with <code>canGrow</code> and <code>canShrink</code></li>
+        <li><strong>Grid</strong> - Add a grid overlay with <code>grid: 20</code> (size in pixels)</li>
+        <li><strong>Features</strong> - Toggle export, save/load, picture upload, frame selection, and more</li>
+        <li><strong>Brush Algorithm</strong> - Choose between <code>'simple'</code> or <code>'quadratic'</code> for brush rendering</li>
+        <li><strong>Clear Behavior</strong> - Set what happens when clearing: <code>'empty'</code>, <code>'defaultShapes'</code>, or a custom function</li>
+      </ul>
+      
+      <h2>Styling</h2>
+      <p>
+        You can customize the appearance of both the Editor and Canvas:
+      </p>
+      
+      <Source language='typescript' code={`<Editor 
+  editorProps={editorProps}
+  options={{
+    toolbarBackgroundColor: '#ffffff',
+    fontColor: '#364181',
+    fontHoverColor: '#0d0931'
+  }}
+>
+  <Canvas 
+    canvasProps={canvasProps}
+    options={{
+      canvasBackgroundColor: '#f5f5f5',
+      canvasSelectionColor: '#0066ff',
+      canvasSelectionWidth: 2
+    }}
+  />
+</Editor>`} />
+      
+      <h2>Event Handling</h2>
+      <p>
+        React Paint emits events that you can listen to for state synchronization:
+      </p>
+      
+     <Source language='typescript' code={`useEffect(() => {
+  const onDataChanged = (data: StateData, source: 'user' | 'remote') => {
+    // data.shapes contains all current shapes
+    // source indicates if the change came from user interaction or remote update
+    console.log('Canvas data changed:', data)
+    setShapes(data.shapes)
+  }
+  
+  registerEvent('dataChanged', onDataChanged)
+  
+  return () => {
+    unregisterEvent('dataChanged', onDataChanged)
+  }
+}, [registerEvent, unregisterEvent])`} />
+      
+      <h2>Exporting Images</h2>
+      <p>
+        Export your canvas as a PNG image:
+      </p>
+      
+   <Source language='typescript' code={`const { getCurrentImage } = useReactPaint()
+
+// Export with default view (canvas dimensions, no zoom)
+const imageUrl1 = getCurrentImage('defaultView')
+
+// Export with current zoom and offset
+const imageUrl2 = getCurrentImage('currentZoom')
+
+// Export fitting all shapes
+const imageUrl3 = getCurrentImage('fitToShapes')
+
+// Use the data URL (e.g., download or display)
+const link = document.createElement('a')
+link.download = 'my-drawing.png'
+link.href = imageUrl1
+link.click()`} />
+      
+      <h2>Modes</h2>
+      <p>
+        React Paint supports two modes:
+      </p>
+      <ul>
+        <li><strong>editor</strong> (default) - Full interactive mode with all tools and editing capabilities</li>
+        <li><strong>viewer</strong> - Read-only mode that hides the editor toolbar and prevents modifications</li>
+      </ul>
+      
+    <Source language='typescript' code={`const { editorProps, canvasProps } = useReactPaint({
+      mode: 'viewer' // Canvas is read-only
+})`} />
+      
+      <h2>Next Steps</h2>
+      <ul>
+        <li>Explore the <LinkTo title='React Paint/Playground' story='docs'>Playground</LinkTo> story to see all configuration options in action</li>
+        <li>Review the API documentation for detailed type definitions and advanced features</li>
+        <li>Visit the <a href="https://github.com/YoRab/react-paint-editor" target="_blank">GitHub repository</a> for more examples and contributions</li>
+      </ul>
+    </div>
+  </div>
+</div>
