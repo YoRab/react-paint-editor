@@ -52,7 +52,7 @@ const useReactPaint = ({
   } = {
     ...DEFAULT_OPTIONS,
     ...options
-  }
+  } as typeof DEFAULT_OPTIONS
 
   const isEditMode = mode !== 'viewer'
 

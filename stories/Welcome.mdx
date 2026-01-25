@@ -1,0 +1,78 @@
+import { Meta } from "@storybook/addon-docs/blocks";
+import LinkTo from '@storybook/addon-links/react';
+import './docs.css'
+import Github from "./assets/github.svg";
+
+export const RightArrow = () => <svg 
+    viewBox="0 0 14 14" 
+    width="8px" 
+    height="14px" 
+    style={{ 
+      marginLeft: '4px',
+      display: 'inline-block',
+      shapeRendering: 'inherit',
+      verticalAlign: 'middle',
+      fill: 'currentColor',
+      'path fill': 'currentColor'
+    }}
+>
+  <path d="m11.1 7.35-5.5 5.5a.5.5 0 0 1-.7-.7L10.04 7 4.9 1.85a.5.5 0 1 1 .7-.7l5.5 5.5c.2.2.2.5 0 .7Z" />
+</svg>
+
+<Meta title="Welcome" />
+
+<div className="sb-container">
+  <div className='sb-section-title'>
+    # Welcome to React Paint
+  </div>
+  
+  <div className="sb-section">
+    <div className="sb-section-item">
+      <h2>What is React Paint?</h2>
+      <p>
+        <strong>React Paint</strong> is an open-source, canvas-based library for React that enables you to build powerful image annotation tools and digital whiteboards. Whether you're creating a collaborative drawing app, an image markup tool, or a design annotation system, React Paint provides all the building blocks you need.
+      </p>
+      
+      <h2>Key Features</h2>
+      <ul>
+        <li><strong>Rich Drawing Tools</strong> - Brush, shapes (rectangles, circles, ellipses, polygons, curves), lines, text, and picture support</li>
+        <li><strong>Interactive Canvas</strong> - Full support for zoom, pan, pinch gestures, and infinite or fixed-size canvases</li>
+        <li><strong>Shape Manipulation</strong> - Select, move, resize, rotate, and transform shapes with intuitive controls</li>
+        <li><strong>Customizable Styling</strong> - Control colors, line widths, opacity, line styles, arrows, and fonts</li>
+        <li><strong>Layer Management</strong> - Built-in layer manipulation panel for organizing your drawings</li>
+        <li><strong>Export & Import</strong> - Export to PNG images or save/load your work as JSON data</li>
+        <li><strong>Event System</strong> - Listen to data changes and integrate with your application state</li>
+        <li><strong>Flexible Configuration</strong> - Extensive options to customize behavior and appearance</li>
+        <li><strong>TypeScript Support</strong> - Fully typed for better developer experience</li>
+      </ul>
+      
+      <h2>Use Cases</h2>
+      <ul>
+        <li>Image annotation and markup tools</li>
+        <li>Digital whiteboards and collaborative drawing apps</li>
+        <li>Design feedback and review systems</li>
+        <li>Educational tools and interactive presentations</li>
+        <li>Custom drawing and sketching applications</li>
+      </ul>
+      
+      <h2>Next</h2>
+      <p>
+        Ready to start building ? Check out the <LinkTo title="Getting Started" story='docs'>Getting Started</LinkTo> guide to learn how to install and use React Paint in your project.
+      </p>
+      <p>
+        You can also explore the <LinkTo title='React Paint/Playground' story='docs'>Playground</LinkTo> story to see all the available options and customize the editor to your needs.
+      </p>
+    </div>
+  </div>
+</div>
+
+<div className="sb-section sb-socials">
+    <div className="sb-section-item">
+      <img src={Github} alt="Github logo" className="sb-explore-image"/>
+      <p>Join our contributors building the future of canvas-based React applications.</p>
+      <a
+        href="https://github.com/YoRab/react-paint-editor"
+        target="_blank"
+      >Star on GitHub<RightArrow /></a>
+    </div>
+</div>

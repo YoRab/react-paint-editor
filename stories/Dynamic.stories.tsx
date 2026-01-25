@@ -2,8 +2,10 @@ import type { Meta, StoryObj } from '@storybook/react-vite'
 import { useEffect, useState } from 'react'
 import { HELLO_THERE, TREE_AND_CLOUDS, WITH_PICTURE } from 'stories/fixture'
 import { Canvas, type DrawableShape, Editor, type StateData, useReactPaint } from '../src/index'
+import './Dynamic.css'
+import './button.css'
 
-const Preset = () => {
+const Dynamic = () => {
   const [preset, setPreset] = useState(0)
   const [shapes, setShapes] = useState<DrawableShape[] | undefined>(WITH_PICTURE)
 
@@ -36,15 +38,18 @@ const Preset = () => {
   return (
     <>
       <div>
-        <button type='button' onClick={() => choosePreset(0)}>
-          preset 1
-        </button>
-        <button type='button' onClick={() => choosePreset(1)}>
-          preset 2
-        </button>
-        <button type='button' onClick={() => choosePreset(2)}>
-          preset 3
-        </button>
+        <h3>Choose a preset to reset the canvas</h3>
+        <div className='dynamic-buttons'>
+          <button type='button' className={`dynamic-button ${preset === 0 ? 'active' : ''}`} onClick={() => choosePreset(0)}>
+            Preset 1
+          </button>
+          <button type='button' className={`dynamic-button ${preset === 1 ? 'active' : ''}`} onClick={() => choosePreset(1)}>
+            Preset 2
+          </button>
+          <button type='button' className={`dynamic-button ${preset === 2 ? 'active' : ''}`} onClick={() => choosePreset(2)}>
+            Preset 3
+          </button>
+        </div>
       </div>
       <Editor editorProps={editorProps}>
         <Canvas canvasProps={canvasProps} />
@@ -55,8 +60,8 @@ const Preset = () => {
 
 // More on how to set up stories at: https://storybook.js.org/docs/react/writing-stories/introduction#default-export
 const meta = {
-  title: 'Main/Preset',
-  component: Preset,
+  title: 'React Paint/Dynamic updates',
+  component: Dynamic,
   parameters: {
     // Optional parameter to center the component in the Canvas. More info: https://storybook.js.org/docs/react/configure/story-layout
     layout: 'centered'
@@ -64,7 +69,7 @@ const meta = {
   // This component will have an automatically generated Autodocs entry: https://storybook.js.org/docs/react/writing-docs/autodocs
   tags: ['autodocs']
   // More on argTypes: https://storybook.js.org/docs/react/api/argtypes
-} satisfies Meta<typeof Preset>
+} satisfies Meta<typeof Dynamic>
 
 export default meta
 type Story = StoryObj<typeof meta>
@@ -104,15 +109,27 @@ export const Default: Story = {
 
   return (
     <>
-      <div>
-        <button type='button' onClick={() => choosePreset(0)}>
-          preset 1
+      <div className="dynamic-buttons">
+        <button
+          type="button"
+          className={\`dynamic-button \${preset === 0 ? 'active' : ''}\`}
+          onClick={() => choosePreset(0)}
+        >
+          Preset 1
         </button>
-        <button type='button' onClick={() => choosePreset(1)}>
-          preset 2
+        <button
+          type="button"
+          className={\`dynamic-button \${preset === 1 ? 'active' : ''}\`}
+          onClick={() => choosePreset(1)}
+        >
+          Preset 2
         </button>
-        <button type='button' onClick={() => choosePreset(2)}>
-          preset 3
+        <button
+          type="button"
+          className={\`dynamic-button \${preset === 2 ? 'active' : ''}\`}
+          onClick={() => choosePreset(2)}
+        >
+          Preset 3
         </button>
       </div>
       <Editor editorProps={editorProps}>

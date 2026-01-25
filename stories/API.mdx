@@ -1,0 +1,945 @@
+import { Meta } from "@storybook/addon-docs/blocks";
+import { Source } from '@storybook/addon-docs/blocks';
+import './docs.css'
+import LinkTo from '@storybook/addon-links/react';
+
+<Meta title="API Reference" />
+
+<div className="sb-container">
+  <div className='sb-section-title'>
+    # API Reference
+  </div>
+  
+  <div className="sb-section">
+    <div className="sb-section-item">
+      <p>
+        Complete API documentation for React Paint. This reference covers all hooks, components, types, and configuration options.
+      </p>
+      
+      <h2>Table of Contents</h2>
+      <ul>
+        <li><a href="#useReactPaint" target="_self">useReactPaint Hook</a></li>
+        <li><a href="#Editor" target="_self">Editor Component</a></li>
+        <li><a href="#Canvas" target="_self">Canvas Component</a></li>
+        <li><a href="#Types" target="_self">Type Definitions</a></li>
+        <li><a href="#Options" target="_self">Configuration Options</a></li>
+        <li><a href="#Events" target="_self">Events</a></li>
+        <li><a href="#Methods" target="_self">Methods</a></li>
+      </ul>
+
+      <h2 id="useReactPaint">useReactPaint Hook</h2>
+      <p>
+        The core hook that manages the paint editor state and provides all necessary props and methods.
+      </p>
+
+      <h3>Parameters</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Parameter</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Default</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>width</code></td>
+            <td><code>number</code></td>
+            <td>Canvas width in pixels</td>
+            <td><code>1000</code></td>
+          </tr>
+          <tr>
+            <td><code>height</code></td>
+            <td><code>number</code></td>
+            <td>Canvas height in pixels</td>
+            <td><code>600</code></td>
+          </tr>
+          <tr>
+            <td><code>shapes</code></td>
+            <td><code>DrawableShape[]</code></td>
+            <td>Array of shapes to initialize the canvas</td>
+            <td><code>undefined</code></td>
+          </tr>
+          <tr>
+            <td><code>mode</code></td>
+            <td><code>'editor' | 'viewer'</code></td>
+            <td>Editor mode: <code>'editor'</code> enables full interaction, <code>'viewer'</code> makes canvas read-only</td>
+            <td><code>'editor'</code></td>
+          </tr>
+          <tr>
+            <td><code>disabled</code></td>
+            <td><code>boolean</code></td>
+            <td>Global flag to prevent interaction with editor and canvas elements</td>
+            <td><code>false</code></td>
+          </tr>
+          <tr>
+            <td><code>options</code></td>
+            <td><code>OptionalOptions</code></td>
+            <td>Configuration options object (see <a href="#Options" target="_self">Configuration Options</a>)</td>
+            <td>See defaults below</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h3>Return Value</h3>
+      <p>The hook returns an object with the following properties:</p>
+
+      <h4>editorProps</h4>
+      <p>Props to pass to the <code>Editor</code> component. Contains:</p>
+      <ul>
+        <li><code>shapesRef</code> - React ref containing current shapes array</li>
+        <li><code>addPictureShape</code> - Function to add a picture shape</li>
+        <li><code>moveShapes</code> - Function to move shapes in layer order</li>
+        <li><code>toggleShapeVisibility</code> - Function to toggle shape visibility</li>
+        <li><code>toggleShapeLock</code> - Function to toggle shape lock state</li>
+        <li><code>canGoBackward</code> - Boolean indicating if undo is available</li>
+        <li><code>canGoForward</code> - Boolean indicating if redo is available</li>
+        <li><code>canClear</code> - Boolean indicating if clear is available</li>
+        <li><code>selectedShape</code> - Currently selected shape or group</li>
+        <li><code>removeShape</code> - Function to remove a shape</li>
+        <li><code>updateShape</code> - Function to update a shape</li>
+        <li><code>backwardShape</code> - Function to undo last action</li>
+        <li><code>forwardShape</code> - Function to redo last undone action</li>
+        <li><code>refs</code> - Object containing canvas and editor refs</li>
+        <li><code>width</code> - Canvas width</li>
+        <li><code>height</code> - Canvas height</li>
+        <li><code>selectTool</code> - Function to select a tool</li>
+        <li><code>selectShapes</code> - Function to select shapes</li>
+        <li><code>activeTool</code> - Currently active tool</li>
+        <li><code>setActiveTool</code> - Function to set active tool</li>
+        <li><code>setAvailableTools</code> - Function to update available tools</li>
+        <li><code>isEditMode</code> - Boolean indicating if in edit mode</li>
+        <li><code>availableTools</code> - Array of available tools</li>
+        <li><code>gridGap</code> - Current grid gap value</li>
+        <li><code>setGridGap</code> - Function to set grid gap</li>
+        <li><code>loadFile</code> - Function to load a file</li>
+        <li><code>exportPicture</code> - Function to export canvas as image</li>
+        <li><code>exportData</code> - Function to export canvas data as JSON</li>
+        <li><code>clearCanvas</code> - Function to clear the canvas</li>
+        <li><code>settings</code> - Current settings object</li>
+        <li><code>setCanvasZoom</code> - Function to set canvas zoom level</li>
+        <li><code>canvas</code> - Canvas configuration object</li>
+      </ul>
+
+      <h4>canvasProps</h4>
+      <p>Props to pass to the <code>Canvas</code> component. Contains:</p>
+      <ul>
+        <li><code>shapesRef</code> - React ref containing current shapes array</li>
+        <li><code>selectedShape</code> - Currently selected shape</li>
+        <li><code>selectionFrame</code> - Current selection frame data</li>
+        <li><code>hoveredShape</code> - Currently hovered shape</li>
+        <li><code>addShape</code> - Function to add shapes</li>
+        <li><code>setSelectedShape</code> - Function to set selected shape</li>
+        <li><code>setSelectionFrame</code> - Function to set selection frame</li>
+        <li><code>refreshSelectedShapes</code> - Function to refresh selected shapes</li>
+        <li><code>refreshHoveredShape</code> - Function to refresh hovered shape</li>
+        <li><code>removeShape</code> - Function to remove a shape</li>
+        <li><code>updateShape</code> - Function to update a shape</li>
+        <li><code>backwardShape</code> - Function to undo</li>
+        <li><code>forwardShape</code> - Function to redo</li>
+        <li><code>saveShapes</code> - Function to save shapes to history</li>
+        <li><code>refs</code> - Object containing canvas and editor refs</li>
+        <li><code>width</code> - Canvas width</li>
+        <li><code>height</code> - Canvas height</li>
+        <li><code>settings</code> - Current settings object</li>
+        <li><code>setCanvasSize</code> - Function to set canvas size</li>
+        <li><code>setCanvasOffset</code> - Function to set canvas offset</li>
+        <li><code>setCanvasZoom</code> - Function to set canvas zoom</li>
+        <li><code>selectShapes</code> - Function to select shapes</li>
+        <li><code>activeTool</code> - Currently active tool</li>
+        <li><code>setActiveTool</code> - Function to set active tool</li>
+        <li><code>isInsideComponent</code> - Boolean indicating if pointer is inside component</li>
+        <li><code>isEditMode</code> - Boolean indicating if in edit mode</li>
+        <li><code>canvas</code> - Canvas configuration object</li>
+        <li><code>canvasOffsetStartData</code> - Canvas offset start data</li>
+        <li><code>setCanvasOffsetStartData</code> - Function to set canvas offset start data</li>
+        <li><code>selectionMode</code> - Current selection mode</li>
+        <li><code>setSelectionMode</code> - Function to set selection mode</li>
+        <li><code>setCanvasMoveAcceleration</code> - Function to set canvas move acceleration</li>
+        <li><code>isShiftPressed</code> - Boolean indicating if Shift key is pressed</li>
+        <li><code>isAltPressed</code> - Boolean indicating if Alt key is pressed</li>
+        <li><code>setShiftPressed</code> - Function to set Shift pressed state</li>
+        <li><code>setAltPressed</code> - Function to set Alt pressed state</li>
+      </ul>
+
+      <h4>Methods</h4>
+      <ul>
+        <li><code>registerEvent</code> - Register an event listener</li>
+        <li><code>unregisterEvent</code> - Unregister an event listener</li>
+        <li><code>resetCanvas</code> - Reset canvas with new shapes</li>
+        <li><code>resetZoom</code> - Reset zoom to default</li>
+        <li><code>getCurrentImage</code> - Get current canvas as image data URL</li>
+        <li><code>getCurrentData</code> - Get current canvas state data</li>
+        <li><code>setCanvasOffset</code> - Set canvas offset programmatically</li>
+        <li><code>setCanvasZoom</code> - Set canvas zoom programmatically</li>
+      </ul>
+
+      <h4>annotationsProps</h4>
+      <p>Props for annotation layer styling (used internally).</p>
+
+      <h2 id="Editor">Editor Component</h2>
+      <p>
+        The Editor component provides the toolbar with drawing tools, settings, and controls.
+      </p>
+
+      <h3>Props</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Prop</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>editorProps</code></td>
+            <td><code>UseReactPaintReturnType['editorProps']</code></td>
+            <td>Props from useReactPaint hook</td>
+            <td>Yes</td>
+          </tr>
+          <tr>
+            <td><code>children</code></td>
+            <td><code>ReactNode</code></td>
+            <td>Child components (typically Canvas)</td>
+            <td>Yes</td>
+          </tr>
+          <tr>
+            <td><code>className</code></td>
+            <td><code>string</code></td>
+            <td>Additional CSS class name</td>
+            <td>No</td>
+          </tr>
+          <tr>
+            <td><code>style</code></td>
+            <td><code>CSSProperties</code></td>
+            <td>Inline CSS styles</td>
+            <td>No</td>
+          </tr>
+          <tr>
+            <td><code>options</code></td>
+            <td><code>EditorOptions</code></td>
+            <td>Editor styling options</td>
+            <td>No</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h3>Editor Options</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Option</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Default</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>toolbarBackgroundColor</code></td>
+            <td><code>string</code></td>
+            <td>Toolbar background color</td>
+            <td><code>'white'</code></td>
+          </tr>
+          <tr>
+            <td><code>dividerColor</code></td>
+            <td><code>string</code></td>
+            <td>Divider color</td>
+            <td><code>'#36418129'</code></td>
+          </tr>
+          <tr>
+            <td><code>fontRadius</code></td>
+            <td><code>number</code></td>
+            <td>Font border radius</td>
+            <td><code>8</code></td>
+          </tr>
+          <tr>
+            <td><code>fontDisabledColor</code></td>
+            <td><code>string</code></td>
+            <td>Disabled font color</td>
+            <td><code>'#3641812b'</code></td>
+          </tr>
+          <tr>
+            <td><code>fontDisabledBackgroundColor</code></td>
+            <td><code>string</code></td>
+            <td>Disabled font background color</td>
+            <td><code>'transparent'</code></td>
+          </tr>
+          <tr>
+            <td><code>fontColor</code></td>
+            <td><code>string</code></td>
+            <td>Font color</td>
+            <td><code>'#364181'</code></td>
+          </tr>
+          <tr>
+            <td><code>fontBackgroundColor</code></td>
+            <td><code>string</code></td>
+            <td>Font background color</td>
+            <td><code>'transparent'</code></td>
+          </tr>
+          <tr>
+            <td><code>fontSelectedColor</code></td>
+            <td><code>string</code></td>
+            <td>Selected font color</td>
+            <td><code>'white'</code></td>
+          </tr>
+          <tr>
+            <td><code>fontSelectedBackgroundColor</code></td>
+            <td><code>string</code></td>
+            <td>Selected font background color</td>
+            <td><code>'#364181'</code></td>
+          </tr>
+          <tr>
+            <td><code>fontHoverColor</code></td>
+            <td><code>string</code></td>
+            <td>Hover font color</td>
+            <td><code>'#364181'</code></td>
+          </tr>
+          <tr>
+            <td><code>fontHoverBackgroundColor</code></td>
+            <td><code>string</code></td>
+            <td>Hover font background color</td>
+            <td><code>'#afd8d8'</code></td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h2 id="Canvas">Canvas Component</h2>
+      <p>
+        The Canvas component is where all drawing happens. It handles mouse/touch interactions, rendering, and shape manipulation.
+      </p>
+
+      <h3>Props</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Prop</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>canvasProps</code></td>
+            <td><code>UseReactPaintReturnType['canvasProps']</code></td>
+            <td>Props from useReactPaint hook</td>
+            <td>Yes</td>
+          </tr>
+          <tr>
+            <td><code>className</code></td>
+            <td><code>string</code></td>
+            <td>Additional CSS class name</td>
+            <td>No</td>
+          </tr>
+          <tr>
+            <td><code>style</code></td>
+            <td><code>CSSProperties</code></td>
+            <td>Inline CSS styles</td>
+            <td>No</td>
+          </tr>
+          <tr>
+            <td><code>options</code></td>
+            <td><code>CanvasOptions</code></td>
+            <td>Canvas styling options</td>
+            <td>No</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h3>Canvas Options</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Option</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Default</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>canvasBackgroundColor</code></td>
+            <td><code>string</code></td>
+            <td>Canvas background color</td>
+            <td><code>'white'</code></td>
+          </tr>
+          <tr>
+            <td><code>canvasSelectionColor</code></td>
+            <td><code>string</code></td>
+            <td>Selection frame color</td>
+            <td>Default selection color</td>
+          </tr>
+          <tr>
+            <td><code>canvasSelectionWidth</code></td>
+            <td><code>number</code></td>
+            <td>Selection frame width</td>
+            <td>Default selection width</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h2 id="Options">Configuration Options</h2>
+      <p>
+        The <code>options</code> parameter in <code>useReactPaint</code> accepts an <code>OptionalOptions</code> object with the following properties:
+      </p>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Option</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Default</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>layersManipulation</code></td>
+            <td><code>boolean</code></td>
+            <td>Enable layers panel for shape management</td>
+            <td><code>true</code></td>
+          </tr>
+          <tr>
+            <td><code>grid</code></td>
+            <td><code>number</code></td>
+            <td>Grid gap size in pixels (0 to disable)</td>
+            <td><code>0</code></td>
+          </tr>
+          <tr>
+            <td><code>canGrow</code></td>
+            <td><code>boolean</code></td>
+            <td>Allow canvas to grow beyond initial size</td>
+            <td><code>false</code></td>
+          </tr>
+          <tr>
+            <td><code>canShrink</code></td>
+            <td><code>boolean</code></td>
+            <td>Allow canvas to shrink below initial size</td>
+            <td><code>true</code></td>
+          </tr>
+          <tr>
+            <td><code>availableTools</code></td>
+            <td><code>CustomToolInput[]</code></td>
+            <td>Custom list of available tools</td>
+            <td>Default shape tools</td>
+          </tr>
+          <tr>
+            <td><code>withExport</code></td>
+            <td><code>boolean</code></td>
+            <td>Show export button in toolbar</td>
+            <td><code>true</code></td>
+          </tr>
+          <tr>
+            <td><code>withLoadAndSave</code></td>
+            <td><code>boolean</code></td>
+            <td>Show load/save buttons in toolbar</td>
+            <td><code>true</code></td>
+          </tr>
+          <tr>
+            <td><code>withUploadPicture</code></td>
+            <td><code>boolean</code></td>
+            <td>Show button to upload picture (base64)</td>
+            <td><code>true</code></td>
+          </tr>
+          <tr>
+            <td><code>withUrlPicture</code></td>
+            <td><code>boolean</code></td>
+            <td>Show button to add picture by URL</td>
+            <td><code>false</code></td>
+          </tr>
+          <tr>
+            <td><code>withFrameSelection</code></td>
+            <td><code>boolean</code></td>
+            <td>Enable frame selection mode</td>
+            <td><code>true</code></td>
+          </tr>
+          <tr>
+            <td><code>withSkeleton</code></td>
+            <td><code>boolean</code></td>
+            <td>Display skeleton when hovering shapes</td>
+            <td><code>true</code></td>
+          </tr>
+          <tr>
+            <td><code>clearCallback</code></td>
+            <td><code>'empty' | 'defaultShapes' | (() =&gt; DrawableShape[])</code></td>
+            <td>Clear button behavior: <code>'empty'</code> clears all, <code>'defaultShapes'</code> uses initial shapes, or a function returning shapes</td>
+            <td><code>'empty'</code></td>
+          </tr>
+          <tr>
+            <td><code>brushAlgo</code></td>
+            <td><code>'simple' | 'quadratic'</code></td>
+            <td>Brush rendering algorithm: <code>'simple'</code> uses raw path, <code>'quadratic'</code> uses quadratic Bézier curves</td>
+            <td><code>'simple'</code></td>
+          </tr>
+          <tr>
+            <td><code>isBrushShapeDoneOnMouseUp</code></td>
+            <td><code>boolean</code></td>
+            <td>Create new shape on mouse up when drawing brush</td>
+            <td><code>true</code></td>
+          </tr>
+          <tr>
+            <td><code>canvasSelectionPadding</code></td>
+            <td><code>number</code></td>
+            <td>Padding between shape and selection frame</td>
+            <td>Default padding</td>
+          </tr>
+          <tr>
+            <td><code>size</code></td>
+            <td><code>'fixed' | 'infinite'</code></td>
+            <td>Canvas size mode: <code>'fixed'</code> bounds canvas to width/height, <code>'infinite'</code> has no bounds</td>
+            <td><code>'fixed'</code></td>
+          </tr>
+          <tr>
+            <td><code>canZoom</code></td>
+            <td><code>'never' | 'always'</code></td>
+            <td>Zoom availability: <code>'never'</code> disables zoom, <code>'always'</code> enables zoom</td>
+            <td><code>'never'</code></td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h2 id="Events">Events</h2>
+      <p>
+        React Paint emits events that you can listen to using <code>registerEvent</code> and <code>unregisterEvent</code>.
+      </p>
+
+      <h3>dataChanged</h3>
+      <p>
+        Fired whenever the canvas state changes (shapes added, removed, or modified).
+      </p>
+      <Source language='typescript' code={`registerEvent('dataChanged', (data: StateData, source: 'user' | 'remote') => {
+  // data.shapes contains all current shapes
+  // source indicates if change came from user interaction ('user') or remote update ('remote')
+  console.log('Canvas data changed:', data)
+})`} />
+
+      <table>
+        <thead>
+          <tr>
+            <th>Parameter</th>
+            <th>Type</th>
+            <th>Description</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>data</code></td>
+            <td><code>StateData</code></td>
+            <td>Current canvas state containing shapes and config</td>
+          </tr>
+          <tr>
+            <td><code>source</code></td>
+            <td><code>'user' | 'remote'</code></td>
+            <td>Origin of the change: <code>'user'</code> for local interactions, <code>'remote'</code> for programmatic updates</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h2 id="Methods">Methods</h2>
+      <p>
+        Methods available from the <code>useReactPaint</code> hook return value:
+      </p>
+
+      <h3>registerEvent</h3>
+      <p>Register a listener for React Paint events.</p>
+      <Source language='typescript' code={`registerEvent(
+  event: 'dataChanged',
+  listener: (data: StateData, source: 'user' | 'remote') => void
+): void`} />
+
+      <h3>unregisterEvent</h3>
+      <p>Unregister an event listener. If listener is omitted, all listeners for the event are removed.</p>
+      <Source language='typescript' code={`unregisterEvent(
+  event: 'dataChanged',
+  listener?: (data: StateData, source: 'user' | 'remote') => void
+): void`} />
+
+      <h3>resetCanvas</h3>
+      <p>Reset the canvas with new shapes.</p>
+      <Source language='typescript' code={`resetCanvas(
+  shapes: DrawableShape[],
+  clearHistory?: boolean
+): void`} />
+      <ul>
+        <li><code>shapes</code> - Array of shapes to set on canvas</li>
+        <li><code>clearHistory</code> - If <code>true</code>, clears undo/redo history (default: <code>true</code>)</li>
+      </ul>
+
+      <h3>resetZoom</h3>
+      <p>Reset canvas zoom to default (100%).</p>
+      <Source language='typescript' code={`resetZoom(): void`} />
+
+      <h3>getCurrentImage</h3>
+      <p>Export the current canvas as a PNG image data URL.</p>
+      <Source language='typescript' code={`getCurrentImage(
+  view: 'fitToShapes' | 'defaultView' | 'currentZoom'
+): string`} />
+      <p>Parameters:</p>
+      <ul>
+        <li>
+          <p><code>view</code> - Export view mode:</p>
+          <ul>
+            <li><code>'defaultView'</code> - Canvas dimensions, no zoom</li>
+            <li><code>'currentZoom'</code> - Current zoom and offset</li>
+            <li><code>'fitToShapes'</code> - Fits all shapes in view</li>
+          </ul>
+        </li>
+      </ul>
+      <p>Returns a data URL string that can be used as an image source or downloaded.</p>
+
+      <h3>getCurrentData</h3>
+      <p>Get the current canvas state as a data object.</p>
+      <Source language='typescript' code={`getCurrentData(): StateData`} />
+      <p>Returns a <code>StateData</code> object containing shapes and canvas configuration.</p>
+
+      <h3>setCanvasOffset</h3>
+      <p>Set the canvas offset programmatically.</p>
+      <Source language='typescript' code={`setCanvasOffset(offset: Point): void`} />
+      <ul>
+        <li><code>offset</code> - A <code>Point</code> tuple <code>[x, y]</code> representing the offset</li>
+      </ul>
+
+      <h3>setCanvasZoom</h3>
+      <p>Set the canvas zoom level programmatically.</p>
+      <Source language='typescript' code={`setCanvasZoom(
+  zoom: number | 'zoom' | 'unzoom' | 'default'
+): void`} />
+      <p>Parameters:</p>
+      <ul>
+        <li>
+          <p><code>zoom</code> - Zoom level as a number (e.g., 1.5 for 150%), or a string:</p>
+          <ul>
+            <li><code>'zoom'</code> - Zoom in</li>
+            <li><code>'unzoom'</code> - Zoom out</li>
+            <li><code>'default'</code> - Reset to 100%</li>
+          </ul>
+        </li>
+      </ul>
+
+      <h2 id="Types">Type Definitions</h2>
+      <p>
+        Complete type definitions exported from React Paint:
+      </p>
+
+      <h3>DrawableShape</h3>
+      <p>
+        Base type for all drawable shapes. All shapes extend this type with shape-specific properties.
+      </p>
+      <Source language='typescript' code={`type DrawableShape<T extends ShapeType = ShapeType> = {
+  toolId?: string
+  visible?: boolean
+  locked?: boolean
+  rotation: number
+  style?: StyleShape
+  // ... shape-specific properties based on type
+}`} />
+
+      <h3>ShapeType</h3>
+      <p>Available shape types:</p>
+      <ul>
+        <li><code>'rect'</code> - Rectangle</li>
+        <li><code>'square'</code> - Square</li>
+        <li><code>'circle'</code> - Circle</li>
+        <li><code>'ellipse'</code> - Ellipse</li>
+        <li><code>'line'</code> - Line</li>
+        <li><code>'polygon'</code> - Polygon</li>
+        <li><code>'curve'</code> - Curve</li>
+        <li><code>'brush'</code> - Brush stroke</li>
+        <li><code>'text'</code> - Text</li>
+        <li><code>'picture'</code> - Picture/image</li>
+        <li><code>'triangle'</code> - Triangle</li>
+        <li><code>'group'</code> - Group of shapes</li>
+      </ul>
+
+      <h3>Point</h3>
+      <p>A 2D point represented as a tuple.</p>
+      <Source language='typescript' code={`type Point = [number, number]`} />
+
+      <h3>StyleShape</h3>
+      <p>Styling properties for shapes.</p>
+      <Source language='typescript' code={`type StyleShape = {
+  fillColor?: string
+  opacity?: number
+  strokeColor?: string
+  lineWidth?: number
+  lineDash?: number
+  lineArrow?: number
+  closedPoints?: number
+  fontFamily?: string
+  fontItalic?: boolean
+  fontBold?: boolean
+}`} />
+
+      <h3>StateData</h3>
+      <p>Complete canvas state data structure.</p>
+      <Source language='typescript' code={`type StateData = {
+  shapes?: DrawableShape[]
+  config?: {
+    width: number
+    height: number
+  }
+}`} />
+
+      <h3>ExportedDrawableShape</h3>
+      <p>
+        Shape type for export/import. Same as <code>DrawableShape</code> except picture shapes don't include the <code>img</code> property.
+      </p>
+
+      <h3>ShapeEntity</h3>
+      <p>
+        A shape with an ID. Used internally for shape management.
+      </p>
+      <Source language='typescript' code={`type ShapeEntity = {
+  id: string
+} & DrawableShape`} />
+
+      <h3>CustomToolInput</h3>
+      <p>
+        Type for defining custom tools. Extends base tool properties with shape-specific settings.
+      </p>
+      <Source language='typescript' code={`type CustomToolInput = {
+  id: string
+  icon?: string
+  label?: string
+  type: ShapeType
+  settings: ToolsSettingsType<ShapeType>
+}`} />
+
+      <h3>ToolsSettingsType</h3>
+      <p>
+        Type-safe settings for each tool type. Settings vary by shape type:
+      </p>
+      <ul>
+        <li><code>ToolsRectSettings</code> - Rectangle settings</li>
+        <li><code>ToolsSquareSettings</code> - Square settings</li>
+        <li><code>ToolsCircleSettings</code> - Circle settings</li>
+        <li><code>ToolsEllipseSettings</code> - Ellipse settings</li>
+        <li><code>ToolsLineSettings</code> - Line settings (includes arrow options)</li>
+        <li><code>ToolsBrushSettings</code> - Brush settings</li>
+        <li><code>ToolsPolygonSettings</code> - Polygon settings (includes closedPoints)</li>
+        <li><code>ToolsCurveSettings</code> - Curve settings (includes closedPoints)</li>
+        <li><code>ToolsTextSettings</code> - Text settings (includes font options)</li>
+        <li><code>ToolsPictureSettings</code> - Picture settings</li>
+        <li><code>ToolsTriangleSettings</code> - Triangle settings</li>
+        <li><code>ToolsGroupSettings</code> - Group settings</li>
+      </ul>
+
+      <h3>OptionalOptions</h3>
+      <p>
+        Configuration options type. All properties are optional and use defaults if not provided.
+      </p>
+      <Source language='typescript' code={`type OptionalOptions = RecursivePartial<AppOptionsType>`} />
+      <p>
+        See <a href="#Options" target="_self">Configuration Options</a> for the complete list of available options.
+      </p>
+
+      <h3>UseReactPaintReturnType</h3>
+      <p>
+        Return type of the <code>useReactPaint</code> hook. Contains <code>editorProps</code>, <code>canvasProps</code>, and all methods.
+      </p>
+
+      <h2>Shape-Specific Types</h2>
+      
+      <h3>Rect</h3>
+      <Source language='typescript' code={`type Rect = {
+  x: number
+  y: number
+  width: number
+  height: number
+}`} />
+
+      <h3>Circle</h3>
+      <Source language='typescript' code={`type Circle = {
+  x: number
+  y: number
+  radius: number
+}`} />
+
+      <h3>Ellipse</h3>
+      <Source language='typescript' code={`type Ellipse = {
+  x: number
+  y: number
+  radiusX: number
+  radiusY: number
+}`} />
+
+      <h3>Line</h3>
+      <Source language='typescript' code={`type Line = {
+  points: readonly [Point, Point]
+}`} />
+
+      <h3>Triangle</h3>
+      <Source language='typescript' code={`type Triangle = {
+  points: [Point, Point, Point]
+}`} />
+
+      <h3>Polygon</h3>
+      <Source language='typescript' code={`type Polygon = {
+  points: Point[]
+  tempPoint?: Point
+}`} />
+
+      <h3>Curve</h3>
+      <Source language='typescript' code={`type Curve = {
+  points: Point[]
+  tempPoint?: Point
+}`} />
+
+      <h3>Brush</h3>
+      <Source language='typescript' code={`type Brush = {
+  points: Point[][]
+}`} />
+
+      <h3>Text</h3>
+      <Source language='typescript' code={`type Text = Rect & {
+  value: string[]
+  fontSize: number
+}`} />
+
+      <h3>Picture</h3>
+      <Source language='typescript' code={`type Picture = Rect & {
+  src: string
+}`} />
+
+      <h2>Keyboard Shortcuts</h2>
+      <p>
+        React Paint supports the following keyboard shortcuts (when canvas is focused):
+      </p>
+      <table>
+        <thead>
+          <tr>
+            <th>Key</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>Delete</code> or <code>Backspace</code></td>
+            <td>Delete selected shape(s)</td>
+          </tr>
+          <tr>
+            <td><code>Ctrl+Z</code> (or <code>Cmd+Z</code> on Mac)</td>
+            <td>Undo</td>
+          </tr>
+          <tr>
+            <td><code>Ctrl+Y</code> or <code>Ctrl+Shift+Z</code> (or <code>Cmd+Shift+Z</code> on Mac)</td>
+            <td>Redo</td>
+          </tr>
+          <tr>
+            <td><code>Ctrl+C</code> (or <code>Cmd+C</code> on Mac)</td>
+            <td>Copy selected shape(s)</td>
+          </tr>
+          <tr>
+            <td><code>Ctrl+V</code> (or <code>Cmd+V</code> on Mac)</td>
+            <td>Paste copied shape(s)</td>
+          </tr>
+          <tr>
+            <td><code>Ctrl+A</code> (or <code>Cmd+A</code> on Mac)</td>
+            <td>Select all shapes</td>
+          </tr>
+          <tr>
+            <td><code>Escape</code></td>
+            <td>Deselect all / Cancel current operation</td>
+          </tr>
+          <tr>
+            <td><code>Arrow Keys</code></td>
+            <td>Move selected shape(s) by 1 pixel</td>
+          </tr>
+          <tr>
+            <td><code>Shift + Arrow Keys</code></td>
+            <td>Move selected shape(s) by 10 pixels</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h2>Examples</h2>
+      
+      <h3>Basic Usage</h3>
+      <Source language='typescript' code={`import { Canvas, Editor, useReactPaint } from '@yorab/react-paint'
+import '@yorab/react-paint/react-paint.css'
+
+function MyPaintApp() {
+  const { editorProps, canvasProps } = useReactPaint()
+
+  return (
+    <Editor editorProps={editorProps}>
+      <Canvas canvasProps={canvasProps} />
+    </Editor>
+  )
+}`} />
+
+      <h3>With Configuration</h3>
+      <Source language='typescript' code={`const { editorProps, canvasProps } = useReactPaint({
+  width: 1920,
+  height: 1080,
+  mode: 'editor',
+  options: {
+    canZoom: 'always',
+    canGrow: true,
+    grid: 20,
+    withExport: true,
+    brushAlgo: 'quadratic'
+  }
+})`} />
+
+      <h3>With Event Handling</h3>
+      <Source language='typescript' code={`const { editorProps, canvasProps, registerEvent, unregisterEvent } = useReactPaint()
+
+useEffect(() => {
+  const onDataChanged = (data: StateData, source: 'user' | 'remote') => {
+    console.log('Shapes changed:', data.shapes)
+    // Sync with server, update state, etc.
+  }
+  
+  registerEvent('dataChanged', onDataChanged)
+  
+  return () => {
+    unregisterEvent('dataChanged', onDataChanged)
+  }
+}, [registerEvent, unregisterEvent])`} />
+
+      <h3>Exporting Images</h3>
+      <Source language='typescript' code={`const { getCurrentImage } = useReactPaint()
+
+// Export with default view
+const imageUrl = getCurrentImage('defaultView')
+
+// Download the image
+const link = document.createElement('a')
+link.download = 'my-drawing.png'
+link.href = imageUrl
+link.click()`} />
+
+      <h3>Programmatic Control</h3>
+      <Source language='typescript' code={`const { 
+  resetCanvas, 
+  setCanvasZoom, 
+  setCanvasOffset,
+  getCurrentData 
+} = useReactPaint()
+
+// Reset canvas
+resetCanvas([/* shapes */], true)
+
+// Set zoom to 150%
+setCanvasZoom(1.5)
+
+// Set offset
+setCanvasOffset([100, 50])
+
+// Get current state
+const currentState = getCurrentData()`} />
+
+      <h2>Next Steps</h2>
+      <ul>
+        <li>Explore the <LinkTo title='React Paint/Getting Started' story='docs'>Getting Started</LinkTo> guide for basic usage</li>
+        <li>Check out the <LinkTo title='React Paint/Playground' story='docs'>Playground</LinkTo> to see all features in action</li>
+        <li>Visit the <a href="https://github.com/YoRab/react-paint-editor" target="_blank">GitHub repository</a> for more examples</li>
+      </ul>
+    </div>
+  </div>
+</div>

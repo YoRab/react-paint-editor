@@ -12,9 +12,9 @@ type AppProps = {
   className?: string
   style?: CSSProperties
   options?: {
-    canvasBackgroundColor?: string
-    canvasSelectionColor?: string
-    canvasSelectionWidth?: number
+    canvasBackgroundColor?: string | undefined
+    canvasSelectionColor?: string | undefined
+    canvasSelectionWidth?: number | undefined
   }
 }
 const App = ({ options, className, style, canvasProps }: AppProps) => {
@@ -59,7 +59,7 @@ const App = ({ options, className, style, canvasProps }: AppProps) => {
   const { canvasBackgroundColor, canvasSelectionColor, canvasSelectionWidth } = {
     ...DEFAULT_CANVAS_OPTIONS,
     ...options
-  }
+  } as typeof DEFAULT_CANVAS_OPTIONS
 
   const containerRef = useRef<HTMLDivElement>(null)
 

@@ -20,17 +20,17 @@ type EditorProps = {
   style?: CSSProperties
   children: ReactNode
   options?: {
-    toolbarBackgroundColor?: string
-    dividerColor?: string
-    fontRadius?: number
-    fontDisabledColor?: string
-    fontDisabledBackgroundColor?: string
-    fontColor?: string
-    fontBackgroundColor?: string
-    fontSelectedColor?: string
-    fontSelectedBackgroundColor?: string
-    fontHoverColor?: string
-    fontHoverBackgroundColor?: string
+    toolbarBackgroundColor?: string | undefined
+    dividerColor?: string | undefined
+    fontRadius?: number | undefined
+    fontDisabledColor?: string | undefined
+    fontDisabledBackgroundColor?: string | undefined
+    fontColor?: string | undefined
+    fontBackgroundColor?: string | undefined
+    fontSelectedColor?: string | undefined
+    fontSelectedBackgroundColor?: string | undefined
+    fontHoverColor?: string | undefined
+    fontHoverBackgroundColor?: string | undefined
   }
 }
 
@@ -85,7 +85,7 @@ const Editor = ({ editorProps, className, style, options, children }: EditorProp
   } = {
     ...DEFAULT_EDITOR_OPTIONS,
     ...options
-  }
+  } as typeof DEFAULT_EDITOR_OPTIONS
 
   const withZoom = settings.size === 'infinite' || settings.features.zoom
 

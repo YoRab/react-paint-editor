@@ -8,6 +8,18 @@ const preview: Preview = {
         color: /(background|color)$/i,
         date: /Date$/
       }
+    },
+    options: {
+      storySort: {
+        order: [
+          'Welcome',
+          'Getting Started',
+          'API Reference',
+          'React Paint',
+          ['Playground', 'Canvas', 'Dynamic updates', ['Default', 'LoadedFromJSON', 'ViewerMode'], 'Whiteboard', 'Picture annotation'],
+          'Main'
+        ]
+      }
     }
   },
 
