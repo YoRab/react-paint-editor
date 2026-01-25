@@ -11,7 +11,14 @@ const preview: Preview = {
     },
     options: {
       storySort: {
-        order: ['Welcome', 'Getting Started', 'React Paint', 'Main']
+        order: [
+          'Welcome',
+          'Getting Started',
+          'API Reference',
+          'React Paint',
+          ['Playground', 'Canvas', 'Dynamic updates', ['Default', 'LoadedFromJSON', 'ViewerMode'], 'Whiteboard', 'Picture annotation'],
+          'Main'
+        ]
       }
     }
   },
