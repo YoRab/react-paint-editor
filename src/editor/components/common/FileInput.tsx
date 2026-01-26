@@ -4,7 +4,8 @@ import { KeyboardCode } from '@canvas/constants/keyboard'
 import type { FileInputType } from '@editor/components/common/Button'
 
 const FileInput = React.forwardRef<HTMLButtonElement | HTMLInputElement, FileInputType>((props, ref) => {
-  const { hidden = false, tabIndex = 0, disabled = false, selected = false, icon, children, className = '', title, onClick, ...fileProps } = props
+  const { hidden = false, disabled = false, selected = false, icon, children, className = '', title, onClick, ...fileProps } = props
+  const tabIndex = disabled ? -1 : 0
   const inputRef = useRef<HTMLInputElement | null>(null)
 
   useImperativeHandle(ref, () => inputRef.current!)
