@@ -1,4 +1,5 @@
 import type { UtilsSettings } from '@canvas/constants/app'
+import { KeyboardCode, KeyboardCommand } from '@canvas/constants/keyboard'
 import { getSelectedShapes } from '@canvas/utils/selection'
 import { copyShapes, translateShapes } from '@canvas/utils/shapes'
 import type { SelectionModeData } from '@common/types/Mode'
@@ -7,28 +8,6 @@ import type { ToolsType } from '@common/types/tools'
 import { isMacOs } from '@common/utils/util'
 import { SELECTION_TOOL } from '@editor/constants/tools'
 import { useEffect, useState } from 'react'
-
-const KeyboardCode = {
-  ArrowUp: 'ArrowUp',
-  ArrowDown: 'ArrowDown',
-  ArrowLeft: 'ArrowLeft',
-  ArrowRight: 'ArrowRight',
-  Delete: 'Delete',
-  Backspace: 'Backspace',
-  Escape: 'Escape',
-  Shift: 'Shift',
-  Alt: 'Alt',
-  Option: 'Option',
-  z: 'z',
-  Z: 'Z',
-  y: 'y',
-  Y: 'Y'
-} as const
-
-const KeyboardCommand = {
-  Copy: 'copy',
-  Paste: 'paste'
-} as const
 
 type UseKeyboardType = {
   isInsideComponent: boolean
