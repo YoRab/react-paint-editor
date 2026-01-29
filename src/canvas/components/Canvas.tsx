@@ -107,6 +107,7 @@ type DrawerType = {
   setSelectionMode: React.Dispatch<React.SetStateAction<SelectionModeData<number | Point>>>
   isShiftPressed: boolean
   isAltPressed: boolean
+  isSpacePressed: boolean
   withFrameSelection: boolean
   withSkeleton: boolean
   setCanvasMoveAcceleration: React.Dispatch<React.SetStateAction<Point>>
@@ -142,6 +143,7 @@ const Canvas = React.forwardRef<HTMLCanvasElement, DrawerType>(
       isEditMode,
       isShiftPressed,
       isAltPressed,
+      isSpacePressed,
       withFrameSelection,
       withSkeleton
     },
@@ -178,7 +180,8 @@ const Canvas = React.forwardRef<HTMLCanvasElement, DrawerType>(
       isShiftPressed,
       isAltPressed,
       withFrameSelection,
-      settings
+      settings,
+      isSpacePressed
     })
     const updateSelectedShapeText = useCallback(
       (newText: string[]) => {
@@ -241,7 +244,7 @@ const Canvas = React.forwardRef<HTMLCanvasElement, DrawerType>(
                   ? 'crosshair'
                   : hoverMode.mode === 'translate'
                     ? 'move'
-                    : hoverMode.mode === 'rotate' || activeTool.type === 'move'
+                    : hoverMode.mode === 'rotate' || activeTool.type === 'move' || isSpacePressed
                       ? 'grab'
                       : 'default'
         }}

@@ -11,6 +11,7 @@ import { useEffect, useState } from 'react'
 
 type UseKeyboardType = {
   isInsideComponent: boolean
+  isInsideCanvas: boolean
   selectedShape: SelectionType | undefined
   pasteShapes: (shape: ShapeEntity[]) => void
   updateShapes: (shapes: ShapeEntity[]) => void
@@ -20,6 +21,7 @@ type UseKeyboardType = {
   forwardShape: () => void
   setShiftPressed: (value: React.SetStateAction<boolean>) => void
   setAltPressed: (value: React.SetStateAction<boolean>) => void
+  setIsSpacePressed: (value: React.SetStateAction<boolean>) => void
   isEditingText: boolean
   setActiveTool: (tool: ToolsType) => void
   setSelectionMode: (mode: SelectionModeData<number | Point>) => void
@@ -31,6 +33,7 @@ type UseKeyboardType = {
 
 const useKeyboard = ({
   isInsideComponent,
+  isInsideCanvas,
   selectedShape,
   isEditingText,
   settings,
@@ -46,7 +49,8 @@ const useKeyboard = ({
   backwardShape,
   forwardShape,
   setShiftPressed,
-  setAltPressed
+  setAltPressed,
+  setIsSpacePressed
 }: UseKeyboardType) => {
   const [copiedShape, setCopiedShape] = useState<SelectionType | undefined>(undefined)
 
@@ -74,6 +78,9 @@ const useKeyboard = ({
         case KeyboardCode.Alt:
         case KeyboardCode.Option:
           setAltPressed(false)
+          break
+        case KeyboardCode.Space:
+          setIsSpacePressed(false)
           break
       }
     }
@@ -121,6 +128,14 @@ const useKeyboard = ({
         e.stopPropagation()
         setShiftPressed(true)
         return
+      }
+      if (e.key === KeyboardCode.Space) {
+        if (isInsideCanvas) {
+          e.preventDefault()
+          e.stopPropagation()
+          setIsSpacePressed(true)
+          return
+        }
       }
       if (e.key === KeyboardCode.Alt || e.key === KeyboardCode.Option) {
         e.preventDefault()
@@ -179,6 +194,7 @@ const useKeyboard = ({
     }
   }, [
     isInsideComponent,
+    isInsideCanvas,
     copiedShape,
     isEditingText,
     selectedShape,
@@ -195,7 +211,8 @@ const useKeyboard = ({
     setSelectionMode,
     setSelectionFrame,
     setCanvasZoom,
-    resetZoom
+    resetZoom,
+    setIsSpacePressed
   ])
 
   return {}

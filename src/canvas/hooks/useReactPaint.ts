@@ -126,13 +126,15 @@ const useReactPaint = ({
 
   const [availableTools, setAvailableTools] = useState(sanitizeTools(availableToolsFromProps, withUploadPicture || withUrlPicture))
 
-  const { isInsideComponent } = useComponent({
+  const { isInsideComponent, isInsideCanvas } = useComponent({
     settings,
-    componentRef: editorRef
+    componentRef: editorRef,
+    canvasRef: canvasRef
   })
 
   const [isShiftPressed, setShiftPressed] = useState<boolean>(false)
   const [isAltPressed, setAltPressed] = useState<boolean>(false)
+  const [isSpacePressed, setIsSpacePressed] = useState<boolean>(false)
 
   const {
     registerEvent,
@@ -393,6 +395,7 @@ const useReactPaint = ({
       activeTool,
       setActiveTool,
       isInsideComponent,
+      isInsideCanvas,
       isEditMode,
       canvas: {
         withSkeleton,
@@ -407,8 +410,10 @@ const useReactPaint = ({
       setCanvasMoveAcceleration,
       isShiftPressed,
       isAltPressed,
+      isSpacePressed,
       setShiftPressed,
-      setAltPressed
+      setAltPressed,
+      setIsSpacePressed
     },
     registerEvent,
     unregisterEvent,
