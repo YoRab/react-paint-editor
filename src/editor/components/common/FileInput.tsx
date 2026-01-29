@@ -34,7 +34,6 @@ const FileInput = React.forwardRef<HTMLButtonElement | HTMLInputElement, FileInp
       data-selected={+selected}
       data-hidden={+hidden}
       tabIndex={tabIndex}
-      //   onFocus={onFocus}
       onKeyDown={onKeyDown}
       onKeyUp={onKeyUp}
     >
