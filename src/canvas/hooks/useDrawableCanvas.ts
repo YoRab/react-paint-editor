@@ -1,4 +1,5 @@
 import type { UtilsSettings } from '@canvas/constants/app'
+import { KeyboardCode } from '@canvas/constants/keyboard'
 import { ShapeTypeArray } from '@canvas/constants/shapes'
 import useDoubleClick from '@canvas/hooks/useDoubleClick'
 import {
@@ -159,6 +160,7 @@ type UseCanvasType = {
   isAltPressed: boolean
   withFrameSelection: boolean
   settings: UtilsSettings
+  isSpacePressed: boolean
 }
 
 const useDrawableCanvas = ({
@@ -184,7 +186,8 @@ const useDrawableCanvas = ({
   settings,
   isShiftPressed,
   isAltPressed,
-  withFrameSelection
+  withFrameSelection,
+  isSpacePressed
 }: UseCanvasType) => {
   const [hoverMode, setHoverMode] = useState<HoverModeData>({
     mode: 'default'
@@ -295,12 +298,14 @@ const useDrawableCanvas = ({
   const onlyCheckZoom = !settings.features.edition && settings.features.zoom
   const disableCheck = !settings.features.edition && !settings.features.zoom
 
-  const handleDownRef = useRef<(e: MouseEvent | TouchEvent, ref: HTMLCanvasElement) => void>(null)
-  handleDownRef.current = (e: MouseEvent | TouchEvent, ref: HTMLCanvasElement) => {
+  const handleDownRef = useRef<(e: MouseEvent | TouchEvent, canvasElt: HTMLCanvasElement, isSpacePressed: boolean) => void>(null)
+  handleDownRef.current = (e: MouseEvent | TouchEvent, canvasElt: HTMLCanvasElement, isSpacePressed: boolean) => {
     e.preventDefault()
     if (isTouchGesture(e) && e.touches.length > 1) return
-    const ctx = ref?.getContext('2d')
+    const ctx = canvasElt?.getContext('2d')
     if (!ctx) return
+
+    canvasElt.focus()
 
     const cursorPosition = getCursorPositionInTransformedCanvas(e, drawCanvasRef.current, settings)
 
@@ -309,7 +314,7 @@ const useDrawableCanvas = ({
 
     if (isRightClick) return
 
-    if (isWheelPressed || activeTool.type === 'move') {
+    if (isWheelPressed || isSpacePressed || activeTool.type === 'move') {
       setCanvasOffsetStartData({ start: cursorPosition, originalOffset: settings.canvasOffset })
       return
     }
@@ -384,19 +389,19 @@ const useDrawableCanvas = ({
 
   useEffect(() => {
     if (disableCheck) return
-    const ref = drawCanvasRef.current
-    if (!ref) return
+    const canvasElt = drawCanvasRef.current
+    if (!canvasElt) return
 
-    const handleMouseDown = (e: MouseEvent | TouchEvent) => handleDownRef.current?.(e, ref)
+    const handleMouseDown = (e: MouseEvent | TouchEvent) => handleDownRef.current?.(e, canvasElt, isSpacePressed)
 
-    ref.addEventListener('mousedown', handleMouseDown, { passive: false })
-    ref.addEventListener('touchstart', handleMouseDown, { passive: false })
+    canvasElt.addEventListener('mousedown', handleMouseDown, { passive: false })
+    canvasElt.addEventListener('touchstart', handleMouseDown, { passive: false })
 
     return () => {
-      ref.removeEventListener('mousedown', handleMouseDown)
-      ref.removeEventListener('touchstart', handleMouseDown)
+      canvasElt.removeEventListener('mousedown', handleMouseDown)
+      canvasElt.removeEventListener('touchstart', handleMouseDown)
     }
-  }, [disableCheck, drawCanvasRef])
+  }, [disableCheck, drawCanvasRef, isSpacePressed])
 
   useEffect(() => {
     const ref = drawCanvasRef.current

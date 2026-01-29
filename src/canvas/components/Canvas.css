@@ -30,6 +30,10 @@
   grid-area: 1 / 1;
 }
 
+.react-paint-canvas-drawcanvas:focus:not(:focus-visible) {
+  outline: none;
+}
+
 .react-paint-canvas-drawcanvas[data-grow='true'] {
   width: 100%;
 }

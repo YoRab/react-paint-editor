@@ -126,13 +126,15 @@ const useReactPaint = ({
 
   const [availableTools, setAvailableTools] = useState(sanitizeTools(availableToolsFromProps, withUploadPicture || withUrlPicture))
 
-  const { isInsideComponent } = useComponent({
+  const { isInsideComponent, isInsideCanvas } = useComponent({
     settings,
-    componentRef: editorRef
+    componentRef: editorRef,
+    canvasRef: canvasRef
   })
 
   const [isShiftPressed, setShiftPressed] = useState<boolean>(false)
   const [isAltPressed, setAltPressed] = useState<boolean>(false)
+  const [isSpacePressed, setIsSpacePressed] = useState<boolean>(false)
 
   const {
     registerEvent,
@@ -246,10 +248,6 @@ const useReactPaint = ({
     return buildDataToExport(shapesRef.current, width, height)
   }, [shapesRef, width, height])
 
-  useEffect(() => {
-    if (!isInsideComponent) setSelectedShape(undefined)
-  }, [isInsideComponent, setSelectedShape])
-
   const resetCanvas = useCallback(
     async (json: ExportedDrawableShape[], options: { clearHistory: boolean; source: 'user' | 'remote' }) => {
       const shapes = await decodeImportedData(json, settings)
@@ -312,8 +310,8 @@ const useReactPaint = ({
 
   const annotationsProps = {
     style: {
-      'user-select': 'none',
-      'touch-action': 'none',
+      userSelect: 'none' as const,
+      touchAction: 'none',
       transformOrigin: 'left top',
       transform:
         'scale(var(--react-paint-canvas-zoom)) translate(calc(var(--react-paint-canvas-offset-x) * 100% / var(--react-paint-app-canvaswidth)),      calc(var(--react-paint-canvas-offset-y) * 100% / var(--react-paint-app-canvasheight)))',
@@ -359,6 +357,7 @@ const useReactPaint = ({
       clearCanvas,
       settings,
       setCanvasZoom,
+      resetZoom,
       canvas: {
         canGrow,
         canShrink,
@@ -391,10 +390,12 @@ const useReactPaint = ({
       setCanvasSize,
       setCanvasOffset,
       setCanvasZoom,
+      resetZoom,
       selectShapes,
       activeTool,
       setActiveTool,
       isInsideComponent,
+      isInsideCanvas,
       isEditMode,
       canvas: {
         withSkeleton,
@@ -409,8 +410,10 @@ const useReactPaint = ({
       setCanvasMoveAcceleration,
       isShiftPressed,
       isAltPressed,
+      isSpacePressed,
       setShiftPressed,
-      setAltPressed
+      setAltPressed,
+      setIsSpacePressed
     },
     registerEvent,
     unregisterEvent,

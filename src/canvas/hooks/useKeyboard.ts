@@ -1,4 +1,5 @@
 import type { UtilsSettings } from '@canvas/constants/app'
+import { KeyboardCode, KeyboardCommand } from '@canvas/constants/keyboard'
 import { getSelectedShapes } from '@canvas/utils/selection'
 import { copyShapes, translateShapes } from '@canvas/utils/shapes'
 import type { SelectionModeData } from '@common/types/Mode'
@@ -8,30 +9,9 @@ import { isMacOs } from '@common/utils/util'
 import { SELECTION_TOOL } from '@editor/constants/tools'
 import { useEffect, useState } from 'react'
 
-const KeyboardCode = {
-  ArrowUp: 'ArrowUp',
-  ArrowDown: 'ArrowDown',
-  ArrowLeft: 'ArrowLeft',
-  ArrowRight: 'ArrowRight',
-  Delete: 'Delete',
-  Backspace: 'Backspace',
-  Escape: 'Escape',
-  Shift: 'Shift',
-  Alt: 'Alt',
-  Option: 'Option',
-  z: 'z',
-  Z: 'Z',
-  y: 'y',
-  Y: 'Y'
-} as const
-
-const KeyboardCommand = {
-  Copy: 'copy',
-  Paste: 'paste'
-} as const
-
 type UseKeyboardType = {
   isInsideComponent: boolean
+  isInsideCanvas: boolean
   selectedShape: SelectionType | undefined
   pasteShapes: (shape: ShapeEntity[]) => void
   updateShapes: (shapes: ShapeEntity[]) => void
@@ -41,20 +21,26 @@ type UseKeyboardType = {
   forwardShape: () => void
   setShiftPressed: (value: React.SetStateAction<boolean>) => void
   setAltPressed: (value: React.SetStateAction<boolean>) => void
+  setIsSpacePressed: (value: React.SetStateAction<boolean>) => void
   isEditingText: boolean
   setActiveTool: (tool: ToolsType) => void
   setSelectionMode: (mode: SelectionModeData<number | Point>) => void
   setSelectionFrame: (args: { oldSelection: SelectionType | undefined; frame: [Point, Point] } | undefined) => void
   settings: UtilsSettings
+  setCanvasZoom: (action: 'unzoom' | 'zoom' | 'default') => void
+  resetZoom: () => void
 }
 
 const useKeyboard = ({
   isInsideComponent,
+  isInsideCanvas,
   selectedShape,
   isEditingText,
   settings,
   setSelectedShape,
   setActiveTool,
+  setCanvasZoom,
+  resetZoom,
   setSelectionMode,
   setSelectionFrame,
   removeShape,
@@ -63,7 +49,8 @@ const useKeyboard = ({
   backwardShape,
   forwardShape,
   setShiftPressed,
-  setAltPressed
+  setAltPressed,
+  setIsSpacePressed
 }: UseKeyboardType) => {
   const [copiedShape, setCopiedShape] = useState<SelectionType | undefined>(undefined)
 
@@ -92,6 +79,9 @@ const useKeyboard = ({
         case KeyboardCode.Option:
           setAltPressed(false)
           break
+        case KeyboardCode.Space:
+          setIsSpacePressed(false)
+          break
       }
     }
 
@@ -113,12 +103,39 @@ const useKeyboard = ({
           forwardShape()
           return
         }
+
+        if (e.key === KeyboardCode.Plus) {
+          e.preventDefault()
+          e.stopPropagation()
+          setCanvasZoom('zoom')
+          return
+        }
+        if (e.key === KeyboardCode.Minus) {
+          e.preventDefault()
+          e.stopPropagation()
+          setCanvasZoom('unzoom')
+          return
+        }
+        if (e.key === KeyboardCode.Zero) {
+          e.preventDefault()
+          e.stopPropagation()
+          resetZoom()
+          return
+        }
       }
       if (e.key === KeyboardCode.Shift) {
         e.preventDefault()
         e.stopPropagation()
         setShiftPressed(true)
         return
+      }
+      if (e.key === KeyboardCode.Space) {
+        if (isInsideCanvas) {
+          e.preventDefault()
+          e.stopPropagation()
+          setIsSpacePressed(true)
+          return
+        }
       }
       if (e.key === KeyboardCode.Alt || e.key === KeyboardCode.Option) {
         e.preventDefault()
@@ -177,6 +194,7 @@ const useKeyboard = ({
     }
   }, [
     isInsideComponent,
+    isInsideCanvas,
     copiedShape,
     isEditingText,
     selectedShape,
@@ -191,7 +209,10 @@ const useKeyboard = ({
     setAltPressed,
     setActiveTool,
     setSelectionMode,
-    setSelectionFrame
+    setSelectionFrame,
+    setCanvasZoom,
+    resetZoom,
+    setIsSpacePressed
   ])
 
   return {}

@@ -43,6 +43,7 @@ const App = ({ options, className, style, canvasProps }: AppProps) => {
     activeTool,
     setActiveTool,
     isInsideComponent,
+    isInsideCanvas,
     isEditMode,
     canvas: { withSkeleton, withFrameSelection, canGrow, canShrink },
     canvasOffsetStartData,
@@ -52,8 +53,12 @@ const App = ({ options, className, style, canvasProps }: AppProps) => {
     setCanvasMoveAcceleration,
     isShiftPressed,
     isAltPressed,
+    isSpacePressed,
     setShiftPressed,
-    setAltPressed
+    setAltPressed,
+    setCanvasZoom,
+    resetZoom,
+    setIsSpacePressed
   } = canvasProps
 
   const { canvasBackgroundColor, canvasSelectionColor, canvasSelectionWidth } = {
@@ -82,6 +87,7 @@ const App = ({ options, className, style, canvasProps }: AppProps) => {
 
   useKeyboard({
     isInsideComponent,
+    isInsideCanvas,
     isEditingText: selectionMode.mode === 'textedition',
     settings,
     selectedShape,
@@ -95,7 +101,10 @@ const App = ({ options, className, style, canvasProps }: AppProps) => {
     setAltPressed,
     setActiveTool,
     setSelectionMode,
-    setSelectionFrame
+    setSelectionFrame,
+    setCanvasZoom,
+    resetZoom,
+    setIsSpacePressed
   })
   useResizeObserver({ element: containerRef, onResized })
 
@@ -115,6 +124,7 @@ const App = ({ options, className, style, canvasProps }: AppProps) => {
       }}
     >
       <Canvas
+        isSpacePressed={isSpacePressed}
         ref={refs.canvas}
         canGrow={canGrow}
         isInsideComponent={isInsideComponent}
