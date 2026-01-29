@@ -246,10 +246,6 @@ const useReactPaint = ({
     return buildDataToExport(shapesRef.current, width, height)
   }, [shapesRef, width, height])
 
-  useEffect(() => {
-    if (!isInsideComponent) setSelectedShape(undefined)
-  }, [isInsideComponent, setSelectedShape])
-
   const resetCanvas = useCallback(
     async (json: ExportedDrawableShape[], options: { clearHistory: boolean; source: 'user' | 'remote' }) => {
       const shapes = await decodeImportedData(json, settings)

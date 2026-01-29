@@ -1,5 +1,4 @@
 import type { UtilsSettings } from '@canvas/constants/app'
-import { isEventInsideNode } from '@common/utils/dom'
 import { type RefObject, useEffect, useState } from 'react'
 
 type UseComponentType = {
@@ -16,16 +15,14 @@ const useComponent = ({ settings, componentRef }: UseComponentType) => {
     if (disabled) {
       setIsInsideComponent(false)
     } else {
-      const onDetectClick = (event: MouseEvent | TouchEvent) => {
-        setIsInsideComponent(isEventInsideNode(event, componentRef.current))
-      }
+      const onFocusIn = () => setIsInsideComponent(true)
+      const onFocusOut = () => setIsInsideComponent(false)
 
-      document.addEventListener('mousedown', onDetectClick, { passive: true })
-      document.addEventListener('touchstart', onDetectClick, { passive: true })
-
+      componentRef.current?.addEventListener('focusin', onFocusIn)
+      componentRef.current?.addEventListener('focusout', onFocusOut)
       return () => {
-        document.removeEventListener('mousedown', onDetectClick)
-        document.removeEventListener('touchstart', onDetectClick)
+        componentRef.current?.removeEventListener('focusin', onFocusIn)
+        componentRef.current?.removeEventListener('focusout', onFocusOut)
       }
     }
   }, [disabled, componentRef])
