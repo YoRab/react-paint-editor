@@ -312,8 +312,8 @@ const useReactPaint = ({
 
   const annotationsProps = {
     style: {
-      'user-select': 'none',
-      'touch-action': 'none',
+      userSelect: 'none',
+      touchAction: 'none',
       transformOrigin: 'left top',
       transform:
         'scale(var(--react-paint-canvas-zoom)) translate(calc(var(--react-paint-canvas-offset-x) * 100% / var(--react-paint-app-canvaswidth)),      calc(var(--react-paint-canvas-offset-y) * 100% / var(--react-paint-app-canvasheight)))',
