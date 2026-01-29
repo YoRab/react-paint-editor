@@ -151,6 +151,7 @@ const Canvas = React.forwardRef<HTMLCanvasElement, DrawerType>(
     const selectionCanvasRef = useRef<HTMLCanvasElement | null>(null)
     const canvasSize = settings.canvasSize
     const withSelectionCanvas = isEditMode
+    const tabIndex = isEditMode ? 0 : -1
 
     useImperativeHandle(ref, () => drawCanvasRef.current!)
 
@@ -253,6 +254,7 @@ const Canvas = React.forwardRef<HTMLCanvasElement, DrawerType>(
             width={canvasSize.width}
             height={canvasSize.height}
             onContextMenu={preventRightClick}
+            tabIndex={tabIndex}
           />
           {withSelectionCanvas && (
             <canvas
