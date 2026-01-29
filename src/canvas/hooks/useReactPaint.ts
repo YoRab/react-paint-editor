@@ -355,6 +355,7 @@ const useReactPaint = ({
       clearCanvas,
       settings,
       setCanvasZoom,
+      resetZoom,
       canvas: {
         canGrow,
         canShrink,
@@ -387,6 +388,7 @@ const useReactPaint = ({
       setCanvasSize,
       setCanvasOffset,
       setCanvasZoom,
+      resetZoom,
       selectShapes,
       activeTool,
       setActiveTool,

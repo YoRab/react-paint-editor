@@ -53,7 +53,9 @@ const App = ({ options, className, style, canvasProps }: AppProps) => {
     isShiftPressed,
     isAltPressed,
     setShiftPressed,
-    setAltPressed
+    setAltPressed,
+    setCanvasZoom,
+    resetZoom
   } = canvasProps
 
   const { canvasBackgroundColor, canvasSelectionColor, canvasSelectionWidth } = {
@@ -95,7 +97,9 @@ const App = ({ options, className, style, canvasProps }: AppProps) => {
     setAltPressed,
     setActiveTool,
     setSelectionMode,
-    setSelectionFrame
+    setSelectionFrame,
+    setCanvasZoom,
+    resetZoom
   })
   useResizeObserver({ element: containerRef, onResized })
 

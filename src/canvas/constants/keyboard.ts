@@ -13,7 +13,10 @@ export const KeyboardCode = {
   z: 'z',
   Z: 'Z',
   y: 'y',
-  Y: 'Y'
+  Y: 'Y',
+  Plus: '+',
+  Minus: '-',
+  Zero: '0'
 } as const
 
 export const KeyboardCommand = {

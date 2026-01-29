@@ -25,6 +25,8 @@ type UseKeyboardType = {
   setSelectionMode: (mode: SelectionModeData<number | Point>) => void
   setSelectionFrame: (args: { oldSelection: SelectionType | undefined; frame: [Point, Point] } | undefined) => void
   settings: UtilsSettings
+  setCanvasZoom: (action: 'unzoom' | 'zoom' | 'default') => void
+  resetZoom: () => void
 }
 
 const useKeyboard = ({
@@ -34,6 +36,8 @@ const useKeyboard = ({
   settings,
   setSelectedShape,
   setActiveTool,
+  setCanvasZoom,
+  resetZoom,
   setSelectionMode,
   setSelectionFrame,
   removeShape,
@@ -90,6 +94,25 @@ const useKeyboard = ({
           e.preventDefault()
           e.stopPropagation()
           forwardShape()
+          return
+        }
+
+        if (e.key === KeyboardCode.Plus) {
+          e.preventDefault()
+          e.stopPropagation()
+          setCanvasZoom('zoom')
+          return
+        }
+        if (e.key === KeyboardCode.Minus) {
+          e.preventDefault()
+          e.stopPropagation()
+          setCanvasZoom('unzoom')
+          return
+        }
+        if (e.key === KeyboardCode.Zero) {
+          e.preventDefault()
+          e.stopPropagation()
+          resetZoom()
           return
         }
       }
@@ -170,7 +193,9 @@ const useKeyboard = ({
     setAltPressed,
     setActiveTool,
     setSelectionMode,
-    setSelectionFrame
+    setSelectionFrame,
+    setCanvasZoom,
+    resetZoom
   ])
 
   return {}
