@@ -310,7 +310,7 @@ const useReactPaint = ({
 
   const annotationsProps = {
     style: {
-      userSelect: 'none',
+      userSelect: 'none' as const,
       touchAction: 'none',
       transformOrigin: 'left top',
       transform:
