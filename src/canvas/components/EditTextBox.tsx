@@ -1,5 +1,4 @@
 import type { UtilsSettings } from '@canvas/constants/app'
-import { getShapeInfos } from '@canvas/utils/shapes'
 import { radiansToDegrees, rotatePoint } from '@canvas/utils/trigo'
 import type { DrawableShape } from '@common/types/Shapes'
 import { STYLE_FONT_DEFAULT } from '@editor/constants/style'
@@ -70,14 +69,14 @@ const EditTextBox = ({ disabled = false, shape, defaultValue, updateValue, saveS
   }, [])
 
   const position = useMemo(() => {
-    const { borders, center } = getShapeInfos(shape, settings)
+    const { borders, center } = shape.computed
 
     return rotatePoint({
       point: [borders.x, borders.y],
       rotation: -shape.rotation,
       origin: center
     })
-  }, [shape, settings])
+  }, [shape])
 
   return (
     <div

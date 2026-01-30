@@ -1,7 +1,6 @@
 import type { UtilsSettings } from '@canvas/constants/app'
 import { SELECTION_ANCHOR_SIZE, SELECTION_RESIZE_ANCHOR_POSITIONS, SELECTION_ROTATED_ANCHOR_POSITION } from '@canvas/constants/shapes'
 import { updateCanvasContext } from '@canvas/utils/canvas'
-import { getShapeInfos } from '@canvas/utils/shapes/index'
 import { createCirclePath, createLinePath, createRecPath } from '@canvas/utils/shapes/path'
 import { roundForGrid, roundValues } from '@canvas/utils/transform'
 import { rotatePoint } from '@canvas/utils/trigo'
@@ -10,11 +9,11 @@ import type { DrawableShape, Point, Rect, SelectionDefaultType } from '@common/t
 
 export const createRecSelectionPath = (
   path: Path2D | undefined,
-  rect: DrawableShape,
+  computed: { borders: Rect; outerBorders: Rect; center: Point },
   settings: UtilsSettings,
   isGroup = false
 ): SelectionDefaultType => {
-  const { borders } = getShapeInfos(rect, settings)
+  const { borders } = computed
 
   return {
     border: createRecPath(borders),
@@ -255,7 +254,7 @@ export const resizeRectSelection = (
   borderY: number
   borderWidth: number
 } => {
-  const { center, borders } = getShapeInfos(originalShape, settings)
+  const { center, borders } = originalShape.computed
 
   const rotatedCursorPosition = rotatePoint({
     origin: center,

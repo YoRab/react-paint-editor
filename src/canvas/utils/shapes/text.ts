@@ -1,6 +1,5 @@
 import type { UtilsSettings } from '@canvas/constants/app'
 import { createRecSelectionPath, resizeRectSelection } from '@canvas/utils/selection/rectSelection'
-import { getShapeInfos } from '@canvas/utils/shapes/index'
 import { boundVectorToSingleAxis, roundForGrid } from '@canvas/utils/transform'
 import type { SelectionModeResize } from '@common/types/Mode'
 import type { DrawableShape, Point, Rect, ShapeEntity, Text } from '@common/types/Shapes'
@@ -8,14 +7,17 @@ import type { ToolsSettingsType } from '@common/types/tools'
 import { uniqueId } from '@common/utils/util'
 import { STYLE_FONT_DEFAULT, STYLE_FONT_SIZE_DEFAULT } from '@editor/constants/style'
 import { getRectOppositeAnchorAbsolutePosition } from './rectangle'
+import { getComputedShapeInfos } from './path'
 
 const DEFAULT_TEXT_VALUE: string[] = ['Texte']
 const DEFAULT_TEXT_WIDTH = 150
 
 const buildPath = <T extends DrawableShape<'text'>>(shape: T, settings: UtilsSettings): T => {
+  const computed = getComputedShapeInfos(shape, getTextBorder, settings)
   return {
     ...shape,
-    selection: createRecSelectionPath(undefined, shape, settings)
+    selection: createRecSelectionPath(undefined, computed, settings),
+    computed
   }
 }
 
@@ -201,9 +203,9 @@ export const resizeTextShapeWithNewContent = <U extends DrawableShape<'text'>>(
     height: newHeight
   }
 
-  const { center } = getShapeInfos(shape, settings)
+  const { center } = shape.computed
 
-  const { center: shapeWithNewDimensionsCenter } = getShapeInfos(resizedShape, settings)
+  const { center: shapeWithNewDimensionsCenter } = resizedShape.computed
 
   const [oppTrueX, oppTrueY] = getRectOppositeAnchorAbsolutePosition([1, 1], center, shape)
 

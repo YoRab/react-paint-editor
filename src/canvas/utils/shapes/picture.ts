@@ -3,15 +3,18 @@ import { addSizeAndConvertSvgToObjectUrl, fetchAndStringify, isSvg } from '@canv
 import { createRecSelectionPath, resizeRectSelection } from '@canvas/utils/selection/rectSelection'
 import { boundVectorToSingleAxis, fitContentInsideContainer, roundForGrid } from '@canvas/utils/transform'
 import type { SelectionModeResize } from '@common/types/Mode'
-import type { DrawableShape, Picture, Point, Rect, ShapeEntity } from '@common/types/Shapes'
+import type { DrawableShape, Point, ShapeEntity } from '@common/types/Shapes'
 import { uniqueId } from '@common/utils/util'
 import { DEFAULT_SHAPE_PICTURE } from '@editor/constants/tools'
 import { getRectBorder } from './rectangle'
+import { getComputedShapeInfos } from './path'
 
 const buildPath = <T extends DrawableShape<'picture'>>(shape: T, settings: UtilsSettings): T => {
+  const computed = getComputedShapeInfos(shape, getRectBorder, settings)
   return {
     ...shape,
-    selection: createRecSelectionPath(undefined, shape, settings)
+    selection: createRecSelectionPath(undefined, computed, settings),
+    computed
   }
 }
 
@@ -121,8 +124,6 @@ export const drawPicture = (ctx: CanvasRenderingContext2D, picture: DrawableShap
   ctx.beginPath()
   ctx.drawImage(picture.img, picture.x, picture.y, picture.width, picture.height)
 }
-
-export const getPictureBorder = (picture: Picture, settings: Pick<UtilsSettings, 'selectionPadding'>): Rect => getRectBorder(picture, settings)
 
 export const translatePicture = <U extends DrawableShape<'picture'>>(
   cursorPosition: Point,
