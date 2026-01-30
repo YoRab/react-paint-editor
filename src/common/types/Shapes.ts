@@ -86,6 +86,11 @@ export type DrawableShape<T extends ShapeType = ShapeType> = {
   locked?: boolean
   rotation: number
   style?: StyleShape | undefined
+  computed: {
+    borders: Rect
+    outerBorders: Rect
+    center: Point
+  }
 } & (T extends 'line'
   ? Line & {
       type: 'line'

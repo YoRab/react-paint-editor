@@ -6,7 +6,6 @@ import { scalePoint } from '@canvas/utils/transform'
 import type { CanvasSize } from '@common/types/Canvas'
 import type { HoverModeData } from '@common/types/Mode'
 import type { DrawableShape, Point, Rect, SelectionType } from '@common/types/Shapes'
-import { getShapeInfos } from './shapes'
 import { isCircleIntersectRect, isPointInsideRect, rotatePoint } from './trigo'
 
 export const getCursorPosition = (e: MouseEvent | TouchEvent): { clientX: number; clientY: number } => {
@@ -72,7 +71,7 @@ export const checkSelectionIntersection = (
   const {
     canvasSize: { scaleRatio }
   } = settings
-  const { borders, center } = getShapeInfos(shape, settings)
+  const { borders, center } = shape.computed
 
   const newPosition = getPointPositionAfterCanvasTransformation(position, shape.rotation, center)
   const shapesToCheck = getSelectedShapes(shape)
@@ -149,7 +148,7 @@ export const checkPolygonLinesSelectionIntersection = (
 ): false | { lineIndex: number } => {
   if (shape.locked || shape.points.length < 2) return false
 
-  const { center } = getShapeInfos(shape, settings)
+  const { center } = shape.computed
 
   const newPosition = getPointPositionAfterCanvasTransformation(position, shape.rotation, center)
 
@@ -174,7 +173,7 @@ export const checkCurveLinesSelectionIntersection = (
   if (shape.locked || shape.points.length < 2) return false
   if (shape.points.length < 3) return checkPolygonLinesSelectionIntersection(ctx, shape, position, settings, radius)
 
-  const { center } = getShapeInfos(shape, settings)
+  const { center } = shape.computed
 
   const newPosition = getPointPositionAfterCanvasTransformation(position, shape.rotation, center)
 
@@ -202,7 +201,7 @@ export const checkPositionIntersection = (
   settings: UtilsSettings
 ): false | HoverModeData => {
   if (shape.locked) return false
-  const { center } = getShapeInfos(shape, settings)
+  const { center } = shape.computed
 
   const newPosition = getPointPositionAfterCanvasTransformation(position, shape.rotation, center)
 
@@ -272,7 +271,7 @@ export const checkSelectionFrameCollision = (
   settings: UtilsSettings
 ): boolean => {
   const { selectionPadding } = settings
-  const { center, borders } = getShapeInfos(shape, settings)
+  const { center, borders } = shape.computed
 
   const frame0 = getPointPositionAfterCanvasTransformation(selectionFrame[0], shape.rotation, center)
   const frame1 = getPointPositionAfterCanvasTransformation(selectionFrame[1], shape.rotation, center)

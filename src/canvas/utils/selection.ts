@@ -6,13 +6,11 @@ import type { Point, Rect, SelectionType, ShapeEntity } from '@common/types/Shap
 import type { CustomTool } from '@common/types/tools'
 import { SETTINGS_DEFAULT_RECT } from '@editor/constants/tools'
 import { checkPositionIntersection, checkSelectionIntersection } from './intersect'
-import { getShapeInfos } from './shapes'
 
 export const getNewSelectionData = (
   hoverMode: HoverModeData,
   selectedShape: SelectionType,
-  cursorPosition: Point,
-  settings: UtilsSettings
+  cursorPosition: Point
 ): SelectionModeData<Point | number> | undefined => {
   if (hoverMode.mode === 'translate') {
     return {
@@ -23,7 +21,7 @@ export const getNewSelectionData = (
     }
   }
   if (hoverMode.mode === 'rotate') {
-    const { center: centerBeforeResize } = getShapeInfos(selectedShape, settings)
+    const { center: centerBeforeResize } = selectedShape.computed
     const center: Point = [centerBeforeResize[0], centerBeforeResize[1]]
     return {
       mode: 'rotate',
@@ -67,7 +65,7 @@ export const selectShape = (
       isTouchGesture ? 20 : undefined
     )
 
-    const newSelectionMode = getNewSelectionData(selectedShapePositionIntersection || { mode: 'default' }, selectedShape, cursorPosition, settings)
+    const newSelectionMode = getNewSelectionData(selectedShapePositionIntersection || { mode: 'default' }, selectedShape, cursorPosition)
     if (newSelectionMode?.mode === 'resize' || newSelectionMode?.mode === 'rotate') {
       return { shape: selectedShape, mode: newSelectionMode }
     }
@@ -156,7 +154,7 @@ export const buildShapesGroup = (shapes: ShapeEntity[], settings: UtilsSettings)
   const rotation = checkRotatedShapes ? 0 : shapes[0]!.rotation
 
   for (const shape of shapes) {
-    const { borders } = getShapeInfos(shape, settings)
+    const { borders } = shape.computed
     const rotatedPoints = rotateRect(borders, shape.rotation, checkRotatedShapes)
     minX = Math.min(rotatedPoints[0][0], rotatedPoints[1][0], rotatedPoints[2][0], rotatedPoints[3][0], minX)
     maxX = Math.max(rotatedPoints[0][0], rotatedPoints[1][0], rotatedPoints[2][0], rotatedPoints[3][0], maxX)
@@ -203,7 +201,8 @@ export const buildShapesGroup = (shapes: ShapeEntity[], settings: UtilsSettings)
     y: groupRectangle.y,
     width: groupRectangle.width,
     height: groupRectangle.height,
-    style
+    style,
+    computed: groupRectangle.computed
   }
 }
 

@@ -1,6 +1,5 @@
 import type { UtilsSettings } from '@canvas/constants/app'
 import { transformCanvas, updateCanvasContext } from '@canvas/utils/canvas'
-import { getShapeInfos } from '@canvas/utils/shapes'
 import type { DrawableShape } from '@common/types/Shapes'
 
 export const drawSelectionGroup = (
@@ -42,8 +41,8 @@ export const drawSelectionGroup = (
       strokeColor: selectionColor,
       lineWidth: selectionWidth / settings.canvasSize.scaleRatio
     })
-    const { center } = getShapeInfos(shape, settings)
-    transformCanvas(ctx, settings, shape.rotation, center)
+
+    transformCanvas(ctx, settings, shape.rotation, shape.computed.center)
     if (shape.selection?.shapePath) ctx.stroke(shape.selection.shapePath)
   })
 }

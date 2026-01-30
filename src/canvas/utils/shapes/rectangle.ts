@@ -6,16 +6,18 @@ import type { SelectionModeResize } from '@common/types/Mode'
 import type { DrawableShape, Point, Rect, ShapeEntity } from '@common/types/Shapes'
 import type { ToolsSettingsType } from '@common/types/tools'
 import { uniqueId } from '@common/utils/util'
-import { createRecPath } from './path'
+import { createRecPath, getComputedShapeInfos } from './path'
 
 type rectish = 'text' | 'rect' | 'square' | 'picture'
 
 const buildPath = <T extends DrawableShape<rectish>>(rect: T, settings: UtilsSettings, isGroup = false): T => {
   const path = createRecPath(rect)
+  const computed = getComputedShapeInfos(rect, getRectBorder, settings)
   return {
     ...rect,
     path,
-    selection: createRecSelectionPath(path, rect, settings, isGroup)
+    computed,
+    selection: createRecSelectionPath(path, computed, settings, isGroup)
   }
 }
 

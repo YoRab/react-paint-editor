@@ -2,10 +2,11 @@ import type { UtilsSettings } from '@canvas/constants/app'
 import { PICTURE_DEFAULT_SIZE } from '@canvas/constants/picture'
 import { ShapeTypeArray } from '@canvas/constants/shapes'
 import { initCanvasContext } from '@canvas/utils/canvas'
-import { drawShape, getShapeInfos } from '@canvas/utils/shapes'
+import { drawShape } from '@canvas/utils/shapes'
 import type { DrawableShape, ExportedDrawableShape, Point, ShapeEntity } from '@common/types/Shapes'
 import { compact } from '@common/utils/array'
-import { addDefaultAndTempShapeProps, buildDataToExport } from './data'
+import { addDefaultAndTempShapeProps, buildDataToExport } from '@canvas/utils/data'
+import { rotatePoint } from '@canvas/utils/trigo'
 
 export const addSizeAndConvertSvgToObjectUrl = (svgFileContent: string): string => {
   const parser = new DOMParser()
@@ -96,13 +97,27 @@ export const getCanvasImage = ({
 
   if (view === 'fitToShapes') {
     const bordersShapes = shapes.map(shape => {
-      const borders = getShapeInfos(shape, settings).borders
-      const halfLineWidth = (shape.style?.lineWidth ?? 0) / 2
+      const { center, outerBorders } = shape.computed
+
+      const rotatedPoints = (
+        [
+          [outerBorders.x, outerBorders.y],
+          [outerBorders.x + outerBorders.width, outerBorders.y],
+          [outerBorders.x + outerBorders.width, outerBorders.y + outerBorders.height],
+          [outerBorders.x, outerBorders.y + outerBorders.height]
+        ] as Point[]
+      ).map(point =>
+        rotatePoint({
+          point,
+          origin: center,
+          rotation: shape.rotation
+        })
+      )
       return {
-        minX: borders.x - halfLineWidth,
-        minY: borders.y - halfLineWidth,
-        maxX: borders.x + borders.width + halfLineWidth,
-        maxY: borders.y + borders.height + halfLineWidth
+        minX: Math.min(...rotatedPoints.map(point => point[0])),
+        minY: Math.min(...rotatedPoints.map(point => point[1])),
+        maxX: Math.max(...rotatedPoints.map(point => point[0])),
+        maxY: Math.max(...rotatedPoints.map(point => point[1]))
       }
     })
     const minX = Math.min(...bordersShapes.map(borders => borders.minX))

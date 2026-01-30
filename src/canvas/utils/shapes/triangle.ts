@@ -1,20 +1,23 @@
-import { createTrianglePath } from '@canvas/utils/shapes/path'
+import type { UtilsSettings } from '@canvas/constants/app'
+import { createTrianglePath, getComputedShapeInfos } from '@canvas/utils/shapes/path'
+import { getPolygonBorder } from '@canvas/utils/shapes/polygon'
 import type { DrawableShape, Triangle } from '@common/types/Shapes'
 
-const buildPath = (shape: DrawableShape<'triangle'>) => {
+const buildPath = (shape: DrawableShape<'triangle'>, settings: UtilsSettings) => {
   return {
     ...shape,
-    path: createTrianglePath(shape)
+    path: createTrianglePath(shape),
+    computed: getComputedShapeInfos(shape, getPolygonBorder, settings)
   }
 }
 
-export const createTriangle = (triangle: Triangle): DrawableShape<'triangle'> => {
+export const createTriangle = (triangle: Triangle, settings: UtilsSettings): DrawableShape<'triangle'> => {
   const triangleShape = {
     ...triangle,
     type: 'triangle'
   } as DrawableShape<'triangle'>
 
-  return buildPath(triangleShape)
+  return buildPath(triangleShape, settings)
 }
 
 export const drawTriangle = (ctx: CanvasRenderingContext2D, triangle: DrawableShape<'triangle'>): void => {

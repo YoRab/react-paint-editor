@@ -20,8 +20,8 @@ const ExportModal = ({ toggleExportModal, exportCanvasInFile }: ExportModalProps
       <h3>{TITLE}</h3>
       <hr />
       <Button onClick={() => triggerExport('currentZoom')}>Exporter la vue actuelle</Button>
-      <Button onClick={() => triggerExport('defaultView')}>Exporter le canvas entier</Button>
-      <Button onClick={() => triggerExport('fitToShapes')}>Exporter dans les limites du dessin</Button>
+      <Button onClick={() => triggerExport('defaultView')}>Exporter le canevas par défaut</Button>
+      <Button onClick={() => triggerExport('fitToShapes')}>Exporter le dessin entier</Button>
       <Button selected onClick={toggleExportModal}>
         Annuler
       </Button>

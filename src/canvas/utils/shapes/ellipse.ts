@@ -1,18 +1,29 @@
 import type { UtilsSettings } from '@canvas/constants/app'
 import { createRecSelectionPath, resizeRectSelection } from '@canvas/utils/selection/rectSelection'
-import { createEllipsePath } from '@canvas/utils/shapes/path'
+import { createEllipsePath, getComputedShapeInfos } from '@canvas/utils/shapes/path'
 import { boundVectorToSingleAxis, roundForGrid } from '@canvas/utils/transform'
 import type { SelectionModeResize } from '@common/types/Mode'
 import type { DrawableShape, Ellipse, Point, Rect, ShapeEntity } from '@common/types/Shapes'
 import type { ToolsSettingsType } from '@common/types/tools'
 import { uniqueId } from '@common/utils/util'
 
+const getEllipseBorder = (ellipse: Ellipse, settings: Pick<UtilsSettings, 'selectionPadding'>): Rect => {
+  return {
+    x: ellipse.x - ellipse.radiusX - settings.selectionPadding,
+    width: (ellipse.radiusX + settings.selectionPadding) * 2,
+    y: ellipse.y - ellipse.radiusY - settings.selectionPadding,
+    height: (ellipse.radiusY + settings.selectionPadding) * 2
+  }
+}
+
 const buildPath = <T extends DrawableShape<'ellipse'>>(shape: T, settings: UtilsSettings): T => {
   const path = createEllipsePath(shape)
+  const computed = getComputedShapeInfos(shape, getEllipseBorder, settings)
   return {
     ...shape,
     path,
-    selection: createRecSelectionPath(path, shape, settings)
+    selection: createRecSelectionPath(path, computed, settings),
+    computed
   }
 }
 
@@ -53,15 +64,6 @@ export const drawEllipse = (ctx: CanvasRenderingContext2D, ellipse: DrawableShap
   if (ctx.globalAlpha === 0 || !ellipse.path) return
   ellipse.style?.fillColor !== 'transparent' && ctx.fill(ellipse.path)
   ellipse.style?.strokeColor !== 'transparent' && ctx.stroke(ellipse.path)
-}
-
-export const getEllipseBorder = (ellipse: Ellipse, settings: Pick<UtilsSettings, 'selectionPadding'>): Rect => {
-  return {
-    x: ellipse.x - ellipse.radiusX - settings.selectionPadding,
-    width: (ellipse.radiusX + settings.selectionPadding) * 2,
-    y: ellipse.y - ellipse.radiusY - settings.selectionPadding,
-    height: (ellipse.radiusY + settings.selectionPadding) * 2
-  }
 }
 
 export const translateEllipse = <U extends DrawableShape<'ellipse'>>(

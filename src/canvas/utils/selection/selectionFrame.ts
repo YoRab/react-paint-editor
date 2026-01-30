@@ -1,6 +1,7 @@
 import type { UtilsSettings } from '@canvas/constants/app'
 import { updateCanvasContext } from '@canvas/utils/canvas'
 import type { Point } from '@common/types/Shapes'
+
 export const drawFrame = (ctx: CanvasRenderingContext2D, selectionFrame: [Point, Point], settings: UtilsSettings): void => {
   updateCanvasContext(ctx, {
     fillColor: 'rgba(170,170,170, 0.1)',

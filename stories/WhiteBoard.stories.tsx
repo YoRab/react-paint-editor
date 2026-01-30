@@ -3,6 +3,7 @@ import { Canvas, Editor, useReactPaint } from '../src/index'
 import './whiteboard.css'
 import { useCallback, useRef, useState } from 'react'
 import useResizeObserver from '@canvas/hooks/useResizeObserver'
+import useDebounce from '@canvas/hooks/useDebounce'
 
 const ReactPaintWrapper = (args: Parameters<typeof useReactPaint>[0]) => {
   const { editorProps, canvasProps } = useReactPaint(args)
@@ -16,10 +17,14 @@ const ReactPaintWrapper = (args: Parameters<typeof useReactPaint>[0]) => {
 const WhiteBoard = (args: Parameters<typeof useReactPaint>[0]) => {
   const [canvasSize, setCanvasSize] = useState<[number, number] | undefined>()
   const containerRef = useRef<HTMLDivElement>(null)
+  const debouncedSetCanvasSize = useDebounce(setCanvasSize)
 
-  const onResized = useCallback((measuredWidth: number, measuredHeight: number) => {
-    setCanvasSize([measuredWidth, measuredHeight - 72])
-  }, [])
+  const onResized = useCallback(
+    (measuredWidth: number, measuredHeight: number) => {
+      debouncedSetCanvasSize([measuredWidth, measuredHeight - 72])
+    },
+    [debouncedSetCanvasSize]
+  )
 
   useResizeObserver({ element: containerRef, onResized })
 

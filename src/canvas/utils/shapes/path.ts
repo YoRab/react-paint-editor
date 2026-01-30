@@ -147,3 +147,23 @@ export const createTrianglePath = (triangle: DrawableShape<'triangle'>) => {
   path.lineTo(...triangle.points[0])
   return path
 }
+
+export const getComputedShapeInfos = <T extends DrawableShape, U extends Pick<UtilsSettings, 'selectionPadding'>>(
+  shape: T,
+  getBorder: (shape: T, settings: U) => Rect,
+  settings: U
+): {
+  borders: Rect
+  outerBorders: Rect
+  center: Point
+} => {
+  const borders = getBorder(shape, settings)
+  const outerBorders = {
+    x: borders.x - (shape.style?.lineWidth ?? 0),
+    y: borders.y - (shape.style?.lineWidth ?? 0),
+    width: borders.width + 2 * (shape.style?.lineWidth ?? 0),
+    height: borders.height + 2 * (shape.style?.lineWidth ?? 0)
+  }
+  const center = [borders.x + borders.width / 2, borders.y + borders.height / 2] as Point
+  return { borders, outerBorders, center }
+}

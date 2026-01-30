@@ -1,8 +1,7 @@
 import type { UtilsSettings } from '@canvas/constants/app'
 import { getPointPositionAfterCanvasTransformation } from '@canvas/utils/intersect'
 import { createLineSelectionPath } from '@canvas/utils/selection/lineSelection'
-import { getShapeInfos } from '@canvas/utils/shapes/index'
-import { createCurvePath } from '@canvas/utils/shapes/path'
+import { createCurvePath, getComputedShapeInfos } from '@canvas/utils/shapes/path'
 import { boundVectorToSingleAxis, roundForGrid } from '@canvas/utils/transform'
 import type { SelectionModeResize } from '@common/types/Mode'
 import type { DrawableShape, Point, ShapeEntity } from '@common/types/Shapes'
@@ -13,10 +12,12 @@ import { getPolygonBorder } from './polygon'
 
 const buildPath = <T extends DrawableShape<'curve'>>(shape: T, settings: UtilsSettings): T => {
   const path = createCurvePath(shape)
+  const computed = getComputedShapeInfos(shape, getPolygonBorder, settings)
   return {
     ...shape,
     path,
-    selection: createLineSelectionPath(path, shape, settings)
+    selection: createLineSelectionPath(path, shape, computed, settings),
+    computed
   }
 }
 
@@ -59,9 +60,9 @@ export const resizeCurve = (
 ): DrawableShape<'curve'> => {
   const roundCursorPosition: Point = [roundForGrid(cursorPosition[0], settings), roundForGrid(cursorPosition[1], settings)]
 
-  const { center } = getShapeInfos(originalShape, settings)
+  const originalCenter = originalShape.computed.center
 
-  const cursorPositionBeforeResize = getPointPositionAfterCanvasTransformation(roundCursorPosition, originalShape.rotation, center)
+  const cursorPositionBeforeResize = getPointPositionAfterCanvasTransformation(roundCursorPosition, originalShape.rotation, originalCenter)
   const updatedShape = set(['points', selectionMode.anchor], cursorPositionBeforeResize, originalShape)
 
   return buildPath(updatedShape, settings)
@@ -74,8 +75,6 @@ export const drawCurve = (ctx: CanvasRenderingContext2D, curve: DrawableShape<'c
   curve.style?.strokeColor !== 'transparent' && ctx.stroke(curve.path)
 }
 
-export const getCurveBorder = getPolygonBorder
-
 export const translateCurve = <U extends DrawableShape<'curve'>>(
   cursorPosition: Point,
   originalShape: U,
@@ -83,7 +82,7 @@ export const translateCurve = <U extends DrawableShape<'curve'>>(
   settings: UtilsSettings,
   singleAxis: boolean
 ) => {
-  const { borders } = getShapeInfos(originalShape, settings)
+  const originalBorders = originalShape.computed.borders
   const translationVector = boundVectorToSingleAxis(
     [cursorPosition[0] - originalCursorPosition[0], cursorPosition[1] - originalCursorPosition[1]],
     singleAxis
@@ -95,8 +94,8 @@ export const translateCurve = <U extends DrawableShape<'curve'>>(
       points: originalShape.points.map(([x, y]) =>
         settings.gridGap
           ? [
-              x + roundForGrid(borders.x + translationVector[0], settings) - borders.x,
-              y + roundForGrid(borders.y + translationVector[1], settings) - borders.y
+              x + roundForGrid(originalBorders.x + translationVector[0], settings) - originalBorders.x,
+              y + roundForGrid(originalBorders.y + translationVector[1], settings) - originalBorders.y
             ]
           : [roundForGrid(x + translationVector[0], settings), roundForGrid(y + translationVector[1], settings)]
       )
@@ -122,9 +121,9 @@ export const addCurveLine = <T extends DrawableShape<'curve'>>(shape: T, lineInd
 export const addCurvePoint = <T extends DrawableShape<'curve'>>(shape: T, cursorPosition: Point, settings: UtilsSettings, temporary = false): T => {
   const roundCursorPosition: Point = [roundForGrid(cursorPosition[0], settings), roundForGrid(cursorPosition[1], settings)]
 
-  const { center } = getShapeInfos(shape, settings)
+  const originalCenter = shape.computed.center
 
-  const cursorPositionBeforeResize = getPointPositionAfterCanvasTransformation(roundCursorPosition, shape.rotation, center)
+  const cursorPositionBeforeResize = getPointPositionAfterCanvasTransformation(roundCursorPosition, shape.rotation, originalCenter)
   const updatedShape = {
     ...shape,
     points: temporary ? shape.points : [...shape.points, cursorPositionBeforeResize],

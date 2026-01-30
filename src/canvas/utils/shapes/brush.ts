@@ -1,7 +1,6 @@
 import type { UtilsSettings } from '@canvas/constants/app'
 import { createRecSelectionPath, resizeRectSelection } from '@canvas/utils/selection/rectSelection'
-import { getShapeInfos } from '@canvas/utils/shapes/index'
-import { createBrushPath } from '@canvas/utils/shapes/path'
+import { createBrushPath, getComputedShapeInfos } from '@canvas/utils/shapes/path'
 import { boundVectorToSingleAxis, roundForGrid, roundValues, scalePoint } from '@canvas/utils/transform'
 import type { SelectionModeResize } from '@common/types/Mode'
 import type { DrawableShape, Point, Rect, ShapeEntity } from '@common/types/Shapes'
@@ -9,12 +8,32 @@ import type { ToolsSettingsType } from '@common/types/tools'
 import { set } from '@common/utils/object'
 import { uniqueId } from '@common/utils/util'
 
+const getBrushBorder = (brush: DrawableShape<'brush'>, { selectionPadding }: Pick<UtilsSettings, 'selectionPadding'>): Rect => {
+  const brushPoints = brush.points.flat()
+  const minX = Math.min(...brushPoints.map(point => point[0]))
+  const minY = Math.min(...brushPoints.map(point => point[1]))
+
+  const scaledPoints = brushPoints.map(point => scalePoint(point, minX, minY, brush.scaleX, brush.scaleY))
+
+  const maxX = Math.max(...scaledPoints.map(point => point[0])) + selectionPadding
+  const maxY = Math.max(...scaledPoints.map(point => point[1])) + selectionPadding
+
+  return {
+    x: minX - selectionPadding,
+    width: maxX - minX + selectionPadding,
+    y: minY - selectionPadding,
+    height: maxY - minY + selectionPadding
+  }
+}
+
 const buildPath = <T extends DrawableShape<'brush'>>(brush: T, settings: UtilsSettings): T => {
   const path = createBrushPath(brush, settings)
+  const computed = getComputedShapeInfos(brush, getBrushBorder, settings)
   return {
     ...brush,
     path,
-    selection: createRecSelectionPath(path, brush, settings)
+    selection: createRecSelectionPath(path, computed, settings),
+    computed
   }
 }
 
@@ -56,24 +75,6 @@ export const drawBrush = (ctx: CanvasRenderingContext2D, shape: DrawableShape<'b
   ctx.stroke(shape.path)
 }
 
-export const getBrushBorder = (brush: DrawableShape<'brush'>, { selectionPadding }: Pick<UtilsSettings, 'selectionPadding'>): Rect => {
-  const brushPoints = brush.points.flat()
-  const minX = Math.min(...brushPoints.map(point => point[0]))
-  const minY = Math.min(...brushPoints.map(point => point[1]))
-
-  const scaledPoints = brushPoints.map(point => scalePoint(point, minX, minY, brush.scaleX, brush.scaleY))
-
-  const maxX = Math.max(...scaledPoints.map(point => point[0])) + selectionPadding
-  const maxY = Math.max(...scaledPoints.map(point => point[1])) + selectionPadding
-
-  return {
-    x: minX - selectionPadding,
-    width: maxX - minX + selectionPadding,
-    y: minY - selectionPadding,
-    height: maxY - minY + selectionPadding
-  }
-}
-
 export const translateBrush = <U extends DrawableShape<'brush'>>(
   cursorPosition: Point,
   originalShape: U,
@@ -81,13 +82,13 @@ export const translateBrush = <U extends DrawableShape<'brush'>>(
   settings: UtilsSettings,
   singleAxis: boolean
 ) => {
-  const { borders } = getShapeInfos(originalShape, settings)
+  const originalBorders = originalShape.computed.borders
   const translationVector = boundVectorToSingleAxis(
     [cursorPosition[0] - originalCursorPosition[0], cursorPosition[1] - originalCursorPosition[1]],
     singleAxis
   )
-  const translationX = settings.gridGap ? roundForGrid(borders.x + translationVector[0], settings) - borders.x : translationVector[0]
-  const translationY = settings.gridGap ? roundForGrid(borders.y + translationVector[1], settings) - borders.y : translationVector[1]
+  const translationX = settings.gridGap ? roundForGrid(originalBorders.x + translationVector[0], settings) - originalBorders.x : translationVector[0]
+  const translationY = settings.gridGap ? roundForGrid(originalBorders.y + translationVector[1], settings) - originalBorders.y : translationVector[1]
   return buildPath(
     {
       ...originalShape,
@@ -105,8 +106,8 @@ export const resizeBrush = (
   keepRatio: boolean,
   resizeFromCenter: boolean
 ): DrawableShape<'brush'> => {
-  const { borders: originalBordersWithoutScale } = getShapeInfos({ ...originalShape, scaleX: 1, scaleY: 1 }, settings)
-  const { borders: originalBorders } = getShapeInfos(originalShape, settings)
+  const originalBordersWithoutScale = getBrushBorder({ ...originalShape, scaleX: 1, scaleY: 1 }, settings)
+  const originalBorders = originalShape.computed.borders
 
   const { borderX, borderHeight, borderY, borderWidth } = resizeRectSelection(
     cursorPosition,

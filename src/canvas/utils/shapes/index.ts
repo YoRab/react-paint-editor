@@ -12,15 +12,15 @@ import type { HoverModeData, SelectionModeData, SelectionModeResize } from '@com
 import type { DrawableShape, Point, Rect, SelectionType, ShapeEntity } from '@common/types/Shapes'
 import type { CustomTool } from '@common/types/tools'
 import { uniqueId } from '@common/utils/util'
-import { createBrush, drawBrush, getBrushBorder, refreshBrush, resizeBrush, translateBrush } from './brush'
-import { createCircle, drawCircle, getCircleBorder, refreshCircle, resizeCircle, translateCircle } from './circle'
-import { createCurve, drawCurve, getCurveBorder, refreshCurve, resizeCurve, translateCurve } from './curve'
-import { createEllipse, drawEllipse, getEllipseBorder, refreshEllipse, resizeEllipse, translateEllipse } from './ellipse'
-import { createLine, drawLine, getLineBorder, refreshLine, resizeLine, translateLine } from './line'
-import { drawPicture, getPictureBorder, refreshPicture, resizePicture, translatePicture } from './picture'
-import { createPolygon, drawPolygon, getPolygonBorder, refreshPolygon, resizePolygon, translatePolygon } from './polygon'
-import { createRectangle, drawRect, getRectBorder, refreshRect, resizeRect, translateRect } from './rectangle'
-import { createText, drawText, getTextBorder, refreshText, resizeText, translateText } from './text'
+import { createBrush, drawBrush, refreshBrush, resizeBrush, translateBrush } from './brush'
+import { createCircle, drawCircle, refreshCircle, resizeCircle, translateCircle } from './circle'
+import { createCurve, drawCurve, refreshCurve, resizeCurve, translateCurve } from './curve'
+import { createEllipse, drawEllipse, refreshEllipse, resizeEllipse, translateEllipse } from './ellipse'
+import { createLine, drawLine, refreshLine, resizeLine, translateLine } from './line'
+import { drawPicture, refreshPicture, resizePicture, translatePicture } from './picture'
+import { createPolygon, drawPolygon, refreshPolygon, resizePolygon, translatePolygon } from './polygon'
+import { createRectangle, drawRect, refreshRect, resizeRect, translateRect } from './rectangle'
+import { createText, drawText, refreshText, resizeText, translateText } from './text'
 
 export const createShape = (
   ctx: CanvasRenderingContext2D,
@@ -111,8 +111,8 @@ const drawShapeWithOpacity = (ctx: CanvasRenderingContext2D, shape: DrawableShap
 
 export const drawShape = (ctx: CanvasRenderingContext2D, shape: DrawableShape, settings: UtilsSettings): void => {
   if (shape.visible === false) return
-  const { center, outerBorders } = getShapeInfos(shape, settings)
   const currentView = getCurrentView(settings)
+  const { outerBorders, center } = shape.computed
   const isInView = !!getRectIntersection(outerBorders, currentView)
   if (!isInView) return
   transformCanvas(ctx, settings, shape.rotation, center)
@@ -126,61 +126,6 @@ export const drawShape = (ctx: CanvasRenderingContext2D, shape: DrawableShape, s
   drawShapeByType(ctx, shape)
 
   ctx.restore()
-}
-
-const getShapeBorders = (marker: DrawableShape, settings: Pick<UtilsSettings, 'selectionPadding'>): Rect => {
-  switch (marker.type) {
-    case 'brush':
-      return getBrushBorder(marker, settings)
-    case 'line':
-      return getLineBorder(marker, settings)
-    case 'polygon':
-      return getPolygonBorder(marker, settings)
-    case 'curve':
-      return getCurveBorder(marker, settings)
-    case 'circle':
-      return getCircleBorder(marker, settings)
-    case 'ellipse':
-      return getEllipseBorder(marker, settings)
-    case 'rect':
-    case 'square':
-    case 'group':
-      return getRectBorder(marker, settings)
-    case 'text':
-      return getTextBorder(marker, settings)
-    case 'picture':
-      return getPictureBorder(marker, settings)
-    default:
-      return {
-        x: 0,
-        y: 0,
-        width: 100,
-        height: 100
-      } // TODO a cause du triangle, a supprimer
-  }
-}
-
-const getShapeCenter = (borders: Rect): Point => {
-  return [borders.x + borders.width / 2, borders.y + borders.height / 2]
-}
-
-export const getShapeInfos = (
-  shape: DrawableShape,
-  settings: Pick<UtilsSettings, 'selectionPadding'>
-): {
-  borders: Rect
-  outerBorders: Rect
-  center: Point
-} => {
-  const borders = getShapeBorders(shape, settings)
-  const outerBorders = {
-    x: borders.x - (shape.style?.lineWidth ?? 0),
-    y: borders.y - (shape.style?.lineWidth ?? 0),
-    width: borders.width + 2 * (shape.style?.lineWidth ?? 0),
-    height: borders.height + 2 * (shape.style?.lineWidth ?? 0)
-  }
-  const center = getShapeCenter(borders)
-  return { borders, outerBorders, center }
 }
 
 export const rotateShape = <T extends DrawableShape>(
@@ -332,7 +277,7 @@ export const drawShapeSelection = ({
   hoverMode: HoverModeData
   withAnchors?: boolean
 }) => {
-  const { center } = getShapeInfos(shape, settings)
+  const { center } = shape.computed
   transformCanvas(ctx, settings, shape.rotation, center)
 
   switch (shape.type) {

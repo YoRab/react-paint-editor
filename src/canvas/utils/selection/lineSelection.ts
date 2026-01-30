@@ -1,22 +1,20 @@
 import type { UtilsSettings } from '@canvas/constants/app'
 import { SELECTION_ANCHOR_SIZE } from '@canvas/constants/shapes'
 import { updateCanvasContext } from '@canvas/utils/canvas'
-import { getShapeInfos } from '@canvas/utils/shapes'
 import { createCirclePath, createRecPath } from '@canvas/utils/shapes/path'
 import type { HoverModeData } from '@common/types/Mode'
-import type { DrawableShape, Point, SelectionLinesType } from '@common/types/Shapes'
+import type { DrawableShape, Point, Rect, SelectionLinesType } from '@common/types/Shapes'
 
 export const createLineSelectionPath = (
   path: Path2D | undefined,
   shape: DrawableShape<'line' | 'polygon' | 'curve'> & {
     points: readonly Point[]
   },
+  computed: { borders: Rect; outerBorders: Rect; center: Point },
   settings: UtilsSettings
 ): SelectionLinesType => {
-  const { borders } = getShapeInfos(shape, settings)
-
   return {
-    border: createRecPath(borders),
+    border: createRecPath(computed.borders),
     shapePath: path,
     anchors: [
       ...shape.points.map(point =>
