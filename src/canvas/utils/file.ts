@@ -5,7 +5,8 @@ import { initCanvasContext } from '@canvas/utils/canvas'
 import { drawShape, getShapeInfos } from '@canvas/utils/shapes'
 import type { DrawableShape, ExportedDrawableShape, Point, ShapeEntity } from '@common/types/Shapes'
 import { compact } from '@common/utils/array'
-import { addDefaultAndTempShapeProps, buildDataToExport } from './data'
+import { addDefaultAndTempShapeProps, buildDataToExport } from '@canvas/utils/data'
+import { rotatePoint } from '@canvas/utils/trigo'
 
 export const addSizeAndConvertSvgToObjectUrl = (svgFileContent: string): string => {
   const parser = new DOMParser()
@@ -96,13 +97,28 @@ export const getCanvasImage = ({
 
   if (view === 'fitToShapes') {
     const bordersShapes = shapes.map(shape => {
-      const borders = getShapeInfos(shape, settings).borders
+      const { borders, center } = getShapeInfos(shape, settings)
+
+      const rotatedPoints = (
+        [
+          [borders.x, borders.y],
+          [borders.x + borders.width, borders.y],
+          [borders.x + borders.width, borders.y + borders.height],
+          [borders.x, borders.y + borders.height]
+        ] as Point[]
+      ).map(point =>
+        rotatePoint({
+          point,
+          origin: center,
+          rotation: shape.rotation
+        })
+      )
       const halfLineWidth = (shape.style?.lineWidth ?? 0) / 2
       return {
-        minX: borders.x - halfLineWidth,
-        minY: borders.y - halfLineWidth,
-        maxX: borders.x + borders.width + halfLineWidth,
-        maxY: borders.y + borders.height + halfLineWidth
+        minX: Math.min(...rotatedPoints.map(point => point[0])) - halfLineWidth,
+        minY: Math.min(...rotatedPoints.map(point => point[1])) - halfLineWidth,
+        maxX: Math.max(...rotatedPoints.map(point => point[0])) + halfLineWidth,
+        maxY: Math.max(...rotatedPoints.map(point => point[1])) + halfLineWidth
       }
     })
     const minX = Math.min(...bordersShapes.map(borders => borders.minX))
