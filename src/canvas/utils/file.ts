@@ -97,14 +97,14 @@ export const getCanvasImage = ({
 
   if (view === 'fitToShapes') {
     const bordersShapes = shapes.map(shape => {
-      const { borders, center } = getShapeInfos(shape, settings)
+      const { center, outerBorders } = getShapeInfos(shape, settings)
 
       const rotatedPoints = (
         [
-          [borders.x, borders.y],
-          [borders.x + borders.width, borders.y],
-          [borders.x + borders.width, borders.y + borders.height],
-          [borders.x, borders.y + borders.height]
+          [outerBorders.x, outerBorders.y],
+          [outerBorders.x + outerBorders.width, outerBorders.y],
+          [outerBorders.x + outerBorders.width, outerBorders.y + outerBorders.height],
+          [outerBorders.x, outerBorders.y + outerBorders.height]
         ] as Point[]
       ).map(point =>
         rotatePoint({
@@ -113,12 +113,11 @@ export const getCanvasImage = ({
           rotation: shape.rotation
         })
       )
-      const halfLineWidth = (shape.style?.lineWidth ?? 0) / 2
       return {
-        minX: Math.min(...rotatedPoints.map(point => point[0])) - halfLineWidth,
-        minY: Math.min(...rotatedPoints.map(point => point[1])) - halfLineWidth,
-        maxX: Math.max(...rotatedPoints.map(point => point[0])) + halfLineWidth,
-        maxY: Math.max(...rotatedPoints.map(point => point[1])) + halfLineWidth
+        minX: Math.min(...rotatedPoints.map(point => point[0])),
+        minY: Math.min(...rotatedPoints.map(point => point[1])),
+        maxX: Math.max(...rotatedPoints.map(point => point[0])),
+        maxY: Math.max(...rotatedPoints.map(point => point[1]))
       }
     })
     const minX = Math.min(...bordersShapes.map(borders => borders.minX))
