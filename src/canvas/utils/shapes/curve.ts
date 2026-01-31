@@ -10,9 +10,13 @@ import { set } from '@common/utils/object'
 import { uniqueId } from '@common/utils/util'
 import { getPolygonBorder } from './polygon'
 
+export const getComputedCurve = (curve: DrawableShape<'curve'>, settings: UtilsSettings) => {
+  return getComputedShapeInfos(curve, getPolygonBorder, settings)
+}
+
 const buildPath = <T extends DrawableShape<'curve'>>(shape: T, settings: UtilsSettings): T => {
   const path = createCurvePath(shape)
-  const computed = getComputedShapeInfos(shape, getPolygonBorder, settings)
+  const computed = getComputedCurve(shape, settings)
   return {
     ...shape,
     path,

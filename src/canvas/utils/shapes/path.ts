@@ -1,6 +1,7 @@
 import type { UtilsSettings } from '@canvas/constants/app'
 import { scalePoint } from '@canvas/utils/transform'
-import type { Circle, DrawableShape, Line, Point, Rect } from '@common/types/Shapes'
+import type { Circle, DrawableShape, Line, Point, Rect, StyleShape } from '@common/types/Shapes'
+import { rotatePoint } from '@canvas/utils/trigo'
 
 export const createRecPath = (rect: Rect) => {
   const path = new Path2D()
@@ -148,22 +149,59 @@ export const createTrianglePath = (triangle: DrawableShape<'triangle'>) => {
   return path
 }
 
+const getDefaultOuterBorder = (border: Rect, style: StyleShape | undefined) => {
+  return {
+    x: border.x - (style?.lineWidth ?? 0) / 2,
+    y: border.y - (style?.lineWidth ?? 0) / 2,
+    width: border.width + (style?.lineWidth ?? 0),
+    height: border.height + (style?.lineWidth ?? 0)
+  }
+}
+
+const getBoundingBox = (outerBorders: Rect, center: Point, rotation: number) => {
+  if (rotation === 0) return outerBorders
+  const rotatedPoints = (
+    [
+      [outerBorders.x, outerBorders.y],
+      [outerBorders.x + outerBorders.width, outerBorders.y],
+      [outerBorders.x + outerBorders.width, outerBorders.y + outerBorders.height],
+      [outerBorders.x, outerBorders.y + outerBorders.height]
+    ] as Point[]
+  ).map(point =>
+    rotatePoint({
+      point,
+      origin: center,
+      rotation: rotation
+    })
+  )
+
+  const minX = Math.min(...rotatedPoints.map(point => point[0]))
+  const minY = Math.min(...rotatedPoints.map(point => point[1]))
+  const maxX = Math.max(...rotatedPoints.map(point => point[0]))
+  const maxY = Math.max(...rotatedPoints.map(point => point[1]))
+
+  return {
+    x: minX,
+    y: minY,
+    width: maxX - minX,
+    height: maxY - minY
+  }
+}
+
 export const getComputedShapeInfos = <T extends DrawableShape, U extends Pick<UtilsSettings, 'selectionPadding'>>(
   shape: T,
   getBorder: (shape: T, settings: U) => Rect,
-  settings: U
+  settings: U,
+  getOuterBorder: (border: Rect, style: StyleShape | undefined) => Rect = getDefaultOuterBorder
 ): {
   borders: Rect
   outerBorders: Rect
   center: Point
+  boundingBox: Rect
 } => {
   const borders = getBorder(shape, settings)
-  const outerBorders = {
-    x: borders.x - (shape.style?.lineWidth ?? 0),
-    y: borders.y - (shape.style?.lineWidth ?? 0),
-    width: borders.width + 2 * (shape.style?.lineWidth ?? 0),
-    height: borders.height + 2 * (shape.style?.lineWidth ?? 0)
-  }
+  const outerBorders = getOuterBorder(borders, shape.style)
   const center = [borders.x + borders.width / 2, borders.y + borders.height / 2] as Point
-  return { borders, outerBorders, center }
+  const boundingBox = getBoundingBox(outerBorders, center, shape.rotation)
+  return { borders, outerBorders, center, boundingBox }
 }

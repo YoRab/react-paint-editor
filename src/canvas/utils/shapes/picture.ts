@@ -9,8 +9,12 @@ import { DEFAULT_SHAPE_PICTURE } from '@editor/constants/tools'
 import { getRectBorder } from './rectangle'
 import { getComputedShapeInfos } from './path'
 
+export const getComputedPicture = (picture: DrawableShape<'picture'>, settings: UtilsSettings) => {
+  return getComputedShapeInfos(picture, getRectBorder, settings)
+}
+
 const buildPath = <T extends DrawableShape<'picture'>>(shape: T, settings: UtilsSettings): T => {
-  const computed = getComputedShapeInfos(shape, getRectBorder, settings)
+  const computed = getComputedPicture(shape, settings)
   return {
     ...shape,
     selection: createRecSelectionPath(undefined, computed, settings),

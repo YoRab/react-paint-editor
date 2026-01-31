@@ -16,9 +16,13 @@ const getEllipseBorder = (ellipse: Ellipse, settings: Pick<UtilsSettings, 'selec
   }
 }
 
+export const getComputedEllipse = (ellipse: DrawableShape<'ellipse'>, settings: UtilsSettings) => {
+  return getComputedShapeInfos(ellipse, getEllipseBorder, settings)
+}
+
 const buildPath = <T extends DrawableShape<'ellipse'>>(shape: T, settings: UtilsSettings): T => {
   const path = createEllipsePath(shape)
-  const computed = getComputedShapeInfos(shape, getEllipseBorder, settings)
+  const computed = getComputedEllipse(shape, settings)
   return {
     ...shape,
     path,

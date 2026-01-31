@@ -9,9 +9,13 @@ import type { ToolsSettingsType } from '@common/types/tools'
 import { set } from '@common/utils/object'
 import { uniqueId } from '@common/utils/util'
 
+export const getComputedPolygon = (polygon: DrawableShape<'polygon'>, settings: UtilsSettings) => {
+  return getComputedShapeInfos(polygon, getPolygonBorder, settings)
+}
+
 const buildPath = <T extends DrawableShape<'polygon'>>(shape: T, settings: UtilsSettings): T => {
   const path = createPolygonPath(shape)
-  const computed = getComputedShapeInfos(shape, getPolygonBorder, settings)
+  const computed = getComputedPolygon(shape, settings)
   return {
     ...shape,
     path,

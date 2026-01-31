@@ -6,7 +6,6 @@ import { drawShape } from '@canvas/utils/shapes'
 import type { DrawableShape, ExportedDrawableShape, Point, ShapeEntity } from '@common/types/Shapes'
 import { compact } from '@common/utils/array'
 import { addDefaultAndTempShapeProps, buildDataToExport } from '@canvas/utils/data'
-import { rotatePoint } from '@canvas/utils/trigo'
 
 export const addSizeAndConvertSvgToObjectUrl = (svgFileContent: string): string => {
   const parser = new DOMParser()
@@ -96,35 +95,10 @@ export const getCanvasImage = ({
   if (view === 'fitToShapes' && !shapes.length) throw new Error('No image found to export')
 
   if (view === 'fitToShapes') {
-    const bordersShapes = shapes.map(shape => {
-      const { center, outerBorders } = shape.computed
-
-      const rotatedPoints = (
-        [
-          [outerBorders.x, outerBorders.y],
-          [outerBorders.x + outerBorders.width, outerBorders.y],
-          [outerBorders.x + outerBorders.width, outerBorders.y + outerBorders.height],
-          [outerBorders.x, outerBorders.y + outerBorders.height]
-        ] as Point[]
-      ).map(point =>
-        rotatePoint({
-          point,
-          origin: center,
-          rotation: shape.rotation
-        })
-      )
-      return {
-        minX: Math.min(...rotatedPoints.map(point => point[0])),
-        minY: Math.min(...rotatedPoints.map(point => point[1])),
-        maxX: Math.max(...rotatedPoints.map(point => point[0])),
-        maxY: Math.max(...rotatedPoints.map(point => point[1]))
-      }
-    })
-    const minX = Math.min(...bordersShapes.map(borders => borders.minX))
-    const maxX = Math.max(...bordersShapes.map(borders => borders.maxX))
-
-    const minY = Math.min(...bordersShapes.map(borders => borders.minY))
-    const maxY = Math.max(...bordersShapes.map(borders => borders.maxY))
+    const minX = Math.min(...shapes.map(shape => shape.computed.boundingBox.x))
+    const maxX = Math.max(...shapes.map(shape => shape.computed.boundingBox.x + shape.computed.boundingBox.width))
+    const minY = Math.min(...shapes.map(shape => shape.computed.boundingBox.y))
+    const maxY = Math.max(...shapes.map(shape => shape.computed.boundingBox.y + shape.computed.boundingBox.height))
 
     const printSettings = {
       ...settings,

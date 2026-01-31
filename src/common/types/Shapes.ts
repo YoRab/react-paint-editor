@@ -90,6 +90,7 @@ export type DrawableShape<T extends ShapeType = ShapeType> = {
     borders: Rect
     outerBorders: Rect
     center: Point
+    boundingBox: Rect
   }
 } & (T extends 'line'
   ? Line & {

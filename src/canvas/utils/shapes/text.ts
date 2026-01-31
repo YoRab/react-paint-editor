@@ -12,8 +12,12 @@ import { getComputedShapeInfos } from './path'
 const DEFAULT_TEXT_VALUE: string[] = ['Texte']
 const DEFAULT_TEXT_WIDTH = 150
 
+export const getComputedText = (text: DrawableShape<'text'>, settings: UtilsSettings) => {
+  return getComputedShapeInfos(text, getTextBorder, settings)
+}
+
 const buildPath = <T extends DrawableShape<'text'>>(shape: T, settings: UtilsSettings): T => {
-  const computed = getComputedShapeInfos(shape, getTextBorder, settings)
+  const computed = getComputedText(shape, settings)
   return {
     ...shape,
     selection: createRecSelectionPath(undefined, computed, settings),

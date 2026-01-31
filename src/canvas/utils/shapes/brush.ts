@@ -26,9 +26,13 @@ const getBrushBorder = (brush: DrawableShape<'brush'>, { selectionPadding }: Pic
   }
 }
 
+export const getComputedBrush = (brush: DrawableShape<'brush'>, settings: UtilsSettings) => {
+  return getComputedShapeInfos(brush, getBrushBorder, settings)
+}
+
 const buildPath = <T extends DrawableShape<'brush'>>(brush: T, settings: UtilsSettings): T => {
   const path = createBrushPath(brush, settings)
-  const computed = getComputedShapeInfos(brush, getBrushBorder, settings)
+  const computed = getComputedBrush(brush, settings)
   return {
     ...brush,
     path,

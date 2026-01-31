@@ -20,6 +20,10 @@ const getLineBorder = (line: Line, settings: Pick<UtilsSettings, 'selectionPaddi
   return { x, width, y, height }
 }
 
+export const getComputedLine = (line: DrawableShape<'line'>, settings: UtilsSettings) => {
+  return getComputedShapeInfos(line, getLineBorder, settings)
+}
+
 const buildPath = <T extends DrawableShape<'line'>>(line: T, settings: UtilsSettings): T => {
   const arrows = []
   let path: Path2D
@@ -45,7 +49,7 @@ const buildPath = <T extends DrawableShape<'line'>>(line: T, settings: UtilsSett
     path = createLinePath(line)
   }
 
-  const computed = getComputedShapeInfos(line, getLineBorder, settings)
+  const computed = getComputedLine(line, settings)
   return {
     ...line,
     path,

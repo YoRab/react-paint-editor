@@ -9,10 +9,13 @@ import { uniqueId } from '@common/utils/util'
 import { createRecPath, getComputedShapeInfos } from './path'
 
 type rectish = 'text' | 'rect' | 'square' | 'picture'
+export const getComputedRect = (rect: DrawableShape<rectish>, settings: UtilsSettings) => {
+  return getComputedShapeInfos(rect, getRectBorder, settings)
+}
 
 const buildPath = <T extends DrawableShape<rectish>>(rect: T, settings: UtilsSettings, isGroup = false): T => {
   const path = createRecPath(rect)
-  const computed = getComputedShapeInfos(rect, getRectBorder, settings)
+  const computed = getComputedRect(rect, settings)
   return {
     ...rect,
     path,
