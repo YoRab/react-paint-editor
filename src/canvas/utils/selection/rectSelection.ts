@@ -58,6 +58,21 @@ export const drawSelectionRect = (
 ): void => {
   if (!shape.selection) return
 
+  if (settings.debug) {
+    updateCanvasContext(ctx, {
+      fillColor: 'transparent',
+      strokeColor: 'red',
+      lineWidth: selectionWidth / settings.canvasSize.scaleRatio
+    })
+
+    ctx.strokeRect(
+      shape.computed.outerBorders.x,
+      shape.computed.outerBorders.y,
+      shape.computed.outerBorders.width,
+      shape.computed.outerBorders.height
+    )
+  }
+
   updateCanvasContext(ctx, {
     fillColor: 'transparent',
     strokeColor: selectionColor,

@@ -35,6 +35,7 @@ const useReactPaint = ({
     layersManipulation,
     brushAlgo,
     isBrushShapeDoneOnMouseUp,
+    debug,
     grid,
     canGrow,
     canShrink,
@@ -91,6 +92,7 @@ const useReactPaint = ({
     () => ({
       brushAlgo,
       isBrushShapeDoneOnMouseUp,
+      debug,
       canvasSize: {
         realWidth: canvasSize.realWidth,
         realHeight: canvasSize.realHeight,
@@ -114,6 +116,7 @@ const useReactPaint = ({
       gridGap,
       brushAlgo,
       isBrushShapeDoneOnMouseUp,
+      debug,
       canvasZoom,
       canvasOffset,
       canvasSize,

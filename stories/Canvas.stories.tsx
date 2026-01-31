@@ -92,3 +92,36 @@ return (
     }
   }
 }
+
+export const DebugMode: Story = {
+  args: {
+    shapes: TREE_AND_CLOUDS,
+    options: {
+      canZoom: 'always',
+      debug: true
+    }
+  },
+  parameters: {
+    docs: {
+      description: {
+        story: 'With `options.debug: true`, shape selection and hit-testing are logged to the browser console. Open DevTools to see debug output when selecting or hovering shapes.'
+      },
+      source: {
+        code: `const { editorProps, canvasProps } = useReactPaint({
+  shapes: TREE_AND_CLOUDS,
+  options: {
+    canZoom: 'always',
+    debug: true
+  }
+})
+
+return (
+  <Editor editorProps={editorProps}>
+    <Canvas canvasProps={canvasProps} />
+  </Editor>
+)`,
+        language: 'tsx'
+      }
+    }
+  }
+}

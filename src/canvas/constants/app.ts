@@ -32,6 +32,7 @@ export type UtilsSettings = {
     zoom: boolean
     edition: boolean
   }
+  debug: boolean
 }
 type AppOptionsType = {
   layersManipulation: boolean
@@ -51,6 +52,7 @@ type AppOptionsType = {
   canvasSelectionPadding: number
   size: Size
   canZoom: 'never' | 'always'
+  debug: boolean
 }
 
 export type OptionalOptions = RecursivePartial<AppOptionsType>
@@ -72,7 +74,8 @@ export const DEFAULT_OPTIONS: AppOptionsType = {
   withSkeleton: true,
   canvasSelectionPadding: SELECTION_DEFAULT_PADDING,
   size: 'fixed',
-  canZoom: 'never'
+  canZoom: 'never',
+  debug: false
 }
 
 export const DEFAULT_CANVAS_OPTIONS: {
