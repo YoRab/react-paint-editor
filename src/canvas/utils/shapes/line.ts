@@ -24,7 +24,7 @@ export const getComputedLine = (line: DrawableShape<'line'>, settings: UtilsSett
   return getComputedShapeInfos(line, getLineBorder, settings)
 }
 
-const buildPath = <T extends DrawableShape<'line'>>(line: T, settings: UtilsSettings): T => {
+const buildPath = <T extends DrawableShape<'line'>>(line: T & { id: string }, settings: UtilsSettings): ShapeEntity<'line'> => {
   const arrows = []
   let path: Path2D
 
@@ -79,7 +79,6 @@ export const createLine = (
     type: shape.type,
     id: uniqueId(`${shape.type}_`),
     points: [cursorPosition, cursorPosition] as const,
-    rotation: 0,
     style: {
       opacity: shape.settings.opacity.default,
       strokeColor: shape.settings.strokeColor.default,
@@ -117,7 +116,7 @@ export const buildTriangleOnLine = (center: Point, rotation: number, lineStyle: 
   } as Triangle
 }
 
-export const drawLine = (ctx: CanvasRenderingContext2D, shape: DrawableShape<'line'>): void => {
+export const drawLine = (ctx: CanvasRenderingContext2D, shape: ShapeEntity<'line'>): void => {
   if (ctx.globalAlpha === 0 || !shape.path) return
 
   shape.style?.fillColor !== 'transparent' && ctx.fill(shape.path)
@@ -129,9 +128,9 @@ export const drawLine = (ctx: CanvasRenderingContext2D, shape: DrawableShape<'li
   }
 }
 
-export const translateLine = <U extends DrawableShape<'line'>>(
+export const translateLine = (
   cursorPosition: Point,
-  originalShape: U,
+  originalShape: ShapeEntity<'line'>,
   originalCursorPosition: Point,
   settings: UtilsSettings,
   singleAxis: boolean
@@ -153,17 +152,17 @@ export const translateLine = <U extends DrawableShape<'line'>>(
   )
 }
 
-export const resizeLine = <U extends DrawableShape<'line'>>(
+export const resizeLine = (
   cursorPosition: Point,
-  originalShape: U,
+  originalShape: ShapeEntity<'line'>,
   selectionMode: SelectionModeResize<number>,
   settings: UtilsSettings
-): U => {
+): ShapeEntity<'line'> => {
   const roundCursorPosition: Point = [roundForGrid(cursorPosition[0], settings), roundForGrid(cursorPosition[1], settings)]
 
   const cursorPositionBeforeResize = getPointPositionAfterCanvasTransformation(
     roundCursorPosition,
-    originalShape.rotation,
+    originalShape.rotation ?? 0,
     originalShape.computed.center
   )
   const updatedShape = set(['points', selectionMode.anchor], cursorPositionBeforeResize, originalShape)

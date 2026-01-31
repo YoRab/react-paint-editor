@@ -151,11 +151,11 @@ export const buildShapesGroup = (shapes: ShapeEntity[], settings: UtilsSettings)
   let maxY = Number.NEGATIVE_INFINITY
 
   const checkRotatedShapes = shapes.some(shape => shape.rotation !== shapes[0]!.rotation)
-  const rotation = checkRotatedShapes ? 0 : shapes[0]!.rotation
+  const rotation = checkRotatedShapes ? 0 : (shapes[0]?.rotation ?? 0)
 
   for (const shape of shapes) {
     const { borders } = shape.computed
-    const rotatedPoints = rotateRect(borders, shape.rotation, checkRotatedShapes)
+    const rotatedPoints = rotateRect(borders, shape.rotation ?? 0, checkRotatedShapes)
     minX = Math.min(rotatedPoints[0][0], rotatedPoints[1][0], rotatedPoints[2][0], rotatedPoints[3][0], minX)
     maxX = Math.max(rotatedPoints[0][0], rotatedPoints[1][0], rotatedPoints[2][0], rotatedPoints[3][0], maxX)
     minY = Math.min(rotatedPoints[0][1], rotatedPoints[1][1], rotatedPoints[2][1], rotatedPoints[3][1], minY)

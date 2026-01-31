@@ -3,7 +3,7 @@ import { SELECTION_ANCHOR_SIZE } from '@canvas/constants/shapes'
 import { updateCanvasContext } from '@canvas/utils/canvas'
 import { createCirclePath, createRecPath } from '@canvas/utils/shapes/path'
 import type { HoverModeData } from '@common/types/Mode'
-import type { DrawableShape, Point, Rect, SelectionLinesType } from '@common/types/Shapes'
+import type { DrawableShape, Point, Rect, SelectionLinesType, ShapeEntity } from '@common/types/Shapes'
 
 export const createLineSelectionPath = (
   path: Path2D | undefined,
@@ -38,7 +38,7 @@ export const drawLineSelection = ({
   settings
 }: {
   ctx: CanvasRenderingContext2D
-  shape: DrawableShape<'line'> | DrawableShape<'polygon'> | DrawableShape<'curve'>
+  shape: ShapeEntity<'line'> | ShapeEntity<'polygon'> | ShapeEntity<'curve'>
   withAnchors: boolean
   selectionWidth: number
   selectionColor: string

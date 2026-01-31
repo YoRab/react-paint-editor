@@ -30,7 +30,7 @@ export const getComputedBrush = (brush: DrawableShape<'brush'>, settings: UtilsS
   return getComputedShapeInfos(brush, getBrushBorder, settings)
 }
 
-const buildPath = <T extends DrawableShape<'brush'>>(brush: T, settings: UtilsSettings): T => {
+const buildPath = <T extends DrawableShape<'brush'>>(brush: T & { id: string }, settings: UtilsSettings): ShapeEntity<'brush'> => {
   const path = createBrushPath(brush, settings)
   const computed = getComputedBrush(brush, settings)
   return {
@@ -58,7 +58,6 @@ export const createBrush = (
       type: shape.type,
       id: uniqueId(`${shape.type}_`),
       points: [[cursorPosition]],
-      rotation: 0,
       scaleX: 1,
       scaleY: 1,
       style: {
@@ -72,16 +71,16 @@ export const createBrush = (
   )
 }
 
-export const drawBrush = (ctx: CanvasRenderingContext2D, shape: DrawableShape<'brush'>): void => {
+export const drawBrush = (ctx: CanvasRenderingContext2D, shape: ShapeEntity<'brush'>): void => {
   if (shape.points.length < 1 || !shape.path) return
   if (ctx.globalAlpha === 0) return
   if (shape.style?.strokeColor === 'transparent' || ctx.globalAlpha === 0) return
   ctx.stroke(shape.path)
 }
 
-export const translateBrush = <U extends DrawableShape<'brush'>>(
+export const translateBrush = (
   cursorPosition: Point,
-  originalShape: U,
+  originalShape: ShapeEntity<'brush'>,
   originalCursorPosition: Point,
   settings: UtilsSettings,
   singleAxis: boolean
@@ -104,12 +103,12 @@ export const translateBrush = <U extends DrawableShape<'brush'>>(
 
 export const resizeBrush = (
   cursorPosition: Point,
-  originalShape: DrawableShape<'brush'>,
+  originalShape: ShapeEntity<'brush'>,
   selectionMode: SelectionModeResize,
   settings: UtilsSettings,
   keepRatio: boolean,
   resizeFromCenter: boolean
-): DrawableShape<'brush'> => {
+): ShapeEntity<'brush'> => {
   const originalBordersWithoutScale = getBrushBorder({ ...originalShape, scaleX: 1, scaleY: 1 }, settings)
   const originalBorders = originalShape.computed.borders
 
@@ -145,7 +144,7 @@ export const resizeBrush = (
   )
 }
 
-export const addNewPointToShape = <T extends DrawableShape<'brush'>>(shape: T, cursorPosition: Point, settings: UtilsSettings) => {
+export const addNewPointToShape = (shape: ShapeEntity<'brush'>, cursorPosition: Point, settings: UtilsSettings): ShapeEntity<'brush'> => {
   const brushShape = {
     ...shape,
     ...{
@@ -159,7 +158,7 @@ export const addNewPointToShape = <T extends DrawableShape<'brush'>>(shape: T, c
   return buildPath(brushShape, settings)
 }
 
-export const addNewPointGroupToShape = <T extends DrawableShape<'brush'>>(shape: T, cursorPosition: Point, settings: UtilsSettings): T => {
+export const addNewPointGroupToShape = (shape: ShapeEntity<'brush'>, cursorPosition: Point, settings: UtilsSettings): ShapeEntity<'brush'> => {
   const brushShape = {
     ...shape,
     ...{

@@ -9,7 +9,7 @@ import { drawFrame } from '@canvas/utils/selection/selectionFrame'
 import { roundForGrid, roundRotationForGrid } from '@canvas/utils/transform'
 import { getCurrentView } from '@canvas/utils/zoom'
 import type { HoverModeData, SelectionModeData, SelectionModeResize } from '@common/types/Mode'
-import type { DrawableShape, Point, Rect, SelectionType, ShapeEntity } from '@common/types/Shapes'
+import type { DrawableShape, Point, SelectionType, ShapeEntity } from '@common/types/Shapes'
 import type { CustomTool } from '@common/types/tools'
 import { uniqueId } from '@common/utils/util'
 import { createBrush, drawBrush, getComputedBrush, refreshBrush, resizeBrush, translateBrush } from './brush'
@@ -50,7 +50,7 @@ export const createShape = (
   }
 }
 
-const drawShapeByType = (ctx: CanvasRenderingContext2D, shape: DrawableShape): void => {
+const drawShapeByType = (ctx: CanvasRenderingContext2D, shape: ShapeEntity): void => {
   switch (shape.type) {
     case 'brush':
       drawBrush(ctx, shape)
@@ -90,7 +90,7 @@ const drawShapeByType = (ctx: CanvasRenderingContext2D, shape: DrawableShape): v
  * @param ctx - The main canvas context
  * @param shape - The shape to draw
  */
-const drawShapeWithOpacity = (ctx: CanvasRenderingContext2D, shape: DrawableShape): void => {
+const drawShapeWithOpacity = (ctx: CanvasRenderingContext2D, shape: ShapeEntity): void => {
   const tempCanvas = document.createElement('canvas')
   const tempCtx = tempCanvas.getContext('2d')
   if (!tempCtx) throw new Error('No context found for canvas')
@@ -109,12 +109,12 @@ const drawShapeWithOpacity = (ctx: CanvasRenderingContext2D, shape: DrawableShap
   ctx.drawImage(tempCanvas, outerBorders.x - tempCanvasSize.width / 4, outerBorders.y - tempCanvasSize.height / 4)
 }
 
-export const isInView = (shape: DrawableShape, settings: UtilsSettings): boolean => {
+export const isInView = (shape: ShapeEntity, settings: UtilsSettings): boolean => {
   const currentView = getCurrentView(settings)
   return !!getRectIntersection(shape.computed.boundingBox, currentView)
 }
 
-export const drawShape = (ctx: CanvasRenderingContext2D, shape: DrawableShape, settings: UtilsSettings): void => {
+export const drawShape = (ctx: CanvasRenderingContext2D, shape: ShapeEntity, settings: UtilsSettings): void => {
   if (shape.visible === false) return
 
   const shouldDraw = isInView(shape, settings)
@@ -148,7 +148,7 @@ export const rotateShape = <T extends DrawableShape>(
   const p2y = shapeCenter[1] - cursorPosition[1]
   const rotatedShape: T = {
     ...shape,
-    rotation: roundRotationForGrid(originalShape.rotation + Math.atan2(p2y, p2x) - Math.atan2(p1y, p1x), settings, isShiftPressed)
+    rotation: roundRotationForGrid((originalShape.rotation ?? 0) + Math.atan2(p2y, p2x) - Math.atan2(p1y, p1x), settings, isShiftPressed)
   }
   return {
     ...rotatedShape,
@@ -156,7 +156,7 @@ export const rotateShape = <T extends DrawableShape>(
   }
 }
 
-export const resizeShape = <T extends DrawableShape>(
+export const resizeShape = <T extends ShapeEntity>(
   ctx: CanvasRenderingContext2D,
   shape: T,
   cursorPosition: Point,
@@ -240,7 +240,7 @@ export const translateShapes = (
   return getSelectedShapes(originalShape).map(shape => translateShape(cursorPosition, shape, originalCursorPosition, settings, isShiftPressed))
 }
 
-export const refreshShape = (shape: ShapeEntity, settings: UtilsSettings): ShapeEntity => {
+export const refreshShape = (shape: DrawableShape & { id: string }, settings: UtilsSettings): ShapeEntity => {
   switch (shape.type) {
     case 'rect':
     case 'square':
@@ -262,7 +262,7 @@ export const refreshShape = (shape: ShapeEntity, settings: UtilsSettings): Shape
     case 'brush':
       return refreshBrush(shape, settings)
     default:
-      return shape
+      return shape as never
   }
 }
 

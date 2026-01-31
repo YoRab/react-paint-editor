@@ -1,10 +1,10 @@
 import type { UtilsSettings } from '@canvas/constants/app'
 import { transformCanvas, updateCanvasContext } from '@canvas/utils/canvas'
-import type { DrawableShape } from '@common/types/Shapes'
+import type { ShapeEntity } from '@common/types/Shapes'
 
 export const drawSelectionGroup = (
   ctx: CanvasRenderingContext2D,
-  shape: DrawableShape<'group'>,
+  shape: ShapeEntity<'group'>,
   selectionColor: string,
   selectionWidth: number,
   settings: UtilsSettings,

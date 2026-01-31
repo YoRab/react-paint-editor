@@ -1,6 +1,6 @@
 import type { UtilsSettings } from '@canvas/constants/app'
 import { radiansToDegrees, rotatePoint } from '@canvas/utils/trigo'
-import type { DrawableShape } from '@common/types/Shapes'
+import type { DrawableShape, ShapeEntity } from '@common/types/Shapes'
 import { STYLE_FONT_DEFAULT } from '@editor/constants/style'
 import type React from 'react'
 import { useEffect, useMemo, useRef } from 'react'
@@ -16,7 +16,7 @@ const getNodeValue = (node: ChildNode): string => {
 
 type EditTextBoxType = {
   disabled?: boolean
-  shape: DrawableShape<'text'>
+  shape: ShapeEntity<'text'>
   defaultValue: string[]
   settings: UtilsSettings
   updateValue: (newValue: string[]) => void
@@ -73,7 +73,7 @@ const EditTextBox = ({ disabled = false, shape, defaultValue, updateValue, saveS
 
     return rotatePoint({
       point: [borders.x, borders.y],
-      rotation: -shape.rotation,
+      rotation: -(shape.rotation ?? 0),
       origin: center
     })
   }, [shape])
@@ -89,7 +89,7 @@ const EditTextBox = ({ disabled = false, shape, defaultValue, updateValue, saveS
       style={{
         '--react-paint-editor-toolbox-edittextbox-transform': `translate3D(${(position[0] + settings.canvasOffset[0]) * settings.canvasSize.scaleRatio}px, ${
           (position[1] + settings.canvasOffset[1]) * settings.canvasSize.scaleRatio
-        }px, 0) rotate(${radiansToDegrees(shape.rotation)}deg)`,
+        }px, 0) rotate(${radiansToDegrees(shape.rotation ?? 0)}deg)`,
         '--react-paint-editor-toolbox-edittextbox-fontsize': `${shape.fontSize * settings.canvasSize.scaleRatio}px`,
         '--react-paint-editor-toolbox-edittextbox-padding': `${settings.selectionPadding * settings.canvasSize.scaleRatio}px`,
         '--react-paint-editor-toolbox-edittextbox-color': shape.style?.strokeColor ?? 'inherit',

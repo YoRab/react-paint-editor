@@ -5,7 +5,7 @@ import { createCirclePath, createLinePath, createRecPath } from '@canvas/utils/s
 import { roundForGrid, roundValues } from '@canvas/utils/transform'
 import { rotatePoint } from '@canvas/utils/trigo'
 import type { SelectionModeResize } from '@common/types/Mode'
-import type { DrawableShape, Point, Rect, SelectionDefaultType, SelectionType } from '@common/types/Shapes'
+import type { DrawableShape, Point, Rect, SelectionDefaultType, SelectionType, ShapeEntity } from '@common/types/Shapes'
 
 export const createRecSelectionPath = (
   path: Path2D | undefined,
@@ -68,7 +68,7 @@ export const drawBoundingBox = (ctx: CanvasRenderingContext2D, shape: SelectionT
 
 export const drawSelectionRect = (
   ctx: CanvasRenderingContext2D,
-  shape: DrawableShape & { selection?: SelectionDefaultType | undefined },
+  shape: ShapeEntity & { selection?: SelectionDefaultType | undefined },
   selectionColor: string,
   selectionWidth: number,
   settings: UtilsSettings,
@@ -243,7 +243,7 @@ const calculateRectSelectionData = ({
 
   const [newCenterX, newCenterY] = rotatePoint({
     point: centerVector,
-    rotation: -originalShape.rotation
+    rotation: -(originalShape.rotation ?? 0)
   })
 
   return {
@@ -276,7 +276,7 @@ const adjustRectSelectionFromCenter = (
 
 export const resizeRectSelection = (
   cursorPosition: Point,
-  originalShape: DrawableShape,
+  originalShape: ShapeEntity,
   selectionMode: SelectionModeResize,
   settings: UtilsSettings,
   keepRatio = false,

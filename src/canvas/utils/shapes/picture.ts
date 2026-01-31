@@ -13,7 +13,7 @@ export const getComputedPicture = (picture: DrawableShape<'picture'>, settings: 
   return getComputedShapeInfos(picture, getRectBorder, settings)
 }
 
-const buildPath = <T extends DrawableShape<'picture'>>(shape: T, settings: UtilsSettings): T => {
+const buildPath = <T extends DrawableShape<'picture'>>(shape: T & { id: string }, settings: UtilsSettings): ShapeEntity<'picture'> => {
   const computed = getComputedPicture(shape, settings)
   return {
     ...shape,
@@ -42,8 +42,7 @@ const createPictureShape = (
       width,
       height,
       src: storedSrc,
-      img,
-      rotation: 0
+      img
     },
     settings
   )
@@ -123,15 +122,15 @@ export const createPicture = (
   })
 }
 
-export const drawPicture = (ctx: CanvasRenderingContext2D, picture: DrawableShape<'picture'>): void => {
+export const drawPicture = (ctx: CanvasRenderingContext2D, picture: ShapeEntity<'picture'>): void => {
   if (ctx.globalAlpha === 0) return
   ctx.beginPath()
   ctx.drawImage(picture.img, picture.x, picture.y, picture.width, picture.height)
 }
 
-export const translatePicture = <U extends DrawableShape<'picture'>>(
+export const translatePicture = (
   cursorPosition: Point,
-  originalShape: U,
+  originalShape: ShapeEntity<'picture'>,
   originalCursorPosition: Point,
   settings: UtilsSettings,
   singleAxis: boolean
@@ -153,11 +152,11 @@ export const translatePicture = <U extends DrawableShape<'picture'>>(
 
 export const resizePicture = (
   cursorPosition: Point,
-  originalShape: DrawableShape<'picture'>,
+  originalShape: ShapeEntity<'picture'>,
   selectionMode: SelectionModeResize,
   settings: UtilsSettings,
   resizeFromCenter: boolean
-): DrawableShape<'picture'> => {
+): ShapeEntity<'picture'> => {
   const { borderX, borderHeight, borderY, borderWidth } = resizeRectSelection(
     cursorPosition,
     originalShape,

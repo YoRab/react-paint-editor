@@ -1,5 +1,4 @@
 import type { UtilsSettings } from '@canvas/constants/app'
-import { KeyboardCode } from '@canvas/constants/keyboard'
 import { ShapeTypeArray } from '@canvas/constants/shapes'
 import useDoubleClick from '@canvas/hooks/useDoubleClick'
 import {

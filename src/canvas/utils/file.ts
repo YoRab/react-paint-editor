@@ -67,7 +67,7 @@ const encodeObjectToString = (objectToEncode: unknown) => {
   return `data:text/plain;charset=utf-8,${encodeURIComponent(JSON.stringify(objectToEncode))}`
 }
 
-const getShapesDataUrl = ({ shapes, settings }: { shapes: DrawableShape[]; settings: UtilsSettings }): string => {
+const getShapesDataUrl = ({ shapes, settings }: { shapes: ShapeEntity[]; settings: UtilsSettings }): string => {
   const newCanvas = document.createElement('canvas')
   const ctx = newCanvas.getContext('2d')
   if (!ctx) throw new Error('No context found for canvas')
@@ -88,7 +88,7 @@ export const getCanvasImage = ({
   settings,
   view
 }: {
-  shapes: DrawableShape[]
+  shapes: ShapeEntity[]
   settings: UtilsSettings
   view: 'fitToShapes' | 'defaultView' | 'currentZoom'
 }): string => {
@@ -145,7 +145,7 @@ export const getCanvasImage = ({
   return getShapesDataUrl({ shapes, settings: printSettings })
 }
 
-export const encodeShapesInString = (shapes: DrawableShape[], width: number, height: number) => {
+export const encodeShapesInString = (shapes: ShapeEntity[], width: number, height: number): string => {
   const dataToExport = buildDataToExport(shapes, width, height)
   return encodeObjectToString(dataToExport)
 }
