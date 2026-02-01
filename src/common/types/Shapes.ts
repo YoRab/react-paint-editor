@@ -81,86 +81,150 @@ export type SelectionLinesType = {
 }
 
 export type DrawableShape<T extends ShapeType = ShapeType> = {
+  rotation?: number
   toolId?: string
   visible?: boolean
   locked?: boolean
-  rotation: number
   style?: StyleShape | undefined
 } & (T extends 'line'
   ? Line & {
       type: 'line'
-      selection?: SelectionLinesType | undefined
-      path?: Path2D
-      arrows?: DrawableShape<'triangle'>[]
     }
   : T extends 'picture'
     ? Picture & {
-        type: 'picture'
         img: HTMLImageElement
-        selection?: SelectionDefaultType | undefined
+        type: 'picture'
       }
     : T extends 'text'
-      ? Text & { type: 'text'; selection?: SelectionDefaultType | undefined }
+      ? Text & {
+          type: 'text'
+        }
       : T extends 'rect'
         ? Rect & {
             type: 'rect'
-            selection?: SelectionDefaultType | undefined
-            path?: Path2D
           }
         : T extends 'square'
           ? Rect & {
               type: 'square'
-              selection?: SelectionDefaultType | undefined
-              path?: Path2D
             }
           : T extends 'circle'
             ? Circle & {
                 type: 'circle'
-                selection?: SelectionDefaultType | undefined
-                path?: Path2D
               }
             : T extends 'ellipse'
               ? Ellipse & {
                   type: 'ellipse'
-                  selection?: SelectionDefaultType | undefined
-                  path?: Path2D
                 }
               : T extends 'triangle'
-                ? Triangle & { type: 'triangle'; path?: Path2D }
+                ? Triangle & {
+                    type: 'triangle'
+                  }
                 : T extends 'polygon'
                   ? Polygon & {
                       type: 'polygon'
-                      selection?: SelectionLinesType | undefined
-                      path?: Path2D
                     }
                   : T extends 'curve'
                     ? Curve & {
                         type: 'curve'
-                        selection?: SelectionLinesType | undefined
-                        path?: Path2D
                       }
                     : T extends 'brush'
                       ? Brush & {
                           type: 'brush'
-                          selection?: SelectionDefaultType | undefined
-                          path?: Path2D
                           scaleX?: number
                           scaleY?: number
                         }
                       : T extends 'group'
                         ? Rect & {
-                            type: 'group'
-                            selection?: SelectionDefaultType | undefined
-                            path?: Path2D
                             shapes: ShapeEntity[]
+                            type: 'group'
                           }
                         : never)
 
 export type ExportedDrawableShape<T extends ShapeType = ShapeType> = T extends 'picture' ? Omit<DrawableShape<'picture'>, 'img'> : DrawableShape<T>
 
+export type TriangleEntity = DrawableShape<'triangle'> & {
+  path: Path2D
+  computed: {
+    borders: Rect
+    outerBorders: Rect
+    center: Point
+    boundingBox: Rect
+  }
+}
+
 export type ShapeEntity<T extends Exclude<ShapeType, 'triangle'> = Exclude<ShapeType, 'triangle'>> = {
   id: string
-} & DrawableShape<T>
+  computed: {
+    borders: Rect
+    outerBorders: Rect
+    center: Point
+    boundingBox: Rect
+  }
+} & DrawableShape<T> &
+  (T extends 'line'
+    ? {
+        selection?: SelectionLinesType | undefined
+        path?: Path2D | undefined
+        arrows?: TriangleEntity[]
+        type: 'line'
+      }
+    : T extends 'picture'
+      ? {
+          img: HTMLImageElement
+          selection?: SelectionDefaultType | undefined
+          type: 'picture'
+        }
+      : T extends 'text'
+        ? { selection?: SelectionDefaultType | undefined; type: 'text' }
+        : T extends 'rect'
+          ? {
+              selection?: SelectionDefaultType | undefined
+              path?: Path2D | undefined
+              type: 'rect'
+            }
+          : T extends 'square'
+            ? {
+                selection?: SelectionDefaultType | undefined
+                path?: Path2D | undefined
+                type: 'square'
+              }
+            : T extends 'circle'
+              ? {
+                  selection?: SelectionDefaultType | undefined
+                  path?: Path2D | undefined
+                  type: 'circle'
+                }
+              : T extends 'ellipse'
+                ? {
+                    selection?: SelectionDefaultType | undefined
+                    path?: Path2D | undefined
+                    type: 'ellipse'
+                  }
+                : T extends 'polygon'
+                  ? {
+                      selection?: SelectionLinesType | undefined
+                      path?: Path2D | undefined
+                      type: 'polygon'
+                    }
+                  : T extends 'curve'
+                    ? {
+                        selection?: SelectionLinesType | undefined
+                        path?: Path2D | undefined
+                        type: 'curve'
+                      }
+                    : T extends 'brush'
+                      ? {
+                          selection?: SelectionDefaultType | undefined
+                          path?: Path2D | undefined
+                          type: 'brush'
+                        }
+                      : T extends 'group'
+                        ? {
+                            selection?: SelectionDefaultType | undefined
+                            path?: Path2D | undefined
+                            type: 'group'
+                          }
+                        : never)
 
 export type StateData = {
   shapes?: DrawableShape[]

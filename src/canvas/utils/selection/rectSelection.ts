@@ -1,20 +1,19 @@
 import type { UtilsSettings } from '@canvas/constants/app'
 import { SELECTION_ANCHOR_SIZE, SELECTION_RESIZE_ANCHOR_POSITIONS, SELECTION_ROTATED_ANCHOR_POSITION } from '@canvas/constants/shapes'
 import { updateCanvasContext } from '@canvas/utils/canvas'
-import { getShapeInfos } from '@canvas/utils/shapes/index'
 import { createCirclePath, createLinePath, createRecPath } from '@canvas/utils/shapes/path'
 import { roundForGrid, roundValues } from '@canvas/utils/transform'
 import { rotatePoint } from '@canvas/utils/trigo'
 import type { SelectionModeResize } from '@common/types/Mode'
-import type { DrawableShape, Point, Rect, SelectionDefaultType } from '@common/types/Shapes'
+import type { DrawableShape, Point, Rect, SelectionDefaultType, SelectionType, ShapeEntity } from '@common/types/Shapes'
 
 export const createRecSelectionPath = (
   path: Path2D | undefined,
-  rect: DrawableShape,
+  computed: { borders: Rect; outerBorders: Rect; center: Point },
   settings: UtilsSettings,
   isGroup = false
 ): SelectionDefaultType => {
-  const { borders } = getShapeInfos(rect, settings)
+  const { borders } = computed
 
   return {
     border: createRecPath(borders),
@@ -49,15 +48,48 @@ export const createRecSelectionPath = (
   }
 }
 
+export const drawBoundingBox = (ctx: CanvasRenderingContext2D, shape: SelectionType, selectionWidth: number, settings: UtilsSettings): void => {
+  if (!shape.selection) return
+  if (settings.debug) {
+    ctx.save()
+    ctx.scale(settings.canvasSize.scaleRatio, settings.canvasSize.scaleRatio)
+    ctx.translate(settings.canvasOffset[0], settings.canvasOffset[1])
+
+    updateCanvasContext(ctx, {
+      fillColor: 'transparent',
+      strokeColor: 'green',
+      lineWidth: selectionWidth / settings.canvasSize.scaleRatio
+    })
+
+    ctx.strokeRect(shape.computed.boundingBox.x, shape.computed.boundingBox.y, shape.computed.boundingBox.width, shape.computed.boundingBox.height)
+    ctx.restore()
+  }
+}
+
 export const drawSelectionRect = (
   ctx: CanvasRenderingContext2D,
-  shape: DrawableShape & { selection?: SelectionDefaultType | undefined },
+  shape: ShapeEntity & { selection?: SelectionDefaultType | undefined },
   selectionColor: string,
   selectionWidth: number,
   settings: UtilsSettings,
   withAnchors: boolean
 ): void => {
   if (!shape.selection) return
+
+  if (settings.debug) {
+    updateCanvasContext(ctx, {
+      fillColor: 'transparent',
+      strokeColor: 'red',
+      lineWidth: selectionWidth / settings.canvasSize.scaleRatio
+    })
+
+    ctx.strokeRect(
+      shape.computed.outerBorders.x,
+      shape.computed.outerBorders.y,
+      shape.computed.outerBorders.width,
+      shape.computed.outerBorders.height
+    )
+  }
 
   updateCanvasContext(ctx, {
     fillColor: 'transparent',
@@ -211,7 +243,7 @@ const calculateRectSelectionData = ({
 
   const [newCenterX, newCenterY] = rotatePoint({
     point: centerVector,
-    rotation: -originalShape.rotation
+    rotation: -(originalShape.rotation ?? 0)
   })
 
   return {
@@ -244,7 +276,7 @@ const adjustRectSelectionFromCenter = (
 
 export const resizeRectSelection = (
   cursorPosition: Point,
-  originalShape: DrawableShape,
+  originalShape: ShapeEntity,
   selectionMode: SelectionModeResize,
   settings: UtilsSettings,
   keepRatio = false,
@@ -255,7 +287,7 @@ export const resizeRectSelection = (
   borderY: number
   borderWidth: number
 } => {
-  const { center, borders } = getShapeInfos(originalShape, settings)
+  const { center, borders } = originalShape.computed
 
   const rotatedCursorPosition = rotatePoint({
     origin: center,

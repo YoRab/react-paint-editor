@@ -4,6 +4,7 @@ import Panel from '@editor/components/common/Panel'
 import type React from 'react'
 import { useEffect, useRef, useState } from 'react'
 import './RangeField.css'
+import useDebounce from '@canvas/hooks/useDebounce'
 
 type ShapeStyleColorType = {
   selectedSettings: string | undefined
@@ -37,16 +38,13 @@ const RangeField = ({
   const indeterminate = value === undefined
   const displayedValue = indeterminate ? 'N/A' : `${Math.round(value)}${unity}`
   const [customKey] = useState(uniqueId('settings_'))
-  const timeoutCb = useRef<NodeJS.Timeout | null>(null)
+  const debouncedValueChanged = useDebounce(valueChanged)
 
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const parsedValue = +event.target.value
-    valueChanged(field, Number.isNaN(parsedValue) ? event.target.value : parsedValue, false)
-
-    timeoutCb.current && clearTimeout(timeoutCb.current)
-    timeoutCb.current = setTimeout(() => {
-      valueChanged(field, Number.isNaN(parsedValue) ? event.target.value : parsedValue, true)
-    }, 1000)
+    const updatedValue = Number.isNaN(parsedValue) ? event.target.value : parsedValue
+    valueChanged(field, updatedValue, false)
+    debouncedValueChanged(field, updatedValue, true)
   }
 
   const togglePanel = () => {
@@ -54,12 +52,6 @@ const RangeField = ({
       return prev === customKey ? undefined : customKey
     })
   }
-
-  useEffect(() => {
-    return () => {
-      timeoutCb.current && clearTimeout(timeoutCb.current)
-    }
-  }, [])
 
   const isPanelVisible = selectedSettings === customKey
 

@@ -1,18 +1,33 @@
 import type { UtilsSettings } from '@canvas/constants/app'
 import { createRecSelectionPath, resizeRectSelection } from '@canvas/utils/selection/rectSelection'
-import { createEllipsePath } from '@canvas/utils/shapes/path'
+import { createEllipsePath, getComputedShapeInfos } from '@canvas/utils/shapes/path'
 import { boundVectorToSingleAxis, roundForGrid } from '@canvas/utils/transform'
 import type { SelectionModeResize } from '@common/types/Mode'
 import type { DrawableShape, Ellipse, Point, Rect, ShapeEntity } from '@common/types/Shapes'
 import type { ToolsSettingsType } from '@common/types/tools'
 import { uniqueId } from '@common/utils/util'
 
-const buildPath = <T extends DrawableShape<'ellipse'>>(shape: T, settings: UtilsSettings): T => {
+const getEllipseBorder = (ellipse: Ellipse, settings: Pick<UtilsSettings, 'selectionPadding'>): Rect => {
+  return {
+    x: ellipse.x - ellipse.radiusX - settings.selectionPadding,
+    width: (ellipse.radiusX + settings.selectionPadding) * 2,
+    y: ellipse.y - ellipse.radiusY - settings.selectionPadding,
+    height: (ellipse.radiusY + settings.selectionPadding) * 2
+  }
+}
+
+export const getComputedEllipse = (ellipse: DrawableShape<'ellipse'>, settings: UtilsSettings) => {
+  return getComputedShapeInfos(ellipse, getEllipseBorder, settings)
+}
+
+const buildPath = <T extends DrawableShape<'ellipse'>>(shape: T & { id: string }, settings: UtilsSettings): ShapeEntity<'ellipse'> => {
   const path = createEllipsePath(shape)
+  const computed = getComputedEllipse(shape, settings)
   return {
     ...shape,
     path,
-    selection: createRecSelectionPath(path, shape, settings)
+    selection: createRecSelectionPath(path, computed, settings),
+    computed
   }
 }
 
@@ -36,7 +51,6 @@ export const createEllipse = (
       y: cursorPosition[1],
       radiusX: 0,
       radiusY: 0,
-      rotation: 0,
       style: {
         opacity: shape.settings.opacity.default,
         fillColor: shape.settings.fillColor.default,
@@ -49,24 +63,15 @@ export const createEllipse = (
   )
 }
 
-export const drawEllipse = (ctx: CanvasRenderingContext2D, ellipse: DrawableShape<'ellipse'>): void => {
+export const drawEllipse = (ctx: CanvasRenderingContext2D, ellipse: ShapeEntity<'ellipse'>): void => {
   if (ctx.globalAlpha === 0 || !ellipse.path) return
   ellipse.style?.fillColor !== 'transparent' && ctx.fill(ellipse.path)
   ellipse.style?.strokeColor !== 'transparent' && ctx.stroke(ellipse.path)
 }
 
-export const getEllipseBorder = (ellipse: Ellipse, settings: Pick<UtilsSettings, 'selectionPadding'>): Rect => {
-  return {
-    x: ellipse.x - ellipse.radiusX - settings.selectionPadding,
-    width: (ellipse.radiusX + settings.selectionPadding) * 2,
-    y: ellipse.y - ellipse.radiusY - settings.selectionPadding,
-    height: (ellipse.radiusY + settings.selectionPadding) * 2
-  }
-}
-
-export const translateEllipse = <U extends DrawableShape<'ellipse'>>(
+export const translateEllipse = (
   cursorPosition: Point,
-  originalShape: U,
+  originalShape: ShapeEntity<'ellipse'>,
   originalCursorPosition: Point,
   settings: UtilsSettings,
   singleAxis: boolean
@@ -88,12 +93,12 @@ export const translateEllipse = <U extends DrawableShape<'ellipse'>>(
 
 export const resizeEllipse = (
   cursorPosition: Point,
-  originalShape: DrawableShape<'ellipse'>,
+  originalShape: ShapeEntity<'ellipse'>,
   selectionMode: SelectionModeResize,
   settings: UtilsSettings,
   keepRatio = false,
   resizeFromCenter = false
-): DrawableShape<'ellipse'> => {
+): ShapeEntity<'ellipse'> => {
   const { borderX, borderHeight, borderY, borderWidth } = resizeRectSelection(
     cursorPosition,
     originalShape,

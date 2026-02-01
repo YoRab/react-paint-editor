@@ -1,6 +1,5 @@
 import type { UtilsSettings } from '@canvas/constants/app'
 import { createRecSelectionPath, resizeRectSelection } from '@canvas/utils/selection/rectSelection'
-import { getShapeInfos } from '@canvas/utils/shapes/index'
 import { boundVectorToSingleAxis, roundForGrid } from '@canvas/utils/transform'
 import type { SelectionModeResize } from '@common/types/Mode'
 import type { DrawableShape, Point, Rect, ShapeEntity, Text } from '@common/types/Shapes'
@@ -8,14 +7,21 @@ import type { ToolsSettingsType } from '@common/types/tools'
 import { uniqueId } from '@common/utils/util'
 import { STYLE_FONT_DEFAULT, STYLE_FONT_SIZE_DEFAULT } from '@editor/constants/style'
 import { getRectOppositeAnchorAbsolutePosition } from './rectangle'
+import { getComputedShapeInfos } from './path'
 
 const DEFAULT_TEXT_VALUE: string[] = ['Texte']
 const DEFAULT_TEXT_WIDTH = 150
 
-const buildPath = <T extends DrawableShape<'text'>>(shape: T, settings: UtilsSettings): T => {
+export const getComputedText = (text: DrawableShape<'text'>, settings: UtilsSettings) => {
+  return getComputedShapeInfos(text, getTextBorder, settings)
+}
+
+const buildPath = <T extends DrawableShape<'text'>>(shape: T & { id: string }, settings: UtilsSettings): ShapeEntity<'text'> => {
+  const computed = getComputedText(shape, settings)
   return {
     ...shape,
-    selection: createRecSelectionPath(undefined, shape, settings)
+    selection: createRecSelectionPath(undefined, computed, settings),
+    computed
   }
 }
 
@@ -67,7 +73,6 @@ export const createText = (
       fontSize,
       width: DEFAULT_TEXT_WIDTH,
       height: defaultHeight,
-      rotation: 0,
       style: {
         opacity: shape.settings.opacity.default,
         strokeColor: shape.settings.strokeColor.default,
@@ -102,9 +107,9 @@ export const getTextBorder = (text: Text, settings: Pick<UtilsSettings, 'selecti
   }
 }
 
-export const translateText = <U extends DrawableShape<'text'>>(
+export const translateText = (
   cursorPosition: Point,
-  originalShape: U,
+  originalShape: ShapeEntity<'text'>,
   originalCursorPosition: Point,
   settings: UtilsSettings,
   singleAxis: boolean
@@ -127,11 +132,11 @@ export const translateText = <U extends DrawableShape<'text'>>(
 export const resizeText = (
   ctx: CanvasRenderingContext2D,
   cursorPosition: Point,
-  originalShape: DrawableShape<'text'>,
+  originalShape: ShapeEntity<'text'>,
   selectionMode: SelectionModeResize,
   settings: UtilsSettings,
   resizeFromCenter: boolean
-): DrawableShape<'text'> => {
+): ShapeEntity<'text'> => {
   const { borderX, borderHeight, borderY, borderWidth } = resizeRectSelection(
     cursorPosition,
     originalShape,
@@ -162,7 +167,7 @@ export const resizeText = (
       newRect.style?.fontItalic ?? false,
       newRect.style?.fontFamily
     )
-  } as DrawableShape<'text'>
+  } as ShapeEntity<'text'>
 }
 
 const calculateTextWidth = (
@@ -178,12 +183,12 @@ const calculateTextWidth = (
   return Math.max(...measuredText) || 20
 }
 
-export const resizeTextShapeWithNewContent = <U extends DrawableShape<'text'>>(
+export const resizeTextShapeWithNewContent = (
   ctx: CanvasRenderingContext2D,
-  shape: U,
+  shape: ShapeEntity<'text'>,
   newValue: string[],
   settings: UtilsSettings
-): U => {
+): ShapeEntity<'text'> => {
   const newShape = { ...shape, value: newValue }
   const newWidth = calculateTextWidth(
     ctx,
@@ -201,11 +206,9 @@ export const resizeTextShapeWithNewContent = <U extends DrawableShape<'text'>>(
     height: newHeight
   }
 
-  const { center } = getShapeInfos(shape, settings)
+  const { center: shapeWithNewDimensionsCenter } = getComputedText(resizedShape, settings)
 
-  const { center: shapeWithNewDimensionsCenter } = getShapeInfos(resizedShape, settings)
-
-  const [oppTrueX, oppTrueY] = getRectOppositeAnchorAbsolutePosition([1, 1], center, shape)
+  const [oppTrueX, oppTrueY] = getRectOppositeAnchorAbsolutePosition([1, 1], shape.computed.center, shape)
 
   const [newOppTrueX, newOppTrueY] = getRectOppositeAnchorAbsolutePosition([1, 1], shapeWithNewDimensionsCenter, resizedShape, [false, false])
 

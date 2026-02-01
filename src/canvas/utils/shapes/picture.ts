@@ -3,15 +3,22 @@ import { addSizeAndConvertSvgToObjectUrl, fetchAndStringify, isSvg } from '@canv
 import { createRecSelectionPath, resizeRectSelection } from '@canvas/utils/selection/rectSelection'
 import { boundVectorToSingleAxis, fitContentInsideContainer, roundForGrid } from '@canvas/utils/transform'
 import type { SelectionModeResize } from '@common/types/Mode'
-import type { DrawableShape, Picture, Point, Rect, ShapeEntity } from '@common/types/Shapes'
+import type { DrawableShape, Point, ShapeEntity } from '@common/types/Shapes'
 import { uniqueId } from '@common/utils/util'
 import { DEFAULT_SHAPE_PICTURE } from '@editor/constants/tools'
 import { getRectBorder } from './rectangle'
+import { getComputedShapeInfos } from './path'
 
-const buildPath = <T extends DrawableShape<'picture'>>(shape: T, settings: UtilsSettings): T => {
+export const getComputedPicture = (picture: DrawableShape<'picture'>, settings: UtilsSettings) => {
+  return getComputedShapeInfos(picture, getRectBorder, settings)
+}
+
+const buildPath = <T extends DrawableShape<'picture'>>(shape: T & { id: string }, settings: UtilsSettings): ShapeEntity<'picture'> => {
+  const computed = getComputedPicture(shape, settings)
   return {
     ...shape,
-    selection: createRecSelectionPath(undefined, shape, settings)
+    selection: createRecSelectionPath(undefined, computed, settings),
+    computed
   }
 }
 
@@ -35,8 +42,7 @@ const createPictureShape = (
       width,
       height,
       src: storedSrc,
-      img,
-      rotation: 0
+      img
     },
     settings
   )
@@ -116,17 +122,15 @@ export const createPicture = (
   })
 }
 
-export const drawPicture = (ctx: CanvasRenderingContext2D, picture: DrawableShape<'picture'>): void => {
+export const drawPicture = (ctx: CanvasRenderingContext2D, picture: ShapeEntity<'picture'>): void => {
   if (ctx.globalAlpha === 0) return
   ctx.beginPath()
   ctx.drawImage(picture.img, picture.x, picture.y, picture.width, picture.height)
 }
 
-export const getPictureBorder = (picture: Picture, settings: Pick<UtilsSettings, 'selectionPadding'>): Rect => getRectBorder(picture, settings)
-
-export const translatePicture = <U extends DrawableShape<'picture'>>(
+export const translatePicture = (
   cursorPosition: Point,
-  originalShape: U,
+  originalShape: ShapeEntity<'picture'>,
   originalCursorPosition: Point,
   settings: UtilsSettings,
   singleAxis: boolean
@@ -148,11 +152,11 @@ export const translatePicture = <U extends DrawableShape<'picture'>>(
 
 export const resizePicture = (
   cursorPosition: Point,
-  originalShape: DrawableShape<'picture'>,
+  originalShape: ShapeEntity<'picture'>,
   selectionMode: SelectionModeResize,
   settings: UtilsSettings,
   resizeFromCenter: boolean
-): DrawableShape<'picture'> => {
+): ShapeEntity<'picture'> => {
   const { borderX, borderHeight, borderY, borderWidth } = resizeRectSelection(
     cursorPosition,
     originalShape,

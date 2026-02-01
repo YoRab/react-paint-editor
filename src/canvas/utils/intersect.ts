@@ -5,8 +5,7 @@ import { catmullRomToBezier, createLinePath, getCatmullRomPoints } from '@canvas
 import { scalePoint } from '@canvas/utils/transform'
 import type { CanvasSize } from '@common/types/Canvas'
 import type { HoverModeData } from '@common/types/Mode'
-import type { DrawableShape, Point, Rect, SelectionType } from '@common/types/Shapes'
-import { getShapeInfos } from './shapes'
+import type { Point, Rect, SelectionType, ShapeEntity } from '@common/types/Shapes'
 import { isCircleIntersectRect, isPointInsideRect, rotatePoint } from './trigo'
 
 export const getCursorPosition = (e: MouseEvent | TouchEvent): { clientX: number; clientY: number } => {
@@ -72,9 +71,9 @@ export const checkSelectionIntersection = (
   const {
     canvasSize: { scaleRatio }
   } = settings
-  const { borders, center } = getShapeInfos(shape, settings)
+  const { borders, center } = shape.computed
 
-  const newPosition = getPointPositionAfterCanvasTransformation(position, shape.rotation, center)
+  const newPosition = getPointPositionAfterCanvasTransformation(position, shape.rotation ?? 0, center)
   const shapesToCheck = getSelectedShapes(shape)
   if (checkAnchors) {
     if (
@@ -142,16 +141,16 @@ export const checkSelectionIntersection = (
 
 export const checkPolygonLinesSelectionIntersection = (
   ctx: CanvasRenderingContext2D,
-  shape: DrawableShape<'polygon' | 'curve'>,
+  shape: ShapeEntity<'polygon' | 'curve'>,
   position: Point,
   settings: UtilsSettings,
   radius = 50
 ): false | { lineIndex: number } => {
   if (shape.locked || shape.points.length < 2) return false
 
-  const { center } = getShapeInfos(shape, settings)
+  const { center } = shape.computed
 
-  const newPosition = getPointPositionAfterCanvasTransformation(position, shape.rotation, center)
+  const newPosition = getPointPositionAfterCanvasTransformation(position, shape.rotation ?? 0, center)
 
   ctx.lineWidth = (shape.style?.lineWidth ?? 0) + radius / settings.canvasZoom
   const points = shape.style?.closedPoints ? [...shape.points, shape.points[0]] : shape.points
@@ -166,7 +165,7 @@ export const checkPolygonLinesSelectionIntersection = (
 
 export const checkCurveLinesSelectionIntersection = (
   ctx: CanvasRenderingContext2D,
-  shape: DrawableShape<'curve'>,
+  shape: ShapeEntity<'curve'>,
   position: Point,
   settings: UtilsSettings,
   radius = 50
@@ -174,9 +173,9 @@ export const checkCurveLinesSelectionIntersection = (
   if (shape.locked || shape.points.length < 2) return false
   if (shape.points.length < 3) return checkPolygonLinesSelectionIntersection(ctx, shape, position, settings, radius)
 
-  const { center } = getShapeInfos(shape, settings)
+  const { center } = shape.computed
 
-  const newPosition = getPointPositionAfterCanvasTransformation(position, shape.rotation, center)
+  const newPosition = getPointPositionAfterCanvasTransformation(position, shape.rotation ?? 0, center)
 
   ctx.lineWidth = (shape.style?.lineWidth ?? 0) + radius / settings.canvasZoom
   const points = getCatmullRomPoints(shape, shape.points)
@@ -187,7 +186,9 @@ export const checkCurveLinesSelectionIntersection = (
     const p1 = points[i]!
     const p2 = points[i + 1]!
     const p3 = points[i + 2]!
-    catmullRomToBezier(path, p0, p1, p2, p3)
+    const { cp1, cp2 } = catmullRomToBezier(p0, p1, p2, p3)
+    path.bezierCurveTo(cp1[0], cp1[1], cp2[0], cp2[1], p2[0], p2[1])
+
     if (ctx.isPointInStroke(path, newPosition[0], newPosition[1])) {
       return { lineIndex: i - 1 }
     }
@@ -202,9 +203,9 @@ export const checkPositionIntersection = (
   settings: UtilsSettings
 ): false | HoverModeData => {
   if (shape.locked) return false
-  const { center } = getShapeInfos(shape, settings)
+  const { center } = shape.computed
 
-  const newPosition = getPointPositionAfterCanvasTransformation(position, shape.rotation, center)
+  const newPosition = getPointPositionAfterCanvasTransformation(position, shape.rotation ?? 0, center)
 
   if ('path' in shape && shape.path) {
     const checkFill = shape.style?.fillColor && shape.style?.fillColor !== 'transparent'
@@ -267,15 +268,15 @@ const COLLISION_OFFSET = 10
 
 export const checkSelectionFrameCollision = (
   ctx: CanvasRenderingContext2D,
-  shape: DrawableShape,
+  shape: ShapeEntity,
   selectionFrame: [Point, Point],
   settings: UtilsSettings
 ): boolean => {
   const { selectionPadding } = settings
-  const { center, borders } = getShapeInfos(shape, settings)
+  const { center, borders } = shape.computed
 
-  const frame0 = getPointPositionAfterCanvasTransformation(selectionFrame[0], shape.rotation, center)
-  const frame1 = getPointPositionAfterCanvasTransformation(selectionFrame[1], shape.rotation, center)
+  const frame0 = getPointPositionAfterCanvasTransformation(selectionFrame[0], shape.rotation ?? 0, center)
+  const frame1 = getPointPositionAfterCanvasTransformation(selectionFrame[1], shape.rotation ?? 0, center)
 
   const minX = Math.round(Math.min(frame0[0], frame1[0]) - selectionPadding / 2)
   const maxX = Math.round(Math.max(frame0[0], frame1[0]) + selectionPadding)
