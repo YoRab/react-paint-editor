@@ -29,10 +29,12 @@ const handleMove = (
   canvasRef: React.RefObject<HTMLCanvasElement | null>,
   selectedShape: SelectionType | undefined,
   selectionMode: SelectionModeData<Point | number>,
+  setSelectionMode: React.Dispatch<React.SetStateAction<SelectionModeData<Point | number>>>,
   canvasOffsetStartData: { start: Point; originalOffset: Point } | undefined,
   setHoverMode: React.Dispatch<React.SetStateAction<HoverModeData>>,
   refreshHoveredShape: (e: MouseEvent | TouchEvent, ctx: CanvasRenderingContext2D, cursorPosition: Point, isInsideMask: boolean) => void,
   updateSingleShape: (updatedShape: ShapeEntity[]) => void,
+  duplicateShapes: (shapesToDuplicate: ShapeEntity[]) => void,
   setCanvasOffset: (offset: Point) => void,
   refreshSelectedShapes: (ctx: CanvasRenderingContext2D, cursorPosition: Point, settings: UtilsSettings) => void,
   settings: UtilsSettings,
@@ -133,6 +135,14 @@ const handleMove = (
     const newShape = transformShape(ctx, selectedShape, cursorPosition, selectionMode, settings, isShiftPressed, isAltPressed)
     updateSingleShape(getSelectedShapes(newShape))
   }
+
+  if (selectionMode.mode === 'translate' && isAltPressed && !selectionMode.hasBeenDuplicated) {
+    setSelectionMode({
+      ...selectionMode,
+      hasBeenDuplicated: true
+    })
+    duplicateShapes(getSelectedShapes(selectionMode.originalShape))
+  }
 }
 
 type UseCanvasType = {
@@ -146,6 +156,7 @@ type UseCanvasType = {
   setActiveTool: React.Dispatch<React.SetStateAction<ToolsType>>
   refreshHoveredShape: (e: MouseEvent | TouchEvent, ctx: CanvasRenderingContext2D, cursorPosition: Point, isInsideMask: boolean) => void
   refreshSelectedShapes: (ctx: CanvasRenderingContext2D, cursorPosition: Point, settings: UtilsSettings) => void
+  duplicateShapes: (shapesToDuplicate: ShapeEntity[]) => void
   canvasOffsetStartData: { start: Point; originalOffset: Point } | undefined
   setCanvasOffsetStartData: React.Dispatch<React.SetStateAction<{ start: Point; originalOffset: Point } | undefined>>
   setCanvasOffset: (offset: Point) => void
@@ -179,6 +190,7 @@ const useDrawableCanvas = ({
   setSelectionFrame,
   setCanvasOffsetStartData,
   updateSingleShape,
+  duplicateShapes,
   saveShapes,
   setSelectionMode,
   setCanvasMoveAcceleration,
@@ -200,10 +212,12 @@ const useDrawableCanvas = ({
       drawCanvasRef,
       selectedShape,
       selectionMode,
+      setSelectionMode,
       canvasOffsetStartData,
       setHoverMode,
       refreshHoveredShape,
       updateSingleShape,
+      duplicateShapes,
       setCanvasOffset,
       refreshSelectedShapes,
       settings,

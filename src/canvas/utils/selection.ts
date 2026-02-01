@@ -17,6 +17,7 @@ export const getNewSelectionData = (
       mode: 'translate',
       cursorStartPosition: cursorPosition,
       originalShape: selectedShape,
+      hasBeenDuplicated: false,
       dateStart: Date.now()
     }
   }
@@ -88,6 +89,7 @@ export const selectShape = (
         mode: {
           mode: 'translate',
           cursorStartPosition: cursorPosition,
+          hasBeenDuplicated: false,
           dateStart: Date.now(),
           originalShape: foundShapeGroup!
         }
@@ -101,6 +103,7 @@ export const selectShape = (
       mode: {
         mode: 'translate',
         cursorStartPosition: cursorPosition,
+        hasBeenDuplicated: false,
         dateStart: Date.now(),
         originalShape: foundShapeGroup!
       }
