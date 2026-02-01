@@ -1,17 +1,53 @@
 import type { UtilsSettings } from '@canvas/constants/app'
 import { getPointPositionAfterCanvasTransformation } from '@canvas/utils/intersect'
 import { createLineSelectionPath } from '@canvas/utils/selection/lineSelection'
-import { createCurvePath, getComputedShapeInfos } from '@canvas/utils/shapes/path'
+import { catmullRomToBezier, createCurvePath, getCatmullRomPoints, getComputedShapeInfos, getCubicBezierBounds } from '@canvas/utils/shapes/path'
 import { boundVectorToSingleAxis, roundForGrid } from '@canvas/utils/transform'
 import type { SelectionModeResize } from '@common/types/Mode'
-import type { DrawableShape, Point, ShapeEntity } from '@common/types/Shapes'
+import type { DrawableShape, Point, Rect, ShapeEntity } from '@common/types/Shapes'
 import type { ToolsSettingsType } from '@common/types/tools'
 import { set } from '@common/utils/object'
 import { uniqueId } from '@common/utils/util'
 import { getPolygonBorder } from './polygon'
+import { getRectBorder } from '@canvas/utils/shapes/rectangle'
+
+const getCurveBorder = (curve: DrawableShape<'curve'>, settings: Pick<UtilsSettings, 'selectionPadding'>): Rect => {
+  const points = curve.tempPoint ? [...curve.points, curve.tempPoint] : curve.points
+  if (points.length < 2) {
+    const single = points[0] ?? ([0, 0] as Point)
+    const p = settings.selectionPadding
+    return { x: single[0] - p, y: single[1] - p, width: 2 * p, height: 2 * p }
+  }
+  if (points.length < 3) {
+    return getPolygonBorder({ ...curve, points } as Parameters<typeof getPolygonBorder>[0], settings)
+  }
+
+  const pts = getCatmullRomPoints(curve, points)
+  let minX = Number.POSITIVE_INFINITY
+  let maxX = Number.NEGATIVE_INFINITY
+  let minY = Number.POSITIVE_INFINITY
+  let maxY = Number.NEGATIVE_INFINITY
+
+  for (let i = 1; i < pts.length - 2; i++) {
+    const p0 = pts[i - 1]!
+    const p1 = pts[i]!
+    const p2 = pts[i + 1]!
+    const p3 = pts[i + 2]!
+
+    const { cp1, cp2 } = catmullRomToBezier(p0, p1, p2, p3)
+
+    const bounds = getCubicBezierBounds(p1, cp1, cp2, p2)
+    minX = Math.min(minX, bounds.minX)
+    maxX = Math.max(maxX, bounds.maxX)
+    minY = Math.min(minY, bounds.minY)
+    maxY = Math.max(maxY, bounds.maxY)
+  }
+
+  return getRectBorder({ x: minX, y: minY, width: maxX - minX, height: maxY - minY }, settings)
+}
 
 export const getComputedCurve = (curve: DrawableShape<'curve'>, settings: UtilsSettings) => {
-  return getComputedShapeInfos(curve, getPolygonBorder, settings)
+  return getComputedShapeInfos(curve, getCurveBorder, settings)
 }
 
 const buildPath = <T extends DrawableShape<'curve'>>(shape: T & { id: string }, settings: UtilsSettings): ShapeEntity<'curve'> => {
