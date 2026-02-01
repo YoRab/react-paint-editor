@@ -28,6 +28,7 @@ const App = ({ options, className, style, canvasProps }: AppProps) => {
     setSelectionFrame,
     refreshSelectedShapes,
     refreshHoveredShape,
+    duplicateShapes,
     removeShape,
     updateShape,
     backwardShape,
@@ -124,6 +125,7 @@ const App = ({ options, className, style, canvasProps }: AppProps) => {
       }}
     >
       <Canvas
+        duplicateShapes={duplicateShapes}
         isSpacePressed={isSpacePressed}
         ref={refs.canvas}
         canGrow={canGrow}

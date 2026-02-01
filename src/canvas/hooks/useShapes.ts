@@ -8,6 +8,7 @@ import { createPicture } from '@canvas/utils/shapes/picture'
 import type { Point, SelectionType, ShapeEntity, StateData } from '@common/types/Shapes'
 import { moveItemPosition } from '@common/utils/array'
 import { isEqual, omit, set } from '@common/utils/object'
+import { uniqueId } from '@common/utils/util'
 import { useCallback, useEffect, useRef, useState } from 'react'
 
 const useShapes = (settings: UtilsSettings, width: number, height: number, isShiftPressed: boolean) => {
@@ -55,6 +56,22 @@ const useShapes = (settings: UtilsSettings, width: number, height: number, isShi
 
   const addShapes = useCallback((newShapes: ShapeEntity[]) => {
     shapesRef.current = [...newShapes, ...shapesRef.current]
+  }, [])
+
+  const duplicateShapes = useCallback((shapesToDuplicate: ShapeEntity[]) => {
+    shapesRef.current = shapesRef.current.flatMap(marker => {
+      const originalShape = shapesToDuplicate.find(shape => shape.id === marker.id)
+      if (originalShape) {
+        return [
+          {
+            ...originalShape,
+            id: uniqueId(`${marker.type}_`)
+          },
+          marker
+        ]
+      }
+      return marker
+    })
   }, [])
 
   const refreshHoveredShape = useCallback(
@@ -288,6 +305,7 @@ const useShapes = (settings: UtilsSettings, width: number, height: number, isShi
     setSelectionFrame,
     refreshSelectedShapes,
     addShapes,
+    duplicateShapes,
     addPictureShape,
     moveShapes,
     saveShapes,

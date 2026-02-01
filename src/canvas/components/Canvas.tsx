@@ -87,6 +87,7 @@ type DrawerType = {
   settings: UtilsSettings
   isEditMode: boolean
   shapes: ShapeEntity[]
+  duplicateShapes: (shapesToDuplicate: ShapeEntity[]) => void
   saveShapes: () => void
   addShapes: (newShape: ShapeEntity[]) => void
   updateSingleShape: (updatedShape: ShapeEntity[], withSave?: boolean) => void
@@ -118,6 +119,7 @@ const Canvas = React.forwardRef<HTMLCanvasElement, DrawerType>(
     {
       canGrow,
       shapes,
+      duplicateShapes,
       addShapes: addShape,
       updateSingleShape,
       selectedShape,
@@ -174,6 +176,7 @@ const Canvas = React.forwardRef<HTMLCanvasElement, DrawerType>(
       refreshHoveredShape,
       refreshSelectedShapes,
       updateSingleShape,
+      duplicateShapes,
       saveShapes,
       setSelectionMode,
       setCanvasMoveAcceleration,

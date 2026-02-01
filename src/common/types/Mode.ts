@@ -38,6 +38,7 @@ export type SelectionModeTranslate = {
   mode: 'translate'
   cursorStartPosition: Point
   originalShape: SelectionType
+  hasBeenDuplicated: boolean
   dateStart: number
 }
 
