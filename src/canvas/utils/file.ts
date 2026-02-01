@@ -2,10 +2,10 @@ import type { UtilsSettings } from '@canvas/constants/app'
 import { PICTURE_DEFAULT_SIZE } from '@canvas/constants/picture'
 import { ShapeTypeArray } from '@canvas/constants/shapes'
 import { initCanvasContext } from '@canvas/utils/canvas'
-import { drawShape, getShapeInfos } from '@canvas/utils/shapes'
+import { drawShape } from '@canvas/utils/shapes'
 import type { DrawableShape, ExportedDrawableShape, Point, ShapeEntity } from '@common/types/Shapes'
 import { compact } from '@common/utils/array'
-import { addDefaultAndTempShapeProps, buildDataToExport } from './data'
+import { addDefaultAndTempShapeProps, buildDataToExport } from '@canvas/utils/data'
 
 export const addSizeAndConvertSvgToObjectUrl = (svgFileContent: string): string => {
   const parser = new DOMParser()
@@ -67,7 +67,7 @@ const encodeObjectToString = (objectToEncode: unknown) => {
   return `data:text/plain;charset=utf-8,${encodeURIComponent(JSON.stringify(objectToEncode))}`
 }
 
-const getShapesDataUrl = ({ shapes, settings }: { shapes: DrawableShape[]; settings: UtilsSettings }): string => {
+const getShapesDataUrl = ({ shapes, settings }: { shapes: ShapeEntity[]; settings: UtilsSettings }): string => {
   const newCanvas = document.createElement('canvas')
   const ctx = newCanvas.getContext('2d')
   if (!ctx) throw new Error('No context found for canvas')
@@ -88,28 +88,17 @@ export const getCanvasImage = ({
   settings,
   view
 }: {
-  shapes: DrawableShape[]
+  shapes: ShapeEntity[]
   settings: UtilsSettings
   view: 'fitToShapes' | 'defaultView' | 'currentZoom'
 }): string => {
   if (view === 'fitToShapes' && !shapes.length) throw new Error('No image found to export')
 
   if (view === 'fitToShapes') {
-    const bordersShapes = shapes.map(shape => {
-      const borders = getShapeInfos(shape, settings).borders
-      const halfLineWidth = (shape.style?.lineWidth ?? 0) / 2
-      return {
-        minX: borders.x - halfLineWidth,
-        minY: borders.y - halfLineWidth,
-        maxX: borders.x + borders.width + halfLineWidth,
-        maxY: borders.y + borders.height + halfLineWidth
-      }
-    })
-    const minX = Math.min(...bordersShapes.map(borders => borders.minX))
-    const maxX = Math.max(...bordersShapes.map(borders => borders.maxX))
-
-    const minY = Math.min(...bordersShapes.map(borders => borders.minY))
-    const maxY = Math.max(...bordersShapes.map(borders => borders.maxY))
+    const minX = Math.min(...shapes.map(shape => shape.computed.boundingBox.x))
+    const maxX = Math.max(...shapes.map(shape => shape.computed.boundingBox.x + shape.computed.boundingBox.width))
+    const minY = Math.min(...shapes.map(shape => shape.computed.boundingBox.y))
+    const maxY = Math.max(...shapes.map(shape => shape.computed.boundingBox.y + shape.computed.boundingBox.height))
 
     const printSettings = {
       ...settings,
@@ -156,7 +145,7 @@ export const getCanvasImage = ({
   return getShapesDataUrl({ shapes, settings: printSettings })
 }
 
-export const encodeShapesInString = (shapes: DrawableShape[], width: number, height: number) => {
+export const encodeShapesInString = (shapes: ShapeEntity[], width: number, height: number): string => {
   const dataToExport = buildDataToExport(shapes, width, height)
   return encodeObjectToString(dataToExport)
 }

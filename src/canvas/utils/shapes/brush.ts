@@ -1,7 +1,6 @@
 import type { UtilsSettings } from '@canvas/constants/app'
 import { createRecSelectionPath, resizeRectSelection } from '@canvas/utils/selection/rectSelection'
-import { getShapeInfos } from '@canvas/utils/shapes/index'
-import { createBrushPath } from '@canvas/utils/shapes/path'
+import { createBrushPath, getComputedShapeInfos } from '@canvas/utils/shapes/path'
 import { boundVectorToSingleAxis, roundForGrid, roundValues, scalePoint } from '@canvas/utils/transform'
 import type { SelectionModeResize } from '@common/types/Mode'
 import type { DrawableShape, Point, Rect, ShapeEntity } from '@common/types/Shapes'
@@ -9,12 +8,36 @@ import type { ToolsSettingsType } from '@common/types/tools'
 import { set } from '@common/utils/object'
 import { uniqueId } from '@common/utils/util'
 
-const buildPath = <T extends DrawableShape<'brush'>>(brush: T, settings: UtilsSettings): T => {
+const getBrushBorder = (brush: DrawableShape<'brush'>, { selectionPadding }: Pick<UtilsSettings, 'selectionPadding'>): Rect => {
+  const brushPoints = brush.points.flat()
+  const minX = Math.min(...brushPoints.map(point => point[0]))
+  const minY = Math.min(...brushPoints.map(point => point[1]))
+
+  const scaledPoints = brushPoints.map(point => scalePoint(point, minX, minY, brush.scaleX, brush.scaleY))
+
+  const maxX = Math.max(...scaledPoints.map(point => point[0])) + selectionPadding
+  const maxY = Math.max(...scaledPoints.map(point => point[1])) + selectionPadding
+
+  return {
+    x: minX - selectionPadding,
+    width: maxX - minX + selectionPadding,
+    y: minY - selectionPadding,
+    height: maxY - minY + selectionPadding
+  }
+}
+
+export const getComputedBrush = (brush: DrawableShape<'brush'>, settings: UtilsSettings) => {
+  return getComputedShapeInfos(brush, getBrushBorder, settings)
+}
+
+const buildPath = <T extends DrawableShape<'brush'>>(brush: T & { id: string }, settings: UtilsSettings): ShapeEntity<'brush'> => {
   const path = createBrushPath(brush, settings)
+  const computed = getComputedBrush(brush, settings)
   return {
     ...brush,
     path,
-    selection: createRecSelectionPath(path, brush, settings)
+    selection: createRecSelectionPath(path, computed, settings),
+    computed
   }
 }
 
@@ -35,7 +58,6 @@ export const createBrush = (
       type: shape.type,
       id: uniqueId(`${shape.type}_`),
       points: [[cursorPosition]],
-      rotation: 0,
       scaleX: 1,
       scaleY: 1,
       style: {
@@ -49,45 +71,27 @@ export const createBrush = (
   )
 }
 
-export const drawBrush = (ctx: CanvasRenderingContext2D, shape: DrawableShape<'brush'>): void => {
+export const drawBrush = (ctx: CanvasRenderingContext2D, shape: ShapeEntity<'brush'>): void => {
   if (shape.points.length < 1 || !shape.path) return
   if (ctx.globalAlpha === 0) return
   if (shape.style?.strokeColor === 'transparent' || ctx.globalAlpha === 0) return
   ctx.stroke(shape.path)
 }
 
-export const getBrushBorder = (brush: DrawableShape<'brush'>, { selectionPadding }: Pick<UtilsSettings, 'selectionPadding'>): Rect => {
-  const brushPoints = brush.points.flat()
-  const minX = Math.min(...brushPoints.map(point => point[0]))
-  const minY = Math.min(...brushPoints.map(point => point[1]))
-
-  const scaledPoints = brushPoints.map(point => scalePoint(point, minX, minY, brush.scaleX, brush.scaleY))
-
-  const maxX = Math.max(...scaledPoints.map(point => point[0])) + selectionPadding
-  const maxY = Math.max(...scaledPoints.map(point => point[1])) + selectionPadding
-
-  return {
-    x: minX - selectionPadding,
-    width: maxX - minX + selectionPadding,
-    y: minY - selectionPadding,
-    height: maxY - minY + selectionPadding
-  }
-}
-
-export const translateBrush = <U extends DrawableShape<'brush'>>(
+export const translateBrush = (
   cursorPosition: Point,
-  originalShape: U,
+  originalShape: ShapeEntity<'brush'>,
   originalCursorPosition: Point,
   settings: UtilsSettings,
   singleAxis: boolean
 ) => {
-  const { borders } = getShapeInfos(originalShape, settings)
+  const originalBorders = originalShape.computed.borders
   const translationVector = boundVectorToSingleAxis(
     [cursorPosition[0] - originalCursorPosition[0], cursorPosition[1] - originalCursorPosition[1]],
     singleAxis
   )
-  const translationX = settings.gridGap ? roundForGrid(borders.x + translationVector[0], settings) - borders.x : translationVector[0]
-  const translationY = settings.gridGap ? roundForGrid(borders.y + translationVector[1], settings) - borders.y : translationVector[1]
+  const translationX = settings.gridGap ? roundForGrid(originalBorders.x + translationVector[0], settings) - originalBorders.x : translationVector[0]
+  const translationY = settings.gridGap ? roundForGrid(originalBorders.y + translationVector[1], settings) - originalBorders.y : translationVector[1]
   return buildPath(
     {
       ...originalShape,
@@ -99,14 +103,14 @@ export const translateBrush = <U extends DrawableShape<'brush'>>(
 
 export const resizeBrush = (
   cursorPosition: Point,
-  originalShape: DrawableShape<'brush'>,
+  originalShape: ShapeEntity<'brush'>,
   selectionMode: SelectionModeResize,
   settings: UtilsSettings,
   keepRatio: boolean,
   resizeFromCenter: boolean
-): DrawableShape<'brush'> => {
-  const { borders: originalBordersWithoutScale } = getShapeInfos({ ...originalShape, scaleX: 1, scaleY: 1 }, settings)
-  const { borders: originalBorders } = getShapeInfos(originalShape, settings)
+): ShapeEntity<'brush'> => {
+  const originalBordersWithoutScale = getBrushBorder({ ...originalShape, scaleX: 1, scaleY: 1 }, settings)
+  const originalBorders = originalShape.computed.borders
 
   const { borderX, borderHeight, borderY, borderWidth } = resizeRectSelection(
     cursorPosition,
@@ -140,7 +144,7 @@ export const resizeBrush = (
   )
 }
 
-export const addNewPointToShape = <T extends DrawableShape<'brush'>>(shape: T, cursorPosition: Point, settings: UtilsSettings) => {
+export const addNewPointToShape = (shape: ShapeEntity<'brush'>, cursorPosition: Point, settings: UtilsSettings): ShapeEntity<'brush'> => {
   const brushShape = {
     ...shape,
     ...{
@@ -154,7 +158,7 @@ export const addNewPointToShape = <T extends DrawableShape<'brush'>>(shape: T, c
   return buildPath(brushShape, settings)
 }
 
-export const addNewPointGroupToShape = <T extends DrawableShape<'brush'>>(shape: T, cursorPosition: Point, settings: UtilsSettings): T => {
+export const addNewPointGroupToShape = (shape: ShapeEntity<'brush'>, cursorPosition: Point, settings: UtilsSettings): ShapeEntity<'brush'> => {
   const brushShape = {
     ...shape,
     ...{

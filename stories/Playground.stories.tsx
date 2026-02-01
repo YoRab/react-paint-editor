@@ -19,6 +19,7 @@ type PlaygroundProps = {
   withUrlPicture?: boolean
   withFrameSelection?: boolean
   withSkeleton?: boolean
+  debug?: boolean
   brushAlgo?: 'simple' | 'quadratic'
   isBrushShapeDoneOnMouseUp?: boolean
   canvasSelectionPadding?: number
@@ -59,6 +60,7 @@ const Playground = (args: PlaygroundProps) => {
     withUrlPicture,
     withFrameSelection,
     withSkeleton,
+    debug,
     brushAlgo,
     isBrushShapeDoneOnMouseUp,
     canvasSelectionPadding,
@@ -92,6 +94,7 @@ const Playground = (args: PlaygroundProps) => {
     withUrlPicture,
     withFrameSelection,
     withSkeleton,
+    debug,
     brushAlgo,
     isBrushShapeDoneOnMouseUp,
     canvasSelectionPadding,
@@ -167,6 +170,7 @@ const meta = {
     withUrlPicture: false,
     withFrameSelection: true,
     withSkeleton: true,
+    debug: false,
     clearCallback: 'empty',
     // Editor styling
     toolbarBackgroundColor: 'white',
@@ -290,6 +294,11 @@ const meta = {
       description: 'Display skeleton when hovering over shapes',
       table: { category: 'Feature Toggles', defaultValue: { summary: 'true' }, type: { summary: 'boolean' } }
     },
+    debug: {
+      control: { type: 'boolean' },
+      description: 'Enable debug logging for shape selection and hit-testing (logs to console)',
+      table: { category: 'Feature Toggles', defaultValue: { summary: 'false' }, type: { summary: 'boolean' } }
+    },
     clearCallback: {
       control: { type: 'select' },
       options: ['empty', 'defaultShapes'],
@@ -391,6 +400,7 @@ export const Default: Story = {
       withUrlPicture,
       withFrameSelection,
       withSkeleton,
+      debug,
       brushAlgo,
       isBrushShapeDoneOnMouseUp,
       canvasSelectionPadding,

@@ -2,8 +2,7 @@ import type { UtilsSettings } from '@canvas/constants/app'
 import { updateCanvasContext } from '@canvas/utils/canvas'
 import { getPointPositionAfterCanvasTransformation } from '@canvas/utils/intersect'
 import { createLineSelectionPath } from '@canvas/utils/selection/lineSelection'
-import { getShapeInfos } from '@canvas/utils/shapes/index'
-import { createLinePath } from '@canvas/utils/shapes/path'
+import { createLinePath, getComputedShapeInfos } from '@canvas/utils/shapes/path'
 import { boundVectorToSingleAxis, roundForGrid, shortenLine } from '@canvas/utils/transform'
 import { getAngleFromVector, rotatePoint } from '@canvas/utils/trigo'
 import type { SelectionModeResize } from '@common/types/Mode'
@@ -13,7 +12,19 @@ import { set } from '@common/utils/object'
 import { uniqueId } from '@common/utils/util'
 import { createTriangle, drawTriangle } from './triangle'
 
-const buildPath = <T extends DrawableShape<'line'>>(line: T, settings: UtilsSettings): T => {
+const getLineBorder = (line: Line, settings: Pick<UtilsSettings, 'selectionPadding'>): Rect => {
+  const x = Math.min(line.points[0][0], line.points[1][0]) - settings.selectionPadding
+  const width = Math.abs(line.points[0][0] - line.points[1][0]) + settings.selectionPadding * 2
+  const y = Math.min(line.points[0][1], line.points[1][1]) - settings.selectionPadding
+  const height = Math.abs(line.points[0][1] - line.points[1][1]) + settings.selectionPadding * 2
+  return { x, width, y, height }
+}
+
+export const getComputedLine = (line: DrawableShape<'line'>, settings: UtilsSettings) => {
+  return getComputedShapeInfos(line, getLineBorder, settings)
+}
+
+const buildPath = <T extends DrawableShape<'line'>>(line: T & { id: string }, settings: UtilsSettings): ShapeEntity<'line'> => {
   const arrows = []
   let path: Path2D
 
@@ -21,10 +32,10 @@ const buildPath = <T extends DrawableShape<'line'>>(line: T, settings: UtilsSett
     const rotation = Math.PI / 2 - getAngleFromVector({ targetVector: [line.points[0], line.points[1]] })
 
     if (line.style?.lineArrow === 1 || line.style?.lineArrow === 3) {
-      arrows.push(createTriangle(buildTriangleOnLine(line.points[0], rotation, line.style)))
+      arrows.push(createTriangle(buildTriangleOnLine(line.points[0], rotation, line.style), settings))
     }
     if (line.style?.lineArrow === 2 || line.style?.lineArrow === 3) {
-      arrows.push(createTriangle(buildTriangleOnLine(line.points[1], rotation + Math.PI, line.style)))
+      arrows.push(createTriangle(buildTriangleOnLine(line.points[1], rotation + Math.PI, line.style), settings))
     }
 
     const arrowLength = 10 + (line.style?.lineWidth ?? 0) * 2
@@ -38,15 +49,17 @@ const buildPath = <T extends DrawableShape<'line'>>(line: T, settings: UtilsSett
     path = createLinePath(line)
   }
 
+  const computed = getComputedLine(line, settings)
   return {
     ...line,
     path,
-    selection: createLineSelectionPath(path, line, settings),
+    selection: createLineSelectionPath(path, line, computed, settings),
     arrows,
     style: {
       ...line.style,
       lineCap: line.style?.lineArrow ? 'butt' : 'round'
-    }
+    },
+    computed
   }
 }
 
@@ -66,7 +79,6 @@ export const createLine = (
     type: shape.type,
     id: uniqueId(`${shape.type}_`),
     points: [cursorPosition, cursorPosition] as const,
-    rotation: 0,
     style: {
       opacity: shape.settings.opacity.default,
       strokeColor: shape.settings.strokeColor.default,
@@ -104,7 +116,7 @@ export const buildTriangleOnLine = (center: Point, rotation: number, lineStyle: 
   } as Triangle
 }
 
-export const drawLine = (ctx: CanvasRenderingContext2D, shape: DrawableShape<'line'>): void => {
+export const drawLine = (ctx: CanvasRenderingContext2D, shape: ShapeEntity<'line'>): void => {
   if (ctx.globalAlpha === 0 || !shape.path) return
 
   shape.style?.fillColor !== 'transparent' && ctx.fill(shape.path)
@@ -116,17 +128,9 @@ export const drawLine = (ctx: CanvasRenderingContext2D, shape: DrawableShape<'li
   }
 }
 
-export const getLineBorder = (line: Line, settings: Pick<UtilsSettings, 'selectionPadding'>): Rect => {
-  const x = Math.min(line.points[0][0], line.points[1][0]) - settings.selectionPadding
-  const width = Math.abs(line.points[0][0] - line.points[1][0]) + settings.selectionPadding * 2
-  const y = Math.min(line.points[0][1], line.points[1][1]) - settings.selectionPadding
-  const height = Math.abs(line.points[0][1] - line.points[1][1]) + settings.selectionPadding * 2
-  return { x, width, y, height }
-}
-
-export const translateLine = <U extends DrawableShape<'line'>>(
+export const translateLine = (
   cursorPosition: Point,
-  originalShape: U,
+  originalShape: ShapeEntity<'line'>,
   originalCursorPosition: Point,
   settings: UtilsSettings,
   singleAxis: boolean
@@ -148,17 +152,19 @@ export const translateLine = <U extends DrawableShape<'line'>>(
   )
 }
 
-export const resizeLine = <U extends DrawableShape<'line'>>(
+export const resizeLine = (
   cursorPosition: Point,
-  originalShape: U,
+  originalShape: ShapeEntity<'line'>,
   selectionMode: SelectionModeResize<number>,
   settings: UtilsSettings
-): U => {
+): ShapeEntity<'line'> => {
   const roundCursorPosition: Point = [roundForGrid(cursorPosition[0], settings), roundForGrid(cursorPosition[1], settings)]
 
-  const { center } = getShapeInfos(originalShape, settings)
-
-  const cursorPositionBeforeResize = getPointPositionAfterCanvasTransformation(roundCursorPosition, originalShape.rotation, center)
+  const cursorPositionBeforeResize = getPointPositionAfterCanvasTransformation(
+    roundCursorPosition,
+    originalShape.rotation ?? 0,
+    originalShape.computed.center
+  )
   const updatedShape = set(['points', selectionMode.anchor], cursorPositionBeforeResize, originalShape)
 
   return buildPath(updatedShape, settings)

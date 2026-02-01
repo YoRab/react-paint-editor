@@ -272,7 +272,7 @@ const Canvas = React.forwardRef<HTMLCanvasElement, DrawerType>(
           {isEditMode && selectionMode.mode === 'textedition' && getSelectedShapes(selectedShape)[0]?.type === 'text' && (
             <EditTextBox
               disabled={!settings.features.edition}
-              shape={getSelectedShapes(selectedShape)[0] as DrawableShape<'text'>}
+              shape={getSelectedShapes(selectedShape)[0] as ShapeEntity<'text'>}
               defaultValue={selectionMode.defaultValue}
               updateValue={updateSelectedShapeText}
               saveShapes={saveShapes}

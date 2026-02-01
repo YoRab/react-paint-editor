@@ -4,23 +4,23 @@ import { getRectIntersection } from '@canvas/utils/intersect'
 import { getSelectedShapes } from '@canvas/utils/selection'
 import { drawSelectionGroup } from '@canvas/utils/selection/groupSelection'
 import { drawLineSelection } from '@canvas/utils/selection/lineSelection'
-import { drawSelectionRect } from '@canvas/utils/selection/rectSelection'
+import { drawBoundingBox, drawSelectionRect } from '@canvas/utils/selection/rectSelection'
 import { drawFrame } from '@canvas/utils/selection/selectionFrame'
 import { roundForGrid, roundRotationForGrid } from '@canvas/utils/transform'
 import { getCurrentView } from '@canvas/utils/zoom'
 import type { HoverModeData, SelectionModeData, SelectionModeResize } from '@common/types/Mode'
-import type { DrawableShape, Point, Rect, SelectionType, ShapeEntity } from '@common/types/Shapes'
+import type { DrawableShape, Point, SelectionType, ShapeEntity } from '@common/types/Shapes'
 import type { CustomTool } from '@common/types/tools'
 import { uniqueId } from '@common/utils/util'
-import { createBrush, drawBrush, getBrushBorder, refreshBrush, resizeBrush, translateBrush } from './brush'
-import { createCircle, drawCircle, getCircleBorder, refreshCircle, resizeCircle, translateCircle } from './circle'
-import { createCurve, drawCurve, getCurveBorder, refreshCurve, resizeCurve, translateCurve } from './curve'
-import { createEllipse, drawEllipse, getEllipseBorder, refreshEllipse, resizeEllipse, translateEllipse } from './ellipse'
-import { createLine, drawLine, getLineBorder, refreshLine, resizeLine, translateLine } from './line'
-import { drawPicture, getPictureBorder, refreshPicture, resizePicture, translatePicture } from './picture'
-import { createPolygon, drawPolygon, getPolygonBorder, refreshPolygon, resizePolygon, translatePolygon } from './polygon'
-import { createRectangle, drawRect, getRectBorder, refreshRect, resizeRect, translateRect } from './rectangle'
-import { createText, drawText, getTextBorder, refreshText, resizeText, translateText } from './text'
+import { createBrush, drawBrush, getComputedBrush, refreshBrush, resizeBrush, translateBrush } from './brush'
+import { createCircle, drawCircle, getComputedCircle, refreshCircle, resizeCircle, translateCircle } from './circle'
+import { createCurve, drawCurve, getComputedCurve, refreshCurve, resizeCurve, translateCurve } from './curve'
+import { createEllipse, drawEllipse, getComputedEllipse, refreshEllipse, resizeEllipse, translateEllipse } from './ellipse'
+import { createLine, drawLine, getComputedLine, refreshLine, resizeLine, translateLine } from './line'
+import { drawPicture, getComputedPicture, refreshPicture, resizePicture, translatePicture } from './picture'
+import { createPolygon, drawPolygon, getComputedPolygon, refreshPolygon, resizePolygon, translatePolygon } from './polygon'
+import { createRectangle, drawRect, getComputedRect, refreshRect, resizeRect, translateRect } from './rectangle'
+import { createText, drawText, getComputedText, refreshText, resizeText, translateText } from './text'
 
 export const createShape = (
   ctx: CanvasRenderingContext2D,
@@ -50,7 +50,7 @@ export const createShape = (
   }
 }
 
-const drawShapeByType = (ctx: CanvasRenderingContext2D, shape: DrawableShape): void => {
+const drawShapeByType = (ctx: CanvasRenderingContext2D, shape: ShapeEntity): void => {
   switch (shape.type) {
     case 'brush':
       drawBrush(ctx, shape)
@@ -89,12 +89,12 @@ const drawShapeByType = (ctx: CanvasRenderingContext2D, shape: DrawableShape): v
  * Renders a shape with opacity on a temporary canvas and then draws it on the main canvas
  * @param ctx - The main canvas context
  * @param shape - The shape to draw
- * @param outerBorders - The outer borders of the shape
  */
-const drawShapeWithOpacity = (ctx: CanvasRenderingContext2D, shape: DrawableShape, outerBorders: Rect): void => {
+const drawShapeWithOpacity = (ctx: CanvasRenderingContext2D, shape: ShapeEntity): void => {
   const tempCanvas = document.createElement('canvas')
   const tempCtx = tempCanvas.getContext('2d')
   if (!tempCtx) throw new Error('No context found for canvas')
+  const { outerBorders } = shape.computed
   const tempCanvasSize = {
     width: outerBorders.width * 2,
     height: outerBorders.height * 2
@@ -109,78 +109,28 @@ const drawShapeWithOpacity = (ctx: CanvasRenderingContext2D, shape: DrawableShap
   ctx.drawImage(tempCanvas, outerBorders.x - tempCanvasSize.width / 4, outerBorders.y - tempCanvasSize.height / 4)
 }
 
-export const drawShape = (ctx: CanvasRenderingContext2D, shape: DrawableShape, settings: UtilsSettings): void => {
-  if (shape.visible === false) return
-  const { center, outerBorders } = getShapeInfos(shape, settings)
+export const isInView = (shape: ShapeEntity, settings: UtilsSettings): boolean => {
   const currentView = getCurrentView(settings)
-  const isInView = !!getRectIntersection(outerBorders, currentView)
-  if (!isInView) return
-  transformCanvas(ctx, settings, shape.rotation, center)
+  return !!getRectIntersection(shape.computed.boundingBox, currentView)
+}
+
+export const drawShape = (ctx: CanvasRenderingContext2D, shape: ShapeEntity, settings: UtilsSettings): void => {
+  if (shape.visible === false) return
+
+  const shouldDraw = isInView(shape, settings)
+  if (!shouldDraw) return
+
+  transformCanvas(ctx, settings, shape.rotation, shape.computed.center)
   updateCanvasContext(ctx, shape.style)
 
   if (ctx.globalAlpha !== 1) {
-    drawShapeWithOpacity(ctx, shape, outerBorders)
+    drawShapeWithOpacity(ctx, shape)
     ctx.restore()
     return
   }
   drawShapeByType(ctx, shape)
 
   ctx.restore()
-}
-
-const getShapeBorders = (marker: DrawableShape, settings: Pick<UtilsSettings, 'selectionPadding'>): Rect => {
-  switch (marker.type) {
-    case 'brush':
-      return getBrushBorder(marker, settings)
-    case 'line':
-      return getLineBorder(marker, settings)
-    case 'polygon':
-      return getPolygonBorder(marker, settings)
-    case 'curve':
-      return getCurveBorder(marker, settings)
-    case 'circle':
-      return getCircleBorder(marker, settings)
-    case 'ellipse':
-      return getEllipseBorder(marker, settings)
-    case 'rect':
-    case 'square':
-    case 'group':
-      return getRectBorder(marker, settings)
-    case 'text':
-      return getTextBorder(marker, settings)
-    case 'picture':
-      return getPictureBorder(marker, settings)
-    default:
-      return {
-        x: 0,
-        y: 0,
-        width: 100,
-        height: 100
-      } // TODO a cause du triangle, a supprimer
-  }
-}
-
-const getShapeCenter = (borders: Rect): Point => {
-  return [borders.x + borders.width / 2, borders.y + borders.height / 2]
-}
-
-export const getShapeInfos = (
-  shape: DrawableShape,
-  settings: Pick<UtilsSettings, 'selectionPadding'>
-): {
-  borders: Rect
-  outerBorders: Rect
-  center: Point
-} => {
-  const borders = getShapeBorders(shape, settings)
-  const outerBorders = {
-    x: borders.x - (shape.style?.lineWidth ?? 0),
-    y: borders.y - (shape.style?.lineWidth ?? 0),
-    width: borders.width + 2 * (shape.style?.lineWidth ?? 0),
-    height: borders.height + 2 * (shape.style?.lineWidth ?? 0)
-  }
-  const center = getShapeCenter(borders)
-  return { borders, outerBorders, center }
 }
 
 export const rotateShape = <T extends DrawableShape>(
@@ -196,16 +146,17 @@ export const rotateShape = <T extends DrawableShape>(
   const p1y = shapeCenter[1] - originalCursorPosition[1]
   const p2x = shapeCenter[0] - cursorPosition[0]
   const p2y = shapeCenter[1] - cursorPosition[1]
-  const rotation = originalShape.rotation + Math.atan2(p2y, p2x) - Math.atan2(p1y, p1x)
-  return {
+  const rotatedShape: T = {
     ...shape,
-    ...{
-      rotation: roundRotationForGrid(rotation, settings, isShiftPressed)
-    }
+    rotation: roundRotationForGrid((originalShape.rotation ?? 0) + Math.atan2(p2y, p2x) - Math.atan2(p1y, p1x), settings, isShiftPressed)
+  }
+  return {
+    ...rotatedShape,
+    computed: getShapeComputedData(rotatedShape, settings)
   }
 }
 
-export const resizeShape = <T extends DrawableShape>(
+export const resizeShape = <T extends ShapeEntity>(
   ctx: CanvasRenderingContext2D,
   shape: T,
   cursorPosition: Point,
@@ -289,7 +240,7 @@ export const translateShapes = (
   return getSelectedShapes(originalShape).map(shape => translateShape(cursorPosition, shape, originalCursorPosition, settings, isShiftPressed))
 }
 
-export const refreshShape = (shape: ShapeEntity, settings: UtilsSettings): ShapeEntity => {
+export const refreshShape = (shape: DrawableShape & { id: string }, settings: UtilsSettings): ShapeEntity => {
   switch (shape.type) {
     case 'rect':
     case 'square':
@@ -311,7 +262,31 @@ export const refreshShape = (shape: ShapeEntity, settings: UtilsSettings): Shape
     case 'brush':
       return refreshBrush(shape, settings)
     default:
-      return shape
+      return shape as never
+  }
+}
+
+export const getShapeComputedData = (shape: DrawableShape, settings: UtilsSettings) => {
+  switch (shape.type) {
+    case 'rect':
+    case 'square':
+      return getComputedRect(shape, settings)
+    case 'ellipse':
+      return getComputedEllipse(shape, settings)
+    case 'circle':
+      return getComputedCircle(shape, settings)
+    case 'picture':
+      return getComputedPicture(shape, settings)
+    case 'text':
+      return getComputedText(shape, settings)
+    case 'line':
+      return getComputedLine(shape, settings)
+    case 'polygon':
+      return getComputedPolygon(shape, settings)
+    case 'curve':
+      return getComputedCurve(shape, settings)
+    case 'brush':
+      return getComputedBrush(shape, settings)
   }
 }
 
@@ -332,7 +307,8 @@ export const drawShapeSelection = ({
   hoverMode: HoverModeData
   withAnchors?: boolean
 }) => {
-  const { center } = getShapeInfos(shape, settings)
+  const { center } = shape.computed
+  if (settings.debug) drawBoundingBox(ctx, shape, selectionWidth, settings)
   transformCanvas(ctx, settings, shape.rotation, center)
 
   switch (shape.type) {

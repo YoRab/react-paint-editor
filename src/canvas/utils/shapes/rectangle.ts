@@ -6,22 +6,27 @@ import type { SelectionModeResize } from '@common/types/Mode'
 import type { DrawableShape, Point, Rect, ShapeEntity } from '@common/types/Shapes'
 import type { ToolsSettingsType } from '@common/types/tools'
 import { uniqueId } from '@common/utils/util'
-import { createRecPath } from './path'
+import { createRecPath, getComputedShapeInfos } from './path'
 
-type rectish = 'text' | 'rect' | 'square' | 'picture'
+type rectish = 'rect' | 'square'
+export const getComputedRect = (rect: DrawableShape<rectish>, settings: UtilsSettings) => {
+  return getComputedShapeInfos(rect, getRectBorder, settings)
+}
 
-const buildPath = <T extends DrawableShape<rectish>>(rect: T, settings: UtilsSettings, isGroup = false): T => {
+const buildPath = <T extends rectish>(rect: DrawableShape<T> & { id: string }, settings: UtilsSettings, isGroup = false): ShapeEntity<T> => {
   const path = createRecPath(rect)
+  const computed = getComputedRect(rect, settings)
   return {
     ...rect,
     path,
-    selection: createRecSelectionPath(path, rect, settings, isGroup)
-  }
+    computed,
+    selection: createRecSelectionPath(path, computed, settings, isGroup)
+  } as unknown as ShapeEntity<T>
 }
 
 export const refreshRect = buildPath
 
-export const createRectangle = <T extends 'rect' | 'square'>(
+export const createRectangle = <T extends rectish>(
   shape: {
     id: string
     type: T
@@ -41,7 +46,6 @@ export const createRectangle = <T extends 'rect' | 'square'>(
     y: cursorPosition[1],
     width,
     height,
-    rotation: 0,
     style: {
       opacity: shape.settings.opacity.default,
       fillColor: shape.settings.fillColor.default,
@@ -49,11 +53,11 @@ export const createRectangle = <T extends 'rect' | 'square'>(
       lineWidth: shape.settings.lineWidth.default,
       lineDash: shape.settings.lineDash.default
     }
-  } as unknown as ShapeEntity<T>
-  return buildPath(recShape, settings, isGroup) as ShapeEntity<T>
+  } as unknown as DrawableShape<T> & { id: string }
+  return buildPath(recShape, settings, isGroup)
 }
 
-export const drawRect = (ctx: CanvasRenderingContext2D, shape: DrawableShape<'rect' | 'square'>): void => {
+export const drawRect = (ctx: CanvasRenderingContext2D, shape: ShapeEntity<rectish>): void => {
   if (ctx.globalAlpha === 0 || !shape.path) return
 
   shape.style?.fillColor !== 'transparent' && ctx.fill(shape.path)
@@ -80,12 +84,12 @@ export const getRectOppositeAnchorAbsolutePosition = <T extends DrawableShape & 
   const oppositeY =
     anchor[1] === 0.5 ? shape.y + shape.height / 2 : anchor[1] === 0 ? shape.y + (negH ? 0 : shape.height) : shape.y + (negH ? shape.height : 0)
 
-  return getPointPositionBeforeCanvasTransformation([oppositeX, oppositeY], shape.rotation, center)
+  return getPointPositionBeforeCanvasTransformation([oppositeX, oppositeY], shape.rotation ?? 0, center)
 }
 
-export const translateRect = <T extends 'rect' | 'square', U extends DrawableShape<T>>(
+export const translateRect = <T extends rectish>(
   cursorPosition: Point,
-  originalShape: U,
+  originalShape: ShapeEntity<T>,
   originalCursorPosition: Point,
   settings: UtilsSettings,
   singleAxis: boolean
@@ -107,12 +111,12 @@ export const translateRect = <T extends 'rect' | 'square', U extends DrawableSha
 
 export const resizeRect = <T extends rectish>(
   cursorPosition: Point,
-  originalShape: DrawableShape<T>,
+  originalShape: ShapeEntity<T>,
   selectionMode: SelectionModeResize,
   settings: UtilsSettings,
   keepRatio = false,
   resizeFromCenter = false
-): DrawableShape<T> => {
+): ShapeEntity<T> => {
   const { borderX, borderHeight, borderY, borderWidth } = resizeRectSelection(
     cursorPosition,
     originalShape,
@@ -130,5 +134,5 @@ export const resizeRect = <T extends rectish>(
       y: borderY + settings.selectionPadding
     },
     settings
-  ) as DrawableShape<T>
+  ) as ShapeEntity<T>
 }
