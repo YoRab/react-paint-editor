@@ -2,6 +2,17 @@
 
 For more details and links to Pull requests, see [Releases](https://github.com/YoRab/react-paint-editor/releases)
 
+## V0.15.0
+- allow label inputs to be focusable and pressable with keyboard
+- make Canvas focusable under conditions
+- use focus events to check if component is active
+- add ctrl commands for zooming in canvas with keyboard
+- add space + drag shortcut to move inside canvas when it is focused
+- add debug mode to easily visualize outer bounding box
+- store shapeInfos in computed props instead of multiple calculation during render
+- add boundingBox in shapes
+- better border calculation with bezier curve and shape rotation : fix fitToShape export
+- improve documentation
 
 ## V0.14.0
 - add shadow to hovered anchors
