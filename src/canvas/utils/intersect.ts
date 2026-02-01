@@ -186,7 +186,9 @@ export const checkCurveLinesSelectionIntersection = (
     const p1 = points[i]!
     const p2 = points[i + 1]!
     const p3 = points[i + 2]!
-    catmullRomToBezier(path, p0, p1, p2, p3)
+    const { cp1, cp2 } = catmullRomToBezier(p0, p1, p2, p3)
+    path.bezierCurveTo(cp1[0], cp1[1], cp2[0], cp2[1], p2[0], p2[1])
+
     if (ctx.isPointInStroke(path, newPosition[0], newPosition[1])) {
       return { lineIndex: i - 1 }
     }
