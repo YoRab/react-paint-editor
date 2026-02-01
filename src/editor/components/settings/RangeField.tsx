@@ -2,7 +2,7 @@ import { uniqueId } from '@common/utils/util'
 import Button from '@editor/components/common/Button'
 import Panel from '@editor/components/common/Panel'
 import type React from 'react'
-import { useEffect, useRef, useState } from 'react'
+import { useState } from 'react'
 import './RangeField.css'
 import useDebounce from '@canvas/hooks/useDebounce'
 
@@ -18,6 +18,7 @@ type ShapeStyleColorType = {
   step?: number
   unity?: string
   value?: number | undefined
+  saveShapes: () => void
   valueChanged: (field: string, value: string | number, needHistorySave?: boolean) => void
 }
 
@@ -33,18 +34,19 @@ const RangeField = ({
   max = 20,
   step = 1,
   unity = '',
-  valueChanged
+  valueChanged,
+  saveShapes
 }: ShapeStyleColorType) => {
   const indeterminate = value === undefined
   const displayedValue = indeterminate ? 'N/A' : `${Math.round(value)}${unity}`
   const [customKey] = useState(uniqueId('settings_'))
-  const debouncedValueChanged = useDebounce(valueChanged)
+  const debouncedSaveChanged = useDebounce(saveShapes)
 
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const parsedValue = +event.target.value
     const updatedValue = Number.isNaN(parsedValue) ? event.target.value : parsedValue
     valueChanged(field, updatedValue, false)
-    debouncedValueChanged(field, updatedValue, true)
+    debouncedSaveChanged()
   }
 
   const togglePanel = () => {

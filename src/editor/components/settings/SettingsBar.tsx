@@ -31,6 +31,7 @@ type SettingsItemsType = {
   selectedShapeTool: CustomTool | undefined
   selectedSettings: string | undefined
   setSelectedSettings: React.Dispatch<React.SetStateAction<string | undefined>>
+  saveShapes: () => void
   handleShapeStyleChange: (field: string, value: string | number | boolean) => void
   handleShapeFontFamilyChange: (field: string, value: string | number | boolean) => void
 }
@@ -42,6 +43,7 @@ const SettingsItems = ({
   disabled,
   selectedSettings,
   setSelectedSettings,
+  saveShapes,
   handleShapeStyleChange,
   handleShapeFontFamilyChange
 }: SettingsItemsType) => {
@@ -77,6 +79,7 @@ const SettingsItems = ({
 
         {'lineWidth' in selectedShapeTool.settings && !selectedShapeTool.settings.lineWidth.hidden && (
           <RangeField
+            saveShapes={saveShapes}
             selectedSettings={selectedSettings}
             setSelectedSettings={setSelectedSettings}
             title='Epaisseur du trait'
@@ -161,6 +164,7 @@ const SettingsItems = ({
 
         {'opacity' in selectedShapeTool.settings && !selectedShapeTool.settings.opacity.hidden && (
           <RangeField
+            saveShapes={saveShapes}
             selectedSettings={selectedSettings}
             setSelectedSettings={setSelectedSettings}
             title='Opacité'
@@ -208,6 +212,7 @@ const SettingsItems = ({
 
       {'lineWidth' in activeTool.settings && !activeTool.settings.lineWidth.hidden && (
         <RangeField
+          saveShapes={saveShapes}
           selectedSettings={selectedSettings}
           setSelectedSettings={setSelectedSettings}
           title='Epaisseur du trait'
@@ -292,6 +297,7 @@ const SettingsItems = ({
 
       {'opacity' in activeTool.settings && !activeTool.settings.opacity.hidden && (
         <RangeField
+          saveShapes={saveShapes}
           selectedSettings={selectedSettings}
           setSelectedSettings={setSelectedSettings}
           title='Opacité'
@@ -325,6 +331,7 @@ type SettingsBarType = {
   isZoomPanelShown: boolean
   setIsZoomPanelShown: React.Dispatch<React.SetStateAction<boolean>>
   setCanvasZoom: (action: 'unzoom' | 'zoom' | 'default') => void
+  saveShapes: () => void
 }
 
 const SettingsBar = ({
@@ -334,6 +341,7 @@ const SettingsBar = ({
   layersManipulation = false,
   toggleLayoutPanel,
   activeTool,
+  saveShapes,
   selectedShape,
   canvas,
   settings,
@@ -427,6 +435,7 @@ const SettingsBar = ({
                 <>
                   {!settingsInMenu && (
                     <SettingsItems
+                      saveShapes={saveShapes}
                       activeTool={activeTool}
                       selectedShape={selectedShape}
                       selectedShapeTool={selectedShapeTool}
@@ -443,6 +452,7 @@ const SettingsBar = ({
               )
             : !settingsInMenu && (
                 <SettingsItems
+                  saveShapes={saveShapes}
                   activeTool={activeTool}
                   selectedShape={selectedShape}
                   selectedShapeTool={selectedShapeTool}
@@ -460,6 +470,7 @@ const SettingsBar = ({
       {isMenuOpen && (
         <Modal className='react-paint-editor-settings-modal' onClose={toggleTools} position='bottom' title='Settings'>
           <SettingsItems
+            saveShapes={saveShapes}
             activeTool={activeTool}
             selectedShape={selectedShape}
             selectedShapeTool={selectedShapeTool}

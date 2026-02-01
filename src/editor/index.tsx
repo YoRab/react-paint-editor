@@ -67,6 +67,7 @@ const Editor = ({ editorProps, className, style, options, children }: EditorProp
     clearCanvas,
     settings,
     setCanvasZoom,
+    saveShapes,
     canvas: { canGrow, layersManipulation, withExport, withLoadAndSave, withUploadPicture, withUrlPicture }
   } = editorProps
 
@@ -252,6 +253,7 @@ const Editor = ({ editorProps, className, style, options, children }: EditorProp
       {isEditMode && (
         <>
           <SettingsBar
+            saveShapes={saveShapes}
             setCanvasZoom={setCanvasZoom}
             width={settings.canvasSize.width}
             activeTool={activeTool}
