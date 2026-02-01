@@ -339,6 +339,7 @@ const useReactPaint = ({
       canGoForward,
       canClear,
       selectedShape,
+      saveShapes,
       removeShape,
       updateShape,
       backwardShape,
