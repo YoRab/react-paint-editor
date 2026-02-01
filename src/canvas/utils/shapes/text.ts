@@ -206,11 +206,9 @@ export const resizeTextShapeWithNewContent = (
     height: newHeight
   }
 
-  const { center } = shape.computed
+  const { center: shapeWithNewDimensionsCenter } = getComputedText(resizedShape, settings)
 
-  const { center: shapeWithNewDimensionsCenter } = resizedShape.computed
-
-  const [oppTrueX, oppTrueY] = getRectOppositeAnchorAbsolutePosition([1, 1], center, shape)
+  const [oppTrueX, oppTrueY] = getRectOppositeAnchorAbsolutePosition([1, 1], shape.computed.center, shape)
 
   const [newOppTrueX, newOppTrueY] = getRectOppositeAnchorAbsolutePosition([1, 1], shapeWithNewDimensionsCenter, resizedShape, [false, false])
 
