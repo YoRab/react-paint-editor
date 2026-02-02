@@ -3,7 +3,7 @@ import { getPointPositionAfterCanvasTransformation } from '@canvas/utils/interse
 import { createLineSelectionPath } from '@canvas/utils/selection/lineSelection'
 import { catmullRomToBezier, createCurvePath, getCatmullRomPoints, getComputedShapeInfos, getCubicBezierBounds } from '@canvas/utils/shapes/path'
 import { getRectBorder } from '@canvas/utils/shapes/rectangle'
-import { boundVectorToSingleAxis, roundForGrid } from '@canvas/utils/transform'
+import { roundForGrid } from '@canvas/utils/transform'
 import type { SelectionModeResize } from '@common/types/Mode'
 import type { DrawableShape, Point, Rect, ShapeEntity } from '@common/types/Shapes'
 import type { ToolsSettingsType } from '@common/types/tools'
@@ -112,35 +112,6 @@ export const drawCurve = (ctx: CanvasRenderingContext2D, curve: ShapeEntity<'cur
   if (ctx.globalAlpha === 0) return
   curve.style?.fillColor !== 'transparent' && ctx.fill(curve.path)
   curve.style?.strokeColor !== 'transparent' && ctx.stroke(curve.path)
-}
-
-export const translateCurve = (
-  cursorPosition: Point,
-  originalShape: ShapeEntity<'curve'>,
-  originalCursorPosition: Point,
-  settings: UtilsSettings,
-  singleAxis: boolean
-) => {
-  const originalBorders = originalShape.computed.borders
-  const translationVector = boundVectorToSingleAxis(
-    [cursorPosition[0] - originalCursorPosition[0], cursorPosition[1] - originalCursorPosition[1]],
-    singleAxis
-  )
-
-  return buildPath(
-    {
-      ...originalShape,
-      points: originalShape.points.map(([x, y]) =>
-        settings.gridGap
-          ? [
-              x + roundForGrid(originalBorders.x + translationVector[0], settings) - originalBorders.x,
-              y + roundForGrid(originalBorders.y + translationVector[1], settings) - originalBorders.y
-            ]
-          : [roundForGrid(x + translationVector[0], settings), roundForGrid(y + translationVector[1], settings)]
-      )
-    },
-    settings
-  )
 }
 
 export const addCurveLine = (

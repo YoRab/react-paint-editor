@@ -1,7 +1,7 @@
 import type { UtilsSettings } from '@canvas/constants/app'
 import { addSizeAndConvertSvgToObjectUrl, fetchAndStringify, isSvg } from '@canvas/utils/file'
 import { createRecSelectionPath, resizeRectSelection } from '@canvas/utils/selection/rectSelection'
-import { boundVectorToSingleAxis, fitContentInsideContainer, roundForGrid } from '@canvas/utils/transform'
+import { fitContentInsideContainer } from '@canvas/utils/transform'
 import type { SelectionModeResize } from '@common/types/Mode'
 import type { DrawableShape, Point, ShapeEntity } from '@common/types/Shapes'
 import { uniqueId } from '@common/utils/util'
@@ -126,28 +126,6 @@ export const drawPicture = (ctx: CanvasRenderingContext2D, picture: ShapeEntity<
   if (ctx.globalAlpha === 0) return
   ctx.beginPath()
   ctx.drawImage(picture.img, picture.x, picture.y, picture.width, picture.height)
-}
-
-export const translatePicture = (
-  cursorPosition: Point,
-  originalShape: ShapeEntity<'picture'>,
-  originalCursorPosition: Point,
-  settings: UtilsSettings,
-  singleAxis: boolean
-) => {
-  const translationVector = boundVectorToSingleAxis(
-    [cursorPosition[0] - originalCursorPosition[0], cursorPosition[1] - originalCursorPosition[1]],
-    singleAxis
-  )
-
-  return buildPath(
-    {
-      ...originalShape,
-      x: roundForGrid(originalShape.x + translationVector[0], settings),
-      y: roundForGrid(originalShape.y + translationVector[1], settings)
-    },
-    settings
-  )
 }
 
 export const resizePicture = (

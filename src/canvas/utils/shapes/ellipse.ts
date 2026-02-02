@@ -1,7 +1,6 @@
 import type { UtilsSettings } from '@canvas/constants/app'
 import { createRecSelectionPath, resizeRectSelection } from '@canvas/utils/selection/rectSelection'
 import { createEllipsePath, getComputedShapeInfos } from '@canvas/utils/shapes/path'
-import { boundVectorToSingleAxis, roundForGrid } from '@canvas/utils/transform'
 import type { SelectionModeResize } from '@common/types/Mode'
 import type { DrawableShape, Ellipse, Point, Rect, ShapeEntity } from '@common/types/Shapes'
 import type { ToolsSettingsType } from '@common/types/tools'
@@ -67,28 +66,6 @@ export const drawEllipse = (ctx: CanvasRenderingContext2D, ellipse: ShapeEntity<
   if (ctx.globalAlpha === 0 || !ellipse.path) return
   ellipse.style?.fillColor !== 'transparent' && ctx.fill(ellipse.path)
   ellipse.style?.strokeColor !== 'transparent' && ctx.stroke(ellipse.path)
-}
-
-export const translateEllipse = (
-  cursorPosition: Point,
-  originalShape: ShapeEntity<'ellipse'>,
-  originalCursorPosition: Point,
-  settings: UtilsSettings,
-  singleAxis: boolean
-) => {
-  const translationVector = boundVectorToSingleAxis(
-    [cursorPosition[0] - originalCursorPosition[0], cursorPosition[1] - originalCursorPosition[1]],
-    singleAxis
-  )
-
-  return buildPath(
-    {
-      ...originalShape,
-      x: roundForGrid(originalShape.x + translationVector[0], settings),
-      y: roundForGrid(originalShape.y + translationVector[1], settings)
-    },
-    settings
-  )
 }
 
 export const resizeEllipse = (
