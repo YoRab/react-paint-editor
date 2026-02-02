@@ -2,6 +2,11 @@
 
 For more details and links to Pull requests, see [Releases](https://github.com/YoRab/react-paint-editor/releases)
 
+## V0.15.1
+- use alt when dragging shape to duplicate it
+- fix : wrongly hovered shapes when another is selected
+- fix Rangefield causing data discrepancy with timeout : do not overwrite shape data after debounce, just force save it
+
 ## V0.15.0
 - allow label inputs to be focusable and pressable with keyboard
 - make Canvas focusable under conditions
