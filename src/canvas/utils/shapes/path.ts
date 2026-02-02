@@ -203,12 +203,12 @@ export const createTrianglePath = (triangle: DrawableShape<'triangle'>) => {
   return path
 }
 
-const getDefaultOuterBorder = (border: Rect, style: StyleShape | undefined) => {
+const getDefaultOuterBorder = (shape: DrawableShape, border: Rect) => {
   return {
-    x: border.x - (style?.lineWidth ?? 0) / 2,
-    y: border.y - (style?.lineWidth ?? 0) / 2,
-    width: border.width + (style?.lineWidth ?? 0),
-    height: border.height + (style?.lineWidth ?? 0)
+    x: border.x - (shape.style?.lineWidth ?? 0) / 2,
+    y: border.y - (shape.style?.lineWidth ?? 0) / 2,
+    width: border.width + (shape.style?.lineWidth ?? 0),
+    height: border.height + (shape.style?.lineWidth ?? 0)
   }
 }
 
@@ -246,7 +246,7 @@ export const getComputedShapeInfos = <T extends DrawableShape, U extends Pick<Ut
   shape: T,
   getBorder: (shape: T, settings: U) => Rect,
   settings: U,
-  getOuterBorder: (border: Rect, style: StyleShape | undefined) => Rect = getDefaultOuterBorder
+  getOuterBorder: (shape: T, borders: Rect, settings: U) => Rect = getDefaultOuterBorder
 ): {
   borders: Rect
   outerBorders: Rect
@@ -254,7 +254,7 @@ export const getComputedShapeInfos = <T extends DrawableShape, U extends Pick<Ut
   boundingBox: Rect
 } => {
   const borders = getBorder(shape, settings)
-  const outerBorders = getOuterBorder(borders, shape.style)
+  const outerBorders = getOuterBorder(shape, borders, settings)
   const center = [borders.x + borders.width / 2, borders.y + borders.height / 2] as Point
   const boundingBox = getBoundingBox(outerBorders, center, shape.rotation)
   return { borders, outerBorders, center, boundingBox }

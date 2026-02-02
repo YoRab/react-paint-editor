@@ -11,7 +11,7 @@ import { set } from '@common/utils/object'
 import { uniqueId } from '@common/utils/util'
 import { getPolygonBorder } from './polygon'
 
-const getCurveBorder = (curve: DrawableShape<'curve'>, settings: Pick<UtilsSettings, 'selectionPadding'>): Rect => {
+const getCurveOuterBorder = (curve: DrawableShape<'curve'>, _borders: Rect, settings: Pick<UtilsSettings, 'selectionPadding'>): Rect => {
   const points = curve.tempPoint ? [...curve.points, curve.tempPoint] : curve.points
   if (points.length < 2) {
     const single = points[0] ?? ([0, 0] as Point)
@@ -47,7 +47,7 @@ const getCurveBorder = (curve: DrawableShape<'curve'>, settings: Pick<UtilsSetti
 }
 
 export const getComputedCurve = (curve: DrawableShape<'curve'>, settings: UtilsSettings) => {
-  return getComputedShapeInfos(curve, getCurveBorder, settings)
+  return getComputedShapeInfos(curve, getPolygonBorder, settings, getCurveOuterBorder)
 }
 
 const buildPath = <T extends DrawableShape<'curve'>>(shape: T & { id: string }, settings: UtilsSettings): ShapeEntity<'curve'> => {
