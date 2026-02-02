@@ -3,7 +3,7 @@ import { updateCanvasContext } from '@canvas/utils/canvas'
 import { getPointPositionAfterCanvasTransformation } from '@canvas/utils/intersect'
 import { createLineSelectionPath } from '@canvas/utils/selection/lineSelection'
 import { createLinePath, getComputedShapeInfos } from '@canvas/utils/shapes/path'
-import { boundVectorToSingleAxis, roundForGrid, shortenLine } from '@canvas/utils/transform'
+import { roundForGrid, shortenLine } from '@canvas/utils/transform'
 import { getAngleFromVector, rotatePoint } from '@canvas/utils/trigo'
 import type { SelectionModeResize } from '@common/types/Mode'
 import type { DrawableShape, Line, Point, Rect, ShapeEntity, StyleShape, Triangle } from '@common/types/Shapes'
@@ -126,30 +126,6 @@ export const drawLine = (ctx: CanvasRenderingContext2D, shape: ShapeEntity<'line
     updateCanvasContext(ctx, arrow.style)
     drawTriangle(ctx, arrow)
   }
-}
-
-export const translateLine = (
-  cursorPosition: Point,
-  originalShape: ShapeEntity<'line'>,
-  originalCursorPosition: Point,
-  settings: UtilsSettings,
-  singleAxis: boolean
-) => {
-  const translationVector = boundVectorToSingleAxis(
-    [cursorPosition[0] - originalCursorPosition[0], cursorPosition[1] - originalCursorPosition[1]],
-    singleAxis
-  )
-
-  return buildPath(
-    {
-      ...originalShape,
-      points: originalShape.points.map(([x, y]) => [
-        roundForGrid(x + translationVector[0], settings),
-        roundForGrid(y + translationVector[1], settings)
-      ]) as [Point, Point]
-    },
-    settings
-  )
 }
 
 export const resizeLine = (

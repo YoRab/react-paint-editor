@@ -1,7 +1,6 @@
 import type { UtilsSettings } from '@canvas/constants/app'
 import { getPointPositionBeforeCanvasTransformation } from '@canvas/utils/intersect'
 import { createRecSelectionPath, resizeRectSelection } from '@canvas/utils/selection/rectSelection'
-import { boundVectorToSingleAxis, roundForGrid } from '@canvas/utils/transform'
 import type { SelectionModeResize } from '@common/types/Mode'
 import type { DrawableShape, Point, Rect, ShapeEntity } from '@common/types/Shapes'
 import type { ToolsSettingsType } from '@common/types/tools'
@@ -85,28 +84,6 @@ export const getRectOppositeAnchorAbsolutePosition = <T extends DrawableShape & 
     anchor[1] === 0.5 ? shape.y + shape.height / 2 : anchor[1] === 0 ? shape.y + (negH ? 0 : shape.height) : shape.y + (negH ? shape.height : 0)
 
   return getPointPositionBeforeCanvasTransformation([oppositeX, oppositeY], shape.rotation ?? 0, center)
-}
-
-export const translateRect = <T extends rectish>(
-  cursorPosition: Point,
-  originalShape: ShapeEntity<T>,
-  originalCursorPosition: Point,
-  settings: UtilsSettings,
-  singleAxis: boolean
-) => {
-  const translationVector = boundVectorToSingleAxis(
-    [cursorPosition[0] - originalCursorPosition[0], cursorPosition[1] - originalCursorPosition[1]],
-    singleAxis
-  )
-
-  return buildPath(
-    {
-      ...originalShape,
-      x: roundForGrid(originalShape.x + translationVector[0], settings),
-      y: roundForGrid(originalShape.y + translationVector[1], settings)
-    },
-    settings
-  )
 }
 
 export const resizeRect = <T extends rectish>(

@@ -4,7 +4,7 @@ import { PICTURE_DEFAULT_SIZE } from '@canvas/constants/picture'
 import { buildShapesGroup, getSelectedShapes } from '@canvas/utils/selection'
 import type { SelectionModeData } from '@common/types/Mode'
 import type { DrawableShape, Line, Point, SelectionType, ShapeEntity } from '@common/types/Shapes'
-import { resizeShape, rotateShape, translateShape } from './shapes'
+import { resizeShape, rotateShape, translateShapes } from './shapes'
 import { addNewPointToShape } from './shapes/brush'
 import { getAngleFromVector, rotatePoint } from './trigo'
 
@@ -55,19 +55,17 @@ export const transformShape = (
   isShiftPressed: boolean,
   isAltPressed: boolean
 ): SelectionType => {
+  if (selectionMode.mode === 'translate') {
+    return buildShapesGroup(
+      translateShapes(cursorPosition, selectionMode.originalShape, selectionMode.cursorStartPosition, settings, isShiftPressed),
+      settings
+    )!
+  }
   return buildShapesGroup(
     getSelectedShapes(selectedShape).map(shape => {
       switch (selectionMode.mode) {
         case 'brush':
           return addNewPointToShape(shape as ShapeEntity<'brush'>, cursorPosition, settings)
-        case 'translate':
-          return translateShape(
-            cursorPosition,
-            getSelectedShapes(selectionMode.originalShape).find(originalShape => originalShape.id === shape.id)!,
-            selectionMode.cursorStartPosition,
-            settings,
-            isShiftPressed
-          )
         case 'rotate':
           return rotateShape(
             shape,

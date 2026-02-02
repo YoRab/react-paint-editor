@@ -6,21 +6,21 @@ import { drawSelectionGroup } from '@canvas/utils/selection/groupSelection'
 import { drawLineSelection } from '@canvas/utils/selection/lineSelection'
 import { drawBoundingBox, drawSelectionRect } from '@canvas/utils/selection/rectSelection'
 import { drawFrame } from '@canvas/utils/selection/selectionFrame'
-import { roundForGrid, roundRotationForGrid } from '@canvas/utils/transform'
+import { boundVectorToSingleAxis, roundForGrid, roundRotationForGrid } from '@canvas/utils/transform'
 import { getCurrentView } from '@canvas/utils/zoom'
 import type { HoverModeData, SelectionModeData, SelectionModeResize } from '@common/types/Mode'
 import type { DrawableShape, Point, SelectionType, ShapeEntity } from '@common/types/Shapes'
 import type { CustomTool } from '@common/types/tools'
 import { uniqueId } from '@common/utils/util'
-import { createBrush, drawBrush, getComputedBrush, refreshBrush, resizeBrush, translateBrush } from './brush'
-import { createCircle, drawCircle, getComputedCircle, refreshCircle, resizeCircle, translateCircle } from './circle'
-import { createCurve, drawCurve, getComputedCurve, refreshCurve, resizeCurve, translateCurve } from './curve'
-import { createEllipse, drawEllipse, getComputedEllipse, refreshEllipse, resizeEllipse, translateEllipse } from './ellipse'
-import { createLine, drawLine, getComputedLine, refreshLine, resizeLine, translateLine } from './line'
-import { drawPicture, getComputedPicture, refreshPicture, resizePicture, translatePicture } from './picture'
-import { createPolygon, drawPolygon, getComputedPolygon, refreshPolygon, resizePolygon, translatePolygon } from './polygon'
-import { createRectangle, drawRect, getComputedRect, refreshRect, resizeRect, translateRect } from './rectangle'
-import { createText, drawText, getComputedText, refreshText, resizeText, translateText } from './text'
+import { createBrush, drawBrush, getComputedBrush, refreshBrush, resizeBrush } from './brush'
+import { createCircle, drawCircle, getComputedCircle, refreshCircle, resizeCircle } from './circle'
+import { createCurve, drawCurve, getComputedCurve, refreshCurve, resizeCurve } from './curve'
+import { createEllipse, drawEllipse, getComputedEllipse, refreshEllipse, resizeEllipse } from './ellipse'
+import { createLine, drawLine, getComputedLine, refreshLine, resizeLine } from './line'
+import { drawPicture, getComputedPicture, refreshPicture, resizePicture } from './picture'
+import { createPolygon, drawPolygon, getComputedPolygon, refreshPolygon, resizePolygon } from './polygon'
+import { createRectangle, drawRect, getComputedRect, refreshRect, resizeRect } from './rectangle'
+import { createText, drawText, getComputedText, refreshText, resizeText } from './text'
 
 export const createShape = (
   ctx: CanvasRenderingContext2D,
@@ -198,35 +198,43 @@ export const resizeShape = <T extends ShapeEntity>(
   }
 }
 
-export const translateShape = (
-  cursorPosition: Point,
-  originalShape: ShapeEntity,
-  originalCursorPosition: Point,
-  settings: UtilsSettings,
-  isShiftPressed: boolean
-): ShapeEntity => {
-  switch (originalShape.type) {
+const translateShape = (shape: ShapeEntity, translationX: number, translationY: number, settings: UtilsSettings): ShapeEntity => {
+  switch (shape.type) {
     case 'rect':
     case 'square':
-      return translateRect(cursorPosition, originalShape, originalCursorPosition, settings, isShiftPressed)
     case 'ellipse':
-      return translateEllipse(cursorPosition, originalShape, originalCursorPosition, settings, isShiftPressed)
     case 'circle':
-      return translateCircle(cursorPosition, originalShape, originalCursorPosition, settings, isShiftPressed)
     case 'picture':
-      return translatePicture(cursorPosition, originalShape, originalCursorPosition, settings, isShiftPressed)
     case 'text':
-      return translateText(cursorPosition, originalShape, originalCursorPosition, settings, isShiftPressed)
+      return refreshShape(
+        {
+          ...shape,
+          x: shape.x + translationX,
+          y: shape.y + translationY
+        },
+        settings
+      )
+
     case 'line':
-      return translateLine(cursorPosition, originalShape, originalCursorPosition, settings, isShiftPressed)
     case 'polygon':
-      return translatePolygon(cursorPosition, originalShape, originalCursorPosition, settings, isShiftPressed)
     case 'curve':
-      return translateCurve(cursorPosition, originalShape, originalCursorPosition, settings, isShiftPressed)
+      return refreshShape(
+        {
+          ...shape,
+          points: shape.points.map(([x, y]) => [x + translationX, y + translationY]) as [Point, Point]
+        },
+        settings
+      )
     case 'brush':
-      return translateBrush(cursorPosition, originalShape, originalCursorPosition, settings, isShiftPressed)
+      return refreshShape(
+        {
+          ...shape,
+          points: shape.points.map(coord => coord.map(([x, y]) => [x + translationX, y + translationY])) as Point[][]
+        },
+        settings
+      )
     default:
-      return originalShape
+      return shape
   }
 }
 
@@ -237,7 +245,17 @@ export const translateShapes = (
   settings: UtilsSettings,
   isShiftPressed: boolean
 ): ShapeEntity[] => {
-  return getSelectedShapes(originalShape).map(shape => translateShape(cursorPosition, shape, originalCursorPosition, settings, isShiftPressed))
+  const originalBorders = originalShape.computed.borders
+  const translationVector = boundVectorToSingleAxis(
+    [cursorPosition[0] - originalCursorPosition[0], cursorPosition[1] - originalCursorPosition[1]],
+    isShiftPressed
+  )
+  const translationX = translationVector[0] === 0 ? 0 : roundForGrid(originalBorders.x + translationVector[0], settings) - originalBorders.x
+  const translationY = translationVector[1] === 0 ? 0 : roundForGrid(originalBorders.y + translationVector[1], settings) - originalBorders.y
+
+  return getSelectedShapes(originalShape).map(shape => {
+    return translateShape(shape, translationX, translationY, settings)
+  })
 }
 
 export const refreshShape = (shape: DrawableShape & { id: string }, settings: UtilsSettings): ShapeEntity => {
@@ -359,7 +377,7 @@ export const drawSelectionFrame = ({
 export const copyShapes = (groupShape: SelectionType, settings: UtilsSettings): ShapeEntity[] => {
   return getSelectedShapes(groupShape).map(shape => {
     return {
-      ...translateShape([20, 20], shape, [0, 0], settings, false),
+      ...translateShape(shape, 20, 20, settings),
       id: uniqueId(`${shape.type}_`)
     }
   })

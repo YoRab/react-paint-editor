@@ -1,7 +1,7 @@
 import type { UtilsSettings } from '@canvas/constants/app'
 import { createRecSelectionPath, resizeRectSelection } from '@canvas/utils/selection/rectSelection'
 import { createBrushPath, getComputedShapeInfos } from '@canvas/utils/shapes/path'
-import { boundVectorToSingleAxis, roundForGrid, roundValues, scalePoint } from '@canvas/utils/transform'
+import { roundValues, scalePoint } from '@canvas/utils/transform'
 import type { SelectionModeResize } from '@common/types/Mode'
 import type { DrawableShape, Point, Rect, ShapeEntity } from '@common/types/Shapes'
 import type { ToolsSettingsType } from '@common/types/tools'
@@ -76,29 +76,6 @@ export const drawBrush = (ctx: CanvasRenderingContext2D, shape: ShapeEntity<'bru
   if (ctx.globalAlpha === 0) return
   if (shape.style?.strokeColor === 'transparent' || ctx.globalAlpha === 0) return
   ctx.stroke(shape.path)
-}
-
-export const translateBrush = (
-  cursorPosition: Point,
-  originalShape: ShapeEntity<'brush'>,
-  originalCursorPosition: Point,
-  settings: UtilsSettings,
-  singleAxis: boolean
-) => {
-  const originalBorders = originalShape.computed.borders
-  const translationVector = boundVectorToSingleAxis(
-    [cursorPosition[0] - originalCursorPosition[0], cursorPosition[1] - originalCursorPosition[1]],
-    singleAxis
-  )
-  const translationX = settings.gridGap ? roundForGrid(originalBorders.x + translationVector[0], settings) - originalBorders.x : translationVector[0]
-  const translationY = settings.gridGap ? roundForGrid(originalBorders.y + translationVector[1], settings) - originalBorders.y : translationVector[1]
-  return buildPath(
-    {
-      ...originalShape,
-      points: originalShape.points.map(coord => coord.map(([x, y]) => [x + translationX, y + translationY])) as Point[][]
-    },
-    settings
-  )
 }
 
 export const resizeBrush = (

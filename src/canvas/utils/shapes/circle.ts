@@ -1,6 +1,5 @@
 import type { UtilsSettings } from '@canvas/constants/app'
 import { createRecSelectionPath, resizeRectSelection } from '@canvas/utils/selection/rectSelection'
-import { boundVectorToSingleAxis, roundForGrid } from '@canvas/utils/transform'
 import type { SelectionModeResize } from '@common/types/Mode'
 import type { Circle, DrawableShape, Point, Rect, ShapeEntity } from '@common/types/Shapes'
 import type { ToolsSettingsType } from '@common/types/tools'
@@ -66,28 +65,6 @@ export const drawCircle = (ctx: CanvasRenderingContext2D, circle: ShapeEntity<'c
   if (ctx.globalAlpha === 0 || !circle.path) return
   circle.style?.fillColor !== 'transparent' && ctx.fill(circle.path)
   circle.style?.strokeColor !== 'transparent' && ctx.stroke(circle.path)
-}
-
-export const translateCircle = (
-  cursorPosition: Point,
-  originalShape: ShapeEntity<'circle'>,
-  originalCursorPosition: Point,
-  settings: UtilsSettings,
-  singleAxis: boolean
-) => {
-  const translationVector = boundVectorToSingleAxis(
-    [cursorPosition[0] - originalCursorPosition[0], cursorPosition[1] - originalCursorPosition[1]],
-    singleAxis
-  )
-
-  return buildPath(
-    {
-      ...originalShape,
-      x: roundForGrid(originalShape.x + translationVector[0], settings),
-      y: roundForGrid(originalShape.y + translationVector[1], settings)
-    },
-    settings
-  )
 }
 
 export const resizeCircle = (
