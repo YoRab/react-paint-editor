@@ -1,79 +1,78 @@
 .sb-container {
-    padding-bottom: 48px;
+  padding-bottom: 48px;
 }
 
 .sb-section {
-    width: 100%;
-    display: flex;
-    flex-direction: row;
-    gap: 12px;
+  width: 100%;
+  display: flex;
+  flex-direction: row;
+  gap: 12px;
 }
 
 img {
-    object-fit: cover;
+  object-fit: cover;
 }
 
 .sb-section-title {
-    padding-bottom: 32px;
+  padding-bottom: 32px;
 }
 
 .sb-section a:not(h1 a, h2 a, h3 a) {
-    font-size: 14px;
+  font-size: 14px;
 }
 
 .sb-section-item {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
 }
 
 .sb-section-item h2 {
-    margin-top: 12px;
-    margin-bottom: 12px;
+  margin-top: 12px;
+  margin-bottom: 12px;
 }
 
 .sb-section-item h3 {
-    margin-top: 12px;
-    margin-bottom: 12px;
+  margin-top: 12px;
+  margin-bottom: 12px;
 }
 
-
 .sb-section-item p {
-    margin-top: 4px;
-    margin-bottom: 4px;
-    line-height: 1.6;
+  margin-top: 4px;
+  margin-bottom: 4px;
+  line-height: 1.6;
 }
 
 .sb-section-item ul {
-    margin-bottom: 12px;
-    padding-left: 24px;
+  margin-bottom: 12px;
+  padding-left: 24px;
 }
 
 .sb-section-item li {
-    margin-bottom: 8px;
-    line-height: 1.6;
+  margin-bottom: 8px;
+  line-height: 1.6;
 }
 
 .sb-chevron {
-    margin-left: 5px;
+  margin-left: 5px;
 }
 
 .sb-socials {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
 }
 
 .sb-explore-image {
-    max-height: 32px;
-    align-self: flex-start;
+  max-height: 32px;
+  align-self: flex-start;
 }
 
 @media screen and (max-width: 600px) {
-    .sb-section {
-        flex-direction: column;
-    }
+  .sb-section {
+    flex-direction: column;
+  }
 
-    .sb-socials {
-        grid-template-columns: repeat(2, 1fr);
-    }
+  .sb-socials {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }
