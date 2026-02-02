@@ -6,8 +6,8 @@ import type { DrawableShape, Point, Rect, ShapeEntity, Text } from '@common/type
 import type { ToolsSettingsType } from '@common/types/tools'
 import { uniqueId } from '@common/utils/util'
 import { STYLE_FONT_DEFAULT, STYLE_FONT_SIZE_DEFAULT } from '@editor/constants/style'
-import { getRectOppositeAnchorAbsolutePosition } from './rectangle'
 import { getComputedShapeInfos } from './path'
+import { getRectOppositeAnchorAbsolutePosition } from './rectangle'
 
 const DEFAULT_TEXT_VALUE: string[] = ['Texte']
 const DEFAULT_TEXT_WIDTH = 150

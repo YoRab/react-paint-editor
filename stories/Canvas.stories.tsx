@@ -104,7 +104,8 @@ export const DebugMode: Story = {
   parameters: {
     docs: {
       description: {
-        story: 'With `options.debug: true`, shape selection and hit-testing are logged to the browser console. Open DevTools to see debug output when selecting or hovering shapes.'
+        story:
+          'With `options.debug: true`, shape selection and hit-testing are logged to the browser console. Open DevTools to see debug output when selecting or hovering shapes.'
       },
       source: {
         code: `const { editorProps, canvasProps } = useReactPaint({

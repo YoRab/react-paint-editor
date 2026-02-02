@@ -2,6 +2,7 @@ import type { UtilsSettings } from '@canvas/constants/app'
 import { getPointPositionAfterCanvasTransformation } from '@canvas/utils/intersect'
 import { createLineSelectionPath } from '@canvas/utils/selection/lineSelection'
 import { catmullRomToBezier, createCurvePath, getCatmullRomPoints, getComputedShapeInfos, getCubicBezierBounds } from '@canvas/utils/shapes/path'
+import { getRectBorder } from '@canvas/utils/shapes/rectangle'
 import { boundVectorToSingleAxis, roundForGrid } from '@canvas/utils/transform'
 import type { SelectionModeResize } from '@common/types/Mode'
 import type { DrawableShape, Point, Rect, ShapeEntity } from '@common/types/Shapes'
@@ -9,7 +10,6 @@ import type { ToolsSettingsType } from '@common/types/tools'
 import { set } from '@common/utils/object'
 import { uniqueId } from '@common/utils/util'
 import { getPolygonBorder } from './polygon'
-import { getRectBorder } from '@canvas/utils/shapes/rectangle'
 
 const getCurveBorder = (curve: DrawableShape<'curve'>, settings: Pick<UtilsSettings, 'selectionPadding'>): Rect => {
   const points = curve.tempPoint ? [...curve.points, curve.tempPoint] : curve.points

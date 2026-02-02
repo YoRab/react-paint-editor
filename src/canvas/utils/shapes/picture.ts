@@ -6,8 +6,8 @@ import type { SelectionModeResize } from '@common/types/Mode'
 import type { DrawableShape, Point, ShapeEntity } from '@common/types/Shapes'
 import { uniqueId } from '@common/utils/util'
 import { DEFAULT_SHAPE_PICTURE } from '@editor/constants/tools'
-import { getRectBorder } from './rectangle'
 import { getComputedShapeInfos } from './path'
+import { getRectBorder } from './rectangle'
 
 export const getComputedPicture = (picture: DrawableShape<'picture'>, settings: UtilsSettings) => {
   return getComputedShapeInfos(picture, getRectBorder, settings)

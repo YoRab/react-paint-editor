@@ -1,6 +1,6 @@
 import type { UtilsSettings } from '@canvas/constants/app'
 import { radiansToDegrees, rotatePoint } from '@canvas/utils/trigo'
-import type { DrawableShape, ShapeEntity } from '@common/types/Shapes'
+import type { ShapeEntity } from '@common/types/Shapes'
 import { STYLE_FONT_DEFAULT } from '@editor/constants/style'
 import type React from 'react'
 import { useEffect, useMemo, useRef } from 'react'
@@ -27,8 +27,8 @@ const EditTextBox = ({ disabled = false, shape, defaultValue, updateValue, saveS
   const ref = useRef<HTMLDivElement>(null)
   const saveShapesRef = useRef(saveShapes)
 
-  const updateContentEditable = (e: React.ChangeEvent<HTMLDivElement>) => {
-    const divContent = Array.from(e.target.childNodes).map(node => getNodeValue(node))
+  const updateContentEditable = (e: React.InputEvent<HTMLDivElement>) => {
+    const divContent = Array.from((e.target as HTMLDivElement).childNodes).map(node => getNodeValue(node))
     updateValue(divContent)
   }
 
