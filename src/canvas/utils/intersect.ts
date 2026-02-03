@@ -74,18 +74,15 @@ export const checkSelectionIntersection = (
   const { borders, center } = shape.computed
 
   const newPosition = getPointPositionAfterCanvasTransformation(position, shape.rotation ?? 0, center)
-  const shapesToCheck = getSelectedShapes(shape)
-  if (checkAnchors) {
-    if (
-      shapesToCheck.length === 1 &&
-      (shapesToCheck[0]?.type === 'line' || shapesToCheck[0]?.type === 'polygon' || shapesToCheck[0]?.type === 'curve')
-    ) {
-      for (let i = 0; i < shapesToCheck[0].points.length; i++) {
+  const shapeToCheck = getSelectedShapes(shape).length > 1 ? shape : getSelectedShapes(shape)[0]
+  if (shapeToCheck && checkAnchors) {
+    if (shapeToCheck.type === 'line' || shapeToCheck.type === 'polygon' || shapeToCheck.type === 'curve') {
+      for (let i = 0; i < shapeToCheck.points.length; i++) {
         if (
           isPartOfRect(
             {
-              x: shapesToCheck[0]!.points[i]![0] - SELECTION_ANCHOR_SIZE / 2 / scaleRatio,
-              y: shapesToCheck[0]!.points[i]![1] - SELECTION_ANCHOR_SIZE / 2 / scaleRatio,
+              x: shapeToCheck.points[i]![0] - SELECTION_ANCHOR_SIZE / 2 / scaleRatio,
+              y: shapeToCheck.points[i]![1] - SELECTION_ANCHOR_SIZE / 2 / scaleRatio,
               width: SELECTION_ANCHOR_SIZE / scaleRatio,
               height: SELECTION_ANCHOR_SIZE / scaleRatio
             },
@@ -97,12 +94,27 @@ export const checkSelectionIntersection = (
         }
       }
     } else {
-      if (shapesToCheck.length === 1) {
+      if (
+        isPartOfRect(
+          {
+            x: borders.x + borders.width / 2 - SELECTION_ANCHOR_SIZE / 2 / scaleRatio,
+            y: borders.y - SELECTION_ANCHOR_SIZE / scaleRatio - SELECTION_ROTATED_ANCHOR_POSITION / scaleRatio,
+            width: SELECTION_ANCHOR_SIZE / scaleRatio,
+            height: SELECTION_ANCHOR_SIZE / scaleRatio
+          },
+          newPosition,
+          radius
+        )
+      ) {
+        return { mode: 'rotate' }
+      }
+
+      for (const anchorPosition of SELECTION_RESIZE_ANCHOR_POSITIONS) {
         if (
           isPartOfRect(
             {
-              x: borders.x + borders.width / 2 - SELECTION_ANCHOR_SIZE / 2 / scaleRatio,
-              y: borders.y - SELECTION_ANCHOR_SIZE / scaleRatio - SELECTION_ROTATED_ANCHOR_POSITION / scaleRatio,
+              x: borders.x + borders.width * anchorPosition[0] - SELECTION_ANCHOR_SIZE / 2 / scaleRatio,
+              y: borders.y + borders.height * anchorPosition[1] - SELECTION_ANCHOR_SIZE / 2 / scaleRatio,
               width: SELECTION_ANCHOR_SIZE / scaleRatio,
               height: SELECTION_ANCHOR_SIZE / scaleRatio
             },
@@ -110,24 +122,7 @@ export const checkSelectionIntersection = (
             radius
           )
         ) {
-          return { mode: 'rotate' }
-        }
-
-        for (const anchorPosition of SELECTION_RESIZE_ANCHOR_POSITIONS) {
-          if (
-            isPartOfRect(
-              {
-                x: borders.x + borders.width * anchorPosition[0] - SELECTION_ANCHOR_SIZE / 2 / scaleRatio,
-                y: borders.y + borders.height * anchorPosition[1] - SELECTION_ANCHOR_SIZE / 2 / scaleRatio,
-                width: SELECTION_ANCHOR_SIZE / scaleRatio,
-                height: SELECTION_ANCHOR_SIZE / scaleRatio
-              },
-              newPosition,
-              radius
-            )
-          ) {
-            return { mode: 'resize', anchor: anchorPosition }
-          }
+          return { mode: 'resize', anchor: anchorPosition }
         }
       }
     }
