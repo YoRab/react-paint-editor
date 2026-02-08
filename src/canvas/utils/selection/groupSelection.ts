@@ -13,7 +13,6 @@ export const drawSelectionGroup = (
   withAnchors: boolean
 ): void => {
   if (!shape.selection) return
-  if (selectionMode.mode === 'rotate') return
 
   shape.shapes.forEach(shape => {
     updateCanvasContext(ctx, {
@@ -26,6 +25,8 @@ export const drawSelectionGroup = (
     if (shape.selection?.shapePath) ctx.stroke(shape.selection.shapePath)
     ctx.restore()
   })
+
+  if (selectionMode.mode === 'rotate') return
 
   transformCanvas(ctx, settings, shape.rotation, shape.computed.center)
 
