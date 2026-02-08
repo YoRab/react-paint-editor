@@ -12,14 +12,14 @@ export const getComputedRect = (rect: DrawableShape<rectish>, settings: UtilsSet
   return getComputedShapeInfos(rect, getRectBorder, settings)
 }
 
-const buildPath = <T extends rectish>(rect: DrawableShape<T> & { id: string }, settings: UtilsSettings, isGroup = false): ShapeEntity<T> => {
+const buildPath = <T extends rectish>(rect: DrawableShape<T> & { id: string }, settings: UtilsSettings): ShapeEntity<T> => {
   const path = createRecPath(rect)
   const computed = getComputedRect(rect, settings)
   return {
     ...rect,
     path,
     computed,
-    selection: createRecSelectionPath(path, computed, settings, isGroup)
+    selection: createRecSelectionPath(path, computed, settings)
   } as unknown as ShapeEntity<T>
 }
 
@@ -33,7 +33,6 @@ export const createRectangle = <T extends rectish>(
   },
   cursorPosition: Point,
   settings: UtilsSettings,
-  isGroup = false,
   width = 0,
   height = 0
 ): ShapeEntity<T> => {
@@ -53,7 +52,7 @@ export const createRectangle = <T extends rectish>(
       lineDash: shape.settings.lineDash.default
     }
   } as unknown as DrawableShape<T> & { id: string }
-  return buildPath(recShape, settings, isGroup)
+  return buildPath(recShape, settings)
 }
 
 export const drawRect = (ctx: CanvasRenderingContext2D, shape: ShapeEntity<rectish>): void => {

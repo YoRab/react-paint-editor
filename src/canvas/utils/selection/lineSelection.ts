@@ -1,6 +1,6 @@
 import type { UtilsSettings } from '@canvas/constants/app'
 import { SELECTION_ANCHOR_SIZE } from '@canvas/constants/shapes'
-import { updateCanvasContext } from '@canvas/utils/canvas'
+import { transformCanvas, updateCanvasContext } from '@canvas/utils/canvas'
 import { createCirclePath, createRecPath } from '@canvas/utils/shapes/path'
 import type { HoverModeData } from '@common/types/Mode'
 import type { DrawableShape, Point, Rect, SelectionLinesType, ShapeEntity } from '@common/types/Shapes'
@@ -46,6 +46,7 @@ export const drawLineSelection = ({
   settings: UtilsSettings
 }) => {
   if (!shape.selection) return
+  transformCanvas(ctx, settings, shape.rotation, shape.computed.center)
 
   if (settings.debug) {
     updateCanvasContext(ctx, {

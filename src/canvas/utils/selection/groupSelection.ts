@@ -14,6 +14,21 @@ export const drawSelectionGroup = (
 ): void => {
   if (!shape.selection) return
   if (selectionMode.mode === 'rotate') return
+
+  shape.shapes.forEach(shape => {
+    updateCanvasContext(ctx, {
+      fillColor: 'transparent',
+      strokeColor: selectionColor,
+      lineWidth: selectionWidth / settings.canvasSize.scaleRatio
+    })
+
+    transformCanvas(ctx, settings, shape.rotation, shape.computed.center)
+    if (shape.selection?.shapePath) ctx.stroke(shape.selection.shapePath)
+    ctx.restore()
+  })
+
+  transformCanvas(ctx, settings, shape.rotation, shape.computed.center)
+
   if (settings.debug) {
     updateCanvasContext(ctx, {
       fillColor: 'transparent',
@@ -50,16 +65,4 @@ export const drawSelectionGroup = (
       ctx.stroke(anchor)
     }
   }
-
-  shape.shapes.forEach(shape => {
-    ctx.restore()
-    updateCanvasContext(ctx, {
-      fillColor: 'transparent',
-      strokeColor: selectionColor,
-      lineWidth: selectionWidth / settings.canvasSize.scaleRatio
-    })
-
-    transformCanvas(ctx, settings, shape.rotation, shape.computed.center)
-    if (shape.selection?.shapePath) ctx.stroke(shape.selection.shapePath)
-  })
 }
