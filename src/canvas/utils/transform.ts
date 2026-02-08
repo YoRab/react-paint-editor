@@ -4,7 +4,7 @@ import { PICTURE_DEFAULT_SIZE } from '@canvas/constants/picture'
 import { buildShapesGroup, getSelectedShapes } from '@canvas/utils/selection'
 import type { SelectionModeData } from '@common/types/Mode'
 import type { DrawableShape, Line, Point, SelectionType, ShapeEntity } from '@common/types/Shapes'
-import { resizeShape, rotateShapes, translateShapes } from './shapes'
+import { refreshShape, resizeShape, rotateShape, translateShapes } from './shapes'
 import { addNewPointToShape } from './shapes/brush'
 import { getAngleFromVector, rotatePoint } from './trigo'
 
@@ -63,10 +63,16 @@ export const transformShape = (
   }
 
   if (selectionMode.mode === 'rotate') {
-    return buildShapesGroup(
-      rotateShapes(cursorPosition, selectionMode.originalShape, selectionMode.cursorStartPosition, settings, isShiftPressed),
-      settings
-    )!
+    const p1x = selectionMode.originalShape.computed.center[0] - selectionMode.cursorStartPosition[0]
+    const p1y = selectionMode.originalShape.computed.center[1] - selectionMode.cursorStartPosition[1]
+    const p2x = selectionMode.originalShape.computed.center[0] - cursorPosition[0]
+    const p2y = selectionMode.originalShape.computed.center[1] - cursorPosition[1]
+    const rotationToAdd = roundRotationForGrid(Math.atan2(p2y, p2x) - Math.atan2(p1y, p1x), settings, isShiftPressed)
+    const shapesGroup = getSelectedShapes(selectionMode.originalShape).map(shape => {
+      return refreshShape(rotateShape(shape, rotationToAdd, selectionMode.originalShape.computed.center), settings)
+    })
+
+    return buildShapesGroup(shapesGroup, settings)!
   }
   return buildShapesGroup(
     getSelectedShapes(selectedShape).map(shape => {

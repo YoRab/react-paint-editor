@@ -1,17 +1,19 @@
 import type { UtilsSettings } from '@canvas/constants/app'
 import { transformCanvas, updateCanvasContext } from '@canvas/utils/canvas'
-import type { ShapeEntity } from '@common/types/Shapes'
+import type { SelectionModeData } from '@common/types/Mode'
+import type { Point, ShapeEntity } from '@common/types/Shapes'
 
 export const drawSelectionGroup = (
   ctx: CanvasRenderingContext2D,
   shape: ShapeEntity<'group'>,
   selectionColor: string,
   selectionWidth: number,
+  selectionMode: SelectionModeData<number | Point>,
   settings: UtilsSettings,
   withAnchors: boolean
 ): void => {
   if (!shape.selection) return
-
+  if (selectionMode.mode === 'rotate') return
   if (settings.debug) {
     updateCanvasContext(ctx, {
       fillColor: 'transparent',

@@ -6,7 +6,7 @@ import { drawSelectionGroup } from '@canvas/utils/selection/groupSelection'
 import { drawLineSelection } from '@canvas/utils/selection/lineSelection'
 import { drawBoundingBox, drawSelectionRect } from '@canvas/utils/selection/rectSelection'
 import { drawFrame } from '@canvas/utils/selection/selectionFrame'
-import { boundVectorToSingleAxis, roundForGrid, roundRotationForGrid } from '@canvas/utils/transform'
+import { boundVectorToSingleAxis, roundForGrid } from '@canvas/utils/transform'
 import { rotatePoint } from '@canvas/utils/trigo'
 import { getCurrentView } from '@canvas/utils/zoom'
 import type { HoverModeData, SelectionModeData, SelectionModeResize } from '@common/types/Mode'
@@ -161,24 +161,6 @@ export const rotateShape = <T extends ShapeEntity>(shape: T, rotationToApply: nu
     y: shape.y + rotatedCenter[1] - shape.computed.center[1],
     rotation: (shape.rotation ?? 0) + rotationToApply
   }
-}
-
-export const rotateShapes = (
-  cursorPosition: Point,
-  originalShape: SelectionType,
-  originalCursorPosition: Point,
-  settings: UtilsSettings,
-  isShiftPressed: boolean
-): ShapeEntity[] => {
-  const p1x = originalShape.computed.center[0] - originalCursorPosition[0]
-  const p1y = originalShape.computed.center[1] - originalCursorPosition[1]
-  const p2x = originalShape.computed.center[0] - cursorPosition[0]
-  const p2y = originalShape.computed.center[1] - cursorPosition[1]
-  const rotationToAdd = roundRotationForGrid(Math.atan2(p2y, p2x) - Math.atan2(p1y, p1x), settings, isShiftPressed)
-
-  return getSelectedShapes(originalShape).map(shape => {
-    return refreshShape(rotateShape(shape, rotationToAdd, originalShape.computed.center), settings)
-  })
 }
 
 export const resizeShape = <T extends ShapeEntity>(
@@ -340,6 +322,7 @@ export const drawShapeSelection = ({
   selectionWidth,
   selectionColor,
   hoverMode,
+  selectionMode,
   withAnchors = true
 }: {
   ctx: CanvasRenderingContext2D
@@ -348,6 +331,7 @@ export const drawShapeSelection = ({
   selectionWidth: number
   selectionColor: string
   hoverMode: HoverModeData
+  selectionMode: SelectionModeData<number | Point>
   withAnchors?: boolean
 }) => {
   const { center } = shape.computed
@@ -365,7 +349,7 @@ export const drawShapeSelection = ({
       drawSelectionRect(ctx, shape, selectionColor, selectionWidth, settings, withAnchors)
       break
     case 'group':
-      drawSelectionGroup(ctx, shape, selectionColor, selectionWidth, settings, withAnchors)
+      drawSelectionGroup(ctx, shape, selectionColor, selectionWidth, selectionMode, settings, withAnchors)
       break
     case 'polygon':
     case 'line':
