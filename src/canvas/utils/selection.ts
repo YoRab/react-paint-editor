@@ -189,13 +189,12 @@ export const buildShapesGroup = (shapes: ShapeEntity[], settings: UtilsSettings)
 
   const groupRectangle = createRectangle(
     {
-      id: 'test',
+      id: 'group_selection',
       type: 'rect',
       settings: SETTINGS_DEFAULT_RECT
     },
     [borders.x, borders.y],
     settings,
-    true,
     borders.width,
     borders.height
   )
