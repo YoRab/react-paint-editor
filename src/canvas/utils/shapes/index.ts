@@ -6,7 +6,8 @@ import { drawSelectionGroup } from '@canvas/utils/selection/groupSelection'
 import { drawLineSelection } from '@canvas/utils/selection/lineSelection'
 import { drawBoundingBox, drawSelectionRect } from '@canvas/utils/selection/rectSelection'
 import { drawFrame } from '@canvas/utils/selection/selectionFrame'
-import { boundVectorToSingleAxis, roundForGrid, roundRotationForGrid } from '@canvas/utils/transform'
+import { boundVectorToSingleAxis, roundForGrid } from '@canvas/utils/transform'
+import { rotatePoint } from '@canvas/utils/trigo'
 import { getCurrentView } from '@canvas/utils/zoom'
 import type { HoverModeData, SelectionModeData, SelectionModeResize } from '@common/types/Mode'
 import type { DrawableShape, Point, SelectionType, ShapeEntity } from '@common/types/Shapes'
@@ -133,26 +134,32 @@ export const drawShape = (ctx: CanvasRenderingContext2D, shape: ShapeEntity, set
   ctx.restore()
 }
 
-export const rotateShape = <T extends DrawableShape>(
-  shape: T,
-  cursorPosition: Point,
-  originalShape: T,
-  originalCursorPosition: Point,
-  shapeCenter: Point,
-  settings: UtilsSettings,
-  isShiftPressed: boolean
-) => {
-  const p1x = shapeCenter[0] - originalCursorPosition[0]
-  const p1y = shapeCenter[1] - originalCursorPosition[1]
-  const p2x = shapeCenter[0] - cursorPosition[0]
-  const p2y = shapeCenter[1] - cursorPosition[1]
-  const rotatedShape: T = {
-    ...shape,
-    rotation: roundRotationForGrid((originalShape.rotation ?? 0) + Math.atan2(p2y, p2x) - Math.atan2(p1y, p1x), settings, isShiftPressed)
+export const rotateShape = <T extends ShapeEntity>(shape: T, rotationToApply: number, selectionCenter: Point): T => {
+  const rotatedCenter = rotatePoint({ origin: selectionCenter, point: shape.computed.center, rotation: -rotationToApply })
+
+  if ('points' in shape) {
+    if (shape.type === 'brush') {
+      const points: Point[][] = shape.points.map(pointGroup =>
+        pointGroup.map(point => [point[0] + rotatedCenter[0] - shape.computed.center[0], point[1] + rotatedCenter[1] - shape.computed.center[1]])
+      )
+      return {
+        ...shape,
+        points,
+        rotation: (shape.rotation ?? 0) + rotationToApply
+      }
+    }
+    const points = shape.points.map(point => rotatePoint({ origin: selectionCenter, point: point, rotation: -rotationToApply }))
+    return {
+      ...shape,
+      points
+    }
   }
+
   return {
-    ...rotatedShape,
-    computed: getShapeComputedData(rotatedShape, settings)
+    ...shape,
+    x: shape.x + rotatedCenter[0] - shape.computed.center[0],
+    y: shape.y + rotatedCenter[1] - shape.computed.center[1],
+    rotation: (shape.rotation ?? 0) + rotationToApply
   }
 }
 
@@ -315,6 +322,7 @@ export const drawShapeSelection = ({
   selectionWidth,
   selectionColor,
   hoverMode,
+  selectionMode,
   withAnchors = true
 }: {
   ctx: CanvasRenderingContext2D
@@ -323,6 +331,7 @@ export const drawShapeSelection = ({
   selectionWidth: number
   selectionColor: string
   hoverMode: HoverModeData
+  selectionMode: SelectionModeData<number | Point>
   withAnchors?: boolean
 }) => {
   const { center } = shape.computed
@@ -340,7 +349,7 @@ export const drawShapeSelection = ({
       drawSelectionRect(ctx, shape, selectionColor, selectionWidth, settings, withAnchors)
       break
     case 'group':
-      drawSelectionGroup(ctx, shape, selectionColor, selectionWidth, settings, withAnchors)
+      drawSelectionGroup(ctx, shape, selectionColor, selectionWidth, selectionMode, settings, withAnchors)
       break
     case 'polygon':
     case 'line':

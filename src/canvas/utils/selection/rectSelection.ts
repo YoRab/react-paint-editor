@@ -18,19 +18,20 @@ export const createRecSelectionPath = (
   return {
     border: createRecPath(borders),
     shapePath: path,
-    line: isGroup
-      ? undefined
-      : createLinePath({
-          points: [
-            [borders.x + borders.width / 2, borders.y],
-            [
-              borders.x + borders.width / 2,
-              borders.y - (SELECTION_ANCHOR_SIZE / 2 + SELECTION_ROTATED_ANCHOR_POSITION) / settings.canvasSize.scaleRatio
-            ]
-          ]
-        }),
+    line: createLinePath({
+      points: [
+        [borders.x + borders.width / 2, borders.y],
+        [borders.x + borders.width / 2, borders.y - (SELECTION_ANCHOR_SIZE / 2 + SELECTION_ROTATED_ANCHOR_POSITION) / settings.canvasSize.scaleRatio]
+      ]
+    }),
     anchors: isGroup
-      ? []
+      ? [
+          createCirclePath({
+            x: borders.x + borders.width / 2,
+            y: borders.y - (SELECTION_ANCHOR_SIZE / 2 + SELECTION_ROTATED_ANCHOR_POSITION) / settings.canvasSize.scaleRatio,
+            radius: SELECTION_ANCHOR_SIZE / 2 / settings.canvasSize.scaleRatio
+          })
+        ]
       : [
           createCirclePath({
             x: borders.x + borders.width / 2,

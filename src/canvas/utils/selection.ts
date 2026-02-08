@@ -126,55 +126,78 @@ export const selectShape = (
   }
 }
 
-const rotateRect = (rect: Rect, rotation: number, withRotation = true): [Point, Point, Point, Point] => {
-  const points: [Point, Point, Point, Point] = [
-    [rect.x, rect.y],
-    [rect.x + rect.width, rect.y],
-    [rect.x + rect.width, rect.y + rect.height],
-    [rect.x, rect.y + rect.height]
-  ]
-  if (!withRotation) return points
-  const center: Point = [rect.x + rect.width / 2, rect.y + rect.height / 2]
-  return points.map(point =>
-    rotatePoint({
-      point: [point[0], point[1]],
-      origin: center,
-      rotation
-    })
-  ) as [Point, Point, Point, Point]
+const buildGroupBorders = (shapes: ShapeEntity[], rotation: number): Rect => {
+  const movedBorders = shapes.map(
+    shape =>
+      (
+        [
+          [shape.computed.borders.x, shape.computed.borders.y],
+          [shape.computed.borders.x + shape.computed.borders.width, shape.computed.borders.y],
+          [shape.computed.borders.x + shape.computed.borders.width, shape.computed.borders.y + shape.computed.borders.height],
+          [shape.computed.borders.x, shape.computed.borders.y + shape.computed.borders.height]
+        ] as [Point, Point, Point, Point]
+      ).map(point => {
+        const rotatedByItsCenter = rotatePoint({
+          point: [point[0], point[1]],
+          origin: shape.computed.center,
+          rotation: -(shape.rotation ?? 0)
+        })
+        const movedOnCanvasCenter = rotatePoint({
+          point: [rotatedByItsCenter[0], rotatedByItsCenter[1]],
+          origin: [0, 0],
+          rotation
+        })
+        return movedOnCanvasCenter
+      }) as [Point, Point, Point, Point]
+  )
+  const movedbordersXMin = Math.min(...movedBorders.flatMap(shape => [shape[0][0], shape[1][0], shape[2][0], shape[3][0]]))
+  const movedBordersYMin = Math.min(...movedBorders.flatMap(shape => [shape[0][1], shape[1][1], shape[2][1], shape[3][1]]))
+  const movedBordersXMax = Math.max(...movedBorders.flatMap(shape => [shape[0][0], shape[1][0], shape[2][0], shape[3][0]]))
+  const movedBordersYMax = Math.max(...movedBorders.flatMap(shape => [shape[0][1], shape[1][1], shape[2][1], shape[3][1]]))
+
+  const movedCenter = [(movedbordersXMin + movedBordersXMax) / 2, (movedBordersYMin + movedBordersYMax) / 2] as Point
+
+  const realCenter = rotatePoint({
+    point: movedCenter,
+    origin: [0, 0],
+    rotation: -rotation
+  })
+
+  const origVector = [movedCenter[0] - realCenter[0], movedCenter[1] - realCenter[1]] as Point
+
+  const minX = movedbordersXMin - origVector[0]
+  const maxX = movedBordersXMax - origVector[0]
+  const minY = movedBordersYMin - origVector[1]
+  const maxY = movedBordersYMax - origVector[1]
+
+  return {
+    width: maxX - minX,
+    height: maxY - minY,
+    x: minX,
+    y: minY
+  }
 }
 
 export const buildShapesGroup = (shapes: ShapeEntity[], settings: UtilsSettings): SelectionType | undefined => {
   if (!shapes.length) return undefined
   if (shapes.length === 1) return shapes[0]
 
-  let minX = Number.POSITIVE_INFINITY
-  let minY = Number.POSITIVE_INFINITY
-  let maxX = Number.NEGATIVE_INFINITY
-  let maxY = Number.NEGATIVE_INFINITY
+  const sameRotation = !shapes.some(shape => shape.rotation !== shapes[0]!.rotation)
+  const rotation = sameRotation ? (shapes[0]?.rotation ?? 0) : 0
 
-  const checkRotatedShapes = shapes.some(shape => shape.rotation !== shapes[0]!.rotation)
-  const rotation = checkRotatedShapes ? 0 : (shapes[0]?.rotation ?? 0)
+  const borders = buildGroupBorders(shapes, rotation)
 
-  for (const shape of shapes) {
-    const { borders } = shape.computed
-    const rotatedPoints = rotateRect(borders, shape.rotation ?? 0, checkRotatedShapes)
-    minX = Math.min(rotatedPoints[0][0], rotatedPoints[1][0], rotatedPoints[2][0], rotatedPoints[3][0], minX)
-    maxX = Math.max(rotatedPoints[0][0], rotatedPoints[1][0], rotatedPoints[2][0], rotatedPoints[3][0], maxX)
-    minY = Math.min(rotatedPoints[0][1], rotatedPoints[1][1], rotatedPoints[2][1], rotatedPoints[3][1], minY)
-    maxY = Math.max(rotatedPoints[0][1], rotatedPoints[1][1], rotatedPoints[2][1], rotatedPoints[3][1], maxY)
-  }
   const groupRectangle = createRectangle(
     {
       id: 'test',
       type: 'rect',
       settings: SETTINGS_DEFAULT_RECT
     },
-    [minX, minY],
+    [borders.x, borders.y],
     settings,
     true,
-    maxX - minX,
-    maxY - minY
+    borders.width,
+    borders.height
   )
 
   const style = shapes.slice(1)!.reduce((acc, shape) => {

@@ -57,6 +57,7 @@ const renderSelectionCanvas = (
       selectionWidth,
       selectionColor,
       hoverMode,
+      selectionMode,
       withAnchors: false
     })
 
@@ -69,6 +70,7 @@ const renderSelectionCanvas = (
       selectionWidth,
       selectionColor,
       hoverMode,
+      selectionMode,
       withAnchors: selectionMode.mode !== 'textedition'
     })
 
