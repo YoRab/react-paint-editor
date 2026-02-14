@@ -334,9 +334,7 @@ export const drawShapeSelection = ({
   selectionMode: SelectionModeData<number | Point>
   withAnchors?: boolean
 }) => {
-  const { center } = shape.computed
   if (settings.debug) drawBoundingBox(ctx, shape, selectionWidth, settings)
-  transformCanvas(ctx, settings, shape.rotation, center)
 
   switch (shape.type) {
     case 'rect':

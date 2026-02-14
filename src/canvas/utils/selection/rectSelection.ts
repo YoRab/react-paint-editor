@@ -1,6 +1,6 @@
 import type { UtilsSettings } from '@canvas/constants/app'
 import { SELECTION_ANCHOR_SIZE, SELECTION_RESIZE_ANCHOR_POSITIONS, SELECTION_ROTATED_ANCHOR_POSITION } from '@canvas/constants/shapes'
-import { updateCanvasContext } from '@canvas/utils/canvas'
+import { transformCanvas, updateCanvasContext } from '@canvas/utils/canvas'
 import { createCirclePath, createLinePath, createRecPath } from '@canvas/utils/shapes/path'
 import { roundForGrid, roundValues } from '@canvas/utils/transform'
 import { rotatePoint } from '@canvas/utils/trigo'
@@ -10,8 +10,7 @@ import type { DrawableShape, Point, Rect, SelectionDefaultType, SelectionType, S
 export const createRecSelectionPath = (
   path: Path2D | undefined,
   computed: { borders: Rect; outerBorders: Rect; center: Point },
-  settings: UtilsSettings,
-  isGroup = false
+  settings: UtilsSettings
 ): SelectionDefaultType => {
   const { borders } = computed
 
@@ -24,28 +23,20 @@ export const createRecSelectionPath = (
         [borders.x + borders.width / 2, borders.y - (SELECTION_ANCHOR_SIZE / 2 + SELECTION_ROTATED_ANCHOR_POSITION) / settings.canvasSize.scaleRatio]
       ]
     }),
-    anchors: isGroup
-      ? [
-          createCirclePath({
-            x: borders.x + borders.width / 2,
-            y: borders.y - (SELECTION_ANCHOR_SIZE / 2 + SELECTION_ROTATED_ANCHOR_POSITION) / settings.canvasSize.scaleRatio,
-            radius: SELECTION_ANCHOR_SIZE / 2 / settings.canvasSize.scaleRatio
-          })
-        ]
-      : [
-          createCirclePath({
-            x: borders.x + borders.width / 2,
-            y: borders.y - (SELECTION_ANCHOR_SIZE / 2 + SELECTION_ROTATED_ANCHOR_POSITION) / settings.canvasSize.scaleRatio,
-            radius: SELECTION_ANCHOR_SIZE / 2 / settings.canvasSize.scaleRatio
-          }),
-          ...SELECTION_RESIZE_ANCHOR_POSITIONS.map(anchorPosition =>
-            createCirclePath({
-              x: borders.x + borders.width * anchorPosition[0],
-              y: borders.y + borders.height * anchorPosition[1],
-              radius: SELECTION_ANCHOR_SIZE / 2 / settings.canvasSize.scaleRatio
-            })
-          )
-        ]
+    anchors: [
+      createCirclePath({
+        x: borders.x + borders.width / 2,
+        y: borders.y - (SELECTION_ANCHOR_SIZE / 2 + SELECTION_ROTATED_ANCHOR_POSITION) / settings.canvasSize.scaleRatio,
+        radius: SELECTION_ANCHOR_SIZE / 2 / settings.canvasSize.scaleRatio
+      }),
+      ...SELECTION_RESIZE_ANCHOR_POSITIONS.map(anchorPosition =>
+        createCirclePath({
+          x: borders.x + borders.width * anchorPosition[0],
+          y: borders.y + borders.height * anchorPosition[1],
+          radius: SELECTION_ANCHOR_SIZE / 2 / settings.canvasSize.scaleRatio
+        })
+      )
+    ]
   }
 }
 
@@ -76,6 +67,7 @@ export const drawSelectionRect = (
   withAnchors: boolean
 ): void => {
   if (!shape.selection) return
+  transformCanvas(ctx, settings, shape.rotation, shape.computed.center)
 
   if (settings.debug) {
     updateCanvasContext(ctx, {
