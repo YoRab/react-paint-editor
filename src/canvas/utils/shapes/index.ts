@@ -4,7 +4,7 @@ import { getRectIntersection } from '@canvas/utils/intersect'
 import { getSelectedShapes } from '@canvas/utils/selection'
 import { drawSelectionGroup } from '@canvas/utils/selection/groupSelection'
 import { drawLineSelection } from '@canvas/utils/selection/lineSelection'
-import { drawBoundingBox, drawSelectionRect } from '@canvas/utils/selection/rectSelection'
+import { drawBoundingBox, drawSelectionRect, resizeRectSelection } from '@canvas/utils/selection/rectSelection'
 import { drawFrame } from '@canvas/utils/selection/selectionFrame'
 import { boundVectorToSingleAxis, roundForGrid } from '@canvas/utils/transform'
 import { rotatePoint } from '@canvas/utils/trigo'
@@ -21,7 +21,8 @@ import { createLine, drawLine, getComputedLine, refreshLine, resizeLine } from '
 import { drawPicture, getComputedPicture, refreshPicture, resizePicture } from './picture'
 import { createPolygon, drawPolygon, getComputedPolygon, refreshPolygon, resizePolygon } from './polygon'
 import { createRectangle, drawRect, getComputedRect, refreshRect, resizeRect } from './rectangle'
-import { createText, drawText, getComputedText, refreshText, resizeText } from './text'
+import { calculateTextFontSize, createText, drawText, getComputedText, refreshText, resizeText } from './text'
+import { SHAPES_KEEPING_RATIO, SHAPES_WITH_ROTATION } from '@canvas/constants/shapes'
 
 export const createShape = (
   ctx: CanvasRenderingContext2D,
@@ -165,7 +166,6 @@ export const rotateShape = <T extends ShapeEntity>(shape: T, rotationToApply: nu
 
 export const resizeShape = <T extends ShapeEntity>(
   ctx: CanvasRenderingContext2D,
-  shape: T,
   cursorPosition: Point,
   originalShape: T,
   selectionMode: SelectionModeData<Point | number>,
@@ -193,7 +193,7 @@ export const resizeShape = <T extends ShapeEntity>(
         originalShape,
         selectionMode as SelectionModeResize,
         settings,
-        shape.type === 'square' || isShiftPressed,
+        originalShape.type === 'square' || isShiftPressed,
         isAltPressed
       ) as T
     case 'text':
@@ -203,6 +203,121 @@ export const resizeShape = <T extends ShapeEntity>(
     default:
       return originalShape
   }
+}
+
+export const resizeShapes = (
+  ctx: CanvasRenderingContext2D,
+  cursorPosition: Point,
+  originalShape: SelectionType,
+  selectionMode: SelectionModeResize<Point | number>,
+  settings: UtilsSettings,
+  isShiftPressed: boolean,
+  isAltPressed: boolean
+): ShapeEntity[] => {
+  if (originalShape.type === 'group') {
+    const { center, borders } = originalShape.computed
+    const groupOriginalShapes = getSelectedShapes(originalShape)
+    const shapesWithRotation = groupOriginalShapes.filter(shape => SHAPES_WITH_ROTATION.includes(shape.type))
+    const sameRotation = !shapesWithRotation.some(shape => (shape.rotation ?? 0) !== (shapesWithRotation[0]!.rotation ?? 0))
+    const hasShapesWithRatio = groupOriginalShapes.some(shape => SHAPES_KEEPING_RATIO.includes(shape.type))
+    const keepRatio = isShiftPressed || !sameRotation || hasShapesWithRatio
+
+    const {
+      borderX: newBorderX,
+      borderHeight: newBorderHeight,
+      borderY: newBorderY,
+      borderWidth: newBorderWidth
+    } = resizeRectSelection(cursorPosition, originalShape, selectionMode as SelectionModeResize, settings, keepRatio, isAltPressed)
+    const widthMultiplier = (newBorderWidth - 2 * settings.selectionPadding) / (originalShape.computed.borders.width - 2 * settings.selectionPadding)
+    const heightMultiplier =
+      (newBorderHeight - 2 * settings.selectionPadding) / (originalShape.computed.borders.height - 2 * settings.selectionPadding)
+
+    const rotatedCursorPosition = rotatePoint({
+      origin: center,
+      point: cursorPosition,
+      rotation: originalShape.rotation
+    })
+    const isXinverted =
+      ((selectionMode as SelectionModeResize).anchor[0] === 0 && rotatedCursorPosition[0] >= borders.x + borders.width) ||
+      ((selectionMode as SelectionModeResize).anchor[0] === 1 && rotatedCursorPosition[0] <= borders.x)
+    const isYinverted =
+      ((selectionMode as SelectionModeResize).anchor[1] === 0 && rotatedCursorPosition[1] >= borders.y + borders.height) ||
+      ((selectionMode as SelectionModeResize).anchor[1] === 1 && rotatedCursorPosition[1] <= borders.y)
+
+    return groupOriginalShapes.map(shape => {
+      if (shape.type === 'rect' || shape.type === 'square' || shape.type === 'picture' || shape.type === 'text') {
+        const shapeCenterWithNoRotation = rotatePoint({
+          origin: originalShape.computed.center,
+          point: shape.computed.center,
+          rotation: originalShape.rotation ?? 0
+        })
+
+        const xOffsetInGroup =
+          (shapeCenterWithNoRotation[0] -
+            shape.computed.borders.width / 2 -
+            settings.selectionPadding -
+            (originalShape.computed.borders.x + settings.selectionPadding)) *
+          widthMultiplier
+        const yOffsetInGroup =
+          (shapeCenterWithNoRotation[1] -
+            shape.computed.borders.height / 2 -
+            settings.selectionPadding -
+            (originalShape.computed.borders.y + settings.selectionPadding)) *
+          heightMultiplier
+
+        const xPositionInGroupNewBorder =
+          newBorderX +
+          settings.selectionPadding +
+          (isXinverted ? newBorderWidth - 2 * settings.selectionPadding - shape.width * widthMultiplier - xOffsetInGroup : xOffsetInGroup)
+        const yPositionInGroupNewBorder =
+          newBorderY +
+          settings.selectionPadding +
+          (isYinverted ? newBorderHeight - 2 * settings.selectionPadding - shape.height * heightMultiplier - yOffsetInGroup : yOffsetInGroup)
+
+        const newWidth = shape.width * widthMultiplier
+        const newHeight = shape.height * heightMultiplier
+
+        const newCenter = rotatePoint({
+          origin: [newBorderX + newBorderWidth / 2, newBorderY + newBorderHeight / 2],
+          point: [xPositionInGroupNewBorder + newWidth / 2, yPositionInGroupNewBorder + newHeight / 2],
+          rotation: -(originalShape.rotation ?? 0)
+        })
+
+        const newX = newCenter[0] - newWidth / 2
+        const newY = newCenter[1] - newHeight / 2
+
+        const refreshedShape = refreshShape(
+          {
+            ...shape,
+            width: newWidth,
+            height: newHeight,
+            x: newX,
+            y: newY
+          },
+          settings
+        )
+
+        if (refreshedShape.type === 'text') {
+          return {
+            ...refreshedShape,
+            fontSize: calculateTextFontSize(
+              ctx,
+              refreshedShape.value,
+              refreshedShape.width,
+              refreshedShape.style?.fontBold ?? false,
+              refreshedShape.style?.fontItalic ?? false,
+              refreshedShape.style?.fontFamily
+            )
+          }
+        }
+        return refreshedShape
+      }
+      return resizeShape(ctx, cursorPosition, shape, selectionMode, settings, isShiftPressed, isAltPressed)
+    })
+  }
+  return getSelectedShapes(originalShape).map(shape => {
+    return resizeShape(ctx, cursorPosition, shape, selectionMode, settings, isShiftPressed, isAltPressed)
+  })
 }
 
 const translateShape = (shape: ShapeEntity, translationX: number, translationY: number, settings: UtilsSettings): ShapeEntity => {
