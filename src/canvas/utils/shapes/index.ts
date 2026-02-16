@@ -245,7 +245,14 @@ export const resizeShapes = (
       ((selectionMode as SelectionModeResize).anchor[1] === 1 && rotatedCursorPosition[1] <= borders.y)
 
     return groupOriginalShapes.map(shape => {
-      if (shape.type === 'rect' || shape.type === 'square' || shape.type === 'picture' || shape.type === 'text') {
+      if (
+        shape.type === 'rect' ||
+        shape.type === 'square' ||
+        shape.type === 'picture' ||
+        shape.type === 'text' ||
+        shape.type === 'ellipse' ||
+        shape.type === 'circle'
+      ) {
         const shapeCenterWithNoRotation = rotatePoint({
           origin: originalShape.computed.center,
           point: shape.computed.center,
@@ -266,49 +273,107 @@ export const resizeShapes = (
         const xPositionInGroupNewBorder =
           newBorderX +
           settings.selectionPadding +
-          (isXinverted ? newBorderWidth - 2 * settings.selectionPadding - shape.width * widthMultiplier - xOffsetInGroup : xOffsetInGroup)
+          (isXinverted
+            ? newBorderWidth -
+              2 * settings.selectionPadding -
+              (shape.computed.borders.width - 2 * settings.selectionPadding) * widthMultiplier -
+              xOffsetInGroup
+            : xOffsetInGroup)
         const yPositionInGroupNewBorder =
           newBorderY +
           settings.selectionPadding +
-          (isYinverted ? newBorderHeight - 2 * settings.selectionPadding - shape.height * heightMultiplier - yOffsetInGroup : yOffsetInGroup)
+          (isYinverted
+            ? newBorderHeight -
+              2 * settings.selectionPadding -
+              (shape.computed.borders.height - 2 * settings.selectionPadding) * heightMultiplier -
+              yOffsetInGroup
+            : yOffsetInGroup)
 
-        const newWidth = shape.width * widthMultiplier
-        const newHeight = shape.height * heightMultiplier
+        if (shape.type === 'rect' || shape.type === 'square' || shape.type === 'picture' || shape.type === 'text') {
+          const newWidth = shape.width * widthMultiplier
+          const newHeight = shape.height * heightMultiplier
 
-        const newCenter = rotatePoint({
-          origin: [newBorderX + newBorderWidth / 2, newBorderY + newBorderHeight / 2],
-          point: [xPositionInGroupNewBorder + newWidth / 2, yPositionInGroupNewBorder + newHeight / 2],
-          rotation: -(originalShape.rotation ?? 0)
-        })
+          const newCenter = rotatePoint({
+            origin: [newBorderX + newBorderWidth / 2, newBorderY + newBorderHeight / 2],
+            point: [xPositionInGroupNewBorder + newWidth / 2, yPositionInGroupNewBorder + newHeight / 2],
+            rotation: -(originalShape.rotation ?? 0)
+          })
 
-        const newX = newCenter[0] - newWidth / 2
-        const newY = newCenter[1] - newHeight / 2
+          const newX = newCenter[0] - newWidth / 2
+          const newY = newCenter[1] - newHeight / 2
 
-        const refreshedShape = refreshShape(
-          {
-            ...shape,
-            width: newWidth,
-            height: newHeight,
-            x: newX,
-            y: newY
-          },
-          settings
-        )
+          const refreshedShape = refreshShape(
+            {
+              ...shape,
+              width: newWidth,
+              height: newHeight,
+              x: newX,
+              y: newY
+            },
+            settings
+          )
 
-        if (refreshedShape.type === 'text') {
-          return {
-            ...refreshedShape,
-            fontSize: calculateTextFontSize(
-              ctx,
-              refreshedShape.value,
-              refreshedShape.width,
-              refreshedShape.style?.fontBold ?? false,
-              refreshedShape.style?.fontItalic ?? false,
-              refreshedShape.style?.fontFamily
-            )
+          if (refreshedShape.type === 'text') {
+            return {
+              ...refreshedShape,
+              fontSize: calculateTextFontSize(
+                ctx,
+                refreshedShape.value,
+                refreshedShape.width,
+                refreshedShape.style?.fontBold ?? false,
+                refreshedShape.style?.fontItalic ?? false,
+                refreshedShape.style?.fontFamily
+              )
+            }
           }
+          return refreshedShape
         }
-        return refreshedShape
+
+        if (shape.type === 'ellipse') {
+          const newRadiusX = shape.radiusX * widthMultiplier
+          const newRadiusY = shape.radiusY * heightMultiplier
+
+          const newCenter = rotatePoint({
+            origin: [newBorderX + newBorderWidth / 2, newBorderY + newBorderHeight / 2],
+            point: [xPositionInGroupNewBorder + newRadiusX, yPositionInGroupNewBorder + newRadiusY],
+            rotation: -(originalShape.rotation ?? 0)
+          })
+
+          const refreshedShape = refreshShape(
+            {
+              ...shape,
+              radiusX: newRadiusX,
+              radiusY: newRadiusY,
+              x: newCenter[0],
+              y: newCenter[1]
+            },
+            settings
+          )
+
+          return refreshedShape
+        }
+
+        if (shape.type === 'circle') {
+          const newRadius = shape.radius * widthMultiplier
+
+          const newCenter = rotatePoint({
+            origin: [newBorderX + newBorderWidth / 2, newBorderY + newBorderHeight / 2],
+            point: [xPositionInGroupNewBorder + newRadius, yPositionInGroupNewBorder + newRadius],
+            rotation: -(originalShape.rotation ?? 0)
+          })
+
+          const refreshedShape = refreshShape(
+            {
+              ...shape,
+              radius: newRadius,
+              x: newCenter[0],
+              y: newCenter[1]
+            },
+            settings
+          )
+
+          return refreshedShape
+        }
       }
       return resizeShape(ctx, cursorPosition, shape, selectionMode, settings, isShiftPressed, isAltPressed)
     })
