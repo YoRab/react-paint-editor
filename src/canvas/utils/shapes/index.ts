@@ -219,8 +219,10 @@ export const resizeShapes = (
     const groupOriginalShapes = getSelectedShapes(originalShape)
     const shapesWithRotation = groupOriginalShapes.filter(shape => SHAPES_WITH_ROTATION.includes(shape.type))
     const sameRotation = !shapesWithRotation.some(shape => (shape.rotation ?? 0) !== (shapesWithRotation[0]!.rotation ?? 0))
+    const hasRotationButWithShapesWithoutRotation =
+      (shapesWithRotation[0]!.rotation ?? 0) !== 0 && shapesWithRotation.length !== groupOriginalShapes.length
     const hasShapesWithRatio = groupOriginalShapes.some(shape => SHAPES_KEEPING_RATIO.includes(shape.type))
-    const keepRatio = isShiftPressed || !sameRotation || hasShapesWithRatio
+    const keepRatio = isShiftPressed || !sameRotation || hasShapesWithRatio || hasRotationButWithShapesWithoutRotation
 
     const {
       borderX: newBorderX,
@@ -252,7 +254,8 @@ export const resizeShapes = (
         shape.type === 'text' ||
         shape.type === 'ellipse' ||
         shape.type === 'circle' ||
-        shape.type === 'brush'
+        shape.type === 'brush' ||
+        shape.type === 'line'
       ) {
         const shapeCenterWithNoRotation = rotatePoint({
           origin: originalShape.computed.center,
@@ -399,6 +402,35 @@ export const resizeShapes = (
               points: shape.points.map(coord => coord.map(([x, y]) => [x + diffX, y + diffY]) as Point[]),
               scaleX,
               scaleY
+            },
+            settings
+          )
+
+          return refreshedShape
+        }
+
+        if (shape.type === 'line') {
+          const oldWidth = shape.computed.borders.width - 2 * settings.selectionPadding
+          const oldHeight = shape.computed.borders.height - 2 * settings.selectionPadding
+          const newWidth = oldWidth * widthMultiplier
+          const newHeight = oldHeight * widthMultiplier
+
+          const newCenter = rotatePoint({
+            origin: [newBorderX + newBorderWidth / 2, newBorderY + newBorderHeight / 2],
+            point: [xPositionInGroupNewBorder + newWidth / 2, yPositionInGroupNewBorder + newHeight / 2],
+            rotation: -(originalShape.rotation ?? 0)
+          })
+
+          const oldX = shape.computed.center[0] - oldWidth / 2
+          const oldY = shape.computed.center[1] - oldHeight / 2
+
+          const newX = newCenter[0] - newWidth / 2
+          const newY = newCenter[1] - newHeight / 2
+
+          const refreshedShape = refreshShape(
+            {
+              ...shape,
+              points: shape.points.map(([x, y]) => [newX + (x - oldX) * widthMultiplier, newY + (y - oldY) * heightMultiplier]) as [Point, Point]
             },
             settings
           )
