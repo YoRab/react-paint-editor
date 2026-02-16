@@ -8,7 +8,7 @@ import type { ToolsSettingsType } from '@common/types/tools'
 import { set } from '@common/utils/object'
 import { uniqueId } from '@common/utils/util'
 
-const getBrushBorder = (brush: DrawableShape<'brush'>, { selectionPadding }: Pick<UtilsSettings, 'selectionPadding'>): Rect => {
+export const getBrushBorder = (brush: DrawableShape<'brush'>, { selectionPadding }: Pick<UtilsSettings, 'selectionPadding'>): Rect => {
   const brushPoints = brush.points.flat()
   const minX = Math.min(...brushPoints.map(point => point[0]))
   const minY = Math.min(...brushPoints.map(point => point[1]))

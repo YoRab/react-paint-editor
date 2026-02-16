@@ -6,14 +6,14 @@ import { drawSelectionGroup } from '@canvas/utils/selection/groupSelection'
 import { drawLineSelection } from '@canvas/utils/selection/lineSelection'
 import { drawBoundingBox, drawSelectionRect, resizeRectSelection } from '@canvas/utils/selection/rectSelection'
 import { drawFrame } from '@canvas/utils/selection/selectionFrame'
-import { boundVectorToSingleAxis, roundForGrid } from '@canvas/utils/transform'
+import { boundVectorToSingleAxis, roundForGrid, roundValues } from '@canvas/utils/transform'
 import { rotatePoint } from '@canvas/utils/trigo'
 import { getCurrentView } from '@canvas/utils/zoom'
 import type { HoverModeData, SelectionModeData, SelectionModeResize } from '@common/types/Mode'
 import type { DrawableShape, Point, SelectionType, ShapeEntity } from '@common/types/Shapes'
 import type { CustomTool } from '@common/types/tools'
 import { uniqueId } from '@common/utils/util'
-import { createBrush, drawBrush, getComputedBrush, refreshBrush, resizeBrush } from './brush'
+import { createBrush, drawBrush, getBrushBorder, getComputedBrush, refreshBrush, resizeBrush } from './brush'
 import { createCircle, drawCircle, getComputedCircle, refreshCircle, resizeCircle } from './circle'
 import { createCurve, drawCurve, getComputedCurve, refreshCurve, resizeCurve } from './curve'
 import { createEllipse, drawEllipse, getComputedEllipse, refreshEllipse, resizeEllipse } from './ellipse'
@@ -251,7 +251,8 @@ export const resizeShapes = (
         shape.type === 'picture' ||
         shape.type === 'text' ||
         shape.type === 'ellipse' ||
-        shape.type === 'circle'
+        shape.type === 'circle' ||
+        shape.type === 'brush'
       ) {
         const shapeCenterWithNoRotation = rotatePoint({
           origin: originalShape.computed.center,
@@ -368,6 +369,36 @@ export const resizeShapes = (
               radius: newRadius,
               x: newCenter[0],
               y: newCenter[1]
+            },
+            settings
+          )
+
+          return refreshedShape
+        }
+        if (shape.type === 'brush') {
+          const originalBordersWithoutScale = getBrushBorder({ ...shape, scaleX: 1, scaleY: 1 }, settings)
+
+          const scaleX = (shape.scaleX ?? 1) * widthMultiplier
+          const scaleY = (shape.scaleY ?? 1) * heightMultiplier
+
+          const newWidth = (originalBordersWithoutScale.width - 2 * settings.selectionPadding) * scaleX
+          const newHeight = (originalBordersWithoutScale.height - 2 * settings.selectionPadding) * scaleY
+
+          const newCenter = rotatePoint({
+            origin: [newBorderX + newBorderWidth / 2, newBorderY + newBorderHeight / 2],
+            point: [xPositionInGroupNewBorder + newWidth / 2, yPositionInGroupNewBorder + newHeight / 2],
+            rotation: -(originalShape.rotation ?? 0)
+          })
+
+          const diffX = roundValues(newCenter[0] - newWidth / 2 - shape.computed.borders.x - settings.selectionPadding)
+          const diffY = roundValues(newCenter[1] - newHeight / 2 - shape.computed.borders.y - settings.selectionPadding)
+
+          const refreshedShape = refreshShape(
+            {
+              ...shape,
+              points: shape.points.map(coord => coord.map(([x, y]) => [x + diffX, y + diffY]) as Point[]),
+              scaleX,
+              scaleY
             },
             settings
           )
