@@ -254,14 +254,12 @@ export const resizeShapes = (
 
         const xOffsetInGroup =
           (shapeCenterWithNoRotation[0] -
-            shape.computed.borders.width / 2 -
-            settings.selectionPadding -
+            (shape.computed.borders.width / 2 - settings.selectionPadding) -
             (originalShape.computed.borders.x + settings.selectionPadding)) *
           widthMultiplier
         const yOffsetInGroup =
           (shapeCenterWithNoRotation[1] -
-            shape.computed.borders.height / 2 -
-            settings.selectionPadding -
+            (shape.computed.borders.height / 2 - settings.selectionPadding) -
             (originalShape.computed.borders.y + settings.selectionPadding)) *
           heightMultiplier
 
