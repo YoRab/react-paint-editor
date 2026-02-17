@@ -126,7 +126,14 @@ export const createPicture = (
 export const drawPicture = (ctx: CanvasRenderingContext2D, picture: ShapeEntity<'picture'>): void => {
   if (ctx.globalAlpha === 0) return
   ctx.beginPath()
-  ctx.drawImage(picture.img, picture.x, picture.y, picture.width, picture.height)
+  ctx.scale(picture.flipX ? -1 : 1, picture.flipY ? -1 : 1)
+  ctx.drawImage(
+    picture.img,
+    picture.flipX ? -picture.x - picture.width : picture.x,
+    picture.flipY ? -picture.y - picture.height : picture.y,
+    picture.width,
+    picture.height
+  )
 }
 
 export const resizePicture = (
@@ -136,7 +143,7 @@ export const resizePicture = (
   settings: UtilsSettings,
   resizeFromCenter: boolean
 ): ShapeEntity<'picture'> => {
-  const { borderX, borderHeight, borderY, borderWidth } = resizeRectSelection(
+  const { borderX, borderHeight, borderY, borderWidth, isXinverted, isYinverted } = resizeRectSelection(
     cursorPosition,
     originalShape,
     selectionMode,
@@ -150,7 +157,9 @@ export const resizePicture = (
       width: Math.max(0, borderWidth - 2 * settings.selectionPadding),
       height: Math.max(0, borderHeight - 2 * settings.selectionPadding),
       x: borderX + settings.selectionPadding,
-      y: borderY + settings.selectionPadding
+      y: borderY + settings.selectionPadding,
+      flipX: isXinverted ? !originalShape.flipX : !!originalShape.flipX,
+      flipY: isYinverted ? !originalShape.flipY : !!originalShape.flipY
     },
     settings
   )
@@ -161,18 +170,24 @@ export const resizePictureInGroup = (
   group: SelectionType & { type: 'group' },
   groupCtx: GroupResizeContext
 ): ShapeEntity<'picture'> => {
+  const { isXinverted, isYinverted, settings, widthMultiplier, heightMultiplier } = groupCtx
   const pos = getShapePositionInNewBorder(shape, group, groupCtx)
-  const newWidth = shape.width * groupCtx.widthMultiplier
-  const newHeight = shape.height * groupCtx.heightMultiplier
+  const newWidth = shape.width * widthMultiplier
+  const newHeight = shape.height * heightMultiplier
   const newCenter = getPositionWithoutGroupRotation(groupCtx, pos.x, pos.y, newWidth, newHeight)
+  const shouldFlipRotation =
+    (isXinverted || isYinverted) && !(isXinverted && isYinverted) && (shape.rotation ?? 0) !== 0 && group.rotation !== shape.rotation
   return buildPath(
     {
       ...shape,
       width: newWidth,
       height: newHeight,
       x: newCenter[0] - newWidth / 2,
-      y: newCenter[1] - newHeight / 2
+      y: newCenter[1] - newHeight / 2,
+      flipX: isXinverted ? !shape.flipX : !!shape.flipX,
+      flipY: isYinverted ? !shape.flipY : !!shape.flipY,
+      rotation: shouldFlipRotation ? -(shape.rotation ?? 0) : (shape.rotation ?? 0)
     },
-    groupCtx.settings
+    settings
   )
 }
