@@ -279,6 +279,8 @@ export const resizeRectSelection = (
   borderHeight: number
   borderY: number
   borderWidth: number
+  isXinverted: boolean
+  isYinverted: boolean
 } => {
   const { center, borders } = originalShape.computed
 
@@ -354,5 +356,9 @@ export const resizeRectSelection = (
         originalShape
       }
 
-  return calculateRectSelectionData(resizeFromCenter ? adjustRectSelectionFromCenter(data, borders, isXinverted, isYinverted) : data)
+  return {
+    ...calculateRectSelectionData(resizeFromCenter ? adjustRectSelectionFromCenter(data, borders, isXinverted, isYinverted) : data),
+    isXinverted,
+    isYinverted
+  }
 }
