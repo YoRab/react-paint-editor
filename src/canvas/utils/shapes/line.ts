@@ -6,10 +6,13 @@ import { createLinePath, getComputedShapeInfos } from '@canvas/utils/shapes/path
 import { roundForGrid, shortenLine } from '@canvas/utils/transform'
 import { getAngleFromVector, rotatePoint } from '@canvas/utils/trigo'
 import type { SelectionModeResize } from '@common/types/Mode'
-import type { DrawableShape, Line, Point, Rect, ShapeEntity, StyleShape, Triangle } from '@common/types/Shapes'
+import type { DrawableShape, Line, Point, Rect, SelectionType, ShapeEntity, StyleShape, Triangle } from '@common/types/Shapes'
 import type { ToolsSettingsType } from '@common/types/tools'
 import { set } from '@common/utils/object'
 import { uniqueId } from '@common/utils/util'
+import { type GroupResizeContext, getPositionWithoutGroupRotation, getShapePositionInNewBorder } from './group'
+import { refreshCurve } from './curve'
+import { refreshPolygon } from './polygon'
 import { createTriangle, drawTriangle } from './triangle'
 
 const getLineBorder = (line: Line, settings: Pick<UtilsSettings, 'selectionPadding'>): Rect => {
@@ -144,4 +147,42 @@ export const resizeLine = (
   const updatedShape = set(['points', selectionMode.anchor], cursorPositionBeforeResize, originalShape)
 
   return buildPath(updatedShape, settings)
+}
+
+const refreshPointBasedShape = (
+  shape: ShapeEntity<'line' | 'polygon' | 'curve'>,
+  settings: UtilsSettings
+): ShapeEntity<'line' | 'polygon' | 'curve'> => {
+  if (shape.type === 'line') return buildPath(shape, settings)
+  if (shape.type === 'polygon') return refreshPolygon(shape, settings)
+  return refreshCurve(shape, settings)
+}
+
+export const resizeLinePolygonCurveInGroup = (
+  shape: ShapeEntity<'line' | 'polygon' | 'curve'>,
+  group: SelectionType & { type: 'group' },
+  groupCtx: GroupResizeContext
+): ShapeEntity<'line' | 'polygon' | 'curve'> => {
+  const oldWidth = shape.computed.borders.width - 2 * groupCtx.settings.selectionPadding
+  const oldHeight = shape.computed.borders.height - 2 * groupCtx.settings.selectionPadding
+  const newWidth = oldWidth * groupCtx.widthMultiplier
+  const newHeight = oldHeight * groupCtx.heightMultiplier
+
+  const pos = getShapePositionInNewBorder(shape, group, groupCtx)
+  const newCenter = getPositionWithoutGroupRotation(groupCtx, pos.x, pos.y, newWidth, newHeight)
+  const oldX = shape.computed.center[0] - oldWidth / 2
+  const oldY = shape.computed.center[1] - oldHeight / 2
+  const newX = newCenter[0] - newWidth / 2
+  const newY = newCenter[1] - newHeight / 2
+
+  return refreshPointBasedShape(
+    {
+      ...shape,
+      points: shape.points.map(([x, y]) => [newX + (x - oldX) * groupCtx.widthMultiplier, newY + (y - oldY) * groupCtx.heightMultiplier]) as [
+        Point,
+        Point
+      ]
+    },
+    groupCtx.settings
+  )
 }

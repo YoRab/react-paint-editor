@@ -13,15 +13,17 @@ import type { HoverModeData, SelectionModeData, SelectionModeResize } from '@com
 import type { DrawableShape, Point, SelectionType, ShapeEntity } from '@common/types/Shapes'
 import type { CustomTool } from '@common/types/tools'
 import { uniqueId } from '@common/utils/util'
-import { createBrush, drawBrush, getComputedBrush, refreshBrush, resizeBrush } from './brush'
-import { createCircle, drawCircle, getComputedCircle, refreshCircle, resizeCircle } from './circle'
+import { createBrush, drawBrush, getComputedBrush, refreshBrush, resizeBrush, resizeBrushInGroup } from './brush'
+import { createCircle, drawCircle, getComputedCircle, refreshCircle, resizeCircle, resizeCircleInGroup } from './circle'
 import { createCurve, drawCurve, getComputedCurve, refreshCurve, resizeCurve } from './curve'
-import { createEllipse, drawEllipse, getComputedEllipse, refreshEllipse, resizeEllipse } from './ellipse'
-import { createLine, drawLine, getComputedLine, refreshLine, resizeLine } from './line'
-import { drawPicture, getComputedPicture, refreshPicture, resizePicture } from './picture'
+import { createEllipse, drawEllipse, getComputedEllipse, refreshEllipse, resizeEllipse, resizeEllipseInGroup } from './ellipse'
+import { getGroupResizeContext } from './group'
+import { createLine, drawLine, getComputedLine, refreshLine, resizeLine, resizeLinePolygonCurveInGroup } from './line'
+import { drawPicture, getComputedPicture, refreshPicture, resizePicture, resizePictureInGroup } from './picture'
 import { createPolygon, drawPolygon, getComputedPolygon, refreshPolygon, resizePolygon } from './polygon'
-import { createRectangle, drawRect, getComputedRect, refreshRect, resizeRect } from './rectangle'
-import { createText, drawText, getComputedText, refreshText, resizeText } from './text'
+import { createRectangle, drawRect, getComputedRect, refreshRect, resizeRect, resizeRectInGroup } from './rectangle'
+import { createText, drawText, getComputedText, refreshText, resizeText, resizeTextInGroup } from './text'
+import { SHAPES_KEEPING_RATIO, SHAPES_WITH_ROTATION } from '@canvas/constants/shapes'
 
 export const createShape = (
   ctx: CanvasRenderingContext2D,
@@ -165,7 +167,6 @@ export const rotateShape = <T extends ShapeEntity>(shape: T, rotationToApply: nu
 
 export const resizeShape = <T extends ShapeEntity>(
   ctx: CanvasRenderingContext2D,
-  shape: T,
   cursorPosition: Point,
   originalShape: T,
   selectionMode: SelectionModeData<Point | number>,
@@ -193,7 +194,7 @@ export const resizeShape = <T extends ShapeEntity>(
         originalShape,
         selectionMode as SelectionModeResize,
         settings,
-        shape.type === 'square' || isShiftPressed,
+        originalShape.type === 'square' || isShiftPressed,
         isAltPressed
       ) as T
     case 'text':
@@ -203,6 +204,56 @@ export const resizeShape = <T extends ShapeEntity>(
     default:
       return originalShape
   }
+}
+
+export const resizeShapes = (
+  ctx: CanvasRenderingContext2D,
+  cursorPosition: Point,
+  originalShape: SelectionType,
+  selectionMode: SelectionModeResize<Point | number>,
+  settings: UtilsSettings,
+  isShiftPressed: boolean,
+  isAltPressed: boolean
+): ShapeEntity[] => {
+  if (originalShape.type !== 'group') {
+    return getSelectedShapes(originalShape).map(shape =>
+      resizeShape(ctx, cursorPosition, shape, selectionMode, settings, isShiftPressed, isAltPressed)
+    )
+  }
+
+  const group = originalShape
+  const groupShapes = getSelectedShapes(group)
+  const shapesWithRotation = groupShapes.filter(s => SHAPES_WITH_ROTATION.includes(s.type))
+  const sameRotation = !shapesWithRotation.some(s => (s.rotation ?? 0) !== (shapesWithRotation[0]?.rotation ?? 0))
+  const hasRotationButWithShapesWithoutRotation = (shapesWithRotation[0]?.rotation ?? 0) !== 0 && shapesWithRotation.length !== groupShapes.length
+  const hasShapesWithRatio = groupShapes.some(s => SHAPES_KEEPING_RATIO.includes(s.type))
+  const keepRatio = isShiftPressed || !sameRotation || hasShapesWithRatio || hasRotationButWithShapesWithoutRotation
+
+  const groupCtx = getGroupResizeContext(cursorPosition, group, selectionMode as SelectionModeResize, settings, keepRatio, isAltPressed)
+
+  return groupShapes.map(shape => {
+    switch (shape.type) {
+      case 'rect':
+      case 'square':
+        return resizeRectInGroup(shape, group, groupCtx)
+      case 'picture':
+        return resizePictureInGroup(shape, group, groupCtx)
+      case 'text':
+        return resizeTextInGroup(ctx, shape, group, groupCtx)
+      case 'ellipse':
+        return resizeEllipseInGroup(shape, group, groupCtx)
+      case 'circle':
+        return resizeCircleInGroup(shape, group, groupCtx)
+      case 'brush':
+        return resizeBrushInGroup(shape, group, groupCtx)
+      case 'line':
+      case 'polygon':
+      case 'curve':
+        return resizeLinePolygonCurveInGroup(shape, group, groupCtx)
+      default: // group, should not happen
+        return resizeShape(ctx, cursorPosition, shape, selectionMode, settings, isShiftPressed, isAltPressed)
+    }
+  })
 }
 
 const translateShape = (shape: ShapeEntity, translationX: number, translationY: number, settings: UtilsSettings): ShapeEntity => {
@@ -334,9 +385,7 @@ export const drawShapeSelection = ({
   selectionMode: SelectionModeData<number | Point>
   withAnchors?: boolean
 }) => {
-  const { center } = shape.computed
   if (settings.debug) drawBoundingBox(ctx, shape, selectionWidth, settings)
-  transformCanvas(ctx, settings, shape.rotation, center)
 
   switch (shape.type) {
     case 'rect':

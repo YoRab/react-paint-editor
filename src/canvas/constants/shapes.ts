@@ -30,3 +30,6 @@ export const ShapeTypeArray = [
   'triangle',
   'group'
 ] as const
+
+export const SHAPES_WITH_ROTATION = ['rect', 'square', 'circle', 'ellipse', 'picture', 'text', 'triangle', 'brush', 'group']
+export const SHAPES_KEEPING_RATIO = ['square', 'circle', 'picture', 'text']

@@ -3,9 +3,10 @@ import { addSizeAndConvertSvgToObjectUrl, fetchAndStringify, isSvg } from '@canv
 import { createRecSelectionPath, resizeRectSelection } from '@canvas/utils/selection/rectSelection'
 import { fitContentInsideContainer } from '@canvas/utils/transform'
 import type { SelectionModeResize } from '@common/types/Mode'
-import type { DrawableShape, Point, ShapeEntity } from '@common/types/Shapes'
+import type { DrawableShape, Point, SelectionType, ShapeEntity } from '@common/types/Shapes'
 import { uniqueId } from '@common/utils/util'
 import { DEFAULT_SHAPE_PICTURE } from '@editor/constants/tools'
+import { type GroupResizeContext, getPositionWithoutGroupRotation, getShapePositionInNewBorder } from './group'
 import { getComputedShapeInfos } from './path'
 import { getRectBorder } from './rectangle'
 
@@ -152,5 +153,26 @@ export const resizePicture = (
       y: borderY + settings.selectionPadding
     },
     settings
+  )
+}
+
+export const resizePictureInGroup = (
+  shape: ShapeEntity<'picture'>,
+  group: SelectionType & { type: 'group' },
+  groupCtx: GroupResizeContext
+): ShapeEntity<'picture'> => {
+  const pos = getShapePositionInNewBorder(shape, group, groupCtx)
+  const newWidth = shape.width * groupCtx.widthMultiplier
+  const newHeight = shape.height * groupCtx.heightMultiplier
+  const newCenter = getPositionWithoutGroupRotation(groupCtx, pos.x, pos.y, newWidth, newHeight)
+  return buildPath(
+    {
+      ...shape,
+      width: newWidth,
+      height: newHeight,
+      x: newCenter[0] - newWidth / 2,
+      y: newCenter[1] - newHeight / 2
+    },
+    groupCtx.settings
   )
 }

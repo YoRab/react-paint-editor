@@ -4,7 +4,7 @@ import { PICTURE_DEFAULT_SIZE } from '@canvas/constants/picture'
 import { buildShapesGroup, getSelectedShapes } from '@canvas/utils/selection'
 import type { SelectionModeData } from '@common/types/Mode'
 import type { DrawableShape, Line, Point, SelectionType, ShapeEntity } from '@common/types/Shapes'
-import { refreshShape, resizeShape, rotateShape, translateShapes } from './shapes'
+import { refreshShape, resizeShapes, rotateShape, translateShapes } from './shapes'
 import { addNewPointToShape } from './shapes/brush'
 import { getAngleFromVector, rotatePoint } from './trigo'
 
@@ -74,28 +74,24 @@ export const transformShape = (
 
     return buildShapesGroup(shapesGroup, settings)!
   }
-  return buildShapesGroup(
-    getSelectedShapes(selectedShape).map(shape => {
-      switch (selectionMode.mode) {
-        case 'brush':
-          return addNewPointToShape(shape as ShapeEntity<'brush'>, cursorPosition, settings)
-        case 'resize':
-          return resizeShape(
-            ctx,
-            shape,
-            cursorPosition,
-            getSelectedShapes(selectionMode.originalShape).find(originalShape => originalShape.id === shape.id)!,
-            selectionMode,
-            settings,
-            isShiftPressed,
-            isAltPressed
-          )
-        default:
-          return shape
-      }
-    }),
-    settings
-  )!
+
+  if (selectionMode.mode === 'resize') {
+    return buildShapesGroup(
+      resizeShapes(ctx, cursorPosition, selectionMode.originalShape, selectionMode, settings, isShiftPressed, isAltPressed),
+      settings
+    )!
+  }
+
+  if (selectionMode.mode === 'brush') {
+    return buildShapesGroup(
+      getSelectedShapes(selectedShape).map(shape => {
+        return addNewPointToShape(shape as ShapeEntity<'brush'>, cursorPosition, settings)
+      }),
+      settings
+    )!
+  }
+
+  return selectedShape
 }
 
 export const fitContentInsideContainer = (

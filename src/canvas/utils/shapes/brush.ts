@@ -3,12 +3,13 @@ import { createRecSelectionPath, resizeRectSelection } from '@canvas/utils/selec
 import { createBrushPath, getComputedShapeInfos } from '@canvas/utils/shapes/path'
 import { roundValues, scalePoint } from '@canvas/utils/transform'
 import type { SelectionModeResize } from '@common/types/Mode'
-import type { DrawableShape, Point, Rect, ShapeEntity } from '@common/types/Shapes'
+import type { DrawableShape, Point, Rect, SelectionType, ShapeEntity } from '@common/types/Shapes'
 import type { ToolsSettingsType } from '@common/types/tools'
 import { set } from '@common/utils/object'
 import { uniqueId } from '@common/utils/util'
+import { type GroupResizeContext, getPositionWithoutGroupRotation, getShapePositionInNewBorder } from './group'
 
-const getBrushBorder = (brush: DrawableShape<'brush'>, { selectionPadding }: Pick<UtilsSettings, 'selectionPadding'>): Rect => {
+export const getBrushBorder = (brush: DrawableShape<'brush'>, { selectionPadding }: Pick<UtilsSettings, 'selectionPadding'>): Rect => {
   const brushPoints = brush.points.flat()
   const minX = Math.min(...brushPoints.map(point => point[0]))
   const minY = Math.min(...brushPoints.map(point => point[1]))
@@ -118,6 +119,33 @@ export const resizeBrush = (
       scaleY
     },
     settings
+  )
+}
+
+export const resizeBrushInGroup = (
+  shape: ShapeEntity<'brush'>,
+  group: SelectionType & { type: 'group' },
+  groupCtx: GroupResizeContext
+): ShapeEntity<'brush'> => {
+  const originalBordersWithoutScale = getBrushBorder({ ...shape, scaleX: 1, scaleY: 1 }, groupCtx.settings)
+  const scaleX = (shape.scaleX ?? 1) * groupCtx.widthMultiplier
+  const scaleY = (shape.scaleY ?? 1) * groupCtx.heightMultiplier
+  const newWidth = (originalBordersWithoutScale.width - 2 * groupCtx.settings.selectionPadding) * scaleX
+  const newHeight = (originalBordersWithoutScale.height - 2 * groupCtx.settings.selectionPadding) * scaleY
+
+  const pos = getShapePositionInNewBorder(shape, group, groupCtx)
+  const newCenter = getPositionWithoutGroupRotation(groupCtx, pos.x, pos.y, newWidth, newHeight)
+  const diffX = roundValues(newCenter[0] - newWidth / 2 - shape.computed.borders.x - groupCtx.settings.selectionPadding)
+  const diffY = roundValues(newCenter[1] - newHeight / 2 - shape.computed.borders.y - groupCtx.settings.selectionPadding)
+
+  return buildPath(
+    {
+      ...shape,
+      points: shape.points.map(coord => coord.map(([x, y]) => [x + diffX, y + diffY]) as Point[]),
+      scaleX,
+      scaleY
+    },
+    groupCtx.settings
   )
 }
 

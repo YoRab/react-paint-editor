@@ -126,15 +126,18 @@ export const selectShape = (
   }
 }
 
-const buildGroupBorders = (shapes: ShapeEntity[], rotation: number): Rect => {
+const buildGroupBorders = (shapes: ShapeEntity[], rotation: number, settings: UtilsSettings): Rect => {
   const movedBorders = shapes.map(
     shape =>
       (
         [
-          [shape.computed.borders.x, shape.computed.borders.y],
-          [shape.computed.borders.x + shape.computed.borders.width, shape.computed.borders.y],
-          [shape.computed.borders.x + shape.computed.borders.width, shape.computed.borders.y + shape.computed.borders.height],
-          [shape.computed.borders.x, shape.computed.borders.y + shape.computed.borders.height]
+          [shape.computed.borders.x + settings.selectionPadding, shape.computed.borders.y + settings.selectionPadding],
+          [shape.computed.borders.x - settings.selectionPadding + shape.computed.borders.width, shape.computed.borders.y + settings.selectionPadding],
+          [
+            shape.computed.borders.x - settings.selectionPadding + shape.computed.borders.width,
+            shape.computed.borders.y - settings.selectionPadding + shape.computed.borders.height
+          ],
+          [shape.computed.borders.x + settings.selectionPadding, shape.computed.borders.y - settings.selectionPadding + shape.computed.borders.height]
         ] as [Point, Point, Point, Point]
       ).map(point => {
         const rotatedByItsCenter = rotatePoint({
@@ -185,17 +188,16 @@ export const buildShapesGroup = (shapes: ShapeEntity[], settings: UtilsSettings)
   const sameRotation = !shapes.some(shape => shape.rotation !== shapes[0]!.rotation)
   const rotation = sameRotation ? (shapes[0]?.rotation ?? 0) : 0
 
-  const borders = buildGroupBorders(shapes, rotation)
+  const borders = buildGroupBorders(shapes, rotation, settings)
 
   const groupRectangle = createRectangle(
     {
-      id: 'test',
+      id: 'group_selection',
       type: 'rect',
       settings: SETTINGS_DEFAULT_RECT
     },
     [borders.x, borders.y],
     settings,
-    true,
     borders.width,
     borders.height
   )

@@ -1,10 +1,11 @@
 import type { UtilsSettings } from '@canvas/constants/app'
 import { createRecSelectionPath, resizeRectSelection } from '@canvas/utils/selection/rectSelection'
 import type { SelectionModeResize } from '@common/types/Mode'
-import type { DrawableShape, Point, Rect, ShapeEntity, Text } from '@common/types/Shapes'
+import type { DrawableShape, Point, Rect, SelectionType, ShapeEntity, Text } from '@common/types/Shapes'
 import type { ToolsSettingsType } from '@common/types/tools'
 import { uniqueId } from '@common/utils/util'
 import { STYLE_FONT_DEFAULT, STYLE_FONT_SIZE_DEFAULT } from '@editor/constants/style'
+import { type GroupResizeContext, getPositionWithoutGroupRotation, getShapePositionInNewBorder } from './group'
 import { getComputedShapeInfos } from './path'
 import { getRectOppositeAnchorAbsolutePosition } from './rectangle'
 
@@ -145,6 +146,39 @@ export const resizeText = (
       newRect.style?.fontFamily
     )
   } as ShapeEntity<'text'>
+}
+
+export const resizeTextInGroup = (
+  canvasCtx: CanvasRenderingContext2D,
+  shape: ShapeEntity<'text'>,
+  group: SelectionType & { type: 'group' },
+  groupCtx: GroupResizeContext
+): ShapeEntity<'text'> => {
+  const pos = getShapePositionInNewBorder(shape, group, groupCtx)
+  const newWidth = shape.width * groupCtx.widthMultiplier
+  const newHeight = shape.height * groupCtx.heightMultiplier
+  const newCenter = getPositionWithoutGroupRotation(groupCtx, pos.x, pos.y, newWidth, newHeight)
+  const refreshedShape = buildPath(
+    {
+      ...shape,
+      width: newWidth,
+      height: newHeight,
+      x: newCenter[0] - newWidth / 2,
+      y: newCenter[1] - newHeight / 2
+    },
+    groupCtx.settings
+  )
+  return {
+    ...refreshedShape,
+    fontSize: calculateTextFontSize(
+      canvasCtx,
+      refreshedShape.value,
+      refreshedShape.width,
+      refreshedShape.style?.fontBold ?? false,
+      refreshedShape.style?.fontItalic ?? false,
+      refreshedShape.style?.fontFamily
+    )
+  }
 }
 
 const calculateTextWidth = (

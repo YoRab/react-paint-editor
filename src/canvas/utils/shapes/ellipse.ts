@@ -2,9 +2,10 @@ import type { UtilsSettings } from '@canvas/constants/app'
 import { createRecSelectionPath, resizeRectSelection } from '@canvas/utils/selection/rectSelection'
 import { createEllipsePath, getComputedShapeInfos } from '@canvas/utils/shapes/path'
 import type { SelectionModeResize } from '@common/types/Mode'
-import type { DrawableShape, Ellipse, Point, Rect, ShapeEntity } from '@common/types/Shapes'
+import type { DrawableShape, Ellipse, Point, Rect, SelectionType, ShapeEntity } from '@common/types/Shapes'
 import type { ToolsSettingsType } from '@common/types/tools'
 import { uniqueId } from '@common/utils/util'
+import { type GroupResizeContext, getPositionWithoutGroupRotation, getShapePositionInNewBorder } from './group'
 
 const getEllipseBorder = (ellipse: Ellipse, settings: Pick<UtilsSettings, 'selectionPadding'>): Rect => {
   return {
@@ -95,4 +96,16 @@ export const resizeEllipse = (
     },
     settings
   )
+}
+
+export const resizeEllipseInGroup = (
+  shape: ShapeEntity<'ellipse'>,
+  group: SelectionType & { type: 'group' },
+  groupCtx: GroupResizeContext
+): ShapeEntity<'ellipse'> => {
+  const pos = getShapePositionInNewBorder(shape, group, groupCtx)
+  const newRadiusX = shape.radiusX * groupCtx.widthMultiplier
+  const newRadiusY = shape.radiusY * groupCtx.heightMultiplier
+  const newCenter = getPositionWithoutGroupRotation(groupCtx, pos.x, pos.y, newRadiusX * 2, newRadiusY * 2)
+  return buildPath({ ...shape, radiusX: newRadiusX, radiusY: newRadiusY, x: newCenter[0], y: newCenter[1] }, groupCtx.settings)
 }
