@@ -2,9 +2,10 @@ import type { UtilsSettings } from '@canvas/constants/app'
 import { getPointPositionBeforeCanvasTransformation } from '@canvas/utils/intersect'
 import { createRecSelectionPath, resizeRectSelection } from '@canvas/utils/selection/rectSelection'
 import type { SelectionModeResize } from '@common/types/Mode'
-import type { DrawableShape, Point, Rect, ShapeEntity } from '@common/types/Shapes'
+import type { DrawableShape, Point, Rect, SelectionType, ShapeEntity } from '@common/types/Shapes'
 import type { ToolsSettingsType } from '@common/types/tools'
 import { uniqueId } from '@common/utils/util'
+import { type GroupResizeContext, getPositionWithoutGroupRotation, getShapePositionInNewBorder } from './group'
 import { createRecPath, getComputedShapeInfos } from './path'
 
 type rectish = 'rect' | 'square'
@@ -111,4 +112,25 @@ export const resizeRect = <T extends rectish>(
     },
     settings
   ) as ShapeEntity<T>
+}
+
+export const resizeRectInGroup = (
+  shape: ShapeEntity<rectish>,
+  group: SelectionType & { type: 'group' },
+  groupCtx: GroupResizeContext
+): ShapeEntity<rectish> => {
+  const pos = getShapePositionInNewBorder(shape, group, groupCtx)
+  const newWidth = shape.width * groupCtx.widthMultiplier
+  const newHeight = shape.height * groupCtx.heightMultiplier
+  const newCenter = getPositionWithoutGroupRotation(groupCtx, pos.x, pos.y, newWidth, newHeight)
+  return buildPath(
+    {
+      ...shape,
+      width: newWidth,
+      height: newHeight,
+      x: newCenter[0] - newWidth / 2,
+      y: newCenter[1] - newHeight / 2
+    },
+    groupCtx.settings
+  ) as ShapeEntity<rectish>
 }

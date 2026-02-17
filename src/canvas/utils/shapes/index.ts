@@ -4,24 +4,25 @@ import { getRectIntersection } from '@canvas/utils/intersect'
 import { getSelectedShapes } from '@canvas/utils/selection'
 import { drawSelectionGroup } from '@canvas/utils/selection/groupSelection'
 import { drawLineSelection } from '@canvas/utils/selection/lineSelection'
-import { drawBoundingBox, drawSelectionRect, resizeRectSelection } from '@canvas/utils/selection/rectSelection'
+import { drawBoundingBox, drawSelectionRect } from '@canvas/utils/selection/rectSelection'
 import { drawFrame } from '@canvas/utils/selection/selectionFrame'
-import { boundVectorToSingleAxis, roundForGrid, roundValues } from '@canvas/utils/transform'
+import { boundVectorToSingleAxis, roundForGrid } from '@canvas/utils/transform'
 import { rotatePoint } from '@canvas/utils/trigo'
 import { getCurrentView } from '@canvas/utils/zoom'
 import type { HoverModeData, SelectionModeData, SelectionModeResize } from '@common/types/Mode'
 import type { DrawableShape, Point, SelectionType, ShapeEntity } from '@common/types/Shapes'
 import type { CustomTool } from '@common/types/tools'
 import { uniqueId } from '@common/utils/util'
-import { createBrush, drawBrush, getBrushBorder, getComputedBrush, refreshBrush, resizeBrush } from './brush'
-import { createCircle, drawCircle, getComputedCircle, refreshCircle, resizeCircle } from './circle'
+import { createBrush, drawBrush, getComputedBrush, refreshBrush, resizeBrush, resizeBrushInGroup } from './brush'
+import { createCircle, drawCircle, getComputedCircle, refreshCircle, resizeCircle, resizeCircleInGroup } from './circle'
 import { createCurve, drawCurve, getComputedCurve, refreshCurve, resizeCurve } from './curve'
-import { createEllipse, drawEllipse, getComputedEllipse, refreshEllipse, resizeEllipse } from './ellipse'
-import { createLine, drawLine, getComputedLine, refreshLine, resizeLine } from './line'
-import { drawPicture, getComputedPicture, refreshPicture, resizePicture } from './picture'
+import { createEllipse, drawEllipse, getComputedEllipse, refreshEllipse, resizeEllipse, resizeEllipseInGroup } from './ellipse'
+import { getGroupResizeContext } from './group'
+import { createLine, drawLine, getComputedLine, refreshLine, resizeLine, resizeLinePolygonCurveInGroup } from './line'
+import { drawPicture, getComputedPicture, refreshPicture, resizePicture, resizePictureInGroup } from './picture'
 import { createPolygon, drawPolygon, getComputedPolygon, refreshPolygon, resizePolygon } from './polygon'
-import { createRectangle, drawRect, getComputedRect, refreshRect, resizeRect } from './rectangle'
-import { calculateTextFontSize, createText, drawText, getComputedText, refreshText, resizeText } from './text'
+import { createRectangle, drawRect, getComputedRect, refreshRect, resizeRect, resizeRectInGroup } from './rectangle'
+import { createText, drawText, getComputedText, refreshText, resizeText, resizeTextInGroup } from './text'
 import { SHAPES_KEEPING_RATIO, SHAPES_WITH_ROTATION } from '@canvas/constants/shapes'
 
 export const createShape = (
@@ -214,225 +215,44 @@ export const resizeShapes = (
   isShiftPressed: boolean,
   isAltPressed: boolean
 ): ShapeEntity[] => {
-  if (originalShape.type === 'group') {
-    const { center, borders } = originalShape.computed
-    const groupOriginalShapes = getSelectedShapes(originalShape)
-    const shapesWithRotation = groupOriginalShapes.filter(shape => SHAPES_WITH_ROTATION.includes(shape.type))
-    const sameRotation = !shapesWithRotation.some(shape => (shape.rotation ?? 0) !== (shapesWithRotation[0]!.rotation ?? 0))
-    const hasRotationButWithShapesWithoutRotation =
-      (shapesWithRotation[0]?.rotation ?? 0) !== 0 && shapesWithRotation.length !== groupOriginalShapes.length
-    const hasShapesWithRatio = groupOriginalShapes.some(shape => SHAPES_KEEPING_RATIO.includes(shape.type))
-    const keepRatio = isShiftPressed || !sameRotation || hasShapesWithRatio || hasRotationButWithShapesWithoutRotation
-
-    const {
-      borderX: newBorderX,
-      borderHeight: newBorderHeight,
-      borderY: newBorderY,
-      borderWidth: newBorderWidth
-    } = resizeRectSelection(cursorPosition, originalShape, selectionMode as SelectionModeResize, settings, keepRatio, isAltPressed)
-    const widthMultiplier = (newBorderWidth - 2 * settings.selectionPadding) / (originalShape.computed.borders.width - 2 * settings.selectionPadding)
-    const heightMultiplier =
-      (newBorderHeight - 2 * settings.selectionPadding) / (originalShape.computed.borders.height - 2 * settings.selectionPadding)
-
-    const rotatedCursorPosition = rotatePoint({
-      origin: center,
-      point: cursorPosition,
-      rotation: originalShape.rotation
-    })
-    const isXinverted =
-      ((selectionMode as SelectionModeResize).anchor[0] === 0 && rotatedCursorPosition[0] >= borders.x + borders.width) ||
-      ((selectionMode as SelectionModeResize).anchor[0] === 1 && rotatedCursorPosition[0] <= borders.x)
-    const isYinverted =
-      ((selectionMode as SelectionModeResize).anchor[1] === 0 && rotatedCursorPosition[1] >= borders.y + borders.height) ||
-      ((selectionMode as SelectionModeResize).anchor[1] === 1 && rotatedCursorPosition[1] <= borders.y)
-
-    return groupOriginalShapes.map(shape => {
-      const shapeCenterWithNoRotation = rotatePoint({
-        origin: originalShape.computed.center,
-        point: shape.computed.center,
-        rotation: originalShape.rotation ?? 0
-      })
-
-      const xOffsetInGroup =
-        (shapeCenterWithNoRotation[0] -
-          (shape.computed.borders.width / 2 - settings.selectionPadding) -
-          (originalShape.computed.borders.x + settings.selectionPadding)) *
-        widthMultiplier
-      const yOffsetInGroup =
-        (shapeCenterWithNoRotation[1] -
-          (shape.computed.borders.height / 2 - settings.selectionPadding) -
-          (originalShape.computed.borders.y + settings.selectionPadding)) *
-        heightMultiplier
-
-      const xPositionInGroupNewBorder =
-        newBorderX +
-        settings.selectionPadding +
-        (isXinverted
-          ? newBorderWidth -
-            2 * settings.selectionPadding -
-            (shape.computed.borders.width - 2 * settings.selectionPadding) * widthMultiplier -
-            xOffsetInGroup
-          : xOffsetInGroup)
-      const yPositionInGroupNewBorder =
-        newBorderY +
-        settings.selectionPadding +
-        (isYinverted
-          ? newBorderHeight -
-            2 * settings.selectionPadding -
-            (shape.computed.borders.height - 2 * settings.selectionPadding) * heightMultiplier -
-            yOffsetInGroup
-          : yOffsetInGroup)
-
-      if (shape.type === 'rect' || shape.type === 'square' || shape.type === 'picture' || shape.type === 'text') {
-        const newWidth = shape.width * widthMultiplier
-        const newHeight = shape.height * heightMultiplier
-
-        const newCenter = rotatePoint({
-          origin: [newBorderX + newBorderWidth / 2, newBorderY + newBorderHeight / 2],
-          point: [xPositionInGroupNewBorder + newWidth / 2, yPositionInGroupNewBorder + newHeight / 2],
-          rotation: -(originalShape.rotation ?? 0)
-        })
-
-        const newX = newCenter[0] - newWidth / 2
-        const newY = newCenter[1] - newHeight / 2
-
-        const refreshedShape = refreshShape(
-          {
-            ...shape,
-            width: newWidth,
-            height: newHeight,
-            x: newX,
-            y: newY
-          },
-          settings
-        )
-
-        if (refreshedShape.type === 'text') {
-          return {
-            ...refreshedShape,
-            fontSize: calculateTextFontSize(
-              ctx,
-              refreshedShape.value,
-              refreshedShape.width,
-              refreshedShape.style?.fontBold ?? false,
-              refreshedShape.style?.fontItalic ?? false,
-              refreshedShape.style?.fontFamily
-            )
-          }
-        }
-        return refreshedShape
-      }
-
-      if (shape.type === 'ellipse') {
-        const newRadiusX = shape.radiusX * widthMultiplier
-        const newRadiusY = shape.radiusY * heightMultiplier
-
-        const newCenter = rotatePoint({
-          origin: [newBorderX + newBorderWidth / 2, newBorderY + newBorderHeight / 2],
-          point: [xPositionInGroupNewBorder + newRadiusX, yPositionInGroupNewBorder + newRadiusY],
-          rotation: -(originalShape.rotation ?? 0)
-        })
-
-        const refreshedShape = refreshShape(
-          {
-            ...shape,
-            radiusX: newRadiusX,
-            radiusY: newRadiusY,
-            x: newCenter[0],
-            y: newCenter[1]
-          },
-          settings
-        )
-
-        return refreshedShape
-      }
-
-      if (shape.type === 'circle') {
-        const newRadius = shape.radius * widthMultiplier
-
-        const newCenter = rotatePoint({
-          origin: [newBorderX + newBorderWidth / 2, newBorderY + newBorderHeight / 2],
-          point: [xPositionInGroupNewBorder + newRadius, yPositionInGroupNewBorder + newRadius],
-          rotation: -(originalShape.rotation ?? 0)
-        })
-
-        const refreshedShape = refreshShape(
-          {
-            ...shape,
-            radius: newRadius,
-            x: newCenter[0],
-            y: newCenter[1]
-          },
-          settings
-        )
-
-        return refreshedShape
-      }
-      if (shape.type === 'brush') {
-        const originalBordersWithoutScale = getBrushBorder({ ...shape, scaleX: 1, scaleY: 1 }, settings)
-
-        const scaleX = (shape.scaleX ?? 1) * widthMultiplier
-        const scaleY = (shape.scaleY ?? 1) * heightMultiplier
-
-        const newWidth = (originalBordersWithoutScale.width - 2 * settings.selectionPadding) * scaleX
-        const newHeight = (originalBordersWithoutScale.height - 2 * settings.selectionPadding) * scaleY
-
-        const newCenter = rotatePoint({
-          origin: [newBorderX + newBorderWidth / 2, newBorderY + newBorderHeight / 2],
-          point: [xPositionInGroupNewBorder + newWidth / 2, yPositionInGroupNewBorder + newHeight / 2],
-          rotation: -(originalShape.rotation ?? 0)
-        })
-
-        const diffX = roundValues(newCenter[0] - newWidth / 2 - shape.computed.borders.x - settings.selectionPadding)
-        const diffY = roundValues(newCenter[1] - newHeight / 2 - shape.computed.borders.y - settings.selectionPadding)
-
-        const refreshedShape = refreshShape(
-          {
-            ...shape,
-            points: shape.points.map(coord => coord.map(([x, y]) => [x + diffX, y + diffY]) as Point[]),
-            scaleX,
-            scaleY
-          },
-          settings
-        )
-
-        return refreshedShape
-      }
-
-      if (shape.type === 'line' || shape.type === 'polygon' || shape.type === 'curve') {
-        const oldWidth = shape.computed.borders.width - 2 * settings.selectionPadding
-        const oldHeight = shape.computed.borders.height - 2 * settings.selectionPadding
-        const newWidth = oldWidth * widthMultiplier
-        const newHeight = oldHeight * widthMultiplier
-
-        const newCenter = rotatePoint({
-          origin: [newBorderX + newBorderWidth / 2, newBorderY + newBorderHeight / 2],
-          point: [xPositionInGroupNewBorder + newWidth / 2, yPositionInGroupNewBorder + newHeight / 2],
-          rotation: -(originalShape.rotation ?? 0)
-        })
-
-        const oldX = shape.computed.center[0] - oldWidth / 2
-        const oldY = shape.computed.center[1] - oldHeight / 2
-
-        const newX = newCenter[0] - newWidth / 2
-        const newY = newCenter[1] - newHeight / 2
-
-        const refreshedShape = refreshShape(
-          {
-            ...shape,
-            points: shape.points.map(([x, y]) => [newX + (x - oldX) * widthMultiplier, newY + (y - oldY) * heightMultiplier]) as [Point, Point]
-          },
-          settings
-        )
-
-        return refreshedShape
-      }
-
-      return resizeShape(ctx, cursorPosition, shape, selectionMode, settings, isShiftPressed, isAltPressed)
-    })
+  if (originalShape.type !== 'group') {
+    return getSelectedShapes(originalShape).map(shape =>
+      resizeShape(ctx, cursorPosition, shape, selectionMode, settings, isShiftPressed, isAltPressed)
+    )
   }
-  return getSelectedShapes(originalShape).map(shape => {
-    return resizeShape(ctx, cursorPosition, shape, selectionMode, settings, isShiftPressed, isAltPressed)
+
+  const group = originalShape
+  const groupShapes = getSelectedShapes(group)
+  const shapesWithRotation = groupShapes.filter(s => SHAPES_WITH_ROTATION.includes(s.type))
+  const sameRotation = !shapesWithRotation.some(s => (s.rotation ?? 0) !== (shapesWithRotation[0]?.rotation ?? 0))
+  const hasRotationButWithShapesWithoutRotation = (shapesWithRotation[0]?.rotation ?? 0) !== 0 && shapesWithRotation.length !== groupShapes.length
+  const hasShapesWithRatio = groupShapes.some(s => SHAPES_KEEPING_RATIO.includes(s.type))
+  const keepRatio = isShiftPressed || !sameRotation || hasShapesWithRatio || hasRotationButWithShapesWithoutRotation
+
+  const groupCtx = getGroupResizeContext(cursorPosition, group, selectionMode as SelectionModeResize, settings, keepRatio, isAltPressed)
+
+  return groupShapes.map(shape => {
+    switch (shape.type) {
+      case 'rect':
+      case 'square':
+        return resizeRectInGroup(shape, group, groupCtx)
+      case 'picture':
+        return resizePictureInGroup(shape, group, groupCtx)
+      case 'text':
+        return resizeTextInGroup(ctx, shape, group, groupCtx)
+      case 'ellipse':
+        return resizeEllipseInGroup(shape, group, groupCtx)
+      case 'circle':
+        return resizeCircleInGroup(shape, group, groupCtx)
+      case 'brush':
+        return resizeBrushInGroup(shape, group, groupCtx)
+      case 'line':
+      case 'polygon':
+      case 'curve':
+        return resizeLinePolygonCurveInGroup(shape, group, groupCtx)
+      default: // group, should not happen
+        return resizeShape(ctx, cursorPosition, shape, selectionMode, settings, isShiftPressed, isAltPressed)
+    }
   })
 }
 
