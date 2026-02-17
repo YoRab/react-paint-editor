@@ -308,8 +308,14 @@ export const translateShapes = (
     [cursorPosition[0] - originalCursorPosition[0], cursorPosition[1] - originalCursorPosition[1]],
     isShiftPressed
   )
-  const translationX = translationVector[0] === 0 ? 0 : roundForGrid(originalBorders.x + translationVector[0], settings) - originalBorders.x
-  const translationY = translationVector[1] === 0 ? 0 : roundForGrid(originalBorders.y + translationVector[1], settings) - originalBorders.y
+  const translationX =
+    translationVector[0] === 0
+      ? 0
+      : roundForGrid(originalBorders.x + settings.selectionPadding + translationVector[0], settings) - (originalBorders.x + settings.selectionPadding)
+  const translationY =
+    translationVector[1] === 0
+      ? 0
+      : roundForGrid(originalBorders.y + settings.selectionPadding + translationVector[1], settings) - (originalBorders.y + settings.selectionPadding)
 
   return getSelectedShapes(originalShape).map(shape => {
     return translateShape(shape, translationX, translationY, settings)
