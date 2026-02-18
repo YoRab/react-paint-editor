@@ -159,12 +159,16 @@ export const resizeBrushInGroup = (
         2 * settings.selectionPadding
       : 0)
 
+  const shouldFlipRotation =
+    (isXinverted || isYinverted) && !(isXinverted && isYinverted) && (shape.rotation ?? 0) !== 0 && group.rotation !== shape.rotation
+
   return buildPath(
     {
       ...shape,
       points: shape.points.map(coord => coord.map(([x, y]) => [isXinverted ? -x + diffX : x + diffX, isYinverted ? -y + diffY : y + diffY])),
       scaleX,
-      scaleY
+      scaleY,
+      rotation: shouldFlipRotation ? -(shape.rotation ?? 0) : (shape.rotation ?? 0)
     },
     groupCtx.settings
   )
