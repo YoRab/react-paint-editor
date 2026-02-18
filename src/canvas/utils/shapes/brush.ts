@@ -90,7 +90,7 @@ export const resizeBrush = (
   const originalBordersWithoutScale = getBrushBorder({ ...originalShape, scaleX: 1, scaleY: 1 }, settings)
   const originalBorders = originalShape.computed.borders
 
-  const { borderX, borderHeight, borderY, borderWidth } = resizeRectSelection(
+  const { borderX, borderHeight, borderY, borderWidth, isXinverted, isYinverted } = resizeRectSelection(
     cursorPosition,
     originalShape,
     selectionMode,
@@ -109,12 +109,20 @@ export const resizeBrush = (
 
   if (!originalShapeWidth || !originalShapeHeight) return originalShape
 
-  const diffX = roundValues(borderX - originalBorders.x)
-  const diffY = roundValues(borderY - originalBorders.y)
+  const diffX =
+    roundValues(borderX - originalBorders.x) +
+    (isXinverted
+      ? 2 * originalBorders.x + (originalBorders.width - 2 * settings.selectionPadding) / (originalShape.scaleX ?? 1) + 2 * settings.selectionPadding
+      : 0)
+  const diffY =
+    roundValues(borderY - originalBorders.y) +
+    (isYinverted
+      ? 2 * originalBorders.y + (originalBorders.height - 2 * settings.selectionPadding) / (originalShape.scaleY ?? 1) + 2 * settings.selectionPadding
+      : 0)
   return buildPath(
     {
       ...originalShape,
-      points: originalShape.points.map(coord => coord.map(([x, y]) => [x + diffX, y + diffY])),
+      points: originalShape.points.map(coord => coord.map(([x, y]) => [isXinverted ? -x + diffX : x + diffX, isYinverted ? -y + diffY : y + diffY])),
       scaleX,
       scaleY
     },
@@ -127,23 +135,40 @@ export const resizeBrushInGroup = (
   group: SelectionType & { type: 'group' },
   groupCtx: GroupResizeContext
 ): ShapeEntity<'brush'> => {
-  const originalBordersWithoutScale = getBrushBorder({ ...shape, scaleX: 1, scaleY: 1 }, groupCtx.settings)
-  const scaleX = (shape.scaleX ?? 1) * groupCtx.widthMultiplier
-  const scaleY = (shape.scaleY ?? 1) * groupCtx.heightMultiplier
-  const newWidth = (originalBordersWithoutScale.width - 2 * groupCtx.settings.selectionPadding) * scaleX
-  const newHeight = (originalBordersWithoutScale.height - 2 * groupCtx.settings.selectionPadding) * scaleY
+  const { isXinverted, isYinverted, settings, widthMultiplier, heightMultiplier } = groupCtx
+  const originalBordersWithoutScale = getBrushBorder({ ...shape, scaleX: 1, scaleY: 1 }, settings)
+  const scaleX = (shape.scaleX ?? 1) * widthMultiplier
+  const scaleY = (shape.scaleY ?? 1) * heightMultiplier
+  const newWidth = (originalBordersWithoutScale.width - 2 * settings.selectionPadding) * scaleX
+  const newHeight = (originalBordersWithoutScale.height - 2 * settings.selectionPadding) * scaleY
 
   const pos = getShapePositionInNewBorder(shape, group, groupCtx)
   const newCenter = getPositionWithoutGroupRotation(groupCtx, pos.x, pos.y, newWidth, newHeight)
-  const diffX = roundValues(newCenter[0] - newWidth / 2 - shape.computed.borders.x - groupCtx.settings.selectionPadding)
-  const diffY = roundValues(newCenter[1] - newHeight / 2 - shape.computed.borders.y - groupCtx.settings.selectionPadding)
+  const diffX =
+    roundValues(newCenter[0] - newWidth / 2 - shape.computed.borders.x - settings.selectionPadding) +
+    (isXinverted
+      ? 2 * shape.computed.borders.x +
+        (shape.computed.borders.width - 2 * settings.selectionPadding) / (shape.scaleX ?? 1) +
+        2 * settings.selectionPadding
+      : 0)
+  const diffY =
+    roundValues(newCenter[1] - newHeight / 2 - shape.computed.borders.y - settings.selectionPadding) +
+    (isYinverted
+      ? 2 * shape.computed.borders.y +
+        (shape.computed.borders.height - 2 * settings.selectionPadding) / (shape.scaleY ?? 1) +
+        2 * settings.selectionPadding
+      : 0)
+
+  const shouldFlipRotation =
+    (isXinverted || isYinverted) && !(isXinverted && isYinverted) && (shape.rotation ?? 0) !== 0 && group.rotation !== shape.rotation
 
   return buildPath(
     {
       ...shape,
-      points: shape.points.map(coord => coord.map(([x, y]) => [x + diffX, y + diffY]) as Point[]),
+      points: shape.points.map(coord => coord.map(([x, y]) => [isXinverted ? -x + diffX : x + diffX, isYinverted ? -y + diffY : y + diffY])),
       scaleX,
-      scaleY
+      scaleY,
+      rotation: shouldFlipRotation ? -(shape.rotation ?? 0) : (shape.rotation ?? 0)
     },
     groupCtx.settings
   )

@@ -93,10 +93,14 @@ export type DrawableShape<T extends ShapeType = ShapeType> = {
   : T extends 'picture'
     ? Picture & {
         img: HTMLImageElement
+        flipX?: boolean
+        flipY?: boolean
         type: 'picture'
       }
     : T extends 'text'
       ? Text & {
+          flipX?: boolean
+          flipY?: boolean
           type: 'text'
         }
       : T extends 'rect'

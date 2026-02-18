@@ -28,24 +28,18 @@ export const getGroupResizeContext = (
   keepRatio: boolean,
   isAltPressed: boolean
 ): GroupResizeContext => {
-  const { center, borders } = group.computed
+  const { borders } = group.computed
   const {
     borderX: newBorderX,
     borderHeight: newBorderHeight,
     borderY: newBorderY,
-    borderWidth: newBorderWidth
+    borderWidth: newBorderWidth,
+    isXinverted,
+    isYinverted
   } = resizeRectSelection(cursorPosition, group, selectionMode, settings, keepRatio, isAltPressed)
 
   const widthMultiplier = (newBorderWidth - 2 * settings.selectionPadding) / (borders.width - 2 * settings.selectionPadding)
   const heightMultiplier = (newBorderHeight - 2 * settings.selectionPadding) / (borders.height - 2 * settings.selectionPadding)
-
-  const rotatedCursorPosition = rotatePoint({ origin: center, point: cursorPosition, rotation: group.rotation })
-  const isXinverted =
-    (selectionMode.anchor[0] === 0 && rotatedCursorPosition[0] >= borders.x + borders.width) ||
-    (selectionMode.anchor[0] === 1 && rotatedCursorPosition[0] <= borders.x)
-  const isYinverted =
-    (selectionMode.anchor[1] === 0 && rotatedCursorPosition[1] >= borders.y + borders.height) ||
-    (selectionMode.anchor[1] === 1 && rotatedCursorPosition[1] <= borders.y)
 
   return {
     newBorderX,

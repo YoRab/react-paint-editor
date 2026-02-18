@@ -119,9 +119,12 @@ export const resizeRectInGroup = (
   group: SelectionType & { type: 'group' },
   groupCtx: GroupResizeContext
 ): ShapeEntity<rectish> => {
+  const { isXinverted, isYinverted, settings, widthMultiplier, heightMultiplier } = groupCtx
+  const shouldFlipRotation =
+    (isXinverted || isYinverted) && !(isXinverted && isYinverted) && (shape.rotation ?? 0) !== 0 && group.rotation !== shape.rotation
   const pos = getShapePositionInNewBorder(shape, group, groupCtx)
-  const newWidth = shape.width * groupCtx.widthMultiplier
-  const newHeight = shape.height * groupCtx.heightMultiplier
+  const newWidth = shape.width * widthMultiplier
+  const newHeight = shape.height * heightMultiplier
   const newCenter = getPositionWithoutGroupRotation(groupCtx, pos.x, pos.y, newWidth, newHeight)
   return buildPath(
     {
@@ -129,8 +132,9 @@ export const resizeRectInGroup = (
       width: newWidth,
       height: newHeight,
       x: newCenter[0] - newWidth / 2,
-      y: newCenter[1] - newHeight / 2
+      y: newCenter[1] - newHeight / 2,
+      rotation: shouldFlipRotation ? -(shape.rotation ?? 0) : (shape.rotation ?? 0)
     },
-    groupCtx.settings
+    settings
   ) as ShapeEntity<rectish>
 }

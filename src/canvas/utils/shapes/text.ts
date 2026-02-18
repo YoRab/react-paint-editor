@@ -87,6 +87,7 @@ export const createText = (
 
 export const drawText = (ctx: CanvasRenderingContext2D, text: DrawableShape<'text'>): void => {
   if (ctx.globalAlpha === 0 || !text.style?.strokeColor || text.style.strokeColor === 'transparent') return
+  ctx.scale(text.flipX ? -1 : 1, text.flipY ? -1 : 1)
 
   ctx.font = `${text.style?.fontItalic ? 'italic' : ''} ${text.style?.fontBold ? 'bold' : ''} ${text.fontSize}px ${
     text.style?.fontFamily ?? STYLE_FONT_DEFAULT
@@ -94,7 +95,12 @@ export const drawText = (ctx: CanvasRenderingContext2D, text: DrawableShape<'tex
   ctx.textBaseline = 'top'
   ctx.fillStyle = text.style.strokeColor
   for (let i = 0; i < text.value.length; i++) {
-    ctx.fillText(text.value[i]!, text.x, text.y + i * text.fontSize, text.width)
+    ctx.fillText(
+      text.value[i]!,
+      text.flipX ? -text.x - text.width : text.x,
+      text.flipY ? -text.y - text.height : text.y + i * text.fontSize,
+      text.width
+    )
   }
 }
 
@@ -115,7 +121,7 @@ export const resizeText = (
   settings: UtilsSettings,
   resizeFromCenter: boolean
 ): ShapeEntity<'text'> => {
-  const { borderX, borderHeight, borderY, borderWidth } = resizeRectSelection(
+  const { borderX, borderHeight, borderY, borderWidth, isXinverted, isYinverted } = resizeRectSelection(
     cursorPosition,
     originalShape,
     selectionMode,
@@ -130,7 +136,9 @@ export const resizeText = (
       width: Math.max(0, borderWidth - 2 * settings.selectionPadding),
       height: Math.max(0, borderHeight - 2 * settings.selectionPadding),
       x: borderX + settings.selectionPadding,
-      y: borderY + settings.selectionPadding
+      y: borderY + settings.selectionPadding,
+      flipX: isXinverted ? !originalShape.flipX : !!originalShape.flipX,
+      flipY: isYinverted ? !originalShape.flipY : !!originalShape.flipY
     },
     settings
   )
@@ -154,9 +162,12 @@ export const resizeTextInGroup = (
   group: SelectionType & { type: 'group' },
   groupCtx: GroupResizeContext
 ): ShapeEntity<'text'> => {
+  const { isXinverted, isYinverted, settings, widthMultiplier, heightMultiplier } = groupCtx
+  const shouldFlipRotation =
+    (isXinverted || isYinverted) && !(isXinverted && isYinverted) && (shape.rotation ?? 0) !== 0 && group.rotation !== shape.rotation
   const pos = getShapePositionInNewBorder(shape, group, groupCtx)
-  const newWidth = shape.width * groupCtx.widthMultiplier
-  const newHeight = shape.height * groupCtx.heightMultiplier
+  const newWidth = shape.width * widthMultiplier
+  const newHeight = shape.height * heightMultiplier
   const newCenter = getPositionWithoutGroupRotation(groupCtx, pos.x, pos.y, newWidth, newHeight)
   const refreshedShape = buildPath(
     {
@@ -164,9 +175,12 @@ export const resizeTextInGroup = (
       width: newWidth,
       height: newHeight,
       x: newCenter[0] - newWidth / 2,
-      y: newCenter[1] - newHeight / 2
+      y: newCenter[1] - newHeight / 2,
+      flipX: isXinverted ? !shape.flipX : !!shape.flipX,
+      flipY: isYinverted ? !shape.flipY : !!shape.flipY,
+      rotation: shouldFlipRotation ? -(shape.rotation ?? 0) : (shape.rotation ?? 0)
     },
-    groupCtx.settings
+    settings
   )
   return {
     ...refreshedShape,

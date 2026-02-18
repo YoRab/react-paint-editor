@@ -163,10 +163,12 @@ export const resizeLinePolygonCurveInGroup = (
   group: SelectionType & { type: 'group' },
   groupCtx: GroupResizeContext
 ): ShapeEntity<'line' | 'polygon' | 'curve'> => {
-  const oldWidth = shape.computed.borders.width - 2 * groupCtx.settings.selectionPadding
-  const oldHeight = shape.computed.borders.height - 2 * groupCtx.settings.selectionPadding
-  const newWidth = oldWidth * groupCtx.widthMultiplier
-  const newHeight = oldHeight * groupCtx.heightMultiplier
+  const { isXinverted, isYinverted, settings, widthMultiplier, heightMultiplier } = groupCtx
+
+  const oldWidth = shape.computed.borders.width - 2 * settings.selectionPadding
+  const oldHeight = shape.computed.borders.height - 2 * settings.selectionPadding
+  const newWidth = oldWidth * widthMultiplier
+  const newHeight = oldHeight * heightMultiplier
 
   const pos = getShapePositionInNewBorder(shape, group, groupCtx)
   const newCenter = getPositionWithoutGroupRotation(groupCtx, pos.x, pos.y, newWidth, newHeight)
@@ -178,10 +180,10 @@ export const resizeLinePolygonCurveInGroup = (
   return refreshPointBasedShape(
     {
       ...shape,
-      points: shape.points.map(([x, y]) => [newX + (x - oldX) * groupCtx.widthMultiplier, newY + (y - oldY) * groupCtx.heightMultiplier]) as [
-        Point,
-        Point
-      ]
+      points: shape.points.map(([x, y]) => [
+        newX + (isXinverted ? newWidth - (x - oldX) * widthMultiplier : (x - oldX) * widthMultiplier),
+        newY + (isYinverted ? newHeight - (y - oldY) * heightMultiplier : (y - oldY) * heightMultiplier)
+      ]) as [Point, Point]
     },
     groupCtx.settings
   )

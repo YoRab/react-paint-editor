@@ -33,6 +33,24 @@ describe('common/utils/object', () => {
       expect(result).toEqual({ a: 1 })
       expect(obj).toEqual({ a: 1, b: 2 })
     })
+
+    it('should omit key only when its value is one of the values in the tuple [key, valuesForWhichKeyIsRemoved]', () => {
+      const obj = { status: 'draft', id: 1 }
+      const result = omit([['status', ['draft', 'archived']]], obj)
+      expect(result).toEqual({ id: 1 })
+    })
+
+    it('should keep key when its value is not in the tuple values (key not removed)', () => {
+      const obj = { status: 'published', id: 1 }
+      const result = omit([['status', ['draft', 'archived']]], obj)
+      expect(result).toEqual({ status: 'published', id: 1 })
+    })
+
+    it('should support mixed keys: string (always omit) and tuple (omit only when value is in list)', () => {
+      const obj = { a: 1, b: 2, c: 3 }
+      const result = omit(['a', ['b', [2]]], obj)
+      expect(result).toEqual({ c: 3 })
+    })
   })
 
   describe('set', () => {
