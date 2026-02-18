@@ -284,7 +284,7 @@ const useShapes = (settings: UtilsSettings, width: number, height: number, isShi
         const newSelectionFrame: [Point, Point] = [prev?.frame[0] ?? [cursorPosition[0], cursorPosition[1]], [cursorPosition[0], cursorPosition[1]]]
 
         const foundShapes = shapesRef.current.filter(shape => {
-          return checkSelectionFrameCollision(ctx, shape, newSelectionFrame, settings)
+          return checkSelectionFrameCollision(ctx, shape, newSelectionFrame)
         })
 
         const shapesGroup = buildShapesGroup(foundShapes, settings)

@@ -266,19 +266,13 @@ const rectSearch = ({
 
 const COLLISION_OFFSET = 10
 
-export const checkSelectionFrameCollision = (
-  ctx: CanvasRenderingContext2D,
-  shape: ShapeEntity,
-  selectionFrame: [Point, Point],
-  settings: UtilsSettings
-): boolean => {
-  const { selectionPadding } = settings
+export const checkSelectionFrameCollision = (ctx: CanvasRenderingContext2D, shape: ShapeEntity, selectionFrame: [Point, Point]): boolean => {
   const { borders, center, boundingBox } = shape.computed
 
-  const minX = Math.round(Math.min(selectionFrame[0][0], selectionFrame[1][0]) - selectionPadding / 2)
-  const maxX = Math.round(Math.max(selectionFrame[0][0], selectionFrame[1][0]) + selectionPadding)
-  const minY = Math.round(Math.min(selectionFrame[0][1], selectionFrame[1][1]) - selectionPadding / 2)
-  const maxY = Math.round(Math.max(selectionFrame[0][1], selectionFrame[1][1]) + selectionPadding)
+  const minX = Math.round(Math.min(selectionFrame[0][0], selectionFrame[1][0]))
+  const maxX = Math.round(Math.max(selectionFrame[0][0], selectionFrame[1][0]))
+  const minY = Math.round(Math.min(selectionFrame[0][1], selectionFrame[1][1]))
+  const maxY = Math.round(Math.max(selectionFrame[0][1], selectionFrame[1][1]))
 
   const frameRect = { x: minX, y: minY, width: maxX - minX, height: maxY - minY }
 
