@@ -38,8 +38,8 @@ export const getGroupResizeContext = (
     isYinverted
   } = resizeRectSelection(cursorPosition, group, selectionMode, settings, keepRatio, isAltPressed)
 
-  const widthMultiplier = (newBorderWidth - 2 * settings.selectionPadding) / (borders.width - 2 * settings.selectionPadding)
-  const heightMultiplier = (newBorderHeight - 2 * settings.selectionPadding) / (borders.height - 2 * settings.selectionPadding)
+  const widthMultiplier = (newBorderWidth - 2 * settings.selectionPadding) / (borders.width - 2 * settings.selectionPadding || 1)
+  const heightMultiplier = (newBorderHeight - 2 * settings.selectionPadding) / (borders.height - 2 * settings.selectionPadding || 1)
 
   return {
     newBorderX,
@@ -85,7 +85,7 @@ export const getShapePositionInNewBorder = (
     (ctx.isXinverted
       ? ctx.newBorderWidth -
         2 * ctx.settings.selectionPadding -
-        (shape.computed.borders.width - 2 * ctx.settings.selectionPadding) * ctx.widthMultiplier -
+        (shape.computed.borders.width - 2 * ctx.settings.selectionPadding || 1) * ctx.widthMultiplier -
         xOffsetInGroup
       : xOffsetInGroup)
   const y =
@@ -94,7 +94,7 @@ export const getShapePositionInNewBorder = (
     (ctx.isYinverted
       ? ctx.newBorderHeight -
         2 * ctx.settings.selectionPadding -
-        (shape.computed.borders.height - 2 * ctx.settings.selectionPadding) * ctx.heightMultiplier -
+        (shape.computed.borders.height - 2 * ctx.settings.selectionPadding || 1) * ctx.heightMultiplier -
         yOffsetInGroup
       : yOffsetInGroup)
 

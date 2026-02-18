@@ -101,7 +101,7 @@ export const resizeCircleInGroup = (
   groupCtx: GroupResizeContext
 ): ShapeEntity<'circle'> => {
   const pos = getShapePositionInNewBorder(shape, group, groupCtx)
-  const newRadius = shape.radius * groupCtx.widthMultiplier
+  const newRadius = (shape.radius || 0.5) * groupCtx.widthMultiplier
   const newCenter = getPositionWithoutGroupRotation(groupCtx, pos.x, pos.y, newRadius * 2, newRadius * 2)
   return buildPath({ ...shape, radius: newRadius, x: newCenter[0], y: newCenter[1] }, groupCtx.settings)
 }

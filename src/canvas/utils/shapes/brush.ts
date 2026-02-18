@@ -109,16 +109,8 @@ export const resizeBrush = (
 
   if (!originalShapeWidth || !originalShapeHeight) return originalShape
 
-  const diffX =
-    roundValues(borderX - originalBorders.x) +
-    (isXinverted
-      ? 2 * originalBorders.x + (originalBorders.width - 2 * settings.selectionPadding) / (originalShape.scaleX ?? 1) + 2 * settings.selectionPadding
-      : 0)
-  const diffY =
-    roundValues(borderY - originalBorders.y) +
-    (isYinverted
-      ? 2 * originalBorders.y + (originalBorders.height - 2 * settings.selectionPadding) / (originalShape.scaleY ?? 1) + 2 * settings.selectionPadding
-      : 0)
+  const diffX = roundValues(borderX - originalBorders.x) + (isXinverted ? 2 * originalBorders.x + originalBordersWithoutScale.width : 0)
+  const diffY = roundValues(borderY - originalBorders.y) + (isYinverted ? 2 * originalBorders.y + originalBordersWithoutScale.height : 0)
   return buildPath(
     {
       ...originalShape,
@@ -146,19 +138,10 @@ export const resizeBrushInGroup = (
   const newCenter = getPositionWithoutGroupRotation(groupCtx, pos.x, pos.y, newWidth, newHeight)
   const diffX =
     roundValues(newCenter[0] - newWidth / 2 - shape.computed.borders.x - settings.selectionPadding) +
-    (isXinverted
-      ? 2 * shape.computed.borders.x +
-        (shape.computed.borders.width - 2 * settings.selectionPadding) / (shape.scaleX ?? 1) +
-        2 * settings.selectionPadding
-      : 0)
+    (isXinverted ? 2 * shape.computed.borders.x + originalBordersWithoutScale.width : 0)
   const diffY =
     roundValues(newCenter[1] - newHeight / 2 - shape.computed.borders.y - settings.selectionPadding) +
-    (isYinverted
-      ? 2 * shape.computed.borders.y +
-        (shape.computed.borders.height - 2 * settings.selectionPadding) / (shape.scaleY ?? 1) +
-        2 * settings.selectionPadding
-      : 0)
-
+    (isYinverted ? 2 * shape.computed.borders.y + originalBordersWithoutScale.height : 0)
   const shouldFlipRotation =
     (isXinverted || isYinverted) && !(isXinverted && isYinverted) && (shape.rotation ?? 0) !== 0 && group.rotation !== shape.rotation
 
