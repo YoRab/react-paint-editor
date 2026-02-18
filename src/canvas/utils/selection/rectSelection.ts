@@ -129,8 +129,8 @@ const getSelectionData = ({
   switch (anchor) {
     case 0: {
       if (invertedAxe) {
-        const shapeSize = borderSize - 2 * settings.selectionPadding
-        return [borderStart + shapeSize, vector - shapeSize]
+        const newBorderWidth = Math.max(0, vector - borderSize) + 2 * settings.selectionPadding
+        return [borderStart + borderSize - 2 * settings.selectionPadding, newBorderWidth]
       }
       const newWidth = Math.max(2 * settings.selectionPadding, borderSize - vector)
       return [borderStart + borderSize - newWidth, newWidth]
@@ -139,8 +139,8 @@ const getSelectionData = ({
       return [borderStart, borderSize]
     case 1:
       if (invertedAxe) {
-        const offset = borderSize + vector
-        return [borderStart + offset, 2 * settings.selectionPadding - offset]
+        const newBorderStart = Math.min(borderStart, borderStart + borderSize + vector)
+        return [newBorderStart, borderStart - newBorderStart + 2 * settings.selectionPadding]
       }
       return [borderStart, Math.max(2 * settings.selectionPadding, borderSize + vector)]
     default:
@@ -149,13 +149,14 @@ const getSelectionData = ({
 }
 
 const resizeRectSelectionKeepingRatio = (
-  rotatedVector: Point,
   borders: Rect,
   center: Point,
   borderX: number,
   borderWidth: number,
   borderY: number,
   borderHeight: number,
+  isXinverted: boolean,
+  isYinverted: boolean,
   originalShape: DrawableShape,
   selectionMode: SelectionModeResize,
   settings: UtilsSettings
@@ -175,24 +176,18 @@ const resizeRectSelectionKeepingRatio = (
       trueBorderHeight = borderHeight
       trueBorderWidth = (borderHeight - selectionPadding * 2) * originalRatio + 2 * selectionPadding
       if (selectionMode.anchor[0] === 0) {
-        trueBorderX =
-          borders.width - rotatedVector[0] > selectionPadding
-            ? borders.x + (borders.width - trueBorderWidth)
-            : borders.x + borders.width - 2 * selectionPadding
+        trueBorderX = !isXinverted ? borders.x + (borders.width - trueBorderWidth) : borders.x + borders.width - 2 * selectionPadding
       } else {
-        trueBorderX = borders.width + rotatedVector[0] > selectionPadding ? borders.x : borders.x - trueBorderWidth + 2 * selectionPadding
+        trueBorderX = !isXinverted ? borders.x : borders.x - trueBorderWidth + 2 * selectionPadding
       }
     } else {
       trueBorderX = borderX
       trueBorderWidth = borderWidth
       trueBorderHeight = (borderWidth - selectionPadding * 2) / originalRatio + 2 * selectionPadding
       if (selectionMode.anchor[1] === 0) {
-        trueBorderY =
-          borders.height - rotatedVector[1] > selectionPadding
-            ? borders.y + (borders.height - trueBorderHeight)
-            : borders.y + borders.height - 2 * selectionPadding
+        trueBorderY = !isYinverted ? borders.y + (borders.height - trueBorderHeight) : borders.y + borders.height - 2 * selectionPadding
       } else {
-        trueBorderY = borders.height + rotatedVector[1] > selectionPadding ? borders.y : borders.y - trueBorderHeight + 2 * selectionPadding
+        trueBorderY = !isYinverted ? borders.y : borders.y - trueBorderHeight + 2 * selectionPadding
       }
     }
   } else if (selectionMode.anchor[0] !== 0.5) {
@@ -291,11 +286,11 @@ export const resizeRectSelection = (
   })
 
   const isXinverted =
-    (selectionMode.anchor[0] === 0 && rotatedCursorPosition[0] >= borders.x + borders.width) ||
-    (selectionMode.anchor[0] === 1 && rotatedCursorPosition[0] <= borders.x)
+    (selectionMode.anchor[0] === 0 && rotatedCursorPosition[0] >= borders.x + borders.width - settings.selectionPadding) ||
+    (selectionMode.anchor[0] === 1 && rotatedCursorPosition[0] <= borders.x + settings.selectionPadding)
   const isYinverted =
-    (selectionMode.anchor[1] === 0 && rotatedCursorPosition[1] >= borders.y + borders.height) ||
-    (selectionMode.anchor[1] === 1 && rotatedCursorPosition[1] <= borders.y)
+    (selectionMode.anchor[1] === 0 && rotatedCursorPosition[1] >= borders.y + borders.height - settings.selectionPadding) ||
+    (selectionMode.anchor[1] === 1 && rotatedCursorPosition[1] <= borders.y + settings.selectionPadding)
 
   const roundCursorPosition: Point = [
     roundForGrid(
@@ -344,9 +339,20 @@ export const resizeRectSelection = (
     invertedAxe: isYinverted,
     anchor: selectionMode.anchor[1]
   })
-
   const data = keepRatio
-    ? resizeRectSelectionKeepingRatio(vector, borders, center, borderX, borderWidth, borderY, borderHeight, originalShape, selectionMode, settings)
+    ? resizeRectSelectionKeepingRatio(
+        borders,
+        center,
+        borderX,
+        borderWidth,
+        borderY,
+        borderHeight,
+        isXinverted,
+        isYinverted,
+        originalShape,
+        selectionMode,
+        settings
+      )
     : {
         borderX,
         borderWidth,
