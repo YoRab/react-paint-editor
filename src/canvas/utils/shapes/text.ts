@@ -166,8 +166,8 @@ export const resizeTextInGroup = (
   const shouldFlipRotation =
     (isXinverted || isYinverted) && !(isXinverted && isYinverted) && (shape.rotation ?? 0) !== 0 && group.rotation !== shape.rotation
   const pos = getShapePositionInNewBorder(shape, group, groupCtx)
-  const newWidth = shape.width * widthMultiplier
-  const newHeight = shape.height * heightMultiplier
+  const newWidth = (shape.width || 1) * widthMultiplier
+  const newHeight = (shape.height || 1) * heightMultiplier
   const newCenter = getPositionWithoutGroupRotation(groupCtx, pos.x, pos.y, newWidth, newHeight)
   const refreshedShape = buildPath(
     {

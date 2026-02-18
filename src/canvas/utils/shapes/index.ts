@@ -94,14 +94,15 @@ const drawShapeByType = (ctx: CanvasRenderingContext2D, shape: ShapeEntity): voi
  * @param shape - The shape to draw
  */
 const drawShapeWithOpacity = (ctx: CanvasRenderingContext2D, shape: ShapeEntity): void => {
-  const tempCanvas = document.createElement('canvas')
-  const tempCtx = tempCanvas.getContext('2d')
-  if (!tempCtx) throw new Error('No context found for canvas')
   const { outerBorders } = shape.computed
   const tempCanvasSize = {
     width: outerBorders.width * 2,
     height: outerBorders.height * 2
   }
+  if (tempCanvasSize.width === 0 || tempCanvasSize.height === 0) return
+  const tempCanvas = document.createElement('canvas')
+  const tempCtx = tempCanvas.getContext('2d')
+  if (!tempCtx) throw new Error('No context found for canvas')
   tempCanvas.width = tempCanvasSize.width
   tempCanvas.height = tempCanvasSize.height
   tempCtx.translate(tempCanvasSize.width / 4 - outerBorders.x, tempCanvasSize.height / 4 - outerBorders.y)

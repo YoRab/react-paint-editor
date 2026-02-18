@@ -107,8 +107,8 @@ export const resizeEllipseInGroup = (
   const shouldFlipRotation =
     (isXinverted || isYinverted) && !(isXinverted && isYinverted) && (shape.rotation ?? 0) !== 0 && group.rotation !== shape.rotation
   const pos = getShapePositionInNewBorder(shape, group, groupCtx)
-  const newRadiusX = shape.radiusX * widthMultiplier
-  const newRadiusY = shape.radiusY * heightMultiplier
+  const newRadiusX = (shape.radiusX || 0.5) * widthMultiplier
+  const newRadiusY = (shape.radiusY || 0.5) * heightMultiplier
   const newCenter = getPositionWithoutGroupRotation(groupCtx, pos.x, pos.y, newRadiusX * 2, newRadiusY * 2)
   return buildPath(
     {
