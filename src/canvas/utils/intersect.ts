@@ -237,6 +237,8 @@ const rectSearch = ({
   path,
   rect,
   offset,
+  center,
+  rotation,
   checkFill
 }: {
   ctx: CanvasRenderingContext2D
@@ -244,12 +246,15 @@ const rectSearch = ({
   rect: Rect
   offset: number
   checkFill: boolean
+  center: Point
+  rotation: number
 }): boolean => {
   for (let shiftX = 0; shiftX < offset; shiftX += offset / 2) {
     for (let shiftY = 0; shiftY < offset; shiftY += offset / 2) {
-      for (let i = shiftX + rect.x; i < rect.x + rect.width; i += offset) {
-        for (let j = shiftY + rect.y; j < rect.y + rect.height; j += offset) {
-          if (checkFill ? ctx.isPointInPath(path, i, j) : ctx.isPointInStroke(path, i, j)) {
+      for (let x = shiftX + rect.x; x < rect.x + rect.width; x += offset) {
+        for (let y = shiftY + rect.y; y < rect.y + rect.height; y += offset) {
+          const point = getPointPositionAfterCanvasTransformation([x, y], rotation, center)
+          if (checkFill ? ctx.isPointInPath(path, point[0], point[1]) : ctx.isPointInStroke(path, point[0], point[1])) {
             return true
           }
         }
@@ -268,19 +273,16 @@ export const checkSelectionFrameCollision = (
   settings: UtilsSettings
 ): boolean => {
   const { selectionPadding } = settings
-  const { center, borders } = shape.computed
+  const { borders, center, boundingBox } = shape.computed
 
-  const frame0 = getPointPositionAfterCanvasTransformation(selectionFrame[0], shape.rotation ?? 0, center)
-  const frame1 = getPointPositionAfterCanvasTransformation(selectionFrame[1], shape.rotation ?? 0, center)
-
-  const minX = Math.round(Math.min(frame0[0], frame1[0]) - selectionPadding / 2)
-  const maxX = Math.round(Math.max(frame0[0], frame1[0]) + selectionPadding)
-  const minY = Math.round(Math.min(frame0[1], frame1[1]) - selectionPadding / 2)
-  const maxY = Math.round(Math.max(frame0[1], frame1[1]) + selectionPadding)
+  const minX = Math.round(Math.min(selectionFrame[0][0], selectionFrame[1][0]) - selectionPadding / 2)
+  const maxX = Math.round(Math.max(selectionFrame[0][0], selectionFrame[1][0]) + selectionPadding)
+  const minY = Math.round(Math.min(selectionFrame[0][1], selectionFrame[1][1]) - selectionPadding / 2)
+  const maxY = Math.round(Math.max(selectionFrame[0][1], selectionFrame[1][1]) + selectionPadding)
 
   const frameRect = { x: minX, y: minY, width: maxX - minX, height: maxY - minY }
 
-  const frameCollision = getRectIntersection(borders, frameRect)
+  const frameCollision = getRectIntersection(boundingBox, frameRect)
   if (!frameCollision) return false
 
   if (borders.width <= 1 || borders.height <= 1 || !('path' in shape && shape.path)) {
@@ -324,7 +326,15 @@ export const checkSelectionFrameCollision = (
           path.moveTo(...point1)
           path.lineTo(...point2)
 
-          const isPathInFrame = rectSearch({ ctx, path, rect: pointsCollision, offset: COLLISION_OFFSET, checkFill: false })
+          const isPathInFrame = rectSearch({
+            ctx,
+            path,
+            rect: pointsCollision,
+            offset: COLLISION_OFFSET,
+            center,
+            rotation: shape.rotation ?? 0,
+            checkFill: false
+          })
           if (isPathInFrame) return true
         }
       }
@@ -334,5 +344,5 @@ export const checkSelectionFrameCollision = (
 
   const checkFill = !!(shape.style?.fillColor && shape.style?.fillColor !== 'transparent')
 
-  return rectSearch({ ctx, path: shape.path, rect: frameCollision, offset: COLLISION_OFFSET, checkFill })
+  return rectSearch({ ctx, path: shape.path, rect: frameCollision, offset: COLLISION_OFFSET, center, rotation: shape.rotation ?? 0, checkFill })
 }
