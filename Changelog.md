@@ -2,6 +2,15 @@
 
 For more details and links to Pull requests, see [Releases](https://github.com/YoRab/react-paint-editor/releases)
 
+## V0.16.0
+- enable selection group rotation
+- enable selection group resize
+- enable shape flip, with or without group selection
+- fix selection group translation not following grid
+- fix translation in grid not considering shape selection padding
+- fix shape flip position when resizing
+
+
 ## V0.15.1
 - use alt when dragging shape to duplicate it
 - fix : wrongly hovered shapes when another is selected
