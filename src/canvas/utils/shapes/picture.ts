@@ -179,8 +179,8 @@ export const resizePictureInGroup = (
 ): ShapeEntity<'picture'> => {
   const { isXinverted, isYinverted, settings, widthMultiplier, heightMultiplier } = groupCtx
   const pos = getShapePositionInNewBorder(shape, group, groupCtx)
-  const newWidth = (shape.width === 0 || shape.height === 0 ? shape.ratio : shape.width) * widthMultiplier
-  const newHeight = (shape.width === 0 || shape.height === 0 ? 1 : shape.height) * heightMultiplier
+  const newWidth = (shape.width === 0 || shape.height === 0 ? (shape.ratio ?? 1) : shape.width) * widthMultiplier
+  const newHeight = (shape.width === 0 || shape.height === 0 ? (shape.ratio ?? 1) : shape.height) * heightMultiplier
   const newCenter = getPositionWithoutGroupRotation(groupCtx, pos.x, pos.y, newWidth, newHeight)
   const shouldFlipRotation =
     (isXinverted || isYinverted) && !(isXinverted && isYinverted) && (shape.rotation ?? 0) !== 0 && group.rotation !== shape.rotation
