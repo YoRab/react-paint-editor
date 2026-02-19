@@ -63,19 +63,20 @@ export const createText = (
     shape.settings.fontFamily.default
   )
 
-  const defaultHeight = fontSize * (DEFAULT_TEXT_VALUE.length || 1)
-
+  const width = DEFAULT_TEXT_WIDTH
+  const height = fontSize * (DEFAULT_TEXT_VALUE.length || 1)
   return buildPath(
     {
       toolId: shape.id,
       type: shape.type,
       id: uniqueId(`${shape.type}_`),
-      x: cursorPosition[0] - DEFAULT_TEXT_WIDTH,
-      y: cursorPosition[1] - defaultHeight,
+      x: cursorPosition[0] - width,
+      y: cursorPosition[1] - height,
       value: DEFAULT_TEXT_VALUE,
       fontSize,
-      width: DEFAULT_TEXT_WIDTH,
-      height: defaultHeight,
+      width,
+      height,
+      ratio: width / height,
       style: {
         opacity: shape.settings.opacity.default,
         strokeColor: shape.settings.strokeColor.default,
@@ -133,11 +134,14 @@ export const resizeText = (
     resizeFromCenter
   )
 
+  const width = Math.max(0, borderWidth - 2 * settings.selectionPadding)
+  const height = Math.max(0, borderHeight - 2 * settings.selectionPadding)
+
   const newRect = buildPath(
     {
       ...originalShape,
-      width: Math.max(0, borderWidth - 2 * settings.selectionPadding),
-      height: Math.max(0, borderHeight - 2 * settings.selectionPadding),
+      width,
+      height,
       x: borderX + settings.selectionPadding,
       y: borderY + settings.selectionPadding,
       flipX: isXinverted ? !originalShape.flipX : !!originalShape.flipX,
@@ -169,8 +173,8 @@ export const resizeTextInGroup = (
   const shouldFlipRotation =
     (isXinverted || isYinverted) && !(isXinverted && isYinverted) && (shape.rotation ?? 0) !== 0 && group.rotation !== shape.rotation
   const pos = getShapePositionInNewBorder(shape, group, groupCtx)
-  const newWidth = (shape.width || 1) * widthMultiplier
-  const newHeight = (shape.height || 1) * heightMultiplier
+  const newWidth = (shape.width === 0 || shape.height === 0 ? shape.ratio : shape.width) * widthMultiplier
+  const newHeight = (shape.width === 0 || shape.height === 0 ? 1 : shape.height) * heightMultiplier
   const newCenter = getPositionWithoutGroupRotation(groupCtx, pos.x, pos.y, newWidth, newHeight)
   const refreshedShape = buildPath(
     {
@@ -228,10 +232,13 @@ export const resizeTextShapeWithNewContent = (
   )
   const newHeight = newShape.fontSize * newShape.value.length
 
+  const ratio = newWidth / newHeight
+
   const resizedShape = {
     ...newShape,
     width: newWidth,
-    height: newHeight
+    height: newHeight,
+    ratio
   }
 
   const { center: shapeWithNewDimensionsCenter } = getComputedText(resizedShape, settings)

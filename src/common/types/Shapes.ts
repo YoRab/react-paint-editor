@@ -95,12 +95,14 @@ export type DrawableShape<T extends ShapeType = ShapeType> = {
         img: HTMLImageElement
         flipX?: boolean
         flipY?: boolean
+        ratio: number
         type: 'picture'
       }
     : T extends 'text'
       ? Text & {
           flipX?: boolean
           flipY?: boolean
+          ratio: number
           type: 'text'
         }
       : T extends 'rect'
@@ -164,7 +166,7 @@ export type ShapeEntity<T extends Exclude<ShapeType, 'triangle'> = Exclude<Shape
     center: Point
     boundingBox: Rect
   }
-  path?: Path2D | undefined
+  path: Path2D | undefined
 } & DrawableShape<T> &
   (T extends 'line'
     ? {
