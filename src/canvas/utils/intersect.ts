@@ -238,7 +238,7 @@ const rectSearch = ({
   rect,
   offset,
   center,
-  rotation,
+  rotation = 0,
   checkFill
 }: {
   ctx: CanvasRenderingContext2D
@@ -247,7 +247,7 @@ const rectSearch = ({
   offset: number
   checkFill: boolean
   center: Point
-  rotation: number
+  rotation?: number | undefined
 }): boolean => {
   for (let shiftX = 0; shiftX < offset; shiftX += offset / 2) {
     for (let shiftY = 0; shiftY < offset; shiftY += offset / 2) {
@@ -269,10 +269,10 @@ const COLLISION_OFFSET = 10
 export const checkSelectionFrameCollision = (ctx: CanvasRenderingContext2D, shape: ShapeEntity, selectionFrame: [Point, Point]): boolean => {
   const { borders, center, boundingBox } = shape.computed
 
-  const minX = Math.round(Math.min(selectionFrame[0][0], selectionFrame[1][0]))
-  const maxX = Math.round(Math.max(selectionFrame[0][0], selectionFrame[1][0]))
-  const minY = Math.round(Math.min(selectionFrame[0][1], selectionFrame[1][1]))
-  const maxY = Math.round(Math.max(selectionFrame[0][1], selectionFrame[1][1]))
+  const minX = Math.min(selectionFrame[0][0], selectionFrame[1][0])
+  const maxX = Math.max(selectionFrame[0][0], selectionFrame[1][0])
+  const minY = Math.min(selectionFrame[0][1], selectionFrame[1][1])
+  const maxY = Math.max(selectionFrame[0][1], selectionFrame[1][1])
 
   const frameRect = { x: minX, y: minY, width: maxX - minX, height: maxY - minY }
 
@@ -300,8 +300,16 @@ export const checkSelectionFrameCollision = (ctx: CanvasRenderingContext2D, shap
         }
       }
       for (let i = 0; i < points.length - 1; i++) {
-        const point1 = scalePoint(points[i]!, brushMinX, brushMinY, shape.scaleX, shape.scaleY)
-        const point2 = scalePoint(points[i + 1]!, brushMinX, brushMinY, shape.scaleX, shape.scaleY)
+        const point1 = getPointPositionBeforeCanvasTransformation(
+          scalePoint(points[i]!, brushMinX, brushMinY, shape.scaleX, shape.scaleY),
+          shape.rotation ?? 0,
+          center
+        )
+        const point2 = getPointPositionBeforeCanvasTransformation(
+          scalePoint(points[i + 1]!, brushMinX, brushMinY, shape.scaleX, shape.scaleY),
+          shape.rotation ?? 0,
+          center
+        )
         const pointMinX = Math.min(point1[0], point2[0])
         const pointMinY = Math.min(point1[1], point2[1])
 
@@ -326,7 +334,6 @@ export const checkSelectionFrameCollision = (ctx: CanvasRenderingContext2D, shap
             rect: pointsCollision,
             offset: COLLISION_OFFSET,
             center,
-            rotation: shape.rotation ?? 0,
             checkFill: false
           })
           if (isPathInFrame) return true
