@@ -129,8 +129,7 @@ export const checkSelectionIntersection = (
   }
 
   if (isPartOfRect(borders, newPosition, radius)) return { mode: 'translate' }
-  if (shape.type === 'curve' && 'path' in shape && shape.path && ctx.isPointInPath(shape.path, newPosition[0], newPosition[1]))
-    return { mode: 'translate' }
+  if (shape.type === 'curve' && shape.path && ctx.isPointInPath(shape.path, newPosition[0], newPosition[1])) return { mode: 'translate' }
   return false
 }
 
@@ -202,8 +201,8 @@ export const checkPositionIntersection = (
 
   const newPosition = getPointPositionAfterCanvasTransformation(position, shape.rotation ?? 0, center)
 
-  if ('path' in shape && shape.path) {
-    const checkFill = shape.style?.fillColor && shape.style?.fillColor !== 'transparent'
+  if (shape.path) {
+    const checkFill = (shape.style?.fillColor && shape.style?.fillColor !== 'transparent') || ['picture', 'text'].includes(shape.type)
     if (checkFill) {
       return ctx.isPointInPath(shape.path, newPosition[0], newPosition[1]) ? { mode: 'translate' } : false
     }
@@ -237,6 +236,8 @@ const rectSearch = ({
   path,
   rect,
   offset,
+  center,
+  rotation = 0,
   checkFill
 }: {
   ctx: CanvasRenderingContext2D
@@ -244,12 +245,15 @@ const rectSearch = ({
   rect: Rect
   offset: number
   checkFill: boolean
+  center: Point
+  rotation?: number | undefined
 }): boolean => {
   for (let shiftX = 0; shiftX < offset; shiftX += offset / 2) {
     for (let shiftY = 0; shiftY < offset; shiftY += offset / 2) {
-      for (let i = shiftX + rect.x; i < rect.x + rect.width; i += offset) {
-        for (let j = shiftY + rect.y; j < rect.y + rect.height; j += offset) {
-          if (checkFill ? ctx.isPointInPath(path, i, j) : ctx.isPointInStroke(path, i, j)) {
+      for (let x = shiftX + rect.x; x < rect.x + rect.width; x += offset) {
+        for (let y = shiftY + rect.y; y < rect.y + rect.height; y += offset) {
+          const point = getPointPositionAfterCanvasTransformation([x, y], rotation, center)
+          if (checkFill ? ctx.isPointInPath(path, point[0], point[1]) : ctx.isPointInStroke(path, point[0], point[1])) {
             return true
           }
         }
@@ -261,29 +265,20 @@ const rectSearch = ({
 
 const COLLISION_OFFSET = 10
 
-export const checkSelectionFrameCollision = (
-  ctx: CanvasRenderingContext2D,
-  shape: ShapeEntity,
-  selectionFrame: [Point, Point],
-  settings: UtilsSettings
-): boolean => {
-  const { selectionPadding } = settings
-  const { center, borders } = shape.computed
+export const checkSelectionFrameCollision = (ctx: CanvasRenderingContext2D, shape: ShapeEntity, selectionFrame: [Point, Point]): boolean => {
+  const { borders, center, boundingBox } = shape.computed
 
-  const frame0 = getPointPositionAfterCanvasTransformation(selectionFrame[0], shape.rotation ?? 0, center)
-  const frame1 = getPointPositionAfterCanvasTransformation(selectionFrame[1], shape.rotation ?? 0, center)
-
-  const minX = Math.round(Math.min(frame0[0], frame1[0]) - selectionPadding / 2)
-  const maxX = Math.round(Math.max(frame0[0], frame1[0]) + selectionPadding)
-  const minY = Math.round(Math.min(frame0[1], frame1[1]) - selectionPadding / 2)
-  const maxY = Math.round(Math.max(frame0[1], frame1[1]) + selectionPadding)
+  const minX = Math.min(selectionFrame[0][0], selectionFrame[1][0])
+  const maxX = Math.max(selectionFrame[0][0], selectionFrame[1][0])
+  const minY = Math.min(selectionFrame[0][1], selectionFrame[1][1])
+  const maxY = Math.max(selectionFrame[0][1], selectionFrame[1][1])
 
   const frameRect = { x: minX, y: minY, width: maxX - minX, height: maxY - minY }
 
-  const frameCollision = getRectIntersection(borders, frameRect)
+  const frameCollision = getRectIntersection(boundingBox, frameRect)
   if (!frameCollision) return false
 
-  if (borders.width <= 1 || borders.height <= 1 || !('path' in shape && shape.path)) {
+  if (borders.width <= 1 || borders.height <= 1 || !shape.path) {
     return true
   }
 
@@ -304,8 +299,16 @@ export const checkSelectionFrameCollision = (
         }
       }
       for (let i = 0; i < points.length - 1; i++) {
-        const point1 = scalePoint(points[i]!, brushMinX, brushMinY, shape.scaleX, shape.scaleY)
-        const point2 = scalePoint(points[i + 1]!, brushMinX, brushMinY, shape.scaleX, shape.scaleY)
+        const point1 = getPointPositionBeforeCanvasTransformation(
+          scalePoint(points[i]!, brushMinX, brushMinY, shape.scaleX, shape.scaleY),
+          shape.rotation ?? 0,
+          center
+        )
+        const point2 = getPointPositionBeforeCanvasTransformation(
+          scalePoint(points[i + 1]!, brushMinX, brushMinY, shape.scaleX, shape.scaleY),
+          shape.rotation ?? 0,
+          center
+        )
         const pointMinX = Math.min(point1[0], point2[0])
         const pointMinY = Math.min(point1[1], point2[1])
 
@@ -324,7 +327,14 @@ export const checkSelectionFrameCollision = (
           path.moveTo(...point1)
           path.lineTo(...point2)
 
-          const isPathInFrame = rectSearch({ ctx, path, rect: pointsCollision, offset: COLLISION_OFFSET, checkFill: false })
+          const isPathInFrame = rectSearch({
+            ctx,
+            path,
+            rect: pointsCollision,
+            offset: COLLISION_OFFSET,
+            center,
+            checkFill: false
+          })
           if (isPathInFrame) return true
         }
       }
@@ -332,7 +342,7 @@ export const checkSelectionFrameCollision = (
     return false
   }
 
-  const checkFill = !!(shape.style?.fillColor && shape.style?.fillColor !== 'transparent')
+  const checkFill = (shape.style?.fillColor && shape.style?.fillColor !== 'transparent') || ['picture', 'text'].includes(shape.type)
 
-  return rectSearch({ ctx, path: shape.path, rect: frameCollision, offset: COLLISION_OFFSET, checkFill })
+  return rectSearch({ ctx, path: shape.path, rect: frameCollision, offset: COLLISION_OFFSET, center, rotation: shape.rotation ?? 0, checkFill })
 }

@@ -7,7 +7,7 @@ import type { DrawableShape, Point, SelectionType, ShapeEntity } from '@common/t
 import { uniqueId } from '@common/utils/util'
 import { DEFAULT_SHAPE_PICTURE } from '@editor/constants/tools'
 import { type GroupResizeContext, getPositionWithoutGroupRotation, getShapePositionInNewBorder } from './group'
-import { getComputedShapeInfos } from './path'
+import { createRecPath, getComputedShapeInfos } from './path'
 import { getRectBorder } from './rectangle'
 
 export const getComputedPicture = (picture: DrawableShape<'picture'>, settings: UtilsSettings) => {
@@ -16,8 +16,10 @@ export const getComputedPicture = (picture: DrawableShape<'picture'>, settings: 
 
 const buildPath = <T extends DrawableShape<'picture'>>(shape: T & { id: string }, settings: UtilsSettings): ShapeEntity<'picture'> => {
   const computed = getComputedPicture(shape, settings)
+  const path = createRecPath(shape)
   return {
     ...shape,
+    path,
     selection: createRecSelectionPath(undefined, computed, settings),
     computed
   }

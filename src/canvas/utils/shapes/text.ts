@@ -6,7 +6,7 @@ import type { ToolsSettingsType } from '@common/types/tools'
 import { uniqueId } from '@common/utils/util'
 import { STYLE_FONT_DEFAULT, STYLE_FONT_SIZE_DEFAULT } from '@editor/constants/style'
 import { type GroupResizeContext, getPositionWithoutGroupRotation, getShapePositionInNewBorder } from './group'
-import { getComputedShapeInfos } from './path'
+import { createRecPath, getComputedShapeInfos } from './path'
 import { getRectOppositeAnchorAbsolutePosition } from './rectangle'
 
 const DEFAULT_TEXT_VALUE: string[] = ['Texte']
@@ -18,8 +18,11 @@ export const getComputedText = (text: DrawableShape<'text'>, settings: UtilsSett
 
 const buildPath = <T extends DrawableShape<'text'>>(shape: T & { id: string }, settings: UtilsSettings): ShapeEntity<'text'> => {
   const computed = getComputedText(shape, settings)
+  const path = createRecPath(shape)
+
   return {
     ...shape,
+    path,
     selection: createRecSelectionPath(undefined, computed, settings),
     computed
   }
