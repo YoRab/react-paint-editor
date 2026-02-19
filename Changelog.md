@@ -2,6 +2,13 @@
 
 For more details and links to Pull requests, see [Releases](https://github.com/YoRab/react-paint-editor/releases)
 
+## V0.16.1
+- fix text render when flipped
+- add ratio prop to text and picture shape preventing it to lose its ratio when reacihng size of 0
+- fix sized 0 brush not resizing correctly in group selection
+- fix selection frame wrong collisions with rotated shapes
+- better collision management for text and picture shapes
+
 ## V0.16.0
 - enable selection group rotation
 - enable selection group resize
