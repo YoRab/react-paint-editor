@@ -78,6 +78,17 @@ const EditTextBox = ({ disabled = false, shape, defaultValue, updateValue, saveS
     })
   }, [shape])
 
+  const transform = [
+    `translate3D(${(position[0] + settings.canvasOffset[0]) * settings.canvasSize.scaleRatio}px, ${
+      (position[1] + settings.canvasOffset[1]) * settings.canvasSize.scaleRatio
+    }px, 0)`,
+    `rotate(${radiansToDegrees(shape.rotation ?? 0)}deg)`,
+    shape.flipX || shape.flipY ? `scale(${shape.flipX ? -1 : 1}, ${shape.flipY ? -1 : 1})` : undefined,
+    shape.flipX || shape.flipY ? `translate3D(${shape.flipX ? -100 : 0}%,${shape.flipY ? -100 : 0}%,0)` : undefined
+  ]
+    .filter(Boolean)
+    .join(' ')
+
   return (
     <div
       className='react-paint-editor-toolbox-edittextbox'
@@ -87,9 +98,7 @@ const EditTextBox = ({ disabled = false, shape, defaultValue, updateValue, saveS
       contentEditable={!disabled}
       onInput={updateContentEditable}
       style={{
-        '--react-paint-editor-toolbox-edittextbox-transform': `translate3D(${(position[0] + settings.canvasOffset[0]) * settings.canvasSize.scaleRatio}px, ${
-          (position[1] + settings.canvasOffset[1]) * settings.canvasSize.scaleRatio
-        }px, 0) rotate(${radiansToDegrees(shape.rotation ?? 0)}deg)`,
+        '--react-paint-editor-toolbox-edittextbox-transform': transform,
         '--react-paint-editor-toolbox-edittextbox-fontsize': `${shape.fontSize * settings.canvasSize.scaleRatio}px`,
         '--react-paint-editor-toolbox-edittextbox-padding': `${settings.selectionPadding * settings.canvasSize.scaleRatio}px`,
         '--react-paint-editor-toolbox-edittextbox-color': shape.style?.strokeColor ?? 'inherit',
