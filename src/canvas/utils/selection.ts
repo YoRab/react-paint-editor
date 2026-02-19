@@ -1,5 +1,6 @@
 import type { UtilsSettings } from '@canvas/constants/app'
 import { createRectangle } from '@canvas/utils/shapes/rectangle'
+import { roundValues } from '@canvas/utils/transform'
 import { rotatePoint } from '@canvas/utils/trigo'
 import type { HoverModeData, SelectionModeData } from '@common/types/Mode'
 import type { Point, Rect, SelectionType, ShapeEntity } from '@common/types/Shapes'
@@ -168,10 +169,10 @@ const buildGroupBorders = (shapes: ShapeEntity[], rotation: number, settings: Ut
 
   const origVector = [movedCenter[0] - realCenter[0], movedCenter[1] - realCenter[1]] as Point
 
-  const minX = movedbordersXMin - origVector[0]
-  const maxX = movedBordersXMax - origVector[0]
-  const minY = movedBordersYMin - origVector[1]
-  const maxY = movedBordersYMax - origVector[1]
+  const minX = roundValues(movedbordersXMin - origVector[0])
+  const maxX = roundValues(movedBordersXMax - origVector[0])
+  const minY = roundValues(movedBordersYMin - origVector[1])
+  const maxY = roundValues(movedBordersYMax - origVector[1])
 
   return {
     width: maxX - minX,

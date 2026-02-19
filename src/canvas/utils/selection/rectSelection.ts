@@ -157,12 +157,15 @@ const resizeRectSelectionKeepingRatio = (
   borderHeight: number,
   isXinverted: boolean,
   isYinverted: boolean,
-  originalShape: DrawableShape,
+  originalShape: ShapeEntity,
   selectionMode: SelectionModeResize,
   settings: UtilsSettings
 ) => {
   const { selectionPadding } = settings
-  const originalRatio = (borders.width - selectionPadding * 2 || 1) / (borders.height - selectionPadding * 2 || 1)
+  const originalRatio =
+    'ratio' in originalShape && originalShape.ratio
+      ? originalShape.ratio
+      : (borders.width - selectionPadding * 2 || 1) / (borders.height - selectionPadding * 2 || 1)
   const calculatedRatio = (borderWidth - selectionPadding * 2) / (borderHeight - selectionPadding * 2)
 
   let trueBorderX: number

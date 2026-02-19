@@ -44,6 +44,7 @@ const createPictureShape = (
       y: -settings.canvasOffset[1] + settings.canvasSize.realHeight / settings.canvasZoom / 2 - height / 2,
       width,
       height,
+      ratio: width / height,
       src: storedSrc,
       img
     },
@@ -153,11 +154,15 @@ export const resizePicture = (
     true,
     resizeFromCenter
   )
+
+  const width = Math.max(0, borderWidth - 2 * settings.selectionPadding)
+  const height = Math.max(0, borderHeight - 2 * settings.selectionPadding)
+
   return buildPath(
     {
       ...originalShape,
-      width: Math.max(0, borderWidth - 2 * settings.selectionPadding),
-      height: Math.max(0, borderHeight - 2 * settings.selectionPadding),
+      width,
+      height,
       x: borderX + settings.selectionPadding,
       y: borderY + settings.selectionPadding,
       flipX: isXinverted ? !originalShape.flipX : !!originalShape.flipX,
@@ -174,8 +179,8 @@ export const resizePictureInGroup = (
 ): ShapeEntity<'picture'> => {
   const { isXinverted, isYinverted, settings, widthMultiplier, heightMultiplier } = groupCtx
   const pos = getShapePositionInNewBorder(shape, group, groupCtx)
-  const newWidth = (shape.width || 1) * widthMultiplier
-  const newHeight = (shape.height || 1) * heightMultiplier
+  const newWidth = (shape.width === 0 || shape.height === 0 ? (shape.ratio ?? 1) : shape.width) * widthMultiplier
+  const newHeight = (shape.width === 0 || shape.height === 0 ? (shape.ratio ?? 1) : shape.height) * heightMultiplier
   const newCenter = getPositionWithoutGroupRotation(groupCtx, pos.x, pos.y, newWidth, newHeight)
   const shouldFlipRotation =
     (isXinverted || isYinverted) && !(isXinverted && isYinverted) && (shape.rotation ?? 0) !== 0 && group.rotation !== shape.rotation

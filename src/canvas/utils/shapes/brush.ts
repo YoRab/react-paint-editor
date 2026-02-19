@@ -129,10 +129,12 @@ export const resizeBrushInGroup = (
 ): ShapeEntity<'brush'> => {
   const { isXinverted, isYinverted, settings, widthMultiplier, heightMultiplier } = groupCtx
   const originalBordersWithoutScale = getBrushBorder({ ...shape, scaleX: 1, scaleY: 1 }, settings)
-  const scaleX = (shape.scaleX ?? 1) * widthMultiplier
-  const scaleY = (shape.scaleY ?? 1) * heightMultiplier
-  const newWidth = (originalBordersWithoutScale.width - 2 * settings.selectionPadding) * scaleX
-  const newHeight = (originalBordersWithoutScale.height - 2 * settings.selectionPadding) * scaleY
+  const originalShapeWidthWithoutScale = originalBordersWithoutScale.width - 2 * settings.selectionPadding
+  const originalShapeHeightWithoutScale = originalBordersWithoutScale.height - 2 * settings.selectionPadding
+  const scaleX = (shape.scaleX ?? 1) ? (shape.scaleX ?? 1) * widthMultiplier : widthMultiplier / originalShapeWidthWithoutScale
+  const scaleY = (shape.scaleY ?? 1) ? (shape.scaleY ?? 1) * heightMultiplier : heightMultiplier / originalShapeHeightWithoutScale
+  const newWidth = originalShapeWidthWithoutScale * scaleX
+  const newHeight = originalShapeHeightWithoutScale * scaleY
 
   const pos = getShapePositionInNewBorder(shape, group, groupCtx)
   const newCenter = getPositionWithoutGroupRotation(groupCtx, pos.x, pos.y, newWidth, newHeight)
