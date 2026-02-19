@@ -166,7 +166,7 @@ export type ShapeEntity<T extends Exclude<ShapeType, 'triangle'> = Exclude<Shape
     center: Point
     boundingBox: Rect
   }
-  path: Path2D | undefined
+  path?: Path2D | undefined
 } & DrawableShape<T> &
   (T extends 'line'
     ? {
