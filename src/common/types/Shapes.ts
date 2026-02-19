@@ -164,11 +164,11 @@ export type ShapeEntity<T extends Exclude<ShapeType, 'triangle'> = Exclude<Shape
     center: Point
     boundingBox: Rect
   }
+  path?: Path2D | undefined
 } & DrawableShape<T> &
   (T extends 'line'
     ? {
         selection?: SelectionLinesType | undefined
-        path?: Path2D | undefined
         arrows?: TriangleEntity[]
         type: 'line'
       }
@@ -183,49 +183,41 @@ export type ShapeEntity<T extends Exclude<ShapeType, 'triangle'> = Exclude<Shape
         : T extends 'rect'
           ? {
               selection?: SelectionDefaultType | undefined
-              path?: Path2D | undefined
               type: 'rect'
             }
           : T extends 'square'
             ? {
                 selection?: SelectionDefaultType | undefined
-                path?: Path2D | undefined
                 type: 'square'
               }
             : T extends 'circle'
               ? {
                   selection?: SelectionDefaultType | undefined
-                  path?: Path2D | undefined
                   type: 'circle'
                 }
               : T extends 'ellipse'
                 ? {
                     selection?: SelectionDefaultType | undefined
-                    path?: Path2D | undefined
                     type: 'ellipse'
                   }
                 : T extends 'polygon'
                   ? {
                       selection?: SelectionLinesType | undefined
-                      path?: Path2D | undefined
                       type: 'polygon'
                     }
                   : T extends 'curve'
                     ? {
                         selection?: SelectionLinesType | undefined
-                        path?: Path2D | undefined
                         type: 'curve'
                       }
                     : T extends 'brush'
                       ? {
                           selection?: SelectionDefaultType | undefined
-                          path?: Path2D | undefined
                           type: 'brush'
                         }
                       : T extends 'group'
                         ? {
                             selection?: SelectionDefaultType | undefined
-                            path?: Path2D | undefined
                             type: 'group'
                           }
                         : never)

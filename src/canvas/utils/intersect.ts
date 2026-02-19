@@ -129,8 +129,7 @@ export const checkSelectionIntersection = (
   }
 
   if (isPartOfRect(borders, newPosition, radius)) return { mode: 'translate' }
-  if (shape.type === 'curve' && 'path' in shape && shape.path && ctx.isPointInPath(shape.path, newPosition[0], newPosition[1]))
-    return { mode: 'translate' }
+  if (shape.type === 'curve' && shape.path && ctx.isPointInPath(shape.path, newPosition[0], newPosition[1])) return { mode: 'translate' }
   return false
 }
 
@@ -202,8 +201,8 @@ export const checkPositionIntersection = (
 
   const newPosition = getPointPositionAfterCanvasTransformation(position, shape.rotation ?? 0, center)
 
-  if ('path' in shape && shape.path) {
-    const checkFill = shape.style?.fillColor && shape.style?.fillColor !== 'transparent'
+  if (shape.path) {
+    const checkFill = (shape.style?.fillColor && shape.style?.fillColor !== 'transparent') || ['picture', 'text'].includes(shape.type)
     if (checkFill) {
       return ctx.isPointInPath(shape.path, newPosition[0], newPosition[1]) ? { mode: 'translate' } : false
     }
@@ -279,7 +278,7 @@ export const checkSelectionFrameCollision = (ctx: CanvasRenderingContext2D, shap
   const frameCollision = getRectIntersection(boundingBox, frameRect)
   if (!frameCollision) return false
 
-  if (borders.width <= 1 || borders.height <= 1 || !('path' in shape && shape.path)) {
+  if (borders.width <= 1 || borders.height <= 1 || !shape.path) {
     return true
   }
 
@@ -343,7 +342,7 @@ export const checkSelectionFrameCollision = (ctx: CanvasRenderingContext2D, shap
     return false
   }
 
-  const checkFill = !!(shape.style?.fillColor && shape.style?.fillColor !== 'transparent')
+  const checkFill = (shape.style?.fillColor && shape.style?.fillColor !== 'transparent') || ['picture', 'text'].includes(shape.type)
 
   return rectSearch({ ctx, path: shape.path, rect: frameCollision, offset: COLLISION_OFFSET, center, rotation: shape.rotation ?? 0, checkFill })
 }
