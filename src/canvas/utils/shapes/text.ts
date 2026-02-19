@@ -102,7 +102,7 @@ export const drawText = (ctx: CanvasRenderingContext2D, text: DrawableShape<'tex
     ctx.fillText(
       text.value[i]!,
       text.flipX ? -text.x - text.width : text.x,
-      text.flipY ? -text.y - text.height : text.y + i * text.fontSize,
+      (text.flipY ? -text.y - text.height : text.y) + i * text.fontSize,
       text.width
     )
   }
