@@ -11,7 +11,38 @@ import { isEqual, omit, set } from '@common/utils/object'
 import { uniqueId } from '@common/utils/util'
 import { useCallback, useEffect, useRef, useState } from 'react'
 
-const useShapes = (settings: UtilsSettings, width: number, height: number, isShiftPressed: boolean) => {
+const useShapes = (
+  settings: UtilsSettings,
+  width: number,
+  height: number,
+  isShiftPressed: boolean
+): {
+  registerEvent: (event: 'dataChanged', fn: (data: StateData, source: 'user' | 'remote') => void) => void
+  unregisterEvent: (event: 'dataChanged', fn?: (data: StateData, source: 'user' | 'remote') => void) => void
+  shapesRef: React.RefObject<ShapeEntity[]>
+  selectedShape: SelectionType | undefined
+  hoveredShape: ShapeEntity | undefined
+  selectionFrame: { oldSelection: SelectionType | undefined; frame: [Point, Point] } | undefined
+  setSelectionFrame: React.Dispatch<React.SetStateAction<{ oldSelection: SelectionType | undefined; frame: [Point, Point] } | undefined>>
+  refreshSelectedShapes: (ctx: CanvasRenderingContext2D, cursorPosition: Point) => void
+  addShapes: (newShapes: ShapeEntity[]) => void
+  duplicateShapes: (shapesToDuplicate: ShapeEntity[]) => void
+  addPictureShape: (fileOrUrl: File | string, maxWidth?: number, maxHeight?: number) => Promise<ShapeEntity>
+  moveShapes: (startPositionShapeId: string, endPositionShapeId: string) => void
+  saveShapes: () => void
+  setSelectedShape: React.Dispatch<React.SetStateAction<SelectionType | undefined>>
+  refreshHoveredShape: (e: MouseEvent | TouchEvent, ctx: CanvasRenderingContext2D, cursorPosition: Point, isInsideMask: boolean) => void
+  toggleShapeVisibility: (shapes: ShapeEntity[]) => void
+  toggleShapeLock: (shapeGroup: ShapeEntity[]) => void
+  removeShape: (shapes: ShapeEntity[]) => void
+  updateShape: (updatedShapes: ShapeEntity[], withSave?: boolean) => void
+  backwardShape: () => void
+  forwardShape: () => void
+  clearShapes: (shapesToInit: ShapeEntity[], options: { clearHistory: boolean; source: 'user' | 'remote' }) => void
+  canGoBackward: boolean
+  canGoForward: boolean
+  canClear: boolean
+} => {
   const shapesRef = useRef<ShapeEntity[]>([])
   const listeners = useRef<{
     dataChanged: ((data: StateData, source: 'user' | 'remote') => void)[]
