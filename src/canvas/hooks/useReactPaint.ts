@@ -9,10 +9,10 @@ import { sanitizeTools } from '@canvas/utils/tools'
 import { getNewOffset } from '@canvas/utils/zoom'
 import type { CanvasSize } from '@common/types/Canvas'
 import type { SelectionModeData } from '@common/types/Mode'
-import type { ExportedDrawableShape, Point, ShapeEntity, StateData } from '@common/types/Shapes'
-import type { ToolsType } from '@common/types/tools'
+import type { ExportedDrawableShape, Point, SelectionType, ShapeEntity, StateData } from '@common/types/Shapes'
+import type { CustomTool, ToolsType } from '@common/types/tools'
 import { SELECTION_TOOL } from '@editor/constants/tools'
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { type CSSProperties, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 type UseReactPaintProps = {
   width?: number | undefined
@@ -23,6 +23,123 @@ type UseReactPaintProps = {
   options?: OptionalOptions | undefined
 }
 
+type EditorProps = {
+  shapesRef: React.RefObject<ShapeEntity[]>
+  addPictureShape: (fileOrUrl: File | string, maxWidth?: number, maxHeight?: number) => Promise<ShapeEntity>
+  moveShapes: (startPositionShapeId: string, endPositionShapeId: string) => void
+  toggleShapeVisibility: (shapes: ShapeEntity[]) => void
+  toggleShapeLock: (shapeGroup: ShapeEntity[]) => void
+  canGoBackward: boolean
+  canGoForward: boolean
+  canClear: boolean
+  selectedShape: SelectionType | undefined
+  saveShapes: () => void
+  removeShape: (shapes: ShapeEntity[]) => void
+  updateShape: (updatedShapes: ShapeEntity[], withSave?: boolean) => void
+  backwardShape: () => void
+  forwardShape: () => void
+  refs: {
+    canvas: React.RefObject<HTMLCanvasElement | null>
+    editor: React.RefObject<HTMLElement | null>
+    setEditor: (node: HTMLElement | null) => void
+  }
+
+  width: number
+  height: number
+  selectTool: (tool: ToolsType) => void
+  selectShapes: (shapes: ShapeEntity[]) => void
+  activeTool: ToolsType
+  setActiveTool: React.Dispatch<React.SetStateAction<ToolsType>>
+  setAvailableTools: React.Dispatch<React.SetStateAction<CustomTool[]>>
+  isEditMode: boolean
+  availableTools: CustomTool[]
+  gridGap: number
+  setGridGap: React.Dispatch<React.SetStateAction<number>>
+  loadFile: (file: File) => Promise<void>
+  exportPicture: (view: 'fitToShapes' | 'defaultView' | 'currentZoom') => void
+  exportData: () => void
+  clearCanvas: () => void
+  settings: UtilsSettings
+  setCanvasZoom: (action: 'unzoom' | 'zoom' | 'default') => void
+  resetZoom: () => void
+  canvas: {
+    canGrow: boolean
+    canShrink: boolean
+    layersManipulation: boolean
+    withExport: boolean
+    withLoadAndSave: boolean
+    withUploadPicture: boolean
+    withUrlPicture: boolean
+  }
+}
+
+type CanvasProps = {
+  shapesRef: React.RefObject<ShapeEntity[]>
+  selectedShape: SelectionType | undefined
+  selectionFrame: { oldSelection: SelectionType | undefined; frame: [Point, Point] } | undefined
+  hoveredShape: ShapeEntity | undefined
+  addShape: (newShapes: ShapeEntity[]) => void
+  setSelectedShape: React.Dispatch<React.SetStateAction<SelectionType | undefined>>
+  setSelectionFrame: React.Dispatch<React.SetStateAction<{ oldSelection: SelectionType | undefined; frame: [Point, Point] } | undefined>>
+  refreshSelectedShapes: (ctx: CanvasRenderingContext2D, cursorPosition: Point) => void
+  refreshHoveredShape: (e: MouseEvent | TouchEvent, ctx: CanvasRenderingContext2D, cursorPosition: Point, isInsideMask: boolean) => void
+  removeShape: (shapes: ShapeEntity[]) => void
+  updateShape: (updatedShapes: ShapeEntity[], withSave?: boolean) => void
+  duplicateShapes: (shapesToDuplicate: ShapeEntity[]) => void
+  backwardShape: () => void
+  forwardShape: () => void
+  saveShapes: () => void
+  refs: {
+    canvas: React.RefObject<HTMLCanvasElement | null>
+    editor: React.RefObject<HTMLElement | null>
+    setEditor: (node: HTMLElement | null) => void
+  }
+  width: number
+  height: number
+  selectShapes: (shapes: ShapeEntity[]) => void
+  activeTool: ToolsType
+  setActiveTool: React.Dispatch<React.SetStateAction<ToolsType>>
+  isEditMode: boolean
+  settings: UtilsSettings
+  setCanvasZoom: (action: 'unzoom' | 'zoom' | 'default') => void
+  resetZoom: () => void
+  setCanvasSize: React.Dispatch<React.SetStateAction<CanvasSize>>
+  setCanvasOffset: (offset: Point) => void
+  isInsideComponent: boolean
+  isInsideCanvas: boolean
+  canvas: {
+    withSkeleton: boolean
+    withFrameSelection: boolean
+    canGrow: boolean
+    canShrink: boolean
+  }
+  canvasOffsetStartData: { start: Point; originalOffset: Point } | undefined
+  setCanvasOffsetStartData: React.Dispatch<React.SetStateAction<{ start: Point; originalOffset: Point } | undefined>>
+  selectionMode: SelectionModeData<number | Point>
+  setSelectionMode: React.Dispatch<React.SetStateAction<SelectionModeData<number | Point>>>
+  setCanvasMoveAcceleration: React.Dispatch<React.SetStateAction<Point>>
+  isShiftPressed: boolean
+  isAltPressed: boolean
+  isSpacePressed: boolean
+  setShiftPressed: React.Dispatch<React.SetStateAction<boolean>>
+  setAltPressed: React.Dispatch<React.SetStateAction<boolean>>
+  setIsSpacePressed: React.Dispatch<React.SetStateAction<boolean>>
+}
+export type UseReactPaintReturnType = {
+  annotationsProps: {
+    style: CSSProperties
+  }
+  editorProps: EditorProps
+  canvasProps: CanvasProps
+  registerEvent: (event: 'dataChanged', fn: (data: StateData, source: 'user' | 'remote') => void) => void
+  unregisterEvent: (event: 'dataChanged', fn?: (data: StateData, source: 'user' | 'remote') => void) => void
+  resetCanvas: (json?: ExportedDrawableShape[], clearHistory?: boolean) => void
+  resetZoom: () => void
+  getCurrentImage: (view: 'fitToShapes' | 'defaultView' | 'currentZoom') => string
+  getCurrentData: () => StateData
+  setCanvasOffset: (offset: Point) => void
+  setCanvasZoom: (action: 'unzoom' | 'zoom' | 'default') => void
+}
 const useReactPaint = ({
   width = 1000,
   height = 600,
@@ -30,7 +147,7 @@ const useReactPaint = ({
   mode = 'editor',
   disabled = false,
   options = DEFAULT_OPTIONS
-}: UseReactPaintProps = {}) => {
+}: UseReactPaintProps = {}): UseReactPaintReturnType => {
   const {
     layersManipulation,
     brushAlgo,
@@ -431,7 +548,4 @@ const useReactPaint = ({
     setCanvasZoom
   }
 }
-
-export type UseReactPaintReturnType = ReturnType<typeof useReactPaint>
-
 export default useReactPaint

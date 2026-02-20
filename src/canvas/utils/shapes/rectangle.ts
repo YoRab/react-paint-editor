@@ -13,7 +13,7 @@ export const getComputedRect = (rect: DrawableShape<rectish>, settings: UtilsSet
   return getComputedShapeInfos(rect, getRectBorder, settings)
 }
 
-const buildPath = <T extends rectish>(rect: DrawableShape<T> & { id: string }, settings: UtilsSettings): ShapeEntity<T> => {
+const buildPath = <T extends rectish>(rect: DrawableShape<rectish> & { id: string }, settings: UtilsSettings): ShapeEntity<T> => {
   const path = createRecPath(rect)
   const computed = getComputedRect(rect, settings)
   return {
@@ -52,7 +52,7 @@ export const createRectangle = <T extends rectish>(
       lineWidth: shape.settings.lineWidth.default,
       lineDash: shape.settings.lineDash.default
     }
-  } as unknown as DrawableShape<T> & { id: string }
+  } as DrawableShape<T> & { id: string }
   return buildPath(recShape, settings)
 }
 

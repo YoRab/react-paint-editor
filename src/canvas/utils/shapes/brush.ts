@@ -114,7 +114,9 @@ export const resizeBrush = (
   return buildPath(
     {
       ...originalShape,
-      points: originalShape.points.map(coord => coord.map(([x, y]) => [isXinverted ? -x + diffX : x + diffX, isYinverted ? -y + diffY : y + diffY])),
+      points: originalShape.points.map(coord =>
+        coord.map(([x, y]) => [isXinverted ? -x + diffX : x + diffX, isYinverted ? -y + diffY : y + diffY] as Point)
+      ),
       scaleX,
       scaleY
     },
@@ -150,7 +152,7 @@ export const resizeBrushInGroup = (
   return buildPath(
     {
       ...shape,
-      points: shape.points.map(coord => coord.map(([x, y]) => [isXinverted ? -x + diffX : x + diffX, isYinverted ? -y + diffY : y + diffY])),
+      points: shape.points.map(coord => coord.map(([x, y]) => [isXinverted ? -x + diffX : x + diffX, isYinverted ? -y + diffY : y + diffY] as Point)),
       scaleX,
       scaleY,
       rotation: shouldFlipRotation ? -(shape.rotation ?? 0) : (shape.rotation ?? 0)
