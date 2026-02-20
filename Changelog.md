@@ -2,6 +2,9 @@
 
 For more details and links to Pull requests, see [Releases](https://github.com/YoRab/react-paint-editor/releases)
 
+## V0.16.2
+- fix oversized built types, removing 140KB of types
+
 ## V0.16.1
 - fix text render when flipped
 - add ratio prop to text and picture shape preventing it to lose its ratio when reacihng size of 0
