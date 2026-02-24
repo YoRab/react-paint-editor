@@ -69,6 +69,7 @@ export type StyleShape = {
 }
 
 export type SelectionDefaultType = {
+  type: 'rect'
   border: Path2D
   line: Path2D | undefined
   shapePath: Path2D | undefined
@@ -76,6 +77,7 @@ export type SelectionDefaultType = {
 }
 
 export type SelectionLinesType = {
+  type: 'line'
   border: Path2D
   shapePath: Path2D | undefined
   anchors: Path2D[]
@@ -160,7 +162,7 @@ export type ShapeEntity<T extends Exclude<ShapeType, 'triangle'> = Exclude<Shape
     center: Point
     boundingBox: Rect
   }
-  path?: Path2D | undefined
+  path: Path2D
 } & DrawableShape<T> &
   (
     | {

@@ -73,7 +73,7 @@ export const createBrush = (
 }
 
 export const drawBrush = (ctx: CanvasRenderingContext2D, shape: ShapeEntity<'brush'>): void => {
-  if (shape.points.length < 1 || !shape.path) return
+  if (shape.points.length < 1) return
   if (ctx.globalAlpha === 0) return
   if (shape.style?.strokeColor === 'transparent' || ctx.globalAlpha === 0) return
   ctx.stroke(shape.path)

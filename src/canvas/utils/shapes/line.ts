@@ -120,7 +120,7 @@ export const buildTriangleOnLine = (center: Point, rotation: number, lineStyle: 
 }
 
 export const drawLine = (ctx: CanvasRenderingContext2D, shape: ShapeEntity<'line'>): void => {
-  if (ctx.globalAlpha === 0 || !shape.path) return
+  if (ctx.globalAlpha === 0) return
 
   shape.style?.fillColor !== 'transparent' && ctx.fill(shape.path)
   shape.style?.strokeColor !== 'transparent' && ctx.stroke(shape.path)

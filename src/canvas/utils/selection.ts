@@ -231,7 +231,8 @@ export const buildShapesGroup = (shapes: ShapeEntity[], settings: UtilsSettings)
     width: groupRectangle.width,
     height: groupRectangle.height,
     style,
-    computed: groupRectangle.computed
+    computed: groupRectangle.computed,
+    path: groupRectangle.path
   }
 }
 

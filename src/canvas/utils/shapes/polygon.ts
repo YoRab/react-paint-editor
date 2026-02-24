@@ -55,7 +55,6 @@ export const createPolygon = (
 }
 
 export const drawPolygon = (ctx: CanvasRenderingContext2D, polygon: ShapeEntity<'polygon'>): void => {
-  if (!polygon.path) return
   if (ctx.globalAlpha === 0) return
   polygon.style?.fillColor !== 'transparent' && ctx.fill(polygon.path)
   polygon.style?.strokeColor !== 'transparent' && ctx.stroke(polygon.path)
