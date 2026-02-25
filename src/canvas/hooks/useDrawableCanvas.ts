@@ -251,8 +251,14 @@ const useDrawableCanvas = ({
 
     const isRightClick = 'button' in e && e.button === 2
     if (isRightClick) {
-      // TODO context menu
-      setSelectedShape(undefined)
+      if (selectionMode.mode === 'preview') {
+        setSelectedShape(undefined)
+      } else {
+        const cursorPosition = getCursorPositionInTransformedCanvas(e, drawCanvasRef.current, settings)
+        const { shape, mode } = selectShape(ctx, shapes, cursorPosition, settings, selectedShape, isTouchGesture(e), false)
+        setSelectedShape(shape)
+        // TODO context menu with shape and mode data
+      }
       setActiveTool(SELECTION_TOOL)
       setSelectionMode({ mode: 'default' })
       setSelectionFrame(undefined)
@@ -328,8 +334,6 @@ const useDrawableCanvas = ({
     const isWheelPressed = 'button' in e && e.button === 1
     const isRightClick = 'button' in e && e.button === 2
 
-    if (isRightClick) return
-
     if (isWheelPressed || isSpacePressed || activeTool.type === 'move') {
       setCanvasOffsetStartData({ start: cursorPosition, originalOffset: settings.canvasOffset })
       return
@@ -342,6 +346,15 @@ const useDrawableCanvas = ({
       setSelectionMode({
         mode: 'default'
       })
+      return
+    }
+
+    if (isRightClick) {
+      if (activeTool.type === 'selection') {
+        const { shape } = selectShape(ctx, shapes, cursorPosition, settings, selectedShape, isTouchGesture(e), false)
+        setSelectedShape(shape)
+        setSelectionMode({ mode: 'default' })
+      }
       return
     }
 
