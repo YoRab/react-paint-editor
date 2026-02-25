@@ -2,6 +2,11 @@
 
 For more details and links to Pull requests, see [Releases](https://github.com/YoRab/react-paint-editor/releases)
 
+## V0.16.3
+- fix shape selection now less depending of what is currently selected
+- fix shift command conflict between grouping and translating
+- add more information about react paint in package json
+
 ## V0.16.2
 - fix oversized built types, removing 140KB of types
 
