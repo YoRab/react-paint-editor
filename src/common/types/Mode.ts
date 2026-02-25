@@ -25,6 +25,7 @@ export type SelectionModeResize<AnchorType extends Point | number = Point> = {
   mode: 'resize'
   cursorStartPosition: Point
   originalShape: SelectionType
+  selectedShapesLengthAtMouseDown: number
   anchor: AnchorType
 }
 
@@ -32,12 +33,14 @@ export type SelectionModeRotate = {
   mode: 'rotate'
   cursorStartPosition: Point
   originalShape: SelectionType
+  selectedShapesLengthAtMouseDown: number
   center: Point
 }
 export type SelectionModeTranslate = {
   mode: 'translate'
   cursorStartPosition: Point
   originalShape: SelectionType
+  selectedShapesLengthAtMouseDown: number
   hasBeenDuplicated: boolean
   dateStart: number
 }

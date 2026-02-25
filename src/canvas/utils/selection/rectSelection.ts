@@ -15,6 +15,7 @@ export const createRecSelectionPath = (
   const { borders } = computed
 
   return {
+    type: 'rect',
     border: createRecPath(borders),
     shapePath: path,
     line: createLinePath({

@@ -14,6 +14,7 @@ export const createLineSelectionPath = (
   settings: UtilsSettings
 ): SelectionLinesType => {
   return {
+    type: 'line',
     border: createRecPath(computed.borders),
     shapePath: path,
     anchors: [

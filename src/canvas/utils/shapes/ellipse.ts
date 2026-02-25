@@ -64,7 +64,7 @@ export const createEllipse = (
 }
 
 export const drawEllipse = (ctx: CanvasRenderingContext2D, ellipse: ShapeEntity<'ellipse'>): void => {
-  if (ctx.globalAlpha === 0 || !ellipse.path) return
+  if (ctx.globalAlpha === 0) return
   ellipse.style?.fillColor !== 'transparent' && ctx.fill(ellipse.path)
   ellipse.style?.strokeColor !== 'transparent' && ctx.stroke(ellipse.path)
 }

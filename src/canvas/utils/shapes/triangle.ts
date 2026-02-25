@@ -28,7 +28,6 @@ export const createTriangle = (triangle: Triangle, settings: UtilsSettings): Tri
 
 export const drawTriangle = (ctx: CanvasRenderingContext2D, triangle: TriangleEntity): void => {
   if (ctx.globalAlpha === 0) return
-  if (!triangle.path) return
   triangle.style?.fillColor !== 'transparent' && ctx.fill(triangle.path)
   triangle.style?.strokeColor !== 'transparent' && ctx.stroke(triangle.path)
 }

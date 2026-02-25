@@ -63,7 +63,7 @@ export const createCircle = (
 }
 
 export const drawCircle = (ctx: CanvasRenderingContext2D, circle: ShapeEntity<'circle'>): void => {
-  if (ctx.globalAlpha === 0 || !circle.path) return
+  if (ctx.globalAlpha === 0) return
   circle.style?.fillColor !== 'transparent' && ctx.fill(circle.path)
   circle.style?.strokeColor !== 'transparent' && ctx.stroke(circle.path)
 }

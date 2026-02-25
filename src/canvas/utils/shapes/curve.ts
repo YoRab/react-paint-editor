@@ -108,7 +108,6 @@ export const resizeCurve = (
 }
 
 export const drawCurve = (ctx: CanvasRenderingContext2D, curve: ShapeEntity<'curve'>): void => {
-  if (!curve.path) return
   if (ctx.globalAlpha === 0) return
   curve.style?.fillColor !== 'transparent' && ctx.fill(curve.path)
   curve.style?.strokeColor !== 'transparent' && ctx.stroke(curve.path)

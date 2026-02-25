@@ -3,19 +3,19 @@ import { scalePoint } from '@canvas/utils/transform'
 import { rotatePoint } from '@canvas/utils/trigo'
 import type { Circle, DrawableShape, Line, Point, Rect } from '@common/types/Shapes'
 
-export const createRecPath = (rect: Rect) => {
+export const createRecPath = (rect: Rect): Path2D => {
   const path = new Path2D()
   path.rect(rect.x, rect.y, rect.width, rect.height)
   return path
 }
 
-export const createCirclePath = (shape: Circle) => {
+export const createCirclePath = (shape: Circle): Path2D => {
   const path = new Path2D()
   path.arc(shape.x, shape.y, shape.radius, 0, 2 * Math.PI)
   return path
 }
 
-export const createEllipsePath = (ellipse: DrawableShape<'ellipse'>) => {
+export const createEllipsePath = (ellipse: DrawableShape<'ellipse'>): Path2D => {
   const path = new Path2D()
   path.ellipse(ellipse.x, ellipse.y, ellipse.radiusX, ellipse.radiusY, 0, 0, 2 * Math.PI)
   return path
@@ -28,8 +28,10 @@ export const createLinePath = (line: Line) => {
   return path
 }
 
-export const createBrushPath = (brush: DrawableShape<'brush'>, { brushAlgo }: UtilsSettings) => {
-  if (brush.points.length < 1 || brush.style?.strokeColor === 'transparent') return undefined
+export const createBrushPath = (brush: DrawableShape<'brush'>, { brushAlgo }: UtilsSettings): Path2D => {
+  const path = new Path2D()
+
+  if (brush.points.length < 1) return path
 
   const brushPoints = brush.points.flat()
   const brushPointX = brushPoints.map(point => point[0])
@@ -38,10 +40,8 @@ export const createBrushPath = (brush: DrawableShape<'brush'>, { brushAlgo }: Ut
   const minX = Math.min(...brushPointX)
   const minY = Math.min(...brushPointY)
 
-  const path = new Path2D()
-
   for (const points of brush.points) {
-    if (!points.length) return
+    if (!points.length) continue
     if (points.length === 1) {
       path.rect(...scalePoint(points[0]!, minX, minY, brush.scaleX, brush.scaleY), 1, 1)
     } else {
@@ -148,13 +148,14 @@ export const catmullRomToBezier = (p0: Point, p1: Point, p2: Point, p3: Point): 
   return { cp1, cp2 }
 }
 
-export const createCurvePath = (curve: DrawableShape<'curve'>) => {
+export const createCurvePath = (curve: DrawableShape<'curve'>): Path2D => {
+  const path = new Path2D()
+
   const points = curve.tempPoint ? [...curve.points, curve.tempPoint] : curve.points
-  if (points.length < 2) return undefined
+  if (points.length < 2) return path
   if (points.length < 3) return createPolygonPath(curve)
   const mustClosePath = curve.style?.closedPoints === 1 && points.length > 2
 
-  const path = new Path2D()
   path.moveTo(...points[0]!)
 
   // Catmull-Rom to Bezier
@@ -177,12 +178,11 @@ export const createCurvePath = (curve: DrawableShape<'curve'>) => {
   return path
 }
 
-export const createPolygonPath = (polygon: DrawableShape<'polygon'> | DrawableShape<'curve'>) => {
+export const createPolygonPath = (polygon: DrawableShape<'polygon'> | DrawableShape<'curve'>): Path2D => {
+  const path = new Path2D()
   const points = polygon.tempPoint ? [...polygon.points, polygon.tempPoint] : polygon.points
 
-  if (points.length < 2) return undefined
-
-  const path = new Path2D()
+  if (points.length < 2) return path
 
   path.moveTo(...points[0]!)
   for (const point of points.slice(1)) {
@@ -194,7 +194,7 @@ export const createPolygonPath = (polygon: DrawableShape<'polygon'> | DrawableSh
   return path
 }
 
-export const createTrianglePath = (triangle: DrawableShape<'triangle'>) => {
+export const createTrianglePath = (triangle: DrawableShape<'triangle'>): Path2D => {
   const path = new Path2D()
   path.moveTo(...triangle.points[0])
   path.lineTo(...triangle.points[1])
