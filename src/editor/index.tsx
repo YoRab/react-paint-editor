@@ -190,7 +190,7 @@ const Editor = ({ editorProps, className, style, options, children }: EditorProp
         '--react-paint-editor-app-maxWidth': canGrow ? '100%' : `${width}px`,
         '--react-paint-editor-app-toolbar-bg': toolbarBackgroundColor,
         '--react-paint-editor-app-divider-color': dividerColor,
-        '--react-paint-editor-app-font-radius': fontRadius,
+        '--react-paint-editor-app-font-radius': `${fontRadius}px`,
         '--react-paint-editor-app-font-disabled-color': fontDisabledColor,
         '--react-paint-editor-app-font-disabled-bg': fontDisabledBackgroundColor,
         '--react-paint-editor-app-font-color': fontColor,
