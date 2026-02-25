@@ -19,7 +19,8 @@ export const getNewSelectionData = (
       cursorStartPosition: cursorPosition,
       originalShape: selectedShape,
       hasBeenDuplicated: false,
-      dateStart: Date.now()
+      dateStart: Date.now(),
+      selectedShapesLengthAtMouseDown: getSelectedShapes(selectedShape).length
     }
   }
   if (hoverMode.mode === 'rotate') {
@@ -29,7 +30,8 @@ export const getNewSelectionData = (
       mode: 'rotate',
       cursorStartPosition: cursorPosition,
       originalShape: selectedShape,
-      center
+      center,
+      selectedShapesLengthAtMouseDown: getSelectedShapes(selectedShape).length
     }
   }
   if (hoverMode.mode === 'resize') {
@@ -37,7 +39,8 @@ export const getNewSelectionData = (
       mode: 'resize',
       cursorStartPosition: cursorPosition,
       originalShape: selectedShape,
-      anchor: hoverMode.anchor
+      anchor: hoverMode.anchor,
+      selectedShapesLengthAtMouseDown: getSelectedShapes(selectedShape).length
     }
   }
   return undefined
@@ -51,7 +54,7 @@ export const selectShape = (
   selectedShape: SelectionType | undefined,
   isTouchGesture: boolean,
   withFrameSelection: boolean,
-  isGroupMode: boolean
+  behavior: 'add' | 'remove' | 'replace' = 'replace'
 ): {
   mode: SelectionModeData<Point | number>
   shape: SelectionType | undefined
@@ -87,17 +90,15 @@ export const selectShape = (
         cursorStartPosition: cursorPosition,
         hasBeenDuplicated: false,
         dateStart: Date.now(),
-        originalShape: selectedShape!
+        originalShape: selectedShape,
+        selectedShapesLengthAtMouseDown: getSelectedShapes(selectedShape).length
       }
     }
   }
 
   if (foundShape) {
-    if (isGroupMode) {
-      const foundShapeGroup = getSelectedShapes(selectedShape).find(shape => shape.id === foundShape?.id)
-        ? buildShapesGroup(omitFromSelectedShapes(selectedShape, foundShape), settings)
-        : buildShapesGroup(addToSelectedShapes(selectedShape, [foundShape]), settings)
-
+    if (behavior === 'add') {
+      const foundShapeGroup = buildShapesGroup(addToSelectedShapes(selectedShape, [foundShape]), settings)
       return {
         shape: foundShapeGroup,
         mode: {
@@ -105,7 +106,22 @@ export const selectShape = (
           cursorStartPosition: cursorPosition,
           hasBeenDuplicated: false,
           dateStart: Date.now(),
-          originalShape: foundShapeGroup!
+          originalShape: foundShapeGroup!,
+          selectedShapesLengthAtMouseDown: getSelectedShapes(selectedShape).length
+        }
+      }
+    }
+    if (behavior === 'remove') {
+      const foundShapeGroup = buildShapesGroup(omitFromSelectedShapes(selectedShape, foundShape), settings)
+      return {
+        shape: foundShapeGroup,
+        mode: {
+          mode: 'translate',
+          cursorStartPosition: cursorPosition,
+          hasBeenDuplicated: false,
+          dateStart: Date.now(),
+          originalShape: foundShapeGroup!,
+          selectedShapesLengthAtMouseDown: getSelectedShapes(selectedShape).length
         }
       }
     }
@@ -119,21 +135,14 @@ export const selectShape = (
         cursorStartPosition: cursorPosition,
         hasBeenDuplicated: false,
         dateStart: Date.now(),
-        originalShape: foundShapeGroup!
+        originalShape: foundShapeGroup!,
+        selectedShapesLengthAtMouseDown: getSelectedShapes(selectedShape).length
       }
     }
   }
 
-  if (isGroupMode) {
-    return {
-      shape: selectedShape,
-      mode: {
-        mode: withFrameSelection ? 'selectionFrame' : 'default'
-      }
-    }
-  }
   return {
-    shape: undefined,
+    shape: behavior !== 'replace' ? selectedShape : undefined,
     mode: {
       mode: withFrameSelection ? 'selectionFrame' : 'default'
     }

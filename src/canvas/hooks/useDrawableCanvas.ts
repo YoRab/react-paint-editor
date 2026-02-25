@@ -276,9 +276,12 @@ const useDrawableCanvas = ({
       cursorPosition[1] === selectionMode.cursorStartPosition[1]
     ) {
       const isGroupMode = e.ctrlKey || e.shiftKey || e.metaKey
-      if (!isGroupMode) {
-        const { shape } = selectShape(ctx, shapes, cursorPosition, settings, selectedShape, isTouchGesture(e), withFrameSelection, false)
-        setSelectedShape(shape)
+
+      if (isGroupMode) {
+        const { shape } = selectShape(ctx, shapes, cursorPosition, settings, selectedShape, isTouchGesture(e), withFrameSelection, 'remove')
+        if (getSelectedShapes(shape).length !== selectionMode.selectedShapesLengthAtMouseDown) {
+          setSelectedShape(shape)
+        }
       }
 
       setSelectionMode({ mode: 'default' })
@@ -344,7 +347,8 @@ const useDrawableCanvas = ({
 
     if (activeTool.type === 'selection') {
       const isGroupMode = e.ctrlKey || e.shiftKey || e.metaKey
-      const { shape, mode } = selectShape(ctx, shapes, cursorPosition, settings, selectedShape, isTouchGesture(e), withFrameSelection, isGroupMode)
+      const behavior = isGroupMode ? 'add' : 'replace'
+      const { shape, mode } = selectShape(ctx, shapes, cursorPosition, settings, selectedShape, isTouchGesture(e), withFrameSelection, behavior)
       setSelectedShape(shape)
       setSelectionMode(mode)
       if (mode.mode === 'selectionFrame') {
@@ -393,7 +397,8 @@ const useDrawableCanvas = ({
             mode: 'resize',
             cursorStartPosition: [cursorPosition[0] + settings.selectionPadding, cursorPosition[1] + settings.selectionPadding],
             originalShape: newSelectedShapes,
-            anchor: newShape.type === 'line' ? 0 : [1, 1]
+            anchor: newShape.type === 'line' ? 0 : [1, 1],
+            selectedShapesLengthAtMouseDown: getSelectedShapes(newSelectedShapes).length
           })
         }
       }
