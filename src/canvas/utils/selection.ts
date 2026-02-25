@@ -72,13 +72,26 @@ export const selectShape = (
       return { shape: selectedShape, mode: newSelectionMode }
     }
   }
-  const foundShape = shapes.find(shape => {
-    return getSelectedShapes(selectedShape).find(selectedShape => shape.id === selectedShape?.id)
-      ? selectedShapePositionIntersection && isGroupMode
-        ? checkSelectionIntersection(ctx, shape, cursorPosition, settings, true, isTouchGesture ? 20 : undefined)
-        : !!selectedShapePositionIntersection
-      : !!checkPositionIntersection(ctx, shape, cursorPosition, settings)
-  })
+  const foundShape =
+    shapes.find(shape => {
+      return getSelectedShapes(selectedShape).find(selectedShape => shape.id === selectedShape?.id)
+        ? selectedShapePositionIntersection && checkSelectionIntersection(ctx, shape, cursorPosition, settings, true, isTouchGesture ? 20 : undefined)
+        : !!checkPositionIntersection(ctx, shape, cursorPosition, settings)
+    }) ?? (selectedShapePositionIntersection ? selectedShape : undefined)
+
+  if (selectedShape && selectedShape?.id === foundShape?.id) {
+    return {
+      shape: selectedShape,
+      mode: {
+        mode: 'translate',
+        cursorStartPosition: cursorPosition,
+        hasBeenDuplicated: false,
+        dateStart: Date.now(),
+        originalShape: selectedShape!
+      }
+    }
+  }
+
   if (foundShape) {
     if (isGroupMode) {
       const foundShapeGroup = getSelectedShapes(selectedShape).find(shape => shape.id === foundShape?.id)
