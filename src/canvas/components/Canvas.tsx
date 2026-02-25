@@ -49,7 +49,7 @@ const renderSelectionCanvas = (
     hoveredShape &&
     !getSelectedShapes(selectedShape).find(selected => selected.id === hoveredShape.id) &&
     activeTool.type === 'selection' &&
-    selectionMode.mode === 'default' &&
+    (selectionMode.mode === 'default' || selectionMode.mode === 'contextMenu' || selectionMode.mode === 'textedition') &&
     drawShapeSelection({
       ctx: selectionCtx,
       shape: hoveredShape,
@@ -284,6 +284,7 @@ const Canvas = React.forwardRef<HTMLCanvasElement, DrawerType>(
               settings={settings}
             />
           )}
+          {selectionMode.mode === 'contextMenu' && <div>My context menu</div>}
         </div>
       </div>
     )

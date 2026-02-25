@@ -118,7 +118,7 @@ const handleMove = (
     return
   }
 
-  if (selectionMode.mode === 'default' || selectionMode.mode === 'textedition') {
+  if (selectionMode.mode === 'default' || selectionMode.mode === 'textedition' || selectionMode.mode === 'contextMenu') {
     if (!isInsideMask) {
       setHoverMode({
         mode: 'default'
@@ -253,14 +253,19 @@ const useDrawableCanvas = ({
     if (isRightClick) {
       if (selectionMode.mode === 'preview') {
         setSelectedShape(undefined)
+        setSelectionMode({ mode: 'default' })
       } else {
         const cursorPosition = getCursorPositionInTransformedCanvas(e, drawCanvasRef.current, settings)
         const { shape, mode } = selectShape(ctx, shapes, cursorPosition, settings, selectedShape, isTouchGesture(e), false)
         setSelectedShape(shape)
-        // TODO context menu with shape and mode data
+        setSelectionMode({
+          mode: 'contextMenu',
+          cursorStartPosition: cursorPosition,
+          originalShape: shape,
+          anchor: 'anchor' in mode ? mode.anchor : undefined
+        })
       }
       setActiveTool(SELECTION_TOOL)
-      setSelectionMode({ mode: 'default' })
       setSelectionFrame(undefined)
       return
     }
