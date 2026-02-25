@@ -277,7 +277,7 @@ const useDrawableCanvas = ({
     ) {
       const isGroupMode = e.ctrlKey || e.shiftKey || e.metaKey
       if (!isGroupMode) {
-        const { shape } = selectShape(ctx, shapes, cursorPosition, settings, undefined, isTouchGesture(e), withFrameSelection, false)
+        const { shape } = selectShape(ctx, shapes, cursorPosition, settings, selectedShape, isTouchGesture(e), withFrameSelection, false)
         setSelectedShape(shape)
       }
 

@@ -59,46 +59,19 @@ export const getPointPositionBeforeCanvasTransformation = (point: Point, shapeRo
 const isPartOfRect = (rect: Rect, point: Point, radius: number) =>
   radius ? isCircleIntersectRect(rect, { x: point[0], y: point[1], radius }) : isPointInsideRect(rect, point)
 
-export const checkSelectionIntersection = (
-  ctx: CanvasRenderingContext2D,
-  shape: SelectionType,
-  position: Point,
-  settings: UtilsSettings,
-  checkAnchors = false,
-  radius = 0
-): false | HoverModeData => {
-  if (shape.locked) return false
+const checkAnchorsSelection = (shape: ShapeEntity, newPosition: Point, settings: UtilsSettings, radius = 0): false | HoverModeData => {
   const {
     canvasSize: { scaleRatio }
   } = settings
-  const { borders, center } = shape.computed
+  const { borders } = shape.computed
 
-  const newPosition = getPointPositionAfterCanvasTransformation(position, shape.rotation ?? 0, center)
-  const shapeToCheck = getSelectedShapes(shape).length > 1 ? shape : getSelectedShapes(shape)[0]
-  if (shapeToCheck && checkAnchors) {
-    if (shapeToCheck.type === 'line' || shapeToCheck.type === 'polygon' || shapeToCheck.type === 'curve') {
-      for (let i = 0; i < shapeToCheck.points.length; i++) {
-        if (
-          isPartOfRect(
-            {
-              x: shapeToCheck.points[i]![0] - SELECTION_ANCHOR_SIZE / 2 / scaleRatio,
-              y: shapeToCheck.points[i]![1] - SELECTION_ANCHOR_SIZE / 2 / scaleRatio,
-              width: SELECTION_ANCHOR_SIZE / scaleRatio,
-              height: SELECTION_ANCHOR_SIZE / scaleRatio
-            },
-            newPosition,
-            radius
-          )
-        ) {
-          return { mode: 'resize', anchor: i }
-        }
-      }
-    } else {
+  if (shape.type === 'line' || shape.type === 'polygon' || shape.type === 'curve') {
+    for (let i = 0; i < shape.points.length; i++) {
       if (
         isPartOfRect(
           {
-            x: borders.x + borders.width / 2 - SELECTION_ANCHOR_SIZE / 2 / scaleRatio,
-            y: borders.y - SELECTION_ANCHOR_SIZE / scaleRatio - SELECTION_ROTATED_ANCHOR_POSITION / scaleRatio,
+            x: shape.points[i]![0] - SELECTION_ANCHOR_SIZE / 2 / scaleRatio,
+            y: shape.points[i]![1] - SELECTION_ANCHOR_SIZE / 2 / scaleRatio,
             width: SELECTION_ANCHOR_SIZE / scaleRatio,
             height: SELECTION_ANCHOR_SIZE / scaleRatio
           },
@@ -106,31 +79,71 @@ export const checkSelectionIntersection = (
           radius
         )
       ) {
-        return { mode: 'rotate' }
+        return { mode: 'resize', anchor: i }
       }
+    }
+  } else {
+    if (
+      isPartOfRect(
+        {
+          x: borders.x + borders.width / 2 - SELECTION_ANCHOR_SIZE / 2 / scaleRatio,
+          y: borders.y - SELECTION_ANCHOR_SIZE / scaleRatio - SELECTION_ROTATED_ANCHOR_POSITION / scaleRatio,
+          width: SELECTION_ANCHOR_SIZE / scaleRatio,
+          height: SELECTION_ANCHOR_SIZE / scaleRatio
+        },
+        newPosition,
+        radius
+      )
+    ) {
+      return { mode: 'rotate' }
+    }
 
-      for (const anchorPosition of SELECTION_RESIZE_ANCHOR_POSITIONS) {
-        if (
-          isPartOfRect(
-            {
-              x: borders.x + borders.width * anchorPosition[0] - SELECTION_ANCHOR_SIZE / 2 / scaleRatio,
-              y: borders.y + borders.height * anchorPosition[1] - SELECTION_ANCHOR_SIZE / 2 / scaleRatio,
-              width: SELECTION_ANCHOR_SIZE / scaleRatio,
-              height: SELECTION_ANCHOR_SIZE / scaleRatio
-            },
-            newPosition,
-            radius
-          )
-        ) {
-          return { mode: 'resize', anchor: anchorPosition }
-        }
+    for (const anchorPosition of SELECTION_RESIZE_ANCHOR_POSITIONS) {
+      if (
+        isPartOfRect(
+          {
+            x: borders.x + borders.width * anchorPosition[0] - SELECTION_ANCHOR_SIZE / 2 / scaleRatio,
+            y: borders.y + borders.height * anchorPosition[1] - SELECTION_ANCHOR_SIZE / 2 / scaleRatio,
+            width: SELECTION_ANCHOR_SIZE / scaleRatio,
+            height: SELECTION_ANCHOR_SIZE / scaleRatio
+          },
+          newPosition,
+          radius
+        )
+      ) {
+        return { mode: 'resize', anchor: anchorPosition }
       }
     }
   }
-
-  if (isPartOfRect(borders, newPosition, radius)) return { mode: 'translate' }
-  if (shape.type === 'curve' && shape.path && ctx.isPointInPath(shape.path, newPosition[0], newPosition[1])) return { mode: 'translate' }
   return false
+}
+
+export const checkSelectionIntersection = (
+  ctx: CanvasRenderingContext2D,
+  selection: SelectionType,
+  position: Point,
+  settings: UtilsSettings,
+  checkAnchors = false,
+  radius = 0
+): false | HoverModeData => {
+  const shape = getSelectedShapes(selection).length > 1 ? selection : getSelectedShapes(selection)[0]
+  if (!shape || shape.locked) return false
+  const { borders, center } = shape.computed
+
+  const newPosition = getPointPositionAfterCanvasTransformation(position, shape.rotation ?? 0, center)
+  if (checkAnchors) {
+    const anchorSelection = checkAnchorsSelection(shape, newPosition, settings, radius)
+    if (anchorSelection) return anchorSelection
+  }
+
+  if (shape.selection?.type === 'line') {
+    ctx.lineWidth = (shape.style?.lineWidth ?? 0) + 15 / settings.canvasZoom
+    const isPointOverShape = shouldCheckFillShape(shape, true)
+      ? ctx.isPointInPath(shape.path, newPosition[0], newPosition[1])
+      : ctx.isPointInStroke(shape.path, newPosition[0], newPosition[1])
+    return isPointOverShape ? { mode: 'translate' } : false
+  }
+  return isPartOfRect(borders, newPosition, 15 + radius) ? { mode: 'translate' } : false
 }
 
 export const checkPolygonLinesSelectionIntersection = (
@@ -190,6 +203,11 @@ export const checkCurveLinesSelectionIntersection = (
   return false
 }
 
+const shouldCheckFillShape = (shape: ShapeEntity, isSelected = false) => {
+  if (isSelected && ['curve', 'polygon'].includes(shape.type)) return true
+  return (shape.style?.fillColor && shape.style?.fillColor !== 'transparent') || ['picture', 'text'].includes(shape.type)
+}
+
 export const checkPositionIntersection = (
   ctx: CanvasRenderingContext2D,
   shape: SelectionType,
@@ -200,18 +218,12 @@ export const checkPositionIntersection = (
   const { center } = shape.computed
 
   const newPosition = getPointPositionAfterCanvasTransformation(position, shape.rotation ?? 0, center)
-
-  if (shape.path) {
-    const checkFill = (shape.style?.fillColor && shape.style?.fillColor !== 'transparent') || ['picture', 'text'].includes(shape.type)
-    if (checkFill) {
-      return ctx.isPointInPath(shape.path, newPosition[0], newPosition[1]) ? { mode: 'translate' } : false
-    }
-    ctx.lineWidth = (shape.style?.lineWidth ?? 0) + 15 / settings.canvasZoom
-
-    return ctx.isPointInStroke(shape.path, newPosition[0], newPosition[1]) ? { mode: 'translate' } : false
-  }
-
-  return checkSelectionIntersection(ctx, shape, position, settings, false)
+  ctx.lineWidth = (shape.style?.lineWidth ?? 0) + 15 / settings.canvasZoom
+  const isPointOverShape = shouldCheckFillShape(shape)
+    ? ctx.isPointInPath(shape.path, newPosition[0], newPosition[1])
+    : ctx.isPointInStroke(shape.path, newPosition[0], newPosition[1])
+  if (isPointOverShape) return { mode: 'translate' }
+  return false
 }
 
 export function getRectIntersection(rect1: Rect, rect2: Rect): Rect | undefined {
@@ -278,7 +290,7 @@ export const checkSelectionFrameCollision = (ctx: CanvasRenderingContext2D, shap
   const frameCollision = getRectIntersection(boundingBox, frameRect)
   if (!frameCollision) return false
 
-  if (borders.width <= 1 || borders.height <= 1 || !shape.path) {
+  if (borders.width <= 1 || borders.height <= 1) {
     return true
   }
 
@@ -342,7 +354,7 @@ export const checkSelectionFrameCollision = (ctx: CanvasRenderingContext2D, shap
     return false
   }
 
-  const checkFill = (shape.style?.fillColor && shape.style?.fillColor !== 'transparent') || ['picture', 'text'].includes(shape.type)
+  const checkFill = shouldCheckFillShape(shape)
 
   return rectSearch({ ctx, path: shape.path, rect: frameCollision, offset: COLLISION_OFFSET, center, rotation: shape.rotation ?? 0, checkFill })
 }
