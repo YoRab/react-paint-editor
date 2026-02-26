@@ -1,6 +1,6 @@
 import type { UtilsSettings } from '@canvas/constants/app'
 import './ContextMenu.css'
-import type { SelectionModeContextMenu } from '@common/types/Mode'
+import type { SelectionModeContextMenu, SelectionModeData } from '@common/types/Mode'
 import type { Point } from '@common/types/Shapes'
 import Button from '@editor/components/common/Button'
 import Menu from '@editor/components/common/Menu'
@@ -8,11 +8,13 @@ import Menu from '@editor/components/common/Menu'
 type ContextMenuType = {
   selectionMode: SelectionModeContextMenu<Point | number>
   settings: UtilsSettings
+  selectAllShapes: () => void
+  closeContextMenu: () => void
 }
 
 const TOOLBAR_SIZE = 36
 
-const ContextMenu = ({ selectionMode, settings }: ContextMenuType) => {
+const ContextMenu = ({ selectAllShapes, selectionMode, settings, closeContextMenu }: ContextMenuType) => {
   const { originalShape, cursorStartPosition, anchor } = selectionMode
 
   const transform = `translate3D(${(cursorStartPosition[0] + settings.canvasOffset[0]) * settings.canvasSize.scaleRatio}px, ${
@@ -21,6 +23,12 @@ const ContextMenu = ({ selectionMode, settings }: ContextMenuType) => {
 
   const handleItemClick = (e: React.MouseEvent | React.TouchEvent) => {
     console.log('click')
+    closeContextMenu()
+  }
+
+  const onSelectAllShapes = () => {
+    selectAllShapes()
+    closeContextMenu()
   }
 
   return (
@@ -32,6 +40,8 @@ const ContextMenu = ({ selectionMode, settings }: ContextMenuType) => {
     >
       <Button onClick={handleItemClick}>Item 1</Button>
       <Button onClick={handleItemClick}>Item 2</Button>
+      <hr />
+      <Button onClick={onSelectAllShapes}>Select all</Button>
     </Menu>
   )
 }

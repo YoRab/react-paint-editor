@@ -16,6 +16,7 @@ type UseKeyboardType = {
   pasteShapes: (shape: ShapeEntity[]) => void
   updateShapes: (shapes: ShapeEntity[]) => void
   setSelectedShape: (value: React.SetStateAction<SelectionType | undefined>) => void
+  selectAllShapes: () => void
   removeShape: (shape: ShapeEntity[]) => void
   backwardShape: () => void
   forwardShape: () => void
@@ -43,6 +44,7 @@ const useKeyboard = ({
   resetZoom,
   setSelectionMode,
   setSelectionFrame,
+  selectAllShapes,
   removeShape,
   pasteShapes,
   updateShapes,
@@ -101,6 +103,13 @@ const useKeyboard = ({
           e.preventDefault()
           e.stopPropagation()
           forwardShape()
+          return
+        }
+
+        if (e.key === KeyboardCode.A || e.key === KeyboardCode.a) {
+          e.preventDefault()
+          e.stopPropagation()
+          selectAllShapes()
           return
         }
 
@@ -212,7 +221,8 @@ const useKeyboard = ({
     setSelectionFrame,
     setCanvasZoom,
     resetZoom,
-    setIsSpacePressed
+    setIsSpacePressed,
+    selectAllShapes
   ])
 
   return {}

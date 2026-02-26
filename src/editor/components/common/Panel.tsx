@@ -21,7 +21,6 @@ const Panel = ({ children, title = '', className = '', position, fitContainer = 
       data-fitcontainer={fitContainer}
       data-position={position ?? 'unset'}
       data-alignment={alignment ?? 'unset'}
-      role='menu'
       style={{ ...style, '--react-paint-editor-panel-zindex': STYLE_ZINDEX.PANEL }}
       {...props}
     >

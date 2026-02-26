@@ -12,7 +12,9 @@ type MenuType = {
 const Menu = ({ alignment, children, className, style, position }: MenuType) => {
   return (
     <Panel alignment={alignment} position={position} className={className} style={style}>
-      <div className='react-paint-editor-menu'>{children}</div>
+      <div className='react-paint-editor-menu' role='menu'>
+        {children}
+      </div>
     </Panel>
   )
 }

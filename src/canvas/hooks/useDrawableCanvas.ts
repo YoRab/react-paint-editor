@@ -161,6 +161,7 @@ type UseCanvasType = {
   setCanvasOffsetStartData: React.Dispatch<React.SetStateAction<{ start: Point; originalOffset: Point } | undefined>>
   setCanvasOffset: (offset: Point) => void
   isInsideComponent: boolean
+  isInsideCanvas: boolean
   selectionMode: SelectionModeData<number | Point>
   setSelectionMode: React.Dispatch<React.SetStateAction<SelectionModeData<number | Point>>>
   setSelectionFrame: React.Dispatch<React.SetStateAction<{ oldSelection: SelectionType | undefined; frame: [Point, Point] } | undefined>>
@@ -183,6 +184,7 @@ const useDrawableCanvas = ({
   selectionMode,
   activeTool,
   isInsideComponent,
+  isInsideCanvas,
   setCanvasOffset,
   selectedShape,
   canvasOffsetStartData,
@@ -311,7 +313,7 @@ const useDrawableCanvas = ({
   }
 
   useEffect(() => {
-    if (isInsideComponent) {
+    if (isInsideCanvas) {
       const handleMouseUp = (e: MouseEvent | TouchEvent) => handleUpRef.current?.(e)
 
       document.addEventListener('mouseup', handleMouseUp)
@@ -322,7 +324,7 @@ const useDrawableCanvas = ({
         document.removeEventListener('touchend', handleMouseUp)
       }
     }
-  }, [isInsideComponent])
+  }, [isInsideCanvas])
 
   const onlyCheckZoom = !settings.features.edition && settings.features.zoom
   const disableCheck = !settings.features.edition && !settings.features.zoom
@@ -479,7 +481,7 @@ const useDrawableCanvas = ({
         }
       }
     }
-    if (isInsideComponent) {
+    if (isInsideCanvas) {
       registerDoubleClickEvent(ref, handleDoubleClick)
       return () => {
         unRegisterDoubleClickEvent(ref)
@@ -489,7 +491,7 @@ const useDrawableCanvas = ({
     updateSingleShape,
     registerDoubleClickEvent,
     unRegisterDoubleClickEvent,
-    isInsideComponent,
+    isInsideCanvas,
     drawCanvasRef,
     activeTool,
     selectedShape,

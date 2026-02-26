@@ -38,6 +38,7 @@ type EditorProps = {
 const Editor = ({ editorProps, className, style, options, children }: EditorProps) => {
   const {
     selectionMode,
+    setSelectionMode,
     shapesRef,
     addPictureShape,
     moveShapes,
@@ -56,6 +57,7 @@ const Editor = ({ editorProps, className, style, options, children }: EditorProp
     height,
     selectTool,
     selectShapes,
+    selectAllShapes,
     activeTool,
     setActiveTool,
     setAvailableTools,
@@ -184,6 +186,12 @@ const Editor = ({ editorProps, className, style, options, children }: EditorProp
 
   const appClassName = `${className ? `${className} ` : ''}${isLayoutPanelShown ? 'react-paint-editor-layout-opened ' : ''}react-paint-editor-app`
 
+  const closeContextMenu = () => {
+    setSelectionMode({
+      mode: 'default'
+    })
+    refs.canvas.current?.focus()
+  }
   return (
     <div
       ref={refs.setEditor}
@@ -277,7 +285,9 @@ const Editor = ({ editorProps, className, style, options, children }: EditorProp
           <SnackbarContainer snackbarList={snackbarList} />
         </>
       )}
-      {selectionMode.mode === 'contextMenu' && withContextMenu && <ContextMenu selectionMode={selectionMode} settings={settings} />}
+      {selectionMode.mode === 'contextMenu' && withContextMenu && (
+        <ContextMenu selectAllShapes={selectAllShapes} selectionMode={selectionMode} settings={settings} closeContextMenu={closeContextMenu} />
+      )}
     </div>
   )
 }

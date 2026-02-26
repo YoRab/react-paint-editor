@@ -48,6 +48,7 @@ type EditorProps = {
   height: number
   selectTool: (tool: ToolsType) => void
   selectShapes: (shapes: ShapeEntity[]) => void
+  selectAllShapes: () => void
   activeTool: ToolsType
   setActiveTool: React.Dispatch<React.SetStateAction<ToolsType>>
   setAvailableTools: React.Dispatch<React.SetStateAction<CustomTool[]>>
@@ -60,6 +61,7 @@ type EditorProps = {
   exportData: () => void
   clearCanvas: () => void
   selectionMode: SelectionModeData<number | Point>
+  setSelectionMode: React.Dispatch<React.SetStateAction<SelectionModeData<number | Point>>>
   settings: UtilsSettings
   setCanvasZoom: (action: 'unzoom' | 'zoom' | 'default') => void
   resetZoom: () => void
@@ -99,6 +101,7 @@ type CanvasProps = {
   width: number
   height: number
   selectShapes: (shapes: ShapeEntity[]) => void
+  selectAllShapes: () => void
   activeTool: ToolsType
   setActiveTool: React.Dispatch<React.SetStateAction<ToolsType>>
   isEditMode: boolean
@@ -346,6 +349,10 @@ const useReactPaint = ({
     [setSelectedShape, settings]
   )
 
+  const selectAllShapes = useCallback(() => {
+    selectShapes(shapesRef.current)
+  }, [selectShapes, shapesRef])
+
   const exportData = useCallback(() => {
     const content = encodeShapesInString(shapesRef.current, width, height)
     if (!content) {
@@ -470,6 +477,7 @@ const useReactPaint = ({
       height,
       selectTool,
       selectShapes,
+      selectAllShapes,
       activeTool,
       setActiveTool,
       setAvailableTools,
@@ -482,6 +490,7 @@ const useReactPaint = ({
       exportData,
       clearCanvas,
       selectionMode,
+      setSelectionMode,
       settings,
       setCanvasZoom,
       resetZoom,
@@ -521,6 +530,7 @@ const useReactPaint = ({
       setCanvasZoom,
       resetZoom,
       selectShapes,
+      selectAllShapes,
       activeTool,
       setActiveTool,
       isInsideComponent,

@@ -106,6 +106,7 @@ type DrawerType = {
   setCanvasOffsetStartData: React.Dispatch<React.SetStateAction<{ start: Point; originalOffset: Point } | undefined>>
   setCanvasOffset: (offset: Point) => void
   isInsideComponent: boolean
+  isInsideCanvas: boolean
   selectionMode: SelectionModeData<number | Point>
   setSelectionMode: React.Dispatch<React.SetStateAction<SelectionModeData<number | Point>>>
   isShiftPressed: boolean
@@ -140,6 +141,7 @@ const Canvas = React.forwardRef<HTMLCanvasElement, DrawerType>(
       setCanvasOffset,
       setCanvasMoveAcceleration,
       isInsideComponent,
+      isInsideCanvas,
       selectionMode,
       setSelectionMode,
       selectionWidth,
@@ -171,6 +173,7 @@ const Canvas = React.forwardRef<HTMLCanvasElement, DrawerType>(
       selectionMode,
       activeTool,
       isInsideComponent,
+      isInsideCanvas,
       setCanvasOffset,
       selectedShape,
       canvasOffsetStartData,

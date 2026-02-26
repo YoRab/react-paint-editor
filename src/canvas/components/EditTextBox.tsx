@@ -89,11 +89,6 @@ const EditTextBox = ({ disabled = false, shape, defaultValue, updateValue, saveS
     .filter(Boolean)
     .join(' ')
 
-  const preventClickPropagation = (e: React.MouseEvent | React.TouchEvent) => {
-    e.stopPropagation()
-    return false
-  }
-
   const isEditable = !disabled
 
   return (
@@ -107,8 +102,6 @@ const EditTextBox = ({ disabled = false, shape, defaultValue, updateValue, saveS
       role='textbox'
       tabIndex={isEditable ? 0 : undefined}
       onInput={updateContentEditable}
-      onMouseUp={preventClickPropagation}
-      onTouchEnd={preventClickPropagation}
       style={{
         '--react-paint-editor-toolbox-edittextbox-transform': transform,
         '--react-paint-editor-toolbox-edittextbox-fontsize': `${shape.fontSize * settings.canvasSize.scaleRatio}px`,

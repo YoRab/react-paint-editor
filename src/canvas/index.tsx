@@ -25,6 +25,7 @@ const App = ({ options, className, style, canvasProps }: AppProps) => {
     hoveredShape,
     addShape,
     setSelectedShape,
+    selectAllShapes,
     setSelectionFrame,
     refreshSelectedShapes,
     refreshHoveredShape,
@@ -92,6 +93,7 @@ const App = ({ options, className, style, canvasProps }: AppProps) => {
     isEditingText: selectionMode.mode === 'textedition',
     settings,
     selectedShape,
+    selectAllShapes,
     setSelectedShape,
     removeShape,
     pasteShapes,
@@ -131,6 +133,7 @@ const App = ({ options, className, style, canvasProps }: AppProps) => {
         ref={refs.canvas}
         canGrow={canGrow}
         isInsideComponent={isInsideComponent}
+        isInsideCanvas={isInsideCanvas}
         activeTool={activeTool}
         setActiveTool={setActiveTool}
         canvasOffsetStartData={canvasOffsetStartData}
