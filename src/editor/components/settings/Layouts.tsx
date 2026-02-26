@@ -149,7 +149,7 @@ const Layouts = ({
   const disabled = !settings.features.edition
 
   return isLayoutPanelShown ? (
-    <Panel alignment='right' className='react-paint-editor-layouts-panel'>
+    <Panel alignment='right' className='react-paint-editor-layouts-panel' position='bottom'>
       <div className='react-paint-editor-layouts-panel-content'>
         <div className='react-paint-editor-layouts-scrolling-content'>
           <div className='react-paint-editor-layouts-row'>

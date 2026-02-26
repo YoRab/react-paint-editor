@@ -15,14 +15,11 @@ type ToolbarGroupType = {
         toolsType: CustomTool[]
         vertical: boolean
       }
-  alignment?: 'left' | 'center' | 'right'
-  title?: string
   disabled?: boolean
-  img?: string
   setActiveToolFromId: (id: string) => void
 }
 
-const ToolbarGroup = ({ activeTool, alignment, group, disabled = false, setActiveToolFromId }: ToolbarGroupType) => {
+const ToolbarGroup = ({ activeTool, group, disabled = false, setActiveToolFromId }: ToolbarGroupType) => {
   const panelRef = useRef<HTMLDivElement | null>(null)
   const [isOpen, setIsOpen] = useState(false)
   const [, startTransition] = useTransition()
@@ -83,7 +80,7 @@ const ToolbarGroup = ({ activeTool, alignment, group, disabled = false, setActiv
     <div className='react-paint-editor-toolbargroup-relative'>
       <Button selected={isActive} title={group.title} disabled={disabled} onClick={openPanel} icon={groupIcon} />
       {isOpen && (
-        <Panel alignment={alignment} position='top'>
+        <Panel alignment='center' position='top'>
           <div className='react-paint-editor-toolbargroup-panel-content' data-vertical={+group.vertical} ref={panelRef}>
             {group.toolsType.map(toolType => (
               <Tool

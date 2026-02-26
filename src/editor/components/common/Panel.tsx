@@ -6,30 +6,22 @@ import type { CSSProperties } from 'react'
 type PanelType = {
   vertical?: boolean
   children: React.ReactNode
-  style?: CSSProperties
+  style?: CSSProperties | undefined
   title?: string
-  className?: string
+  className?: string | undefined
   fitContainer?: boolean
-  position?: 'bottom' | 'top'
+  position?: 'bottom' | 'top' | undefined
   alignment?: 'left' | 'right' | 'center' | undefined
 }
 
-const Panel = ({
-  children,
-  title = '',
-  className = '',
-  position = 'bottom',
-  fitContainer = false,
-  alignment = 'center',
-  style,
-  ...props
-}: PanelType) => {
+const Panel = ({ children, title = '', className = '', position, fitContainer = false, alignment, style, ...props }: PanelType) => {
   return (
     <div
       className={`react-paint-editor-panel ${className}`}
       data-fitcontainer={fitContainer}
-      data-position={position}
-      data-alignment={alignment}
+      data-position={position ?? 'unset'}
+      data-alignment={alignment ?? 'unset'}
+      role='menu'
       style={{ ...style, '--react-paint-editor-panel-zindex': STYLE_ZINDEX.PANEL }}
       {...props}
     >

@@ -188,9 +188,6 @@ const Toolbar = ({
         <MenuGroup
           withActionsInMenu={actionsInMenu}
           disabled={disabled}
-          vertical={true}
-          alignment='right'
-          group={{ title: 'Menu', img: menuIcon }}
           activeTool={activeTool}
           addPicture={addPicture}
           loadFile={loadFile}

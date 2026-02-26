@@ -287,7 +287,6 @@ const Canvas = React.forwardRef<HTMLCanvasElement, DrawerType>(
               settings={settings}
             />
           )}
-          {selectionMode.mode === 'contextMenu' && <div>My context menu</div>}
         </div>
       </div>
     )
