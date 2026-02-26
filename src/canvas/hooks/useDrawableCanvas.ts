@@ -169,6 +169,7 @@ type UseCanvasType = {
   isShiftPressed: boolean
   isAltPressed: boolean
   withFrameSelection: boolean
+  withContextMenu: boolean
   settings: UtilsSettings
   isSpacePressed: boolean
 }
@@ -198,6 +199,7 @@ const useDrawableCanvas = ({
   isShiftPressed,
   isAltPressed,
   withFrameSelection,
+  withContextMenu,
   isSpacePressed
 }: UseCanvasType) => {
   const [hoverMode, setHoverMode] = useState<HoverModeData>({
@@ -251,7 +253,7 @@ const useDrawableCanvas = ({
 
     const isRightClick = 'button' in e && e.button === 2
     if (isRightClick) {
-      if (activeTool !== SELECTION_TOOL) {
+      if (activeTool !== SELECTION_TOOL || !withContextMenu) {
         setSelectedShape(undefined)
         setSelectionMode({ mode: 'default' })
       } else {

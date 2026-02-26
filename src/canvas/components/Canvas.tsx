@@ -112,6 +112,7 @@ type DrawerType = {
   isAltPressed: boolean
   isSpacePressed: boolean
   withFrameSelection: boolean
+  withContextMenu: boolean
   withSkeleton: boolean
   setCanvasMoveAcceleration: React.Dispatch<React.SetStateAction<Point>>
 }
@@ -149,7 +150,8 @@ const Canvas = React.forwardRef<HTMLCanvasElement, DrawerType>(
       isAltPressed,
       isSpacePressed,
       withFrameSelection,
-      withSkeleton
+      withSkeleton,
+      withContextMenu
     },
     ref
   ) => {
@@ -186,7 +188,8 @@ const Canvas = React.forwardRef<HTMLCanvasElement, DrawerType>(
       isAltPressed,
       withFrameSelection,
       settings,
-      isSpacePressed
+      isSpacePressed,
+      withContextMenu
     })
     const updateSelectedShapeText = useCallback(
       (newText: string[]) => {

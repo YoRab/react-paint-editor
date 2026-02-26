@@ -70,7 +70,7 @@ const Editor = ({ editorProps, className, style, options, children }: EditorProp
     settings,
     setCanvasZoom,
     saveShapes,
-    canvas: { canGrow, layersManipulation, withExport, withLoadAndSave, withUploadPicture, withUrlPicture }
+    canvas: { canGrow, layersManipulation, withExport, withLoadAndSave, withUploadPicture, withUrlPicture, withContextMenu }
   } = editorProps
 
   const {
@@ -277,7 +277,7 @@ const Editor = ({ editorProps, className, style, options, children }: EditorProp
           <SnackbarContainer snackbarList={snackbarList} />
         </>
       )}
-      {selectionMode.mode === 'contextMenu' && <ContextMenu selectionMode={selectionMode} settings={settings} />}
+      {selectionMode.mode === 'contextMenu' && withContextMenu && <ContextMenu selectionMode={selectionMode} settings={settings} />}
     </div>
   )
 }

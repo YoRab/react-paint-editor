@@ -71,6 +71,7 @@ type EditorProps = {
     withLoadAndSave: boolean
     withUploadPicture: boolean
     withUrlPicture: boolean
+    withContextMenu: boolean
   }
 }
 
@@ -109,6 +110,7 @@ type CanvasProps = {
   isInsideComponent: boolean
   isInsideCanvas: boolean
   canvas: {
+    withContextMenu: boolean
     withSkeleton: boolean
     withFrameSelection: boolean
     canGrow: boolean
@@ -163,6 +165,7 @@ const useReactPaint = ({
     withUrlPicture,
     withSkeleton,
     withFrameSelection,
+    withContextMenu,
     clearCallback,
     availableTools: availableToolsFromProps,
     canvasSelectionPadding,
@@ -489,7 +492,8 @@ const useReactPaint = ({
         withExport,
         withLoadAndSave,
         withUploadPicture,
-        withUrlPicture
+        withUrlPicture,
+        withContextMenu
       }
     },
     canvasProps: {
@@ -525,6 +529,7 @@ const useReactPaint = ({
       canvas: {
         withSkeleton,
         withFrameSelection,
+        withContextMenu,
         canGrow,
         canShrink
       },

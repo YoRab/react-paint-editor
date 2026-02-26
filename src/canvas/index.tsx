@@ -46,7 +46,7 @@ const App = ({ options, className, style, canvasProps }: AppProps) => {
     isInsideComponent,
     isInsideCanvas,
     isEditMode,
-    canvas: { withSkeleton, withFrameSelection, canGrow, canShrink },
+    canvas: { withSkeleton, withFrameSelection, withContextMenu, canGrow, canShrink },
     canvasOffsetStartData,
     setCanvasOffsetStartData,
     selectionMode,
@@ -127,6 +127,7 @@ const App = ({ options, className, style, canvasProps }: AppProps) => {
       <Canvas
         duplicateShapes={duplicateShapes}
         isSpacePressed={isSpacePressed}
+        withContextMenu={withContextMenu}
         ref={refs.canvas}
         canGrow={canGrow}
         isInsideComponent={isInsideComponent}
