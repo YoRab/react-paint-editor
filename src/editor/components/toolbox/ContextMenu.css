@@ -1,0 +1,40 @@
+.react-paint-editor-toolbox-contextmenu {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  left: 0px;
+  top: 0px;
+  transform-origin: left top;
+  box-sizing: border-box;
+  line-height: 1;
+  transform: var(--react-paint-editor-toolbox-contextmenu-transform);
+  background: var(--react-paint-editor-app-toolbar-bg);
+  box-shadow: 0 3px 8px rgb(0 0 0 / 24%);
+  padding: 8px;
+  border-radius: 8px;
+  white-space: nowrap;
+}
+
+.react-paint-editor-toolbox-contextmenu button {
+  min-width: 64px;
+  height: 32px;
+  font-size: 14px;
+  display: inline-flex;
+  vertical-align: middle;
+  box-sizing: border-box;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  cursor: pointer;
+  border-radius: 8px;
+  color: var(--react-paint-editor-app-font-color);
+  margin: 0;
+  padding: 4px;
+}
+
+.react-paint-editor-toolbox-contextmenu button:hover {
+  color: var(--react-paint-editor-app-font-hover-color);
+  background: var(--react-paint-editor-app-font-hover-bg);
+}

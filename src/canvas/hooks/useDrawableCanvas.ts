@@ -251,7 +251,7 @@ const useDrawableCanvas = ({
 
     const isRightClick = 'button' in e && e.button === 2
     if (isRightClick) {
-      if (selectionMode.mode === 'preview') {
+      if (activeTool !== SELECTION_TOOL) {
         setSelectedShape(undefined)
         setSelectionMode({ mode: 'default' })
       } else {
@@ -339,7 +339,7 @@ const useDrawableCanvas = ({
     const isWheelPressed = 'button' in e && e.button === 1
     const isRightClick = 'button' in e && e.button === 2
 
-    if (isWheelPressed || isSpacePressed || activeTool.type === 'move') {
+    if (isWheelPressed || isSpacePressed || (activeTool.type === 'move' && !isRightClick)) {
       setCanvasOffsetStartData({ start: cursorPosition, originalOffset: settings.canvasOffset })
       return
     }

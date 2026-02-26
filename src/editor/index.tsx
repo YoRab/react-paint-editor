@@ -13,6 +13,7 @@ import './index.css'
 import Button from '@editor/components/common/Button'
 import Panel from '@editor/components/common/Panel'
 import { zoomIn, zoomOut } from '@editor/constants/icons'
+import ContextMenu from '@editor/components/toolbox/ContextMenu'
 
 type EditorProps = {
   editorProps: UseReactPaintReturnType['editorProps']
@@ -36,6 +37,7 @@ type EditorProps = {
 
 const Editor = ({ editorProps, className, style, options, children }: EditorProps) => {
   const {
+    selectionMode,
     shapesRef,
     addPictureShape,
     moveShapes,
@@ -275,6 +277,7 @@ const Editor = ({ editorProps, className, style, options, children }: EditorProp
           <SnackbarContainer snackbarList={snackbarList} />
         </>
       )}
+      {selectionMode.mode === 'contextMenu' && <ContextMenu selectionMode={selectionMode} settings={settings} />}
     </div>
   )
 }

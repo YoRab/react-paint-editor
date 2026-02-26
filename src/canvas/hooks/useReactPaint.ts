@@ -59,6 +59,7 @@ type EditorProps = {
   exportPicture: (view: 'fitToShapes' | 'defaultView' | 'currentZoom') => void
   exportData: () => void
   clearCanvas: () => void
+  selectionMode: SelectionModeData<number | Point>
   settings: UtilsSettings
   setCanvasZoom: (action: 'unzoom' | 'zoom' | 'default') => void
   resetZoom: () => void
@@ -477,6 +478,7 @@ const useReactPaint = ({
       exportPicture,
       exportData,
       clearCanvas,
+      selectionMode,
       settings,
       setCanvasZoom,
       resetZoom,
