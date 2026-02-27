@@ -6,7 +6,7 @@ type MenuType = {
   children: React.ReactNode
   className?: string
   style?: React.CSSProperties
-  position?: 'top' | 'bottom' | undefined
+  position?: 'top' | 'bottom' | 'right' | undefined
 }
 
 const Menu = ({ alignment, children, className, style, position }: MenuType) => {

@@ -4,10 +4,11 @@ import Button from '@editor/components/common/Button'
 import Menu from '@editor/components/common/Menu'
 import { publicIcon } from '@editor/constants/icons'
 import { CLEAR_TOOL, EXPORT_TOOL, LOAD_TOOL, REDO_TOOL, SAVE_TOOL, UNDO_TOOL, UPLOAD_PICTURE_TOOL } from '@editor/constants/tools'
-import { useEffect, useState, useTransition } from 'react'
+import { useRef } from 'react'
 import LoadFileTool from './LoadFileTool'
 import './MenuGroup.css'
 import Tool from './Tool'
+import useMenu from '@editor/hooks/useMenu'
 
 type MenuGroupType = {
   activeTool: ToolsType
@@ -46,49 +47,25 @@ const MenuGroup = ({
   withLoadAndSave,
   withExport,
   addPicture: addPictureFromProps,
-  loadFile: loadFileFromProps,
+  loadFile,
   togglePictureUrlModal,
   saveFile,
   toggleExportModal,
   withUploadPicture,
   withUrlPicture
 }: MenuGroupType) => {
-  const [isOpen, setIsOpen] = useState(false)
-  const [, startTransition] = useTransition()
-
-  const loadFile = (file: File) => {
-    setIsOpen(false)
-    loadFileFromProps(file)
-  }
+  const buttonRef = useRef<HTMLButtonElement>(null)
+  const { isOpen } = useMenu({ buttonElt: buttonRef.current })
 
   const addPicture = async (file: File) => {
-    setIsOpen(false)
     await addPictureFromProps(file)
   }
-
-  const openPanel = () => {
-    startTransition(() => {
-      setIsOpen(true)
-    })
-  }
-
-  useEffect(() => {
-    if (!isOpen) return
-
-    const closePanel = () => {
-      setIsOpen(false)
-    }
-    document.addEventListener('click', closePanel)
-    return () => {
-      document.removeEventListener('click', closePanel)
-    }
-  }, [isOpen])
 
   const withMenu = withActionsInMenu || withUploadPicture || withUrlPicture || withLoadAndSave || withExport
 
   return withMenu ? (
     <div className='react-paint-editor-toolbox-relative'>
-      <Button title='Menu' disabled={disabled} onClick={openPanel} icon={menuIcon} />
+      <Button title='Menu' disabled={disabled} ref={buttonRef} icon={menuIcon} />
       {isOpen && (
         <Menu alignment='right' position='top'>
           {withActionsInMenu && (
