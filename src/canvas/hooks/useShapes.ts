@@ -42,6 +42,8 @@ const useShapes = (
   canGoBackward: boolean
   canGoForward: boolean
   canClear: boolean
+  copiedShape: SelectionType | undefined
+  setCopiedShape: React.Dispatch<React.SetStateAction<SelectionType | undefined>>
 } => {
   const shapesRef = useRef<ShapeEntity[]>([])
   const listeners = useRef<{
@@ -51,6 +53,7 @@ const useShapes = (
   const [selectionFrame, setSelectionFrame] = useState<{ oldSelection: SelectionType | undefined; frame: [Point, Point] } | undefined>(undefined)
   const [selectedShape, setSelectedShape] = useState<SelectionType | undefined>(undefined)
   const [hoveredShape, setHoveredShape] = useState<ShapeEntity | undefined>(undefined)
+  const [copiedShape, setCopiedShape] = useState<SelectionType | undefined>(undefined)
   const [savedShapes, setSavedShapes] = useState<{
     states: {
       shapes: ShapeEntity[]
@@ -334,6 +337,8 @@ const useShapes = (
     hoveredShape,
     selectionFrame,
     setSelectionFrame,
+    copiedShape,
+    setCopiedShape,
     refreshSelectedShapes,
     addShapes,
     duplicateShapes,

@@ -33,6 +33,8 @@ type EditorProps = {
   canGoForward: boolean
   canClear: boolean
   selectedShape: SelectionType | undefined
+  copiedShape: SelectionType | undefined
+  setCopiedShape: React.Dispatch<React.SetStateAction<SelectionType | undefined>>
   saveShapes: () => void
   removeShape: (shapes: ShapeEntity[]) => void
   updateShape: (updatedShapes: ShapeEntity[], withSave?: boolean) => void
@@ -80,6 +82,8 @@ type EditorProps = {
 type CanvasProps = {
   shapesRef: React.RefObject<ShapeEntity[]>
   selectedShape: SelectionType | undefined
+  copiedShape: SelectionType | undefined
+  setCopiedShape: React.Dispatch<React.SetStateAction<SelectionType | undefined>>
   selectionFrame: { oldSelection: SelectionType | undefined; frame: [Point, Point] } | undefined
   hoveredShape: ShapeEntity | undefined
   addShape: (newShapes: ShapeEntity[]) => void
@@ -270,6 +274,8 @@ const useReactPaint = ({
     selectedShape,
     selectionFrame,
     hoveredShape,
+    copiedShape,
+    setCopiedShape,
     addShapes: addShape,
     addPictureShape,
     moveShapes,
@@ -467,6 +473,8 @@ const useReactPaint = ({
       canGoForward,
       canClear,
       selectedShape,
+      copiedShape,
+      setCopiedShape,
       saveShapes,
       removeShape,
       updateShape,
@@ -510,6 +518,8 @@ const useReactPaint = ({
       selectedShape,
       selectionFrame,
       hoveredShape,
+      copiedShape,
+      setCopiedShape,
       addShape,
       setSelectedShape,
       setSelectionFrame,

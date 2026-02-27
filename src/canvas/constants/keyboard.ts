@@ -22,6 +22,7 @@ export const KeyboardCode = {
 } as const
 
 export const KeyboardCommand = {
+  Cut: 'cut',
   Copy: 'copy',
   Paste: 'paste'
 } as const
