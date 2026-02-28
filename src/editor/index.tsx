@@ -48,6 +48,9 @@ const Editor = ({ editorProps, className, style, options, children }: EditorProp
     canGoForward,
     canClear,
     selectedShape,
+    copiedShape,
+    setCopiedShape,
+    pasteShapes,
     removeShape,
     duplicateShapes,
     updateShape,
@@ -306,6 +309,9 @@ const Editor = ({ editorProps, className, style, options, children }: EditorProp
           duplicateShapes={duplicateShapes}
           toggleShapeLock={toggleShapeLock}
           toggleShapeVisibility={toggleShapeVisibility}
+          setCopiedShape={setCopiedShape}
+          copiedShape={copiedShape}
+          pasteShapes={pasteShapes}
         />
       )}
     </div>

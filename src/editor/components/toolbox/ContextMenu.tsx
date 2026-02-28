@@ -1,13 +1,15 @@
 import type { UtilsSettings } from '@canvas/constants/app'
 import './ContextMenu.css'
 import type { SelectionModeContextMenu } from '@common/types/Mode'
-import type { Point, ShapeEntity } from '@common/types/Shapes'
+import type { Point, SelectionType, ShapeEntity } from '@common/types/Shapes'
 import Button from '@editor/components/common/Button'
 import Menu from '@editor/components/common/Menu'
 import { useRef } from 'react'
 import useMenu from '@editor/hooks/useMenu'
 import { rightChevronIcon } from '@editor/constants/icons'
 import { getSelectedShapes } from '@canvas/utils/selection'
+import { copyShapes } from '@canvas/utils/shapes'
+import { buildShapesGroup } from '@canvas/utils/selection'
 
 type ContextMenuType = {
   selectionMode: SelectionModeContextMenu<Point | number>
@@ -18,6 +20,9 @@ type ContextMenuType = {
   toggleShapeLock: (shapes: ShapeEntity[]) => void
   removeShape: (shapes: ShapeEntity[]) => void
   duplicateShapes: (shapesToDuplicate: ShapeEntity[], translate?: boolean, selectNewOnes?: boolean) => void
+  setCopiedShape: (shape: React.SetStateAction<SelectionType | undefined>) => void
+  copiedShape: SelectionType | undefined
+  pasteShapes: (shapes: ShapeEntity[]) => void
 }
 
 const TOOLBAR_SIZE = 36
@@ -30,7 +35,10 @@ const ContextMenu = ({
   toggleShapeVisibility,
   toggleShapeLock,
   removeShape,
-  duplicateShapes
+  duplicateShapes,
+  copiedShape,
+  setCopiedShape,
+  pasteShapes
 }: ContextMenuType) => {
   const organizeButtonRef = useRef<HTMLDivElement>(null)
   const transformButtonRef = useRef<HTMLDivElement>(null)
@@ -76,17 +84,24 @@ const ContextMenu = ({
   }
 
   const onCutShape = () => {
-    console.log('cut shape')
+    if (hasSelectedShape) {
+      setCopiedShape(buildShapesGroup(selectedShapes, settings))
+      removeShape(selectedShapes)
+    }
     closeContextMenu()
   }
 
   const onCopyShape = () => {
-    console.log('copy shape')
+    if (hasSelectedShape) {
+      setCopiedShape(buildShapesGroup(selectedShapes, settings))
+    }
     closeContextMenu()
   }
 
   const onPasteShape = () => {
-    console.log('paste shape')
+    if (copiedShape) {
+      pasteShapes(copyShapes(copiedShape, settings))
+    }
     closeContextMenu()
   }
 
@@ -180,7 +195,9 @@ const ContextMenu = ({
           <Button onClick={onCopyShape}>Copy</Button>
         </>
       )}
-      <Button onClick={onPasteShape}>Paste</Button>
+      <Button onClick={onPasteShape} disabled={!copiedShape}>
+        Paste
+      </Button>
       <hr />
       {hasSelectedShape && (
         <>
