@@ -49,6 +49,7 @@ const Editor = ({ editorProps, className, style, options, children }: EditorProp
     canClear,
     selectedShape,
     removeShape,
+    duplicateShapes,
     updateShape,
     backwardShape,
     forwardShape,
@@ -286,7 +287,26 @@ const Editor = ({ editorProps, className, style, options, children }: EditorProp
         </>
       )}
       {selectionMode.mode === 'contextMenu' && withContextMenu && (
-        <ContextMenu selectAllShapes={selectAllShapes} selectionMode={selectionMode} settings={settings} closeContextMenu={closeContextMenu} />
+        <ContextMenu
+          selectionMode={selectionMode}
+          settings={settings}
+          closeContextMenu={closeContextMenu}
+          selectAllShapes={selectAllShapes}
+          // copyShape={copyShape}
+          // pasteShape={pasteShape}
+          removeShape={removeShape}
+          // moveForward={moveForward}
+          // moveToFirst={moveToFirst}
+          // moveBackward={moveBackward}
+          // moveToLast={moveToLast}
+          // flipHorizontally={flipHorizontally}
+          // flipVertically={flipVertically}
+          // rotateClockwise={rotateClockwise}
+          // rotateCounterclockwise={rotateCounterclockwise}
+          duplicateShapes={duplicateShapes}
+          toggleShapeLock={toggleShapeLock}
+          toggleShapeVisibility={toggleShapeVisibility}
+        />
       )}
     </div>
   )

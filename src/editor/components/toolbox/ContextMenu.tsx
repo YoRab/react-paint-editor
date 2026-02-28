@@ -1,32 +1,53 @@
 import type { UtilsSettings } from '@canvas/constants/app'
 import './ContextMenu.css'
 import type { SelectionModeContextMenu } from '@common/types/Mode'
-import type { Point } from '@common/types/Shapes'
+import type { Point, ShapeEntity } from '@common/types/Shapes'
 import Button from '@editor/components/common/Button'
 import Menu from '@editor/components/common/Menu'
 import { useRef } from 'react'
 import useMenu from '@editor/hooks/useMenu'
 import { rightChevronIcon } from '@editor/constants/icons'
+import { getSelectedShapes } from '@canvas/utils/selection'
 
 type ContextMenuType = {
   selectionMode: SelectionModeContextMenu<Point | number>
   settings: UtilsSettings
   selectAllShapes: () => void
   closeContextMenu: () => void
+  toggleShapeVisibility: (shapes: ShapeEntity[]) => void
+  toggleShapeLock: (shapes: ShapeEntity[]) => void
+  removeShape: (shapes: ShapeEntity[]) => void
+  duplicateShapes: (shapesToDuplicate: ShapeEntity[], translate?: boolean, selectNewOnes?: boolean) => void
 }
 
 const TOOLBAR_SIZE = 36
 
-const ContextMenu = ({ selectAllShapes, selectionMode, settings, closeContextMenu }: ContextMenuType) => {
+const ContextMenu = ({
+  selectAllShapes,
+  selectionMode,
+  settings,
+  closeContextMenu,
+  toggleShapeVisibility,
+  toggleShapeLock,
+  removeShape,
+  duplicateShapes
+}: ContextMenuType) => {
   const organizeButtonRef = useRef<HTMLDivElement>(null)
   const transformButtonRef = useRef<HTMLDivElement>(null)
   const { isOpen: isOrganizeMenuOpen } = useMenu({ trigger: 'hover', buttonElt: organizeButtonRef.current })
   const { isOpen: isTransformMenuOpen } = useMenu({ trigger: 'hover', buttonElt: transformButtonRef.current })
 
   const { originalShape, cursorStartPosition, anchor } = selectionMode
-  const hasSelectedShape = !!originalShape
+  const selectedShapes = getSelectedShapes(originalShape)
+  const hasSelectedShape = selectedShapes.length > 0
   const hasSelectedRemovableAnchor =
-    (originalShape?.type === 'polygon' || originalShape?.type === 'curve') && !!anchor && originalShape?.points?.length > 2
+    selectedShapes.length === 1 &&
+    (selectedShapes[0]?.type === 'polygon' || selectedShapes[0]?.type === 'curve') &&
+    !!anchor &&
+    selectedShapes[0]?.points?.length > 2
+
+  const isVisible = !selectedShapes.some(shape => shape.visible === false)
+  const isLocked = selectedShapes.some(shape => shape.locked)
 
   const transform = `translate3D(${(cursorStartPosition[0] + settings.canvasOffset[0]) * settings.canvasSize.scaleRatio}px, ${
     TOOLBAR_SIZE + (cursorStartPosition[1] + settings.canvasOffset[1]) * settings.canvasSize.scaleRatio
@@ -37,8 +58,8 @@ const ContextMenu = ({ selectAllShapes, selectionMode, settings, closeContextMen
     closeContextMenu()
   }
 
-  const onDeleteShape = () => {
-    console.log('delete shape')
+  const onRemoveShape = () => {
+    hasSelectedShape && removeShape(selectedShapes)
     closeContextMenu()
   }
 
@@ -47,18 +68,10 @@ const ContextMenu = ({ selectAllShapes, selectionMode, settings, closeContextMen
     closeContextMenu()
   }
 
-  const onUnlockShape = () => {
-    console.log('unlock shape')
-    closeContextMenu()
-  }
-
-  const onLockShape = () => {
-    console.log('lock shape')
-    closeContextMenu()
-  }
-
   const onDuplicateShape = () => {
-    console.log('duplicate shape')
+    if (hasSelectedShape) {
+      duplicateShapes(selectedShapes, true, true)
+    }
     closeContextMenu()
   }
 
@@ -69,11 +82,6 @@ const ContextMenu = ({ selectAllShapes, selectionMode, settings, closeContextMen
 
   const onCopyShape = () => {
     console.log('copy shape')
-    closeContextMenu()
-  }
-
-  const onTransformShape = () => {
-    console.log('transform shape')
     closeContextMenu()
   }
 
@@ -122,6 +130,19 @@ const ContextMenu = ({ selectAllShapes, selectionMode, settings, closeContextMen
     closeContextMenu()
   }
 
+  const onToggleShapeVisibility = () => {
+    if (hasSelectedShape) {
+      console.log(selectedShapes.filter(shape => (isVisible ? shape.visible !== false : shape.visible === false)))
+      toggleShapeVisibility(selectedShapes.filter(shape => (isVisible ? shape.visible !== false : shape.visible === false)))
+      closeContextMenu()
+    }
+  }
+
+  const onToggleShapeLock = () => {
+    hasSelectedShape && toggleShapeLock(selectedShapes)
+    closeContextMenu()
+  }
+
   return (
     <Menu
       className='react-paint-editor-toolbox-contextmenu'
@@ -164,8 +185,9 @@ const ContextMenu = ({ selectAllShapes, selectionMode, settings, closeContextMen
       {hasSelectedShape && (
         <>
           <Button onClick={onDuplicateShape}>Duplicate</Button>
-          {originalShape?.locked ? <Button onClick={onUnlockShape}>Unlock</Button> : <Button onClick={onLockShape}>Lock</Button>}
-          <Button onClick={onDeleteShape}>Delete</Button>
+          <Button onClick={onToggleShapeVisibility}>{isVisible ? 'Hide' : 'Show'}</Button>
+          <Button onClick={onToggleShapeLock}>{isLocked ? 'Unlock' : 'Lock'}</Button>
+          <Button onClick={onRemoveShape}>Delete</Button>
           <hr />
         </>
       )}

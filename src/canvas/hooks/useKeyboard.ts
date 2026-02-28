@@ -7,7 +7,7 @@ import type { Point, SelectionType, ShapeEntity } from '@common/types/Shapes'
 import type { ToolsType } from '@common/types/tools'
 import { isMacOs } from '@common/utils/util'
 import { SELECTION_TOOL } from '@editor/constants/tools'
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 
 type UseKeyboardType = {
   isInsideComponent: boolean

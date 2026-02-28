@@ -38,6 +38,7 @@ type EditorProps = {
   saveShapes: () => void
   removeShape: (shapes: ShapeEntity[]) => void
   updateShape: (updatedShapes: ShapeEntity[], withSave?: boolean) => void
+  duplicateShapes: (shapesToDuplicate: ShapeEntity[]) => void
   backwardShape: () => void
   forwardShape: () => void
   refs: {
@@ -469,6 +470,7 @@ const useReactPaint = ({
       moveShapes,
       toggleShapeVisibility,
       toggleShapeLock,
+      duplicateShapes,
       canGoBackward,
       canGoForward,
       canClear,

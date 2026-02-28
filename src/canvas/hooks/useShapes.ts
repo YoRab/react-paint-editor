@@ -3,7 +3,7 @@ import { PICTURE_DEFAULT_SIZE } from '@canvas/constants/picture'
 import { buildDataToExport } from '@canvas/utils/data'
 import { checkPositionIntersection, checkSelectionFrameCollision, checkSelectionIntersection } from '@canvas/utils/intersect'
 import { addToSelectedShapes, applyToSelectedShape, buildShapesGroup, getSelectedShapes } from '@canvas/utils/selection'
-import { refreshShape } from '@canvas/utils/shapes/index'
+import { copyShapes, refreshShape } from '@canvas/utils/shapes/index'
 import { createPicture } from '@canvas/utils/shapes/picture'
 import type { Point, SelectionType, ShapeEntity, StateData } from '@common/types/Shapes'
 import { moveItemPosition } from '@common/utils/array'
@@ -26,7 +26,7 @@ const useShapes = (
   setSelectionFrame: React.Dispatch<React.SetStateAction<{ oldSelection: SelectionType | undefined; frame: [Point, Point] } | undefined>>
   refreshSelectedShapes: (ctx: CanvasRenderingContext2D, cursorPosition: Point) => void
   addShapes: (newShapes: ShapeEntity[]) => void
-  duplicateShapes: (shapesToDuplicate: ShapeEntity[]) => void
+  duplicateShapes: (shapesToDuplicate: ShapeEntity[], translate?: boolean, selectNewOnes?: boolean) => void
   addPictureShape: (fileOrUrl: File | string, maxWidth?: number, maxHeight?: number) => Promise<ShapeEntity>
   moveShapes: (startPositionShapeId: string, endPositionShapeId: string) => void
   saveShapes: () => void
@@ -92,21 +92,27 @@ const useShapes = (
     shapesRef.current = [...newShapes, ...shapesRef.current]
   }, [])
 
-  const duplicateShapes = useCallback((shapesToDuplicate: ShapeEntity[]) => {
-    shapesRef.current = shapesRef.current.flatMap(marker => {
-      const originalShape = shapesToDuplicate.find(shape => shape.id === marker.id)
-      if (originalShape) {
-        return [
-          {
-            ...originalShape,
-            id: uniqueId(`${marker.type}_`)
-          },
-          marker
-        ]
-      }
-      return marker
-    })
-  }, [])
+  const duplicateShapes = useCallback(
+    (shapesToDuplicate: ShapeEntity[], translate = false, selectNewOnes = false) => {
+      const newShapes: ShapeEntity[] = []
+      shapesRef.current = shapesRef.current.flatMap(marker => {
+        const originalShape = shapesToDuplicate.find(shape => shape.id === marker.id)
+        if (originalShape) {
+          const newShape = translate
+            ? copyShapes(buildShapesGroup([originalShape], settings)!, settings)[0]!
+            : {
+                ...originalShape,
+                id: uniqueId(`${marker.type}_`)
+              }
+          newShapes.push(newShape)
+          return [newShape, marker]
+        }
+        return marker
+      })
+      if (selectNewOnes) setSelectedShape(buildShapesGroup(newShapes, settings))
+    },
+    [settings]
+  )
 
   const refreshHoveredShape = useCallback(
     (e: MouseEvent | TouchEvent, ctx: CanvasRenderingContext2D, cursorPosition: Point, isInsideMask: boolean) => {
