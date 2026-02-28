@@ -41,8 +41,10 @@ const handleMove = (
   isShiftPressed: boolean,
   isAltPressed: boolean,
   setSelectedShape: React.Dispatch<React.SetStateAction<SelectionType | undefined>>,
-  setCanvasMoveAcceleration: React.Dispatch<React.SetStateAction<Point>>
+  setCanvasMoveAcceleration: React.Dispatch<React.SetStateAction<Point>>,
+  longPressTimeout: NodeJS.Timeout | null
 ) => {
+  longPressTimeout && clearTimeout(longPressTimeout)
   if (isTouchGesture(e) && e.touches.length > 1) return
 
   const drawCtx = canvasRef.current?.getContext('2d')
@@ -204,10 +206,32 @@ const useDrawableCanvas = ({
   withContextMenu,
   isSpacePressed
 }: UseCanvasType) => {
+  const longPressTimeout = useRef<NodeJS.Timeout | null>(null)
   const [hoverMode, setHoverMode] = useState<HoverModeData>({
     mode: 'default'
   })
   const { registerDoubleClickEvent, unRegisterDoubleClickEvent } = useDoubleClick()
+
+  const handleContextMenu = (e: MouseEvent | TouchEvent, canvasElt: HTMLCanvasElement) => {
+    const ctx = canvasElt?.getContext('2d')
+    if (!ctx) return
+    if (activeTool !== SELECTION_TOOL || !withContextMenu) {
+      setSelectedShape(undefined)
+      setSelectionMode({ mode: 'default' })
+    } else {
+      const cursorPosition = getCursorPositionInTransformedCanvas(e, drawCanvasRef.current, settings)
+      const { shape, mode } = selectShape(ctx, shapes, cursorPosition, settings, selectedShape, isTouchGesture(e), false)
+      setSelectedShape(shape)
+      setSelectionMode({
+        mode: 'contextMenu',
+        cursorStartPosition: cursorPosition,
+        originalShape: shape,
+        anchor: 'anchor' in mode ? mode.anchor : undefined
+      })
+    }
+    setActiveTool(SELECTION_TOOL)
+    setSelectionFrame(undefined)
+  }
 
   const handleMoveRef = useRef<(e: MouseEvent | TouchEvent) => void>(null)
   handleMoveRef.current = (e: MouseEvent | TouchEvent) =>
@@ -228,7 +252,8 @@ const useDrawableCanvas = ({
       isShiftPressed,
       isAltPressed,
       setSelectedShape,
-      setCanvasMoveAcceleration
+      setCanvasMoveAcceleration,
+      longPressTimeout.current
     )
 
   useEffect(() => {
@@ -249,28 +274,15 @@ const useDrawableCanvas = ({
   const handleUpRef = useRef<(e: MouseEvent | TouchEvent) => void>(null)
 
   handleUpRef.current = (e: MouseEvent | TouchEvent) => {
+    longPressTimeout.current && clearTimeout(longPressTimeout.current)
+    if (selectionMode.mode === 'contextMenu') return
     if (isTouchGesture(e) && e.touches.length > 1) return
     const ctx = drawCanvasRef.current?.getContext('2d')
     if (!ctx) return
 
     const isRightClick = 'button' in e && e.button === 2
     if (isRightClick) {
-      if (activeTool !== SELECTION_TOOL || !withContextMenu) {
-        setSelectedShape(undefined)
-        setSelectionMode({ mode: 'default' })
-      } else {
-        const cursorPosition = getCursorPositionInTransformedCanvas(e, drawCanvasRef.current, settings)
-        const { shape, mode } = selectShape(ctx, shapes, cursorPosition, settings, selectedShape, isTouchGesture(e), false)
-        setSelectedShape(shape)
-        setSelectionMode({
-          mode: 'contextMenu',
-          cursorStartPosition: cursorPosition,
-          originalShape: shape,
-          anchor: 'anchor' in mode ? mode.anchor : undefined
-        })
-      }
-      setActiveTool(SELECTION_TOOL)
-      setSelectionFrame(undefined)
+      handleContextMenu(e, drawCanvasRef.current!)
       return
     }
 
@@ -365,6 +377,13 @@ const useDrawableCanvas = ({
         setSelectionMode({ mode: 'default' })
       }
       return
+    }
+
+    if (isTouchGesture(e)) {
+      longPressTimeout.current && clearTimeout(longPressTimeout.current)
+      longPressTimeout.current = setTimeout(() => {
+        handleContextMenu(e, drawCanvasRef.current!)
+      }, 500)
     }
 
     if (activeTool.type === 'selection') {
