@@ -41,8 +41,10 @@ const handleMove = (
   isShiftPressed: boolean,
   isAltPressed: boolean,
   setSelectedShape: React.Dispatch<React.SetStateAction<SelectionType | undefined>>,
-  setCanvasMoveAcceleration: React.Dispatch<React.SetStateAction<Point>>
+  setCanvasMoveAcceleration: React.Dispatch<React.SetStateAction<Point>>,
+  longPressTimeout: NodeJS.Timeout | null
 ) => {
+  longPressTimeout && clearTimeout(longPressTimeout)
   if (isTouchGesture(e) && e.touches.length > 1) return
 
   const drawCtx = canvasRef.current?.getContext('2d')
@@ -118,7 +120,7 @@ const handleMove = (
     return
   }
 
-  if (selectionMode.mode === 'default' || selectionMode.mode === 'textedition') {
+  if (selectionMode.mode === 'default' || selectionMode.mode === 'textedition' || selectionMode.mode === 'contextMenu') {
     if (!isInsideMask) {
       setHoverMode({
         mode: 'default'
@@ -161,6 +163,7 @@ type UseCanvasType = {
   setCanvasOffsetStartData: React.Dispatch<React.SetStateAction<{ start: Point; originalOffset: Point } | undefined>>
   setCanvasOffset: (offset: Point) => void
   isInsideComponent: boolean
+  isInsideCanvas: boolean
   selectionMode: SelectionModeData<number | Point>
   setSelectionMode: React.Dispatch<React.SetStateAction<SelectionModeData<number | Point>>>
   setSelectionFrame: React.Dispatch<React.SetStateAction<{ oldSelection: SelectionType | undefined; frame: [Point, Point] } | undefined>>
@@ -169,6 +172,7 @@ type UseCanvasType = {
   isShiftPressed: boolean
   isAltPressed: boolean
   withFrameSelection: boolean
+  withContextMenu: boolean
   settings: UtilsSettings
   isSpacePressed: boolean
 }
@@ -182,6 +186,7 @@ const useDrawableCanvas = ({
   selectionMode,
   activeTool,
   isInsideComponent,
+  isInsideCanvas,
   setCanvasOffset,
   selectedShape,
   canvasOffsetStartData,
@@ -198,12 +203,35 @@ const useDrawableCanvas = ({
   isShiftPressed,
   isAltPressed,
   withFrameSelection,
+  withContextMenu,
   isSpacePressed
 }: UseCanvasType) => {
+  const longPressTimeout = useRef<NodeJS.Timeout | null>(null)
   const [hoverMode, setHoverMode] = useState<HoverModeData>({
     mode: 'default'
   })
   const { registerDoubleClickEvent, unRegisterDoubleClickEvent } = useDoubleClick()
+
+  const handleContextMenu = (e: MouseEvent | TouchEvent, canvasElt: HTMLCanvasElement) => {
+    const ctx = canvasElt?.getContext('2d')
+    if (!ctx) return
+    if (activeTool !== SELECTION_TOOL || !withContextMenu) {
+      setSelectedShape(undefined)
+      setSelectionMode({ mode: 'default' })
+    } else {
+      const cursorPosition = getCursorPositionInTransformedCanvas(e, drawCanvasRef.current, settings)
+      const { shape, mode } = selectShape(ctx, shapes, cursorPosition, settings, selectedShape, isTouchGesture(e), false)
+      setSelectedShape(shape)
+      setSelectionMode({
+        mode: 'contextMenu',
+        cursorStartPosition: cursorPosition,
+        originalShape: shape,
+        anchor: 'anchor' in mode ? mode.anchor : undefined
+      })
+    }
+    setActiveTool(SELECTION_TOOL)
+    setSelectionFrame(undefined)
+  }
 
   const handleMoveRef = useRef<(e: MouseEvent | TouchEvent) => void>(null)
   handleMoveRef.current = (e: MouseEvent | TouchEvent) =>
@@ -224,7 +252,8 @@ const useDrawableCanvas = ({
       isShiftPressed,
       isAltPressed,
       setSelectedShape,
-      setCanvasMoveAcceleration
+      setCanvasMoveAcceleration,
+      longPressTimeout.current
     )
 
   useEffect(() => {
@@ -245,17 +274,15 @@ const useDrawableCanvas = ({
   const handleUpRef = useRef<(e: MouseEvent | TouchEvent) => void>(null)
 
   handleUpRef.current = (e: MouseEvent | TouchEvent) => {
+    longPressTimeout.current && clearTimeout(longPressTimeout.current)
+    if (selectionMode.mode === 'contextMenu') return
     if (isTouchGesture(e) && e.touches.length > 1) return
     const ctx = drawCanvasRef.current?.getContext('2d')
     if (!ctx) return
 
     const isRightClick = 'button' in e && e.button === 2
     if (isRightClick) {
-      // TODO context menu
-      setSelectedShape(undefined)
-      setActiveTool(SELECTION_TOOL)
-      setSelectionMode({ mode: 'default' })
-      setSelectionFrame(undefined)
+      handleContextMenu(e, drawCanvasRef.current!)
       return
     }
 
@@ -298,7 +325,7 @@ const useDrawableCanvas = ({
   }
 
   useEffect(() => {
-    if (isInsideComponent) {
+    if (isInsideCanvas) {
       const handleMouseUp = (e: MouseEvent | TouchEvent) => handleUpRef.current?.(e)
 
       document.addEventListener('mouseup', handleMouseUp)
@@ -309,7 +336,7 @@ const useDrawableCanvas = ({
         document.removeEventListener('touchend', handleMouseUp)
       }
     }
-  }, [isInsideComponent])
+  }, [isInsideCanvas])
 
   const onlyCheckZoom = !settings.features.edition && settings.features.zoom
   const disableCheck = !settings.features.edition && !settings.features.zoom
@@ -328,9 +355,7 @@ const useDrawableCanvas = ({
     const isWheelPressed = 'button' in e && e.button === 1
     const isRightClick = 'button' in e && e.button === 2
 
-    if (isRightClick) return
-
-    if (isWheelPressed || isSpacePressed || activeTool.type === 'move') {
+    if (isWheelPressed || isSpacePressed || (activeTool.type === 'move' && !isRightClick)) {
       setCanvasOffsetStartData({ start: cursorPosition, originalOffset: settings.canvasOffset })
       return
     }
@@ -343,6 +368,22 @@ const useDrawableCanvas = ({
         mode: 'default'
       })
       return
+    }
+
+    if (isRightClick) {
+      if (activeTool.type === 'selection') {
+        const { shape } = selectShape(ctx, shapes, cursorPosition, settings, selectedShape, isTouchGesture(e), false)
+        setSelectedShape(shape)
+        setSelectionMode({ mode: 'default' })
+      }
+      return
+    }
+
+    if (isTouchGesture(e)) {
+      longPressTimeout.current && clearTimeout(longPressTimeout.current)
+      longPressTimeout.current = setTimeout(() => {
+        handleContextMenu(e, drawCanvasRef.current!)
+      }, 500)
     }
 
     if (activeTool.type === 'selection') {
@@ -459,7 +500,7 @@ const useDrawableCanvas = ({
         }
       }
     }
-    if (isInsideComponent) {
+    if (isInsideCanvas) {
       registerDoubleClickEvent(ref, handleDoubleClick)
       return () => {
         unRegisterDoubleClickEvent(ref)
@@ -469,7 +510,7 @@ const useDrawableCanvas = ({
     updateSingleShape,
     registerDoubleClickEvent,
     unRegisterDoubleClickEvent,
-    isInsideComponent,
+    isInsideCanvas,
     drawCanvasRef,
     activeTool,
     selectedShape,

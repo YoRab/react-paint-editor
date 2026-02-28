@@ -13,6 +13,7 @@ import './index.css'
 import Button from '@editor/components/common/Button'
 import Panel from '@editor/components/common/Panel'
 import { zoomIn, zoomOut } from '@editor/constants/icons'
+import ContextMenu from '@editor/components/toolbox/ContextMenu'
 
 type EditorProps = {
   editorProps: UseReactPaintReturnType['editorProps']
@@ -36,6 +37,8 @@ type EditorProps = {
 
 const Editor = ({ editorProps, className, style, options, children }: EditorProps) => {
   const {
+    selectionMode,
+    setSelectionMode,
     shapesRef,
     addPictureShape,
     moveShapes,
@@ -46,6 +49,7 @@ const Editor = ({ editorProps, className, style, options, children }: EditorProp
     canClear,
     selectedShape,
     removeShape,
+    duplicateShapes,
     updateShape,
     backwardShape,
     forwardShape,
@@ -54,6 +58,7 @@ const Editor = ({ editorProps, className, style, options, children }: EditorProp
     height,
     selectTool,
     selectShapes,
+    selectAllShapes,
     activeTool,
     setActiveTool,
     setAvailableTools,
@@ -68,7 +73,7 @@ const Editor = ({ editorProps, className, style, options, children }: EditorProp
     settings,
     setCanvasZoom,
     saveShapes,
-    canvas: { canGrow, layersManipulation, withExport, withLoadAndSave, withUploadPicture, withUrlPicture }
+    canvas: { canGrow, layersManipulation, withExport, withLoadAndSave, withUploadPicture, withUrlPicture, withContextMenu }
   } = editorProps
 
   const {
@@ -182,6 +187,12 @@ const Editor = ({ editorProps, className, style, options, children }: EditorProp
 
   const appClassName = `${className ? `${className} ` : ''}${isLayoutPanelShown ? 'react-paint-editor-layout-opened ' : ''}react-paint-editor-app`
 
+  const closeContextMenu = () => {
+    setSelectionMode({
+      mode: 'default'
+    })
+    refs.canvas.current?.focus()
+  }
   return (
     <div
       ref={refs.setEditor}
@@ -190,7 +201,7 @@ const Editor = ({ editorProps, className, style, options, children }: EditorProp
         '--react-paint-editor-app-maxWidth': canGrow ? '100%' : `${width}px`,
         '--react-paint-editor-app-toolbar-bg': toolbarBackgroundColor,
         '--react-paint-editor-app-divider-color': dividerColor,
-        '--react-paint-editor-app-font-radius': fontRadius,
+        '--react-paint-editor-app-font-radius': `${fontRadius}px`,
         '--react-paint-editor-app-font-disabled-color': fontDisabledColor,
         '--react-paint-editor-app-font-disabled-bg': fontDisabledBackgroundColor,
         '--react-paint-editor-app-font-color': fontColor,
@@ -242,7 +253,7 @@ const Editor = ({ editorProps, className, style, options, children }: EditorProp
         />
       )}
       {isZoomPanelShown && (
-        <Panel alignment='left' className='react-paint-editor-layouts-panel' data-edit={+isEditMode}>
+        <Panel alignment='left' position='bottom' className='react-paint-editor-layouts-panel' data-edit={+isEditMode}>
           <Button className='react-paint-editor-zoom-button' icon={zoomOut} onClick={() => setCanvasZoom('unzoom')} />
           <Button className='react-paint-editor-zoom-button react-paint-editor-zoom-button-value' onClick={() => setCanvasZoom('default')}>
             {Math.round(settings.canvasZoom * 100)}%
@@ -274,6 +285,28 @@ const Editor = ({ editorProps, className, style, options, children }: EditorProp
           <Loading isLoading={isLoading} />
           <SnackbarContainer snackbarList={snackbarList} />
         </>
+      )}
+      {selectionMode.mode === 'contextMenu' && withContextMenu && (
+        <ContextMenu
+          selectionMode={selectionMode}
+          settings={settings}
+          closeContextMenu={closeContextMenu}
+          selectAllShapes={selectAllShapes}
+          // copyShape={copyShape}
+          // pasteShape={pasteShape}
+          removeShape={removeShape}
+          // moveForward={moveForward}
+          // moveToFirst={moveToFirst}
+          // moveBackward={moveBackward}
+          // moveToLast={moveToLast}
+          // flipHorizontally={flipHorizontally}
+          // flipVertically={flipVertically}
+          // rotateClockwise={rotateClockwise}
+          // rotateCounterclockwise={rotateCounterclockwise}
+          duplicateShapes={duplicateShapes}
+          toggleShapeLock={toggleShapeLock}
+          toggleShapeVisibility={toggleShapeVisibility}
+        />
       )}
     </div>
   )

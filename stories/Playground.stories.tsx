@@ -19,6 +19,7 @@ type PlaygroundProps = {
   withUrlPicture?: boolean
   withFrameSelection?: boolean
   withSkeleton?: boolean
+  withContextMenu?: boolean
   debug?: boolean
   brushAlgo?: 'simple' | 'quadratic'
   isBrushShapeDoneOnMouseUp?: boolean
@@ -60,6 +61,7 @@ const Playground = (args: PlaygroundProps) => {
     withUrlPicture,
     withFrameSelection,
     withSkeleton,
+    withContextMenu,
     debug,
     brushAlgo,
     isBrushShapeDoneOnMouseUp,
@@ -94,6 +96,7 @@ const Playground = (args: PlaygroundProps) => {
     withUrlPicture,
     withFrameSelection,
     withSkeleton,
+    withContextMenu,
     debug,
     brushAlgo,
     isBrushShapeDoneOnMouseUp,
@@ -170,6 +173,7 @@ const meta = {
     withUrlPicture: false,
     withFrameSelection: true,
     withSkeleton: true,
+    withContextMenu: true,
     debug: false,
     clearCallback: 'empty',
     // Editor styling
@@ -294,6 +298,11 @@ const meta = {
       description: 'Display skeleton when hovering over shapes',
       table: { category: 'Feature Toggles', defaultValue: { summary: 'true' }, type: { summary: 'boolean' } }
     },
+    withContextMenu: {
+      control: { type: 'boolean' },
+      description: 'Enable the editor and canvas context menu (right-click on canvas or selection)',
+      table: { category: 'Feature Toggles', defaultValue: { summary: 'true' }, type: { summary: 'boolean' } }
+    },
     debug: {
       control: { type: 'boolean' },
       description: 'Enable debug logging for shape selection and hit-testing (logs to console)',
@@ -400,6 +409,7 @@ export const Default: Story = {
       withUrlPicture,
       withFrameSelection,
       withSkeleton,
+      withContextMenu,
       debug,
       brushAlgo,
       isBrushShapeDoneOnMouseUp,

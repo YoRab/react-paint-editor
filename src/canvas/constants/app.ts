@@ -46,6 +46,7 @@ type AppOptionsType = {
   withUrlPicture: boolean
   withFrameSelection: boolean
   withSkeleton: boolean
+  withContextMenu: boolean
   clearCallback: 'empty' | 'defaultShapes' | (() => ExportedDrawableShape[])
   brushAlgo: BrushAlgo
   isBrushShapeDoneOnMouseUp: boolean
@@ -66,6 +67,7 @@ export const DEFAULT_OPTIONS: AppOptionsType = {
   withLoadAndSave: true,
   withUploadPicture: true,
   withUrlPicture: false,
+  withContextMenu: true,
   availableTools: DEFAULT_SHAPE_TOOLS,
   clearCallback: 'empty',
   brushAlgo: 'simple',

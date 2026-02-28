@@ -464,6 +464,15 @@ import LinkTo from '@storybook/addon-links/react';
             <td><code>true</code></td>
           </tr>
           <tr>
+            <td><code>withContextMenu</code></td>
+            <td><code>boolean</code></td>
+            <td>
+              Enable right-click context menu on the canvas and current selection. Set to <code>false</code> to disable the context menu entirely
+              (useful if you want to handle right-click yourself).
+            </td>
+            <td><code>true</code></td>
+          </tr>
+          <tr>
             <td><code>clearCallback</code></td>
             <td><code>'empty' | 'defaultShapes' | (() =&gt; DrawableShape[])</code></td>
             <td>Clear button behavior: <code>'empty'</code> clears all, <code>'defaultShapes'</code> uses initial shapes, or a function returning shapes</td>
@@ -888,7 +897,8 @@ function MyPaintApp() {
     canGrow: true,
     grid: 20,
     withExport: true,
-    brushAlgo: 'quadratic'
+    brushAlgo: 'quadratic',
+    withContextMenu: true // set to false to disable the built-in context menu
   }
 })`} />
 

@@ -1,0 +1,12 @@
+.react-paint-editor-toolbox-contextmenu {
+  left: 0px;
+  top: 0px;
+  transform: var(--react-paint-editor-toolbox-contextmenu-transform);
+  width: 160px;
+}
+
+.react-paint-editor-toolbox-contextmenu-group {
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}

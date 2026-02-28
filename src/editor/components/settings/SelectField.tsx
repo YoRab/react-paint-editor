@@ -52,7 +52,7 @@ const SelectField = ({
     <>
       <Button selected={isPanelVisible} title={title} icon={icon} disabled={disabled} onClick={togglePanel} />
       {isPanelVisible && (
-        <Panel title={title} alignment='left' fitContainer={true}>
+        <Panel title={title} alignment='left' fitContainer position='bottom'>
           <div className='react-paint-editor-selectfield-wrapper'>
             {values.map(value => {
               return (

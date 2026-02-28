@@ -33,9 +33,12 @@ type EditorProps = {
   canGoForward: boolean
   canClear: boolean
   selectedShape: SelectionType | undefined
+  copiedShape: SelectionType | undefined
+  setCopiedShape: React.Dispatch<React.SetStateAction<SelectionType | undefined>>
   saveShapes: () => void
   removeShape: (shapes: ShapeEntity[]) => void
   updateShape: (updatedShapes: ShapeEntity[], withSave?: boolean) => void
+  duplicateShapes: (shapesToDuplicate: ShapeEntity[]) => void
   backwardShape: () => void
   forwardShape: () => void
   refs: {
@@ -48,6 +51,7 @@ type EditorProps = {
   height: number
   selectTool: (tool: ToolsType) => void
   selectShapes: (shapes: ShapeEntity[]) => void
+  selectAllShapes: () => void
   activeTool: ToolsType
   setActiveTool: React.Dispatch<React.SetStateAction<ToolsType>>
   setAvailableTools: React.Dispatch<React.SetStateAction<CustomTool[]>>
@@ -59,6 +63,8 @@ type EditorProps = {
   exportPicture: (view: 'fitToShapes' | 'defaultView' | 'currentZoom') => void
   exportData: () => void
   clearCanvas: () => void
+  selectionMode: SelectionModeData<number | Point>
+  setSelectionMode: React.Dispatch<React.SetStateAction<SelectionModeData<number | Point>>>
   settings: UtilsSettings
   setCanvasZoom: (action: 'unzoom' | 'zoom' | 'default') => void
   resetZoom: () => void
@@ -70,12 +76,15 @@ type EditorProps = {
     withLoadAndSave: boolean
     withUploadPicture: boolean
     withUrlPicture: boolean
+    withContextMenu: boolean
   }
 }
 
 type CanvasProps = {
   shapesRef: React.RefObject<ShapeEntity[]>
   selectedShape: SelectionType | undefined
+  copiedShape: SelectionType | undefined
+  setCopiedShape: React.Dispatch<React.SetStateAction<SelectionType | undefined>>
   selectionFrame: { oldSelection: SelectionType | undefined; frame: [Point, Point] } | undefined
   hoveredShape: ShapeEntity | undefined
   addShape: (newShapes: ShapeEntity[]) => void
@@ -97,6 +106,7 @@ type CanvasProps = {
   width: number
   height: number
   selectShapes: (shapes: ShapeEntity[]) => void
+  selectAllShapes: () => void
   activeTool: ToolsType
   setActiveTool: React.Dispatch<React.SetStateAction<ToolsType>>
   isEditMode: boolean
@@ -108,6 +118,7 @@ type CanvasProps = {
   isInsideComponent: boolean
   isInsideCanvas: boolean
   canvas: {
+    withContextMenu: boolean
     withSkeleton: boolean
     withFrameSelection: boolean
     canGrow: boolean
@@ -162,6 +173,7 @@ const useReactPaint = ({
     withUrlPicture,
     withSkeleton,
     withFrameSelection,
+    withContextMenu,
     clearCallback,
     availableTools: availableToolsFromProps,
     canvasSelectionPadding,
@@ -263,6 +275,8 @@ const useReactPaint = ({
     selectedShape,
     selectionFrame,
     hoveredShape,
+    copiedShape,
+    setCopiedShape,
     addShapes: addShape,
     addPictureShape,
     moveShapes,
@@ -341,6 +355,10 @@ const useReactPaint = ({
     },
     [setSelectedShape, settings]
   )
+
+  const selectAllShapes = useCallback(() => {
+    selectShapes(shapesRef.current)
+  }, [selectShapes, shapesRef])
 
   const exportData = useCallback(() => {
     const content = encodeShapesInString(shapesRef.current, width, height)
@@ -452,10 +470,13 @@ const useReactPaint = ({
       moveShapes,
       toggleShapeVisibility,
       toggleShapeLock,
+      duplicateShapes,
       canGoBackward,
       canGoForward,
       canClear,
       selectedShape,
+      copiedShape,
+      setCopiedShape,
       saveShapes,
       removeShape,
       updateShape,
@@ -466,6 +487,7 @@ const useReactPaint = ({
       height,
       selectTool,
       selectShapes,
+      selectAllShapes,
       activeTool,
       setActiveTool,
       setAvailableTools,
@@ -477,6 +499,8 @@ const useReactPaint = ({
       exportPicture,
       exportData,
       clearCanvas,
+      selectionMode,
+      setSelectionMode,
       settings,
       setCanvasZoom,
       resetZoom,
@@ -487,7 +511,8 @@ const useReactPaint = ({
         withExport,
         withLoadAndSave,
         withUploadPicture,
-        withUrlPicture
+        withUrlPicture,
+        withContextMenu
       }
     },
     canvasProps: {
@@ -495,6 +520,8 @@ const useReactPaint = ({
       selectedShape,
       selectionFrame,
       hoveredShape,
+      copiedShape,
+      setCopiedShape,
       addShape,
       setSelectedShape,
       setSelectionFrame,
@@ -515,6 +542,7 @@ const useReactPaint = ({
       setCanvasZoom,
       resetZoom,
       selectShapes,
+      selectAllShapes,
       activeTool,
       setActiveTool,
       isInsideComponent,
@@ -523,6 +551,7 @@ const useReactPaint = ({
       canvas: {
         withSkeleton,
         withFrameSelection,
+        withContextMenu,
         canGrow,
         canShrink
       },

@@ -41,28 +41,24 @@ const Layout = ({
   const onRemove = (e: React.MouseEvent<HTMLElement>) => {
     if (disabled) return
     e.preventDefault()
-    e.stopPropagation()
     handleRemove([shape])
   }
 
   const onSelect = (e: React.MouseEvent<HTMLElement>) => {
     if (disabled) return
     e.preventDefault()
-    e.stopPropagation()
     handleSelect([shape])
   }
 
   const onToggleShapeVisibility = (e: React.MouseEvent<HTMLElement>) => {
     if (disabled) return
     e.preventDefault()
-    e.stopPropagation()
     toggleShapeVisibility([shape])
   }
 
   const onToggleShapeLock = (e: React.MouseEvent<HTMLElement>) => {
     if (disabled) return
     e.preventDefault()
-    e.stopPropagation()
     toggleShapeLock([shape])
   }
 
@@ -149,7 +145,7 @@ const Layouts = ({
   const disabled = !settings.features.edition
 
   return isLayoutPanelShown ? (
-    <Panel alignment='right' className='react-paint-editor-layouts-panel'>
+    <Panel alignment='right' className='react-paint-editor-layouts-panel' position='bottom'>
       <div className='react-paint-editor-layouts-panel-content'>
         <div className='react-paint-editor-layouts-scrolling-content'>
           <div className='react-paint-editor-layouts-row'>

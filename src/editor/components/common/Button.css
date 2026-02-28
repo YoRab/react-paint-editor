@@ -14,6 +14,7 @@
   color: var(--react-paint-editor-app-font-color);
   margin: 2px 4px;
   padding: var(--react-paint-editor-button-padding, 0);
+  user-select: none;
 }
 
 .react-paint-editor-button[data-selected='1'] {
@@ -74,6 +75,6 @@
   align-items: center;
 }
 
-.react-paint-editor-button-children + .react-paint-editor-button-icon {
+.react-paint-editor-button-children+.react-paint-editor-button-icon {
   margin-left: 12px;
 }

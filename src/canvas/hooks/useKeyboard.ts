@@ -7,7 +7,7 @@ import type { Point, SelectionType, ShapeEntity } from '@common/types/Shapes'
 import type { ToolsType } from '@common/types/tools'
 import { isMacOs } from '@common/utils/util'
 import { SELECTION_TOOL } from '@editor/constants/tools'
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 
 type UseKeyboardType = {
   isInsideComponent: boolean
@@ -16,6 +16,7 @@ type UseKeyboardType = {
   pasteShapes: (shape: ShapeEntity[]) => void
   updateShapes: (shapes: ShapeEntity[]) => void
   setSelectedShape: (value: React.SetStateAction<SelectionType | undefined>) => void
+  selectAllShapes: () => void
   removeShape: (shape: ShapeEntity[]) => void
   backwardShape: () => void
   forwardShape: () => void
@@ -29,6 +30,8 @@ type UseKeyboardType = {
   settings: UtilsSettings
   setCanvasZoom: (action: 'unzoom' | 'zoom' | 'default') => void
   resetZoom: () => void
+  copiedShape: SelectionType | undefined
+  setCopiedShape: (shape: React.SetStateAction<SelectionType | undefined>) => void
 }
 
 const useKeyboard = ({
@@ -37,12 +40,15 @@ const useKeyboard = ({
   selectedShape,
   isEditingText,
   settings,
+  copiedShape,
+  setCopiedShape,
   setSelectedShape,
   setActiveTool,
   setCanvasZoom,
   resetZoom,
   setSelectionMode,
   setSelectionFrame,
+  selectAllShapes,
   removeShape,
   pasteShapes,
   updateShapes,
@@ -52,8 +58,6 @@ const useKeyboard = ({
   setAltPressed,
   setIsSpacePressed
 }: UseKeyboardType) => {
-  const [copiedShape, setCopiedShape] = useState<SelectionType | undefined>(undefined)
-
   useEffect(() => {
     const handleCopy = (e: ClipboardEvent) => {
       if (!selectedShape) return
@@ -61,6 +65,15 @@ const useKeyboard = ({
 
       e.preventDefault()
       setCopiedShape({ ...selectedShape })
+    }
+
+    const handleCut = (e: ClipboardEvent) => {
+      if (!selectedShape) return
+      if (isEditingText) return
+
+      e.preventDefault()
+      setCopiedShape({ ...selectedShape })
+      removeShape(getSelectedShapes(selectedShape))
     }
 
     const handlePaste = (e: ClipboardEvent) => {
@@ -101,6 +114,13 @@ const useKeyboard = ({
           e.preventDefault()
           e.stopPropagation()
           forwardShape()
+          return
+        }
+
+        if (e.key === KeyboardCode.A || e.key === KeyboardCode.a) {
+          e.preventDefault()
+          e.stopPropagation()
+          selectAllShapes()
           return
         }
 
@@ -184,12 +204,14 @@ const useKeyboard = ({
       document.addEventListener('keyup', handleKeyUp)
       document.addEventListener(KeyboardCommand.Copy, handleCopy)
       document.addEventListener(KeyboardCommand.Paste, handlePaste)
+      document.addEventListener(KeyboardCommand.Cut, handleCut)
 
       return () => {
         document.removeEventListener('keydown', handleKeyDown)
         document.removeEventListener('keyup', handleKeyUp)
         document.removeEventListener(KeyboardCommand.Copy, handleCopy)
         document.removeEventListener(KeyboardCommand.Paste, handlePaste)
+        document.removeEventListener(KeyboardCommand.Cut, handleCut)
       }
     }
   }, [
@@ -210,9 +232,11 @@ const useKeyboard = ({
     setActiveTool,
     setSelectionMode,
     setSelectionFrame,
+    setCopiedShape,
     setCanvasZoom,
     resetZoom,
-    setIsSpacePressed
+    setIsSpacePressed,
+    selectAllShapes
   ])
 
   return {}

@@ -49,7 +49,7 @@ const renderSelectionCanvas = (
     hoveredShape &&
     !getSelectedShapes(selectedShape).find(selected => selected.id === hoveredShape.id) &&
     activeTool.type === 'selection' &&
-    selectionMode.mode === 'default' &&
+    (selectionMode.mode === 'default' || selectionMode.mode === 'contextMenu' || selectionMode.mode === 'textedition') &&
     drawShapeSelection({
       ctx: selectionCtx,
       shape: hoveredShape,
@@ -106,12 +106,14 @@ type DrawerType = {
   setCanvasOffsetStartData: React.Dispatch<React.SetStateAction<{ start: Point; originalOffset: Point } | undefined>>
   setCanvasOffset: (offset: Point) => void
   isInsideComponent: boolean
+  isInsideCanvas: boolean
   selectionMode: SelectionModeData<number | Point>
   setSelectionMode: React.Dispatch<React.SetStateAction<SelectionModeData<number | Point>>>
   isShiftPressed: boolean
   isAltPressed: boolean
   isSpacePressed: boolean
   withFrameSelection: boolean
+  withContextMenu: boolean
   withSkeleton: boolean
   setCanvasMoveAcceleration: React.Dispatch<React.SetStateAction<Point>>
 }
@@ -139,6 +141,7 @@ const Canvas = React.forwardRef<HTMLCanvasElement, DrawerType>(
       setCanvasOffset,
       setCanvasMoveAcceleration,
       isInsideComponent,
+      isInsideCanvas,
       selectionMode,
       setSelectionMode,
       selectionWidth,
@@ -149,7 +152,8 @@ const Canvas = React.forwardRef<HTMLCanvasElement, DrawerType>(
       isAltPressed,
       isSpacePressed,
       withFrameSelection,
-      withSkeleton
+      withSkeleton,
+      withContextMenu
     },
     ref
   ) => {
@@ -169,6 +173,7 @@ const Canvas = React.forwardRef<HTMLCanvasElement, DrawerType>(
       selectionMode,
       activeTool,
       isInsideComponent,
+      isInsideCanvas,
       setCanvasOffset,
       selectedShape,
       canvasOffsetStartData,
@@ -186,7 +191,8 @@ const Canvas = React.forwardRef<HTMLCanvasElement, DrawerType>(
       isAltPressed,
       withFrameSelection,
       settings,
-      isSpacePressed
+      isSpacePressed,
+      withContextMenu
     })
     const updateSelectedShapeText = useCallback(
       (newText: string[]) => {

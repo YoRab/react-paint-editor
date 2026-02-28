@@ -25,6 +25,7 @@ const App = ({ options, className, style, canvasProps }: AppProps) => {
     hoveredShape,
     addShape,
     setSelectedShape,
+    selectAllShapes,
     setSelectionFrame,
     refreshSelectedShapes,
     refreshHoveredShape,
@@ -46,7 +47,7 @@ const App = ({ options, className, style, canvasProps }: AppProps) => {
     isInsideComponent,
     isInsideCanvas,
     isEditMode,
-    canvas: { withSkeleton, withFrameSelection, canGrow, canShrink },
+    canvas: { withSkeleton, withFrameSelection, withContextMenu, canGrow, canShrink },
     canvasOffsetStartData,
     setCanvasOffsetStartData,
     selectionMode,
@@ -55,6 +56,8 @@ const App = ({ options, className, style, canvasProps }: AppProps) => {
     isShiftPressed,
     isAltPressed,
     isSpacePressed,
+    copiedShape,
+    setCopiedShape,
     setShiftPressed,
     setAltPressed,
     setCanvasZoom,
@@ -92,6 +95,9 @@ const App = ({ options, className, style, canvasProps }: AppProps) => {
     isEditingText: selectionMode.mode === 'textedition',
     settings,
     selectedShape,
+    copiedShape,
+    setCopiedShape,
+    selectAllShapes,
     setSelectedShape,
     removeShape,
     pasteShapes,
@@ -127,9 +133,11 @@ const App = ({ options, className, style, canvasProps }: AppProps) => {
       <Canvas
         duplicateShapes={duplicateShapes}
         isSpacePressed={isSpacePressed}
+        withContextMenu={withContextMenu}
         ref={refs.canvas}
         canGrow={canGrow}
         isInsideComponent={isInsideComponent}
+        isInsideCanvas={isInsideCanvas}
         activeTool={activeTool}
         setActiveTool={setActiveTool}
         canvasOffsetStartData={canvasOffsetStartData}
