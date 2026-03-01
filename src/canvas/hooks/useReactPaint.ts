@@ -5,6 +5,8 @@ import useZoom from '@canvas/hooks/useZoom'
 import { buildDataToExport } from '@canvas/utils/data'
 import { decodeImportedData, decodeJson, downloadFile, encodeShapesInString, getCanvasImage } from '@canvas/utils/file'
 import { buildShapesGroup } from '@canvas/utils/selection'
+import { removeCurvePoint } from '@canvas/utils/shapes/curve'
+import { removePolygonPoint } from '@canvas/utils/shapes/polygon'
 import { sanitizeTools } from '@canvas/utils/tools'
 import { getNewOffset } from '@canvas/utils/zoom'
 import type { CanvasSize } from '@common/types/Canvas'
@@ -43,6 +45,7 @@ type EditorProps = {
   duplicateShapes: (shapesToDuplicate: ShapeEntity[]) => void
   backwardShape: () => void
   forwardShape: () => void
+  removeShapePoint: (shape: ShapeEntity<'curve' | 'polygon'>, pointIndex: number) => void
   refs: {
     canvas: React.RefObject<HTMLCanvasElement | null>
     editor: React.RefObject<HTMLElement | null>
@@ -449,6 +452,14 @@ const useReactPaint = ({
     }
   }, [resetCanvasWithShapeEntity, resetCanvas, defaultShapes, clearCallback])
 
+  const removeShapePoint = useCallback(
+    (shape: ShapeEntity<'curve' | 'polygon'>, pointIndex: number) => {
+      const newShape = shape.type === 'curve' ? removeCurvePoint(shape, pointIndex, settings) : removePolygonPoint(shape, pointIndex, settings)
+      updateShape([newShape], true)
+    },
+    [settings, updateShape]
+  )
+
   useEffect(() => {
     setAvailableTools(sanitizeTools(availableToolsFromProps, withUploadPicture || withUrlPicture))
   }, [availableToolsFromProps, withUploadPicture, withUrlPicture])
@@ -496,6 +507,7 @@ const useReactPaint = ({
       updateShape,
       backwardShape,
       forwardShape,
+      removeShapePoint,
       refs,
       width,
       height,

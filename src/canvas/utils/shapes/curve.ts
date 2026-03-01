@@ -150,3 +150,13 @@ export const addCurvePoint = (
   }
   return buildPath(updatedShape, settings)
 }
+
+export const removeCurvePoint = (shape: ShapeEntity<'curve'>, pointIndex: number, settings: UtilsSettings): ShapeEntity<'curve'> => {
+  if (pointIndex < 0 || pointIndex > shape.points.length - 1) return shape
+
+  const updatedShape = {
+    ...shape,
+    points: shape.points.filter((_, index) => index !== pointIndex)
+  }
+  return buildPath(updatedShape, settings)
+}

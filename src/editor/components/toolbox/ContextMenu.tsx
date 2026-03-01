@@ -24,6 +24,7 @@ type ContextMenuType = {
   copiedShape: SelectionType | undefined
   pasteShapes: (shapes: ShapeEntity[]) => void
   moveShapes: (shapes: ShapeEntity[], action: 'first' | 'last' | 'forward' | 'backward') => void
+  removeShapePoint: (shape: ShapeEntity<'curve' | 'polygon'>, pointIndex: number) => void
 }
 
 const TOOLBAR_SIZE = 36
@@ -40,7 +41,8 @@ const ContextMenu = ({
   duplicateShapes,
   copiedShape,
   setCopiedShape,
-  pasteShapes
+  pasteShapes,
+  removeShapePoint
 }: ContextMenuType) => {
   const organizeButtonRef = useRef<HTMLDivElement>(null)
   const transformButtonRef = useRef<HTMLDivElement>(null)
@@ -53,7 +55,7 @@ const ContextMenu = ({
   const hasSelectedRemovableAnchor =
     selectedShapes.length === 1 &&
     (selectedShapes[0]?.type === 'polygon' || selectedShapes[0]?.type === 'curve') &&
-    !!anchor &&
+    anchor !== undefined &&
     selectedShapes[0]?.points?.length > 2
 
   const isVisible = !selectedShapes.some(shape => shape.visible === false)
@@ -64,7 +66,9 @@ const ContextMenu = ({
   }px, 0)`
 
   const onDeleteAnchor = () => {
-    console.log('delete anchor')
+    if (hasSelectedRemovableAnchor) {
+      removeShapePoint(selectedShapes[0] as ShapeEntity<'curve' | 'polygon'>, anchor as number)
+    }
     closeContextMenu()
   }
 
