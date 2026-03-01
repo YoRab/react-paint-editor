@@ -175,14 +175,15 @@ const ContextMenu = ({
 
   const onToggleShapeVisibility = () => {
     if (hasSelectedShape) {
-      console.log(selectedShapes.filter(shape => (isVisible ? shape.visible !== false : shape.visible === false)))
       toggleShapeVisibility(selectedShapes.filter(shape => (isVisible ? shape.visible !== false : shape.visible === false)))
-      closeContextMenu()
     }
+    closeContextMenu()
   }
 
   const onToggleShapeLock = () => {
-    hasSelectedShape && toggleShapeLock(selectedShapes)
+    if (hasSelectedShape) {
+      toggleShapeLock(selectedShapes.filter(shape => (isLocked ? shape.locked : !shape.locked)))
+    }
     closeContextMenu()
   }
 

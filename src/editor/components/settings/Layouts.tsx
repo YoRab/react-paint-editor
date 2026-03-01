@@ -41,6 +41,7 @@ const Layout = ({
   const onRemove = (e: React.MouseEvent<HTMLElement>) => {
     if (disabled) return
     e.preventDefault()
+    e.stopPropagation()
     handleRemove([shape])
   }
 
@@ -53,12 +54,14 @@ const Layout = ({
   const onToggleShapeVisibility = (e: React.MouseEvent<HTMLElement>) => {
     if (disabled) return
     e.preventDefault()
+    e.stopPropagation()
     toggleShapeVisibility([shape])
   }
 
   const onToggleShapeLock = (e: React.MouseEvent<HTMLElement>) => {
     if (disabled) return
     e.preventDefault()
+    e.stopPropagation()
     toggleShapeLock([shape])
   }
 

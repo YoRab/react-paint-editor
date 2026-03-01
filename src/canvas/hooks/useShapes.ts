@@ -325,16 +325,24 @@ const useShapes = (
 
   const toggleShapeVisibility = useCallback(
     (shapes: ShapeEntity[]) => {
-      const shapesToUpdate = shapesRef.current
       const shapeIds = new Set(shapes.map(item => item.id))
-      const newShapes = shapesToUpdate.map(shape => {
+      const newShapes = shapesRef.current.map(shape => {
         if (shapeIds.has(shape.id)) {
           return set('visible', shape.visible === false, shape)
         }
         return shape
       })
 
-      setSelectedShape(applyToSelectedShape(shape => set('visible', shape.visible === false, shape), settings))
+      setSelectedShape(old =>
+        buildShapesGroup(
+          newShapes.filter(shape =>
+            getSelectedShapes(old)
+              ?.map(oldShape => oldShape.id)
+              .includes(shape.id)
+          ),
+          settings
+        )
+      )
 
       resetShapes(newShapes)
     },
@@ -343,16 +351,24 @@ const useShapes = (
 
   const toggleShapeLock = useCallback(
     (shapeGroup: ShapeEntity[]) => {
-      const shapes = shapesRef.current
       const shapeIds = new Set(shapeGroup.map(item => item.id))
-      const newShapes = shapes.map(shape => {
+      const newShapes = shapesRef.current.map(shape => {
         if (shapeIds.has(shape.id)) {
           return set('locked', !shape.locked, shape)
         }
         return shape
       })
 
-      setSelectedShape(applyToSelectedShape(shape => set('locked', !shape.locked, shape), settings))
+      setSelectedShape(old =>
+        buildShapesGroup(
+          newShapes.filter(shape =>
+            getSelectedShapes(old)
+              ?.map(oldShape => oldShape.id)
+              .includes(shape.id)
+          ),
+          settings
+        )
+      )
 
       resetShapes(newShapes)
     },
