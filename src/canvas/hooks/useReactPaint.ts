@@ -26,7 +26,8 @@ type UseReactPaintProps = {
 type EditorProps = {
   shapesRef: React.RefObject<ShapeEntity[]>
   addPictureShape: (fileOrUrl: File | string, maxWidth?: number, maxHeight?: number) => Promise<ShapeEntity>
-  moveShapes: (startPositionShapeId: string, endPositionShapeId: string) => void
+  swapShapes: (startPositionShapeId: string, endPositionShapeId: string) => void
+  moveShapes: (shapes: ShapeEntity[], action: 'first' | 'last' | 'forward' | 'backward') => void
   toggleShapeVisibility: (shapes: ShapeEntity[]) => void
   toggleShapeLock: (shapeGroup: ShapeEntity[]) => void
   canGoBackward: boolean
@@ -282,6 +283,7 @@ const useReactPaint = ({
     addShapes: addShape,
     addPictureShape,
     moveShapes,
+    swapShapes,
     setSelectedShape,
     setSelectionFrame,
     refreshSelectedShapes,
@@ -478,6 +480,7 @@ const useReactPaint = ({
       shapesRef,
       addPictureShape,
       moveShapes,
+      swapShapes,
       toggleShapeVisibility,
       toggleShapeLock,
       duplicateShapes,

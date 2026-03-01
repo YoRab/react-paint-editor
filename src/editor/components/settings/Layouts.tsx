@@ -21,7 +21,7 @@ type LayoutType = {
   handleSelect: (shape: ShapeEntity[]) => void
   toggleShapeVisibility: (shape: ShapeEntity[]) => void
   toggleShapeLock: (shape: ShapeEntity[]) => void
-  onMoveShapes: (firstShapeId: string, lastShapeId: string) => void
+  onSwapShapes: (firstShapeId: string, lastShapeId: string) => void
 }
 
 const Layout = ({
@@ -34,7 +34,7 @@ const Layout = ({
   setLayoutDragging,
   handleRemove,
   handleSelect,
-  onMoveShapes
+  onSwapShapes
 }: LayoutType) => {
   const ref = useRef<HTMLDivElement>(null)
 
@@ -69,7 +69,7 @@ const Layout = ({
     layoutDragging,
     setLayoutDragging,
     handleSelect,
-    onMoveShapes
+    onSwapShapes
   })
 
   return (
@@ -123,7 +123,7 @@ type LayoutsType = {
   toggleShapeLock: (shape: ShapeEntity[]) => void
   selectedShapes: SelectionType | undefined
   selectShapes: (shapes: ShapeEntity[]) => void
-  moveShapes: (firstShapeId: string, lastShapeId: string) => void
+  swapShapes: (startPositionShapeId: string, endPositionShapeId: string) => void
   isLayoutPanelShown: boolean
 }
 
@@ -136,7 +136,7 @@ const Layouts = ({
   toggleShapeVisibility,
   toggleShapeLock,
   selectedShapes,
-  moveShapes,
+  swapShapes,
   selectShapes,
   isLayoutPanelShown
 }: LayoutsType) => {
@@ -184,7 +184,7 @@ const Layouts = ({
                   selected={getSelectedShapes(selectedShapes).some(s => s.id === shape.id) ?? false}
                   handleSelect={selectShapes}
                   handleRemove={removeShape}
-                  onMoveShapes={moveShapes}
+                  onSwapShapes={swapShapes}
                   toggleShapeVisibility={toggleShapeVisibility}
                   toggleShapeLock={toggleShapeLock}
                 />

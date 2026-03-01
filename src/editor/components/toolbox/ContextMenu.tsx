@@ -23,11 +23,13 @@ type ContextMenuType = {
   setCopiedShape: (shape: React.SetStateAction<SelectionType | undefined>) => void
   copiedShape: SelectionType | undefined
   pasteShapes: (shapes: ShapeEntity[]) => void
+  moveShapes: (shapes: ShapeEntity[], action: 'first' | 'last' | 'forward' | 'backward') => void
 }
 
 const TOOLBAR_SIZE = 36
 
 const ContextMenu = ({
+  moveShapes,
   selectAllShapes,
   selectionMode,
   settings,
@@ -106,22 +108,30 @@ const ContextMenu = ({
   }
 
   const onMoveForward = () => {
-    console.log('move forward')
+    if (hasSelectedShape) {
+      moveShapes(selectedShapes, 'forward')
+    }
     closeContextMenu()
   }
 
   const onMoveToFirst = () => {
-    console.log('move to first')
+    if (hasSelectedShape) {
+      moveShapes(selectedShapes, 'first')
+    }
     closeContextMenu()
   }
 
   const onMoveBackward = () => {
-    console.log('move backward')
+    if (hasSelectedShape) {
+      moveShapes(selectedShapes, 'backward')
+    }
     closeContextMenu()
   }
 
   const onMoveToLast = () => {
-    console.log('move to last')
+    if (hasSelectedShape) {
+      moveShapes(selectedShapes, 'last')
+    }
     closeContextMenu()
   }
 

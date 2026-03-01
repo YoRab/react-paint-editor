@@ -42,6 +42,7 @@ const Editor = ({ editorProps, className, style, options, children }: EditorProp
     shapesRef,
     addPictureShape,
     moveShapes,
+    swapShapes,
     toggleShapeVisibility,
     toggleShapeLock,
     canGoBackward,
@@ -245,7 +246,7 @@ const Editor = ({ editorProps, className, style, options, children }: EditorProp
           gridFormat={gridFormat}
           setGridFormat={setGridFormat}
           shapes={shapesRef.current}
-          moveShapes={moveShapes}
+          swapShapes={swapShapes}
           selectedShapes={selectedShape}
           removeShape={removeShape}
           selectShapes={selectShapes}
@@ -306,6 +307,7 @@ const Editor = ({ editorProps, className, style, options, children }: EditorProp
           // flipVertically={flipVertically}
           // rotateClockwise={rotateClockwise}
           // rotateCounterclockwise={rotateCounterclockwise}
+          moveShapes={moveShapes}
           duplicateShapes={duplicateShapes}
           toggleShapeLock={toggleShapeLock}
           toggleShapeVisibility={toggleShapeVisibility}

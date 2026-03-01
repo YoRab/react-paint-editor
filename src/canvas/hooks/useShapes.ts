@@ -28,7 +28,8 @@ const useShapes = (
   addShapes: (newShapes: ShapeEntity[]) => void
   duplicateShapes: (shapesToDuplicate: ShapeEntity[], translate?: boolean, selectNewOnes?: boolean) => void
   addPictureShape: (fileOrUrl: File | string, maxWidth?: number, maxHeight?: number) => Promise<ShapeEntity>
-  moveShapes: (startPositionShapeId: string, endPositionShapeId: string) => void
+  swapShapes: (startPositionShapeId: string, endPositionShapeId: string) => void
+  moveShapes: (shapes: ShapeEntity[], action: 'first' | 'last' | 'forward' | 'backward') => void
   saveShapes: () => void
   setSelectedShape: React.Dispatch<React.SetStateAction<SelectionType | undefined>>
   refreshHoveredShape: (e: MouseEvent | TouchEvent, ctx: CanvasRenderingContext2D, cursorPosition: Point, isInsideMask: boolean) => void
@@ -234,13 +235,65 @@ const useShapes = (
     })
   }, [])
 
-  const moveShapes = useCallback(
+  const swapShapes = useCallback(
     (startPositionShapeId: string, endPositionShapeId: string) => {
       const shapes = shapesRef.current
       const startPositionShapeIndex = shapes.findIndex(shape => shape.id === startPositionShapeId)
       const endPositionShapeIndex = shapes.findIndex(shape => shape.id === endPositionShapeId)
 
       resetShapes(moveItemPosition(shapes, startPositionShapeIndex, endPositionShapeIndex))
+    },
+    [resetShapes]
+  )
+
+  const moveShapes = useCallback(
+    (selectedShapes: ShapeEntity[], action: 'first' | 'last' | 'forward' | 'backward') => {
+      const shapes = [...shapesRef.current]
+      const selectedIds = new Set(selectedShapes.map(s => s.id))
+      const selectedIndices = shapes.map((s, i) => (selectedIds.has(s.id) ? i : -1)).filter(i => i >= 0)
+
+      if (selectedIndices.length === 0) return
+
+      switch (action) {
+        case 'first':
+        case 'last': {
+          const selected = selectedIndices.map(i => shapes[i]!).filter(Boolean)
+          const rest = shapes.filter((_, i) => !selectedIndices.includes(i))
+          resetShapes(action === 'first' ? [...selected, ...rest] : [...rest, ...selected])
+          break
+        }
+
+        case 'backward': {
+          let newShapes = [...shapes]
+          const idsByOriginalIndex = selectedIndices.sort((a, b) => b - a).map(i => shapes[i]!.id)
+          for (const id of idsByOriginalIndex) {
+            const from = newShapes.findIndex(s => s.id === id)
+            if (from < newShapes.length - 1) {
+              const to = from + 1
+              if (!selectedIds.has(newShapes[to]!.id)) {
+                newShapes = moveItemPosition(newShapes, from, to)
+              }
+            }
+          }
+          resetShapes(newShapes)
+          break
+        }
+        case 'forward': {
+          let newShapes = [...shapes]
+          const idsByOriginalIndex = selectedIndices.sort((a, b) => a - b).map(i => shapes[i]!.id)
+          for (const id of idsByOriginalIndex) {
+            const from = newShapes.findIndex(s => s.id === id)
+            if (from > 0) {
+              const to = from - 1
+              if (!selectedIds.has(newShapes[to]!.id)) {
+                newShapes = moveItemPosition(newShapes, from, to)
+              }
+            }
+          }
+          resetShapes(newShapes)
+          break
+        }
+      }
     },
     [resetShapes]
   )
@@ -350,6 +403,7 @@ const useShapes = (
     duplicateShapes,
     addPictureShape,
     moveShapes,
+    swapShapes,
     saveShapes,
     setSelectedShape,
     refreshHoveredShape,
