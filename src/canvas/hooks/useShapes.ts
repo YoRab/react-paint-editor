@@ -3,7 +3,7 @@ import { PICTURE_DEFAULT_SIZE } from '@canvas/constants/picture'
 import { buildDataToExport } from '@canvas/utils/data'
 import { checkPositionIntersection, checkSelectionFrameCollision, checkSelectionIntersection } from '@canvas/utils/intersect'
 import { addToSelectedShapes, applyToSelectedShape, buildShapesGroup, getSelectedShapes } from '@canvas/utils/selection'
-import { copyShapes, refreshShape } from '@canvas/utils/shapes/index'
+import { copyShapes, refreshShape, rotateShape } from '@canvas/utils/shapes/index'
 import { createPicture } from '@canvas/utils/shapes/picture'
 import type { Point, SelectionType, ShapeEntity, StateData } from '@common/types/Shapes'
 import { moveItemPosition } from '@common/utils/array'
@@ -37,6 +37,11 @@ const useShapes = (
   toggleShapeLock: (shapeGroup: ShapeEntity[]) => void
   removeShape: (shapes: ShapeEntity[]) => void
   updateShape: (updatedShapes: ShapeEntity[], withSave?: boolean) => void
+  transformShape: (
+    shapes: ShapeEntity[],
+    center: Point,
+    action: 'flipHorizontally' | 'flipVertically' | 'rotateClockwise' | 'rotateCounterclockwise'
+  ) => void
   backwardShape: () => void
   forwardShape: () => void
   clearShapes: (shapesToInit: ShapeEntity[], options: { clearHistory: boolean; source: 'user' | 'remote' }) => void
@@ -298,6 +303,26 @@ const useShapes = (
     [resetShapes]
   )
 
+  const transformShape = useCallback(
+    (selectedShapes: ShapeEntity[], center: Point, action: 'flipHorizontally' | 'flipVertically' | 'rotateClockwise' | 'rotateCounterclockwise') => {
+      const shapeIds = new Set(selectedShapes.map(item => item.id))
+      const newShapes = shapesRef.current.map(shape => {
+        if (shapeIds.has(shape.id)) {
+          return refreshShape(rotateShape(shape, action === 'rotateClockwise' ? Math.PI / 2 : -Math.PI / 2, center), settings)
+        }
+        return shape
+      })
+      setSelectedShape(
+        buildShapesGroup(
+          newShapes.filter(shape => shapeIds.has(shape.id)),
+          settings
+        )
+      )
+      resetShapes(newShapes)
+    },
+    [settings, resetShapes]
+  )
+
   const toggleShapeVisibility = useCallback(
     (shapes: ShapeEntity[]) => {
       const shapesToUpdate = shapesRef.current
@@ -411,6 +436,7 @@ const useShapes = (
     toggleShapeLock,
     removeShape,
     updateShape: updateShapes,
+    transformShape,
     backwardShape,
     forwardShape,
     clearShapes,

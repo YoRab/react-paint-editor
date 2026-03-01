@@ -25,6 +25,11 @@ type ContextMenuType = {
   pasteShapes: (shapes: ShapeEntity[]) => void
   moveShapes: (shapes: ShapeEntity[], action: 'first' | 'last' | 'forward' | 'backward') => void
   removeShapePoint: (shape: ShapeEntity<'curve' | 'polygon'>, pointIndex: number) => void
+  transformShape: (
+    shapes: ShapeEntity[],
+    center: Point,
+    action: 'flipHorizontally' | 'flipVertically' | 'rotateClockwise' | 'rotateCounterclockwise'
+  ) => void
 }
 
 const TOOLBAR_SIZE = 36
@@ -33,6 +38,7 @@ const ContextMenu = ({
   moveShapes,
   selectAllShapes,
   selectionMode,
+  transformShape,
   settings,
   closeContextMenu,
   toggleShapeVisibility,
@@ -140,22 +146,30 @@ const ContextMenu = ({
   }
 
   const onFlipHorizontally = () => {
-    console.log('flip horizontally')
+    if (hasSelectedShape) {
+      transformShape(selectedShapes, originalShape!.computed.center, 'flipHorizontally')
+    }
     closeContextMenu()
   }
 
   const onFlipVertically = () => {
-    console.log('flip vertically')
+    if (hasSelectedShape) {
+      transformShape(selectedShapes, originalShape!.computed.center, 'flipVertically')
+    }
     closeContextMenu()
   }
 
   const onRotateClockwise = () => {
-    console.log('rotate clockwise')
+    if (hasSelectedShape) {
+      transformShape(selectedShapes, originalShape!.computed.center, 'rotateClockwise')
+    }
     closeContextMenu()
   }
 
   const onRotateCounterclockwise = () => {
-    console.log('rotate counterclockwise')
+    if (hasSelectedShape) {
+      transformShape(selectedShapes, originalShape!.computed.center, 'rotateCounterclockwise')
+    }
     closeContextMenu()
   }
 

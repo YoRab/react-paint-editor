@@ -58,6 +58,7 @@ const Editor = ({ editorProps, className, style, options, children }: EditorProp
     backwardShape,
     forwardShape,
     removeShapePoint,
+    transformShape,
     refs,
     width,
     height,
@@ -316,6 +317,7 @@ const Editor = ({ editorProps, className, style, options, children }: EditorProp
           copiedShape={copiedShape}
           pasteShapes={pasteShapes}
           removeShapePoint={removeShapePoint}
+          transformShape={transformShape}
         />
       )}
     </div>

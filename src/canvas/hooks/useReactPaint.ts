@@ -42,10 +42,15 @@ type EditorProps = {
   saveShapes: () => void
   removeShape: (shapes: ShapeEntity[]) => void
   updateShape: (updatedShapes: ShapeEntity[], withSave?: boolean) => void
-  duplicateShapes: (shapesToDuplicate: ShapeEntity[]) => void
+  duplicateShapes: (shapesToDuplicate: ShapeEntity[], translate?: boolean, selectNewOnes?: boolean) => void
   backwardShape: () => void
   forwardShape: () => void
   removeShapePoint: (shape: ShapeEntity<'curve' | 'polygon'>, pointIndex: number) => void
+  transformShape: (
+    shapes: ShapeEntity[],
+    center: Point,
+    action: 'flipHorizontally' | 'flipVertically' | 'rotateClockwise' | 'rotateCounterclockwise'
+  ) => void
   refs: {
     canvas: React.RefObject<HTMLCanvasElement | null>
     editor: React.RefObject<HTMLElement | null>
@@ -100,7 +105,7 @@ type CanvasProps = {
   refreshHoveredShape: (e: MouseEvent | TouchEvent, ctx: CanvasRenderingContext2D, cursorPosition: Point, isInsideMask: boolean) => void
   removeShape: (shapes: ShapeEntity[]) => void
   updateShape: (updatedShapes: ShapeEntity[], withSave?: boolean) => void
-  duplicateShapes: (shapesToDuplicate: ShapeEntity[]) => void
+  duplicateShapes: (shapesToDuplicate: ShapeEntity[], translate?: boolean, selectNewOnes?: boolean) => void
   backwardShape: () => void
   forwardShape: () => void
   saveShapes: () => void
@@ -300,6 +305,7 @@ const useReactPaint = ({
     saveShapes,
     toggleShapeVisibility,
     toggleShapeLock,
+    transformShape,
     canGoBackward,
     canGoForward,
     canClear
@@ -508,6 +514,7 @@ const useReactPaint = ({
       backwardShape,
       forwardShape,
       removeShapePoint,
+      transformShape,
       refs,
       width,
       height,
