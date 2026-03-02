@@ -243,8 +243,8 @@ const ContextMenu = ({
             <Button icon={rightChevronIcon}>Transform</Button>
             {isTransformMenuOpen && (
               <Menu position={menuPosition?.subMenuPosition}>
-                <Button onClick={onFlipHorizontally}>Flip horizontally</Button>
-                <Button onClick={onFlipVertically}>Flip vertically</Button>
+                {/* <Button onClick={onFlipHorizontally}>Flip horizontally</Button> */}
+                {/* <Button onClick={onFlipVertically}>Flip vertically</Button> */}
                 <Button onClick={onRotateClockwise}>Rotate clockwise</Button>
                 <Button onClick={onRotateCounterclockwise}>Rotate counterclockwise</Button>
               </Menu>
@@ -263,7 +263,7 @@ const ContextMenu = ({
         <>
           <Button onClick={onDuplicateShape}>Duplicate</Button>
           <Button onClick={onToggleShapeVisibility}>{isVisible ? 'Hide' : 'Show'}</Button>
-          <Button onClick={onToggleShapeLock}>{isLocked ? 'Unlock' : 'Lock'}</Button>
+          {/* <Button onClick={onToggleShapeLock}>{isLocked ? 'Unlock' : 'Lock'}</Button> */}
           <Button onClick={onRemoveShape}>Delete</Button>
           <hr />
         </>
