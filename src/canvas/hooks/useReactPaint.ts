@@ -184,7 +184,7 @@ const useReactPaint = ({
     withUrlPicture,
     withSkeleton,
     withFrameSelection,
-    withContextMenu,
+    withContextMenu: withContextMenuFromProps,
     clearCallback,
     availableTools: availableToolsFromProps,
     canvasSelectionPadding,
@@ -196,6 +196,7 @@ const useReactPaint = ({
   } as typeof DEFAULT_OPTIONS
 
   const isEditMode = mode !== 'viewer'
+  const withContextMenu = withContextMenuFromProps && isEditMode && !disabled
 
   const editorRef = useRef<HTMLElement | null>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
