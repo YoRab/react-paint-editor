@@ -52,12 +52,13 @@ const useShapes = (
   setCopiedShape: React.Dispatch<React.SetStateAction<SelectionType | undefined>>
 } => {
   const shapesRef = useRef<ShapeEntity[]>([])
+  const selectedShapeRef = useRef<SelectionType | undefined>(undefined)
   const listeners = useRef<{
     dataChanged: ((data: StateData, source: 'user' | 'remote') => void)[]
   }>({ dataChanged: [] })
 
   const [selectionFrame, setSelectionFrame] = useState<{ oldSelection: SelectionType | undefined; frame: [Point, Point] } | undefined>(undefined)
-  const [selectedShape, setSelectedShape] = useState<SelectionType | undefined>(undefined)
+  const [selectedShape, setSelectedShapeState] = useState<SelectionType | undefined>(undefined)
   const [hoveredShape, setHoveredShape] = useState<ShapeEntity | undefined>(undefined)
   const [copiedShape, setCopiedShape] = useState<SelectionType | undefined>(undefined)
   const [savedShapes, setSavedShapes] = useState<{
@@ -72,6 +73,18 @@ const useShapes = (
     cursor: 0
   })
 
+  const setSelectedShape = useCallback(
+    (newSelectedShape: SelectionType | undefined | ((prevSelectedShape: SelectionType | undefined) => SelectionType | undefined)) => {
+      if (typeof newSelectedShape === 'function') {
+        selectedShapeRef.current = newSelectedShape(selectedShapeRef.current)
+      } else {
+        selectedShapeRef.current = newSelectedShape
+      }
+      setSelectedShapeState(selectedShapeRef.current)
+    },
+    []
+  )
+
   const canGoBackward = savedShapes.cursor > 0
   const canGoForward = savedShapes.cursor < savedShapes.states.length - 1
   const canClear = shapesRef.current.length > 0
@@ -85,14 +98,14 @@ const useShapes = (
               ...prevSavedShaped.states.slice(0, prevSavedShaped.cursor + 1),
               {
                 shapes: shapesRef.current,
-                selectedShape,
+                selectedShape: selectedShapeRef.current,
                 source: 'user'
               }
             ],
             cursor: prevSavedShaped.cursor + 1
           }
     })
-  }, [selectedShape])
+  }, [])
 
   const addShapes = useCallback((newShapes: ShapeEntity[]) => {
     shapesRef.current = [...newShapes, ...shapesRef.current]
@@ -117,7 +130,7 @@ const useShapes = (
       })
       if (selectNewOnes) setSelectedShape(buildShapesGroup(newShapes, settings))
     },
-    [settings]
+    [settings, setSelectedShape]
   )
 
   const refreshHoveredShape = useCallback(
@@ -168,7 +181,7 @@ const useShapes = (
       )
       withSave && saveShapes()
     },
-    [saveShapes, settings]
+    [saveShapes, setSelectedShape, settings]
   )
 
   const resetShapes = useCallback(
@@ -191,17 +204,20 @@ const useShapes = (
       shapesRef.current = shapesRef.current.filter(item => !shapeIds?.has(item.id))
       saveShapes()
     },
-    [saveShapes]
+    [saveShapes, setSelectedShape]
   )
 
-  const moveCursor = useCallback((getNewCursor: (shapes: typeof savedShapes) => number) => {
-    setSavedShapes(prevSavedShaped => {
-      const newCursor = getNewCursor(prevSavedShaped)
-      shapesRef.current = prevSavedShaped.states[newCursor]?.shapes ?? []
-      setSelectedShape(prevSavedShaped.states[newCursor]?.selectedShape)
-      return set('cursor', newCursor, prevSavedShaped)
-    })
-  }, [])
+  const moveCursor = useCallback(
+    (getNewCursor: (shapes: typeof savedShapes) => number) => {
+      setSavedShapes(prevSavedShaped => {
+        const newCursor = getNewCursor(prevSavedShaped)
+        shapesRef.current = prevSavedShaped.states[newCursor]?.shapes ?? []
+        setSelectedShape(prevSavedShaped.states[newCursor]?.selectedShape)
+        return set('cursor', newCursor, prevSavedShaped)
+      })
+    },
+    [setSelectedShape]
+  )
 
   const backwardShape = useCallback(() => {
     moveCursor(prevSavedShaped => Math.max(0, prevSavedShaped.cursor - 1))
@@ -211,34 +227,37 @@ const useShapes = (
     moveCursor(prevSavedShaped => Math.min(prevSavedShaped.states.length - 1, prevSavedShaped.cursor + 1))
   }, [moveCursor])
 
-  const clearShapes = useCallback((shapesToInit: ShapeEntity[], options: { clearHistory: boolean; source: 'user' | 'remote' }) => {
-    setSelectedShape(undefined)
-    shapesRef.current = shapesToInit
-    setSavedShapes(prevSavedShaped => {
-      return options.clearHistory
-        ? {
-            states: [
-              {
-                shapes: shapesToInit,
-                selectedShape: undefined,
-                source: options.source
-              }
-            ],
-            cursor: 0
-          }
-        : {
-            states: [
-              ...prevSavedShaped.states.slice(0, prevSavedShaped.cursor + 1),
-              {
-                shapes: shapesToInit,
-                selectedShape: undefined,
-                source: options.source
-              }
-            ],
-            cursor: prevSavedShaped.cursor + 1
-          }
-    })
-  }, [])
+  const clearShapes = useCallback(
+    (shapesToInit: ShapeEntity[], options: { clearHistory: boolean; source: 'user' | 'remote' }) => {
+      setSelectedShape(undefined)
+      shapesRef.current = shapesToInit
+      setSavedShapes(prevSavedShaped => {
+        return options.clearHistory
+          ? {
+              states: [
+                {
+                  shapes: shapesToInit,
+                  selectedShape: undefined,
+                  source: options.source
+                }
+              ],
+              cursor: 0
+            }
+          : {
+              states: [
+                ...prevSavedShaped.states.slice(0, prevSavedShaped.cursor + 1),
+                {
+                  shapes: shapesToInit,
+                  selectedShape: undefined,
+                  source: options.source
+                }
+              ],
+              cursor: prevSavedShaped.cursor + 1
+            }
+      })
+    },
+    [setSelectedShape]
+  )
 
   const swapShapes = useCallback(
     (startPositionShapeId: string, endPositionShapeId: string) => {
@@ -320,7 +339,7 @@ const useShapes = (
       )
       resetShapes(newShapes)
     },
-    [settings, resetShapes]
+    [settings, resetShapes, setSelectedShape]
   )
 
   const toggleShapeVisibility = useCallback(
@@ -346,7 +365,7 @@ const useShapes = (
 
       resetShapes(newShapes)
     },
-    [resetShapes, settings]
+    [resetShapes, settings, setSelectedShape]
   )
 
   const toggleShapeLock = useCallback(
@@ -372,7 +391,7 @@ const useShapes = (
 
       resetShapes(newShapes)
     },
-    [resetShapes, settings]
+    [resetShapes, settings, setSelectedShape]
   )
 
   const registerEvent = useCallback((event: 'dataChanged', fn: (data: StateData, source: 'user' | 'remote') => void) => {
@@ -410,7 +429,7 @@ const useShapes = (
             settings
           )
     )
-  }, [settings])
+  }, [settings, setSelectedShape])
 
   const refreshSelectedShapes = useCallback(
     (ctx: CanvasRenderingContext2D, cursorPosition: Point) => {
@@ -426,7 +445,7 @@ const useShapes = (
         return { oldSelection: prev?.oldSelection, frame: newSelectionFrame }
       })
     },
-    [settings, isShiftPressed]
+    [settings, isShiftPressed, setSelectedShape]
   )
 
   return {
