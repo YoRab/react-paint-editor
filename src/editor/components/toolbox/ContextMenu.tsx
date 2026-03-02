@@ -4,7 +4,7 @@ import type { SelectionModeContextMenu } from '@common/types/Mode'
 import type { Point, SelectionType, ShapeEntity } from '@common/types/Shapes'
 import Button from '@editor/components/common/Button'
 import Menu from '@editor/components/common/Menu'
-import { useRef } from 'react'
+import { useRef, useState } from 'react'
 import useMenu from '@editor/hooks/useMenu'
 import { rightChevronIcon } from '@editor/constants/icons'
 import { getSelectedShapes } from '@canvas/utils/selection'
@@ -67,9 +67,12 @@ const ContextMenu = ({
   const isVisible = !selectedShapes.some(shape => shape.visible === false)
   const isLocked = selectedShapes.some(shape => shape.locked)
 
-  const transform = `translate3D(${(cursorStartPosition[0] + settings.canvasOffset[0]) * settings.canvasSize.scaleRatio}px, ${
+  const [menuPosition] = useState([
+    (cursorStartPosition[0] + settings.canvasOffset[0]) * settings.canvasSize.scaleRatio,
     TOOLBAR_SIZE + (cursorStartPosition[1] + settings.canvasOffset[1]) * settings.canvasSize.scaleRatio
-  }px, 0)`
+  ])
+
+  const transform = `translate3D(${menuPosition[0]}px, ${menuPosition[1]}px, 0)`
 
   const onDeleteAnchor = () => {
     if (hasSelectedRemovableAnchor) {
