@@ -275,7 +275,6 @@ const useDrawableCanvas = ({
 
   handleUpRef.current = (e: MouseEvent | TouchEvent) => {
     longPressTimeout.current && clearTimeout(longPressTimeout.current)
-    if (selectionMode.mode === 'contextMenu') return
     if (isTouchGesture(e) && e.touches.length > 1) return
     const ctx = drawCanvasRef.current?.getContext('2d')
     if (!ctx) return
@@ -291,6 +290,7 @@ const useDrawableCanvas = ({
       return
     }
 
+    if (selectionMode.mode === 'contextMenu') return
     if (selectionMode.mode === 'textedition') return
     if (selectionMode.mode === 'preview') return
 
