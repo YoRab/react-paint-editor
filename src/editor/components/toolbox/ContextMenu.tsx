@@ -4,16 +4,25 @@ import type { SelectionModeContextMenu } from '@common/types/Mode'
 import type { Point, SelectionType, ShapeEntity } from '@common/types/Shapes'
 import Button from '@editor/components/common/Button'
 import Menu from '@editor/components/common/Menu'
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import useMenu from '@editor/hooks/useMenu'
 import { rightChevronIcon } from '@editor/constants/icons'
 import { getSelectedShapes } from '@canvas/utils/selection'
 import { copyShapes } from '@canvas/utils/shapes'
 import { buildShapesGroup } from '@canvas/utils/selection'
 
+const TOOLBAR_SIZE = 36
+const BUTTON_HEIGHT = 36
+const HR_HEIGHT = 16
+const MENU_PADDING_VERTICAL = 8
+const MENU_MARGIN = 8
+const MENU_WIDTH = 160 + MENU_MARGIN * 2
+const SUB_MENU_WIDTH = 200
+
 type ContextMenuType = {
   selectionMode: SelectionModeContextMenu<Point | number>
   settings: UtilsSettings
+  canvasRef: React.RefObject<HTMLCanvasElement | null>
   selectAllShapes: () => void
   closeContextMenu: () => void
   toggleShapeVisibility: (shapes: ShapeEntity[]) => void
@@ -32,14 +41,13 @@ type ContextMenuType = {
   ) => void
 }
 
-const TOOLBAR_SIZE = 36
-
 const ContextMenu = ({
   moveShapes,
   selectAllShapes,
   selectionMode,
   transformShape,
   settings,
+  canvasRef,
   closeContextMenu,
   toggleShapeVisibility,
   toggleShapeLock,
@@ -67,12 +75,37 @@ const ContextMenu = ({
   const isVisible = !selectedShapes.some(shape => shape.visible === false)
   const isLocked = selectedShapes.some(shape => shape.locked)
 
-  const [menuPosition] = useState([
+  const menuHeight =
+    MENU_PADDING_VERTICAL * 2 +
+    BUTTON_HEIGHT * (2 + (hasSelectedShape ? 8 : 0) + (hasSelectedRemovableAnchor ? 1 : 0)) +
+    HR_HEIGHT * (hasSelectedShape ? 3 : 1)
+
+  const [basePosition] = useState<[number, number]>(() => [
     (cursorStartPosition[0] + settings.canvasOffset[0]) * settings.canvasSize.scaleRatio,
     TOOLBAR_SIZE + (cursorStartPosition[1] + settings.canvasOffset[1]) * settings.canvasSize.scaleRatio
   ])
 
-  const transform = `translate3D(${menuPosition[0]}px, ${menuPosition[1]}px, 0)`
+  const [menuPosition, setMenuPosition] = useState<{ x: number; y: number; subMenuPosition: 'left' | 'right' } | undefined>()
+
+  useEffect(() => {
+    const canvasRect = canvasRef?.current?.getBoundingClientRect()
+    if (!canvasRect) return
+
+    const viewportX = canvasRect.left + basePosition[0]
+    const viewportY = canvasRect.top + basePosition[1]
+    const clampedX = Math.max(0, Math.min(viewportX, window.innerWidth - MENU_WIDTH)) - canvasRect.left
+    const clampedY = Math.max(0, Math.min(viewportY, window.innerHeight - menuHeight)) - canvasRect.top
+    const subMenuPosition = clampedX > window.innerWidth - MENU_WIDTH - Math.min(clampedX, SUB_MENU_WIDTH) ? 'left' : 'right'
+    setMenuPosition({ x: clampedX, y: clampedY, subMenuPosition })
+  }, [canvasRef, basePosition, menuHeight])
+
+  const style = menuPosition
+    ? {
+        '--react-paint-editor-toolbox-contextmenu-transform': `translate3D(${menuPosition.x}px, ${menuPosition.y}px, 0)`
+      }
+    : {
+        display: 'none'
+      }
 
   const onDeleteAnchor = () => {
     if (hasSelectedRemovableAnchor) {
@@ -191,19 +224,14 @@ const ContextMenu = ({
   }
 
   return (
-    <Menu
-      className='react-paint-editor-toolbox-contextmenu'
-      style={{
-        '--react-paint-editor-toolbox-contextmenu-transform': transform
-      }}
-    >
+    <Menu className='react-paint-editor-toolbox-contextmenu' style={style}>
       {hasSelectedShape && (
         <>
           {hasSelectedRemovableAnchor && <Button onClick={onDeleteAnchor}>Delete point</Button>}
           <div className='react-paint-editor-toolbox-contextmenu-group' ref={organizeButtonRef}>
             <Button icon={rightChevronIcon}>Organize</Button>
             {isOrganizeMenuOpen && (
-              <Menu position='right'>
+              <Menu position={menuPosition?.subMenuPosition}>
                 <Button onClick={onMoveForward}>Move forward</Button>
                 <Button onClick={onMoveToFirst}>Put on first</Button>
                 <Button onClick={onMoveBackward}>Move backward</Button>
@@ -214,7 +242,7 @@ const ContextMenu = ({
           <div className='react-paint-editor-toolbox-contextmenu-group' ref={transformButtonRef}>
             <Button icon={rightChevronIcon}>Transform</Button>
             {isTransformMenuOpen && (
-              <Menu position='right'>
+              <Menu position={menuPosition?.subMenuPosition}>
                 <Button onClick={onFlipHorizontally}>Flip horizontally</Button>
                 <Button onClick={onFlipVertically}>Flip vertically</Button>
                 <Button onClick={onRotateClockwise}>Rotate clockwise</Button>

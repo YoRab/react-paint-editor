@@ -10,7 +10,7 @@ type PanelType = {
   title?: string
   className?: string | undefined
   fitContainer?: boolean
-  position?: 'bottom' | 'top' | 'right' | undefined
+  position?: 'bottom' | 'top' | 'left' | 'right' | undefined
   alignment?: 'left' | 'right' | 'center' | undefined
 }
 
