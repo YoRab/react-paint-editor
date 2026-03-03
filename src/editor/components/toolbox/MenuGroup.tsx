@@ -46,7 +46,7 @@ const MenuGroup = ({
   disabled = false,
   withLoadAndSave,
   withExport,
-  addPicture: addPictureFromProps,
+  addPicture,
   loadFile,
   togglePictureUrlModal,
   saveFile,
@@ -54,93 +54,111 @@ const MenuGroup = ({
   withUploadPicture,
   withUrlPicture
 }: MenuGroupType) => {
-  const buttonRef = useRef<HTMLButtonElement>(null)
-  const { isOpen } = useMenu({ buttonElt: buttonRef.current })
+  const buttonRef = useRef<HTMLDivElement>(null)
+  const { isOpen, closeMenu } = useMenu({ buttonElt: buttonRef.current })
 
-  const addPicture = async (file: File) => {
-    await addPictureFromProps(file)
-  }
+  const triggerAndCloseMenu =
+    <T extends unknown[]>(callback: (...args: T) => void | Promise<void>) =>
+    async (...args: T) => {
+      await callback(...args)
+      closeMenu()
+    }
 
   const withMenu = withActionsInMenu || withUploadPicture || withUrlPicture || withLoadAndSave || withExport
 
   return withMenu ? (
     <div className='react-paint-editor-toolbox-relative'>
-      <Button title='Menu' disabled={disabled} ref={buttonRef} icon={menuIcon} />
-      {isOpen && (
-        <Menu alignment='right' position='top'>
-          {withActionsInMenu && (
-            <>
-              <Tool
-                withText={true}
-                type={UNDO_TOOL}
-                disabled={disabled || !hasActionToUndo}
-                img={UNDO_TOOL.icon}
-                isActive={activeTool.id === UNDO_TOOL.id}
-                setActive={undoAction}
-              />
-              <Tool
-                withText={true}
-                type={REDO_TOOL}
-                disabled={disabled || !hasActionToRedo}
-                img={REDO_TOOL.icon}
-                isActive={activeTool.id === REDO_TOOL.id}
-                setActive={redoAction}
-              />
-              <Tool
-                withText={true}
-                type={CLEAR_TOOL}
-                disabled={disabled || !hasActionToClear}
-                img={CLEAR_TOOL.icon}
-                isActive={activeTool.id === CLEAR_TOOL.id}
-                setActive={clearCanvas}
-              />
-              {(withUploadPicture || withUrlPicture || withLoadAndSave) && <hr />}
-            </>
-          )}
+      <div ref={buttonRef}>
+        <Button title='Menu' disabled={disabled} icon={menuIcon} />
+        {isOpen && (
+          <Menu alignment='right' position='top'>
+            {withActionsInMenu && (
+              <>
+                <Tool
+                  withText={true}
+                  type={UNDO_TOOL}
+                  disabled={disabled || !hasActionToUndo}
+                  img={UNDO_TOOL.icon}
+                  isActive={activeTool.id === UNDO_TOOL.id}
+                  setActive={triggerAndCloseMenu(undoAction)}
+                />
+                <Tool
+                  withText={true}
+                  type={REDO_TOOL}
+                  disabled={disabled || !hasActionToRedo}
+                  img={REDO_TOOL.icon}
+                  isActive={activeTool.id === REDO_TOOL.id}
+                  setActive={triggerAndCloseMenu(redoAction)}
+                />
+                <Tool
+                  withText={true}
+                  type={CLEAR_TOOL}
+                  disabled={disabled || !hasActionToClear}
+                  img={CLEAR_TOOL.icon}
+                  isActive={activeTool.id === CLEAR_TOOL.id}
+                  setActive={triggerAndCloseMenu(clearCanvas)}
+                />
+                {(withUploadPicture || withUrlPicture || withLoadAndSave) && <hr />}
+              </>
+            )}
 
-          {withUploadPicture && (
-            <LoadFileTool
-              withText={true}
-              type={UPLOAD_PICTURE_TOOL}
-              disabled={disabled}
-              loadFile={addPicture}
-              img={UPLOAD_PICTURE_TOOL.icon}
-              accept='image/png, image/gif, image/jpeg, image/svg+xml, image/webp'
-            />
-          )}
-          {withUrlPicture && (
-            <Button disabled={disabled} selected={false} onClick={togglePictureUrlModal} title='Add picture from URL' icon={publicIcon}>
-              Add picture from URL
-            </Button>
-          )}
-          {(withUploadPicture || withUrlPicture) && withLoadAndSave && <hr />}
+            {withUploadPicture && (
+              <LoadFileTool
+                withText={true}
+                type={UPLOAD_PICTURE_TOOL}
+                disabled={disabled}
+                loadFile={triggerAndCloseMenu(addPicture)}
+                img={UPLOAD_PICTURE_TOOL.icon}
+                accept='image/png, image/gif, image/jpeg, image/svg+xml, image/webp'
+              />
+            )}
+            {withUrlPicture && (
+              <Button
+                disabled={disabled}
+                selected={false}
+                onClick={triggerAndCloseMenu(togglePictureUrlModal)}
+                title='Add picture from URL'
+                icon={publicIcon}
+              >
+                Add picture from URL
+              </Button>
+            )}
+            {(withUploadPicture || withUrlPicture) && withLoadAndSave && <hr />}
 
-          {withLoadAndSave && (
-            <>
-              <LoadFileTool withText={true} type={LOAD_TOOL} disabled={disabled} loadFile={loadFile} img={LOAD_TOOL.icon} accept='application/JSON' />
+            {withLoadAndSave && (
+              <>
+                <LoadFileTool
+                  withText={true}
+                  type={LOAD_TOOL}
+                  disabled={disabled}
+                  loadFile={triggerAndCloseMenu(loadFile)}
+                  img={LOAD_TOOL.icon}
+                  accept='application/JSON'
+                />
 
+                <Tool
+                  withText={true}
+                  disabled={disabled}
+                  type={SAVE_TOOL}
+                  img={SAVE_TOOL.icon}
+                  isActive={activeTool.id === SAVE_TOOL.id}
+                  setActive={triggerAndCloseMenu(saveFile)}
+                />
+              </>
+            )}
+            {withExport && (
               <Tool
                 withText={true}
                 disabled={disabled}
-                type={SAVE_TOOL}
-                img={SAVE_TOOL.icon}
-                isActive={activeTool.id === SAVE_TOOL.id}
-                setActive={saveFile}
+                type={EXPORT_TOOL}
+                img={EXPORT_TOOL.icon}
+                isActive={activeTool.id === EXPORT_TOOL.id}
+                setActive={triggerAndCloseMenu(toggleExportModal)}
               />
-            </>
-          )}
-          {withExport && (
-            <Tool
-              withText={true}
-              disabled={disabled}
-              type={EXPORT_TOOL}
-              img={EXPORT_TOOL.icon}
-              isActive={activeTool.id === EXPORT_TOOL.id}
-              setActive={toggleExportModal}
-            />
-          )}
-        </Menu>
-      )}
+            )}
+          </Menu>
+        )}
+      </div>
     </div>
   ) : null
 }

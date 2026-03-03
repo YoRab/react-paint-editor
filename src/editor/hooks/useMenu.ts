@@ -1,4 +1,5 @@
-import { useEffect, useState, useTransition } from 'react'
+import { isEventInsideNode } from '@common/utils/dom'
+import { useCallback, useEffect, useState, useTransition } from 'react'
 
 type UseMenuProps = {
   trigger?: 'click' | 'hover'
@@ -9,23 +10,36 @@ const useMenu = ({ trigger = 'click', buttonElt }: UseMenuProps) => {
   const [isOpen, setIsOpen] = useState(false)
   const [, startTransition] = useTransition()
 
+  const closeMenu = useCallback(() => {
+    startTransition(() => {
+      setIsOpen(false)
+    })
+  }, [])
+
   useEffect(() => {
     if (!buttonElt) return
     if (isOpen) {
-      const closePanel = () => {
+      const closePanelOnClick = (event: MouseEvent | TouchEvent) => {
+        if (isEventInsideNode(event, buttonElt)) return
+        startTransition(() => {
+          setIsOpen(false)
+        })
+      }
+
+      const closePanelOnMouseLeave = () => {
         startTransition(() => {
           setIsOpen(false)
         })
       }
       if (trigger === 'hover') {
-        buttonElt.addEventListener('mouseleave', closePanel)
+        buttonElt.addEventListener('mouseleave', closePanelOnMouseLeave)
         return () => {
-          buttonElt.removeEventListener('mouseleave', closePanel)
+          buttonElt.removeEventListener('mouseleave', closePanelOnMouseLeave)
         }
       }
-      document.addEventListener('click', closePanel)
+      document.addEventListener('click', closePanelOnClick)
       return () => {
-        document.removeEventListener('click', closePanel)
+        document.removeEventListener('click', closePanelOnClick)
       }
     }
     const openPanel = () => {
@@ -45,6 +59,6 @@ const useMenu = ({ trigger = 'click', buttonElt }: UseMenuProps) => {
     }
   }, [buttonElt, isOpen, trigger])
 
-  return { isOpen, trigger }
+  return { isOpen, trigger, closeMenu }
 }
 export default useMenu
