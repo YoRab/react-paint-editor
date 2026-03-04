@@ -1,4 +1,5 @@
 import type { UtilsSettings } from '@canvas/constants/app'
+import { drawPathWithFillAndStroke } from '@canvas/utils/canvas'
 import { getPointPositionBeforeCanvasTransformation } from '@canvas/utils/intersect'
 import { createRecSelectionPath, resizeRectSelection } from '@canvas/utils/selection/rectSelection'
 import type { SelectionModeResize } from '@common/types/Mode'
@@ -6,7 +7,7 @@ import type { DrawableShape, Point, Rect, SelectionType, ShapeEntity } from '@co
 import type { ToolsSettingsType } from '@common/types/tools'
 import { uniqueId } from '@common/utils/util'
 import { type GroupResizeContext, getPositionWithoutGroupRotation, getShapePositionInNewBorder } from './group'
-import { createRecPath, getComputedShapeInfos } from './path'
+import { createRecPath, expandRect, getComputedShapeInfos } from './path'
 
 type rectish = 'rect' | 'square'
 
@@ -54,19 +55,11 @@ export const createRectangle = <T extends rectish>(
 }
 
 export const drawRect = (ctx: CanvasRenderingContext2D, shape: ShapeEntity<rectish>): void => {
-  if (ctx.globalAlpha === 0) return
-
-  shape.style?.fillColor !== 'transparent' && ctx.fill(shape.path)
-  shape.style?.strokeColor !== 'transparent' && ctx.stroke(shape.path)
+  drawPathWithFillAndStroke(ctx, shape.path, shape.style)
 }
 
 export const getRectBorder = (rect: Rect, settings: Pick<UtilsSettings, 'selectionPadding'>): Rect => {
-  return {
-    x: rect.x - settings.selectionPadding,
-    width: rect.width + settings.selectionPadding * 2,
-    y: rect.y - settings.selectionPadding,
-    height: rect.height + settings.selectionPadding * 2
-  }
+  return expandRect(rect, settings.selectionPadding)
 }
 
 export const getRectOppositeAnchorAbsolutePosition = <T extends DrawableShape & Rect>(

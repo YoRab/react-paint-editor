@@ -5,6 +5,7 @@ import { checkPositionIntersection, checkSelectionFrameCollision, checkSelection
 import { addToSelectedShapes, buildShapesGroup, getSelectedShapes } from '@canvas/utils/selection'
 import { copyShapes, flipShapes, refreshShape, rotateShape } from '@canvas/utils/shapes/index'
 import { createPicture } from '@canvas/utils/shapes/picture'
+import { isPointInsideRect } from '@canvas/utils/trigo'
 import type { Point, SelectionType, ShapeEntity, StateData } from '@common/types/Shapes'
 import { moveItemPosition } from '@common/utils/array'
 import { isEqual, omit, set } from '@common/utils/object'
@@ -144,14 +145,14 @@ const useShapes = (
         return
       }
 
-      const foundShape = shapesRef.current.find(shape => {
-        if (shape.locked) return false
-        return getSelectedShapes(selectedShape)
-          ?.map(shape => shape.id)
+      const candidates = shapesRef.current.filter(shape => !shape.locked && isPointInsideRect(shape.computed.boundingBox, cursorPosition))
+      const foundShape = candidates.find(shape =>
+        getSelectedShapes(selectedShape)
+          ?.map(s => s.id)
           .includes(shape.id)
           ? !!checkSelectionIntersection(ctx, shape, cursorPosition, settings)
           : !!checkPositionIntersection(ctx, shape, cursorPosition, settings)
-      })
+      )
       setHoveredShape(foundShape)
     },
     [settings, selectedShape]

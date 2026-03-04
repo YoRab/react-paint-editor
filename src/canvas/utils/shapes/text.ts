@@ -6,7 +6,7 @@ import type { ToolsSettingsType } from '@common/types/tools'
 import { uniqueId } from '@common/utils/util'
 import { STYLE_FONT_DEFAULT, STYLE_FONT_SIZE_DEFAULT } from '@editor/constants/style'
 import { type GroupResizeContext, getPositionWithoutGroupRotation, getShapePositionInNewBorder } from './group'
-import { createRecPath, getComputedShapeInfos } from './path'
+import { createRecPath, expandRect, getComputedShapeInfos } from './path'
 import { getRectOppositeAnchorAbsolutePosition } from './rectangle'
 
 const DEFAULT_TEXT_VALUE: string[] = ['Texte']
@@ -109,12 +109,13 @@ export const drawText = (ctx: CanvasRenderingContext2D, text: DrawableShape<'tex
 }
 
 export const getTextBorder = (text: Text, settings: Pick<UtilsSettings, 'selectionPadding'>): Rect => {
-  return {
-    x: text.x - settings.selectionPadding,
-    width: text.width + settings.selectionPadding * 2,
-    y: text.y - settings.selectionPadding,
-    height: text.height + settings.selectionPadding * 2
+  const baseRect: Rect = {
+    x: text.x,
+    y: text.y,
+    width: text.width,
+    height: text.height
   }
+  return expandRect(baseRect, settings.selectionPadding)
 }
 
 export const resizeText = (

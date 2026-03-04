@@ -1,6 +1,6 @@
 import type { UtilsSettings } from '@canvas/constants/app'
 import { SELECTION_DEFAULT_COLOR, SELECTION_DEFAULT_WIDTH } from '@canvas/constants/shapes'
-import type { Point } from '@common/types/Shapes'
+import type { Point, StyleShape } from '@common/types/Shapes'
 import { LINE_DASH_DATA } from '@editor/constants/style'
 
 export const initCanvasContext = (ctx: CanvasRenderingContext2D) => {
@@ -50,5 +50,20 @@ export const transformCanvas = (ctx: CanvasRenderingContext2D, settings: UtilsSe
     ctx.translate(translation[0], translation[1])
     ctx.rotate(rotation)
     ctx.translate(-translation[0], -translation[1])
+  }
+}
+
+export const drawPathWithFillAndStroke = (
+  ctx: CanvasRenderingContext2D,
+  path: Path2D,
+  style?: Pick<StyleShape, 'fillColor' | 'strokeColor'>
+): void => {
+  if (ctx.globalAlpha === 0) return
+
+  if (style?.fillColor !== 'transparent') {
+    ctx.fill(path)
+  }
+  if (style?.strokeColor !== 'transparent') {
+    ctx.stroke(path)
   }
 }

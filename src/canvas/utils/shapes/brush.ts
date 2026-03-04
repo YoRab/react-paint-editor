@@ -1,6 +1,6 @@
 import type { UtilsSettings } from '@canvas/constants/app'
 import { createRecSelectionPath, resizeRectSelection } from '@canvas/utils/selection/rectSelection'
-import { createBrushPath, getComputedShapeInfos } from '@canvas/utils/shapes/path'
+import { createBrushPath, expandRect, getComputedShapeInfos } from '@canvas/utils/shapes/path'
 import { roundValues, scalePoint } from '@canvas/utils/transform'
 import type { SelectionModeResize } from '@common/types/Mode'
 import type { DrawableShape, Point, Rect, SelectionType, ShapeEntity } from '@common/types/Shapes'
@@ -16,15 +16,17 @@ export const getBrushBorder = (brush: DrawableShape<'brush'>, { selectionPadding
 
   const scaledPoints = brushPoints.map(point => scalePoint(point, minX, minY, brush.scaleX, brush.scaleY))
 
-  const maxX = Math.max(...scaledPoints.map(point => point[0])) + selectionPadding
-  const maxY = Math.max(...scaledPoints.map(point => point[1])) + selectionPadding
+  const maxX = Math.max(...scaledPoints.map(point => point[0]))
+  const maxY = Math.max(...scaledPoints.map(point => point[1]))
 
-  return {
-    x: minX - selectionPadding,
-    width: maxX - minX + selectionPadding,
-    y: minY - selectionPadding,
-    height: maxY - minY + selectionPadding
+  const baseRect: Rect = {
+    x: minX,
+    y: minY,
+    width: maxX - minX,
+    height: maxY - minY
   }
+
+  return expandRect(baseRect, selectionPadding)
 }
 
 const buildPath = <T extends DrawableShape<'brush'>>(brush: T & { id: string }, settings: UtilsSettings): ShapeEntity<'brush'> => {

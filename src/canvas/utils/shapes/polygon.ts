@@ -1,7 +1,8 @@
 import type { UtilsSettings } from '@canvas/constants/app'
+import { drawPathWithFillAndStroke } from '@canvas/utils/canvas'
 import { getPointPositionAfterCanvasTransformation } from '@canvas/utils/intersect'
 import { createLineSelectionPath } from '@canvas/utils/selection/lineSelection'
-import { createPolygonPath, getComputedShapeInfos } from '@canvas/utils/shapes/path'
+import { createPolygonPath, expandRect, getComputedShapeInfos } from '@canvas/utils/shapes/path'
 import { roundForGrid } from '@canvas/utils/transform'
 import type { SelectionModeResize } from '@common/types/Mode'
 import type { DrawableShape, Point, Polygon, Rect, ShapeEntity } from '@common/types/Shapes'
@@ -51,19 +52,18 @@ export const createPolygon = (
 }
 
 export const drawPolygon = (ctx: CanvasRenderingContext2D, polygon: ShapeEntity<'polygon'>): void => {
-  if (ctx.globalAlpha === 0) return
-  polygon.style?.fillColor !== 'transparent' && ctx.fill(polygon.path)
-  polygon.style?.strokeColor !== 'transparent' && ctx.stroke(polygon.path)
+  drawPathWithFillAndStroke(ctx, polygon.path, polygon.style)
 }
 
 export const getPolygonBorder = (polygon: Polygon, settings: Pick<UtilsSettings, 'selectionPadding'>): Rect => {
-  const minX = Math.min(...polygon.points.map(point => point[0])) - settings.selectionPadding
-  const maxX = Math.max(...polygon.points.map(point => point[0])) + settings.selectionPadding
+  const minX = Math.min(...polygon.points.map(point => point[0]))
+  const maxX = Math.max(...polygon.points.map(point => point[0]))
 
-  const minY = Math.min(...polygon.points.map(point => point[1])) - settings.selectionPadding
-  const maxY = Math.max(...polygon.points.map(point => point[1])) + settings.selectionPadding
+  const minY = Math.min(...polygon.points.map(point => point[1]))
+  const maxY = Math.max(...polygon.points.map(point => point[1]))
 
-  return { x: minX, width: maxX - minX, y: minY, height: maxY - minY }
+  const baseRect: Rect = { x: minX, width: maxX - minX, y: minY, height: maxY - minY }
+  return expandRect(baseRect, settings.selectionPadding)
 }
 export const resizePolygon = (
   cursorPosition: Point,

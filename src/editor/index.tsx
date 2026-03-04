@@ -12,8 +12,8 @@ import { type CSSProperties, type ReactNode, useCallback, useState } from 'react
 import './index.css'
 import Button from '@editor/components/common/Button'
 import Panel from '@editor/components/common/Panel'
-import { zoomIn, zoomOut } from '@editor/constants/icons'
 import ContextMenu from '@editor/components/toolbox/ContextMenu'
+import { zoomIn, zoomOut } from '@editor/constants/icons'
 
 type EditorProps = {
   editorProps: UseReactPaintReturnType['editorProps']

@@ -1,4 +1,5 @@
 import type { UtilsSettings } from '@canvas/constants/app'
+import { SHAPES_KEEPING_RATIO, SHAPES_WITH_ROTATION } from '@canvas/constants/shapes'
 import { transformCanvas, updateCanvasContext } from '@canvas/utils/canvas'
 import { getRectIntersection } from '@canvas/utils/intersect'
 import { buildShapesGroup, getSelectedShapes } from '@canvas/utils/selection'
@@ -10,7 +11,7 @@ import { boundVectorToSingleAxis, roundForGrid } from '@canvas/utils/transform'
 import { rotatePoint } from '@canvas/utils/trigo'
 import { getCurrentView } from '@canvas/utils/zoom'
 import type { HoverModeData, SelectionModeData, SelectionModeResize } from '@common/types/Mode'
-import type { DrawableShape, Point, SelectionType, ShapeEntity } from '@common/types/Shapes'
+import type { DrawableShape, Point, Rect, SelectionType, ShapeEntity } from '@common/types/Shapes'
 import type { CustomTool } from '@common/types/tools'
 import { uniqueId } from '@common/utils/util'
 import { createBrush, drawBrush, refreshBrush, resizeBrush, resizeBrushInGroup } from './brush'
@@ -23,7 +24,6 @@ import { drawPicture, refreshPicture, resizePicture, resizePictureInGroup } from
 import { createPolygon, drawPolygon, refreshPolygon, resizePolygon } from './polygon'
 import { createRectangle, drawRect, refreshRect, resizeRect, resizeRectInGroup } from './rectangle'
 import { createText, drawText, refreshText, resizeText, resizeTextInGroup } from './text'
-import { SHAPES_KEEPING_RATIO, SHAPES_WITH_ROTATION } from '@canvas/constants/shapes'
 
 export const createShape = (
   ctx: CanvasRenderingContext2D,
@@ -113,15 +113,13 @@ const drawShapeWithOpacity = (ctx: CanvasRenderingContext2D, shape: ShapeEntity)
   ctx.drawImage(tempCanvas, outerBorders.x - tempCanvasSize.width / 4, outerBorders.y - tempCanvasSize.height / 4)
 }
 
-export const isInView = (shape: ShapeEntity, settings: UtilsSettings): boolean => {
-  const currentView = getCurrentView(settings)
-  return !!getRectIntersection(shape.computed.boundingBox, currentView)
+const isInView = (shape: ShapeEntity, settings: UtilsSettings, currentView?: Rect): boolean => {
+  return !!getRectIntersection(shape.computed.boundingBox, currentView ?? getCurrentView(settings))
 }
 
-export const drawShape = (ctx: CanvasRenderingContext2D, shape: ShapeEntity, settings: UtilsSettings): void => {
+export const drawShape = (ctx: CanvasRenderingContext2D, shape: ShapeEntity, settings: UtilsSettings, currentView?: Rect): void => {
   if (shape.visible === false) return
-
-  const shouldDraw = isInView(shape, settings)
+  const shouldDraw = isInView(shape, settings, currentView)
   if (!shouldDraw) return
 
   transformCanvas(ctx, settings, shape.rotation, shape.computed.center)

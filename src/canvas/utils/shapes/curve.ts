@@ -1,4 +1,5 @@
 import type { UtilsSettings } from '@canvas/constants/app'
+import { drawPathWithFillAndStroke } from '@canvas/utils/canvas'
 import { getPointPositionAfterCanvasTransformation } from '@canvas/utils/intersect'
 import { createLineSelectionPath } from '@canvas/utils/selection/lineSelection'
 import { catmullRomToBezier, createCurvePath, getCatmullRomPoints, getComputedShapeInfos, getCubicBezierBounds } from '@canvas/utils/shapes/path'
@@ -104,9 +105,7 @@ export const resizeCurve = (
 }
 
 export const drawCurve = (ctx: CanvasRenderingContext2D, curve: ShapeEntity<'curve'>): void => {
-  if (ctx.globalAlpha === 0) return
-  curve.style?.fillColor !== 'transparent' && ctx.fill(curve.path)
-  curve.style?.strokeColor !== 'transparent' && ctx.stroke(curve.path)
+  drawPathWithFillAndStroke(ctx, curve.path, curve.style)
 }
 
 export const addCurveLine = (

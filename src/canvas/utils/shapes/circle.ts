@@ -1,19 +1,21 @@
 import type { UtilsSettings } from '@canvas/constants/app'
+import { drawPathWithFillAndStroke } from '@canvas/utils/canvas'
 import { createRecSelectionPath, resizeRectSelection } from '@canvas/utils/selection/rectSelection'
 import type { SelectionModeResize } from '@common/types/Mode'
 import type { Circle, DrawableShape, Point, Rect, SelectionType, ShapeEntity } from '@common/types/Shapes'
 import type { ToolsSettingsType } from '@common/types/tools'
 import { uniqueId } from '@common/utils/util'
 import { type GroupResizeContext, getPositionWithoutGroupRotation, getShapePositionInNewBorder } from './group'
-import { createCirclePath, getComputedShapeInfos } from './path'
+import { createCirclePath, expandRect, getComputedShapeInfos } from './path'
 
 const getCircleBorder = (circle: Circle, settings: Pick<UtilsSettings, 'selectionPadding'>): Rect => {
-  return {
-    x: circle.x - circle.radius - settings.selectionPadding,
-    width: (circle.radius + settings.selectionPadding) * 2,
-    y: circle.y - circle.radius - settings.selectionPadding,
-    height: (circle.radius + settings.selectionPadding) * 2
+  const baseRect: Rect = {
+    x: circle.x - circle.radius,
+    y: circle.y - circle.radius,
+    width: circle.radius * 2,
+    height: circle.radius * 2
   }
+  return expandRect(baseRect, settings.selectionPadding)
 }
 
 const buildPath = <T extends DrawableShape<'circle'>>(shape: T & { id: string }, settings: UtilsSettings): ShapeEntity<'circle'> => {
@@ -59,9 +61,7 @@ export const createCircle = (
 }
 
 export const drawCircle = (ctx: CanvasRenderingContext2D, circle: ShapeEntity<'circle'>): void => {
-  if (ctx.globalAlpha === 0) return
-  circle.style?.fillColor !== 'transparent' && ctx.fill(circle.path)
-  circle.style?.strokeColor !== 'transparent' && ctx.stroke(circle.path)
+  drawPathWithFillAndStroke(ctx, circle.path, circle.style)
 }
 
 export const resizeCircle = (

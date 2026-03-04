@@ -1,5 +1,5 @@
 import type { UtilsSettings } from '@canvas/constants/app'
-import { updateCanvasContext } from '@canvas/utils/canvas'
+import { drawPathWithFillAndStroke, updateCanvasContext } from '@canvas/utils/canvas'
 import { getPointPositionAfterCanvasTransformation } from '@canvas/utils/intersect'
 import { createLineSelectionPath } from '@canvas/utils/selection/lineSelection'
 import { createLinePath, getComputedShapeInfos } from '@canvas/utils/shapes/path'
@@ -10,8 +10,8 @@ import type { DrawableShape, Line, Point, Rect, SelectionType, ShapeEntity, Styl
 import type { ToolsSettingsType } from '@common/types/tools'
 import { set } from '@common/utils/object'
 import { uniqueId } from '@common/utils/util'
-import { type GroupResizeContext, getPositionWithoutGroupRotation, getShapePositionInNewBorder } from './group'
 import { refreshCurve } from './curve'
+import { type GroupResizeContext, getPositionWithoutGroupRotation, getShapePositionInNewBorder } from './group'
 import { refreshPolygon } from './polygon'
 import { createTriangle, drawTriangle } from './triangle'
 
@@ -116,11 +116,7 @@ export const buildTriangleOnLine = (center: Point, rotation: number, lineStyle: 
 }
 
 export const drawLine = (ctx: CanvasRenderingContext2D, shape: ShapeEntity<'line'>): void => {
-  if (ctx.globalAlpha === 0) return
-
-  shape.style?.fillColor !== 'transparent' && ctx.fill(shape.path)
-  shape.style?.strokeColor !== 'transparent' && ctx.stroke(shape.path)
-
+  drawPathWithFillAndStroke(ctx, shape.path, shape.style)
   for (const arrow of shape.arrows ?? []) {
     updateCanvasContext(ctx, arrow.style)
     drawTriangle(ctx, arrow)
@@ -154,11 +150,11 @@ const refreshPointBasedShape = (
   return refreshCurve(shape, settings)
 }
 
-export const resizeLinePolygonCurveInGroup = (
-  shape: ShapeEntity<'line' | 'polygon' | 'curve'>,
+export const resizeLinePolygonCurveInGroup = <T extends ShapeEntity<'line' | 'polygon' | 'curve'>>(
+  shape: T,
   group: SelectionType & { type: 'group' },
   groupCtx: GroupResizeContext
-): ShapeEntity<'line' | 'polygon' | 'curve'> => {
+): T => {
   const { isXinverted, isYinverted, settings, widthMultiplier, heightMultiplier } = groupCtx
 
   const oldWidth = shape.computed.borders.width - 2 * settings.selectionPadding
@@ -172,15 +168,16 @@ export const resizeLinePolygonCurveInGroup = (
   const oldY = shape.computed.center[1] - oldHeight / 2
   const newX = newCenter[0] - newWidth / 2
   const newY = newCenter[1] - newHeight / 2
-
   return refreshPointBasedShape(
     {
       ...shape,
-      points: shape.points.map(([x, y]) => [
-        newX + (isXinverted ? newWidth - (x - oldX) * widthMultiplier : (x - oldX) * widthMultiplier),
-        newY + (isYinverted ? newHeight - (y - oldY) * heightMultiplier : (y - oldY) * heightMultiplier)
-      ]) as [Point, Point]
-    },
+      points: shape.points.map(
+        ([x, y]): Point => [
+          newX + (isXinverted ? newWidth - (x - oldX) * widthMultiplier : (x - oldX) * widthMultiplier),
+          newY + (isYinverted ? newHeight - (y - oldY) * heightMultiplier : (y - oldY) * heightMultiplier)
+        ]
+      )
+    } as T,
     groupCtx.settings
-  )
+  ) as T
 }

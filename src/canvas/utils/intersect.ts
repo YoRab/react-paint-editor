@@ -143,7 +143,7 @@ export const checkSelectionIntersection = (
       : ctx.isPointInStroke(shape.path, newPosition[0], newPosition[1])
     return isPointOverShape ? { mode: 'translate' } : false
   }
-  return isPartOfRect(borders, newPosition, 15 + radius) ? { mode: 'translate' } : false
+  return isPartOfRect(borders, newPosition, (15 + radius) / settings.canvasZoom) ? { mode: 'translate' } : false
 }
 
 export const checkPolygonLinesSelectionIntersection = (
