@@ -471,6 +471,7 @@ const useDrawableCanvas = ({
       if (activeTool.type === 'selection') {
         if (getSelectedShapes(selectedShape).length !== 1) return
         const firstShape = getSelectedShapes(selectedShape)[0]
+        if (firstShape?.locked) return
         if (firstShape?.type === 'text') {
           const cursorPosition = getCursorPositionInTransformedCanvas(e, drawCanvasRef.current, settings)
 

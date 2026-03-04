@@ -145,6 +145,7 @@ const useShapes = (
       }
 
       const foundShape = shapesRef.current.find(shape => {
+        if (shape.locked) return false
         return getSelectedShapes(selectedShape)
           ?.map(shape => shape.id)
           .includes(shape.id)
