@@ -21,7 +21,7 @@ type LayoutType = {
   handleSelect: (shape: ShapeEntity[]) => void
   toggleShapeVisibility: (shape: ShapeEntity[]) => void
   toggleShapeLock: (shape: ShapeEntity[]) => void
-  onMoveShapes: (firstShapeId: string, lastShapeId: string) => void
+  onSwapShapes: (firstShapeId: string, lastShapeId: string) => void
 }
 
 const Layout = ({
@@ -34,7 +34,7 @@ const Layout = ({
   setLayoutDragging,
   handleRemove,
   handleSelect,
-  onMoveShapes
+  onSwapShapes
 }: LayoutType) => {
   const ref = useRef<HTMLDivElement>(null)
 
@@ -48,7 +48,6 @@ const Layout = ({
   const onSelect = (e: React.MouseEvent<HTMLElement>) => {
     if (disabled) return
     e.preventDefault()
-    e.stopPropagation()
     handleSelect([shape])
   }
 
@@ -73,7 +72,7 @@ const Layout = ({
     layoutDragging,
     setLayoutDragging,
     handleSelect,
-    onMoveShapes
+    onSwapShapes
   })
 
   return (
@@ -127,7 +126,7 @@ type LayoutsType = {
   toggleShapeLock: (shape: ShapeEntity[]) => void
   selectedShapes: SelectionType | undefined
   selectShapes: (shapes: ShapeEntity[]) => void
-  moveShapes: (firstShapeId: string, lastShapeId: string) => void
+  swapShapes: (startPositionShapeId: string, endPositionShapeId: string) => void
   isLayoutPanelShown: boolean
 }
 
@@ -140,7 +139,7 @@ const Layouts = ({
   toggleShapeVisibility,
   toggleShapeLock,
   selectedShapes,
-  moveShapes,
+  swapShapes,
   selectShapes,
   isLayoutPanelShown
 }: LayoutsType) => {
@@ -149,7 +148,7 @@ const Layouts = ({
   const disabled = !settings.features.edition
 
   return isLayoutPanelShown ? (
-    <Panel alignment='right' className='react-paint-editor-layouts-panel'>
+    <Panel alignment='right' className='react-paint-editor-layouts-panel' position='bottom'>
       <div className='react-paint-editor-layouts-panel-content'>
         <div className='react-paint-editor-layouts-scrolling-content'>
           <div className='react-paint-editor-layouts-row'>
@@ -188,7 +187,7 @@ const Layouts = ({
                   selected={getSelectedShapes(selectedShapes).some(s => s.id === shape.id) ?? false}
                   handleSelect={selectShapes}
                   handleRemove={removeShape}
-                  onMoveShapes={moveShapes}
+                  onSwapShapes={swapShapes}
                   toggleShapeVisibility={toggleShapeVisibility}
                   toggleShapeLock={toggleShapeLock}
                 />

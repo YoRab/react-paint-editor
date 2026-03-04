@@ -15,8 +15,7 @@ type LoadFileToolType = {
 const LoadFileTool = ({ disabled = false, withText = false, loadFile, type, img, accept }: LoadFileToolType) => {
   const inputRef = useRef<HTMLInputElement>(null)
 
-  const handleClick = (event: React.MouseEvent) => {
-    event.stopPropagation()
+  const handleClick = () => {
     if (inputRef.current) inputRef.current.value = ''
   }
 

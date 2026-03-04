@@ -13,6 +13,7 @@ import './index.css'
 import Button from '@editor/components/common/Button'
 import Panel from '@editor/components/common/Panel'
 import { zoomIn, zoomOut } from '@editor/constants/icons'
+import ContextMenu from '@editor/components/toolbox/ContextMenu'
 
 type EditorProps = {
   editorProps: UseReactPaintReturnType['editorProps']
@@ -36,24 +37,34 @@ type EditorProps = {
 
 const Editor = ({ editorProps, className, style, options, children }: EditorProps) => {
   const {
+    selectionMode,
+    setSelectionMode,
     shapesRef,
     addPictureShape,
     moveShapes,
+    swapShapes,
     toggleShapeVisibility,
     toggleShapeLock,
     canGoBackward,
     canGoForward,
     canClear,
     selectedShape,
+    copiedShape,
+    setCopiedShape,
+    pasteShapes,
     removeShape,
+    duplicateShapes,
     updateShape,
     backwardShape,
     forwardShape,
+    removeShapePoint,
+    transformShape,
     refs,
     width,
     height,
     selectTool,
     selectShapes,
+    selectAllShapes,
     activeTool,
     setActiveTool,
     setAvailableTools,
@@ -68,7 +79,7 @@ const Editor = ({ editorProps, className, style, options, children }: EditorProp
     settings,
     setCanvasZoom,
     saveShapes,
-    canvas: { canGrow, layersManipulation, withExport, withLoadAndSave, withUploadPicture, withUrlPicture }
+    canvas: { canGrow, layersManipulation, withExport, withLoadAndSave, withUploadPicture, withUrlPicture, withContextMenu }
   } = editorProps
 
   const {
@@ -182,6 +193,12 @@ const Editor = ({ editorProps, className, style, options, children }: EditorProp
 
   const appClassName = `${className ? `${className} ` : ''}${isLayoutPanelShown ? 'react-paint-editor-layout-opened ' : ''}react-paint-editor-app`
 
+  const closeContextMenu = () => {
+    setSelectionMode({
+      mode: 'default'
+    })
+    refs.canvas.current?.focus()
+  }
   return (
     <div
       ref={refs.setEditor}
@@ -190,7 +207,7 @@ const Editor = ({ editorProps, className, style, options, children }: EditorProp
         '--react-paint-editor-app-maxWidth': canGrow ? '100%' : `${width}px`,
         '--react-paint-editor-app-toolbar-bg': toolbarBackgroundColor,
         '--react-paint-editor-app-divider-color': dividerColor,
-        '--react-paint-editor-app-font-radius': fontRadius,
+        '--react-paint-editor-app-font-radius': `${fontRadius}px`,
         '--react-paint-editor-app-font-disabled-color': fontDisabledColor,
         '--react-paint-editor-app-font-disabled-bg': fontDisabledBackgroundColor,
         '--react-paint-editor-app-font-color': fontColor,
@@ -231,7 +248,7 @@ const Editor = ({ editorProps, className, style, options, children }: EditorProp
           gridFormat={gridFormat}
           setGridFormat={setGridFormat}
           shapes={shapesRef.current}
-          moveShapes={moveShapes}
+          swapShapes={swapShapes}
           selectedShapes={selectedShape}
           removeShape={removeShape}
           selectShapes={selectShapes}
@@ -242,7 +259,7 @@ const Editor = ({ editorProps, className, style, options, children }: EditorProp
         />
       )}
       {isZoomPanelShown && (
-        <Panel alignment='left' className='react-paint-editor-layouts-panel' data-edit={+isEditMode}>
+        <Panel alignment='left' position='bottom' className='react-paint-editor-layouts-panel' data-edit={+isEditMode}>
           <Button className='react-paint-editor-zoom-button' icon={zoomOut} onClick={() => setCanvasZoom('unzoom')} />
           <Button className='react-paint-editor-zoom-button react-paint-editor-zoom-button-value' onClick={() => setCanvasZoom('default')}>
             {Math.round(settings.canvasZoom * 100)}%
@@ -274,6 +291,25 @@ const Editor = ({ editorProps, className, style, options, children }: EditorProp
           <Loading isLoading={isLoading} />
           <SnackbarContainer snackbarList={snackbarList} />
         </>
+      )}
+      {selectionMode.mode === 'contextMenu' && withContextMenu && (
+        <ContextMenu
+          selectionMode={selectionMode}
+          settings={settings}
+          canvasRef={refs.canvas}
+          closeContextMenu={closeContextMenu}
+          selectAllShapes={selectAllShapes}
+          removeShape={removeShape}
+          moveShapes={moveShapes}
+          duplicateShapes={duplicateShapes}
+          toggleShapeLock={toggleShapeLock}
+          toggleShapeVisibility={toggleShapeVisibility}
+          setCopiedShape={setCopiedShape}
+          copiedShape={copiedShape}
+          pasteShapes={pasteShapes}
+          removeShapePoint={removeShapePoint}
+          transformShape={transformShape}
+        />
       )}
     </div>
   )

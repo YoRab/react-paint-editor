@@ -5,6 +5,8 @@ import useZoom from '@canvas/hooks/useZoom'
 import { buildDataToExport } from '@canvas/utils/data'
 import { decodeImportedData, decodeJson, downloadFile, encodeShapesInString, getCanvasImage } from '@canvas/utils/file'
 import { buildShapesGroup } from '@canvas/utils/selection'
+import { removeCurvePoint } from '@canvas/utils/shapes/curve'
+import { removePolygonPoint } from '@canvas/utils/shapes/polygon'
 import { sanitizeTools } from '@canvas/utils/tools'
 import { getNewOffset } from '@canvas/utils/zoom'
 import type { CanvasSize } from '@common/types/Canvas'
@@ -26,18 +28,29 @@ type UseReactPaintProps = {
 type EditorProps = {
   shapesRef: React.RefObject<ShapeEntity[]>
   addPictureShape: (fileOrUrl: File | string, maxWidth?: number, maxHeight?: number) => Promise<ShapeEntity>
-  moveShapes: (startPositionShapeId: string, endPositionShapeId: string) => void
+  swapShapes: (startPositionShapeId: string, endPositionShapeId: string) => void
+  moveShapes: (shapes: ShapeEntity[], action: 'first' | 'last' | 'forward' | 'backward') => void
   toggleShapeVisibility: (shapes: ShapeEntity[]) => void
   toggleShapeLock: (shapeGroup: ShapeEntity[]) => void
   canGoBackward: boolean
   canGoForward: boolean
   canClear: boolean
   selectedShape: SelectionType | undefined
+  copiedShape: SelectionType | undefined
+  setCopiedShape: React.Dispatch<React.SetStateAction<SelectionType | undefined>>
+  pasteShapes: (shapes: ShapeEntity[]) => void
   saveShapes: () => void
   removeShape: (shapes: ShapeEntity[]) => void
   updateShape: (updatedShapes: ShapeEntity[], withSave?: boolean) => void
+  duplicateShapes: (shapesToDuplicate: ShapeEntity[], translate?: boolean, selectNewOnes?: boolean) => void
   backwardShape: () => void
   forwardShape: () => void
+  removeShapePoint: (shape: ShapeEntity<'curve' | 'polygon'>, pointIndex: number) => void
+  transformShape: (
+    shapes: ShapeEntity[],
+    center: Point,
+    action: 'flipHorizontally' | 'flipVertically' | 'rotateClockwise' | 'rotateCounterclockwise'
+  ) => void
   refs: {
     canvas: React.RefObject<HTMLCanvasElement | null>
     editor: React.RefObject<HTMLElement | null>
@@ -48,6 +61,7 @@ type EditorProps = {
   height: number
   selectTool: (tool: ToolsType) => void
   selectShapes: (shapes: ShapeEntity[]) => void
+  selectAllShapes: () => void
   activeTool: ToolsType
   setActiveTool: React.Dispatch<React.SetStateAction<ToolsType>>
   setAvailableTools: React.Dispatch<React.SetStateAction<CustomTool[]>>
@@ -59,6 +73,8 @@ type EditorProps = {
   exportPicture: (view: 'fitToShapes' | 'defaultView' | 'currentZoom') => void
   exportData: () => void
   clearCanvas: () => void
+  selectionMode: SelectionModeData<number | Point>
+  setSelectionMode: React.Dispatch<React.SetStateAction<SelectionModeData<number | Point>>>
   settings: UtilsSettings
   setCanvasZoom: (action: 'unzoom' | 'zoom' | 'default') => void
   resetZoom: () => void
@@ -70,12 +86,16 @@ type EditorProps = {
     withLoadAndSave: boolean
     withUploadPicture: boolean
     withUrlPicture: boolean
+    withContextMenu: boolean
   }
 }
 
 type CanvasProps = {
   shapesRef: React.RefObject<ShapeEntity[]>
   selectedShape: SelectionType | undefined
+  copiedShape: SelectionType | undefined
+  setCopiedShape: React.Dispatch<React.SetStateAction<SelectionType | undefined>>
+  pasteShapes: (shapes: ShapeEntity[]) => void
   selectionFrame: { oldSelection: SelectionType | undefined; frame: [Point, Point] } | undefined
   hoveredShape: ShapeEntity | undefined
   addShape: (newShapes: ShapeEntity[]) => void
@@ -85,7 +105,7 @@ type CanvasProps = {
   refreshHoveredShape: (e: MouseEvent | TouchEvent, ctx: CanvasRenderingContext2D, cursorPosition: Point, isInsideMask: boolean) => void
   removeShape: (shapes: ShapeEntity[]) => void
   updateShape: (updatedShapes: ShapeEntity[], withSave?: boolean) => void
-  duplicateShapes: (shapesToDuplicate: ShapeEntity[]) => void
+  duplicateShapes: (shapesToDuplicate: ShapeEntity[], translate?: boolean, selectNewOnes?: boolean) => void
   backwardShape: () => void
   forwardShape: () => void
   saveShapes: () => void
@@ -97,6 +117,7 @@ type CanvasProps = {
   width: number
   height: number
   selectShapes: (shapes: ShapeEntity[]) => void
+  selectAllShapes: () => void
   activeTool: ToolsType
   setActiveTool: React.Dispatch<React.SetStateAction<ToolsType>>
   isEditMode: boolean
@@ -108,6 +129,7 @@ type CanvasProps = {
   isInsideComponent: boolean
   isInsideCanvas: boolean
   canvas: {
+    withContextMenu: boolean
     withSkeleton: boolean
     withFrameSelection: boolean
     canGrow: boolean
@@ -162,6 +184,7 @@ const useReactPaint = ({
     withUrlPicture,
     withSkeleton,
     withFrameSelection,
+    withContextMenu: withContextMenuFromProps,
     clearCallback,
     availableTools: availableToolsFromProps,
     canvasSelectionPadding,
@@ -173,6 +196,7 @@ const useReactPaint = ({
   } as typeof DEFAULT_OPTIONS
 
   const isEditMode = mode !== 'viewer'
+  const withContextMenu = withContextMenuFromProps && isEditMode && !disabled
 
   const editorRef = useRef<HTMLElement | null>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
@@ -263,9 +287,12 @@ const useReactPaint = ({
     selectedShape,
     selectionFrame,
     hoveredShape,
+    copiedShape,
+    setCopiedShape,
     addShapes: addShape,
     addPictureShape,
     moveShapes,
+    swapShapes,
     setSelectedShape,
     setSelectionFrame,
     refreshSelectedShapes,
@@ -279,6 +306,7 @@ const useReactPaint = ({
     saveShapes,
     toggleShapeVisibility,
     toggleShapeLock,
+    transformShape,
     canGoBackward,
     canGoForward,
     canClear
@@ -341,6 +369,18 @@ const useReactPaint = ({
     },
     [setSelectedShape, settings]
   )
+
+  const pasteShapes = useCallback(
+    (shapes: ShapeEntity[]) => {
+      addShape(shapes)
+      selectShapes(shapes)
+    },
+    [addShape, selectShapes]
+  )
+
+  const selectAllShapes = useCallback(() => {
+    selectShapes(shapesRef.current)
+  }, [selectShapes, shapesRef])
 
   const exportData = useCallback(() => {
     const content = encodeShapesInString(shapesRef.current, width, height)
@@ -419,6 +459,14 @@ const useReactPaint = ({
     }
   }, [resetCanvasWithShapeEntity, resetCanvas, defaultShapes, clearCallback])
 
+  const removeShapePoint = useCallback(
+    (shape: ShapeEntity<'curve' | 'polygon'>, pointIndex: number) => {
+      const newShape = shape.type === 'curve' ? removeCurvePoint(shape, pointIndex, settings) : removePolygonPoint(shape, pointIndex, settings)
+      updateShape([newShape], true)
+    },
+    [settings, updateShape]
+  )
+
   useEffect(() => {
     setAvailableTools(sanitizeTools(availableToolsFromProps, withUploadPicture || withUrlPicture))
   }, [availableToolsFromProps, withUploadPicture, withUrlPicture])
@@ -450,22 +498,30 @@ const useReactPaint = ({
       shapesRef,
       addPictureShape,
       moveShapes,
+      swapShapes,
       toggleShapeVisibility,
       toggleShapeLock,
+      duplicateShapes,
       canGoBackward,
       canGoForward,
       canClear,
       selectedShape,
+      copiedShape,
+      setCopiedShape,
+      pasteShapes,
       saveShapes,
       removeShape,
       updateShape,
       backwardShape,
       forwardShape,
+      removeShapePoint,
+      transformShape,
       refs,
       width,
       height,
       selectTool,
       selectShapes,
+      selectAllShapes,
       activeTool,
       setActiveTool,
       setAvailableTools,
@@ -477,6 +533,8 @@ const useReactPaint = ({
       exportPicture,
       exportData,
       clearCanvas,
+      selectionMode,
+      setSelectionMode,
       settings,
       setCanvasZoom,
       resetZoom,
@@ -487,7 +545,8 @@ const useReactPaint = ({
         withExport,
         withLoadAndSave,
         withUploadPicture,
-        withUrlPicture
+        withUrlPicture,
+        withContextMenu
       }
     },
     canvasProps: {
@@ -495,6 +554,9 @@ const useReactPaint = ({
       selectedShape,
       selectionFrame,
       hoveredShape,
+      copiedShape,
+      pasteShapes,
+      setCopiedShape,
       addShape,
       setSelectedShape,
       setSelectionFrame,
@@ -515,6 +577,7 @@ const useReactPaint = ({
       setCanvasZoom,
       resetZoom,
       selectShapes,
+      selectAllShapes,
       activeTool,
       setActiveTool,
       isInsideComponent,
@@ -523,6 +586,7 @@ const useReactPaint = ({
       canvas: {
         withSkeleton,
         withFrameSelection,
+        withContextMenu,
         canGrow,
         canShrink
       },

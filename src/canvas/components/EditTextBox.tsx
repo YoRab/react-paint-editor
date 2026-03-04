@@ -89,13 +89,18 @@ const EditTextBox = ({ disabled = false, shape, defaultValue, updateValue, saveS
     .filter(Boolean)
     .join(' ')
 
+  const isEditable = !disabled
+
   return (
+    // biome-ignore lint/a11y/useSemanticElements: contentEditable div is used to allow bounding box to fit content
     <div
       className='react-paint-editor-toolbox-edittextbox'
       ref={ref}
       data-fontbold={shape.style?.fontBold ?? false}
       data-fontitalic={shape.style?.fontItalic ?? false}
-      contentEditable={!disabled}
+      contentEditable={isEditable}
+      role='textbox'
+      tabIndex={isEditable ? 0 : undefined}
       onInput={updateContentEditable}
       style={{
         '--react-paint-editor-toolbox-edittextbox-transform': transform,

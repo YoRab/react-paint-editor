@@ -3,7 +3,7 @@ import { PICTURE_DEFAULT_SIZE } from '@canvas/constants/picture'
 import { buildDataToExport } from '@canvas/utils/data'
 import { checkPositionIntersection, checkSelectionFrameCollision, checkSelectionIntersection } from '@canvas/utils/intersect'
 import { addToSelectedShapes, applyToSelectedShape, buildShapesGroup, getSelectedShapes } from '@canvas/utils/selection'
-import { refreshShape } from '@canvas/utils/shapes/index'
+import { copyShapes, refreshShape, rotateShape } from '@canvas/utils/shapes/index'
 import { createPicture } from '@canvas/utils/shapes/picture'
 import type { Point, SelectionType, ShapeEntity, StateData } from '@common/types/Shapes'
 import { moveItemPosition } from '@common/utils/array'
@@ -26,9 +26,10 @@ const useShapes = (
   setSelectionFrame: React.Dispatch<React.SetStateAction<{ oldSelection: SelectionType | undefined; frame: [Point, Point] } | undefined>>
   refreshSelectedShapes: (ctx: CanvasRenderingContext2D, cursorPosition: Point) => void
   addShapes: (newShapes: ShapeEntity[]) => void
-  duplicateShapes: (shapesToDuplicate: ShapeEntity[]) => void
+  duplicateShapes: (shapesToDuplicate: ShapeEntity[], translate?: boolean, selectNewOnes?: boolean) => void
   addPictureShape: (fileOrUrl: File | string, maxWidth?: number, maxHeight?: number) => Promise<ShapeEntity>
-  moveShapes: (startPositionShapeId: string, endPositionShapeId: string) => void
+  swapShapes: (startPositionShapeId: string, endPositionShapeId: string) => void
+  moveShapes: (shapes: ShapeEntity[], action: 'first' | 'last' | 'forward' | 'backward') => void
   saveShapes: () => void
   setSelectedShape: React.Dispatch<React.SetStateAction<SelectionType | undefined>>
   refreshHoveredShape: (e: MouseEvent | TouchEvent, ctx: CanvasRenderingContext2D, cursorPosition: Point, isInsideMask: boolean) => void
@@ -36,21 +37,30 @@ const useShapes = (
   toggleShapeLock: (shapeGroup: ShapeEntity[]) => void
   removeShape: (shapes: ShapeEntity[]) => void
   updateShape: (updatedShapes: ShapeEntity[], withSave?: boolean) => void
+  transformShape: (
+    shapes: ShapeEntity[],
+    center: Point,
+    action: 'flipHorizontally' | 'flipVertically' | 'rotateClockwise' | 'rotateCounterclockwise'
+  ) => void
   backwardShape: () => void
   forwardShape: () => void
   clearShapes: (shapesToInit: ShapeEntity[], options: { clearHistory: boolean; source: 'user' | 'remote' }) => void
   canGoBackward: boolean
   canGoForward: boolean
   canClear: boolean
+  copiedShape: SelectionType | undefined
+  setCopiedShape: React.Dispatch<React.SetStateAction<SelectionType | undefined>>
 } => {
   const shapesRef = useRef<ShapeEntity[]>([])
+  const selectedShapeRef = useRef<SelectionType | undefined>(undefined)
   const listeners = useRef<{
     dataChanged: ((data: StateData, source: 'user' | 'remote') => void)[]
   }>({ dataChanged: [] })
 
   const [selectionFrame, setSelectionFrame] = useState<{ oldSelection: SelectionType | undefined; frame: [Point, Point] } | undefined>(undefined)
-  const [selectedShape, setSelectedShape] = useState<SelectionType | undefined>(undefined)
+  const [selectedShape, setSelectedShapeState] = useState<SelectionType | undefined>(undefined)
   const [hoveredShape, setHoveredShape] = useState<ShapeEntity | undefined>(undefined)
+  const [copiedShape, setCopiedShape] = useState<SelectionType | undefined>(undefined)
   const [savedShapes, setSavedShapes] = useState<{
     states: {
       shapes: ShapeEntity[]
@@ -62,6 +72,18 @@ const useShapes = (
     states: [{ shapes: [], selectedShape: undefined, source: 'remote' }],
     cursor: 0
   })
+
+  const setSelectedShape = useCallback(
+    (newSelectedShape: SelectionType | undefined | ((prevSelectedShape: SelectionType | undefined) => SelectionType | undefined)) => {
+      if (typeof newSelectedShape === 'function') {
+        selectedShapeRef.current = newSelectedShape(selectedShapeRef.current)
+      } else {
+        selectedShapeRef.current = newSelectedShape
+      }
+      setSelectedShapeState(selectedShapeRef.current)
+    },
+    []
+  )
 
   const canGoBackward = savedShapes.cursor > 0
   const canGoForward = savedShapes.cursor < savedShapes.states.length - 1
@@ -76,34 +98,40 @@ const useShapes = (
               ...prevSavedShaped.states.slice(0, prevSavedShaped.cursor + 1),
               {
                 shapes: shapesRef.current,
-                selectedShape,
+                selectedShape: selectedShapeRef.current,
                 source: 'user'
               }
             ],
             cursor: prevSavedShaped.cursor + 1
           }
     })
-  }, [selectedShape])
+  }, [])
 
   const addShapes = useCallback((newShapes: ShapeEntity[]) => {
     shapesRef.current = [...newShapes, ...shapesRef.current]
   }, [])
 
-  const duplicateShapes = useCallback((shapesToDuplicate: ShapeEntity[]) => {
-    shapesRef.current = shapesRef.current.flatMap(marker => {
-      const originalShape = shapesToDuplicate.find(shape => shape.id === marker.id)
-      if (originalShape) {
-        return [
-          {
-            ...originalShape,
-            id: uniqueId(`${marker.type}_`)
-          },
-          marker
-        ]
-      }
-      return marker
-    })
-  }, [])
+  const duplicateShapes = useCallback(
+    (shapesToDuplicate: ShapeEntity[], translate = false, selectNewOnes = false) => {
+      const newShapes: ShapeEntity[] = []
+      shapesRef.current = shapesRef.current.flatMap(marker => {
+        const originalShape = shapesToDuplicate.find(shape => shape.id === marker.id)
+        if (originalShape) {
+          const newShape = translate
+            ? copyShapes(buildShapesGroup([originalShape], settings)!, settings)[0]!
+            : {
+                ...originalShape,
+                id: uniqueId(`${marker.type}_`)
+              }
+          newShapes.push(newShape)
+          return [newShape, marker]
+        }
+        return marker
+      })
+      if (selectNewOnes) setSelectedShape(buildShapesGroup(newShapes, settings))
+    },
+    [settings, setSelectedShape]
+  )
 
   const refreshHoveredShape = useCallback(
     (e: MouseEvent | TouchEvent, ctx: CanvasRenderingContext2D, cursorPosition: Point, isInsideMask: boolean) => {
@@ -153,7 +181,7 @@ const useShapes = (
       )
       withSave && saveShapes()
     },
-    [saveShapes, settings]
+    [saveShapes, setSelectedShape, settings]
   )
 
   const resetShapes = useCallback(
@@ -176,17 +204,20 @@ const useShapes = (
       shapesRef.current = shapesRef.current.filter(item => !shapeIds?.has(item.id))
       saveShapes()
     },
-    [saveShapes]
+    [saveShapes, setSelectedShape]
   )
 
-  const moveCursor = useCallback((getNewCursor: (shapes: typeof savedShapes) => number) => {
-    setSavedShapes(prevSavedShaped => {
-      const newCursor = getNewCursor(prevSavedShaped)
-      shapesRef.current = prevSavedShaped.states[newCursor]?.shapes ?? []
-      setSelectedShape(prevSavedShaped.states[newCursor]?.selectedShape)
-      return set('cursor', newCursor, prevSavedShaped)
-    })
-  }, [])
+  const moveCursor = useCallback(
+    (getNewCursor: (shapes: typeof savedShapes) => number) => {
+      setSavedShapes(prevSavedShaped => {
+        const newCursor = getNewCursor(prevSavedShaped)
+        shapesRef.current = prevSavedShaped.states[newCursor]?.shapes ?? []
+        setSelectedShape(prevSavedShaped.states[newCursor]?.selectedShape)
+        return set('cursor', newCursor, prevSavedShaped)
+      })
+    },
+    [setSelectedShape]
+  )
 
   const backwardShape = useCallback(() => {
     moveCursor(prevSavedShaped => Math.max(0, prevSavedShaped.cursor - 1))
@@ -196,36 +227,39 @@ const useShapes = (
     moveCursor(prevSavedShaped => Math.min(prevSavedShaped.states.length - 1, prevSavedShaped.cursor + 1))
   }, [moveCursor])
 
-  const clearShapes = useCallback((shapesToInit: ShapeEntity[], options: { clearHistory: boolean; source: 'user' | 'remote' }) => {
-    setSelectedShape(undefined)
-    shapesRef.current = shapesToInit
-    setSavedShapes(prevSavedShaped => {
-      return options.clearHistory
-        ? {
-            states: [
-              {
-                shapes: shapesToInit,
-                selectedShape: undefined,
-                source: options.source
-              }
-            ],
-            cursor: 0
-          }
-        : {
-            states: [
-              ...prevSavedShaped.states.slice(0, prevSavedShaped.cursor + 1),
-              {
-                shapes: shapesToInit,
-                selectedShape: undefined,
-                source: options.source
-              }
-            ],
-            cursor: prevSavedShaped.cursor + 1
-          }
-    })
-  }, [])
+  const clearShapes = useCallback(
+    (shapesToInit: ShapeEntity[], options: { clearHistory: boolean; source: 'user' | 'remote' }) => {
+      setSelectedShape(undefined)
+      shapesRef.current = shapesToInit
+      setSavedShapes(prevSavedShaped => {
+        return options.clearHistory
+          ? {
+              states: [
+                {
+                  shapes: shapesToInit,
+                  selectedShape: undefined,
+                  source: options.source
+                }
+              ],
+              cursor: 0
+            }
+          : {
+              states: [
+                ...prevSavedShaped.states.slice(0, prevSavedShaped.cursor + 1),
+                {
+                  shapes: shapesToInit,
+                  selectedShape: undefined,
+                  source: options.source
+                }
+              ],
+              cursor: prevSavedShaped.cursor + 1
+            }
+      })
+    },
+    [setSelectedShape]
+  )
 
-  const moveShapes = useCallback(
+  const swapShapes = useCallback(
     (startPositionShapeId: string, endPositionShapeId: string) => {
       const shapes = shapesRef.current
       const startPositionShapeIndex = shapes.findIndex(shape => shape.id === startPositionShapeId)
@@ -236,40 +270,128 @@ const useShapes = (
     [resetShapes]
   )
 
+  const moveShapes = useCallback(
+    (selectedShapes: ShapeEntity[], action: 'first' | 'last' | 'forward' | 'backward') => {
+      const shapes = [...shapesRef.current]
+      const selectedIds = new Set(selectedShapes.map(s => s.id))
+      const selectedIndices = shapes.map((s, i) => (selectedIds.has(s.id) ? i : -1)).filter(i => i >= 0)
+
+      if (selectedIndices.length === 0) return
+
+      switch (action) {
+        case 'first':
+        case 'last': {
+          const selected = selectedIndices.map(i => shapes[i]!).filter(Boolean)
+          const rest = shapes.filter((_, i) => !selectedIndices.includes(i))
+          resetShapes(action === 'first' ? [...selected, ...rest] : [...rest, ...selected])
+          break
+        }
+
+        case 'backward': {
+          let newShapes = [...shapes]
+          const idsByOriginalIndex = selectedIndices.sort((a, b) => b - a).map(i => shapes[i]!.id)
+          for (const id of idsByOriginalIndex) {
+            const from = newShapes.findIndex(s => s.id === id)
+            if (from < newShapes.length - 1) {
+              const to = from + 1
+              if (!selectedIds.has(newShapes[to]!.id)) {
+                newShapes = moveItemPosition(newShapes, from, to)
+              }
+            }
+          }
+          resetShapes(newShapes)
+          break
+        }
+        case 'forward': {
+          let newShapes = [...shapes]
+          const idsByOriginalIndex = selectedIndices.sort((a, b) => a - b).map(i => shapes[i]!.id)
+          for (const id of idsByOriginalIndex) {
+            const from = newShapes.findIndex(s => s.id === id)
+            if (from > 0) {
+              const to = from - 1
+              if (!selectedIds.has(newShapes[to]!.id)) {
+                newShapes = moveItemPosition(newShapes, from, to)
+              }
+            }
+          }
+          resetShapes(newShapes)
+          break
+        }
+      }
+    },
+    [resetShapes]
+  )
+
+  const transformShape = useCallback(
+    (selectedShapes: ShapeEntity[], center: Point, action: 'flipHorizontally' | 'flipVertically' | 'rotateClockwise' | 'rotateCounterclockwise') => {
+      const shapeIds = new Set(selectedShapes.map(item => item.id))
+      const newShapes = shapesRef.current.map(shape => {
+        if (shapeIds.has(shape.id)) {
+          return refreshShape(rotateShape(shape, action === 'rotateClockwise' ? Math.PI / 2 : -Math.PI / 2, center), settings)
+        }
+        return shape
+      })
+      setSelectedShape(
+        buildShapesGroup(
+          newShapes.filter(shape => shapeIds.has(shape.id)),
+          settings
+        )
+      )
+      resetShapes(newShapes)
+    },
+    [settings, resetShapes, setSelectedShape]
+  )
+
   const toggleShapeVisibility = useCallback(
     (shapes: ShapeEntity[]) => {
-      const shapesToUpdate = shapesRef.current
       const shapeIds = new Set(shapes.map(item => item.id))
-      const newShapes = shapesToUpdate.map(shape => {
+      const newShapes = shapesRef.current.map(shape => {
         if (shapeIds.has(shape.id)) {
           return set('visible', shape.visible === false, shape)
         }
         return shape
       })
 
-      setSelectedShape(applyToSelectedShape(shape => set('visible', shape.visible === false, shape), settings))
+      setSelectedShape(old =>
+        buildShapesGroup(
+          newShapes.filter(shape =>
+            getSelectedShapes(old)
+              ?.map(oldShape => oldShape.id)
+              .includes(shape.id)
+          ),
+          settings
+        )
+      )
 
       resetShapes(newShapes)
     },
-    [resetShapes, settings]
+    [resetShapes, settings, setSelectedShape]
   )
 
   const toggleShapeLock = useCallback(
     (shapeGroup: ShapeEntity[]) => {
-      const shapes = shapesRef.current
       const shapeIds = new Set(shapeGroup.map(item => item.id))
-      const newShapes = shapes.map(shape => {
+      const newShapes = shapesRef.current.map(shape => {
         if (shapeIds.has(shape.id)) {
           return set('locked', !shape.locked, shape)
         }
         return shape
       })
 
-      setSelectedShape(applyToSelectedShape(shape => set('locked', !shape.locked, shape), settings))
+      setSelectedShape(old =>
+        buildShapesGroup(
+          newShapes.filter(shape =>
+            getSelectedShapes(old)
+              ?.map(oldShape => oldShape.id)
+              .includes(shape.id)
+          ),
+          settings
+        )
+      )
 
       resetShapes(newShapes)
     },
-    [resetShapes, settings]
+    [resetShapes, settings, setSelectedShape]
   )
 
   const registerEvent = useCallback((event: 'dataChanged', fn: (data: StateData, source: 'user' | 'remote') => void) => {
@@ -307,7 +429,7 @@ const useShapes = (
             settings
           )
     )
-  }, [settings])
+  }, [settings, setSelectedShape])
 
   const refreshSelectedShapes = useCallback(
     (ctx: CanvasRenderingContext2D, cursorPosition: Point) => {
@@ -323,7 +445,7 @@ const useShapes = (
         return { oldSelection: prev?.oldSelection, frame: newSelectionFrame }
       })
     },
-    [settings, isShiftPressed]
+    [settings, isShiftPressed, setSelectedShape]
   )
 
   return {
@@ -334,11 +456,14 @@ const useShapes = (
     hoveredShape,
     selectionFrame,
     setSelectionFrame,
+    copiedShape,
+    setCopiedShape,
     refreshSelectedShapes,
     addShapes,
     duplicateShapes,
     addPictureShape,
     moveShapes,
+    swapShapes,
     saveShapes,
     setSelectedShape,
     refreshHoveredShape,
@@ -346,6 +471,7 @@ const useShapes = (
     toggleShapeLock,
     removeShape,
     updateShape: updateShapes,
+    transformShape,
     backwardShape,
     forwardShape,
     clearShapes,

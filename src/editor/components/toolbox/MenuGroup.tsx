@@ -1,24 +1,19 @@
-import type { ShapeType } from '@common/types/Shapes'
 import type { ToolsType } from '@common/types/tools'
+import { menuIcon } from '@editor/constants/icons'
 import Button from '@editor/components/common/Button'
-import Panel from '@editor/components/common/Panel'
+import Menu from '@editor/components/common/Menu'
 import { publicIcon } from '@editor/constants/icons'
 import { CLEAR_TOOL, EXPORT_TOOL, LOAD_TOOL, REDO_TOOL, SAVE_TOOL, UNDO_TOOL, UPLOAD_PICTURE_TOOL } from '@editor/constants/tools'
-import { useEffect, useState, useTransition } from 'react'
+import { useRef } from 'react'
 import LoadFileTool from './LoadFileTool'
 import './MenuGroup.css'
 import Tool from './Tool'
+import useMenu from '@editor/hooks/useMenu'
 
 type MenuGroupType = {
   activeTool: ToolsType
   withActionsInMenu: boolean
-  group: {
-    tools?: ShapeType[]
-    title: string
-    img: string
-  }
   vertical?: boolean
-  alignment?: 'left' | 'center' | 'right'
   title?: string
   disabled?: boolean
   img?: string
@@ -48,63 +43,35 @@ const MenuGroup = ({
   undoAction,
   redoAction,
   clearCanvas,
-  alignment,
-  group,
-  vertical = false,
   disabled = false,
   withLoadAndSave,
   withExport,
-  addPicture: addPictureFromProps,
-  loadFile: loadFileFromProps,
+  addPicture,
+  loadFile,
   togglePictureUrlModal,
   saveFile,
   toggleExportModal,
   withUploadPicture,
   withUrlPicture
 }: MenuGroupType) => {
-  const [isOpen, setIsOpen] = useState(false)
-  const [, startTransition] = useTransition()
+  const buttonRef = useRef<HTMLDivElement>(null)
+  const { isOpen, closeMenu } = useMenu({ buttonElt: buttonRef.current })
 
-  const loadFile = (file: File) => {
-    setIsOpen(false)
-    loadFileFromProps(file)
-  }
-
-  const addPicture = async (file: File) => {
-    setIsOpen(false)
-    await addPictureFromProps(file)
-  }
-
-  const openPanel = () => {
-    startTransition(() => {
-      setIsOpen(true)
-    })
-  }
-
-  const isActive = group?.tools?.some(tool => tool === activeTool.type)
-
-  const groupIcon = (isActive ? activeTool.icon : group.img) ?? group.title
-
-  useEffect(() => {
-    if (!isOpen) return
-
-    const closePanel = () => {
-      setIsOpen(false)
+  const triggerAndCloseMenu =
+    <T extends unknown[]>(callback: (...args: T) => void | Promise<void>) =>
+    async (...args: T) => {
+      await callback(...args)
+      closeMenu()
     }
-    document.addEventListener('click', closePanel)
-    return () => {
-      document.removeEventListener('click', closePanel)
-    }
-  }, [isOpen])
 
   const withMenu = withActionsInMenu || withUploadPicture || withUrlPicture || withLoadAndSave || withExport
 
   return withMenu ? (
     <div className='react-paint-editor-toolbox-relative'>
-      <Button selected={isActive} title={group.title} disabled={disabled} onClick={openPanel} icon={groupIcon} />
-      {isOpen && (
-        <Panel alignment={alignment} position='top'>
-          <div className='react-paint-editor-toolbox-panel-content' data-vertical={+vertical}>
+      <div ref={buttonRef}>
+        <Button title='Menu' disabled={disabled} icon={menuIcon} />
+        {isOpen && (
+          <Menu alignment='right' position='top'>
             {withActionsInMenu && (
               <>
                 <Tool
@@ -113,7 +80,7 @@ const MenuGroup = ({
                   disabled={disabled || !hasActionToUndo}
                   img={UNDO_TOOL.icon}
                   isActive={activeTool.id === UNDO_TOOL.id}
-                  setActive={undoAction}
+                  setActive={triggerAndCloseMenu(undoAction)}
                 />
                 <Tool
                   withText={true}
@@ -121,7 +88,7 @@ const MenuGroup = ({
                   disabled={disabled || !hasActionToRedo}
                   img={REDO_TOOL.icon}
                   isActive={activeTool.id === REDO_TOOL.id}
-                  setActive={redoAction}
+                  setActive={triggerAndCloseMenu(redoAction)}
                 />
                 <Tool
                   withText={true}
@@ -129,7 +96,7 @@ const MenuGroup = ({
                   disabled={disabled || !hasActionToClear}
                   img={CLEAR_TOOL.icon}
                   isActive={activeTool.id === CLEAR_TOOL.id}
-                  setActive={clearCanvas}
+                  setActive={triggerAndCloseMenu(clearCanvas)}
                 />
                 {(withUploadPicture || withUrlPicture || withLoadAndSave) && <hr />}
               </>
@@ -140,13 +107,19 @@ const MenuGroup = ({
                 withText={true}
                 type={UPLOAD_PICTURE_TOOL}
                 disabled={disabled}
-                loadFile={addPicture}
+                loadFile={triggerAndCloseMenu(addPicture)}
                 img={UPLOAD_PICTURE_TOOL.icon}
                 accept='image/png, image/gif, image/jpeg, image/svg+xml, image/webp'
               />
             )}
             {withUrlPicture && (
-              <Button disabled={disabled} selected={false} onClick={togglePictureUrlModal} title='Add picture from URL' icon={publicIcon}>
+              <Button
+                disabled={disabled}
+                selected={false}
+                onClick={triggerAndCloseMenu(togglePictureUrlModal)}
+                title='Add picture from URL'
+                icon={publicIcon}
+              >
                 Add picture from URL
               </Button>
             )}
@@ -158,7 +131,7 @@ const MenuGroup = ({
                   withText={true}
                   type={LOAD_TOOL}
                   disabled={disabled}
-                  loadFile={loadFile}
+                  loadFile={triggerAndCloseMenu(loadFile)}
                   img={LOAD_TOOL.icon}
                   accept='application/JSON'
                 />
@@ -169,7 +142,7 @@ const MenuGroup = ({
                   type={SAVE_TOOL}
                   img={SAVE_TOOL.icon}
                   isActive={activeTool.id === SAVE_TOOL.id}
-                  setActive={saveFile}
+                  setActive={triggerAndCloseMenu(saveFile)}
                 />
               </>
             )}
@@ -180,12 +153,12 @@ const MenuGroup = ({
                 type={EXPORT_TOOL}
                 img={EXPORT_TOOL.icon}
                 isActive={activeTool.id === EXPORT_TOOL.id}
-                setActive={toggleExportModal}
+                setActive={triggerAndCloseMenu(toggleExportModal)}
               />
             )}
-          </div>
-        </Panel>
-      )}
+          </Menu>
+        )}
+      </div>
     </div>
   ) : null
 }

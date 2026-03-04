@@ -8,10 +8,10 @@ type useDragType = {
   layoutDragging: string | undefined
   setLayoutDragging: (shapeId: string | undefined) => void
   handleSelect: (shape: ShapeEntity[]) => void
-  onMoveShapes: (firstShapeId: string, lastShapeId: string) => void
+  onSwapShapes: (firstShapeId: string, lastShapeId: string) => void
 }
 
-const useDrag = ({ disabled = false, ref, shape, layoutDragging, setLayoutDragging, handleSelect, onMoveShapes }: useDragType) => {
+const useDrag = ({ disabled = false, ref, shape, layoutDragging, setLayoutDragging, handleSelect, onSwapShapes }: useDragType) => {
   const [isOver, setIsOver] = useState(false)
 
   useEffect(() => {
@@ -53,7 +53,7 @@ const useDrag = ({ disabled = false, ref, shape, layoutDragging, setLayoutDraggi
     const handleDrop = (e: DragEvent) => {
       e.stopPropagation() // stops the browser from redirecting.
       if (e.dataTransfer) {
-        onMoveShapes(e.dataTransfer.getData('draggableShapeId'), shape.id)
+        onSwapShapes(e.dataTransfer.getData('draggableShapeId'), shape.id)
       }
       return false
     }
@@ -76,7 +76,7 @@ const useDrag = ({ disabled = false, ref, shape, layoutDragging, setLayoutDraggi
         layoutRef.removeEventListener('drop', handleDrop)
       }
     }
-  }, [disabled, ref, shape, setLayoutDragging, handleSelect, onMoveShapes, layoutDragging])
+  }, [disabled, ref, shape, setLayoutDragging, handleSelect, onSwapShapes, layoutDragging])
 
   return { isOver }
 }

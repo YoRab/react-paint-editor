@@ -45,6 +45,13 @@ export type SelectionModeTranslate = {
   dateStart: number
 }
 
+export type SelectionModeContextMenu<AnchorType extends Point | number = Point> = {
+  mode: 'contextMenu'
+  cursorStartPosition: Point
+  originalShape: SelectionType | undefined
+  anchor: AnchorType | undefined
+}
+
 export type SelectionModeData<AnchorType extends Point | number> =
   | SelectionModeDefault
   | SelectionModeSelectionFrame
@@ -54,6 +61,7 @@ export type SelectionModeData<AnchorType extends Point | number> =
   | SelectionModeTranslate
   | SelectionModeEditText
   | SelectionModePreview
+  | SelectionModeContextMenu<AnchorType>
 
 export type HoverModeData = { outOfView?: boolean } & (
   | {

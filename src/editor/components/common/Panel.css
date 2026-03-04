@@ -29,6 +29,16 @@
   bottom: 100%;
 }
 
+.react-paint-editor-panel[data-position='right'] {
+  left: 100%;
+  top: 0;
+}
+
+.react-paint-editor-panel[data-position='left'] {
+  right: 100%;
+  top: 0;
+}
+
 .react-paint-editor-panel[data-position='top'] {
   top: 100%;
 }

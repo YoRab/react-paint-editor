@@ -3,7 +3,6 @@ import { DEFAULT_CANVAS_OPTIONS } from '@canvas/constants/app'
 import useKeyboard from '@canvas/hooks/useKeyboard'
 import type { UseReactPaintReturnType } from '@canvas/hooks/useReactPaint'
 import useResizeObserver from '@canvas/hooks/useResizeObserver'
-import type { ShapeEntity } from '@common/types/Shapes'
 import { type CSSProperties, useCallback, useRef } from 'react'
 import './index.css'
 
@@ -25,6 +24,7 @@ const App = ({ options, className, style, canvasProps }: AppProps) => {
     hoveredShape,
     addShape,
     setSelectedShape,
+    selectAllShapes,
     setSelectionFrame,
     refreshSelectedShapes,
     refreshHoveredShape,
@@ -40,13 +40,13 @@ const App = ({ options, className, style, canvasProps }: AppProps) => {
     settings,
     setCanvasSize,
     setCanvasOffset,
-    selectShapes,
+    pasteShapes,
     activeTool,
     setActiveTool,
     isInsideComponent,
     isInsideCanvas,
     isEditMode,
-    canvas: { withSkeleton, withFrameSelection, canGrow, canShrink },
+    canvas: { withSkeleton, withFrameSelection, withContextMenu, canGrow, canShrink },
     canvasOffsetStartData,
     setCanvasOffsetStartData,
     selectionMode,
@@ -55,6 +55,8 @@ const App = ({ options, className, style, canvasProps }: AppProps) => {
     isShiftPressed,
     isAltPressed,
     isSpacePressed,
+    copiedShape,
+    setCopiedShape,
     setShiftPressed,
     setAltPressed,
     setCanvasZoom,
@@ -68,14 +70,6 @@ const App = ({ options, className, style, canvasProps }: AppProps) => {
   } as typeof DEFAULT_CANVAS_OPTIONS
 
   const containerRef = useRef<HTMLDivElement>(null)
-
-  const pasteShapes = useCallback(
-    (shapes: ShapeEntity[]) => {
-      addShape(shapes)
-      selectShapes(shapes)
-    },
-    [addShape, selectShapes]
-  )
 
   const onResized = useCallback(
     (measuredWidth: number) => {
@@ -92,6 +86,9 @@ const App = ({ options, className, style, canvasProps }: AppProps) => {
     isEditingText: selectionMode.mode === 'textedition',
     settings,
     selectedShape,
+    copiedShape,
+    setCopiedShape,
+    selectAllShapes,
     setSelectedShape,
     removeShape,
     pasteShapes,
@@ -127,9 +124,11 @@ const App = ({ options, className, style, canvasProps }: AppProps) => {
       <Canvas
         duplicateShapes={duplicateShapes}
         isSpacePressed={isSpacePressed}
+        withContextMenu={withContextMenu}
         ref={refs.canvas}
         canGrow={canGrow}
         isInsideComponent={isInsideComponent}
+        isInsideCanvas={isInsideCanvas}
         activeTool={activeTool}
         setActiveTool={setActiveTool}
         canvasOffsetStartData={canvasOffsetStartData}

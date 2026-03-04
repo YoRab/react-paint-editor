@@ -91,6 +91,7 @@ import LinkTo from '@storybook/addon-links/react';
         <li><code>shapesRef</code> - React ref containing current shapes array</li>
         <li><code>addPictureShape</code> - Function to add a picture shape</li>
         <li><code>moveShapes</code> - Function to move shapes in layer order</li>
+        <li><code>swapShapes</code> - Function to swap 2 shapes in layer order</li>
         <li><code>toggleShapeVisibility</code> - Function to toggle shape visibility</li>
         <li><code>toggleShapeLock</code> - Function to toggle shape lock state</li>
         <li><code>canGoBackward</code> - Boolean indicating if undo is available</li>
@@ -461,6 +462,15 @@ import LinkTo from '@storybook/addon-links/react';
             <td><code>withSkeleton</code></td>
             <td><code>boolean</code></td>
             <td>Display skeleton when hovering shapes</td>
+            <td><code>true</code></td>
+          </tr>
+          <tr>
+            <td><code>withContextMenu</code></td>
+            <td><code>boolean</code></td>
+            <td>
+              Enable right-click context menu on the canvas and current selection. Set to <code>false</code> to disable the context menu entirely
+              (useful if you want to handle right-click yourself).
+            </td>
             <td><code>true</code></td>
           </tr>
           <tr>
@@ -888,7 +898,8 @@ function MyPaintApp() {
     canGrow: true,
     grid: 20,
     withExport: true,
-    brushAlgo: 'quadratic'
+    brushAlgo: 'quadratic',
+    withContextMenu: true // set to false to disable the built-in context menu
   }
 })`} />
 

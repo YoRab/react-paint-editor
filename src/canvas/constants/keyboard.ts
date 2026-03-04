@@ -10,6 +10,8 @@ export const KeyboardCode = {
   Alt: 'Alt',
   Option: 'Option',
   Space: ' ',
+  A: 'A',
+  a: 'a',
   z: 'z',
   Z: 'Z',
   y: 'y',
@@ -20,6 +22,7 @@ export const KeyboardCode = {
 } as const
 
 export const KeyboardCommand = {
+  Cut: 'cut',
   Copy: 'copy',
   Paste: 'paste'
 } as const

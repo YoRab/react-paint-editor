@@ -63,7 +63,7 @@ const RangeField = ({
     <>
       <Button selected={isPanelVisible} title={title} disabled={disabled} icon={icon} onClick={togglePanel} />
       {isPanelVisible && (
-        <Panel title={title} alignment='left' fitContainer={true}>
+        <Panel title={title} alignment='left' fitContainer position='bottom'>
           <div>
             <label className='react-paint-editor-rangefield'>
               <input

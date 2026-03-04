@@ -1,0 +1,4 @@
+.react-paint-editor-menu {
+    display: flex;
+    flex-direction: column;
+}

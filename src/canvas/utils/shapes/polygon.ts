@@ -124,3 +124,13 @@ export const addPolygonPoint = (
 
   return buildPath(updatedShape, settings)
 }
+
+export const removePolygonPoint = (shape: ShapeEntity<'polygon'>, pointIndex: number, settings: UtilsSettings): ShapeEntity<'polygon'> => {
+  if (pointIndex < 0 || pointIndex > shape.points.length - 1) return shape
+
+  const updatedShape = {
+    ...shape,
+    points: shape.points.filter((_, index) => index !== pointIndex)
+  }
+  return buildPath(updatedShape, settings)
+}
