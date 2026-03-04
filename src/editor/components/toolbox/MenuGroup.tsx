@@ -1,14 +1,13 @@
 import type { ToolsType } from '@common/types/tools'
-import { menuIcon } from '@editor/constants/icons'
 import Button from '@editor/components/common/Button'
 import Menu from '@editor/components/common/Menu'
-import { publicIcon } from '@editor/constants/icons'
+import { menuIcon, publicIcon } from '@editor/constants/icons'
 import { CLEAR_TOOL, EXPORT_TOOL, LOAD_TOOL, REDO_TOOL, SAVE_TOOL, UNDO_TOOL, UPLOAD_PICTURE_TOOL } from '@editor/constants/tools'
 import { useRef } from 'react'
 import LoadFileTool from './LoadFileTool'
 import './MenuGroup.css'
-import Tool from './Tool'
 import useMenu from '@editor/hooks/useMenu'
+import Tool from './Tool'
 
 type MenuGroupType = {
   activeTool: ToolsType

@@ -75,6 +75,6 @@
   align-items: center;
 }
 
-.react-paint-editor-button-children+.react-paint-editor-button-icon {
+.react-paint-editor-button-children + .react-paint-editor-button-icon {
   margin-left: 12px;
 }

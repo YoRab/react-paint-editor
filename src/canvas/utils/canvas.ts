@@ -42,12 +42,7 @@ export const updateCanvasContext = (
   ctx.shadowBlur = shadowBlur
 }
 
-export const transformCanvas = (
-  ctx: CanvasRenderingContext2D,
-  settings: UtilsSettings,
-  rotation?: number,
-  translation?: Point
-): void => {
+export const transformCanvas = (ctx: CanvasRenderingContext2D, settings: UtilsSettings, rotation?: number, translation?: Point): void => {
   ctx.save()
   ctx.scale(settings.canvasSize.scaleRatio, settings.canvasSize.scaleRatio)
   ctx.translate(settings.canvasOffset[0], settings.canvasOffset[1])

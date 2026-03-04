@@ -10,8 +10,8 @@ import type { DrawableShape, Line, Point, Rect, SelectionType, ShapeEntity, Styl
 import type { ToolsSettingsType } from '@common/types/tools'
 import { set } from '@common/utils/object'
 import { uniqueId } from '@common/utils/util'
-import { type GroupResizeContext, getPositionWithoutGroupRotation, getShapePositionInNewBorder } from './group'
 import { refreshCurve } from './curve'
+import { type GroupResizeContext, getPositionWithoutGroupRotation, getShapePositionInNewBorder } from './group'
 import { refreshPolygon } from './polygon'
 import { createTriangle, drawTriangle } from './triangle'
 

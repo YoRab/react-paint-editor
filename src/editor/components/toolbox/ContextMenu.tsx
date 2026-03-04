@@ -1,15 +1,14 @@
 import type { UtilsSettings } from '@canvas/constants/app'
 import './ContextMenu.css'
+import { buildShapesGroup, getSelectedShapes } from '@canvas/utils/selection'
+import { copyShapes } from '@canvas/utils/shapes'
 import type { SelectionModeContextMenu } from '@common/types/Mode'
 import type { Point, SelectionType, ShapeEntity } from '@common/types/Shapes'
 import Button from '@editor/components/common/Button'
 import Menu from '@editor/components/common/Menu'
-import { useEffect, useRef, useState } from 'react'
-import useMenu from '@editor/hooks/useMenu'
 import { rightChevronIcon } from '@editor/constants/icons'
-import { getSelectedShapes } from '@canvas/utils/selection'
-import { copyShapes } from '@canvas/utils/shapes'
-import { buildShapesGroup } from '@canvas/utils/selection'
+import useMenu from '@editor/hooks/useMenu'
+import { useEffect, useRef, useState } from 'react'
 
 const TOOLBAR_SIZE = 36
 const BUTTON_HEIGHT = 36
