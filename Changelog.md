@@ -2,6 +2,14 @@
 
 For more details and links to Pull requests, see [Releases](https://github.com/YoRab/react-paint-editor/releases)
 
+## V0.17.0
+- add "cut" feature usable with CTRL+X
+- add "select all" feature, usable with CTRL+A
+- add context menu into editor showing up with right click or long press and including : select all, organize (move forward, backward, on first, on last), transform (rotate clockwise, counterclockwise), cut, copy, paste, duplicate, show/hide, delete
+- add possibility to remove selected point on curve or polygon with context menu
+- fix fontRadius editor option not being applied
+- fix wrong state for selected shape being saved and restored when using undo/redo
+
 ## V0.16.3
 - fix shape selection now less depending of what is currently selected
 - fix shift command conflict between grouping and translating
