@@ -229,7 +229,7 @@ const calculateRectSelectionData = ({
   borderY: number
   borderHeight: number
   center: Point
-  originalShape: DrawableShape
+  originalShape: ShapeEntity
 }) => {
   const centerVector = [borderX + borderWidth / 2 - center[0], borderY + borderHeight / 2 - center[1]] as Point
 
@@ -247,15 +247,19 @@ const calculateRectSelectionData = ({
 }
 
 const adjustRectSelectionFromCenter = (
-  data: { borderX: number; borderWidth: number; borderY: number; borderHeight: number; center: Point; originalShape: DrawableShape },
-  borders: Rect,
+  data: { borderX: number; borderWidth: number; borderY: number; borderHeight: number; center: Point; originalShape: ShapeEntity },
+  originalBorders: Rect,
   isXinverted: boolean,
   isYinverted: boolean
 ) => {
-  const originalCenterX = borders.x + borders.width / 2
-  const originalCenterY = borders.y + borders.height / 2
-  const newWidth = isXinverted ? data.borderWidth * 2 + borders.width : Math.abs(borders.width + (data.borderWidth - borders.width) * 2)
-  const newHeight = isYinverted ? data.borderHeight * 2 + borders.height : Math.abs(borders.height + (data.borderHeight - borders.height) * 2)
+  const originalCenterX = originalBorders.x + originalBorders.width / 2
+  const originalCenterY = originalBorders.y + originalBorders.height / 2
+  const newWidth = isXinverted
+    ? data.borderWidth * 2 + originalBorders.width
+    : Math.abs(originalBorders.width + (data.borderWidth - originalBorders.width) * 2)
+  const newHeight = isYinverted
+    ? data.borderHeight * 2 + originalBorders.height
+    : Math.abs(originalBorders.height + (data.borderHeight - originalBorders.height) * 2)
 
   return {
     ...data,
@@ -263,6 +267,75 @@ const adjustRectSelectionFromCenter = (
     borderWidth: newWidth,
     borderX: originalCenterX - newWidth / 2,
     borderY: originalCenterY - newHeight / 2
+  }
+}
+
+const resizeRectSelectionFromCenterWithRatio = ({
+  roundCursorPosition,
+  borders,
+  center,
+  selectionMode,
+  originalShape,
+  settings
+}: {
+  roundCursorPosition: Point
+  borders: Rect
+  center: Point
+  selectionMode: SelectionModeResize
+  originalShape: ShapeEntity
+  settings: UtilsSettings
+}) => {
+  const { selectionPadding } = settings
+
+  const originalWidthWithoutPadding = Math.max(1, borders.width - selectionPadding * 2)
+  const originalHeightWithoutPadding = Math.max(1, borders.height - selectionPadding * 2)
+
+  const originalRatio =
+    'ratio' in originalShape && originalShape.ratio ? originalShape.ratio : originalWidthWithoutPadding / originalHeightWithoutPadding
+
+  const centerX = borders.x + borders.width / 2
+  const centerY = borders.y + borders.height / 2
+
+  let scale = 1
+
+  if (selectionMode.anchor[0] !== 0.5 && selectionMode.anchor[1] !== 0.5) {
+    const originalAnchorVector: Point = [
+      (selectionMode.anchor[0] - 0.5) * originalWidthWithoutPadding,
+      (selectionMode.anchor[1] - 0.5) * originalHeightWithoutPadding
+    ]
+    const currentAnchorVector: Point = [roundCursorPosition[0] - centerX, roundCursorPosition[1] - centerY]
+    const originalRadius = Math.hypot(originalAnchorVector[0], originalAnchorVector[1]) || 1
+    const currentRadius = Math.hypot(currentAnchorVector[0], currentAnchorVector[1])
+    scale = currentRadius / originalRadius
+  } else if (selectionMode.anchor[0] === 0.5) {
+    const originalHalfHeight = (selectionMode.anchor[1] - 0.5) * originalHeightWithoutPadding
+    const currentHalfHeight = roundCursorPosition[1] - centerY
+    const originalDistance = Math.abs(originalHalfHeight) || 1
+    const currentDistance = Math.abs(currentHalfHeight)
+    scale = currentDistance / originalDistance
+  } else {
+    const originalHalfWidth = (selectionMode.anchor[0] - 0.5) * originalWidthWithoutPadding
+    const currentHalfWidth = roundCursorPosition[0] - centerX
+    const originalDistance = Math.abs(originalHalfWidth) || 1
+    const currentDistance = Math.abs(currentHalfWidth)
+    scale = currentDistance / originalDistance
+  }
+
+  const minScale = (2 * selectionPadding) / (originalWidthWithoutPadding + 2 * selectionPadding)
+
+  const newWidthWithoutPadding = originalWidthWithoutPadding * Math.max(scale, minScale)
+  const newHeightWithoutPadding = newWidthWithoutPadding / originalRatio
+
+  const borderWidth = newWidthWithoutPadding + selectionPadding * 2
+  const borderHeight = newHeightWithoutPadding + selectionPadding * 2
+
+  return {
+    borderX: centerX - borderWidth / 2,
+    borderY: centerY - borderHeight / 2,
+    borderWidth,
+    borderHeight,
+    center,
+    originalShape
   }
 }
 
@@ -289,12 +362,21 @@ export const resizeRectSelection = (
     rotation: originalShape.rotation
   })
 
+  const xBounds =
+    resizeFromCenter && keepRatio
+      ? [borders.x + borders.width / 2, borders.x + borders.width / 2]
+      : ([borders.x + borders.width - settings.selectionPadding, borders.x + settings.selectionPadding] as const)
+  const yBounds =
+    resizeFromCenter && keepRatio
+      ? [borders.y + borders.height / 2, borders.y + borders.height / 2]
+      : ([borders.y + borders.height - settings.selectionPadding, borders.y + settings.selectionPadding] as const)
+
   const isXinverted =
-    (selectionMode.anchor[0] === 0 && rotatedCursorPosition[0] >= borders.x + borders.width - settings.selectionPadding) ||
-    (selectionMode.anchor[0] === 1 && rotatedCursorPosition[0] <= borders.x + settings.selectionPadding)
+    (selectionMode.anchor[0] === 0 && rotatedCursorPosition[0] >= xBounds[0]) ||
+    (selectionMode.anchor[0] === 1 && rotatedCursorPosition[0] <= xBounds[1])
   const isYinverted =
-    (selectionMode.anchor[1] === 0 && rotatedCursorPosition[1] >= borders.y + borders.height - settings.selectionPadding) ||
-    (selectionMode.anchor[1] === 1 && rotatedCursorPosition[1] <= borders.y + settings.selectionPadding)
+    (selectionMode.anchor[1] === 0 && rotatedCursorPosition[1] >= yBounds[0]) ||
+    (selectionMode.anchor[1] === 1 && rotatedCursorPosition[1] <= yBounds[1])
 
   const roundCursorPosition: Point = [
     roundForGrid(
@@ -313,6 +395,23 @@ export const resizeRectSelection = (
     )
   ]
 
+  if (keepRatio && resizeFromCenter) {
+    const data = resizeRectSelectionFromCenterWithRatio({
+      roundCursorPosition,
+      borders,
+      center,
+      selectionMode,
+      originalShape,
+      settings
+    })
+
+    return {
+      ...calculateRectSelectionData(data),
+      isXinverted,
+      isYinverted
+    }
+  }
+
   const roundCursorStartPosition: Point = settings.gridGap
     ? [
         selectionMode.anchor[0] === 0 ? borders.x : selectionMode.anchor[0] === 0.5 ? borders.x + borders.width / 2 : borders.x + borders.width,
@@ -325,7 +424,6 @@ export const resizeRectSelection = (
       })
 
   const vector = [roundCursorPosition[0] - roundCursorStartPosition[0], roundCursorPosition[1] - roundCursorStartPosition[1]] as Point
-
   const [borderX, borderWidth] = getSelectionData({
     borderStart: borders.x,
     borderSize: borders.width,
@@ -334,7 +432,6 @@ export const resizeRectSelection = (
     invertedAxe: isXinverted,
     anchor: selectionMode.anchor[0]
   })
-
   const [borderY, borderHeight] = getSelectionData({
     borderStart: borders.y,
     borderSize: borders.height,
