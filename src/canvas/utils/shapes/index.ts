@@ -280,7 +280,7 @@ export const flipShapes = (
     isXinverted: action === 'flipHorizontally',
     isYinverted: action === 'flipVertically',
     groupCenter: center,
-    rotation: group.rotation ?? 0,
+    rotation: 0, // group rotation is 0 to force flipping single shapes with rotation
     settings,
     originalBorders: borders
   }

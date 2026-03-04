@@ -171,7 +171,7 @@ export const resizeTextInGroup = (
 ): ShapeEntity<'text'> => {
   const { isXinverted, isYinverted, settings, widthMultiplier, heightMultiplier } = groupCtx
   const shouldFlipRotation =
-    (isXinverted || isYinverted) && !(isXinverted && isYinverted) && (shape.rotation ?? 0) !== 0 && group.rotation !== shape.rotation
+    (isXinverted || isYinverted) && !(isXinverted && isYinverted) && (shape.rotation ?? 0) !== 0 && groupCtx.rotation !== shape.rotation
   const pos = getShapePositionInNewBorder(shape, group, groupCtx)
   const newWidth = (shape.width === 0 || shape.height === 0 ? (shape.ratio ?? 1) : shape.width) * widthMultiplier
   const newHeight = (shape.width === 0 || shape.height === 0 ? (shape.ratio ?? 1) : shape.height) * heightMultiplier

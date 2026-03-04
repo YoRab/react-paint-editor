@@ -121,7 +121,7 @@ export const resizeRectInGroup = (
 ): ShapeEntity<rectish> => {
   const { isXinverted, isYinverted, settings, widthMultiplier, heightMultiplier } = groupCtx
   const shouldFlipRotation =
-    (isXinverted || isYinverted) && !(isXinverted && isYinverted) && (shape.rotation ?? 0) !== 0 && group.rotation !== shape.rotation
+    (isXinverted || isYinverted) && !(isXinverted && isYinverted) && (shape.rotation ?? 0) !== 0 && groupCtx.rotation !== shape.rotation
   const pos = getShapePositionInNewBorder(shape, group, groupCtx)
   const newWidth = (shape.width || 1) * widthMultiplier
   const newHeight = (shape.height || 1) * heightMultiplier

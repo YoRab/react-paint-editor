@@ -105,7 +105,7 @@ export const resizeEllipseInGroup = (
 ): ShapeEntity<'ellipse'> => {
   const { isXinverted, isYinverted, settings, widthMultiplier, heightMultiplier } = groupCtx
   const shouldFlipRotation =
-    (isXinverted || isYinverted) && !(isXinverted && isYinverted) && (shape.rotation ?? 0) !== 0 && group.rotation !== shape.rotation
+    (isXinverted || isYinverted) && !(isXinverted && isYinverted) && (shape.rotation ?? 0) !== 0 && groupCtx.rotation !== shape.rotation
   const pos = getShapePositionInNewBorder(shape, group, groupCtx)
   const newRadiusX = (shape.radiusX || 0.5) * widthMultiplier
   const newRadiusY = (shape.radiusY || 0.5) * heightMultiplier
