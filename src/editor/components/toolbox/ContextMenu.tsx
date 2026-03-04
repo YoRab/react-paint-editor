@@ -268,7 +268,7 @@ const ContextMenu = ({
         <>
           <Button onClick={onDuplicateShape}>Duplicate</Button>
           <Button onClick={onToggleShapeVisibility}>{isVisible ? 'Hide' : 'Show'}</Button>
-          {/* <Button onClick={onToggleShapeLock}>{isLocked ? 'Unlock' : 'Lock'}</Button> */}
+          <Button onClick={onToggleShapeLock}>{isLocked ? 'Unlock' : 'Lock'}</Button>
           <Button onClick={onRemoveShape}>Delete</Button>
           <hr />
         </>
