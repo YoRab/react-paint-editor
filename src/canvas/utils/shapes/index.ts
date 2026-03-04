@@ -1,7 +1,7 @@
 import type { UtilsSettings } from '@canvas/constants/app'
 import { transformCanvas, updateCanvasContext } from '@canvas/utils/canvas'
 import { getRectIntersection } from '@canvas/utils/intersect'
-import { getSelectedShapes } from '@canvas/utils/selection'
+import { buildShapesGroup, getSelectedShapes } from '@canvas/utils/selection'
 import { drawSelectionGroup } from '@canvas/utils/selection/groupSelection'
 import { drawLineSelection } from '@canvas/utils/selection/lineSelection'
 import { drawBoundingBox, drawSelectionRect } from '@canvas/utils/selection/rectSelection'
@@ -253,6 +253,63 @@ export const resizeShapes = (
         return resizeLinePolygonCurveInGroup(shape, group, groupCtx)
       default: // group, should not happen
         return resizeShape(ctx, cursorPosition, shape, selectionMode, settings, isShiftPressed, isAltPressed)
+    }
+  })
+}
+
+export const flipShapes = (
+  ctx: CanvasRenderingContext2D,
+  shapes: ShapeEntity[],
+  selectedShapes: ShapeEntity[],
+  center: Point,
+  action: 'flipHorizontally' | 'flipVertically',
+  settings: UtilsSettings
+): ShapeEntity[] => {
+  if (selectedShapes.length === 0) return shapes
+
+  const group = buildShapesGroup(selectedShapes, settings) as SelectionType & { type: 'group' }
+  const borders = group.computed.borders
+
+  const groupCtx = {
+    newBorderX: borders.x,
+    newBorderY: borders.y,
+    newBorderWidth: borders.width,
+    newBorderHeight: borders.height,
+    widthMultiplier: 1,
+    heightMultiplier: 1,
+    isXinverted: action === 'flipHorizontally',
+    isYinverted: action === 'flipVertically',
+    groupCenter: center,
+    rotation: group.rotation ?? 0,
+    settings,
+    originalBorders: borders
+  }
+
+  const selectedIds = new Set(selectedShapes.map(shape => shape.id))
+
+  return shapes.map(shape => {
+    if (!selectedIds.has(shape.id)) return shape
+
+    switch (shape.type) {
+      case 'rect':
+      case 'square':
+        return resizeRectInGroup(shape, group, groupCtx)
+      case 'picture':
+        return resizePictureInGroup(shape, group, groupCtx)
+      case 'text':
+        return resizeTextInGroup(ctx, shape, group, groupCtx)
+      case 'ellipse':
+        return resizeEllipseInGroup(shape, group, groupCtx)
+      case 'circle':
+        return resizeCircleInGroup(shape, group, groupCtx)
+      case 'brush':
+        return resizeBrushInGroup(shape, group, groupCtx)
+      case 'line':
+      case 'polygon':
+      case 'curve':
+        return resizeLinePolygonCurveInGroup(shape, group, groupCtx)
+      default:
+        return shape
     }
   })
 }

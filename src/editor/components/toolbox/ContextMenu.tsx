@@ -35,6 +35,7 @@ type ContextMenuType = {
   moveShapes: (shapes: ShapeEntity[], action: 'first' | 'last' | 'forward' | 'backward') => void
   removeShapePoint: (shape: ShapeEntity<'curve' | 'polygon'>, pointIndex: number) => void
   transformShape: (
+    ctx: CanvasRenderingContext2D,
     shapes: ShapeEntity[],
     center: Point,
     action: 'flipHorizontally' | 'flipVertically' | 'rotateClockwise' | 'rotateCounterclockwise'
@@ -182,29 +183,33 @@ const ContextMenu = ({
   }
 
   const onFlipHorizontally = () => {
-    if (hasSelectedShape) {
-      transformShape(selectedShapes, originalShape!.computed.center, 'flipHorizontally')
+    const ctx = canvasRef?.current?.getContext('2d')
+    if (ctx && hasSelectedShape) {
+      transformShape(ctx, selectedShapes, originalShape!.computed.center, 'flipHorizontally')
     }
     closeContextMenu()
   }
 
   const onFlipVertically = () => {
-    if (hasSelectedShape) {
-      transformShape(selectedShapes, originalShape!.computed.center, 'flipVertically')
+    const ctx = canvasRef?.current?.getContext('2d')
+    if (ctx && hasSelectedShape) {
+      transformShape(ctx, selectedShapes, originalShape!.computed.center, 'flipVertically')
     }
     closeContextMenu()
   }
 
   const onRotateClockwise = () => {
-    if (hasSelectedShape) {
-      transformShape(selectedShapes, originalShape!.computed.center, 'rotateClockwise')
+    const ctx = canvasRef?.current?.getContext('2d')
+    if (ctx && hasSelectedShape) {
+      transformShape(ctx, selectedShapes, originalShape!.computed.center, 'rotateClockwise')
     }
     closeContextMenu()
   }
 
   const onRotateCounterclockwise = () => {
-    if (hasSelectedShape) {
-      transformShape(selectedShapes, originalShape!.computed.center, 'rotateCounterclockwise')
+    const ctx = canvasRef?.current?.getContext('2d')
+    if (ctx && hasSelectedShape) {
+      transformShape(ctx, selectedShapes, originalShape!.computed.center, 'rotateCounterclockwise')
     }
     closeContextMenu()
   }
@@ -243,8 +248,8 @@ const ContextMenu = ({
             <Button icon={rightChevronIcon}>Transform</Button>
             {isTransformMenuOpen && (
               <Menu position={menuPosition?.subMenuPosition}>
-                {/* <Button onClick={onFlipHorizontally}>Flip horizontally</Button> */}
-                {/* <Button onClick={onFlipVertically}>Flip vertically</Button> */}
+                <Button onClick={onFlipHorizontally}>Flip horizontally</Button>
+                <Button onClick={onFlipVertically}>Flip vertically</Button>
                 <Button onClick={onRotateClockwise}>Rotate clockwise</Button>
                 <Button onClick={onRotateCounterclockwise}>Rotate counterclockwise</Button>
               </Menu>
