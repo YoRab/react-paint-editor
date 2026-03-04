@@ -2,6 +2,12 @@
 
 For more details and links to Pull requests, see [Releases](https://github.com/YoRab/react-paint-editor/releases)
 
+## V0.17.1
+- fix shape inverting while resizing with keepRatio and resizeFromCenter
+- add flip feature in context menu
+- improve locked shape selection 
+- add lock/unlock feature in context menu
+
 ## V0.17.0
 - add "cut" feature usable with CTRL+X
 - add "select all" feature, usable with CTRL+A
