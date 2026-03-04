@@ -8,18 +8,6 @@ import { refreshShape, resizeShapes, rotateShape, translateShapes } from './shap
 import { addNewPointToShape } from './shapes/brush'
 import { getAngleFromVector, rotatePoint } from './trigo'
 
-export const getNormalizedSize = (originalWidth: number, originalHeight: number, width: number, height: number) => {
-  const originalRatio = originalWidth / originalHeight
-  const newRatio = width / height
-  if (newRatio > originalRatio || height < 0) {
-    return width > originalWidth ? [width, width / originalRatio] : [height * originalRatio, height]
-  }
-  if (newRatio < originalRatio) {
-    return height > originalHeight ? [height * originalRatio, height] : [width, width / originalRatio]
-  }
-  return [width, height]
-}
-
 export const roundValues = (prop: number, precision = 2): number => {
   return Math.round(prop * 10 ** precision) / 10 ** precision
 }

@@ -1,4 +1,5 @@
 import type { UtilsSettings } from '@canvas/constants/app'
+import { drawPathWithFillAndStroke } from '@canvas/utils/canvas'
 import { createTrianglePath, getComputedShapeInfos } from '@canvas/utils/shapes/path'
 import { getPolygonBorder } from '@canvas/utils/shapes/polygon'
 import type { DrawableShape, Triangle, TriangleEntity } from '@common/types/Shapes'
@@ -23,7 +24,5 @@ export const createTriangle = (triangle: Triangle, settings: UtilsSettings): Tri
 }
 
 export const drawTriangle = (ctx: CanvasRenderingContext2D, triangle: TriangleEntity): void => {
-  if (ctx.globalAlpha === 0) return
-  triangle.style?.fillColor !== 'transparent' && ctx.fill(triangle.path)
-  triangle.style?.strokeColor !== 'transparent' && ctx.stroke(triangle.path)
+  drawPathWithFillAndStroke(ctx, triangle.path, triangle.style)
 }

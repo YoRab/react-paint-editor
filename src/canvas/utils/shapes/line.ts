@@ -1,5 +1,5 @@
 import type { UtilsSettings } from '@canvas/constants/app'
-import { updateCanvasContext } from '@canvas/utils/canvas'
+import { drawPathWithFillAndStroke, updateCanvasContext } from '@canvas/utils/canvas'
 import { getPointPositionAfterCanvasTransformation } from '@canvas/utils/intersect'
 import { createLineSelectionPath } from '@canvas/utils/selection/lineSelection'
 import { createLinePath, getComputedShapeInfos } from '@canvas/utils/shapes/path'
@@ -116,11 +116,7 @@ export const buildTriangleOnLine = (center: Point, rotation: number, lineStyle: 
 }
 
 export const drawLine = (ctx: CanvasRenderingContext2D, shape: ShapeEntity<'line'>): void => {
-  if (ctx.globalAlpha === 0) return
-
-  shape.style?.fillColor !== 'transparent' && ctx.fill(shape.path)
-  shape.style?.strokeColor !== 'transparent' && ctx.stroke(shape.path)
-
+  drawPathWithFillAndStroke(ctx, shape.path, shape.style)
   for (const arrow of shape.arrows ?? []) {
     updateCanvasContext(ctx, arrow.style)
     drawTriangle(ctx, arrow)

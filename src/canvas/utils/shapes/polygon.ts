@@ -1,4 +1,5 @@
 import type { UtilsSettings } from '@canvas/constants/app'
+import { drawPathWithFillAndStroke } from '@canvas/utils/canvas'
 import { getPointPositionAfterCanvasTransformation } from '@canvas/utils/intersect'
 import { createLineSelectionPath } from '@canvas/utils/selection/lineSelection'
 import { createPolygonPath, getComputedShapeInfos } from '@canvas/utils/shapes/path'
@@ -51,9 +52,7 @@ export const createPolygon = (
 }
 
 export const drawPolygon = (ctx: CanvasRenderingContext2D, polygon: ShapeEntity<'polygon'>): void => {
-  if (ctx.globalAlpha === 0) return
-  polygon.style?.fillColor !== 'transparent' && ctx.fill(polygon.path)
-  polygon.style?.strokeColor !== 'transparent' && ctx.stroke(polygon.path)
+  drawPathWithFillAndStroke(ctx, polygon.path, polygon.style)
 }
 
 export const getPolygonBorder = (polygon: Polygon, settings: Pick<UtilsSettings, 'selectionPadding'>): Rect => {

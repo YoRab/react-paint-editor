@@ -1,4 +1,5 @@
 import type { UtilsSettings } from '@canvas/constants/app'
+import { drawPathWithFillAndStroke } from '@canvas/utils/canvas'
 import { createRecSelectionPath, resizeRectSelection } from '@canvas/utils/selection/rectSelection'
 import type { SelectionModeResize } from '@common/types/Mode'
 import type { Circle, DrawableShape, Point, Rect, SelectionType, ShapeEntity } from '@common/types/Shapes'
@@ -59,9 +60,7 @@ export const createCircle = (
 }
 
 export const drawCircle = (ctx: CanvasRenderingContext2D, circle: ShapeEntity<'circle'>): void => {
-  if (ctx.globalAlpha === 0) return
-  circle.style?.fillColor !== 'transparent' && ctx.fill(circle.path)
-  circle.style?.strokeColor !== 'transparent' && ctx.stroke(circle.path)
+  drawPathWithFillAndStroke(ctx, circle.path, circle.style)
 }
 
 export const resizeCircle = (

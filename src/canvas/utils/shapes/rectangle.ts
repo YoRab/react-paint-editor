@@ -1,4 +1,5 @@
 import type { UtilsSettings } from '@canvas/constants/app'
+import { drawPathWithFillAndStroke } from '@canvas/utils/canvas'
 import { getPointPositionBeforeCanvasTransformation } from '@canvas/utils/intersect'
 import { createRecSelectionPath, resizeRectSelection } from '@canvas/utils/selection/rectSelection'
 import type { SelectionModeResize } from '@common/types/Mode'
@@ -54,10 +55,7 @@ export const createRectangle = <T extends rectish>(
 }
 
 export const drawRect = (ctx: CanvasRenderingContext2D, shape: ShapeEntity<rectish>): void => {
-  if (ctx.globalAlpha === 0) return
-
-  shape.style?.fillColor !== 'transparent' && ctx.fill(shape.path)
-  shape.style?.strokeColor !== 'transparent' && ctx.stroke(shape.path)
+  drawPathWithFillAndStroke(ctx, shape.path, shape.style)
 }
 
 export const getRectBorder = (rect: Rect, settings: Pick<UtilsSettings, 'selectionPadding'>): Rect => {

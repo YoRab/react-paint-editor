@@ -1,4 +1,5 @@
 import type { UtilsSettings } from '@canvas/constants/app'
+import { drawPathWithFillAndStroke } from '@canvas/utils/canvas'
 import { createRecSelectionPath, resizeRectSelection } from '@canvas/utils/selection/rectSelection'
 import { createEllipsePath, getComputedShapeInfos } from '@canvas/utils/shapes/path'
 import type { SelectionModeResize } from '@common/types/Mode'
@@ -60,9 +61,7 @@ export const createEllipse = (
 }
 
 export const drawEllipse = (ctx: CanvasRenderingContext2D, ellipse: ShapeEntity<'ellipse'>): void => {
-  if (ctx.globalAlpha === 0) return
-  ellipse.style?.fillColor !== 'transparent' && ctx.fill(ellipse.path)
-  ellipse.style?.strokeColor !== 'transparent' && ctx.stroke(ellipse.path)
+  drawPathWithFillAndStroke(ctx, ellipse.path, ellipse.style)
 }
 
 export const resizeEllipse = (
