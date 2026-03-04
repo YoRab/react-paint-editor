@@ -3,6 +3,7 @@ import useDrawableCanvas from '@canvas/hooks/useDrawableCanvas'
 import { initCanvasContext } from '@canvas/utils/canvas'
 import { drawGrid } from '@canvas/utils/grid'
 import { drawSelectionFrame, drawShape, drawShapeSelection, refreshShape } from '@canvas/utils/shapes'
+import { getCurrentView } from '@canvas/utils/zoom'
 import { resizeTextShapeWithNewContent } from '@canvas/utils/shapes/text'
 import type { HoverModeData, SelectionModeData } from '@common/types/Mode'
 import type { Point, SelectionType, ShapeEntity } from '@common/types/Shapes'
@@ -23,9 +24,10 @@ const renderDrawCanvas = (
   initCanvasContext(drawCtx)
   drawMask(drawCtx, settings)
   drawGrid(drawCtx, settings)
+  const currentView = getCurrentView(settings)
   for (let i = shapes.length - 1; i >= 0; i--) {
     if (selectionMode.mode === 'textedition' && shapes[i] === selectedShape) continue
-    drawShape(drawCtx, getSelectedShapes(selectedShape).find(selected => selected.id === shapes[i]!.id) ?? shapes[i]!, settings)
+    drawShape(drawCtx, getSelectedShapes(selectedShape).find(selected => selected.id === shapes[i]!.id) ?? shapes[i]!, settings, currentView)
   }
 }
 

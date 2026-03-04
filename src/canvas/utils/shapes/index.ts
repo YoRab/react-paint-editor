@@ -10,7 +10,7 @@ import { boundVectorToSingleAxis, roundForGrid } from '@canvas/utils/transform'
 import { rotatePoint } from '@canvas/utils/trigo'
 import { getCurrentView } from '@canvas/utils/zoom'
 import type { HoverModeData, SelectionModeData, SelectionModeResize } from '@common/types/Mode'
-import type { DrawableShape, Point, SelectionType, ShapeEntity } from '@common/types/Shapes'
+import type { DrawableShape, Point, Rect, SelectionType, ShapeEntity } from '@common/types/Shapes'
 import type { CustomTool } from '@common/types/tools'
 import { uniqueId } from '@common/utils/util'
 import { createBrush, drawBrush, refreshBrush, resizeBrush, resizeBrushInGroup } from './brush'
@@ -113,15 +113,13 @@ const drawShapeWithOpacity = (ctx: CanvasRenderingContext2D, shape: ShapeEntity)
   ctx.drawImage(tempCanvas, outerBorders.x - tempCanvasSize.width / 4, outerBorders.y - tempCanvasSize.height / 4)
 }
 
-export const isInView = (shape: ShapeEntity, settings: UtilsSettings): boolean => {
-  const currentView = getCurrentView(settings)
-  return !!getRectIntersection(shape.computed.boundingBox, currentView)
+const isInView = (shape: ShapeEntity, settings: UtilsSettings, currentView?: Rect): boolean => {
+  return !!getRectIntersection(shape.computed.boundingBox, currentView ?? getCurrentView(settings))
 }
 
-export const drawShape = (ctx: CanvasRenderingContext2D, shape: ShapeEntity, settings: UtilsSettings): void => {
+export const drawShape = (ctx: CanvasRenderingContext2D, shape: ShapeEntity, settings: UtilsSettings, currentView?: Rect): void => {
   if (shape.visible === false) return
-
-  const shouldDraw = isInView(shape, settings)
+  const shouldDraw = isInView(shape, settings, currentView)
   if (!shouldDraw) return
 
   transformCanvas(ctx, settings, shape.rotation, shape.computed.center)
