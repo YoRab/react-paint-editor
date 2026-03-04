@@ -13,16 +13,16 @@ import type { HoverModeData, SelectionModeData, SelectionModeResize } from '@com
 import type { DrawableShape, Point, SelectionType, ShapeEntity } from '@common/types/Shapes'
 import type { CustomTool } from '@common/types/tools'
 import { uniqueId } from '@common/utils/util'
-import { createBrush, drawBrush, getComputedBrush, refreshBrush, resizeBrush, resizeBrushInGroup } from './brush'
-import { createCircle, drawCircle, getComputedCircle, refreshCircle, resizeCircle, resizeCircleInGroup } from './circle'
-import { createCurve, drawCurve, getComputedCurve, refreshCurve, resizeCurve } from './curve'
-import { createEllipse, drawEllipse, getComputedEllipse, refreshEllipse, resizeEllipse, resizeEllipseInGroup } from './ellipse'
+import { createBrush, drawBrush, refreshBrush, resizeBrush, resizeBrushInGroup } from './brush'
+import { createCircle, drawCircle, refreshCircle, resizeCircle, resizeCircleInGroup } from './circle'
+import { createCurve, drawCurve, refreshCurve, resizeCurve } from './curve'
+import { createEllipse, drawEllipse, refreshEllipse, resizeEllipse, resizeEllipseInGroup } from './ellipse'
 import { getGroupResizeContext } from './group'
-import { createLine, drawLine, getComputedLine, refreshLine, resizeLine, resizeLinePolygonCurveInGroup } from './line'
-import { drawPicture, getComputedPicture, refreshPicture, resizePicture, resizePictureInGroup } from './picture'
-import { createPolygon, drawPolygon, getComputedPolygon, refreshPolygon, resizePolygon } from './polygon'
-import { createRectangle, drawRect, getComputedRect, refreshRect, resizeRect, resizeRectInGroup } from './rectangle'
-import { createText, drawText, getComputedText, refreshText, resizeText, resizeTextInGroup } from './text'
+import { createLine, drawLine, refreshLine, resizeLine, resizeLinePolygonCurveInGroup } from './line'
+import { drawPicture, refreshPicture, resizePicture, resizePictureInGroup } from './picture'
+import { createPolygon, drawPolygon, refreshPolygon, resizePolygon } from './polygon'
+import { createRectangle, drawRect, refreshRect, resizeRect, resizeRectInGroup } from './rectangle'
+import { createText, drawText, refreshText, resizeText, resizeTextInGroup } from './text'
 import { SHAPES_KEEPING_RATIO, SHAPES_WITH_ROTATION } from '@canvas/constants/shapes'
 
 export const createShape = (
@@ -138,6 +138,8 @@ export const drawShape = (ctx: CanvasRenderingContext2D, shape: ShapeEntity, set
 }
 
 export const rotateShape = <T extends ShapeEntity>(shape: T, rotationToApply: number, selectionCenter: Point): T => {
+  if (shape.locked) return shape
+
   const rotatedCenter = rotatePoint({ origin: selectionCenter, point: shape.computed.center, rotation: -rotationToApply })
 
   if ('points' in shape) {
@@ -175,6 +177,8 @@ export const resizeShape = <T extends ShapeEntity>(
   isShiftPressed: boolean,
   isAltPressed: boolean
 ): T => {
+  if (originalShape.locked) return originalShape
+
   switch (originalShape.type) {
     case 'line':
       return resizeLine(cursorPosition, originalShape, selectionMode as SelectionModeResize<number>, settings) as T
@@ -233,6 +237,7 @@ export const resizeShapes = (
   const groupCtx = getGroupResizeContext(cursorPosition, group, selectionMode as SelectionModeResize, settings, keepRatio, isAltPressed)
 
   return groupShapes.map(shape => {
+    if (shape.locked) return shape
     switch (shape.type) {
       case 'rect':
       case 'square':
@@ -288,6 +293,7 @@ export const flipShapes = (
   const selectedIds = new Set(selectedShapes.map(shape => shape.id))
 
   return shapes.map(shape => {
+    if (shape.locked) return shape
     if (!selectedIds.has(shape.id)) return shape
 
     switch (shape.type) {
@@ -315,6 +321,7 @@ export const flipShapes = (
 }
 
 const translateShape = (shape: ShapeEntity, translationX: number, translationY: number, settings: UtilsSettings): ShapeEntity => {
+  if (shape.locked) return shape
   switch (shape.type) {
     case 'rect':
     case 'square':
@@ -403,30 +410,6 @@ export const refreshShape = (shape: DrawableShape & { id: string }, settings: Ut
       return refreshBrush(shape, settings)
     default:
       return shape as never
-  }
-}
-
-export const getShapeComputedData = (shape: DrawableShape, settings: UtilsSettings) => {
-  switch (shape.type) {
-    case 'rect':
-    case 'square':
-      return getComputedRect(shape, settings)
-    case 'ellipse':
-      return getComputedEllipse(shape, settings)
-    case 'circle':
-      return getComputedCircle(shape, settings)
-    case 'picture':
-      return getComputedPicture(shape, settings)
-    case 'text':
-      return getComputedText(shape, settings)
-    case 'line':
-      return getComputedLine(shape, settings)
-    case 'polygon':
-      return getComputedPolygon(shape, settings)
-    case 'curve':
-      return getComputedCurve(shape, settings)
-    case 'brush':
-      return getComputedBrush(shape, settings)
   }
 }
 

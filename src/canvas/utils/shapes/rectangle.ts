@@ -9,13 +9,10 @@ import { type GroupResizeContext, getPositionWithoutGroupRotation, getShapePosit
 import { createRecPath, getComputedShapeInfos } from './path'
 
 type rectish = 'rect' | 'square'
-export const getComputedRect = (rect: DrawableShape<rectish>, settings: UtilsSettings) => {
-  return getComputedShapeInfos(rect, getRectBorder, settings)
-}
 
 const buildPath = <T extends rectish>(rect: DrawableShape<rectish> & { id: string }, settings: UtilsSettings): ShapeEntity<T> => {
   const path = createRecPath(rect)
-  const computed = getComputedRect(rect, settings)
+  const computed = getComputedShapeInfos(rect, getRectBorder, settings)
   return {
     ...rect,
     path,

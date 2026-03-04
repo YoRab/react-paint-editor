@@ -16,13 +16,9 @@ const getCircleBorder = (circle: Circle, settings: Pick<UtilsSettings, 'selectio
   }
 }
 
-export const getComputedCircle = (circle: DrawableShape<'circle'>, settings: UtilsSettings) => {
-  return getComputedShapeInfos(circle, getCircleBorder, settings)
-}
-
 const buildPath = <T extends DrawableShape<'circle'>>(shape: T & { id: string }, settings: UtilsSettings): ShapeEntity<'circle'> => {
   const path = createCirclePath(shape)
-  const computed = getComputedCircle(shape, settings)
+  const computed = getComputedShapeInfos(shape, getCircleBorder, settings)
   return {
     ...shape,
     path,
