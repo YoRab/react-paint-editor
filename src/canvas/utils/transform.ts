@@ -51,15 +51,15 @@ export const transformShape = (
   }
 
   if (selectionMode.mode === 'rotate') {
-    const p1x = selectionMode.originalShape.computed.center[0] - selectionMode.cursorStartPosition[0]
-    const p1y = selectionMode.originalShape.computed.center[1] - selectionMode.cursorStartPosition[1]
-    const p2x = selectionMode.originalShape.computed.center[0] - cursorPosition[0]
-    const p2y = selectionMode.originalShape.computed.center[1] - cursorPosition[1]
-    const rotationToAdd = roundRotationForGrid(Math.atan2(p2y, p2x) - Math.atan2(p1y, p1x), settings, isShiftPressed)
-    const shapesGroup = getSelectedShapes(selectionMode.originalShape).map(shape => {
-      return refreshShape(rotateShape(shape, rotationToAdd, selectionMode.originalShape.computed.center), settings)
-    })
-
+    const { originalShape, cursorStartPosition } = selectionMode
+    const center = originalShape.computed.center
+    const [cx, cy] = center
+    const rotationToAdd = roundRotationForGrid(
+      Math.atan2(cy - cursorPosition[1], cx - cursorPosition[0]) - Math.atan2(cy - cursorStartPosition[1], cx - cursorStartPosition[0]),
+      settings,
+      isShiftPressed
+    )
+    const shapesGroup = getSelectedShapes(originalShape).map(shape => refreshShape(rotateShape(shape, rotationToAdd, center), settings))
     return buildShapesGroup(shapesGroup, settings)!
   }
 

@@ -468,37 +468,32 @@ const useDrawableCanvas = ({
     if (!ref || !drawCtx) return
 
     const handleDoubleClick = (e: MouseEvent | TouchEvent) => {
-      if (activeTool.type === 'selection') {
-        if (getSelectedShapes(selectedShape).length !== 1) return
-        const firstShape = getSelectedShapes(selectedShape)[0]
-        if (firstShape?.locked) return
-        if (firstShape?.type === 'text') {
-          const cursorPosition = getCursorPositionInTransformedCanvas(e, drawCanvasRef.current, settings)
+      if (activeTool.type !== 'selection') return
+      const selectedShapes = getSelectedShapes(selectedShape)
+      if (selectedShapes.length !== 1) return
+      const firstShape = selectedShapes[0]
+      if (firstShape?.locked) return
+      const cursorPosition = getCursorPositionInTransformedCanvas(e, drawCanvasRef.current, settings)
+      if (!isCursorInsideMask(cursorPosition, settings)) return
 
-          if (!isCursorInsideMask(cursorPosition, settings)) return
-
-          if (checkSelectionIntersection(drawCtx, selectedShape!, cursorPosition, settings)) {
-            setSelectionMode({
-              mode: 'textedition',
-              defaultValue: firstShape.value
-            })
-          }
-          return
+      if (firstShape?.type === 'text') {
+        if (checkSelectionIntersection(drawCtx, selectedShape!, cursorPosition, settings)) {
+          setSelectionMode({
+            mode: 'textedition',
+            defaultValue: firstShape.value
+          })
         }
-        if (firstShape?.type === 'polygon') {
-          const cursorPosition = getCursorPositionInTransformedCanvas(e, drawCanvasRef.current, settings)
-          if (!isCursorInsideMask(cursorPosition, settings)) return
-          const polygonIntersection = checkPolygonLinesSelectionIntersection(drawCtx, firstShape, cursorPosition, settings)
-          if (polygonIntersection) updateSingleShape([addPolygonLine(firstShape, polygonIntersection.lineIndex, cursorPosition, settings)])
-          return
-        }
-        if (firstShape?.type === 'curve') {
-          const cursorPosition = getCursorPositionInTransformedCanvas(e, drawCanvasRef.current, settings)
-          if (!isCursorInsideMask(cursorPosition, settings)) return
-          const polygonIntersection = checkCurveLinesSelectionIntersection(drawCtx, firstShape, cursorPosition, settings)
-          if (polygonIntersection) updateSingleShape([addCurveLine(firstShape, polygonIntersection.lineIndex, cursorPosition, settings)])
-          return
-        }
+        return
+      }
+      if (firstShape?.type === 'polygon') {
+        const polygonIntersection = checkPolygonLinesSelectionIntersection(drawCtx, firstShape, cursorPosition, settings)
+        if (polygonIntersection) updateSingleShape([addPolygonLine(firstShape, polygonIntersection.lineIndex, cursorPosition, settings)])
+        return
+      }
+      if (firstShape?.type === 'curve') {
+        const curveIntersection = checkCurveLinesSelectionIntersection(drawCtx, firstShape, cursorPosition, settings)
+        if (curveIntersection) updateSingleShape([addCurveLine(firstShape, curveIntersection.lineIndex, cursorPosition, settings)])
+        return
       }
     }
     if (isInsideCanvas) {
