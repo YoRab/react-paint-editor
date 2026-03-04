@@ -203,6 +203,15 @@ export const createTrianglePath = (triangle: DrawableShape<'triangle'>): Path2D 
   return path
 }
 
+export const expandRect = (rect: Rect, selectionPadding: number): Rect => {
+  return {
+    x: rect.x - selectionPadding,
+    y: rect.y - selectionPadding,
+    width: rect.width + selectionPadding * 2,
+    height: rect.height + selectionPadding * 2
+  }
+}
+
 const getDefaultOuterBorder = (shape: DrawableShape, border: Rect) => {
   return {
     x: border.x - (shape.style?.lineWidth ?? 0) / 2,

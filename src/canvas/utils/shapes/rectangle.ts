@@ -7,7 +7,7 @@ import type { DrawableShape, Point, Rect, SelectionType, ShapeEntity } from '@co
 import type { ToolsSettingsType } from '@common/types/tools'
 import { uniqueId } from '@common/utils/util'
 import { type GroupResizeContext, getPositionWithoutGroupRotation, getShapePositionInNewBorder } from './group'
-import { createRecPath, getComputedShapeInfos } from './path'
+import { createRecPath, expandRect, getComputedShapeInfos } from './path'
 
 type rectish = 'rect' | 'square'
 
@@ -59,12 +59,7 @@ export const drawRect = (ctx: CanvasRenderingContext2D, shape: ShapeEntity<recti
 }
 
 export const getRectBorder = (rect: Rect, settings: Pick<UtilsSettings, 'selectionPadding'>): Rect => {
-  return {
-    x: rect.x - settings.selectionPadding,
-    width: rect.width + settings.selectionPadding * 2,
-    y: rect.y - settings.selectionPadding,
-    height: rect.height + settings.selectionPadding * 2
-  }
+  return expandRect(rect, settings.selectionPadding)
 }
 
 export const getRectOppositeAnchorAbsolutePosition = <T extends DrawableShape & Rect>(
