@@ -10,12 +10,8 @@ import { type GroupResizeContext, getPositionWithoutGroupRotation, getShapePosit
 import { createRecPath, getComputedShapeInfos } from './path'
 import { getRectBorder } from './rectangle'
 
-export const getComputedPicture = (picture: DrawableShape<'picture'>, settings: UtilsSettings) => {
-  return getComputedShapeInfos(picture, getRectBorder, settings)
-}
-
 const buildPath = <T extends DrawableShape<'picture'>>(shape: T & { id: string }, settings: UtilsSettings): ShapeEntity<'picture'> => {
-  const computed = getComputedPicture(shape, settings)
+  const computed = getComputedShapeInfos(shape, getRectBorder, settings)
   const path = createRecPath(shape)
   return {
     ...shape,

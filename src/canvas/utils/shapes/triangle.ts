@@ -4,15 +4,11 @@ import { getPolygonBorder } from '@canvas/utils/shapes/polygon'
 import type { DrawableShape, Triangle, TriangleEntity } from '@common/types/Shapes'
 import { uniqueId } from '@common/utils/util'
 
-const getComputedTriangle = (triangle: DrawableShape<'triangle'>, settings: UtilsSettings) => {
-  return getComputedShapeInfos(triangle, getPolygonBorder, settings)
-}
-
 const buildPath = (shape: DrawableShape<'triangle'> & { id: string }, settings: UtilsSettings): TriangleEntity => {
   return {
     ...shape,
     path: createTrianglePath(shape),
-    computed: getComputedTriangle(shape, settings)
+    computed: getComputedShapeInfos(shape, getPolygonBorder, settings)
   }
 }
 

@@ -145,6 +145,7 @@ const useShapes = (
       }
 
       const foundShape = shapesRef.current.find(shape => {
+        if (shape.locked) return false
         return getSelectedShapes(selectedShape)
           ?.map(shape => shape.id)
           .includes(shape.id)
@@ -448,6 +449,7 @@ const useShapes = (
         const newSelectionFrame: [Point, Point] = [prev?.frame[0] ?? [cursorPosition[0], cursorPosition[1]], [cursorPosition[0], cursorPosition[1]]]
 
         const foundShapes = shapesRef.current.filter(shape => {
+          if (shape.locked) return false
           return checkSelectionFrameCollision(ctx, shape, newSelectionFrame)
         })
 

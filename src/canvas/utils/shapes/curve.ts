@@ -46,13 +46,9 @@ const getCurveOuterBorder = (curve: DrawableShape<'curve'>, _borders: Rect, sett
   return getRectBorder({ x: minX, y: minY, width: maxX - minX, height: maxY - minY }, settings)
 }
 
-export const getComputedCurve = (curve: DrawableShape<'curve'>, settings: UtilsSettings) => {
-  return getComputedShapeInfos(curve, getPolygonBorder, settings, getCurveOuterBorder)
-}
-
 const buildPath = <T extends DrawableShape<'curve'>>(shape: T & { id: string }, settings: UtilsSettings): ShapeEntity<'curve'> => {
   const path = createCurvePath(shape)
-  const computed = getComputedCurve(shape, settings)
+  const computed = getComputedShapeInfos(shape, getPolygonBorder, settings, getCurveOuterBorder)
   return {
     ...shape,
     path,

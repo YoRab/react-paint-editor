@@ -127,7 +127,7 @@ export const checkSelectionIntersection = (
   radius = 0
 ): false | HoverModeData => {
   const shape = getSelectedShapes(selection).length > 1 ? selection : getSelectedShapes(selection)[0]
-  if (!shape || shape.locked) return false
+  if (!shape) return false
   const { borders, center } = shape.computed
 
   const newPosition = getPointPositionAfterCanvasTransformation(position, shape.rotation ?? 0, center)
@@ -214,7 +214,6 @@ export const checkPositionIntersection = (
   position: Point,
   settings: UtilsSettings
 ): false | HoverModeData => {
-  if (shape.locked) return false
   const { center } = shape.computed
 
   const newPosition = getPointPositionAfterCanvasTransformation(position, shape.rotation ?? 0, center)
