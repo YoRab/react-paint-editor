@@ -5,7 +5,7 @@ import { createCirclePath, createLinePath, createRecPath } from '@canvas/utils/s
 import { roundForGrid, roundValues } from '@canvas/utils/transform'
 import { rotatePoint } from '@canvas/utils/trigo'
 import type { SelectionModeResize } from '@common/types/Mode'
-import type { DrawableShape, Point, Rect, SelectionDefaultType, SelectionType, ShapeEntity } from '@common/types/Shapes'
+import type { Point, Rect, SelectionDefaultType, SelectionType, ShapeEntity } from '@common/types/Shapes'
 
 export const createRecSelectionPath = (
   path: Path2D | undefined,
