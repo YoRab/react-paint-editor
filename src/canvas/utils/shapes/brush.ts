@@ -147,7 +147,7 @@ export const resizeBrushInGroup = (
     roundValues(newCenter[1] - newHeight / 2 - shape.computed.borders.y - settings.selectionPadding) +
     (isYinverted ? 2 * shape.computed.borders.y + originalBordersWithoutScale.height : 0)
   const shouldFlipRotation =
-    (isXinverted || isYinverted) && !(isXinverted && isYinverted) && (shape.rotation ?? 0) !== 0 && group.rotation !== shape.rotation
+    (isXinverted || isYinverted) && !(isXinverted && isYinverted) && (shape.rotation ?? 0) !== 0 && groupCtx.rotation !== shape.rotation
 
   return buildPath(
     {

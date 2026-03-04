@@ -47,6 +47,7 @@ type EditorProps = {
   forwardShape: () => void
   removeShapePoint: (shape: ShapeEntity<'curve' | 'polygon'>, pointIndex: number) => void
   transformShape: (
+    ctx: CanvasRenderingContext2D,
     shapes: ShapeEntity[],
     center: Point,
     action: 'flipHorizontally' | 'flipVertically' | 'rotateClockwise' | 'rotateCounterclockwise'
