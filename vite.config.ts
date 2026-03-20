@@ -1,11 +1,12 @@
 import { resolve } from 'node:path'
-import terser from '@rollup/plugin-terser'
 import react from '@vitejs/plugin-react'
 import { defineConfig } from 'vite'
-import tsconfigPaths from 'vite-tsconfig-paths'
 
 // https://vitejs.dev/config/
 export default defineConfig({
+  resolve: {
+    tsconfigPaths: true
+  },
   build: {
     target: 'es2020',
     cssMinify: 'lightningcss',
@@ -15,14 +16,16 @@ export default defineConfig({
       fileName: 'react-paint'
     },
 
-    rollupOptions: {
+    rolldownOptions: {
       external: ['react', 'react/jsx-runtime', 'react-dom'],
       output: {
         assetFileNames: 'react-paint.css',
-        generatedCode: 'es2015'
+        minify: true,
+        generatedCode : {
+          preset: 'es2015'
+        }
       },
-      plugins: [terser()]
     }
   },
-  plugins: [react(), tsconfigPaths()]
+  plugins: [react()]
 })
