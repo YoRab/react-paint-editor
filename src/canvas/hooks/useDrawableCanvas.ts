@@ -210,6 +210,14 @@ const useDrawableCanvas = ({
   const [hoverMode, setHoverMode] = useState<HoverModeData>({
     mode: 'default'
   })
+
+  useEffect(() => {
+    return () => {
+      if (longPressTimeout.current) {
+        clearTimeout(longPressTimeout.current)
+      }
+    }
+  }, [])
   const { registerDoubleClickEvent, unRegisterDoubleClickEvent } = useDoubleClick()
 
   const handleContextMenu = (e: MouseEvent | TouchEvent, canvasElt: HTMLCanvasElement) => {
