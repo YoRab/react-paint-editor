@@ -155,10 +155,15 @@ export const decodeJson = async (file: File) => {
     const reader = new FileReader()
     reader.onload = event => {
       const result = event.target?.result
-      if (!result) return reject('Impossible de récupérer les données du fichier')
-      const json = JSON.parse(result as string)
-      resolve(json)
+      if (!result) return reject(new Error('Impossible de récupérer les données du fichier'))
+      try {
+        const json = JSON.parse(result as string)
+        resolve(json)
+      } catch {
+        reject(new Error('Invalid JSON file'))
+      }
     }
+    reader.onerror = () => reject(new Error('Failed to read file'))
     reader.readAsText(file)
   })
 }
