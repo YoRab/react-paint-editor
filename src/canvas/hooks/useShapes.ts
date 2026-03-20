@@ -170,14 +170,12 @@ const useShapes = (
 
   const updateShapes = useCallback(
     (updatedShapes: ShapeEntity[], withSave = false) => {
-      shapesRef.current = shapesRef.current.map(marker => {
-        const updatedShape = updatedShapes.find(shape => shape.id === marker.id)
-        return updatedShape ?? marker
-      })
+      const updatedById = new Map(updatedShapes.map(shape => [shape.id, shape]))
+      shapesRef.current = shapesRef.current.map(marker => updatedById.get(marker.id) ?? marker)
       setSelectedShape(prevSelectedShape =>
         prevSelectedShape
           ? buildShapesGroup(
-              getSelectedShapes(prevSelectedShape).map(shape => updatedShapes.find(updatedShape => updatedShape.id === shape.id) ?? shape),
+              getSelectedShapes(prevSelectedShape).map(shape => updatedById.get(shape.id) ?? shape),
               settings
             )
           : prevSelectedShape
