@@ -1,6 +1,8 @@
 import type { UtilsSettings } from '@canvas/constants/app'
 import { ShapeTypeArray } from '@canvas/constants/shapes'
+import { useCanvasContext } from '@canvas/context/CanvasContext'
 import useDoubleClick from '@canvas/hooks/useDoubleClick'
+import useEventListener from '@canvas/hooks/useEventListener'
 import {
   checkCurveLinesSelectionIntersection,
   checkPolygonLinesSelectionIntersection,
@@ -22,7 +24,6 @@ import type { CustomTool, ToolsType } from '@common/types/tools'
 import { clamp } from '@common/utils/util'
 import { SELECTION_TOOL } from '@editor/constants/tools'
 import type React from 'react'
-import useEventListener from '@canvas/hooks/useEventListener'
 import { useEffect, useRef, useState } from 'react'
 
 const handleMove = (
@@ -148,65 +149,35 @@ const handleMove = (
   }
 }
 
-type UseCanvasType = {
-  shapes: ShapeEntity[]
-  saveShapes: () => void
-  addShapes: (newShape: ShapeEntity[]) => void
-  updateSingleShape: (updatedShape: ShapeEntity[], withSave?: boolean) => void
-  selectedShape: SelectionType | undefined
-  setSelectedShape: React.Dispatch<React.SetStateAction<SelectionType | undefined>>
-  activeTool: ToolsType
-  setActiveTool: React.Dispatch<React.SetStateAction<ToolsType>>
-  refreshHoveredShape: (e: MouseEvent | TouchEvent, ctx: CanvasRenderingContext2D, cursorPosition: Point, isInsideMask: boolean) => void
-  refreshSelectedShapes: (ctx: CanvasRenderingContext2D, cursorPosition: Point, settings: UtilsSettings) => void
-  duplicateShapes: (shapesToDuplicate: ShapeEntity[]) => void
-  canvasOffsetStartData: { start: Point; originalOffset: Point } | undefined
-  setCanvasOffsetStartData: React.Dispatch<React.SetStateAction<{ start: Point; originalOffset: Point } | undefined>>
-  setCanvasOffset: (offset: Point) => void
-  isInsideComponent: boolean
-  isInsideCanvas: boolean
-  selectionMode: SelectionModeData<number | Point>
-  setSelectionMode: React.Dispatch<React.SetStateAction<SelectionModeData<number | Point>>>
-  setSelectionFrame: React.Dispatch<React.SetStateAction<{ oldSelection: SelectionType | undefined; frame: [Point, Point] } | undefined>>
-  setCanvasMoveAcceleration: React.Dispatch<React.SetStateAction<Point>>
-  drawCanvasRef: React.RefObject<HTMLCanvasElement | null>
-  isShiftPressed: boolean
-  isAltPressed: boolean
-  withFrameSelection: boolean
-  withContextMenu: boolean
-  settings: UtilsSettings
-  isSpacePressed: boolean
-}
-
-const useDrawableCanvas = ({
-  addShapes,
-  drawCanvasRef,
-  setActiveTool,
-  refreshHoveredShape,
-  shapes,
-  selectionMode,
-  activeTool,
-  isInsideComponent,
-  isInsideCanvas,
-  setCanvasOffset,
-  selectedShape,
-  canvasOffsetStartData,
-  refreshSelectedShapes,
-  setSelectedShape,
-  setSelectionFrame,
-  setCanvasOffsetStartData,
-  updateSingleShape,
-  duplicateShapes,
-  saveShapes,
-  setSelectionMode,
-  setCanvasMoveAcceleration,
-  settings,
-  isShiftPressed,
-  isAltPressed,
-  withFrameSelection,
-  withContextMenu,
-  isSpacePressed
-}: UseCanvasType) => {
+const useDrawableCanvas = (drawCanvasRef: React.RefObject<HTMLCanvasElement | null>) => {
+  const {
+    shapes,
+    settings,
+    selectedShape,
+    selectionMode,
+    activeTool,
+    canvasOffsetStartData,
+    isInsideComponent,
+    isInsideCanvas,
+    isShiftPressed,
+    isAltPressed,
+    isSpacePressed,
+    withFrameSelection,
+    withContextMenu,
+    setSelectedShape,
+    setSelectionFrame,
+    setSelectionMode,
+    setActiveTool,
+    setCanvasOffsetStartData,
+    setCanvasOffset,
+    setCanvasMoveAcceleration,
+    addShapes,
+    updateSingleShape,
+    duplicateShapes,
+    saveShapes,
+    refreshHoveredShape,
+    refreshSelectedShapes
+  } = useCanvasContext()
   const longPressTimeout = useRef<NodeJS.Timeout | null>(null)
   const [hoverMode, setHoverMode] = useState<HoverModeData>({
     mode: 'default'

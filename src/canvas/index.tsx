@@ -1,9 +1,10 @@
 import Canvas from '@canvas/components/Canvas'
 import { DEFAULT_CANVAS_OPTIONS } from '@canvas/constants/app'
+import CanvasContext from '@canvas/context/CanvasContext'
 import useKeyboard from '@canvas/hooks/useKeyboard'
 import type { UseReactPaintReturnType } from '@canvas/hooks/useReactPaint'
 import useResizeObserver from '@canvas/hooks/useResizeObserver'
-import { type CSSProperties, useCallback, useRef } from 'react'
+import { type CSSProperties, useCallback, useMemo, useRef } from 'react'
 import './index.css'
 
 type AppProps = {
@@ -106,6 +107,79 @@ const App = ({ options, className, style, canvasProps }: AppProps) => {
   })
   useResizeObserver({ element: containerRef, onResized })
 
+  const contextValue = useMemo(
+    () => ({
+      shapes: shapesRef.current,
+      settings,
+      selectedShape,
+      hoveredShape,
+      selectionFrame,
+      selectionMode,
+      activeTool,
+      canvasOffsetStartData,
+      isInsideComponent,
+      isInsideCanvas,
+      isShiftPressed,
+      isAltPressed,
+      isSpacePressed,
+      selectionColor: canvasSelectionColor,
+      selectionWidth: canvasSelectionWidth,
+      isEditMode,
+      canGrow,
+      withFrameSelection,
+      withSkeleton,
+      withContextMenu,
+      setSelectedShape,
+      setSelectionFrame,
+      setSelectionMode,
+      setActiveTool,
+      setCanvasOffsetStartData,
+      setCanvasOffset,
+      setCanvasMoveAcceleration,
+      addShapes: addShape,
+      updateSingleShape: updateShape,
+      duplicateShapes,
+      saveShapes,
+      refreshHoveredShape,
+      refreshSelectedShapes
+    }),
+    [
+      shapesRef,
+      settings,
+      selectedShape,
+      hoveredShape,
+      selectionFrame,
+      selectionMode,
+      activeTool,
+      canvasOffsetStartData,
+      isInsideComponent,
+      isInsideCanvas,
+      isShiftPressed,
+      isAltPressed,
+      isSpacePressed,
+      canvasSelectionColor,
+      canvasSelectionWidth,
+      isEditMode,
+      canGrow,
+      withFrameSelection,
+      withSkeleton,
+      withContextMenu,
+      setSelectedShape,
+      setSelectionFrame,
+      setSelectionMode,
+      setActiveTool,
+      setCanvasOffsetStartData,
+      setCanvasOffset,
+      setCanvasMoveAcceleration,
+      addShape,
+      updateShape,
+      duplicateShapes,
+      saveShapes,
+      refreshHoveredShape,
+      refreshSelectedShapes
+    ]
+  )
+
   return (
     <div
       ref={containerRef}
@@ -121,42 +195,9 @@ const App = ({ options, className, style, canvasProps }: AppProps) => {
         ...style
       }}
     >
-      <Canvas
-        duplicateShapes={duplicateShapes}
-        isSpacePressed={isSpacePressed}
-        withContextMenu={withContextMenu}
-        ref={refs.canvas}
-        canGrow={canGrow}
-        isInsideComponent={isInsideComponent}
-        isInsideCanvas={isInsideCanvas}
-        activeTool={activeTool}
-        setActiveTool={setActiveTool}
-        canvasOffsetStartData={canvasOffsetStartData}
-        setCanvasOffsetStartData={setCanvasOffsetStartData}
-        shapes={shapesRef.current}
-        addShapes={addShape}
-        updateSingleShape={updateShape}
-        selectedShape={selectedShape}
-        selectionFrame={selectionFrame}
-        setSelectedShape={setSelectedShape}
-        setSelectionFrame={setSelectionFrame}
-        hoveredShape={hoveredShape}
-        refreshHoveredShape={refreshHoveredShape}
-        refreshSelectedShapes={refreshSelectedShapes}
-        settings={settings}
-        setCanvasOffset={setCanvasOffset}
-        saveShapes={saveShapes}
-        selectionMode={selectionMode}
-        setSelectionMode={setSelectionMode}
-        setCanvasMoveAcceleration={setCanvasMoveAcceleration}
-        selectionColor={canvasSelectionColor}
-        selectionWidth={canvasSelectionWidth}
-        isEditMode={isEditMode}
-        isShiftPressed={isShiftPressed}
-        isAltPressed={isAltPressed}
-        withFrameSelection={withFrameSelection}
-        withSkeleton={withSkeleton}
-      />
+      <CanvasContext.Provider value={contextValue}>
+        <Canvas ref={refs.canvas} />
+      </CanvasContext.Provider>
     </div>
   )
 }
