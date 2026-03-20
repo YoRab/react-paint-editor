@@ -96,6 +96,30 @@ export const selectShape = (
     }
   }
 
+  if (foundShape?.locked && behavior === 'add') {
+    return {
+      shape: selectedShape,
+      mode: {
+        mode: withFrameSelection ? 'selectionFrame' : 'default'
+      }
+    }
+  }
+
+  if (foundShape && behavior === 'add' && selectedShape?.locked) {
+    const foundShapeGroup = buildShapesGroup([foundShape], settings)
+    return {
+      shape: foundShapeGroup,
+      mode: {
+        mode: 'translate',
+        cursorStartPosition: cursorPosition,
+        hasBeenDuplicated: false,
+        dateStart: Date.now(),
+        originalShape: foundShapeGroup!,
+        selectedShapesLengthAtMouseDown: getSelectedShapes(selectedShape).length
+      }
+    }
+  }
+
   if (foundShape) {
     if (behavior === 'add') {
       const foundShapeGroup = buildShapesGroup(addToSelectedShapes(selectedShape, [foundShape]), settings)
