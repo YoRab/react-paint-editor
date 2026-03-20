@@ -39,7 +39,7 @@ const Editor = ({ editorProps, className, style, options, children }: EditorProp
   const {
     selectionMode,
     setSelectionMode,
-    shapesRef,
+    shapes,
     addPictureShape,
     moveShapes,
     swapShapes,
@@ -247,7 +247,7 @@ const Editor = ({ editorProps, className, style, options, children }: EditorProp
         <Layouts
           gridFormat={gridFormat}
           setGridFormat={setGridFormat}
-          shapes={shapesRef.current}
+          shapes={shapes}
           swapShapes={swapShapes}
           selectedShapes={selectedShape}
           removeShape={removeShape}

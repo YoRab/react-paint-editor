@@ -19,7 +19,7 @@ type AppProps = {
 }
 const App = ({ options, className, style, canvasProps }: AppProps) => {
   const {
-    shapesRef,
+    shapes,
     selectedShape,
     selectionFrame,
     hoveredShape,
@@ -109,7 +109,7 @@ const App = ({ options, className, style, canvasProps }: AppProps) => {
 
   const contextValue = useMemo(
     () => ({
-      shapes: shapesRef.current,
+      shapes,
       settings,
       selectedShape,
       hoveredShape,
@@ -144,7 +144,7 @@ const App = ({ options, className, style, canvasProps }: AppProps) => {
       refreshSelectedShapes
     }),
     [
-      shapesRef,
+      shapes,
       settings,
       selectedShape,
       hoveredShape,
