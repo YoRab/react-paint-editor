@@ -26,7 +26,7 @@ type UseReactPaintProps = {
 }
 
 type EditorProps = {
-  shapesRef: React.RefObject<ShapeEntity[]>
+  shapes: ShapeEntity[]
   addPictureShape: (fileOrUrl: File | string, maxWidth?: number, maxHeight?: number) => Promise<ShapeEntity>
   swapShapes: (startPositionShapeId: string, endPositionShapeId: string) => void
   moveShapes: (shapes: ShapeEntity[], action: 'first' | 'last' | 'forward' | 'backward') => void
@@ -92,7 +92,7 @@ type EditorProps = {
 }
 
 type CanvasProps = {
-  shapesRef: React.RefObject<ShapeEntity[]>
+  shapes: ShapeEntity[]
   selectedShape: SelectionType | undefined
   copiedShape: SelectionType | undefined
   setCopiedShape: React.Dispatch<React.SetStateAction<SelectionType | undefined>>
@@ -284,6 +284,7 @@ const useReactPaint = ({
   const {
     registerEvent,
     unregisterEvent,
+    shapes,
     shapesRef,
     selectedShape,
     selectionFrame,
@@ -496,7 +497,7 @@ const useReactPaint = ({
   return {
     annotationsProps,
     editorProps: {
-      shapesRef,
+      shapes,
       addPictureShape,
       moveShapes,
       swapShapes,
@@ -551,7 +552,7 @@ const useReactPaint = ({
       }
     },
     canvasProps: {
-      shapesRef,
+      shapes,
       selectedShape,
       selectionFrame,
       hoveredShape,

@@ -40,7 +40,7 @@ const createPictureShape = (
       y: -settings.canvasOffset[1] + settings.canvasSize.realHeight / settings.canvasZoom / 2 - height / 2,
       width,
       height,
-      ratio: width / height,
+      ratio: height === 0 ? 1 : width / height,
       src: storedSrc,
       img
     },
@@ -108,17 +108,23 @@ export const createPicture = (
   return new Promise<ShapeEntity<'picture'>>((resolve, reject) => {
     const img = new Image()
 
-    img.onerror = () => {
-      reject(new Error('Some images could not be loaded'))
-    }
-
-    setTimeout(() => {
+    const timeoutId = setTimeout(() => {
       reject(new Error('Timeout while loading images'))
     }, 4000)
 
+    const resolveWithCleanup = (value: ShapeEntity<'picture'> | PromiseLike<ShapeEntity<'picture'>>) => {
+      clearTimeout(timeoutId)
+      resolve(value)
+    }
+
+    img.onerror = () => {
+      clearTimeout(timeoutId)
+      reject(new Error('Some images could not be loaded'))
+    }
+
     fileOrUrl instanceof File
-      ? createFilePicture(img, resolve, fileOrUrl, maxPictureWidth, maxPictureHeight, settings)
-      : createUrlPicture(img, resolve, fileOrUrl, maxPictureWidth, maxPictureHeight, settings)
+      ? createFilePicture(img, resolveWithCleanup, fileOrUrl, maxPictureWidth, maxPictureHeight, settings)
+      : createUrlPicture(img, resolveWithCleanup, fileOrUrl, maxPictureWidth, maxPictureHeight, settings)
   })
 }
 

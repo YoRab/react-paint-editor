@@ -4,7 +4,7 @@ import { roundValues } from '@canvas/utils/transform'
 import { rotatePoint } from '@canvas/utils/trigo'
 import type { HoverModeData, SelectionModeData } from '@common/types/Mode'
 import type { Point, Rect, SelectionType, ShapeEntity } from '@common/types/Shapes'
-import type { CustomTool } from '@common/types/tools'
+import type { CustomTool, ToolsGroupSettings } from '@common/types/tools'
 import { SETTINGS_DEFAULT_RECT } from '@editor/constants/tools'
 import { checkPositionIntersection, checkSelectionIntersection } from './intersect'
 
@@ -290,51 +290,53 @@ export const getSelectedShapesTools = (selection: SelectionType | undefined, ava
   if (!tools.length) return undefined
   if (tools.length === 1) return tools[0]
 
-  const settings = tools.slice(1)!.reduce((settingsAcc, tool) => {
-    const newSettings: CustomTool['settings'] = {}
-    for (const key in tool.settings) {
-      if (settingsAcc[key as keyof typeof settingsAcc] === undefined) continue
-      if (tool.settings[key as keyof typeof tool.settings]?.hidden || settingsAcc[key as keyof typeof settingsAcc]?.hidden) continue
+  type SettingField = { hidden?: boolean; min?: number; max?: number; step?: number; values?: unknown[]; default?: unknown }
 
-      const accSet = settingsAcc[key as keyof typeof settingsAcc]!
-      const newSet = tool.settings[key as keyof typeof tool.settings]!
-      const settings: Partial<typeof accSet> = {}
+  const settings = tools.slice(1)!.reduce<Record<string, SettingField>>(
+    (settingsAcc, tool) => {
+      const newSettings: Record<string, SettingField> = {}
+      for (const key in tool.settings) {
+        if (settingsAcc[key] === undefined) continue
+        const accSet = settingsAcc[key]
+        const newSet = (tool.settings as Record<string, SettingField>)[key]!
+        if (accSet.hidden || newSet?.hidden) continue
 
-      if (
-        'min' in newSet &&
-        'min' in accSet &&
-        newSet.min === accSet.min &&
-        'max' in newSet &&
-        'max' in accSet &&
-        newSet.max === accSet.max &&
-        'step' in newSet &&
-        'step' in accSet &&
-        newSet.step === accSet.step
-      ) {
-        settings.min = newSet.min
-        settings.max = newSet.max
-        settings.step = newSet.step
+        const fieldSettings: SettingField = {}
+
+        if (
+          'min' in newSet &&
+          'min' in accSet &&
+          newSet.min === accSet.min &&
+          'max' in newSet &&
+          'max' in accSet &&
+          newSet.max === accSet.max &&
+          'step' in newSet &&
+          'step' in accSet &&
+          newSet.step === accSet.step
+        ) {
+          fieldSettings.min = newSet.min
+          fieldSettings.max = newSet.max
+          fieldSettings.step = newSet.step
+        }
+
+        if ('values' in newSet && 'values' in accSet && newSet.values?.join(',') === accSet.values?.join(',')) {
+          fieldSettings.values = newSet.values
+        }
+
+        if (Object.keys(fieldSettings).length > 0 || key === 'closedPoints') {
+          newSettings[key] = fieldSettings
+        }
       }
-
-      //@ts-expect-error TODO fix type here
-      if ('values' in newSet && 'values' in accSet && newSet.values?.join(',') === accSet.values?.join(',')) {
-        //@ts-expect-error TODO fix type here
-        settings.values = newSet.values
-      }
-
-      if (Object.keys(settings).length > 0 || key === 'closedPoints') {
-        //@ts-expect-error TODO fix type here
-        newSettings[key as keyof typeof newSettings] = settings
-      }
-    }
-    return newSettings
-  }, tools[0]!.settings)
+      return newSettings
+    },
+    tools[0]!.settings as Record<string, SettingField>
+  )
 
   return {
     id: tools.map(tool => tool.id).join('-'),
     icon: '',
     label: 'group',
     type: 'group',
-    settings: settings
+    settings: settings as ToolsGroupSettings
   }
 }

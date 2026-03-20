@@ -27,7 +27,11 @@ const useSnackbar = () => {
       text
     }
     setSnackbarList(prev => [...prev, newSnackbar])
-    timers.current = [...timers.current, setTimeout(() => removeSnackbar(newSnackbar.id), duration)]
+    const timerId = setTimeout(() => {
+      removeSnackbar(newSnackbar.id)
+      timers.current = timers.current.filter(t => t !== timerId)
+    }, duration)
+    timers.current = [...timers.current, timerId]
   }
 
   useEffect(() => {

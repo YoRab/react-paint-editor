@@ -1,4 +1,5 @@
 import { DRAWCANVAS_CLASSNAME, SELECTIONCANVAS_CLASSNAME, type UtilsSettings } from '@canvas/constants/app'
+import { useCanvasContext } from '@canvas/context/CanvasContext'
 import useDrawableCanvas from '@canvas/hooks/useDrawableCanvas'
 import { initCanvasContext } from '@canvas/utils/canvas'
 import { drawGrid } from '@canvas/utils/grid'
@@ -9,9 +10,9 @@ import type { HoverModeData, SelectionModeData } from '@common/types/Mode'
 import type { Point, SelectionType, ShapeEntity } from '@common/types/Shapes'
 import type { ToolsType } from '@common/types/tools'
 import React, { useCallback, useEffect, useImperativeHandle, useRef } from 'react'
-import './Canvas.css'
 import { getSelectedShapes } from '@canvas/utils/selection'
 import { clipMask, drawMask } from '@canvas/utils/zoom'
+import './Canvas.css'
 import EditTextBox from './EditTextBox'
 
 const renderDrawCanvas = (
@@ -84,218 +85,136 @@ const renderSelectionCanvas = (
     })
 }
 
-type DrawerType = {
-  canGrow?: boolean
-  selectionColor: string
-  selectionWidth: number
-  settings: UtilsSettings
-  isEditMode: boolean
-  shapes: ShapeEntity[]
-  duplicateShapes: (shapesToDuplicate: ShapeEntity[]) => void
-  saveShapes: () => void
-  addShapes: (newShape: ShapeEntity[]) => void
-  updateSingleShape: (updatedShape: ShapeEntity[], withSave?: boolean) => void
-  selectedShape: SelectionType | undefined
-  setSelectedShape: React.Dispatch<React.SetStateAction<SelectionType | undefined>>
-  setSelectionFrame: React.Dispatch<React.SetStateAction<{ oldSelection: SelectionType | undefined; frame: [Point, Point] } | undefined>>
-  hoveredShape: ShapeEntity | undefined
-  selectionFrame: { oldSelection: SelectionType | undefined; frame: [Point, Point] } | undefined
-  refreshHoveredShape: (e: MouseEvent | TouchEvent, ctx: CanvasRenderingContext2D, cursorPosition: Point, isInsideMask: boolean) => void
-  refreshSelectedShapes: (ctx: CanvasRenderingContext2D, cursorPosition: Point, settings: UtilsSettings) => void
-  activeTool: ToolsType
-  setActiveTool: React.Dispatch<React.SetStateAction<ToolsType>>
-  canvasOffsetStartData: { start: Point; originalOffset: Point } | undefined
-  setCanvasOffsetStartData: React.Dispatch<React.SetStateAction<{ start: Point; originalOffset: Point } | undefined>>
-  setCanvasOffset: (offset: Point) => void
-  isInsideComponent: boolean
-  isInsideCanvas: boolean
-  selectionMode: SelectionModeData<number | Point>
-  setSelectionMode: React.Dispatch<React.SetStateAction<SelectionModeData<number | Point>>>
-  isShiftPressed: boolean
-  isAltPressed: boolean
-  isSpacePressed: boolean
-  withFrameSelection: boolean
-  withContextMenu: boolean
-  withSkeleton: boolean
-  setCanvasMoveAcceleration: React.Dispatch<React.SetStateAction<Point>>
-}
+const Canvas = React.forwardRef<HTMLCanvasElement>((_, ref) => {
+  const {
+    shapes,
+    settings,
+    selectedShape,
+    hoveredShape,
+    selectionFrame,
+    selectionMode,
+    activeTool,
+    canvasOffsetStartData,
+    isSpacePressed,
+    selectionColor,
+    selectionWidth,
+    isEditMode,
+    canGrow,
+    withSkeleton,
+    updateSingleShape,
+    saveShapes
+  } = useCanvasContext()
 
-const Canvas = React.forwardRef<HTMLCanvasElement, DrawerType>(
-  (
-    {
-      canGrow,
-      shapes,
-      duplicateShapes,
-      addShapes: addShape,
-      updateSingleShape,
-      selectedShape,
-      setSelectedShape,
-      setSelectionFrame,
-      hoveredShape,
-      selectionFrame,
-      refreshHoveredShape,
-      refreshSelectedShapes,
-      saveShapes,
-      activeTool,
-      setActiveTool,
-      canvasOffsetStartData,
-      setCanvasOffsetStartData,
-      setCanvasOffset,
-      setCanvasMoveAcceleration,
-      isInsideComponent,
-      isInsideCanvas,
-      selectionMode,
-      setSelectionMode,
-      selectionWidth,
-      selectionColor,
-      settings,
-      isEditMode,
-      isShiftPressed,
-      isAltPressed,
-      isSpacePressed,
-      withFrameSelection,
-      withSkeleton,
-      withContextMenu
+  const drawCanvasRef = useRef<HTMLCanvasElement | null>(null)
+  const selectionCanvasRef = useRef<HTMLCanvasElement | null>(null)
+  const canvasSize = settings.canvasSize
+  const withSelectionCanvas = isEditMode
+  const tabIndex = isEditMode ? 0 : -1
+
+  useImperativeHandle(ref, () => drawCanvasRef.current!)
+
+  const { hoverMode } = useDrawableCanvas(drawCanvasRef)
+
+  const updateSelectedShapeText = useCallback(
+    (newText: string[]) => {
+      const firstShape = getSelectedShapes(selectedShape)[0]
+      if (firstShape?.type !== 'text') return
+
+      const ctx = drawCanvasRef.current?.getContext('2d')
+      if (!ctx) return
+
+      const newShape = refreshShape(resizeTextShapeWithNewContent(ctx, firstShape, newText, settings), settings)
+
+      updateSingleShape([newShape])
     },
-    ref
-  ) => {
-    const drawCanvasRef = useRef<HTMLCanvasElement | null>(null)
-    const selectionCanvasRef = useRef<HTMLCanvasElement | null>(null)
-    const canvasSize = settings.canvasSize
-    const withSelectionCanvas = isEditMode
-    const tabIndex = isEditMode ? 0 : -1
+    [updateSingleShape, selectedShape, settings]
+  )
 
-    useImperativeHandle(ref, () => drawCanvasRef.current!)
+  const preventRightClick = (e: React.MouseEvent | React.TouchEvent) => {
+    if (!isEditMode) return
+    e.preventDefault()
+    e.stopPropagation()
+    return false
+  }
 
-    const { hoverMode } = useDrawableCanvas({
-      addShapes: addShape,
-      drawCanvasRef,
-      setActiveTool,
-      shapes,
-      selectionMode,
-      activeTool,
-      isInsideComponent,
-      isInsideCanvas,
-      setCanvasOffset,
-      selectedShape,
-      canvasOffsetStartData,
-      setCanvasOffsetStartData,
-      setSelectedShape,
-      setSelectionFrame,
-      refreshHoveredShape,
-      refreshSelectedShapes,
-      updateSingleShape,
-      duplicateShapes,
-      saveShapes,
-      setSelectionMode,
-      setCanvasMoveAcceleration,
-      isShiftPressed,
-      isAltPressed,
-      withFrameSelection,
-      settings,
-      isSpacePressed,
-      withContextMenu
-    })
-    const updateSelectedShapeText = useCallback(
-      (newText: string[]) => {
-        const firstShape = getSelectedShapes(selectedShape)[0]
-        if (firstShape?.type !== 'text') return
+  useEffect(() => {
+    const drawCtx = drawCanvasRef.current?.getContext('2d')
+    drawCtx && window.requestAnimationFrame(() => renderDrawCanvas(drawCtx, selectionMode, settings, shapes, selectedShape))
+  }, [shapes, selectionMode, selectedShape, settings])
 
-        const ctx = drawCanvasRef.current?.getContext('2d')
-        if (!ctx) return
+  useEffect(() => {
+    const selectionCtx = selectionCanvasRef.current?.getContext('2d')
 
-        const newShape = refreshShape(resizeTextShapeWithNewContent(ctx, firstShape, newText, settings), settings)
-
-        updateSingleShape([newShape])
-      },
-      [updateSingleShape, selectedShape, settings]
-    )
-
-    const preventRightClick = (e: React.MouseEvent | React.TouchEvent) => {
-      if (!isEditMode) return
-      e.preventDefault()
-      e.stopPropagation()
-      return false
-    }
-
-    useEffect(() => {
-      const drawCtx = drawCanvasRef.current?.getContext('2d')
-      drawCtx && window.requestAnimationFrame(() => renderDrawCanvas(drawCtx, selectionMode, settings, shapes, selectedShape))
-    }, [shapes, selectionMode, selectedShape, settings])
-
-    useEffect(() => {
-      const selectionCtx = selectionCanvasRef.current?.getContext('2d')
-
-      selectionCtx &&
-        window.requestAnimationFrame(() =>
-          renderSelectionCanvas(
-            selectionCtx,
-            selectionMode,
-            settings,
-            activeTool,
-            selectionWidth,
-            selectionColor,
-            selectedShape,
-            hoveredShape,
-            hoverMode,
-            selectionFrame,
-            withSkeleton
-          )
+    selectionCtx &&
+      window.requestAnimationFrame(() =>
+        renderSelectionCanvas(
+          selectionCtx,
+          selectionMode,
+          settings,
+          activeTool,
+          selectionWidth,
+          selectionColor,
+          selectedShape,
+          hoveredShape,
+          hoverMode,
+          selectionFrame,
+          withSkeleton
         )
-    }, [hoveredShape, hoverMode, selectionFrame, selectionMode, selectedShape, activeTool, settings, selectionWidth, selectionColor, withSkeleton])
-    return (
-      <div
-        className='react-paint-canvas-box'
-        style={{
-          '--react-paint-canvas-cursor': canvasOffsetStartData
-            ? 'grabbing'
-            : hoverMode.outOfView
-              ? 'default'
-              : hoverMode.mode === 'resize'
-                ? 'pointer'
-                : activeTool.type !== 'selection' && activeTool.type !== 'move'
-                  ? 'crosshair'
-                  : hoverMode.mode === 'translate'
-                    ? 'move'
-                    : hoverMode.mode === 'rotate' || activeTool.type === 'move' || isSpacePressed
-                      ? 'grab'
-                      : 'default'
-        }}
-      >
-        <div className='react-paint-canvas-container' data-grow={canGrow}>
+      )
+  }, [hoveredShape, hoverMode, selectionFrame, selectionMode, selectedShape, activeTool, settings, selectionWidth, selectionColor, withSkeleton])
+
+  return (
+    <div
+      className='react-paint-canvas-box'
+      style={{
+        '--react-paint-canvas-cursor': canvasOffsetStartData
+          ? 'grabbing'
+          : hoverMode.outOfView
+            ? 'default'
+            : hoverMode.mode === 'resize'
+              ? 'pointer'
+              : activeTool.type !== 'selection' && activeTool.type !== 'move'
+                ? 'crosshair'
+                : hoverMode.mode === 'translate'
+                  ? 'move'
+                  : hoverMode.mode === 'rotate' || activeTool.type === 'move' || isSpacePressed
+                    ? 'grab'
+                    : 'default'
+      }}
+    >
+      <div className='react-paint-canvas-container' data-grow={canGrow}>
+        <canvas
+          className={DRAWCANVAS_CLASSNAME}
+          ref={drawCanvasRef}
+          data-grow={canGrow}
+          width={canvasSize.width}
+          height={canvasSize.height}
+          onContextMenu={preventRightClick}
+          tabIndex={tabIndex}
+        />
+        {withSelectionCanvas && (
           <canvas
-            className={DRAWCANVAS_CLASSNAME}
-            ref={drawCanvasRef}
-            data-grow={canGrow}
+            className={SELECTIONCANVAS_CLASSNAME}
+            ref={selectionCanvasRef}
             width={canvasSize.width}
             height={canvasSize.height}
+            data-grow={canGrow}
             onContextMenu={preventRightClick}
-            tabIndex={tabIndex}
           />
-          {withSelectionCanvas && (
-            <canvas
-              className={SELECTIONCANVAS_CLASSNAME}
-              ref={selectionCanvasRef}
-              width={canvasSize.width}
-              height={canvasSize.height}
-              data-grow={canGrow}
-              onContextMenu={preventRightClick}
-            />
-          )}
-          {isEditMode && selectionMode.mode === 'textedition' && getSelectedShapes(selectedShape)[0]?.type === 'text' && (
-            <EditTextBox
-              disabled={!settings.features.edition}
-              shape={getSelectedShapes(selectedShape)[0] as ShapeEntity<'text'>}
-              defaultValue={selectionMode.defaultValue}
-              updateValue={updateSelectedShapeText}
-              saveShapes={saveShapes}
-              settings={settings}
-            />
-          )}
-        </div>
+        )}
+        {isEditMode && selectionMode.mode === 'textedition' && getSelectedShapes(selectedShape)[0]?.type === 'text' && (
+          <EditTextBox
+            disabled={!settings.features.edition}
+            shape={getSelectedShapes(selectedShape)[0] as ShapeEntity<'text'>}
+            defaultValue={selectionMode.defaultValue}
+            updateValue={updateSelectedShapeText}
+            saveShapes={saveShapes}
+            settings={settings}
+          />
+        )}
       </div>
-    )
-  }
-)
+    </div>
+  )
+})
 
 export default Canvas

@@ -39,7 +39,16 @@ const EditTextBox = ({ disabled = false, shape, defaultValue, updateValue, saveS
     const handlePaste = (e: ClipboardEvent) => {
       e.preventDefault()
       const text = e.clipboardData?.getData('text/plain')
-      document.execCommand('insertText', false, text) //TODO use Clipboard API when ready
+      if (!text) return
+      const selection = window.getSelection()
+      if (!selection || selection.rangeCount === 0) return
+      selection.deleteFromDocument()
+      const range = selection.getRangeAt(0)
+      range.insertNode(document.createTextNode(text))
+      range.collapse(false)
+      selection.removeAllRanges()
+      selection.addRange(range)
+      currentNode.dispatchEvent(new Event('input', { bubbles: true }))
     }
 
     currentNode.addEventListener('paste', handlePaste)
