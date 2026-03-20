@@ -22,6 +22,7 @@ import type { CustomTool, ToolsType } from '@common/types/tools'
 import { clamp } from '@common/utils/util'
 import { SELECTION_TOOL } from '@editor/constants/tools'
 import type React from 'react'
+import useEventListener from '@canvas/hooks/useEventListener'
 import { useEffect, useRef, useState } from 'react'
 
 const handleMove = (
@@ -264,18 +265,9 @@ const useDrawableCanvas = ({
       longPressTimeout.current
     )
 
-  useEffect(() => {
-    if (isInsideComponent) {
-      const handleMouseMove = (e: MouseEvent | TouchEvent) => handleMoveRef.current?.(e)
-      document.addEventListener('mousemove', handleMouseMove)
-      document.addEventListener('touchmove', handleMouseMove)
-
-      return () => {
-        document.removeEventListener('mousemove', handleMouseMove)
-        document.removeEventListener('touchmove', handleMouseMove)
-      }
-    }
-  }, [isInsideComponent])
+  const moveTarget = isInsideComponent ? document : null
+  useEventListener(moveTarget, 'mousemove', e => handleMoveRef.current?.(e as MouseEvent | TouchEvent))
+  useEventListener(moveTarget, 'touchmove', e => handleMoveRef.current?.(e as MouseEvent | TouchEvent))
 
   const { isBrushShapeDoneOnMouseUp } = settings
 
@@ -332,19 +324,9 @@ const useDrawableCanvas = ({
     }
   }
 
-  useEffect(() => {
-    if (isInsideCanvas) {
-      const handleMouseUp = (e: MouseEvent | TouchEvent) => handleUpRef.current?.(e)
-
-      document.addEventListener('mouseup', handleMouseUp)
-      document.addEventListener('touchend', handleMouseUp)
-
-      return () => {
-        document.removeEventListener('mouseup', handleMouseUp)
-        document.removeEventListener('touchend', handleMouseUp)
-      }
-    }
-  }, [isInsideCanvas])
+  const upTarget = isInsideCanvas ? document : null
+  useEventListener(upTarget, 'mouseup', e => handleUpRef.current?.(e as MouseEvent | TouchEvent))
+  useEventListener(upTarget, 'touchend', e => handleUpRef.current?.(e as MouseEvent | TouchEvent))
 
   const onlyCheckZoom = !settings.features.edition && settings.features.zoom
   const disableCheck = !settings.features.edition && !settings.features.zoom
