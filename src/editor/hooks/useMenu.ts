@@ -4,9 +4,10 @@ import { useCallback, useEffect, useState, useTransition } from 'react'
 type UseMenuProps = {
   trigger?: 'click' | 'hover'
   buttonElt: HTMLElement | null
+  disabled?: boolean
 }
 
-const useMenu = ({ trigger = 'click', buttonElt }: UseMenuProps) => {
+const useMenu = ({ trigger = 'click', disabled = false, buttonElt }: UseMenuProps) => {
   const [isOpen, setIsOpen] = useState(false)
   const [, startTransition] = useTransition()
 
@@ -17,7 +18,7 @@ const useMenu = ({ trigger = 'click', buttonElt }: UseMenuProps) => {
   }, [])
 
   useEffect(() => {
-    if (!buttonElt) return
+    if (!buttonElt || disabled) return
     if (isOpen) {
       const closePanelOnClick = (event: MouseEvent | TouchEvent) => {
         if (isEventInsideNode(event, buttonElt)) return
@@ -57,7 +58,7 @@ const useMenu = ({ trigger = 'click', buttonElt }: UseMenuProps) => {
     return () => {
       buttonElt.removeEventListener('click', openPanel)
     }
-  }, [buttonElt, isOpen, trigger])
+  }, [buttonElt, isOpen, disabled, trigger])
 
   return { isOpen, trigger, closeMenu }
 }

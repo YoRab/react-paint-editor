@@ -60,8 +60,6 @@ const ContextMenu = ({
 }: ContextMenuType) => {
   const organizeButtonRef = useRef<HTMLDivElement>(null)
   const transformButtonRef = useRef<HTMLDivElement>(null)
-  const { isOpen: isOrganizeMenuOpen } = useMenu({ trigger: 'hover', buttonElt: organizeButtonRef.current })
-  const { isOpen: isTransformMenuOpen } = useMenu({ trigger: 'hover', buttonElt: transformButtonRef.current })
 
   const { originalShape, cursorStartPosition, anchor } = selectionMode
   const selectedShapes = getSelectedShapes(originalShape)
@@ -74,6 +72,8 @@ const ContextMenu = ({
 
   const isVisible = !selectedShapes.some(shape => shape.visible === false)
   const isLocked = selectedShapes.some(shape => shape.locked)
+  const { isOpen: isOrganizeMenuOpen } = useMenu({ trigger: 'hover', buttonElt: organizeButtonRef.current })
+  const { isOpen: isTransformMenuOpen } = useMenu({ trigger: 'hover', buttonElt: transformButtonRef.current, disabled: isLocked })
 
   const menuHeight =
     MENU_PADDING_VERTICAL * 2 +
@@ -244,7 +244,9 @@ const ContextMenu = ({
             )}
           </div>
           <div className='react-paint-editor-toolbox-contextmenu-group' ref={transformButtonRef}>
-            <Button icon={rightChevronIcon}>Transform</Button>
+            <Button icon={rightChevronIcon} disabled={isLocked}>
+              Transform
+            </Button>
             {isTransformMenuOpen && (
               <Menu position={menuPosition?.subMenuPosition}>
                 <Button onClick={onFlipHorizontally}>Flip horizontally</Button>
