@@ -1,6 +1,6 @@
 import type { UtilsSettings } from '@canvas/constants/app'
 import { SELECTION_ANCHOR_SIZE, SELECTION_RESIZE_ANCHOR_POSITIONS, SELECTION_ROTATED_ANCHOR_POSITION } from '@canvas/constants/shapes'
-import { getSelectedShapes } from '@canvas/utils/selection'
+import { getSelectedShapes } from '@common/utils/selection'
 import { catmullRomToBezier, createLinePath, getCatmullRomPoints } from '@canvas/utils/shapes/path'
 import { scalePoint } from '@canvas/utils/transform'
 import type { CanvasSize } from '@common/types/Canvas'

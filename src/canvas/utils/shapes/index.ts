@@ -2,7 +2,7 @@ import type { UtilsSettings } from '@canvas/constants/app'
 import { SHAPES_KEEPING_RATIO, SHAPES_WITH_ROTATION } from '@canvas/constants/shapes'
 import { transformCanvas, updateCanvasContext } from '@canvas/utils/canvas'
 import { getRectIntersection } from '@canvas/utils/intersect'
-import { buildShapesGroup, getSelectedShapes } from '@canvas/utils/selection'
+import { buildShapesGroup } from '@canvas/utils/selection'
 import { drawSelectionGroup } from '@canvas/utils/selection/groupSelection'
 import { drawLineSelection } from '@canvas/utils/selection/lineSelection'
 import { drawBoundingBox, drawSelectionRect } from '@canvas/utils/selection/rectSelection'
@@ -24,6 +24,7 @@ import { drawPicture, refreshPicture, resizePicture, resizePictureInGroup } from
 import { createPolygon, drawPolygon, refreshPolygon, resizePolygon } from './polygon'
 import { createRectangle, drawRect, refreshRect, resizeRect, resizeRectInGroup } from './rectangle'
 import { createText, drawText, refreshText, resizeText, resizeTextInGroup } from './text'
+import { getSelectedShapes } from '@common/utils/selection'
 
 export const createShape = (
   ctx: CanvasRenderingContext2D,

@@ -8,8 +8,8 @@ import { getShapePicture } from '@editor/utils/style'
 import type React from 'react'
 import { useRef, useState } from 'react'
 import './Layouts.css'
-import type { UtilsSettings } from '@canvas/constants/app'
-import { getSelectedShapes } from '@canvas/utils/selection'
+import type { UtilsSettings } from '@common/types/Settings'
+import { getSelectedShapes } from '@common/utils/selection'
 
 type LayoutType = {
   disabled?: boolean

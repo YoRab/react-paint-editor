@@ -5,7 +5,7 @@ import { fitContentInsideContainer } from '@canvas/utils/transform'
 import type { SelectionModeResize } from '@common/types/Mode'
 import type { DrawableShape, Point, SelectionType, ShapeEntity } from '@common/types/Shapes'
 import { uniqueId } from '@common/utils/util'
-import { DEFAULT_SHAPE_PICTURE } from '@editor/constants/tools'
+import { PICTURE_TOOL_ID } from '@canvas/constants/tools'
 import { type GroupResizeContext, getPositionWithoutGroupRotation, getShapePositionInNewBorder } from './group'
 import { createRecPath, getComputedShapeInfos } from './path'
 import { getRectBorder } from './rectangle'
@@ -33,7 +33,7 @@ const createPictureShape = (
   const [width, height] = fitContentInsideContainer(img.width, img.height, maxPictureWidth, maxPictureHeight, true)
   return buildPath(
     {
-      toolId: DEFAULT_SHAPE_PICTURE.id,
+      toolId: PICTURE_TOOL_ID,
       type: 'picture',
       id: uniqueId(`${'picture'}_`),
       x: -settings.canvasOffset[0] + settings.canvasSize.realWidth / settings.canvasZoom / 2 - width / 2,

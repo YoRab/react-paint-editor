@@ -1,12 +1,12 @@
 import type { UtilsSettings } from '@canvas/constants/app'
 import { KeyboardCode, KeyboardCommand } from '@canvas/constants/keyboard'
-import { getSelectedShapes } from '@canvas/utils/selection'
+import { getSelectedShapes } from '@common/utils/selection'
 import { copyShapes, translateShapes } from '@canvas/utils/shapes'
 import type { SelectionModeData } from '@common/types/Mode'
 import type { Point, SelectionType, ShapeEntity } from '@common/types/Shapes'
 import type { ToolsType } from '@common/types/tools'
 import { isMacOs } from '@common/utils/util'
-import { SELECTION_TOOL } from '@editor/constants/tools'
+import { SELECTION_TOOL } from '@canvas/constants/tools'
 import { useEffect } from 'react'
 
 type UseKeyboardType = {

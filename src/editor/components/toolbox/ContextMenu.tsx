@@ -1,7 +1,6 @@
-import type { UtilsSettings } from '@canvas/constants/app'
+import type { UtilsSettings } from '@common/types/Settings'
 import './ContextMenu.css'
-import { buildShapesGroup, getSelectedShapes } from '@canvas/utils/selection'
-import { copyShapes } from '@canvas/utils/shapes'
+import { getSelectedShapes } from '@common/utils/selection'
 import type { SelectionModeContextMenu } from '@common/types/Mode'
 import type { Point, SelectionType, ShapeEntity } from '@common/types/Shapes'
 import Button from '@editor/components/common/Button'
@@ -24,6 +23,8 @@ type ContextMenuType = {
   canvasRef: React.RefObject<HTMLCanvasElement | null>
   selectAllShapes: () => void
   closeContextMenu: () => void
+  buildShapesGroup: (shapes: ShapeEntity[]) => SelectionType | undefined
+  copyShapes: (selection: SelectionType) => ShapeEntity[]
   toggleShapeVisibility: (shapes: ShapeEntity[]) => void
   toggleShapeLock: (shapes: ShapeEntity[]) => void
   removeShape: (shapes: ShapeEntity[]) => void
@@ -56,7 +57,9 @@ const ContextMenu = ({
   copiedShape,
   setCopiedShape,
   pasteShapes,
-  removeShapePoint
+  removeShapePoint,
+  buildShapesGroup,
+  copyShapes
 }: ContextMenuType) => {
   const organizeButtonRef = useRef<HTMLDivElement>(null)
   const transformButtonRef = useRef<HTMLDivElement>(null)
@@ -133,7 +136,7 @@ const ContextMenu = ({
 
   const onCutShape = () => {
     if (hasSelectedShape) {
-      setCopiedShape(buildShapesGroup(selectedShapes, settings))
+      setCopiedShape(buildShapesGroup(selectedShapes))
       removeShape(selectedShapes)
     }
     closeContextMenu()
@@ -141,14 +144,14 @@ const ContextMenu = ({
 
   const onCopyShape = () => {
     if (hasSelectedShape) {
-      setCopiedShape(buildShapesGroup(selectedShapes, settings))
+      setCopiedShape(buildShapesGroup(selectedShapes))
     }
     closeContextMenu()
   }
 
   const onPasteShape = () => {
     if (copiedShape) {
-      pasteShapes(copyShapes(copiedShape, settings))
+      pasteShapes(copyShapes(copiedShape))
     }
     closeContextMenu()
   }

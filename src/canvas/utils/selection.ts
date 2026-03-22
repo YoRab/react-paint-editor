@@ -1,12 +1,13 @@
 import type { UtilsSettings } from '@canvas/constants/app'
+import { CANVAS_DEFAULT_RECT_SETTINGS } from '@canvas/constants/tools'
 import { createRectangle } from '@canvas/utils/shapes/rectangle'
 import { roundValues } from '@canvas/utils/transform'
 import { rotatePoint } from '@canvas/utils/trigo'
 import type { HoverModeData, SelectionModeData } from '@common/types/Mode'
 import type { Point, Rect, SelectionType, ShapeEntity } from '@common/types/Shapes'
-import type { CustomTool, ToolsGroupSettings } from '@common/types/tools'
-import { SETTINGS_DEFAULT_RECT } from '@editor/constants/tools'
 import { checkPositionIntersection, checkSelectionIntersection } from './intersect'
+
+import { getSelectedShapes } from '@common/utils/selection'
 
 export const getNewSelectionData = (
   hoverMode: HoverModeData,
@@ -241,7 +242,7 @@ export const buildShapesGroup = (shapes: ShapeEntity[], settings: UtilsSettings)
     {
       id: 'group_selection',
       type: 'rect',
-      settings: SETTINGS_DEFAULT_RECT
+      settings: CANVAS_DEFAULT_RECT_SETTINGS
     },
     [borders.x, borders.y],
     settings,
@@ -290,11 +291,6 @@ export const applyToSelectedShape =
     return buildShapesGroup(shapes, settings)
   }
 
-export const getSelectedShapes = (selection: SelectionType | undefined): ShapeEntity[] => {
-  if (!selection) return []
-  return selection.type === 'group' ? selection.shapes : [selection]
-}
-
 export const addToSelectedShapes = (selection: SelectionType | undefined, shapes: ShapeEntity[]): ShapeEntity[] => {
   const currentShapes = getSelectedShapes(selection)
   return [...new Set([...currentShapes, ...shapes])]
@@ -302,65 +298,4 @@ export const addToSelectedShapes = (selection: SelectionType | undefined, shapes
 
 export const omitFromSelectedShapes = (selection: SelectionType | undefined, shape: ShapeEntity): ShapeEntity[] => {
   return getSelectedShapes(selection).filter(selectedShape => selectedShape.id !== shape.id)
-}
-
-export const getSelectedShapesTools = (selection: SelectionType | undefined, availableTools: CustomTool[]): CustomTool | undefined => {
-  const selectedShapes = getSelectedShapes(selection)
-  const tools = selectedShapes
-    .map(shape => {
-      return availableTools.find(tool => tool.id === shape?.toolId) || availableTools.find(tool => tool.type === shape?.type)
-    })
-    .filter(tool => tool !== undefined)
-  if (!tools.length) return undefined
-  if (tools.length === 1) return tools[0]
-
-  type SettingField = { hidden?: boolean; min?: number; max?: number; step?: number; values?: unknown[]; default?: unknown }
-
-  const settings = tools.slice(1)!.reduce<Record<string, SettingField>>(
-    (settingsAcc, tool) => {
-      const newSettings: Record<string, SettingField> = {}
-      for (const key in tool.settings) {
-        if (settingsAcc[key] === undefined) continue
-        const accSet = settingsAcc[key]
-        const newSet = (tool.settings as Record<string, SettingField>)[key]!
-        if (accSet.hidden || newSet?.hidden) continue
-
-        const fieldSettings: SettingField = {}
-
-        if (
-          'min' in newSet &&
-          'min' in accSet &&
-          newSet.min === accSet.min &&
-          'max' in newSet &&
-          'max' in accSet &&
-          newSet.max === accSet.max &&
-          'step' in newSet &&
-          'step' in accSet &&
-          newSet.step === accSet.step
-        ) {
-          fieldSettings.min = newSet.min
-          fieldSettings.max = newSet.max
-          fieldSettings.step = newSet.step
-        }
-
-        if ('values' in newSet && 'values' in accSet && newSet.values?.join(',') === accSet.values?.join(',')) {
-          fieldSettings.values = newSet.values
-        }
-
-        if (Object.keys(fieldSettings).length > 0 || key === 'closedPoints') {
-          newSettings[key] = fieldSettings
-        }
-      }
-      return newSettings
-    },
-    tools[0]!.settings as Record<string, SettingField>
-  )
-
-  return {
-    id: tools.map(tool => tool.id).join('-'),
-    icon: '',
-    label: 'group',
-    type: 'group',
-    settings: settings as ToolsGroupSettings
-  }
 }

@@ -4,7 +4,7 @@ import Panel from '@editor/components/common/Panel'
 import type React from 'react'
 import { useState } from 'react'
 import './RangeField.css'
-import useDebounce from '@canvas/hooks/useDebounce'
+import useDebounce from '@common/hooks/useDebounce'
 
 type ShapeStyleColorType = {
   selectedSettings: string | undefined

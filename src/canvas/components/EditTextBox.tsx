@@ -1,7 +1,7 @@
 import type { UtilsSettings } from '@canvas/constants/app'
 import { radiansToDegrees, rotatePoint } from '@canvas/utils/trigo'
 import type { ShapeEntity } from '@common/types/Shapes'
-import { STYLE_FONT_DEFAULT } from '@editor/constants/style'
+import { STYLE_FONT_DEFAULT } from '@canvas/constants/rendering'
 import type React from 'react'
 import { useEffect, useMemo, useRef } from 'react'
 import './EditTextBox.css'

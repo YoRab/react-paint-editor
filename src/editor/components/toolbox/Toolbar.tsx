@@ -10,7 +10,7 @@ import MenuGroup from './MenuGroup'
 import PictureUrlModal from './PictureUrlInput'
 import Tool from './Tool'
 import './Toolbar.css'
-import type { UtilsSettings } from '@canvas/constants/app'
+import type { UtilsSettings } from '@common/types/Settings'
 import ExportModal from '@editor/components/toolbox/ExportModal'
 import ToolbarGroup from './ToolbarGroup'
 
