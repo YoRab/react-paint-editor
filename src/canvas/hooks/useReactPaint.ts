@@ -5,15 +5,16 @@ import useZoom from '@canvas/hooks/useZoom'
 import { buildDataToExport } from '@canvas/utils/data'
 import { decodeImportedData, decodeJson, downloadFile, encodeShapesInString, getCanvasImage } from '@canvas/utils/file'
 import { buildShapesGroup } from '@canvas/utils/selection'
+import { copyShapes, refreshShape } from '@canvas/utils/shapes'
 import { removeCurvePoint } from '@canvas/utils/shapes/curve'
 import { removePolygonPoint } from '@canvas/utils/shapes/polygon'
-import { sanitizeTools } from '@canvas/utils/tools'
+import { calculateTextFontSize } from '@canvas/utils/shapes/text'
 import { getNewOffset } from '@canvas/utils/zoom'
 import type { CanvasSize } from '@common/types/Canvas'
 import type { SelectionModeData } from '@common/types/Mode'
 import type { ExportedDrawableShape, Point, SelectionType, ShapeEntity, StateData } from '@common/types/Shapes'
 import type { CustomTool, ToolsType } from '@common/types/tools'
-import { SELECTION_TOOL } from '@editor/constants/tools'
+import { SELECTION_TOOL } from '@canvas/constants/tools'
 import { type CSSProperties, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 type UseReactPaintProps = {
@@ -25,7 +26,7 @@ type UseReactPaintProps = {
   options?: OptionalOptions | undefined
 }
 
-type EditorProps = {
+export type EditorProps = {
   shapes: ShapeEntity[]
   addPictureShape: (fileOrUrl: File | string, maxWidth?: number, maxHeight?: number) => Promise<ShapeEntity>
   swapShapes: (startPositionShapeId: string, endPositionShapeId: string) => void
@@ -79,6 +80,10 @@ type EditorProps = {
   settings: UtilsSettings
   setCanvasZoom: (action: 'unzoom' | 'zoom' | 'default') => void
   resetZoom: () => void
+  buildShapesGroup: (shapes: ShapeEntity[]) => SelectionType | undefined
+  copyShapes: (selection: SelectionType) => ShapeEntity[]
+  refreshShape: (shape: ShapeEntity) => ShapeEntity
+  calculateTextFontSize: typeof calculateTextFontSize
   canvas: {
     canGrow: boolean
     canShrink: boolean
@@ -269,7 +274,7 @@ const useReactPaint = ({
     ]
   )
 
-  const [availableTools, setAvailableTools] = useState(sanitizeTools(availableToolsFromProps, withUploadPicture || withUrlPicture))
+  const [availableTools, setAvailableTools] = useState(availableToolsFromProps as CustomTool[])
 
   const { isInsideComponent, isInsideCanvas } = useComponent({
     settings,
@@ -384,6 +389,21 @@ const useReactPaint = ({
     selectShapes(shapesRef.current)
   }, [selectShapes, shapesRef])
 
+  const editorBuildShapesGroup = useCallback(
+    (shapes: ShapeEntity[]) => buildShapesGroup(shapes, settings),
+    [settings]
+  )
+
+  const editorCopyShapes = useCallback(
+    (sel: SelectionType) => copyShapes(sel, settings),
+    [settings]
+  )
+
+  const editorRefreshShape = useCallback(
+    (shape: ShapeEntity) => refreshShape(shape, settings),
+    [settings]
+  )
+
   const exportData = useCallback(() => {
     const content = encodeShapesInString(shapesRef.current, width, height)
     if (!content) {
@@ -470,8 +490,8 @@ const useReactPaint = ({
   )
 
   useEffect(() => {
-    setAvailableTools(sanitizeTools(availableToolsFromProps, withUploadPicture || withUrlPicture))
-  }, [availableToolsFromProps, withUploadPicture, withUrlPicture])
+    setAvailableTools(availableToolsFromProps as CustomTool[])
+  }, [availableToolsFromProps])
 
   const refs = {
     canvas: canvasRef,
@@ -540,6 +560,10 @@ const useReactPaint = ({
       settings,
       setCanvasZoom,
       resetZoom,
+      buildShapesGroup: editorBuildShapesGroup,
+      copyShapes: editorCopyShapes,
+      refreshShape: editorRefreshShape,
+      calculateTextFontSize,
       canvas: {
         canGrow,
         canShrink,

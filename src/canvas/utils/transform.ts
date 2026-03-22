@@ -1,12 +1,13 @@
 import type { UtilsSettings } from '@canvas/constants/app'
 import { GRID_ROTATION_STEPS } from '@canvas/constants/grid'
 import { PICTURE_DEFAULT_SIZE } from '@canvas/constants/picture'
-import { buildShapesGroup, getSelectedShapes } from '@canvas/utils/selection'
+import { buildShapesGroup } from '@canvas/utils/selection'
 import type { SelectionModeData } from '@common/types/Mode'
 import type { DrawableShape, Line, Point, SelectionType, ShapeEntity } from '@common/types/Shapes'
 import { refreshShape, resizeShapes, rotateShape, translateShapes } from './shapes'
 import { addNewPointToShape } from './shapes/brush'
 import { getAngleFromVector, rotatePoint } from './trigo'
+import { getSelectedShapes } from '@common/utils/selection'
 
 export const roundValues = (prop: number, precision = 2): number => {
   return Math.round(prop * 10 ** precision) / 10 ** precision

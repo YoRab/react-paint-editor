@@ -1,6 +1,4 @@
-import type { UtilsSettings } from '@canvas/constants/app'
-import { refreshShape } from '@canvas/utils/shapes'
-import { calculateTextFontSize } from '@canvas/utils/shapes/text'
+import type { UtilsSettings } from '@common/types/Settings'
 import type { SelectionType, ShapeEntity } from '@common/types/Shapes'
 import type { CustomTool, ToolsType } from '@common/types/tools'
 import { set } from '@common/utils/object'
@@ -17,7 +15,7 @@ import LineArrowField from './LineArrowField'
 import LineTypeField from './LineTypeField'
 import RangeField from './RangeField'
 import './SettingsBar.css'
-import { getSelectedShapes, getSelectedShapesTools } from '@canvas/utils/selection'
+import { getSelectedShapes, getSelectedShapesTools } from '@common/utils/selection'
 import ClosedPointsField from '@editor/components/settings/ClosedPointsField'
 import ZoomButton from '@editor/components/settings/ZoomButton'
 import ToggleField from './ToggleField'
@@ -332,6 +330,8 @@ type SettingsBarType = {
   setIsZoomPanelShown: React.Dispatch<React.SetStateAction<boolean>>
   setCanvasZoom: (action: 'unzoom' | 'zoom' | 'default') => void
   saveShapes: () => void
+  refreshShape: (shape: ShapeEntity) => ShapeEntity
+  calculateTextFontSize: (ctx: CanvasRenderingContext2D, text: string[], maxWidth: number, fontBold: boolean, fontItalic: boolean, fontFamily?: string) => number
 }
 
 const SettingsBar = ({
@@ -348,7 +348,9 @@ const SettingsBar = ({
   updateShape,
   removeShape,
   isZoomPanelShown,
-  setIsZoomPanelShown
+  setIsZoomPanelShown,
+  refreshShape,
+  calculateTextFontSize
 }: SettingsBarType) => {
   const [selectedSettings, setSelectedSettings] = useState<string | undefined>(undefined)
   const [isMenuOpen, setIsMenuOpen] = useState(false)
@@ -381,7 +383,7 @@ const SettingsBar = ({
   const handleShapeStyleChange = (field: string, value: string | number | boolean, needHistorySave = true) => {
     if (getSelectedShapes(selectedShape).length) {
       const refreshedShapes = getSelectedShapes(selectedShape).map(shape => {
-        return refreshShape(set(['style', field], value, shape), settings)
+        return refreshShape(set(['style', field], value, shape))
       })
       updateShape(refreshedShapes, needHistorySave)
       selectedShapeTool && updateToolSettings(selectedShapeTool.id, field, value)
@@ -405,14 +407,11 @@ const SettingsBar = ({
           newShape.style?.fontItalic ?? false,
           newShape.style?.fontFamily
         )
-        return refreshShape(
-          {
-            ...newShape,
-            fontSize,
-            height: fontSize * newShape.value.length
-          },
-          settings
-        )
+        return refreshShape({
+          ...newShape,
+          fontSize,
+          height: fontSize * newShape.value.length
+        })
       })
 
       updateShape(refreshedShapes, true)

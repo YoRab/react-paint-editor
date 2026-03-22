@@ -1,4 +1,4 @@
-import { getSelectedShapes } from '@canvas/utils/selection'
+import { getSelectedShapes } from '@common/utils/selection'
 import type { SelectionType, ShapeEntity } from '@common/types/Shapes'
 import Button from '@editor/components/common/Button'
 import { trashIcon } from '@editor/constants/icons'

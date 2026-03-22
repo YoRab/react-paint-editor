@@ -11,7 +11,7 @@ import {
   getCursorPositionInTransformedCanvas,
   isTouchGesture
 } from '@canvas/utils/intersect'
-import { buildShapesGroup, getSelectedShapes, selectShape } from '@canvas/utils/selection'
+import { buildShapesGroup, selectShape } from '@canvas/utils/selection'
 import { createShape } from '@canvas/utils/shapes'
 import { addNewPointGroupToShape } from '@canvas/utils/shapes/brush'
 import { addCurveLine, addCurvePoint } from '@canvas/utils/shapes/curve'
@@ -22,9 +22,10 @@ import type { HoverModeData, SelectionModeData } from '@common/types/Mode'
 import type { Point, SelectionType, ShapeEntity } from '@common/types/Shapes'
 import type { CustomTool, ToolsType } from '@common/types/tools'
 import { clamp } from '@common/utils/util'
-import { SELECTION_TOOL } from '@editor/constants/tools'
+import { SELECTION_TOOL } from '@canvas/constants/tools'
 import type React from 'react'
 import { useEffect, useRef, useState } from 'react'
+import { getSelectedShapes } from '@common/utils/selection'
 
 const handleMove = (
   e: MouseEvent | TouchEvent,

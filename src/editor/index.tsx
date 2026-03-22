@@ -1,4 +1,4 @@
-import type { UseReactPaintReturnType } from '@canvas/hooks/useReactPaint'
+import type { EditorProps as CanvasEditorProps } from '@canvas/hooks/useReactPaint'
 import { set } from '@common/utils/object'
 import Loading from '@editor/components/common/Loading'
 import SnackbarContainer from '@editor/components/common/Snackbar'
@@ -16,7 +16,7 @@ import ContextMenu from '@editor/components/toolbox/ContextMenu'
 import { zoomIn, zoomOut } from '@editor/constants/icons'
 
 type EditorProps = {
-  editorProps: UseReactPaintReturnType['editorProps']
+  editorProps: CanvasEditorProps
   className?: string
   style?: CSSProperties
   children: ReactNode
@@ -79,6 +79,10 @@ const Editor = ({ editorProps, className, style, options, children }: EditorProp
     settings,
     setCanvasZoom,
     saveShapes,
+    buildShapesGroup,
+    copyShapes,
+    refreshShape,
+    calculateTextFontSize,
     canvas: { canGrow, layersManipulation, withExport, withLoadAndSave, withUploadPicture, withUrlPicture, withContextMenu }
   } = editorProps
 
@@ -287,6 +291,8 @@ const Editor = ({ editorProps, className, style, options, children }: EditorProp
             isZoomPanelShown={isZoomPanelShown}
             setIsZoomPanelShown={setIsZoomPanelShown}
             updateToolSettings={updateToolSettings}
+            refreshShape={refreshShape}
+            calculateTextFontSize={calculateTextFontSize}
           />
           <Loading isLoading={isLoading} />
           <SnackbarContainer snackbarList={snackbarList} />
@@ -309,6 +315,8 @@ const Editor = ({ editorProps, className, style, options, children }: EditorProp
           pasteShapes={pasteShapes}
           removeShapePoint={removeShapePoint}
           transformShape={transformShape}
+          buildShapesGroup={buildShapesGroup}
+          copyShapes={copyShapes}
         />
       )}
     </div>

@@ -1,6 +1,5 @@
 import React, { useImperativeHandle, useRef } from 'react'
 import './Button.css'
-import { KeyboardCode } from '@canvas/constants/keyboard'
 import type { FileInputType } from '@editor/components/common/Button'
 
 const FileInput = React.forwardRef<HTMLButtonElement | HTMLInputElement, FileInputType>((props, ref) => {
@@ -11,7 +10,7 @@ const FileInput = React.forwardRef<HTMLButtonElement | HTMLInputElement, FileInp
   useImperativeHandle(ref, () => inputRef.current!)
 
   const onKeyDown = (e: React.KeyboardEvent<HTMLElement>) => {
-    if (e.key === KeyboardCode.Space) {
+    if (e.key === ' ') {
       e.preventDefault()
       e.stopPropagation()
     }
@@ -20,7 +19,7 @@ const FileInput = React.forwardRef<HTMLButtonElement | HTMLInputElement, FileInp
   const onKeyUp = (e: React.KeyboardEvent<HTMLElement>) => {
     e.preventDefault()
     e.stopPropagation()
-    if (e.key === KeyboardCode.Space) {
+    if (e.key === ' ') {
       inputRef.current?.click()
     }
   }

@@ -1,8 +1,7 @@
 import type { Size } from '@common/types/Canvas'
-import type { ExportedDrawableShape, Point } from '@common/types/Shapes'
+import type { ExportedDrawableShape } from '@common/types/Shapes'
 import type { CustomToolInput } from '@common/types/tools'
 import type { RecursivePartial } from '@common/types/utils'
-import { DEFAULT_SHAPE_TOOLS } from '@editor/constants/tools'
 import { SELECTION_DEFAULT_COLOR, SELECTION_DEFAULT_PADDING, SELECTION_DEFAULT_WIDTH } from './shapes'
 
 export const APP_NAME = 'react_paint'
@@ -10,30 +9,8 @@ export const APP_NAME = 'react_paint'
 export const DRAWCANVAS_CLASSNAME = 'react-paint-canvas-drawcanvas'
 export const SELECTIONCANVAS_CLASSNAME = 'react-paint-canvas-selectioncanvas'
 
-export type BrushAlgo = 'simple' | 'quadratic'
-
-export type UtilsSettings = {
-  brushAlgo: BrushAlgo
-  isBrushShapeDoneOnMouseUp: boolean
-  gridGap: number
-  canvasOffset: Point
-  canvasZoom: number
-  canvasSize: {
-    realWidth: number
-    realHeight: number
-    width: number
-    height: number
-    scaleRatio: number
-    scaleRatioWithNoZoom: number
-  }
-  selectionPadding: number
-  size: 'infinite' | 'fixed'
-  features: {
-    zoom: boolean
-    edition: boolean
-  }
-  debug: boolean
-}
+import type { BrushAlgo } from '@common/types/Settings'
+export type { BrushAlgo, UtilsSettings } from '@common/types/Settings'
 type AppOptionsType = {
   layersManipulation: boolean
   grid: number
@@ -68,7 +45,7 @@ export const DEFAULT_OPTIONS: AppOptionsType = {
   withUploadPicture: true,
   withUrlPicture: false,
   withContextMenu: true,
-  availableTools: DEFAULT_SHAPE_TOOLS,
+  availableTools: [],
   clearCallback: 'empty',
   brushAlgo: 'simple',
   isBrushShapeDoneOnMouseUp: true,

@@ -1,7 +1,7 @@
 import type { UtilsSettings } from '@canvas/constants/app'
 import { SELECTION_DEFAULT_COLOR, SELECTION_DEFAULT_WIDTH } from '@canvas/constants/shapes'
 import type { Point, StyleShape } from '@common/types/Shapes'
-import { LINE_DASH_DATA } from '@editor/constants/style'
+import { LINE_DASH_DATA } from '@canvas/constants/rendering'
 
 export const initCanvasContext = (ctx: CanvasRenderingContext2D) => {
   ctx.reset()
