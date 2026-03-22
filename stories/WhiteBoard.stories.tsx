@@ -1,8 +1,8 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import { Canvas, Editor, useReactPaint } from '../src/index'
 import './whiteboard.css'
-import useDebounce from '@common/hooks/useDebounce'
 import useResizeObserver from '@canvas/hooks/useResizeObserver'
+import useDebounce from '@common/hooks/useDebounce'
 import { useCallback, useRef, useState } from 'react'
 
 const ReactPaintWrapper = (args: Parameters<typeof useReactPaint>[0]) => {

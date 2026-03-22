@@ -5,9 +5,8 @@ import { roundValues } from '@canvas/utils/transform'
 import { rotatePoint } from '@canvas/utils/trigo'
 import type { HoverModeData, SelectionModeData } from '@common/types/Mode'
 import type { Point, Rect, SelectionType, ShapeEntity } from '@common/types/Shapes'
-import { checkPositionIntersection, checkSelectionIntersection } from './intersect'
-
 import { getSelectedShapes } from '@common/utils/selection'
+import { checkPositionIntersection, checkSelectionIntersection } from './intersect'
 
 export const getNewSelectionData = (
   hoverMode: HoverModeData,

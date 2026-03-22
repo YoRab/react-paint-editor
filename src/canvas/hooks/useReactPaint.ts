@@ -1,4 +1,5 @@
 import { DEFAULT_OPTIONS, type OptionalOptions, type UtilsSettings } from '@canvas/constants/app'
+import { SELECTION_TOOL } from '@canvas/constants/tools'
 import useComponent from '@canvas/hooks/useComponent'
 import useShapes from '@canvas/hooks/useShapes'
 import useZoom from '@canvas/hooks/useZoom'
@@ -14,7 +15,6 @@ import type { CanvasSize } from '@common/types/Canvas'
 import type { SelectionModeData } from '@common/types/Mode'
 import type { ExportedDrawableShape, Point, SelectionType, ShapeEntity, StateData } from '@common/types/Shapes'
 import type { CustomTool, ToolsType } from '@common/types/tools'
-import { SELECTION_TOOL } from '@canvas/constants/tools'
 import { type CSSProperties, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 type UseReactPaintProps = {
@@ -389,20 +389,11 @@ const useReactPaint = ({
     selectShapes(shapesRef.current.filter(shape => !shape.locked))
   }, [selectShapes, shapesRef])
 
-  const editorBuildShapesGroup = useCallback(
-    (shapes: ShapeEntity[]) => buildShapesGroup(shapes, settings),
-    [settings]
-  )
+  const editorBuildShapesGroup = useCallback((shapes: ShapeEntity[]) => buildShapesGroup(shapes, settings), [settings])
 
-  const editorCopyShapes = useCallback(
-    (sel: SelectionType) => copyShapes(sel, settings),
-    [settings]
-  )
+  const editorCopyShapes = useCallback((sel: SelectionType) => copyShapes(sel, settings), [settings])
 
-  const editorRefreshShape = useCallback(
-    (shape: ShapeEntity) => refreshShape(shape, settings),
-    [settings]
-  )
+  const editorRefreshShape = useCallback((shape: ShapeEntity) => refreshShape(shape, settings), [settings])
 
   const exportData = useCallback(() => {
     const content = encodeShapesInString(shapesRef.current, width, height)

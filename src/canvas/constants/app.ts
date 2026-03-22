@@ -10,7 +10,9 @@ export const DRAWCANVAS_CLASSNAME = 'react-paint-canvas-drawcanvas'
 export const SELECTIONCANVAS_CLASSNAME = 'react-paint-canvas-selectioncanvas'
 
 import type { BrushAlgo } from '@common/types/Settings'
+
 export type { BrushAlgo, UtilsSettings } from '@common/types/Settings'
+
 type AppOptionsType = {
   layersManipulation: boolean
   grid: number

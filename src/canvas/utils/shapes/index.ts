@@ -13,6 +13,7 @@ import { getCurrentView } from '@canvas/utils/zoom'
 import type { HoverModeData, SelectionModeData, SelectionModeResize } from '@common/types/Mode'
 import type { DrawableShape, Point, Rect, SelectionType, ShapeEntity } from '@common/types/Shapes'
 import type { CustomTool } from '@common/types/tools'
+import { getSelectedShapes } from '@common/utils/selection'
 import { uniqueId } from '@common/utils/util'
 import { createBrush, drawBrush, refreshBrush, resizeBrush, resizeBrushInGroup } from './brush'
 import { createCircle, drawCircle, refreshCircle, resizeCircle, resizeCircleInGroup } from './circle'
@@ -24,7 +25,6 @@ import { drawPicture, refreshPicture, resizePicture, resizePictureInGroup } from
 import { createPolygon, drawPolygon, refreshPolygon, resizePolygon } from './polygon'
 import { createRectangle, drawRect, refreshRect, resizeRect, resizeRectInGroup } from './rectangle'
 import { createText, drawText, refreshText, resizeText, resizeTextInGroup } from './text'
-import { getSelectedShapes } from '@common/utils/selection'
 
 export const createShape = (
   ctx: CanvasRenderingContext2D,

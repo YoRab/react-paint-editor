@@ -1,11 +1,11 @@
 import type { UtilsSettings } from '@canvas/constants/app'
 import { SELECTION_ANCHOR_SIZE, SELECTION_RESIZE_ANCHOR_POSITIONS, SELECTION_ROTATED_ANCHOR_POSITION } from '@canvas/constants/shapes'
-import { getSelectedShapes } from '@common/utils/selection'
 import { catmullRomToBezier, createLinePath, getCatmullRomPoints } from '@canvas/utils/shapes/path'
 import { scalePoint } from '@canvas/utils/transform'
 import type { CanvasSize } from '@common/types/Canvas'
 import type { HoverModeData } from '@common/types/Mode'
 import type { Point, Rect, SelectionType, ShapeEntity } from '@common/types/Shapes'
+import { getSelectedShapes } from '@common/utils/selection'
 import { isCircleIntersectRect, isPointInsideRect, rotatePoint } from './trigo'
 
 export const getCursorPosition = (e: MouseEvent | TouchEvent): { clientX: number; clientY: number } => {
@@ -360,7 +360,7 @@ export const checkSelectionFrameCollision = (ctx: CanvasRenderingContext2D, shap
 
 const LONG_PRESS_MOVE_THRESHOLD = 5
 
-export const shouldCancelLongPress = (e: MouseEvent | TouchEvent, startPosition:  {clientX: number, clientY: number}): boolean => {
+export const shouldCancelLongPress = (e: MouseEvent | TouchEvent, startPosition: { clientX: number; clientY: number }): boolean => {
   if (!isTouchGesture(e)) return true
   const { clientX, clientY } = getCursorPosition(e)
   const dx = clientX - startPosition.clientX

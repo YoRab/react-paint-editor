@@ -1,5 +1,6 @@
 import type { UtilsSettings } from '@canvas/constants/app'
 import { ShapeTypeArray } from '@canvas/constants/shapes'
+import { SELECTION_TOOL } from '@canvas/constants/tools'
 import { useCanvasContext } from '@canvas/context/CanvasContext'
 import useDoubleClick from '@canvas/hooks/useDoubleClick'
 import useEventListener from '@canvas/hooks/useEventListener'
@@ -22,12 +23,11 @@ import { transformShape } from '@canvas/utils/transform'
 import { isCursorInsideMask } from '@canvas/utils/zoom'
 import type { HoverModeData, SelectionModeData } from '@common/types/Mode'
 import type { Point, SelectionType, ShapeEntity } from '@common/types/Shapes'
-import type { CustomTool, ToolsType } from '@common/types/tools'
+import type { CustomTool } from '@common/types/tools'
+import { getSelectedShapes } from '@common/utils/selection'
 import { clamp } from '@common/utils/util'
-import { SELECTION_TOOL } from '@canvas/constants/tools'
 import type React from 'react'
 import { useEffect, useRef, useState } from 'react'
-import { getSelectedShapes } from '@common/utils/selection'
 
 const handleMove = (
   e: MouseEvent | TouchEvent,
@@ -47,7 +47,7 @@ const handleMove = (
   isAltPressed: boolean,
   setSelectedShape: React.Dispatch<React.SetStateAction<SelectionType | undefined>>,
   setCanvasMoveAcceleration: React.Dispatch<React.SetStateAction<Point>>,
-  longPressTimeout: { timeout: NodeJS.Timeout; startPosition: {clientX: number, clientY: number} } | null
+  longPressTimeout: { timeout: NodeJS.Timeout; startPosition: { clientX: number; clientY: number } } | null
 ) => {
   if (longPressTimeout && shouldCancelLongPress(e, longPressTimeout.startPosition)) {
     clearTimeout(longPressTimeout.timeout)
@@ -183,7 +183,7 @@ const useDrawableCanvas = (drawCanvasRef: React.RefObject<HTMLCanvasElement | nu
     refreshHoveredShape,
     refreshSelectedShapes
   } = useCanvasContext()
-  const longPressTimeout = useRef<{ timeout: NodeJS.Timeout; startPosition: {clientX: number, clientY: number} } | null>(null)
+  const longPressTimeout = useRef<{ timeout: NodeJS.Timeout; startPosition: { clientX: number; clientY: number } } | null>(null)
   const [hoverMode, setHoverMode] = useState<HoverModeData>({
     mode: 'default'
   })

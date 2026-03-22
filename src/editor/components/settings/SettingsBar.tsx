@@ -331,7 +331,14 @@ type SettingsBarType = {
   setCanvasZoom: (action: 'unzoom' | 'zoom' | 'default') => void
   saveShapes: () => void
   refreshShape: (shape: ShapeEntity) => ShapeEntity
-  calculateTextFontSize: (ctx: CanvasRenderingContext2D, text: string[], maxWidth: number, fontBold: boolean, fontItalic: boolean, fontFamily?: string) => number
+  calculateTextFontSize: (
+    ctx: CanvasRenderingContext2D,
+    text: string[],
+    maxWidth: number,
+    fontBold: boolean,
+    fontItalic: boolean,
+    fontFamily?: string
+  ) => number
 }
 
 const SettingsBar = ({

@@ -203,13 +203,10 @@ const useShapes = (
   const [hoveredShape, setHoveredShape] = useState<ShapeEntity | undefined>(undefined)
   const [copiedShape, setCopiedShape] = useState<SelectionType | undefined>(undefined)
 
-  const setSelectedShape = useCallback(
-    (newVal: SelectionType | undefined | ((prev: SelectionType | undefined) => SelectionType | undefined)) => {
-      const resolved = typeof newVal === 'function' ? newVal(selectedShapeRef.current) : newVal
-      dispatch({ type: 'SET_SELECTION', newSelectedShape: resolved })
-    },
-    []
-  )
+  const setSelectedShape = useCallback((newVal: SelectionType | undefined | ((prev: SelectionType | undefined) => SelectionType | undefined)) => {
+    const resolved = typeof newVal === 'function' ? newVal(selectedShapeRef.current) : newVal
+    dispatch({ type: 'SET_SELECTION', newSelectedShape: resolved })
+  }, [])
 
   const canGoBackward = shapesState.history.cursor > 0
   const canGoForward = shapesState.history.cursor < shapesState.history.states.length - 1
@@ -292,23 +289,17 @@ const useShapes = (
   )
 
   // newSelectedShape defaults to current selection when not provided (preserves it for swapShapes/moveShapes)
-  const resetShapes = useCallback(
-    (newShapes: ShapeEntity[], newSelectedShape: SelectionType | undefined = selectedShapeRef.current) => {
-      dispatch({ type: 'RESET_AND_SAVE', shapes: newShapes, newSelectedShape })
-    },
-    []
-  )
+  const resetShapes = useCallback((newShapes: ShapeEntity[], newSelectedShape: SelectionType | undefined = selectedShapeRef.current) => {
+    dispatch({ type: 'RESET_AND_SAVE', shapes: newShapes, newSelectedShape })
+  }, [])
 
-  const removeShape = useCallback(
-    (shapes: ShapeEntity[]) => {
-      const ids = new Set(shapes.map(item => item.id))
-      const prev = selectedShapeRef.current
-      const prevIds = getSelectedShapes(prev).map(item => item.id)
-      const newSelectedShape = prevIds.find(value => ids.has(value)) ? undefined : prev
-      dispatch({ type: 'REMOVE', ids, newSelectedShape })
-    },
-    []
-  )
+  const removeShape = useCallback((shapes: ShapeEntity[]) => {
+    const ids = new Set(shapes.map(item => item.id))
+    const prev = selectedShapeRef.current
+    const prevIds = getSelectedShapes(prev).map(item => item.id)
+    const newSelectedShape = prevIds.find(value => ids.has(value)) ? undefined : prev
+    dispatch({ type: 'REMOVE', ids, newSelectedShape })
+  }, [])
 
   const backwardShape = useCallback(() => {
     dispatch({ type: 'UNDO' })
@@ -318,12 +309,9 @@ const useShapes = (
     dispatch({ type: 'REDO' })
   }, [])
 
-  const clearShapes = useCallback(
-    (shapesToInit: ShapeEntity[], options: { clearHistory: boolean; source: 'user' | 'remote' }) => {
-      dispatch({ type: 'CLEAR', shapes: shapesToInit, clearHistory: options.clearHistory, source: options.source })
-    },
-    []
-  )
+  const clearShapes = useCallback((shapesToInit: ShapeEntity[], options: { clearHistory: boolean; source: 'user' | 'remote' }) => {
+    dispatch({ type: 'CLEAR', shapes: shapesToInit, clearHistory: options.clearHistory, source: options.source })
+  }, [])
 
   const swapShapes = useCallback(
     (startPositionShapeId: string, endPositionShapeId: string) => {
