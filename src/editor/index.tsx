@@ -324,3 +324,5 @@ const Editor = ({ editorProps, className, style, options, children }: EditorProp
 }
 
 export default Editor
+
+export { DEFAULT_SHAPE_TOOLS } from '@editor/constants/tools'

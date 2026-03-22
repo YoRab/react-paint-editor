@@ -203,3 +203,8 @@ const App = ({ options, className, style, canvasProps }: AppProps) => {
 }
 
 export default App
+
+export { DEFAULT_OPTIONS } from '@canvas/constants/app'
+export type { OptionalOptions } from '@canvas/constants/app'
+export { default as useReactPaint } from '@canvas/hooks/useReactPaint'
+export type { ExportedDrawableShape as DrawableShape, StateData } from '@common/types/Shapes'

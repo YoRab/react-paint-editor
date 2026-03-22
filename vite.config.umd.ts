@@ -2,7 +2,6 @@ import { resolve } from 'node:path'
 import react from '@vitejs/plugin-react'
 import { defineConfig } from 'vite'
 
-// https://vitejs.dev/config/
 export default defineConfig({
   resolve: {
     tsconfigPaths: true
@@ -12,21 +11,21 @@ export default defineConfig({
     cssMinify: 'lightningcss',
     emptyOutDir: false,
     lib: {
-      entry: {
-        'react-paint': resolve(__dirname, 'src/index.tsx'),
-        'canvas/index': resolve(__dirname, 'src/canvas/index.tsx'),
-        'editor/index': resolve(__dirname, 'src/editor/index.tsx')
-      },
-      formats: ['es'],
-      fileName: (_format, entryName) => `${entryName}.js`
+      entry: resolve(__dirname, 'src/index.tsx'),
+      fileName: () => 'react-paint.umd.cjs',
+      name: 'ReactPaint',
     },
     rolldownOptions: {
       external: ['react', 'react/jsx-runtime', 'react-dom'],
       output: {
-        format: 'es',
+        format: 'umd',
+        globals: {
+          react: 'React',
+          'react/jsx-runtime': 'ReactJSXRuntime',
+          'react-dom': 'ReactDOM'
+        },
         assetFileNames: 'react-paint.css',
-        chunkFileNames: '_chunks/[name]-[hash].js',
-minify: true,
+        minify: true,
         generatedCode: { preset: 'es2015' }
       }
     }

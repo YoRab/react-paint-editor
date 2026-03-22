@@ -2,6 +2,7 @@
   "name": "@yorab/react-paint",
   "version": "0.17.1",
   "type": "module",
+  "sideEffects": false,
   "keywords": [
     "react",
     "canvas",
@@ -32,7 +33,25 @@
       "import": "./dist/react-paint.js",
       "require": "./dist/react-paint.umd.cjs"
     },
+    "./canvas": {
+      "types": "./dist/canvas/index.d.ts",
+      "import": "./dist/canvas/index.js"
+    },
+    "./editor": {
+      "types": "./dist/editor/index.d.ts",
+      "import": "./dist/editor/index.js"
+    },
     "./react-paint.css": "./dist/react-paint.css"
+  },
+  "typesVersions": {
+    "*": {
+      "canvas": [
+        "./dist/canvas/index.d.ts"
+      ],
+      "editor": [
+        "./dist/editor/index.d.ts"
+      ]
+    }
   },
   "files": [
     "README.md",
@@ -70,7 +89,7 @@
     "start": "storybook dev -p 6006",
     "build-storybook": "storybook build",
     "test": "vitest",
-    "build": "vite build",
+    "build": "rm -rf dist && vite build --config vite.config.umd.ts && vite build",
     "lint": "pnpm biome check --write src stories tests",
     "prepublishOnly": "pnpm build && pnpm declarationfiles",
     "publishnpm": "pnpm publish --access public"
