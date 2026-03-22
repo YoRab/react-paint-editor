@@ -93,6 +93,98 @@ return (
   }
 }
 
+const CUSTOM_BRUSH_TOOLS = [
+  {
+    type: 'brush' as const,
+    id: 'fine-pencil',
+    label: 'Fine pencil',
+    settings: {
+      lineWidth: { min: 1, max: 8, step: 1, default: 2 },
+      strokeColor: { default: '#212121' }
+    }
+  },
+  {
+    type: 'brush' as const,
+    id: 'marker',
+    label: 'Marker',
+    settings: {
+      lineWidth: { min: 10, max: 30, step: 2, default: 20 },
+      strokeColor: { default: '#e74c3c' },
+      opacity: { default: 50 }
+    }
+  },
+  {
+    type: 'brush' as const,
+    id: 'dashed-brush',
+    label: 'Dashed brush',
+    settings: {
+      lineWidth: { min: 4, max: 16, step: 2, default: 8 },
+      strokeColor: { default: '#2980b9' },
+      lineDash: { default: 1 }
+    }
+  }
+]
+
+export const CustomTool: Story = {
+  args: {
+    options: {
+      availableTools: CUSTOM_BRUSH_TOOLS,
+      withUploadPicture: false,
+      withUrlPicture: false
+    }
+  },
+  parameters: {
+    docs: {
+      description: {
+        story:
+          'Custom tools — only 3 brush presets with different configurations. Each tool is defined as a partial object merged with the default brush settings.'
+      },
+      source: {
+        code: `const CUSTOM_BRUSH_TOOLS = [
+  {
+    type: 'brush',
+    id: 'fine-pencil',
+    label: 'Fine pencil',
+    settings: {
+      lineWidth: { min: 1, max: 8, step: 1, default: 2 },
+      strokeColor: { default: '#212121' }
+    }
+  },
+  {
+    type: 'brush',
+    id: 'marker',
+    label: 'Marker',
+    settings: {
+      lineWidth: { min: 10, max: 30, step: 2, default: 20 },
+      strokeColor: { default: '#e74c3c' },
+      opacity: { default: 50 }
+    }
+  },
+  {
+    type: 'brush',
+    id: 'dashed-brush',
+    label: 'Dashed brush',
+    settings: {
+      lineWidth: { min: 4, max: 16, step: 2, default: 8 },
+      strokeColor: { default: '#2980b9' },
+      lineDash: { default: 1 }
+    }
+  }
+]
+
+const { editorProps, canvasProps } = useReactPaint({ options: { availableTools: CUSTOM_BRUSH_TOOLS, withUploadPicture: false, withUrlPicture: false } })
+
+return (
+  <Editor editorProps={editorProps}>
+    <Canvas canvasProps={canvasProps} />
+  </Editor>
+)`,
+        language: 'tsx'
+      }
+    }
+  }
+}
+
 export const DebugMode: Story = {
   args: {
     shapes: TREE_AND_CLOUDS,
