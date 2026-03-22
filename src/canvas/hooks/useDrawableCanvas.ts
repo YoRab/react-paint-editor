@@ -7,9 +7,11 @@ import {
   checkCurveLinesSelectionIntersection,
   checkPolygonLinesSelectionIntersection,
   checkSelectionIntersection,
+  getCursorPosition,
   getCursorPositionInElement,
   getCursorPositionInTransformedCanvas,
-  isTouchGesture
+  isTouchGesture,
+  shouldCancelLongPress
 } from '@canvas/utils/intersect'
 import { buildShapesGroup, selectShape } from '@canvas/utils/selection'
 import { createShape } from '@canvas/utils/shapes'
@@ -45,9 +47,11 @@ const handleMove = (
   isAltPressed: boolean,
   setSelectedShape: React.Dispatch<React.SetStateAction<SelectionType | undefined>>,
   setCanvasMoveAcceleration: React.Dispatch<React.SetStateAction<Point>>,
-  longPressTimeout: NodeJS.Timeout | null
+  longPressTimeout: { timeout: NodeJS.Timeout; startPosition: {clientX: number, clientY: number} } | null
 ) => {
-  longPressTimeout && clearTimeout(longPressTimeout)
+  if (longPressTimeout && shouldCancelLongPress(e, longPressTimeout.startPosition)) {
+    clearTimeout(longPressTimeout.timeout)
+  }
   if (isTouchGesture(e) && e.touches.length > 1) return
 
   const drawCtx = canvasRef.current?.getContext('2d')
@@ -179,7 +183,7 @@ const useDrawableCanvas = (drawCanvasRef: React.RefObject<HTMLCanvasElement | nu
     refreshHoveredShape,
     refreshSelectedShapes
   } = useCanvasContext()
-  const longPressTimeout = useRef<NodeJS.Timeout | null>(null)
+  const longPressTimeout = useRef<{ timeout: NodeJS.Timeout; startPosition: {clientX: number, clientY: number} } | null>(null)
   const [hoverMode, setHoverMode] = useState<HoverModeData>({
     mode: 'default'
   })
@@ -187,7 +191,7 @@ const useDrawableCanvas = (drawCanvasRef: React.RefObject<HTMLCanvasElement | nu
   useEffect(() => {
     return () => {
       if (longPressTimeout.current) {
-        clearTimeout(longPressTimeout.current)
+        clearTimeout(longPressTimeout.current.timeout)
       }
     }
   }, [])
@@ -246,7 +250,7 @@ const useDrawableCanvas = (drawCanvasRef: React.RefObject<HTMLCanvasElement | nu
   const handleUpRef = useRef<(e: MouseEvent | TouchEvent) => void>(null)
 
   handleUpRef.current = (e: MouseEvent | TouchEvent) => {
-    longPressTimeout.current && clearTimeout(longPressTimeout.current)
+    if (longPressTimeout.current) clearTimeout(longPressTimeout.current.timeout)
     if (isTouchGesture(e) && e.touches.length > 1) return
     const ctx = drawCanvasRef.current?.getContext('2d')
     if (!ctx) return
@@ -342,10 +346,13 @@ const useDrawableCanvas = (drawCanvasRef: React.RefObject<HTMLCanvasElement | nu
     }
 
     if (isTouchGesture(e)) {
-      longPressTimeout.current && clearTimeout(longPressTimeout.current)
-      longPressTimeout.current = setTimeout(() => {
-        handleContextMenu(e, drawCanvasRef.current!)
-      }, 500)
+      if (longPressTimeout.current) clearTimeout(longPressTimeout.current.timeout)
+      longPressTimeout.current = {
+        timeout: setTimeout(() => {
+          handleContextMenu(e, drawCanvasRef.current!)
+        }, 500),
+        startPosition: getCursorPosition(e)
+      }
     }
 
     if (activeTool.type === 'selection') {
