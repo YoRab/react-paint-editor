@@ -357,3 +357,13 @@ export const checkSelectionFrameCollision = (ctx: CanvasRenderingContext2D, shap
 
   return rectSearch({ ctx, path: shape.path, rect: frameCollision, offset: COLLISION_OFFSET, center, rotation: shape.rotation ?? 0, checkFill })
 }
+
+const LONG_PRESS_MOVE_THRESHOLD = 10
+
+export const shouldCancelLongPress = (e: MouseEvent | TouchEvent, startPosition:  {clientX: number, clientY: number}): boolean => {
+  if (!isTouchGesture(e)) return true
+  const { clientX, clientY } = getCursorPosition(e)
+  const dx = clientX - startPosition.clientX
+  const dy = clientY - startPosition.clientY
+  return dx * dx + dy * dy > LONG_PRESS_MOVE_THRESHOLD * LONG_PRESS_MOVE_THRESHOLD
+}
