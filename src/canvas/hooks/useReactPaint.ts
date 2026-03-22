@@ -386,7 +386,7 @@ const useReactPaint = ({
   )
 
   const selectAllShapes = useCallback(() => {
-    selectShapes(shapesRef.current)
+    selectShapes(shapesRef.current.filter(shape => !shape.locked))
   }, [selectShapes, shapesRef])
 
   const editorBuildShapesGroup = useCallback(
