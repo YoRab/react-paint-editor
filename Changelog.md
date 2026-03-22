@@ -2,6 +2,18 @@
 
 For more details and links to Pull requests, see [Releases](https://github.com/YoRab/react-paint-editor/releases)
 
+## V0.18.0
+- Separate current logic and create new entrypoints for ESM build (dist/canvas & dist/editor), allowing treeshaking in the future
+- use vite 8 + rolldown to build, decreasing ESM build size by 15-20%
+- use clipboard API to handle copy/paste feature
+- add Custom Tool story
+- fix context menu not triggered on long press
+- fix performance issue when transforming multiple shapes
+- fix : locked shape should not be selectionable with ctrl + click
+- fix : disable transform entry in context menu if shape is locked
+- fix : select all shapes now filters locked ones
+- various other fixes and improvements
+
 ## V0.17.1
 - fix shape inverting while resizing with keepRatio and resizeFromCenter
 - add flip feature in context menu
