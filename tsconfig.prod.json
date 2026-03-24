@@ -1,11 +1,11 @@
 {
   "compilerOptions": {
     "target": "es2020",
-    "lib": ["dom", "dom.iterable", "es2020"],
-    "baseUrl": ".",
+    "lib": ["dom", "es2020"],
     "skipLibCheck": true,
     "declaration": true,
     "emitDeclarationOnly": true,
+    "rootDir": ".",
     "outDir": "declarationfiles",
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
@@ -18,10 +18,11 @@
     "moduleResolution": "bundler",
     "resolveJsonModule": true,
     "jsx": "react-jsx",
+    "types": ["node"],
     "paths": {
-      "@editor/*": ["src/editor/*"],
-      "@canvas/*": ["src/canvas/*"],
-      "@common/*": ["src/common/*"]
+      "@editor/*": ["./src/editor/*"],
+      "@canvas/*": ["./src/canvas/*"],
+      "@common/*": ["./src/common/*"]
     }
   },
   "include": ["src"]

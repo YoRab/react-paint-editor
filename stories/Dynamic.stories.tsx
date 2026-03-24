@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import { useEffect, useState } from 'react'
-import { HELLO_THERE, TREE_AND_CLOUDS, WITH_PICTURE } from 'stories/fixture'
+import { HELLO_THERE, TREE_AND_CLOUDS, WITH_PICTURE } from './fixture'
 import { Canvas, type DrawableShape, Editor, type StateData, useReactPaint } from '../src/index'
 import './Dynamic.css'
 import './button.css'
