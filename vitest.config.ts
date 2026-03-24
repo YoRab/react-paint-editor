@@ -1,8 +1,6 @@
-/// <reference types="vitest/config" />
-import react from '@vitejs/plugin-react'
-import { defineConfig } from 'vite'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { defineConfig } from 'vitest/config'
 import { storybookTest } from '@storybook/addon-vitest/vitest-plugin'
 import { playwright } from '@vitest/browser-playwright'
 
@@ -13,24 +11,23 @@ export default defineConfig({
   resolve: {
     tsconfigPaths: true
   },
-  plugins: [react()],
-  assetsInclude: ['/sb-preview/runtime.js'],
   test: {
-    projects: [{
-      extends: true,
-      plugins: [
-        storybookTest({ configDir: path.join(dirname, '.storybook') })
-      ],
-      test: {
-        name: 'storybook',
-        browser: {
-          enabled: true,
-          headless: true,
-          provider: playwright({}),
-          instances: [{ browser: 'chromium' }]
-        },
-        setupFiles: ['.storybook/vitest.setup.ts']
+    projects: [
+      {
+        extends: true,
+        plugins: [
+          storybookTest({ configDir: path.join(dirname, '.storybook') })
+        ],
+        test: {
+          name: 'storybook',
+          browser: {
+            enabled: true,
+            headless: true,
+            provider: playwright({}),
+            instances: [{ browser: 'chromium' }]
+          }
+        }
       }
-    }]
+    ]
   }
 })
