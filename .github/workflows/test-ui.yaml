@@ -21,7 +21,7 @@ jobs:
           node-version: "24.x"
 
       - name: Install dependencies
-        run: npm ci
+        run: pnpm install
 
       - name: Run tests
-        run: npm run test-storybook
+        run: pnpm test-storybook
