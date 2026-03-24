@@ -69,16 +69,16 @@
     "@types/react": "19.2.14",
     "@types/react-dom": "19.2.3",
     "@vitejs/plugin-react": "6.0.1",
+    "@vitest/browser-playwright": "4.1.0",
+    "@vitest/coverage-v8": "4.1.0",
     "jsdom": "29.0.1",
+    "playwright": "1.58.2",
     "react": "18.3.1",
     "react-dom": "18.3.1",
     "storybook": "10.3.3",
     "typescript": "6.0.2",
     "vite": "8.0.1",
-    "vitest": "4.1.0",
-    "playwright": "1.58.2",
-    "@vitest/browser-playwright": "4.1.0",
-    "@vitest/coverage-v8": "4.1.0"
+    "vitest": "4.1.0"
   },
   "peerDependencies": {
     "react": "18.x",
@@ -92,7 +92,7 @@
     "prepublishOnly": "pnpm build && pnpm declarationfiles",
     "publishnpm": "pnpm publish --access public",
     "start": "storybook dev -p 6006",
-    "test": "vitest",
+    "test": "vitest --project=unit",
     "test-storybook": "vitest --project=storybook"
   }
 }
