@@ -186,6 +186,7 @@ const Canvas = React.forwardRef<HTMLCanvasElement>((_, ref) => {
           className={DRAWCANVAS_CLASSNAME}
           ref={drawCanvasRef}
           data-grow={canGrow}
+          data-testid='draw-canvas'
           width={canvasSize.width}
           height={canvasSize.height}
           onContextMenu={preventRightClick}

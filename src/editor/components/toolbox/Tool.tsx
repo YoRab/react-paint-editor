@@ -16,7 +16,7 @@ const Tool = ({ type, img, isActive, withText = false, disabled = false, setActi
   }
 
   return (
-    <Button disabled={disabled} selected={isActive} onClick={handleClick} title={type.label ?? type.type} icon={img}>
+    <Button disabled={disabled} selected={isActive} onClick={handleClick} title={type.label ?? type.type} icon={img} data-testid={`tool-${type.type}`}>
       {withText ? type.label : undefined}
     </Button>
   )

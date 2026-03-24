@@ -61,37 +61,38 @@
   ],
   "devDependencies": {
     "@biomejs/biome": "2.4.8",
-    "@storybook/addon-docs": "10.3.1",
-    "@storybook/addon-links": "10.3.1",
-    "@storybook/addon-vitest": "10.3.1",
-    "@storybook/react-vite": "10.3.1",
+    "@storybook/addon-docs": "10.3.3",
+    "@storybook/addon-links": "10.3.3",
+    "@storybook/addon-vitest": "10.3.3",
+    "@storybook/react-vite": "10.3.3",
     "@types/node": "25.5.0",
     "@types/react": "19.2.14",
     "@types/react-dom": "19.2.3",
     "@vitejs/plugin-react": "6.0.1",
+    "@vitest/browser-playwright": "4.1.0",
+    "@vitest/coverage-v8": "4.1.0",
     "jsdom": "29.0.1",
+    "playwright": "1.58.2",
     "react": "18.3.1",
     "react-dom": "18.3.1",
-    "storybook": "10.3.1",
-    "typescript": "5.9.3",
+    "storybook": "10.3.3",
+    "typescript": "6.0.2",
     "vite": "8.0.1",
-    "vitest": "4.1.0",
-    "playwright": "1.58.2",
-    "@vitest/browser-playwright": "4.1.0",
-    "@vitest/coverage-v8": "4.1.0"
+    "vitest": "4.1.0"
   },
   "peerDependencies": {
     "react": "18.x",
     "react-dom": "18.x"
   },
   "scripts": {
-    "declarationfiles": "pnpm tsc --project tsconfig.prod.json && node fixDtsPath.js",
-    "start": "storybook dev -p 6006",
-    "build-storybook": "storybook build",
-    "test": "vitest",
     "build": "rm -rf dist && vite build --config vite.config.umd.ts && vite build",
+    "build-storybook": "storybook build",
+    "declarationfiles": "pnpm tsc --project tsconfig.prod.json && node fixDtsPath.js",
     "lint": "pnpm biome check --write src stories tests",
     "prepublishOnly": "pnpm build && pnpm declarationfiles",
-    "publishnpm": "pnpm publish --access public"
+    "publishnpm": "pnpm publish --access public",
+    "start": "storybook dev -p 6006",
+    "test": "vitest --project=unit",
+    "test-storybook": "vitest --project=storybook"
   }
 }
