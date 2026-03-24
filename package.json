@@ -85,13 +85,14 @@
     "react-dom": "18.x"
   },
   "scripts": {
-    "declarationfiles": "pnpm tsc --project tsconfig.prod.json && node fixDtsPath.js",
-    "start": "storybook dev -p 6006",
-    "build-storybook": "storybook build",
-    "test": "vitest",
     "build": "rm -rf dist && vite build --config vite.config.umd.ts && vite build",
+    "build-storybook": "storybook build",
+    "declarationfiles": "pnpm tsc --project tsconfig.prod.json && node fixDtsPath.js",
     "lint": "pnpm biome check --write src stories tests",
     "prepublishOnly": "pnpm build && pnpm declarationfiles",
-    "publishnpm": "pnpm publish --access public"
+    "publishnpm": "pnpm publish --access public",
+    "start": "storybook dev -p 6006",
+    "test": "vitest",
+    "test-storybook": "vitest --project=storybook"
   }
 }
