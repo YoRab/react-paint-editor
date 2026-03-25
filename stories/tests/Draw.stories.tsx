@@ -302,7 +302,10 @@ export const DrawRect: Story = {
     expect((data.shapes![1] as { width: number; height: number }).width).toBeGreaterThan(0)
     expect((data.shapes![1] as { width: number; height: number }).height).toBeGreaterThan(0)
 
-    expect(data.shapes![0]).toMatchObject({ type: 'rect', style: { strokeColor: 'green', fillColor: 'yellow', opacity: 75, lineWidth: 10, lineDash: 2 } })
+    expect(data.shapes![0]).toMatchObject({
+      type: 'rect',
+      style: { strokeColor: 'green', fillColor: 'yellow', opacity: 75, lineWidth: 10, lineDash: 2 }
+    })
     assertNoInternalFields(data.shapes![0])
     expect((data.shapes![0] as { width: number; height: number }).width).toBeGreaterThan(0)
     expect((data.shapes![0] as { width: number; height: number }).height).toBeGreaterThan(0)
@@ -359,13 +362,19 @@ export const DrawSquare: Story = {
 
     expect(data.shapes).toHaveLength(2)
 
-    expect(data.shapes![1]).toMatchObject({ type: 'square', style: { strokeColor: 'red', fillColor: 'blue', opacity: 50, lineWidth: 5, lineDash: 1 } })
+    expect(data.shapes![1]).toMatchObject({
+      type: 'square',
+      style: { strokeColor: 'red', fillColor: 'blue', opacity: 50, lineWidth: 5, lineDash: 1 }
+    })
     assertNoInternalFields(data.shapes![1])
     const sq1 = data.shapes![1] as { width: number; height: number }
     expect(sq1.width).toBeGreaterThan(0)
     expect(sq1.width).toBe(sq1.height)
 
-    expect(data.shapes![0]).toMatchObject({ type: 'square', style: { strokeColor: 'green', fillColor: 'yellow', opacity: 75, lineWidth: 10, lineDash: 2 } })
+    expect(data.shapes![0]).toMatchObject({
+      type: 'square',
+      style: { strokeColor: 'green', fillColor: 'yellow', opacity: 75, lineWidth: 10, lineDash: 2 }
+    })
     assertNoInternalFields(data.shapes![0])
     const sq2 = data.shapes![0] as { width: number; height: number }
     expect(sq2.width).toBeGreaterThan(0)
@@ -423,11 +432,17 @@ export const DrawCircle: Story = {
 
     expect(data.shapes).toHaveLength(2)
 
-    expect(data.shapes![1]).toMatchObject({ type: 'circle', style: { strokeColor: 'red', fillColor: 'blue', opacity: 50, lineWidth: 5, lineDash: 1 } })
+    expect(data.shapes![1]).toMatchObject({
+      type: 'circle',
+      style: { strokeColor: 'red', fillColor: 'blue', opacity: 50, lineWidth: 5, lineDash: 1 }
+    })
     assertNoInternalFields(data.shapes![1])
     expect((data.shapes![1] as { radius: number }).radius).toBeGreaterThan(0)
 
-    expect(data.shapes![0]).toMatchObject({ type: 'circle', style: { strokeColor: 'green', fillColor: 'yellow', opacity: 75, lineWidth: 10, lineDash: 2 } })
+    expect(data.shapes![0]).toMatchObject({
+      type: 'circle',
+      style: { strokeColor: 'green', fillColor: 'yellow', opacity: 75, lineWidth: 10, lineDash: 2 }
+    })
     assertNoInternalFields(data.shapes![0])
     expect((data.shapes![0] as { radius: number }).radius).toBeGreaterThan(0)
   }
@@ -483,13 +498,19 @@ export const DrawEllipse: Story = {
 
     expect(data.shapes).toHaveLength(2)
 
-    expect(data.shapes![1]).toMatchObject({ type: 'ellipse', style: { strokeColor: 'red', fillColor: 'blue', opacity: 50, lineWidth: 5, lineDash: 1 } })
+    expect(data.shapes![1]).toMatchObject({
+      type: 'ellipse',
+      style: { strokeColor: 'red', fillColor: 'blue', opacity: 50, lineWidth: 5, lineDash: 1 }
+    })
     assertNoInternalFields(data.shapes![1])
     const el1 = data.shapes![1] as { radiusX: number; radiusY: number }
     expect(el1.radiusX).toBeGreaterThan(0)
     expect(el1.radiusY).toBeGreaterThan(0)
 
-    expect(data.shapes![0]).toMatchObject({ type: 'ellipse', style: { strokeColor: 'green', fillColor: 'yellow', opacity: 75, lineWidth: 10, lineDash: 2 } })
+    expect(data.shapes![0]).toMatchObject({
+      type: 'ellipse',
+      style: { strokeColor: 'green', fillColor: 'yellow', opacity: 75, lineWidth: 10, lineDash: 2 }
+    })
     assertNoInternalFields(data.shapes![0])
     const el2 = data.shapes![0] as { radiusX: number; radiusY: number }
     expect(el2.radiusX).toBeGreaterThan(0)
@@ -553,11 +574,17 @@ export const DrawPolygon: Story = {
 
     expect(data.shapes).toHaveLength(2)
 
-    expect(data.shapes![1]).toMatchObject({ type: 'polygon', style: { strokeColor: 'red', fillColor: 'blue', opacity: 50, lineWidth: 5, lineDash: 1, closedPoints: 1 } })
+    expect(data.shapes![1]).toMatchObject({
+      type: 'polygon',
+      style: { strokeColor: 'red', fillColor: 'blue', opacity: 50, lineWidth: 5, lineDash: 1, closedPoints: 1 }
+    })
     assertNoInternalFields(data.shapes![1])
     expect((data.shapes![1] as { points: unknown[] }).points.length).toBeGreaterThanOrEqual(3)
 
-    expect(data.shapes![0]).toMatchObject({ type: 'polygon', style: { strokeColor: 'green', fillColor: 'yellow', opacity: 75, lineWidth: 10, lineDash: 2, closedPoints: 0 } })
+    expect(data.shapes![0]).toMatchObject({
+      type: 'polygon',
+      style: { strokeColor: 'green', fillColor: 'yellow', opacity: 75, lineWidth: 10, lineDash: 2, closedPoints: 0 }
+    })
     assertNoInternalFields(data.shapes![0])
     expect((data.shapes![0] as { points: unknown[] }).points.length).toBeGreaterThanOrEqual(3)
   }
@@ -619,11 +646,17 @@ export const DrawCurve: Story = {
 
     expect(data.shapes).toHaveLength(2)
 
-    expect(data.shapes![1]).toMatchObject({ type: 'curve', style: { strokeColor: 'red', fillColor: 'blue', opacity: 50, lineWidth: 5, lineDash: 1, closedPoints: 1 } })
+    expect(data.shapes![1]).toMatchObject({
+      type: 'curve',
+      style: { strokeColor: 'red', fillColor: 'blue', opacity: 50, lineWidth: 5, lineDash: 1, closedPoints: 1 }
+    })
     assertNoInternalFields(data.shapes![1])
     expect((data.shapes![1] as { points: unknown[] }).points.length).toBeGreaterThanOrEqual(3)
 
-    expect(data.shapes![0]).toMatchObject({ type: 'curve', style: { strokeColor: 'green', fillColor: 'yellow', opacity: 75, lineWidth: 10, lineDash: 2, closedPoints: 0 } })
+    expect(data.shapes![0]).toMatchObject({
+      type: 'curve',
+      style: { strokeColor: 'green', fillColor: 'yellow', opacity: 75, lineWidth: 10, lineDash: 2, closedPoints: 0 }
+    })
     assertNoInternalFields(data.shapes![0])
     expect((data.shapes![0] as { points: unknown[] }).points.length).toBeGreaterThanOrEqual(3)
   }
@@ -676,7 +709,7 @@ export const DrawText: Story = {
     // --- Shape 2 settings (clicking settings blurs the textbox, saving "World") ---
     await setColorSetting(view, 'Couleur du trait', 'green')
     await setSelectSetting(view, 'Police', 'arial')
-    await setToggleSetting(view, 'Gras')    // toggle back to false
+    await setToggleSetting(view, 'Gras') // toggle back to false
     await setToggleSetting(view, 'Italique') // toggle back to false
     await setRangeSetting(view, 'Opacité', 75)
 
@@ -686,11 +719,17 @@ export const DrawText: Story = {
 
     expect(data.shapes).toHaveLength(2)
 
-    expect(data.shapes![1]).toMatchObject({ type: 'text', style: { strokeColor: 'red', opacity: 50, fontFamily: 'monospace', fontBold: true, fontItalic: true } })
+    expect(data.shapes![1]).toMatchObject({
+      type: 'text',
+      style: { strokeColor: 'red', opacity: 50, fontFamily: 'monospace', fontBold: true, fontItalic: true }
+    })
     assertNoInternalFields(data.shapes![1])
     expect((data.shapes![1] as { value: string[] }).value).toEqual(['Hello'])
 
-    expect(data.shapes![0]).toMatchObject({ type: 'text', style: { strokeColor: 'green', opacity: 75, fontFamily: 'arial', fontBold: false, fontItalic: false } })
+    expect(data.shapes![0]).toMatchObject({
+      type: 'text',
+      style: { strokeColor: 'green', opacity: 75, fontFamily: 'arial', fontBold: false, fontItalic: false }
+    })
     assertNoInternalFields(data.shapes![0])
     expect((data.shapes![0] as { value: string[] }).value).toEqual(['World'])
   }
@@ -704,10 +743,9 @@ const SVG_DATA_URI =
   "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='100' height='100'><rect width='100' height='100' fill='blue'/></svg>"
 
 // SVG content used for the file-upload test.
-const SVG_CONTENT =
-  "<svg xmlns='http://www.w3.org/2000/svg' width='120' height='80'><rect width='120' height='80' fill='green'/></svg>"
+const SVG_CONTENT = "<svg xmlns='http://www.w3.org/2000/svg' width='120' height='80'><rect width='120' height='80' fill='green'/></svg>"
 
-export const AddPictureFromUrl: Story = {
+export const DrawPictureFromUrl: Story = {
   args: { options: { withUrlPicture: true } },
   play: async ({ canvasElement }) => {
     const view = within(canvasElement)
@@ -744,7 +782,7 @@ export const AddPictureFromUrl: Story = {
   }
 }
 
-export const AddPictureFromUpload: Story = {
+export const DrawPictureFromUpload: Story = {
   args: {},
   play: async ({ canvasElement }) => {
     const view = within(canvasElement)
