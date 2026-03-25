@@ -1,5 +1,9 @@
 # React Paint
 
+[![npm version](https://img.shields.io/npm/v/@yorab/react-paint)](https://www.npmjs.com/package/@yorab/react-paint)
+[![License: MIT](https://img.shields.io/npm/l/@yorab/react-paint)](https://github.com/YoRab/react-paint-editor/blob/main/LICENSE.txt)
+[![Build and Test](https://github.com/YoRab/react-paint-editor/actions/workflows/build-and-test.yaml/badge.svg)](https://github.com/YoRab/react-paint-editor/actions/workflows/build-and-test.yaml)
+
 An open-source canvas-based library for React used for image annotation or as a digital whiteboard.
 
 ## Features
