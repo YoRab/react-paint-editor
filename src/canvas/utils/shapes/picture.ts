@@ -42,7 +42,10 @@ const createPictureShape = (
       height,
       ratio: height === 0 ? 1 : width / height,
       src: storedSrc,
-      img
+      img,
+      style: {
+        opacity: 100
+      }
     },
     settings
   )
