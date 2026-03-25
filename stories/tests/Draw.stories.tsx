@@ -59,6 +59,49 @@ async function selectTool(view: ReturnType<typeof within>, toolId: string) {
   await userEvent.click(toolButton)
 }
 
+// Open a settings panel by clicking its trigger button
+async function openSettingPanel(view: ReturnType<typeof within>, title: string) {
+  await userEvent.click(await view.findByRole('button', { name: title }))
+}
+
+// Close a settings panel by clicking its trigger button again
+async function closeSettingPanel(view: ReturnType<typeof within>, title: string) {
+  await userEvent.click(await view.findByRole('button', { name: title }))
+}
+
+// Select a color in a ColorField panel
+async function setColorSetting(view: ReturnType<typeof within>, title: string, color: string) {
+  await openSettingPanel(view, title)
+  await userEvent.click(await view.findByRole('button', { name: color }))
+  await closeSettingPanel(view, title)
+}
+
+// Change a range slider by setting the value directly via the native HTMLInputElement
+// value setter, then dispatching an 'input' event so React's onChange fires.
+// This is necessary in Playwright browser mode where keyboard navigation on
+// range inputs is unreliable.
+async function setRangeSetting(view: ReturnType<typeof within>, title: string, targetValue: number) {
+  await openSettingPanel(view, title)
+  const slider = (await view.findByRole('slider')) as HTMLInputElement
+  const nativeSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value')!.set!
+  nativeSetter.call(slider, String(targetValue))
+  slider.dispatchEvent(new Event('input', { bubbles: true }))
+  await new Promise(res => setTimeout(res, 0))
+  await closeSettingPanel(view, title)
+}
+
+// Select an option in a SelectField panel (pass the option's accessible name)
+async function setSelectSetting(view: ReturnType<typeof within>, title: string, optionName: string) {
+  await openSettingPanel(view, title)
+  await userEvent.click(await view.findByRole('button', { name: optionName }))
+  await closeSettingPanel(view, title)
+}
+
+// Toggle a ToggleField button (fontBold / fontItalic)
+async function setToggleSetting(view: ReturnType<typeof within>, title: string) {
+  await userEvent.click(await view.findByRole('button', { name: title }))
+}
+
 function assertNoInternalFields(shape: unknown) {
   expect(shape).not.toHaveProperty('id')
   expect(shape).not.toHaveProperty('path')
@@ -74,17 +117,25 @@ export const DrawBrushShape: Story = {
     // 1. Select the brush tool
     await selectTool(view, 'brush')
 
-    // 2. Find the draw canvas
-    const drawCanvas = await view.findByTestId('draw-canvas')
+    // 2. Modify all brush settings to non-default values
+    // strokeColor: 'black' → 'red'
+    await setColorSetting(view, 'Couleur du trait', 'red')
+    // lineWidth: 10 → 14
+    await setRangeSetting(view, 'Epaisseur du trait', 14)
+    // lineDash: 0 → 1
+    await setSelectSetting(view, 'Type de traits', '1')
+    // opacity: 100 → 50
+    await setRangeSetting(view, 'Opacité', 50)
 
-    // Coordinates relative to the canvas position in the viewport
+    // 3. Find the draw canvas
+    const drawCanvas = await view.findByTestId('draw-canvas')
     const rect = drawCanvas.getBoundingClientRect()
     const cx = rect.left + rect.width / 2
     const cy = rect.top + rect.height / 2
     const r = Math.min(rect.width, rect.height) * 0.2
     const STEPS = 16
 
-    // 3. Mousedown on the canvas (triggers focusin → isInsideCanvas = true)
+    // 4. Mousedown on the canvas (triggers focusin → isInsideCanvas = true)
     const user = userEvent.setup()
     await user.pointer({
       target: drawCanvas,
@@ -95,7 +146,7 @@ export const DrawBrushShape: Story = {
     // Let React process focusin and register the mouseup listener on document
     await new Promise(res => setTimeout(res, 50))
 
-    // 4. Draw a circle
+    // 5. Draw a circle
     for (let i = 1; i <= STEPS; i++) {
       const angle = (i / STEPS) * 2 * Math.PI
       await user.pointer({
@@ -104,7 +155,7 @@ export const DrawBrushShape: Story = {
       })
     }
 
-    // 5. Mouseup → save the stroke
+    // 6. Mouseup → save the stroke
     await user.pointer({
       target: drawCanvas,
       keys: '[/MouseLeft]',
@@ -112,7 +163,7 @@ export const DrawBrushShape: Story = {
     })
     await new Promise(res => setTimeout(res, 100))
 
-    // 6. Assert exported data
+    // 7. Assert exported data
     expect(getCurrentDataRef.current).not.toBeNull()
     const data = getCurrentDataRef.current!()
 
@@ -120,10 +171,10 @@ export const DrawBrushShape: Story = {
     expect(data.shapes![0]).toMatchObject({
       type: 'brush',
       style: {
-        strokeColor: 'black',
-        opacity: 100,
-        lineWidth: 10,
-        lineDash: 0
+        strokeColor: 'red',
+        opacity: 50,
+        lineWidth: 14,
+        lineDash: 1
       }
     })
     assertNoInternalFields(data.shapes![0])
@@ -138,6 +189,18 @@ export const DrawLine: Story = {
   play: async ({ canvasElement }) => {
     const view = within(canvasElement)
     await selectTool(view, 'line')
+
+    // Modify all line settings to non-default values
+    // strokeColor: 'black' → 'red'
+    await setColorSetting(view, 'Couleur du trait', 'red')
+    // lineWidth: 1 → 5
+    await setRangeSetting(view, 'Epaisseur du trait', 5)
+    // lineDash: 0 → 1
+    await setSelectSetting(view, 'Type de traits', '1')
+    // lineArrow: 0 → 1
+    await setSelectSetting(view, 'Flèches', '1')
+    // opacity: 100 → 50
+    await setRangeSetting(view, 'Opacité', 50)
 
     const drawCanvas = await view.findByTestId('draw-canvas')
     const rect = drawCanvas.getBoundingClientRect()
@@ -158,7 +221,7 @@ export const DrawLine: Story = {
     expect(data.shapes).toHaveLength(1)
     expect(data.shapes![0]).toMatchObject({
       type: 'line',
-      style: { strokeColor: 'black', opacity: 100, lineWidth: 1, lineDash: 0, lineArrow: 0 }
+      style: { strokeColor: 'red', opacity: 50, lineWidth: 5, lineDash: 1, lineArrow: 1 }
     })
     assertNoInternalFields(data.shapes![0])
     const lineShape = data.shapes![0] as { points: [number, number][] }
@@ -171,6 +234,18 @@ export const DrawRect: Story = {
   play: async ({ canvasElement }) => {
     const view = within(canvasElement)
     await selectTool(view, 'rect')
+
+    // Modify all rect settings to non-default values
+    // strokeColor: 'black' → 'red'
+    await setColorSetting(view, 'Couleur du trait', 'red')
+    // fillColor: 'transparent' → 'blue'
+    await setColorSetting(view, 'Couleur de fond', 'blue')
+    // lineWidth: 1 → 5
+    await setRangeSetting(view, 'Epaisseur du trait', 5)
+    // lineDash: 0 → 1
+    await setSelectSetting(view, 'Type de traits', '1')
+    // opacity: 100 → 50
+    await setRangeSetting(view, 'Opacité', 50)
 
     const drawCanvas = await view.findByTestId('draw-canvas')
     const rect = drawCanvas.getBoundingClientRect()
@@ -191,7 +266,7 @@ export const DrawRect: Story = {
     expect(data.shapes).toHaveLength(1)
     expect(data.shapes![0]).toMatchObject({
       type: 'rect',
-      style: { strokeColor: 'black', fillColor: 'transparent', opacity: 100, lineWidth: 1, lineDash: 0 }
+      style: { strokeColor: 'red', fillColor: 'blue', opacity: 50, lineWidth: 5, lineDash: 1 }
     })
     assertNoInternalFields(data.shapes![0])
     const rectShape = data.shapes![0] as { width: number; height: number }
@@ -205,6 +280,13 @@ export const DrawSquare: Story = {
   play: async ({ canvasElement }) => {
     const view = within(canvasElement)
     await selectTool(view, 'square')
+
+    // Modify all square settings to non-default values
+    await setColorSetting(view, 'Couleur du trait', 'red')
+    await setColorSetting(view, 'Couleur de fond', 'blue')
+    await setRangeSetting(view, 'Epaisseur du trait', 5)
+    await setSelectSetting(view, 'Type de traits', '1')
+    await setRangeSetting(view, 'Opacité', 50)
 
     const drawCanvas = await view.findByTestId('draw-canvas')
     const rect = drawCanvas.getBoundingClientRect()
@@ -225,7 +307,7 @@ export const DrawSquare: Story = {
     expect(data.shapes).toHaveLength(1)
     expect(data.shapes![0]).toMatchObject({
       type: 'square',
-      style: { strokeColor: 'black', fillColor: 'transparent', opacity: 100, lineWidth: 1, lineDash: 0 }
+      style: { strokeColor: 'red', fillColor: 'blue', opacity: 50, lineWidth: 5, lineDash: 1 }
     })
     assertNoInternalFields(data.shapes![0])
     const squareShape = data.shapes![0] as { width: number; height: number }
@@ -239,6 +321,13 @@ export const DrawCircle: Story = {
   play: async ({ canvasElement }) => {
     const view = within(canvasElement)
     await selectTool(view, 'circle')
+
+    // Modify all circle settings to non-default values
+    await setColorSetting(view, 'Couleur du trait', 'red')
+    await setColorSetting(view, 'Couleur de fond', 'blue')
+    await setRangeSetting(view, 'Epaisseur du trait', 5)
+    await setSelectSetting(view, 'Type de traits', '1')
+    await setRangeSetting(view, 'Opacité', 50)
 
     const drawCanvas = await view.findByTestId('draw-canvas')
     const rect = drawCanvas.getBoundingClientRect()
@@ -259,7 +348,7 @@ export const DrawCircle: Story = {
     expect(data.shapes).toHaveLength(1)
     expect(data.shapes![0]).toMatchObject({
       type: 'circle',
-      style: { strokeColor: 'black', fillColor: 'transparent', opacity: 100, lineWidth: 1, lineDash: 0 }
+      style: { strokeColor: 'red', fillColor: 'blue', opacity: 50, lineWidth: 5, lineDash: 1 }
     })
     assertNoInternalFields(data.shapes![0])
     const circleShape = data.shapes![0] as { radius: number }
@@ -272,6 +361,13 @@ export const DrawEllipse: Story = {
   play: async ({ canvasElement }) => {
     const view = within(canvasElement)
     await selectTool(view, 'ellipse')
+
+    // Modify all ellipse settings to non-default values
+    await setColorSetting(view, 'Couleur du trait', 'red')
+    await setColorSetting(view, 'Couleur de fond', 'blue')
+    await setRangeSetting(view, 'Epaisseur du trait', 5)
+    await setSelectSetting(view, 'Type de traits', '1')
+    await setRangeSetting(view, 'Opacité', 50)
 
     const drawCanvas = await view.findByTestId('draw-canvas')
     const rect = drawCanvas.getBoundingClientRect()
@@ -292,7 +388,7 @@ export const DrawEllipse: Story = {
     expect(data.shapes).toHaveLength(1)
     expect(data.shapes![0]).toMatchObject({
       type: 'ellipse',
-      style: { strokeColor: 'black', fillColor: 'transparent', opacity: 100, lineWidth: 1, lineDash: 0 }
+      style: { strokeColor: 'red', fillColor: 'blue', opacity: 50, lineWidth: 5, lineDash: 1 }
     })
     assertNoInternalFields(data.shapes![0])
     const ellipseShape = data.shapes![0] as { radiusX: number; radiusY: number }
@@ -306,6 +402,16 @@ export const DrawPolygon: Story = {
   play: async ({ canvasElement }) => {
     const view = within(canvasElement)
     await selectTool(view, 'polygon')
+
+    // Modify all polygon settings to non-default values
+    await setColorSetting(view, 'Couleur du trait', 'red')
+    await setColorSetting(view, 'Couleur de fond', 'blue')
+    await setRangeSetting(view, 'Epaisseur du trait', 5)
+    await setSelectSetting(view, 'Type de traits', '1')
+    // closedPoints: 0 → 1 (accessible name is 'Oui' for value=1)
+    await setSelectSetting(view, 'Fermer les points', 'Oui')
+    // opacity: 100 → 50
+    await setRangeSetting(view, 'Opacité', 50)
 
     const drawCanvas = await view.findByTestId('draw-canvas')
     const rect = drawCanvas.getBoundingClientRect()
@@ -329,7 +435,7 @@ export const DrawPolygon: Story = {
     expect(data.shapes).toHaveLength(1)
     expect(data.shapes![0]).toMatchObject({
       type: 'polygon',
-      style: { strokeColor: 'black', fillColor: 'transparent', opacity: 100, lineWidth: 1, lineDash: 0 }
+      style: { strokeColor: 'red', fillColor: 'blue', opacity: 50, lineWidth: 5, lineDash: 1, closedPoints: 1 }
     })
     assertNoInternalFields(data.shapes![0])
     const polygonShape = data.shapes![0] as { points: [number, number][] }
@@ -342,6 +448,16 @@ export const DrawCurve: Story = {
   play: async ({ canvasElement }) => {
     const view = within(canvasElement)
     await selectTool(view, 'curve')
+
+    // Modify all curve settings to non-default values
+    await setColorSetting(view, 'Couleur du trait', 'red')
+    await setColorSetting(view, 'Couleur de fond', 'blue')
+    await setRangeSetting(view, 'Epaisseur du trait', 5)
+    await setSelectSetting(view, 'Type de traits', '1')
+    // closedPoints: 0 → 1 (accessible name is 'Oui' for value=1)
+    await setSelectSetting(view, 'Fermer les points', 'Oui')
+    // opacity: 100 → 50
+    await setRangeSetting(view, 'Opacité', 50)
 
     const drawCanvas = await view.findByTestId('draw-canvas')
     const rect = drawCanvas.getBoundingClientRect()
@@ -365,7 +481,7 @@ export const DrawCurve: Story = {
     expect(data.shapes).toHaveLength(1)
     expect(data.shapes![0]).toMatchObject({
       type: 'curve',
-      style: { strokeColor: 'black', fillColor: 'transparent', opacity: 100, lineWidth: 1, lineDash: 0 }
+      style: { strokeColor: 'red', fillColor: 'blue', opacity: 50, lineWidth: 5, lineDash: 1, closedPoints: 1 }
     })
     assertNoInternalFields(data.shapes![0])
     const curveShape = data.shapes![0] as { points: [number, number][] }
@@ -378,6 +494,18 @@ export const DrawText: Story = {
   play: async ({ canvasElement }) => {
     const view = within(canvasElement)
     await selectTool(view, 'text')
+
+    // Modify all text settings to non-default values
+    // strokeColor: 'black' → 'red'
+    await setColorSetting(view, 'Couleur du trait', 'red')
+    // fontFamily: 'serif' → 'monospace'
+    await setSelectSetting(view, 'Police', 'monospace')
+    // fontBold: false → true
+    await setToggleSetting(view, 'Gras')
+    // fontItalic: false → true
+    await setToggleSetting(view, 'Italique')
+    // opacity: 100 → 50
+    await setRangeSetting(view, 'Opacité', 50)
 
     const drawCanvas = await view.findByTestId('draw-canvas')
     const rect = drawCanvas.getBoundingClientRect()
@@ -410,7 +538,7 @@ export const DrawText: Story = {
     expect(data.shapes).toHaveLength(1)
     expect(data.shapes![0]).toMatchObject({
       type: 'text',
-      style: { strokeColor: 'black', opacity: 100 }
+      style: { strokeColor: 'red', opacity: 50, fontFamily: 'monospace', fontBold: true, fontItalic: true }
     })
     assertNoInternalFields(data.shapes![0])
     const textShape = data.shapes![0] as { value: string[] }

@@ -8,12 +8,13 @@ type ShapeStyleSelectType = {
   disabled?: boolean | undefined
   field: string
   icon: string
+  title?: string
   values: boolean[]
   value?: boolean | undefined
   valueChanged: (field: string, value: boolean) => void
 }
 
-const ToggleField = ({ setSelectedSettings, disabled = false, field, icon, values, value = false, valueChanged }: ShapeStyleSelectType) => {
+const ToggleField = ({ setSelectedSettings, disabled = false, field, icon, title, values, value = false, valueChanged }: ShapeStyleSelectType) => {
   const [customKey] = useState(uniqueId('settings_'))
 
   const handleClick = () => {
@@ -25,7 +26,7 @@ const ToggleField = ({ setSelectedSettings, disabled = false, field, icon, value
 
   if (values.length !== 2) return null
 
-  return <Button onClick={handleClick} selected={value} disabled={disabled} icon={icon} />
+  return <Button onClick={handleClick} selected={value} disabled={disabled} icon={icon} title={title} />
 }
 
 export default ToggleField
