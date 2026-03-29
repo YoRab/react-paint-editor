@@ -380,6 +380,93 @@ export const SelectRotateResizeTranslate: Story = {
     // expect(curve.points[1]![1]).toBeCloseTo(450, 0)
     // expect(curve.points[2]![0]).toBeCloseTo(820, 0)
     // expect(curve.points[2]![1]).toBeCloseTo(440, 0)
+
+    // =====================================================================
+    // Group: selection frame → resize ÷2 → rotate ~45° → translate (+100,+50)
+    // =====================================================================
+
+    // --- Step 18: Drag selection frame from (10,10) to (990,590) to select all 5 shapes ---
+    // Starting in the empty top-left corner ensures no shape is accidentally clicked.
+    await selectTool(view, 'selection')
+    await user.pointer({ target: drawCanvas, keys: '[MouseLeft>]', coords: { x: toClientX(10), y: toClientY(10) } })
+    await new Promise(res => setTimeout(res, 50))
+    await user.pointer({ target: drawCanvas, coords: { x: toClientX(990), y: toClientY(590) } })
+    await new Promise(res => setTimeout(res, 50))
+    await user.pointer({ target: drawCanvas, keys: '[/MouseLeft]', coords: { x: toClientX(990), y: toClientY(590) } })
+    await new Promise(res => setTimeout(res, 100))
+
+    // --- Step 19: Halve the group — drag bottom-right anchor (820,500) to group center (460,315) ---
+    // Group bbox: (100,130,720,370), center (460,315). widthMultiplier = heightMultiplier = 0.5.
+    // keepRatio=true (group contains a square) but the drag is proportional so no distortion.
+    // New group bbox: (100,130,360,185), new center (280,222.5).
+    await user.pointer({ target: drawCanvas, keys: '[MouseLeft>]', coords: { x: toClientX(820), y: toClientY(500) } })
+    await new Promise(res => setTimeout(res, 50))
+    await user.pointer({ target: drawCanvas, coords: { x: toClientX(460), y: toClientY(315) } })
+    await new Promise(res => setTimeout(res, 50))
+    await user.pointer({ target: drawCanvas, keys: '[/MouseLeft]', coords: { x: toClientX(460), y: toClientY(315) } })
+    await new Promise(res => setTimeout(res, 100))
+
+    // --- Step 20: Rotate group ~45° ---
+    // After resize: bbox (100,130,360,185), center (280,222.5).
+    // Rotate handle: top-center (280,130) minus (ANCHOR_SIZE/2 + ROTATED_ANCHOR_POSITION) = 23 → canvas (280,107).
+    // Drag to (362,141): atan2(222.5-141, 280-362) - atan2(222.5-107, 280-280) ≈ π/4.
+    await user.pointer({ target: drawCanvas, keys: '[MouseLeft>]', coords: { x: toClientX(280), y: toClientY(107) } })
+    await new Promise(res => setTimeout(res, 50))
+    await user.pointer({ target: drawCanvas, coords: { x: toClientX(362), y: toClientY(141) } })
+    await new Promise(res => setTimeout(res, 50))
+    await user.pointer({ target: drawCanvas, keys: '[/MouseLeft]', coords: { x: toClientX(362), y: toClientY(141) } })
+    await new Promise(res => setTimeout(res, 100))
+
+    // --- Step 21: Translate group (+100, +50) ---
+    // After rotate, group center is near (280,222). Drag to (380,272).
+    await user.pointer({ target: drawCanvas, keys: '[MouseLeft>]', coords: { x: toClientX(280), y: toClientY(222) } })
+    await new Promise(res => setTimeout(res, 50))
+    await user.pointer({ target: drawCanvas, coords: { x: toClientX(380), y: toClientY(272) } })
+    await new Promise(res => setTimeout(res, 50))
+    await user.pointer({ target: drawCanvas, keys: '[/MouseLeft]', coords: { x: toClientX(380), y: toClientY(272) } })
+    await new Promise(res => setTimeout(res, 100))
+
+    // =====================================================================
+    // Group assertions
+    // =====================================================================
+    const groupData = getCurrentDataRef.current!()
+    expect(groupData.shapes).toHaveLength(5)
+
+    // Square: halved to 25×25, rotation stepped to ~π/2, translated by (+100,+50).
+    const squareGroup = groupData.shapes![0] as { type: string; x: number; y: number; width: number; height: number; rotation: number }
+    assertNoInternalFields(groupData.shapes![0])
+    expect(squareGroup.type).toBe('square')
+    expect(squareGroup.width).toBeCloseTo(25, 0)
+    expect(squareGroup.height).toBeCloseTo(25, 0)
+    expect(squareGroup.rotation).toBeCloseTo(Math.PI / 2, 1)
+    expect(squareGroup.x).toBeCloseTo(318, 0)
+    expect(squareGroup.y).toBeCloseTo(175, 0)
+
+    // Line: both endpoints scaled ×0.5 relative to group center, rotated ~π/4, then translated (+100,+50).
+    // Pre-group: [(370,130),(550,450)]. After resize→rotate→translate: [(414,175),(364,352)].
+    const lineGroup = groupData.shapes![2] as { type: string; points: number[][] }
+    assertNoInternalFields(groupData.shapes![2])
+    expect(lineGroup.type).toBe('line')
+    expect(lineGroup.points[0]![0]).toBeCloseTo(414, 0)
+    expect(lineGroup.points[0]![1]).toBeCloseTo(175, 0)
+    expect(lineGroup.points[1]![0]).toBeCloseTo(364, 0)
+    expect(lineGroup.points[1]![1]).toBeCloseTo(352, 0)
+
+    // Polygon: first vertex after all group operations.
+    // Pre-group: points[0]=(100,440). After resize→rotate→translate: ≈(209,189).
+    const polygonGroup = groupData.shapes![3] as { type: string; points: number[][] }
+    assertNoInternalFields(groupData.shapes![3])
+    expect(polygonGroup.type).toBe('polygon')
+    expect(polygonGroup.points[0]![0]).toBeCloseTo(209, 0)
+    expect(polygonGroup.points[0]![1]).toBeCloseTo(189, 0)
+
+    // Curve: first control point after all group operations.
+    // Pre-group: points[0]=(700,390). After resize→rotate→translate: ≈(438,384).
+    const curveGroup = groupData.shapes![4] as { type: string; points: number[][] }
+    assertNoInternalFields(groupData.shapes![4])
+    expect(curveGroup.type).toBe('curve')
+    expect(curveGroup.points[0]![0]).toBeCloseTo(438, 0)
+    expect(curveGroup.points[0]![1]).toBeCloseTo(384, 0)
   }
 }
 
