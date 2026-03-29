@@ -1,19 +1,16 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import { expect, userEvent, within } from 'storybook/test'
-import { Canvas, Editor, type StateData, useReactPaint } from '../../src/index'
-
-const getCurrentDataRef = { current: null as null | (() => StateData) }
-
-const ReactPaintWrapper = (args: Parameters<typeof useReactPaint>[0]) => {
-  const { editorProps, canvasProps, getCurrentData } = useReactPaint(args)
-  getCurrentDataRef.current = getCurrentData
-
-  return (
-    <Editor editorProps={editorProps}>
-      <Canvas canvasProps={canvasProps} />
-    </Editor>
-  )
-}
+import {
+  ReactPaintWrapper,
+  getCurrentDataRef,
+  selectTool,
+  assertNoInternalFields,
+  setColorSetting,
+  setRangeSetting,
+  setSelectSetting,
+  setToggleSetting,
+  openContextMenuAndClick
+} from './helpers'
 
 const meta = {
   title: 'Tests/Draw',
@@ -25,89 +22,6 @@ const meta = {
 
 export default meta
 type Story = StoryObj<typeof meta>
-
-// Some tools are grouped inside ToolbarGroup panels
-const TOOL_GROUPS: Record<string, string> = {
-  line: 'lines',
-  curve: 'lines',
-  polygon: 'lines',
-  rect: 'shapes',
-  square: 'shapes',
-  circle: 'shapes',
-  ellipse: 'shapes'
-}
-
-async function selectTool(view: ReturnType<typeof within>, toolId: string) {
-  let toolButton = view.queryByTestId(`tool-${toolId}`)
-
-  if (!toolButton) {
-    // Case 1: toolbar too narrow — "Toggle tools" button is shown
-    const toggleBtn = view.queryByRole('button', { name: 'Toggle tools' })
-    if (toggleBtn) {
-      await userEvent.click(toggleBtn)
-    } else {
-      // Case 2: tool is inside a group panel — open the group first
-      const groupTitle = TOOL_GROUPS[toolId]
-      if (groupTitle) {
-        const groupBtn = await view.findByRole('button', { name: groupTitle })
-        await userEvent.click(groupBtn)
-      }
-    }
-    toolButton = await view.findByTestId(`tool-${toolId}`)
-  }
-
-  await userEvent.click(toolButton)
-}
-
-// Open a settings panel by clicking its trigger button
-async function openSettingPanel(view: ReturnType<typeof within>, title: string) {
-  await userEvent.click(await view.findByRole('button', { name: title }))
-}
-
-// Close a settings panel by clicking its trigger button again
-async function closeSettingPanel(view: ReturnType<typeof within>, title: string) {
-  await userEvent.click(await view.findByRole('button', { name: title }))
-}
-
-// Select a color in a ColorField panel
-async function setColorSetting(view: ReturnType<typeof within>, title: string, color: string) {
-  await openSettingPanel(view, title)
-  await userEvent.click(await view.findByRole('button', { name: color }))
-  await closeSettingPanel(view, title)
-}
-
-// Change a range slider by setting the value directly via the native HTMLInputElement
-// value setter, then dispatching an 'input' event so React's onChange fires.
-// This is necessary in Playwright browser mode where keyboard navigation on
-// range inputs is unreliable.
-async function setRangeSetting(view: ReturnType<typeof within>, title: string, targetValue: number) {
-  await openSettingPanel(view, title)
-  const slider = (await view.findByRole('slider')) as HTMLInputElement
-  const nativeSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value')!.set!
-  nativeSetter.call(slider, String(targetValue))
-  slider.dispatchEvent(new Event('input', { bubbles: true }))
-  await new Promise(res => setTimeout(res, 0))
-  await closeSettingPanel(view, title)
-}
-
-// Select an option in a SelectField panel (pass the option's accessible name)
-async function setSelectSetting(view: ReturnType<typeof within>, title: string, optionName: string) {
-  await openSettingPanel(view, title)
-  await userEvent.click(await view.findByRole('button', { name: optionName }))
-  await closeSettingPanel(view, title)
-}
-
-// Toggle a ToggleField button (fontBold / fontItalic)
-async function setToggleSetting(view: ReturnType<typeof within>, title: string) {
-  await userEvent.click(await view.findByRole('button', { name: title }))
-}
-
-function assertNoInternalFields(shape: unknown) {
-  expect(shape).not.toHaveProperty('id')
-  expect(shape).not.toHaveProperty('path')
-  expect(shape).not.toHaveProperty('computed')
-  expect(shape).not.toHaveProperty('selection')
-}
 
 // Horizontal distance from canvas center to each shape's center.
 // Both shapes are centered in the canvas: one at cx-OFFSET, the other at cx+OFFSET.
@@ -580,15 +494,7 @@ export const DrawPolygon: Story = {
     // --- Delete the added point via context menu ---
     // Right-click on the newly added point (index 1, same client coords as the double-click above).
     // selectShape detects the vertex anchor → context menu shows "Delete point".
-    await user.pointer({ target: drawCanvas, keys: '[MouseRight]', coords: { x: cx + OFFSET + 30, y: cy - 10 } })
-    await new Promise(res => setTimeout(res, 100))
-    const deletePointButton = view.queryByRole('button', { name: 'Delete point' })
-    if (!deletePointButton) {
-      // isInsideCanvas may have been false (canvas lost focus during settings); retry once.
-      await user.pointer({ target: drawCanvas, keys: '[MouseRight]', coords: { x: cx + OFFSET + 30, y: cy - 10 } })
-      await new Promise(res => setTimeout(res, 100))
-    }
-    await userEvent.click(await view.findByRole('button', { name: 'Delete point' }))
+    await openContextMenuAndClick(user, drawCanvas, view, cx + OFFSET + 30, cy - 10, 'Delete point')
     await new Promise(res => setTimeout(res, 100))
 
     // --- Assertions ---
@@ -678,15 +584,7 @@ export const DrawCurve: Story = {
     // --- Delete the added point via context menu ---
     // Right-click on the newly added point (index 1, same client coords as the double-click above).
     // selectShape detects the vertex anchor → context menu shows "Delete point".
-    await user.pointer({ target: drawCanvas, keys: '[MouseRight]', coords: { x: cx + OFFSET - 30, y: cy - 30 } })
-    await new Promise(res => setTimeout(res, 100))
-    const deletePointButton = view.queryByRole('button', { name: 'Delete point' })
-    if (!deletePointButton) {
-      // isInsideCanvas may have been false (canvas lost focus during settings); retry once.
-      await user.pointer({ target: drawCanvas, keys: '[MouseRight]', coords: { x: cx + OFFSET - 30, y: cy - 30 } })
-      await new Promise(res => setTimeout(res, 100))
-    }
-    await userEvent.click(await view.findByRole('button', { name: 'Delete point' }))
+    await openContextMenuAndClick(user, drawCanvas, view, cx + OFFSET - 30, cy - 30, 'Delete point')
     await new Promise(res => setTimeout(res, 100))
 
     // --- Assertions ---

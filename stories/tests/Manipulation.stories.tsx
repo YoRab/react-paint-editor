@@ -1,19 +1,15 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import { expect, userEvent, within } from 'storybook/test'
-import { Canvas, Editor, type DrawableShape, type StateData, useReactPaint } from '../../src/index'
-
-const getCurrentDataRef = { current: null as null | (() => StateData) }
-
-const ReactPaintWrapper = (args: Parameters<typeof useReactPaint>[0]) => {
-  const { editorProps, canvasProps, getCurrentData } = useReactPaint(args)
-  getCurrentDataRef.current = getCurrentData
-
-  return (
-    <Editor editorProps={editorProps}>
-      <Canvas canvasProps={canvasProps} />
-    </Editor>
-  )
-}
+import type { DrawableShape } from '../../src/index'
+import {
+  ReactPaintWrapper,
+  getCurrentDataRef,
+  makeCoordConverters,
+  selectTool,
+  assertNoInternalFields,
+  setColorSetting,
+  openContextMenuAndClick
+} from './helpers'
 
 const meta = {
   title: 'Tests/Manipulation',
@@ -25,56 +21,6 @@ const meta = {
 
 export default meta
 type Story = StoryObj<typeof meta>
-
-async function selectTool(view: ReturnType<typeof within>, toolId: string) {
-  let toolButton = view.queryByTestId(`tool-${toolId}`)
-
-  if (!toolButton) {
-    const toggleBtn = view.queryByRole('button', { name: 'Toggle tools' })
-    if (toggleBtn) {
-      await userEvent.click(toggleBtn)
-    } else {
-      const groupTitles: Record<string, string> = {
-        line: 'lines',
-        curve: 'lines',
-        polygon: 'lines',
-        rect: 'shapes',
-        square: 'shapes',
-        circle: 'shapes',
-        ellipse: 'shapes'
-      }
-      const groupTitle = groupTitles[toolId]
-      if (groupTitle) {
-        const groupBtn = await view.findByRole('button', { name: groupTitle })
-        await userEvent.click(groupBtn)
-      }
-    }
-    toolButton = await view.findByTestId(`tool-${toolId}`)
-  }
-
-  await userEvent.click(toolButton)
-}
-
-function assertNoInternalFields(shape: unknown) {
-  expect(shape).not.toHaveProperty('id')
-  expect(shape).not.toHaveProperty('path')
-  expect(shape).not.toHaveProperty('computed')
-  expect(shape).not.toHaveProperty('selection')
-}
-
-async function openSettingPanel(view: ReturnType<typeof within>, title: string) {
-  await userEvent.click(await view.findByRole('button', { name: title }))
-}
-
-async function closeSettingPanel(view: ReturnType<typeof within>, title: string) {
-  await userEvent.click(await view.findByRole('button', { name: title }))
-}
-
-async function setColorSetting(view: ReturnType<typeof within>, title: string, color: string) {
-  await openSettingPanel(view, title)
-  await userEvent.click(await view.findByRole('button', { name: color }))
-  await closeSettingPanel(view, title)
-}
 
 // 100×100 filled square on the left side of the canvas, center at canvas (300, 300).
 // A non-transparent fill is required so that clicking anywhere inside the shape selects it
@@ -190,8 +136,7 @@ export const SelectRotateResizeTranslate: Story = {
 
     // Helpers to convert logical canvas coordinates (1000×600) to client pixel coordinates.
     // The canvas element may be scaled by CSS (max-width:100%), so we apply the scale factor.
-    const toClientX = (canvasX: number) => rect.left + (canvasX * rect.width) / 1000
-    const toClientY = (canvasY: number) => rect.top + (canvasY * rect.height) / 600
+    const { toClientX, toClientY } = makeCoordConverters(rect)
 
     const user = userEvent.setup()
 
@@ -447,8 +392,7 @@ export const StateManagement: Story = {
     const drawCanvas = await view.findByTestId('draw-canvas')
     const rect = drawCanvas.getBoundingClientRect()
 
-    const toClientX = (canvasX: number) => rect.left + (canvasX * rect.width) / 1000
-    const toClientY = (canvasY: number) => rect.top + (canvasY * rect.height) / 600
+    const { toClientX, toClientY } = makeCoordConverters(rect)
 
     const user = userEvent.setup()
 
@@ -494,8 +438,7 @@ export const Commands: Story = {
     const drawCanvas = await view.findByTestId('draw-canvas')
     const rect = drawCanvas.getBoundingClientRect()
 
-    const toClientX = (canvasX: number) => rect.left + (canvasX * rect.width) / 1000
-    const toClientY = (canvasY: number) => rect.top + (canvasY * rect.height) / 600
+    const { toClientX, toClientY } = makeCoordConverters(rect)
 
     const user = userEvent.setup()
 
@@ -552,15 +495,7 @@ export const Commands: Story = {
     await setColorSetting(view, 'Couleur de fond', 'yellow')
 
     // --- Right-click on the yellow shape (center at canvas (340, 340)) ---
-    await user.pointer({ target: drawCanvas, keys: '[MouseRight]', coords: { x: toClientX(340), y: toClientY(340) } })
-    await new Promise(res => setTimeout(res, 100))
-    if (!view.queryByRole('button', { name: 'Duplicate' })) {
-      // isInsideCanvas may have been false (canvas lost focus during settings); retry once.
-      await user.pointer({ target: drawCanvas, keys: '[MouseRight]', coords: { x: toClientX(340), y: toClientY(340) } })
-      await new Promise(res => setTimeout(res, 100))
-    }
-    await userEvent.click(await view.findByRole('button', { name: 'Duplicate' }))
-    await new Promise(res => setTimeout(res, 100))
+    await openContextMenuAndClick(user, drawCanvas, view, toClientX(340), toClientY(340), 'Duplicate')
 
     // =====================================================================
     // Assertions: 3 squares total
