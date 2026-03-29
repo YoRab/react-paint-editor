@@ -292,6 +292,8 @@ export const SelectRotateResizeTranslate: Story = {
     // --- Step 15: Select the curve ---
     // Closed filled curve → click at its centroid (800, 450); isPointInPath returns true inside the region.
     await selectTool(view, 'selection')
+    await new Promise(res => setTimeout(res, 300))
+
     await user.pointer({ target: drawCanvas, keys: '[MouseLeft]', coords: { x: toClientX(800), y: toClientY(450) } })
     await new Promise(res => setTimeout(res, 100))
 
@@ -364,10 +366,10 @@ export const SelectRotateResizeTranslate: Story = {
     expect(polygon.type).toBe('polygon')
     expect(polygon.points[0]![0]).toBeCloseTo(100, 0)
     expect(polygon.points[0]![1]).toBeCloseTo(440, 0)
-    // expect(polygon.points[1]![0]).toBeCloseTo(100, 0)
-    // expect(polygon.points[1]![1]).toBeCloseTo(420, 0)
-    // expect(polygon.points[2]![0]).toBeCloseTo(170, 0)
-    // expect(polygon.points[2]![1]).toBeCloseTo(330, 0)
+    expect(polygon.points[1]![0]).toBeCloseTo(100, 0)
+    expect(polygon.points[1]![1]).toBeCloseTo(440, 0)
+    expect(polygon.points[2]![0]).toBeCloseTo(220, 0)
+    expect(polygon.points[2]![1]).toBeCloseTo(420, 0)
 
     // --- Curve assertions (shapes[4]) ---
     // After step 16: points[0] moved to (730,390). After step 17: all points translated by -30 in x.
@@ -376,10 +378,10 @@ export const SelectRotateResizeTranslate: Story = {
     expect(curve.type).toBe('curve')
     expect(curve.points[0]![0]).toBeCloseTo(700, 0)
     expect(curve.points[0]![1]).toBeCloseTo(390, 0)
-    // expect(curve.points[1]![0]).toBeCloseTo(770, 0)
-    // expect(curve.points[1]![1]).toBeCloseTo(450, 0)
-    // expect(curve.points[2]![0]).toBeCloseTo(820, 0)
-    // expect(curve.points[2]![1]).toBeCloseTo(440, 0)
+    expect(curve.points[1]![0]).toBeCloseTo(760, 0)
+    expect(curve.points[1]![1]).toBeCloseTo(445, 0)
+    expect(curve.points[2]![0]).toBeCloseTo(820, 0)
+    expect(curve.points[2]![1]).toBeCloseTo(440, 0)
 
     // =====================================================================
     // Group: selection frame → resize ÷2 → rotate ~45° → translate (+100,+50)
