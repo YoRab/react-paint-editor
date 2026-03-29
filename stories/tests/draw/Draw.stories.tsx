@@ -10,7 +10,7 @@ import {
   setSelectSetting,
   setToggleSetting,
   openContextMenuAndClick
-} from './helpers'
+} from './../helpers'
 
 const meta = {
   title: 'Tests/Draw',
