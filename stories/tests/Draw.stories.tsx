@@ -544,7 +544,7 @@ export const DrawPolygon: Story = {
     await new Promise(res => setTimeout(res, 50))
     await user.pointer({ target: drawCanvas, keys: '[MouseLeft]', coords: { x: cx - OFFSET + 60, y: cy + 40 } })
     await new Promise(res => setTimeout(res, 50))
-    await user.pointer({ target: drawCanvas, keys: '[MouseLeft][MouseLeft]', coords: { x: cx - OFFSET - 60, y: cy + 40 } })
+    await user.pointer({ target: drawCanvas, keys: '[MouseLeft]', coords: { x: cx - OFFSET - 60, y: cy + 40 } })
     await new Promise(res => setTimeout(res, 100))
 
     // --- Draw shape 2 (triangle centered at cx + OFFSET, with shape 1's settings) ---
@@ -553,7 +553,7 @@ export const DrawPolygon: Story = {
     await new Promise(res => setTimeout(res, 50))
     await user.pointer({ target: drawCanvas, keys: '[MouseLeft]', coords: { x: cx + OFFSET + 60, y: cy + 40 } })
     await new Promise(res => setTimeout(res, 50))
-    await user.pointer({ target: drawCanvas, keys: '[MouseLeft][MouseLeft]', coords: { x: cx + OFFSET - 60, y: cy + 40 } })
+    await user.pointer({ target: drawCanvas, keys: '[MouseLeft]', coords: { x: cx + OFFSET - 60, y: cy + 40 } })
     await new Promise(res => setTimeout(res, 100))
     // Exit drawing mode, then click the shape to select it
     await selectTool(view, 'selection')
@@ -567,6 +567,29 @@ export const DrawPolygon: Story = {
     await setSelectSetting(view, 'Type de traits', '2')
     await setSelectSetting(view, 'Fermer les points', 'Non')
     await setRangeSetting(view, 'Opacité', 75)
+
+    // --- Add a point to shape 2 by double-clicking between P0 (cx+OFFSET, cy-60) and P1 (cx+OFFSET+60, cy+40) ---
+    // Midpoint: (cx + OFFSET + 30, cy - 10) — well inside the 50-unit hit radius of the segment.
+    await user.pointer({ target: drawCanvas, keys: '[MouseLeft][MouseLeft]', coords: { x: cx + OFFSET + 30, y: cy - 10 } })
+    await new Promise(res => setTimeout(res, 100))
+
+    // --- Assert shape 2 now has 4 points ---
+    expect(getCurrentDataRef.current).not.toBeNull()
+    expect((getCurrentDataRef.current!().shapes![0] as { points: unknown[] }).points.length).toBe(4)
+
+    // --- Delete the added point via context menu ---
+    // Right-click on the newly added point (index 1, same client coords as the double-click above).
+    // selectShape detects the vertex anchor → context menu shows "Delete point".
+    await user.pointer({ target: drawCanvas, keys: '[MouseRight]', coords: { x: cx + OFFSET + 30, y: cy - 10 } })
+    await new Promise(res => setTimeout(res, 100))
+    const deletePointButton = view.queryByRole('button', { name: 'Delete point' })
+    if (!deletePointButton) {
+      // isInsideCanvas may have been false (canvas lost focus during settings); retry once.
+      await user.pointer({ target: drawCanvas, keys: '[MouseRight]', coords: { x: cx + OFFSET + 30, y: cy - 10 } })
+      await new Promise(res => setTimeout(res, 100))
+    }
+    await userEvent.click(await view.findByRole('button', { name: 'Delete point' }))
+    await new Promise(res => setTimeout(res, 100))
 
     // --- Assertions ---
     expect(getCurrentDataRef.current).not.toBeNull()
@@ -586,7 +609,8 @@ export const DrawPolygon: Story = {
       style: { strokeColor: 'green', fillColor: 'yellow', opacity: 75, lineWidth: 10, lineDash: 2, closedPoints: 0 }
     })
     assertNoInternalFields(data.shapes![0])
-    expect((data.shapes![0] as { points: unknown[] }).points.length).toBeGreaterThanOrEqual(3)
+    // Point added then deleted → back to 3 points.
+    expect((data.shapes![0] as { points: unknown[] }).points.length).toBe(3)
   }
 }
 
@@ -616,7 +640,7 @@ export const DrawCurve: Story = {
     await new Promise(res => setTimeout(res, 50))
     await user.pointer({ target: drawCanvas, keys: '[MouseLeft]', coords: { x: cx - OFFSET, y: cy - 60 } })
     await new Promise(res => setTimeout(res, 50))
-    await user.pointer({ target: drawCanvas, keys: '[MouseLeft][MouseLeft]', coords: { x: cx - OFFSET + 60, y: cy } })
+    await user.pointer({ target: drawCanvas, keys: '[MouseLeft]', coords: { x: cx - OFFSET + 60, y: cy } })
     await new Promise(res => setTimeout(res, 100))
 
     // --- Draw shape 2 (centered at cx + OFFSET, with shape 1's settings) ---
@@ -625,10 +649,12 @@ export const DrawCurve: Story = {
     await new Promise(res => setTimeout(res, 50))
     await user.pointer({ target: drawCanvas, keys: '[MouseLeft]', coords: { x: cx + OFFSET, y: cy - 60 } })
     await new Promise(res => setTimeout(res, 50))
-    await user.pointer({ target: drawCanvas, keys: '[MouseLeft][MouseLeft]', coords: { x: cx + OFFSET + 60, y: cy } })
+    await user.pointer({ target: drawCanvas, keys: '[MouseLeft]', coords: { x: cx + OFFSET + 60, y: cy } })
     await new Promise(res => setTimeout(res, 100))
     // Exit drawing mode, then click the shape to select it
-    await selectTool(view, 'selection')
+    await user.pointer({ target: drawCanvas, keys: '[MouseRight]', coords: { x: cx + OFFSET + 60, y: cy } })
+    await new Promise(res => setTimeout(res, 200))
+
     await user.pointer({ target: drawCanvas, keys: '[MouseLeft]', coords: { x: cx + OFFSET, y: cy - 20 } })
     await new Promise(res => setTimeout(res, 100))
 
@@ -639,6 +665,29 @@ export const DrawCurve: Story = {
     await setSelectSetting(view, 'Type de traits', '2')
     await setSelectSetting(view, 'Fermer les points', 'Non')
     await setRangeSetting(view, 'Opacité', 75)
+
+    // --- Add a point to shape 2 by double-clicking between P0 (cx+OFFSET-60, cy) and P1 (cx+OFFSET, cy-60) ---
+    // Midpoint: (cx + OFFSET - 30, cy - 30) — well inside the 50-unit hit radius of the segment.
+    await user.pointer({ target: drawCanvas, keys: '[MouseLeft][MouseLeft]', coords: { x: cx + OFFSET - 30, y: cy - 30 } })
+    await new Promise(res => setTimeout(res, 100))
+
+    // --- Assert shape 2 now has 4 points ---
+    expect(getCurrentDataRef.current).not.toBeNull()
+    expect((getCurrentDataRef.current!().shapes![0] as { points: unknown[] }).points.length).toBe(4)
+
+    // --- Delete the added point via context menu ---
+    // Right-click on the newly added point (index 1, same client coords as the double-click above).
+    // selectShape detects the vertex anchor → context menu shows "Delete point".
+    await user.pointer({ target: drawCanvas, keys: '[MouseRight]', coords: { x: cx + OFFSET - 30, y: cy - 30 } })
+    await new Promise(res => setTimeout(res, 100))
+    const deletePointButton = view.queryByRole('button', { name: 'Delete point' })
+    if (!deletePointButton) {
+      // isInsideCanvas may have been false (canvas lost focus during settings); retry once.
+      await user.pointer({ target: drawCanvas, keys: '[MouseRight]', coords: { x: cx + OFFSET - 30, y: cy - 30 } })
+      await new Promise(res => setTimeout(res, 100))
+    }
+    await userEvent.click(await view.findByRole('button', { name: 'Delete point' }))
+    await new Promise(res => setTimeout(res, 100))
 
     // --- Assertions ---
     expect(getCurrentDataRef.current).not.toBeNull()
@@ -658,7 +707,8 @@ export const DrawCurve: Story = {
       style: { strokeColor: 'green', fillColor: 'yellow', opacity: 75, lineWidth: 10, lineDash: 2, closedPoints: 0 }
     })
     assertNoInternalFields(data.shapes![0])
-    expect((data.shapes![0] as { points: unknown[] }).points.length).toBeGreaterThanOrEqual(3)
+    // Point added then deleted → back to 3 points.
+    expect((data.shapes![0] as { points: unknown[] }).points.length).toBe(3)
   }
 }
 
