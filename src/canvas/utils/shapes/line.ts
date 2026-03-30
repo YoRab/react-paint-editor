@@ -118,7 +118,7 @@ export const buildTriangleOnLine = (center: Point, rotation: number, lineStyle: 
 export const drawLine = (ctx: CanvasRenderingContext2D, shape: ShapeEntity<'line'>): void => {
   drawPathWithFillAndStroke(ctx, shape.path, shape.style)
   for (const arrow of shape.arrows ?? []) {
-    updateCanvasContext(ctx, arrow.style)
+    updateCanvasContext(ctx, { ...arrow.style, opacity: 100 })
     drawTriangle(ctx, arrow)
   }
 }
