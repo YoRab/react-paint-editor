@@ -107,6 +107,7 @@ const EditTextBox = ({ disabled = false, shape, defaultValue, updateValue, saveS
       ref={ref}
       data-fontbold={shape.style?.fontBold ?? false}
       data-fontitalic={shape.style?.fontItalic ?? false}
+      aria-label='Text content'
       contentEditable={isEditable}
       role='textbox'
       tabIndex={isEditable ? 0 : undefined}
