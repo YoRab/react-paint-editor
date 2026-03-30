@@ -2,6 +2,13 @@
 
 For more details and links to Pull requests, see [Releases](https://github.com/YoRab/react-paint-editor/releases)
 
+## V0.18.1
+- fix opacity problems with line and arrows
+- fix picture style not set at shape creation
+- update colors and button title to fix accessibility problems
+- add interaction and accessibility tests in storybook and CI (about 80% coverage)
+- add meta description in storybook and badges in Readme
+
 ## V0.18.0
 - Separate current logic and create new entrypoints for ESM build (dist/canvas & dist/editor), allowing treeshaking in the future
 - use vite 8 + rolldown to build, decreasing ESM build size by 15-20%
