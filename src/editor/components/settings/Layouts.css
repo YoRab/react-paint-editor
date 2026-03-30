@@ -65,11 +65,15 @@
 .react-paint-editor-layout > span {
   height: 20px;
   line-height: 1;
-  color: #8a8a8a;
+  color: #6b6b6b;
+}
+
+.react-paint-editor-layout[data-selected='1'] > span {
+  color: var(--react-paint-editor-app-font-selected-color);
 }
 
 .react-paint-editor-layout > span > svg {
-  fill: #8a8a8a;
+  fill: #6b6b6b;
   width: 20px;
   height: 20px;
   padding: 0 4px;

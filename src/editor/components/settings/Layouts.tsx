@@ -154,6 +154,7 @@ const Layouts = ({
           <div className='react-paint-editor-layouts-row'>
             <span className='react-paint-editor-layouts-subtitle'>Grid</span>
             <Button
+              aria-label='No grid'
               icon={gridOffIcon}
               className='react-paint-editor-layouts-grid-button'
               selected={gridFormat === 'none'}
