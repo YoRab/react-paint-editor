@@ -13,9 +13,9 @@ export default defineConfig({
     emptyOutDir: false,
     lib: {
       entry: {
-        'react-paint': resolve(__dirname, 'src/index.tsx'),
-        'canvas/index': resolve(__dirname, 'src/canvas/index.tsx'),
-        'editor/index': resolve(__dirname, 'src/editor/index.tsx')
+        'react-paint': resolve(import.meta.dirname, 'src/index.tsx'),
+        'canvas/index': resolve(import.meta.dirname, 'src/canvas/index.tsx'),
+        'editor/index': resolve(import.meta.dirname, 'src/editor/index.tsx')
       },
       formats: ['es'],
       fileName: (_format, entryName) => `${entryName}.js`

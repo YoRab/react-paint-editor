@@ -11,7 +11,7 @@ export default defineConfig({
     cssMinify: 'lightningcss',
     emptyOutDir: false,
     lib: {
-      entry: resolve(__dirname, 'src/index.tsx'),
+      entry: resolve(import.meta.dirname, 'src/index.tsx'),
       fileName: () => 'react-paint.umd.cjs',
       name: 'ReactPaint',
     },
