@@ -1,17 +1,15 @@
-import type { SelectionType, ShapeEntity } from '@common/types/Shapes'
-import { getSelectedShapes } from '@common/utils/selection'
 import Button from '@editor/components/common/Button'
 import { trashIcon } from '@editor/constants/icons'
 
 type DeleteShapeButtonType = {
   disabled?: boolean
-  selectedShape: SelectionType
-  removeShape: (shape: ShapeEntity[]) => void
+  selectedShapeIds: string[]
+  removeShapes: (ids: string[]) => void
 }
 
-const DeleteButton = ({ disabled = false, selectedShape, removeShape }: DeleteShapeButtonType) => {
+const DeleteButton = ({ disabled = false, selectedShapeIds, removeShapes }: DeleteShapeButtonType) => {
   const handleRemove = () => {
-    removeShape(getSelectedShapes(selectedShape))
+    removeShapes(selectedShapeIds)
   }
 
   return <Button title='Delete' disabled={disabled} data-disabled={+disabled} onClick={handleRemove} icon={trashIcon} />

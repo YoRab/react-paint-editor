@@ -1,4 +1,4 @@
-.react-paint-editor-toolbox-edittextbox {
+.react-paint-canvas-edittextbox {
   position: absolute;
   display: inline-block;
   outline: none;
@@ -7,21 +7,21 @@
   transform-origin: left top;
   box-sizing: border-box;
   line-height: 1;
-  transform: var(--react-paint-editor-toolbox-edittextbox-transform);
-  color: var(--react-paint-editor-toolbox-edittextbox-color);
-  padding: var(--react-paint-editor-toolbox-edittextbox-padding);
-  font-size: var(--react-paint-editor-toolbox-edittextbox-fontsize);
-  font-family: var(--react-paint-editor-toolbox-edittextbox-fontfamily);
-  opacity: var(--react-paint-editor-toolbox-edittextbox-opacity);
+  transform: var(--react-paint-canvas-edittextbox-transform);
+  color: var(--react-paint-canvas-edittextbox-color);
+  padding: var(--react-paint-canvas-edittextbox-padding);
+  font-size: var(--react-paint-canvas-edittextbox-fontsize);
+  font-family: var(--react-paint-canvas-edittextbox-fontfamily);
+  opacity: var(--react-paint-canvas-edittextbox-opacity);
   width: max-content;
   /* required to override injected prop in contenteditable span elements */
   background: none;
 }
 
-.react-paint-editor-toolbox-edittextbox[data-fontbold='true'] {
+.react-paint-canvas-edittextbox[data-fontbold='true'] {
   font-weight: bold;
 }
 
-.react-paint-editor-toolbox-edittextbox[data-fontitalic='true'] {
+.react-paint-canvas-edittextbox[data-fontitalic='true'] {
   font-style: italic;
 }

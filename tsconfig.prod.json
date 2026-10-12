@@ -5,7 +5,7 @@
     "skipLibCheck": true,
     "declaration": true,
     "emitDeclarationOnly": true,
-    "rootDir": ".",
+    "rootDir": "./src",
     "outDir": "declarationfiles",
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,

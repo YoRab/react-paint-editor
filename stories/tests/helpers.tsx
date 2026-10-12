@@ -1,16 +1,40 @@
-import { expect, userEvent, within } from 'storybook/test'
-import { Canvas, Editor, type StateData, useReactPaint } from '../../src/index'
+import { useEffect } from 'react'
+import { expect, userEvent, type within } from 'storybook/test'
+import {
+  Canvas,
+  Editor,
+  type EditorOptions,
+  type ShapeEntity,
+  type StateData,
+  type ToolsType,
+  type UseReactPaintProps,
+  useReactPaint
+} from '../../src/index'
 
 // ─── Component wrapper ─────────────────────────────────────────────────────────
 
 export const getCurrentDataRef = { current: null as null | (() => StateData) }
 
-export const ReactPaintWrapper = (args: Parameters<typeof useReactPaint>[0]) => {
-  const { editorProps, canvasProps, getCurrentData } = useReactPaint(args)
+/** Log of the selectionChanged / toolChanged events emitted by the last rendered wrapper */
+export const eventsLog: ({ name: 'selectionChanged'; ids: string[] } | { name: 'toolChanged'; toolId: string })[] = []
+
+export const ReactPaintWrapper = ({ editorOptions, ...args }: UseReactPaintProps & { editorOptions?: EditorOptions }) => {
+  const { editorProps, canvasProps, getCurrentData, registerEvent, unregisterEvent } = useReactPaint(args)
   getCurrentDataRef.current = getCurrentData
 
+  useEffect(() => {
+    const onSelectionChanged = (shapes: ShapeEntity[]) => eventsLog.push({ name: 'selectionChanged', ids: shapes.map(shape => shape.id) })
+    const onToolChanged = (tool: ToolsType) => eventsLog.push({ name: 'toolChanged', toolId: tool.id })
+    registerEvent('selectionChanged', onSelectionChanged)
+    registerEvent('toolChanged', onToolChanged)
+    return () => {
+      unregisterEvent('selectionChanged', onSelectionChanged)
+      unregisterEvent('toolChanged', onToolChanged)
+    }
+  }, [registerEvent, unregisterEvent])
+
   return (
-    <Editor editorProps={editorProps}>
+    <Editor editorProps={editorProps} options={editorOptions}>
       <Canvas canvasProps={canvasProps} />
     </Editor>
   )

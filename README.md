@@ -36,6 +36,27 @@ Don't forget to import the CSS file in your application:
 import '@yorab/react-paint/react-paint.css'
 ```
 
+## Modules
+
+The library is made of two independent modules:
+
+- **canvas**: the `Canvas` component and the `useReactPaint` hook, which holds the whole state and logic.
+- **editor**: the `Editor` component (toolbar, settings bar, layers panel, context menu).
+
+They only communicate through `useReactPaint`: `canvasProps` is given to `Canvas` and must be treated as opaque, `editorProps` is given to `Editor`, or to your own editor.
+
+When you don't use `Editor`, it is removed from your bundle, even when importing from the package root. You can also import each module and its styles separately:
+
+```tsx
+import { Canvas, useReactPaint } from '@yorab/react-paint/canvas'
+import '@yorab/react-paint/canvas/canvas.css'
+
+import { Editor } from '@yorab/react-paint/editor'
+import '@yorab/react-paint/editor/editor.css'
+```
+
+Tree-shaking applies to the ES modules build. The CommonJS (UMD) build, used with `require`, contains both modules.
+
 ## Usage
 
 ### Basic Usage
@@ -125,6 +146,49 @@ function AdvancedPaintApp() {
   )
 }
 ```
+
+### Custom Editor
+
+`editorProps` is a public contract: `state` holds everything an editor needs to render (shapes, selection, active tool, history, zoom, hovered shape, context menu...) and `actions` holds the commands to act on the canvas. Set `editorRef` on the root element of your editor: it defines the area where interactions and keyboard shortcuts are active.
+
+```tsx
+import { Canvas, type EditorProps, useReactPaint } from '@yorab/react-paint/canvas'
+import '@yorab/react-paint/canvas/canvas.css'
+
+const MyEditor = ({ editorProps, children }: { editorProps: EditorProps; children: React.ReactNode }) => {
+  const { state, actions, editorRef } = editorProps
+  const selectedIds = state.selectedShapes.map(shape => shape.id)
+
+  return (
+    <div ref={editorRef}>
+      {state.tools.map(tool => (
+        <button key={tool.id} aria-pressed={state.activeTool.id === tool.id} onClick={() => actions.selectTool(tool.id)}>
+          {tool.label ?? tool.type}
+        </button>
+      ))}
+      <button disabled={!state.history.canUndo} onClick={actions.undo}>Undo</button>
+      <button disabled={!selectedIds.length} onClick={() => actions.updateShapesStyle(selectedIds, 'strokeColor', 'red')}>Red</button>
+      {children}
+    </div>
+  )
+}
+
+function MyPaintApp() {
+  const { editorProps, canvasProps } = useReactPaint()
+
+  return (
+    <MyEditor editorProps={editorProps}>
+      <Canvas canvasProps={canvasProps} />
+    </MyEditor>
+  )
+}
+```
+
+To use the canvas alone, set `editorProps.editorRef` on an element wrapping `Canvas`.
+
+### Upgrading from 0.x
+
+Version 1 changes the shape of `editorProps` and moves some options. See the [migration guide](https://github.com/YoRab/react-paint-editor/blob/main/MIGRATION.md).
 
 ## Documentation
 

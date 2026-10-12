@@ -1,12 +1,13 @@
 import { DRAWCANVAS_CLASSNAME, SELECTIONCANVAS_CLASSNAME, type UtilsSettings } from '@canvas/constants/app'
 import { PICTURE_DEFAULT_SIZE } from '@canvas/constants/picture'
+import type { EmitEvent } from '@canvas/hooks/useEventEmitter'
 import { buildDataToExport } from '@canvas/utils/data'
 import { checkPositionIntersection, checkSelectionFrameCollision, checkSelectionIntersection } from '@canvas/utils/intersect'
 import { addToSelectedShapes, buildShapesGroup } from '@canvas/utils/selection'
 import { copyShapes, flipShapes, refreshShape, rotateShape } from '@canvas/utils/shapes/index'
 import { createPicture } from '@canvas/utils/shapes/picture'
 import { isPointInsideRect } from '@canvas/utils/trigo'
-import type { Point, SelectionType, ShapeEntity, StateData } from '@common/types/Shapes'
+import type { Point, SelectionType, ShapeEntity } from '@common/types/Shapes'
 import { moveItemPosition } from '@common/utils/array'
 import { isEqual, omit, set } from '@common/utils/object'
 import { getSelectedShapes } from '@common/utils/selection'
@@ -143,10 +144,9 @@ const useShapes = (
   settings: UtilsSettings,
   width: number,
   height: number,
-  isShiftPressed: boolean
+  isShiftPressed: boolean,
+  emit: EmitEvent
 ): {
-  registerEvent: (event: 'dataChanged', fn: (data: StateData, source: 'user' | 'remote') => void) => void
-  unregisterEvent: (event: 'dataChanged', fn?: (data: StateData, source: 'user' | 'remote') => void) => void
   shapes: ShapeEntity[]
   shapesRef: React.RefObject<ShapeEntity[]>
   selectedShape: SelectionType | undefined
@@ -190,9 +190,6 @@ const useShapes = (
   // Read-only mirror refs for synchronous access in callbacks
   const shapesRef = useRef<ShapeEntity[]>([])
   const selectedShapeRef = useRef<SelectionType | undefined>(undefined)
-  const listeners = useRef<{
-    dataChanged: ((data: StateData, source: 'user' | 'remote') => void)[]
-  }>({ dataChanged: [] })
 
   useLayoutEffect(() => {
     shapesRef.current = shapesState.shapes
@@ -451,30 +448,10 @@ const useShapes = (
     [resetShapes, settings]
   )
 
-  const registerEvent = useCallback((event: 'dataChanged', fn: (data: StateData, source: 'user' | 'remote') => void) => {
-    // biome-ignore lint/suspicious/noPrototypeBuiltins: be compliant with es2020
-    if (!listeners.current.hasOwnProperty(event)) return
-    listeners.current[event] = [...listeners.current[event], fn]
-  }, [])
-
-  const unregisterEvent = useCallback((event: 'dataChanged', fn?: (data: StateData, source: 'user' | 'remote') => void) => {
-    // biome-ignore lint/suspicious/noPrototypeBuiltins: be compliant with es2020
-    if (!listeners.current.hasOwnProperty(event)) return
-    if (fn) {
-      const currentFnIndex = listeners.current[event].indexOf(fn)
-      listeners.current[event] = [...listeners.current[event].slice(0, currentFnIndex), ...listeners.current[event].slice(currentFnIndex + 1)]
-    } else {
-      listeners.current[event] = []
-    }
-  }, [])
-
   useEffect(() => {
     const entry = shapesState.history.states[shapesState.history.cursor]!
-    const shapes = buildDataToExport(entry.shapes, width, height)
-    for (const listener of listeners.current.dataChanged) {
-      listener(shapes, entry.source)
-    }
-  }, [width, height, shapesState.history])
+    emit('dataChanged', buildDataToExport(entry.shapes, width, height), entry.source)
+  }, [width, height, shapesState.history, emit])
 
   useEffect(() => {
     const newShapes = shapesRef.current.map(shape => refreshShape(shape, settings))
@@ -508,8 +485,6 @@ const useShapes = (
   )
 
   return {
-    registerEvent,
-    unregisterEvent,
     shapes: shapesState.shapes,
     shapesRef,
     selectedShape: shapesState.selectedShape,

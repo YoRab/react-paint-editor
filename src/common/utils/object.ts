@@ -33,6 +33,10 @@ export const set = <T extends Record<string, any> | unknown[]>(path: string | nu
   return result
 }
 
+/** Shallow merges the options into the defaults, ignoring the options set to undefined */
+export const withDefaults = <T extends object>(defaults: T, options: object | undefined): T =>
+  ({ ...defaults, ...Object.fromEntries(Object.entries(options ?? {}).filter(([, value]) => value !== undefined)) }) as T
+
 const isRecord = (value: unknown): value is Record<string, unknown> => {
   return typeof value === 'object' && !Array.isArray(value) && value !== null
 }

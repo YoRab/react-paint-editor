@@ -1,5 +1,5 @@
 import type { UtilsSettings } from '@canvas/constants/app'
-import { CANVAS_DEFAULT_RECT_SETTINGS } from '@canvas/constants/tools'
+import { SETTINGS_DEFAULT_RECT } from '@canvas/constants/tools'
 import { createRectangle } from '@canvas/utils/shapes/rectangle'
 import { roundValues } from '@canvas/utils/transform'
 import { rotatePoint } from '@canvas/utils/trigo'
@@ -241,7 +241,7 @@ export const buildShapesGroup = (shapes: ShapeEntity[], settings: UtilsSettings)
     {
       id: 'group_selection',
       type: 'rect',
-      settings: CANVAS_DEFAULT_RECT_SETTINGS
+      settings: SETTINGS_DEFAULT_RECT
     },
     [borders.x, borders.y],
     settings,

@@ -1,12 +1,12 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
-import { Canvas, Editor, useReactPaint } from '../src/index'
+import { Canvas, Editor, type EditorOptions, type UseReactPaintProps, useReactPaint } from '../src/index'
 import { TREE_AND_CLOUDS } from './fixture'
 
-const ReactPaintWrapper = (args: Parameters<typeof useReactPaint>[0]) => {
+const ReactPaintWrapper = ({ editorOptions, ...args }: UseReactPaintProps & { editorOptions?: EditorOptions }) => {
   const { editorProps, canvasProps } = useReactPaint(args)
 
   return (
-    <Editor editorProps={editorProps}>
+    <Editor editorProps={editorProps} options={editorOptions}>
       <Canvas canvasProps={canvasProps} />
     </Editor>
   )
@@ -128,7 +128,9 @@ const CUSTOM_BRUSH_TOOLS = [
 export const CustomTool: Story = {
   args: {
     options: {
-      availableTools: CUSTOM_BRUSH_TOOLS,
+      availableTools: CUSTOM_BRUSH_TOOLS
+    },
+    editorOptions: {
       withUploadPicture: false,
       withUrlPicture: false
     }
@@ -172,10 +174,10 @@ export const CustomTool: Story = {
   }
 ]
 
-const { editorProps, canvasProps } = useReactPaint({ options: { availableTools: CUSTOM_BRUSH_TOOLS, withUploadPicture: false, withUrlPicture: false } })
+const { editorProps, canvasProps } = useReactPaint({ options: { availableTools: CUSTOM_BRUSH_TOOLS } })
 
 return (
-  <Editor editorProps={editorProps}>
+  <Editor editorProps={editorProps} options={{ withUploadPicture: false, withUrlPicture: false }}>
     <Canvas canvasProps={canvasProps} />
   </Editor>
 )`,

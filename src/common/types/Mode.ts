@@ -48,6 +48,7 @@ export type SelectionModeTranslate = {
 export type SelectionModeContextMenu<AnchorType extends Point | number = Point> = {
   mode: 'contextMenu'
   cursorStartPosition: Point
+  clientPosition: { x: number; y: number }
   originalShape: SelectionType | undefined
   anchor: AnchorType | undefined
 }

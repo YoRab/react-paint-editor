@@ -1,23 +1,21 @@
-import Canvas from '@canvas/components/Canvas'
-import { DEFAULT_CANVAS_OPTIONS } from '@canvas/constants/app'
+import CanvasElement from '@canvas/components/Canvas'
+import { type CanvasOptions, DEFAULT_CANVAS_OPTIONS } from '@canvas/constants/app'
 import CanvasContext from '@canvas/context/CanvasContext'
 import useKeyboard from '@canvas/hooks/useKeyboard'
-import type { UseReactPaintReturnType } from '@canvas/hooks/useReactPaint'
 import useResizeObserver from '@canvas/hooks/useResizeObserver'
+import type { CanvasProps, InternalCanvasProps } from '@canvas/types/canvasProps'
+import { withDefaults } from '@common/utils/object'
 import { type CSSProperties, useCallback, useMemo, useRef } from 'react'
 import './index.css'
 
-type AppProps = {
-  canvasProps: UseReactPaintReturnType['canvasProps']
-  className?: string
-  style?: CSSProperties
-  options?: {
-    canvasBackgroundColor?: string | undefined
-    canvasSelectionColor?: string | undefined
-    canvasSelectionWidth?: number | undefined
-  }
+type CanvasComponentProps = {
+  canvasProps: CanvasProps
+  className?: string | undefined
+  style?: CSSProperties | undefined
+  options?: CanvasOptions | undefined
 }
-const App = ({ options, className, style, canvasProps }: AppProps) => {
+
+const Canvas = ({ options, className, style, canvasProps }: CanvasComponentProps) => {
   const {
     shapes,
     selectedShape,
@@ -35,13 +33,12 @@ const App = ({ options, className, style, canvasProps }: AppProps) => {
     backwardShape,
     forwardShape,
     saveShapes,
-    refs,
+    canvasRef,
     width,
     height,
     settings,
     setCanvasSize,
     setCanvasOffset,
-    pasteShapes,
     activeTool,
     setActiveTool,
     isInsideComponent,
@@ -56,19 +53,18 @@ const App = ({ options, className, style, canvasProps }: AppProps) => {
     isShiftPressed,
     isAltPressed,
     isSpacePressed,
-    copiedShape,
-    setCopiedShape,
+    hasCopiedShape,
+    copy,
+    cut,
+    paste,
     setShiftPressed,
     setAltPressed,
     setCanvasZoom,
     resetZoom,
     setIsSpacePressed
-  } = canvasProps
+  } = canvasProps as unknown as InternalCanvasProps
 
-  const { canvasBackgroundColor, canvasSelectionColor, canvasSelectionWidth } = {
-    ...DEFAULT_CANVAS_OPTIONS,
-    ...options
-  } as typeof DEFAULT_CANVAS_OPTIONS
+  const { canvasBackgroundColor, canvasSelectionColor, canvasSelectionWidth } = withDefaults(DEFAULT_CANVAS_OPTIONS, options)
 
   const containerRef = useRef<HTMLDivElement>(null)
 
@@ -87,12 +83,13 @@ const App = ({ options, className, style, canvasProps }: AppProps) => {
     isEditingText: selectionMode.mode === 'textedition',
     settings,
     selectedShape,
-    copiedShape,
-    setCopiedShape,
+    hasCopiedShape,
+    copy,
+    cut,
+    paste,
     selectAllShapes,
     setSelectedShape,
     removeShape,
-    pasteShapes,
     updateShapes: updateShape,
     backwardShape,
     forwardShape,
@@ -196,15 +193,43 @@ const App = ({ options, className, style, canvasProps }: AppProps) => {
       }}
     >
       <CanvasContext.Provider value={contextValue}>
-        <Canvas ref={refs.canvas} />
+        <CanvasElement ref={canvasRef} />
       </CanvasContext.Provider>
     </div>
   )
 }
 
-export default App
-
-export type { OptionalOptions } from '@canvas/constants/app'
-export { DEFAULT_OPTIONS } from '@canvas/constants/app'
-export { default as useReactPaint } from '@canvas/hooks/useReactPaint'
-export type { ExportedDrawableShape as DrawableShape, StateData } from '@common/types/Shapes'
+export { type CanvasOptions, DEFAULT_OPTIONS, type OptionalOptions, type OptionalOptions as UseReactPaintOptions } from '@canvas/constants/app'
+export { DEFAULT_TOOLS } from '@canvas/constants/tools'
+export { default as useReactPaint, type UseReactPaintProps, type UseReactPaintReturnType } from '@canvas/hooks/useReactPaint'
+export type { CanvasProps } from '@canvas/types/canvasProps'
+export { MOVE_TOOL, SELECTION_TOOL } from '@common/constants/tools'
+export type {
+  ContextMenuState,
+  EditorActions,
+  EditorProps,
+  EditorState,
+  ExportView,
+  InteractionMode,
+  InteractionState,
+  ReactPaintEventName,
+  ReactPaintEvents,
+  ShapeStyleField,
+  ShapesOrderAction,
+  ShapesTransformAction,
+  ToolSettingValue,
+  ZoomAction
+} from '@common/types/editor'
+export type {
+  ExportedDrawableShape as DrawableShape,
+  ExportedDrawableShape,
+  Point,
+  ShapeEntity,
+  ShapeType,
+  StateData,
+  StyleShape
+} from '@common/types/Shapes'
+export type { ActionsTool, CustomTool, CustomToolInput, ToolsType } from '@common/types/tools'
+export { getSelectedShapes, getSelectedShapesTools } from '@common/utils/selection'
+export type { CanvasComponentProps }
+export { Canvas }
