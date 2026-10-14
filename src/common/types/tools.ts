@@ -49,8 +49,8 @@ export type CustomToolInput = {
 
 export type CustomTool = {
   id: string
-  icon: string
-  label: string
+  icon?: string
+  label?: string
 } & (
   | {
       type: 'brush'
@@ -241,8 +241,8 @@ export type ActionsType = 'selection' | 'undo' | 'redo' | 'clear' | 'export' | '
 export type ActionsTool = {
   id: string
   type: ActionsType
-  icon: string
-  label: string
+  icon?: string
+  label?: string
 }
 
 export type ToolsType = CustomTool | ActionsTool

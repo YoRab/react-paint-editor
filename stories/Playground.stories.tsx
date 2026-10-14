@@ -86,14 +86,9 @@ const Playground = (args: PlaygroundProps) => {
   } = args
 
   const options: OptionalOptions = {
-    layersManipulation,
     grid,
     canGrow,
     canShrink,
-    withExport,
-    withLoadAndSave,
-    withUploadPicture,
-    withUrlPicture,
     withFrameSelection,
     withSkeleton,
     withContextMenu,
@@ -107,6 +102,11 @@ const Playground = (args: PlaygroundProps) => {
   }
 
   const editorOptions = {
+    layersManipulation,
+    withExport,
+    withLoadAndSave,
+    withUploadPicture,
+    withUrlPicture,
     toolbarBackgroundColor,
     dividerColor,
     fontRadius,
@@ -266,27 +266,27 @@ const meta = {
     layersManipulation: {
       control: { type: 'boolean' },
       description: 'Enable layer manipulation features',
-      table: { category: 'Feature Toggles', defaultValue: { summary: 'true' }, type: { summary: 'boolean' } }
+      table: { category: 'Editor Features', defaultValue: { summary: 'true' }, type: { summary: 'boolean' } }
     },
     withExport: {
       control: { type: 'boolean' },
       description: 'Show export button',
-      table: { category: 'Feature Toggles', defaultValue: { summary: 'true' }, type: { summary: 'boolean' } }
+      table: { category: 'Editor Features', defaultValue: { summary: 'true' }, type: { summary: 'boolean' } }
     },
     withLoadAndSave: {
       control: { type: 'boolean' },
       description: 'Show load and save buttons',
-      table: { category: 'Feature Toggles', defaultValue: { summary: 'true' }, type: { summary: 'boolean' } }
+      table: { category: 'Editor Features', defaultValue: { summary: 'true' }, type: { summary: 'boolean' } }
     },
     withUploadPicture: {
       control: { type: 'boolean' },
       description: 'Show button to add picture shape stored in base64',
-      table: { category: 'Feature Toggles', defaultValue: { summary: 'true' }, type: { summary: 'boolean' } }
+      table: { category: 'Editor Features', defaultValue: { summary: 'true' }, type: { summary: 'boolean' } }
     },
     withUrlPicture: {
       control: { type: 'boolean' },
       description: 'Show button to add picture shape with URL (requires connectivity)',
-      table: { category: 'Feature Toggles', defaultValue: { summary: 'false' }, type: { summary: 'boolean' } }
+      table: { category: 'Editor Features', defaultValue: { summary: 'false' }, type: { summary: 'boolean' } }
     },
     withFrameSelection: {
       control: { type: 'boolean' },
@@ -399,14 +399,9 @@ export const Default: Story = {
       source: {
         code: `
     const options: OptionalOptions = {
-      layersManipulation,
       grid,
       canGrow,
       canShrink,
-      withExport,
-      withLoadAndSave,
-      withUploadPicture,
-      withUrlPicture,
       withFrameSelection,
       withSkeleton,
       withContextMenu,
@@ -420,6 +415,11 @@ export const Default: Story = {
     }
 
     const editorOptions = {
+      layersManipulation,
+      withExport,
+      withLoadAndSave,
+      withUploadPicture,
+      withUrlPicture,
       toolbarBackgroundColor,
       dividerColor,
       fontRadius,

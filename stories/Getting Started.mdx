@@ -104,8 +104,8 @@ function AdvancedPaintApp() {
         The <code>useReactPaint</code> hook is the core of React Paint. It returns:
       </p>
       <ul>
-        <li><code>editorProps</code> - Props to pass to the <code>Editor</code> component</li>
-        <li><code>canvasProps</code> - Props to pass to the <code>Canvas</code> component</li>
+        <li><code>editorProps</code> - Props to pass to the <code>Editor</code> component, or to <LinkTo title='React Paint/Custom editor' story='docs'>your own editor</LinkTo></li>
+        <li><code>canvasProps</code> - Props to pass as is to the <code>Canvas</code> component</li>
         <li><code>registerEvent</code> - Function to listen to events (like <code>dataChanged</code>)</li>
         <li><code>unregisterEvent</code> - Function to stop listening to events</li>
         <li><code>resetCanvas</code> - Function to reset the canvas with new shapes</li>
@@ -121,6 +121,21 @@ function AdvancedPaintApp() {
       <h3>Canvas Component</h3>
       <p>
         The <code>Canvas</code> component is where all the drawing happens. It handles mouse/touch interactions, rendering, and shape manipulation.
+      </p>
+
+      <h3>Modules</h3>
+      <p>
+        The library is made of two independent modules: <strong>canvas</strong> (<code>Canvas</code> and <code>useReactPaint</code>) and <strong>editor</strong> (<code>Editor</code>).
+        When you don't use <code>Editor</code>, it is removed from your bundle. Each module can also be imported with its own styles:
+      </p>
+      <Source language='typescript' code={`import { Canvas, useReactPaint } from '@yorab/react-paint/canvas'
+import '@yorab/react-paint/canvas/canvas.css'
+
+import { Editor } from '@yorab/react-paint/editor'
+import '@yorab/react-paint/editor/editor.css'`} />
+      <p>
+        To build your own editor, use <code>editorProps.state</code> to render it, <code>editorProps.actions</code> to act on the canvas, and set <code>editorProps.editorRef</code> on its root element.
+        See the <LinkTo title='React Paint/Custom editor' story='docs'>Custom editor</LinkTo> and <LinkTo title='React Paint/Canvas only' story='docs'>Canvas only</LinkTo> examples.
       </p>
       
       <h2>Configuration Options</h2>

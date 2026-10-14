@@ -2,6 +2,12 @@ import { resolve } from 'node:path'
 import react from '@vitejs/plugin-react'
 import { defineConfig } from 'vite'
 
+// CSS emitted for each module chunk. The aggregated react-paint.css is emitted by the UMD build.
+const CSS_FILE_NAMES: Record<string, string> = {
+  'canvas.css': 'canvas/canvas.css',
+  'editor.css': 'editor/editor.css'
+}
+
 // https://vitejs.dev/config/
 export default defineConfig({
   resolve: {
@@ -10,10 +16,11 @@ export default defineConfig({
   build: {
     target: 'es2020',
     cssMinify: 'lightningcss',
+    cssCodeSplit: true,
     emptyOutDir: false,
     lib: {
       entry: {
-        'react-paint': resolve(import.meta.dirname, 'src/index.tsx'),
+        'react-paint': resolve(import.meta.dirname, 'src/index.ts'),
         'canvas/index': resolve(import.meta.dirname, 'src/canvas/index.tsx'),
         'editor/index': resolve(import.meta.dirname, 'src/editor/index.tsx')
       },
@@ -24,9 +31,13 @@ export default defineConfig({
       external: ['react', 'react/jsx-runtime', 'react-dom'],
       output: {
         format: 'es',
-        assetFileNames: 'react-paint.css',
+        assetFileNames: assetInfo => {
+          const cssFileName = assetInfo.names.map(name => CSS_FILE_NAMES[name]).find(Boolean)
+          if (!cssFileName) throw new Error(`Unexpected asset: ${assetInfo.names.join(', ')}`)
+          return cssFileName
+        },
         chunkFileNames: '_chunks/[name]-[hash].js',
-minify: true,
+        minify: true,
         generatedCode: { preset: 'es2015' }
       }
     }

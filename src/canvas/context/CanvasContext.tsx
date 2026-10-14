@@ -33,7 +33,7 @@ export type CanvasContextType = {
   setSelectedShape: React.Dispatch<React.SetStateAction<SelectionType | undefined>>
   setSelectionFrame: React.Dispatch<React.SetStateAction<{ oldSelection: SelectionType | undefined; frame: [Point, Point] } | undefined>>
   setSelectionMode: React.Dispatch<React.SetStateAction<SelectionModeData<number | Point>>>
-  setActiveTool: React.Dispatch<React.SetStateAction<ToolsType>>
+  setActiveTool: (tool: ToolsType) => void
   setCanvasOffsetStartData: React.Dispatch<React.SetStateAction<{ start: Point; originalOffset: Point } | undefined>>
   setCanvasOffset: (offset: Point) => void
   setCanvasMoveAcceleration: React.Dispatch<React.SetStateAction<Point>>

@@ -1,11 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import { expect, userEvent, within } from 'storybook/test'
-import {
-  ReactPaintWrapper,
-  getCurrentDataRef,
-  assertNoInternalFields,
-  setRangeSetting
-} from './../helpers'
+import { assertNoInternalFields, getCurrentDataRef, ReactPaintWrapper, setRangeSetting } from './../helpers'
 
 const meta = {
   title: 'Tests/Draw',
@@ -26,7 +21,7 @@ const SVG_DATA_URI =
   "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='100' height='100'><rect width='100' height='100' fill='blue'/></svg>"
 
 export const DrawPictureFromUrl: Story = {
-  args: { options: { withUrlPicture: true } },
+  args: { editorOptions: { withUrlPicture: true } },
   play: async ({ canvasElement }) => {
     const view = within(canvasElement)
 

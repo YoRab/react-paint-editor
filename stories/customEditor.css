@@ -1,0 +1,56 @@
+.custom-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 800px;
+  font-family: sans-serif;
+}
+
+.custom-editor-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.custom-editor-toolbar button[aria-pressed='true'] {
+  background: #364181;
+  color: white;
+}
+
+.custom-editor-content {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+}
+
+.custom-editor-content > :first-child {
+  flex: 1;
+  border: 1px solid #ccc;
+}
+
+.custom-editor-side {
+  width: 180px;
+}
+
+.custom-editor-color {
+  width: 20px;
+  height: 20px;
+  border: 1px solid #999;
+}
+
+.custom-editor-side li[data-selected='true'] {
+  font-weight: bold;
+}
+
+.custom-editor-side li[data-hovered='true'] {
+  outline: 2px dashed orange;
+}
+
+.custom-editor-context-menu {
+  position: fixed;
+  display: flex;
+  flex-direction: column;
+  background: white;
+  border: 1px solid #ccc;
+  padding: 4px;
+}

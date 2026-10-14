@@ -1,23 +1,40 @@
 import { DEFAULT_OPTIONS, type OptionalOptions, type UtilsSettings } from '@canvas/constants/app'
-import { SELECTION_TOOL } from '@canvas/constants/tools'
 import useComponent from '@canvas/hooks/useComponent'
+import useEventEmitter from '@canvas/hooks/useEventEmitter'
 import useShapes from '@canvas/hooks/useShapes'
+import useStableCallbacks from '@canvas/hooks/useStableCallbacks'
 import useZoom from '@canvas/hooks/useZoom'
+import type { CanvasProps, InternalCanvasProps } from '@canvas/types/canvasProps'
 import { buildDataToExport } from '@canvas/utils/data'
 import { decodeImportedData, decodeJson, downloadFile, encodeShapesInString, getCanvasImage } from '@canvas/utils/file'
 import { buildShapesGroup } from '@canvas/utils/selection'
-import { copyShapes, refreshShape } from '@canvas/utils/shapes'
+import { canRemoveShapePoint, copyShapes, updateShapeStyle } from '@canvas/utils/shapes'
 import { removeCurvePoint } from '@canvas/utils/shapes/curve'
 import { removePolygonPoint } from '@canvas/utils/shapes/polygon'
-import { calculateTextFontSize } from '@canvas/utils/shapes/text'
+import { buildAvailableTools } from '@canvas/utils/tools'
 import { getNewOffset } from '@canvas/utils/zoom'
+import { MOVE_TOOL, SELECTION_TOOL } from '@common/constants/tools'
 import type { CanvasSize } from '@common/types/Canvas'
+import type {
+  ContextMenuState,
+  EditorActions,
+  EditorProps,
+  EditorState,
+  ExportView,
+  InteractionState,
+  ReactPaintEventName,
+  ReactPaintEvents,
+  ZoomAction
+} from '@common/types/editor'
 import type { SelectionModeData } from '@common/types/Mode'
-import type { ExportedDrawableShape, Point, SelectionType, ShapeEntity, StateData } from '@common/types/Shapes'
+import type { ExportedDrawableShape, Point, ShapeEntity, StateData } from '@common/types/Shapes'
 import type { CustomTool, ToolsType } from '@common/types/tools'
+import { compact } from '@common/utils/array'
+import { set, withDefaults } from '@common/utils/object'
+import { getSelectedShapes } from '@common/utils/selection'
 import { type CSSProperties, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
-type UseReactPaintProps = {
+export type UseReactPaintProps = {
   width?: number | undefined
   height?: number | undefined
   shapes?: ExportedDrawableShape[] | undefined
@@ -26,168 +43,37 @@ type UseReactPaintProps = {
   options?: OptionalOptions | undefined
 }
 
-export type EditorProps = {
-  shapes: ShapeEntity[]
-  addPictureShape: (fileOrUrl: File | string, maxWidth?: number, maxHeight?: number) => Promise<ShapeEntity>
-  swapShapes: (startPositionShapeId: string, endPositionShapeId: string) => void
-  moveShapes: (shapes: ShapeEntity[], action: 'first' | 'last' | 'forward' | 'backward') => void
-  toggleShapeVisibility: (shapes: ShapeEntity[]) => void
-  toggleShapeLock: (shapeGroup: ShapeEntity[]) => void
-  canGoBackward: boolean
-  canGoForward: boolean
-  canClear: boolean
-  selectedShape: SelectionType | undefined
-  copiedShape: SelectionType | undefined
-  setCopiedShape: React.Dispatch<React.SetStateAction<SelectionType | undefined>>
-  pasteShapes: (shapes: ShapeEntity[]) => void
-  saveShapes: () => void
-  removeShape: (shapes: ShapeEntity[]) => void
-  updateShape: (updatedShapes: ShapeEntity[], withSave?: boolean) => void
-  duplicateShapes: (shapesToDuplicate: ShapeEntity[], translate?: boolean, selectNewOnes?: boolean) => void
-  backwardShape: () => void
-  forwardShape: () => void
-  removeShapePoint: (shape: ShapeEntity<'curve' | 'polygon'>, pointIndex: number) => void
-  transformShape: (
-    ctx: CanvasRenderingContext2D,
-    shapes: ShapeEntity[],
-    center: Point,
-    action: 'flipHorizontally' | 'flipVertically' | 'rotateClockwise' | 'rotateCounterclockwise'
-  ) => void
-  refs: {
-    canvas: React.RefObject<HTMLCanvasElement | null>
-    editor: React.RefObject<HTMLElement | null>
-    setEditor: (node: HTMLElement | null) => void
-  }
-
-  width: number
-  height: number
-  selectTool: (tool: ToolsType) => void
-  selectShapes: (shapes: ShapeEntity[]) => void
-  selectAllShapes: () => void
-  activeTool: ToolsType
-  setActiveTool: React.Dispatch<React.SetStateAction<ToolsType>>
-  setAvailableTools: React.Dispatch<React.SetStateAction<CustomTool[]>>
-  isEditMode: boolean
-  availableTools: CustomTool[]
-  gridGap: number
-  setGridGap: React.Dispatch<React.SetStateAction<number>>
-  loadFile: (file: File) => Promise<void>
-  exportPicture: (view: 'fitToShapes' | 'defaultView' | 'currentZoom') => void
-  exportData: () => void
-  clearCanvas: () => void
-  selectionMode: SelectionModeData<number | Point>
-  setSelectionMode: React.Dispatch<React.SetStateAction<SelectionModeData<number | Point>>>
-  settings: UtilsSettings
-  setCanvasZoom: (action: 'unzoom' | 'zoom' | 'default') => void
-  resetZoom: () => void
-  buildShapesGroup: (shapes: ShapeEntity[]) => SelectionType | undefined
-  copyShapes: (selection: SelectionType) => ShapeEntity[]
-  refreshShape: (shape: ShapeEntity) => ShapeEntity
-  calculateTextFontSize: typeof calculateTextFontSize
-  canvas: {
-    canGrow: boolean
-    canShrink: boolean
-    layersManipulation: boolean
-    withExport: boolean
-    withLoadAndSave: boolean
-    withUploadPicture: boolean
-    withUrlPicture: boolean
-    withContextMenu: boolean
-  }
-}
-
-type CanvasProps = {
-  shapes: ShapeEntity[]
-  selectedShape: SelectionType | undefined
-  copiedShape: SelectionType | undefined
-  setCopiedShape: React.Dispatch<React.SetStateAction<SelectionType | undefined>>
-  pasteShapes: (shapes: ShapeEntity[]) => void
-  selectionFrame: { oldSelection: SelectionType | undefined; frame: [Point, Point] } | undefined
-  hoveredShape: ShapeEntity | undefined
-  addShape: (newShapes: ShapeEntity[]) => void
-  setSelectedShape: React.Dispatch<React.SetStateAction<SelectionType | undefined>>
-  setSelectionFrame: React.Dispatch<React.SetStateAction<{ oldSelection: SelectionType | undefined; frame: [Point, Point] } | undefined>>
-  refreshSelectedShapes: (ctx: CanvasRenderingContext2D, cursorPosition: Point) => void
-  refreshHoveredShape: (e: MouseEvent | TouchEvent, ctx: CanvasRenderingContext2D, cursorPosition: Point, isInsideMask: boolean) => void
-  removeShape: (shapes: ShapeEntity[]) => void
-  updateShape: (updatedShapes: ShapeEntity[], withSave?: boolean) => void
-  duplicateShapes: (shapesToDuplicate: ShapeEntity[], translate?: boolean, selectNewOnes?: boolean) => void
-  backwardShape: () => void
-  forwardShape: () => void
-  saveShapes: () => void
-  refs: {
-    canvas: React.RefObject<HTMLCanvasElement | null>
-    editor: React.RefObject<HTMLElement | null>
-    setEditor: (node: HTMLElement | null) => void
-  }
-  width: number
-  height: number
-  selectShapes: (shapes: ShapeEntity[]) => void
-  selectAllShapes: () => void
-  activeTool: ToolsType
-  setActiveTool: React.Dispatch<React.SetStateAction<ToolsType>>
-  isEditMode: boolean
-  settings: UtilsSettings
-  setCanvasZoom: (action: 'unzoom' | 'zoom' | 'default') => void
-  resetZoom: () => void
-  setCanvasSize: React.Dispatch<React.SetStateAction<CanvasSize>>
-  setCanvasOffset: (offset: Point) => void
-  isInsideComponent: boolean
-  isInsideCanvas: boolean
-  canvas: {
-    withContextMenu: boolean
-    withSkeleton: boolean
-    withFrameSelection: boolean
-    canGrow: boolean
-    canShrink: boolean
-  }
-  canvasOffsetStartData: { start: Point; originalOffset: Point } | undefined
-  setCanvasOffsetStartData: React.Dispatch<React.SetStateAction<{ start: Point; originalOffset: Point } | undefined>>
-  selectionMode: SelectionModeData<number | Point>
-  setSelectionMode: React.Dispatch<React.SetStateAction<SelectionModeData<number | Point>>>
-  setCanvasMoveAcceleration: React.Dispatch<React.SetStateAction<Point>>
-  isShiftPressed: boolean
-  isAltPressed: boolean
-  isSpacePressed: boolean
-  setShiftPressed: React.Dispatch<React.SetStateAction<boolean>>
-  setAltPressed: React.Dispatch<React.SetStateAction<boolean>>
-  setIsSpacePressed: React.Dispatch<React.SetStateAction<boolean>>
-}
 export type UseReactPaintReturnType = {
   annotationsProps: {
     style: CSSProperties
   }
   editorProps: EditorProps
   canvasProps: CanvasProps
-  registerEvent: (event: 'dataChanged', fn: (data: StateData, source: 'user' | 'remote') => void) => void
-  unregisterEvent: (event: 'dataChanged', fn?: (data: StateData, source: 'user' | 'remote') => void) => void
+  registerEvent: <E extends ReactPaintEventName>(event: E, fn: ReactPaintEvents[E]) => void
+  unregisterEvent: <E extends ReactPaintEventName>(event: E, fn?: ReactPaintEvents[E]) => void
   resetCanvas: (json?: ExportedDrawableShape[], clearHistory?: boolean) => void
   resetZoom: () => void
-  getCurrentImage: (view: 'fitToShapes' | 'defaultView' | 'currentZoom') => string
+  getCurrentImage: (view: ExportView) => string
   getCurrentData: () => StateData
   setCanvasOffset: (offset: Point) => void
-  setCanvasZoom: (action: 'unzoom' | 'zoom' | 'default') => void
+  setCanvasZoom: (action: ZoomAction) => void
 }
+
 const useReactPaint = ({
   width = 1000,
   height = 600,
   shapes: defaultShapes,
   mode = 'editor',
   disabled = false,
-  options = DEFAULT_OPTIONS
+  options
 }: UseReactPaintProps = {}): UseReactPaintReturnType => {
   const {
-    layersManipulation,
     brushAlgo,
     isBrushShapeDoneOnMouseUp,
     debug,
     grid,
     canGrow,
     canShrink,
-    withExport,
-    withLoadAndSave,
-    withUploadPicture,
-    withUrlPicture,
     withSkeleton,
     withFrameSelection,
     withContextMenu: withContextMenuFromProps,
@@ -196,10 +82,7 @@ const useReactPaint = ({
     canvasSelectionPadding,
     size,
     canZoom
-  } = {
-    ...DEFAULT_OPTIONS,
-    ...options
-  } as typeof DEFAULT_OPTIONS
+  } = withDefaults(DEFAULT_OPTIONS, options)
 
   const isEditMode = mode !== 'viewer'
   const withContextMenu = withContextMenuFromProps && isEditMode && !disabled
@@ -212,7 +95,7 @@ const useReactPaint = ({
     editorRef.current = node
   }, [])
   const [canvasOffsetStartData, setCanvasOffsetStartData] = useState<{ start: Point; originalOffset: Point } | undefined>(undefined)
-  const [activeTool, setActiveTool] = useState<ToolsType>(SELECTION_TOOL)
+  const [activeToolId, setActiveToolId] = useState(SELECTION_TOOL.id)
   const [selectionMode, setSelectionMode] = useState<SelectionModeData<Point | number>>({
     mode: 'default'
   })
@@ -235,6 +118,7 @@ const useReactPaint = ({
   })
 
   const { offset: canvasOffset, zoom: canvasZoom } = canvasTransformation
+  const features = useMemo(() => ({ edition: isEditMode && !disabled, zoom: zoomEnabled }), [isEditMode, disabled, zoomEnabled])
   const settings: UtilsSettings = useMemo(
     () => ({
       brushAlgo,
@@ -253,28 +137,18 @@ const useReactPaint = ({
       canvasZoom,
       gridGap,
       selectionPadding: canvasSelectionPadding,
-      features: {
-        edition: isEditMode && !disabled,
-        zoom: zoomEnabled
-      }
+      features
     }),
-    [
-      canvasSelectionPadding,
-      gridGap,
-      brushAlgo,
-      isBrushShapeDoneOnMouseUp,
-      debug,
-      canvasZoom,
-      canvasOffset,
-      canvasSize,
-      size,
-      disabled,
-      zoomEnabled,
-      isEditMode
-    ]
+    [canvasSelectionPadding, gridGap, brushAlgo, isBrushShapeDoneOnMouseUp, debug, canvasZoom, canvasOffset, canvasSize, size, features]
   )
 
-  const [availableTools, setAvailableTools] = useState(availableToolsFromProps as CustomTool[])
+  const toolsFromProps = useMemo(() => buildAvailableTools(availableToolsFromProps), [availableToolsFromProps])
+  const [availableTools, setAvailableTools] = useState<CustomTool[]>(toolsFromProps)
+
+  // the active tool is derived from the tools by its id, so that it follows their updates
+  const selectableTools = useMemo<ToolsType[]>(() => [SELECTION_TOOL, MOVE_TOOL, ...availableTools], [availableTools])
+  const activeTool = selectableTools.find(tool => tool.id === activeToolId) ?? SELECTION_TOOL
+  const setActiveTool = useCallback((tool: ToolsType) => setActiveToolId(tool.id), [])
 
   const { isInsideComponent, isInsideCanvas } = useComponent({
     settings,
@@ -286,9 +160,9 @@ const useReactPaint = ({
   const [isAltPressed, setAltPressed] = useState<boolean>(false)
   const [isSpacePressed, setIsSpacePressed] = useState<boolean>(false)
 
+  const { registerEvent, unregisterEvent, emit } = useEventEmitter()
+
   const {
-    registerEvent,
-    unregisterEvent,
     shapes,
     shapesRef,
     selectedShape,
@@ -317,14 +191,14 @@ const useReactPaint = ({
     canGoBackward,
     canGoForward,
     canClear
-  } = useShapes(settings, width, height, isShiftPressed)
+  } = useShapes(settings, width, height, isShiftPressed, emit)
 
   const selectTool = useCallback(
     (tool: ToolsType) => {
       setSelectedShape(undefined)
       setActiveTool(tool)
     },
-    [setSelectedShape]
+    [setSelectedShape, setActiveTool]
   )
 
   const [canvasMoveAcceleration, setCanvasMoveAcceleration] = useState<Point>([0, 0])
@@ -374,7 +248,7 @@ const useReactPaint = ({
         return buildShapesGroup(shapes, settings)
       })
     },
-    [setSelectedShape, settings]
+    [setSelectedShape, setActiveTool, settings]
   )
 
   const pasteShapes = useCallback(
@@ -389,30 +263,8 @@ const useReactPaint = ({
     selectShapes(shapesRef.current.filter(shape => !shape.locked))
   }, [selectShapes, shapesRef])
 
-  const editorBuildShapesGroup = useCallback((shapes: ShapeEntity[]) => buildShapesGroup(shapes, settings), [settings])
-
-  const editorCopyShapes = useCallback((sel: SelectionType) => copyShapes(sel, settings), [settings])
-
-  const editorRefreshShape = useCallback((shape: ShapeEntity) => refreshShape(shape, settings), [settings])
-
-  const exportData = useCallback(() => {
-    const content = encodeShapesInString(shapesRef.current, width, height)
-    if (!content) {
-      throw new Error("L'encodage a échoué")
-    }
-    downloadFile(content, 'drawing.json')
-  }, [shapesRef, width, height])
-
-  const exportPicture = useCallback(
-    (view: 'fitToShapes' | 'defaultView' | 'currentZoom') => {
-      const dataURL = getCanvasImage({ shapes: shapesRef.current, settings, view })
-      downloadFile(dataURL, 'drawing.png')
-    },
-    [shapesRef, settings]
-  )
-
   const getCurrentImage = useCallback(
-    (view: 'fitToShapes' | 'defaultView' | 'currentZoom') => {
+    (view: ExportView) => {
       return getCanvasImage({ shapes: shapesRef.current, settings, view })
     },
     [shapesRef, settings]
@@ -443,51 +295,284 @@ const useReactPaint = ({
     defaultShapes && resetCanvasRef.current?.(defaultShapes, { clearHistory: true, source: 'remote' })
   }, [defaultShapes])
 
-  const loadFile = useCallback(
-    async (file: File) => {
-      const json = await decodeJson(file)
-      await resetCanvas((json as StateData).shapes ?? [], {
-        clearHistory: true,
-        source: 'remote'
-      })
-    },
-    [resetCanvas]
-  )
+  useEffect(() => {
+    setAvailableTools(toolsFromProps)
+  }, [toolsFromProps])
 
-  const clearCanvas = useCallback(() => {
-    if (typeof clearCallback !== 'string') {
-      void resetCanvas(clearCallback(), {
-        clearHistory: false,
-        source: 'user'
-      })
-    } else {
-      if (clearCallback === 'defaultShapes' && defaultShapes !== undefined) {
-        void resetCanvas(defaultShapes, {
-          clearHistory: false,
-          source: 'user'
-        })
+  // --- Events ---
+
+  const selectedShapes = useMemo(() => getSelectedShapes(selectedShape), [selectedShape])
+
+  // a group id is made of the ids of its shapes
+  const selectionKey = selectedShape?.id
+  const lastSelectionKey = useRef(selectionKey)
+  useEffect(() => {
+    if (selectionKey === lastSelectionKey.current) return
+    lastSelectionKey.current = selectionKey
+    emit('selectionChanged', selectedShapes)
+  }, [selectionKey, selectedShapes, emit])
+
+  const lastToolId = useRef(activeTool.id)
+  useEffect(() => {
+    if (activeTool.id === lastToolId.current) return
+    lastToolId.current = activeTool.id
+    emit('toolChanged', activeTool)
+  }, [activeTool, emit])
+
+  // --- Editor contract ---
+
+  const resolveShapes = (ids: string[]): ShapeEntity[] => {
+    // selected shapes come last to take precedence
+    const shapesById = new Map([...shapesRef.current, ...selectedShapes].map(shape => [shape.id, shape] as const))
+    return compact(ids.map(id => shapesById.get(id)))
+  }
+
+  const copyToClipboard = (ids: string[] | undefined) => {
+    const shapesToCopy = ids ? resolveShapes(ids) : selectedShapes
+    if (shapesToCopy.length) setCopiedShape(buildShapesGroup(shapesToCopy, settings))
+    return shapesToCopy
+  }
+
+  const actions = useStableCallbacks<EditorActions>({
+    selectTool: toolOrId => {
+      const toolId = typeof toolOrId === 'string' ? toolOrId : toolOrId.id
+      const tool = selectableTools.find(selectableTool => selectableTool.id === toolId)
+      if (tool) selectTool(tool)
+    },
+    updateToolSettings: (toolId, field, value) =>
+      setAvailableTools(tools => tools.map(tool => (tool.id === toolId ? set(['settings', field, 'default'], value, tool) : tool))),
+    selectShapes: ids => selectShapes(resolveShapes(ids)),
+    selectAllShapes,
+    clearSelection: () => setSelectedShape(undefined),
+    removeShapes: ids => removeShape(resolveShapes(ids)),
+    duplicateShapes: (ids, { translate = false, select = false } = {}) => duplicateShapes(resolveShapes(ids), translate, select),
+    moveShapes: (ids, action) => moveShapes(resolveShapes(ids), action),
+    swapShapes,
+    toggleShapesVisibility: ids => toggleShapeVisibility(resolveShapes(ids)),
+    toggleShapesLock: ids => toggleShapeLock(resolveShapes(ids)),
+    setShapesVisibility: (ids, visible) => {
+      const shapesToToggle = resolveShapes(ids).filter(shape => (shape.visible !== false) !== visible)
+      if (shapesToToggle.length) toggleShapeVisibility(shapesToToggle)
+    },
+    setShapesLocked: (ids, locked) => {
+      const shapesToToggle = resolveShapes(ids).filter(shape => !!shape.locked !== locked)
+      if (shapesToToggle.length) toggleShapeLock(shapesToToggle)
+    },
+    updateShapesStyle: (ids, field, value, { save = true } = {}) => {
+      const ctx = canvasRef.current?.getContext('2d')
+      updateShape(
+        resolveShapes(ids).map(shape => updateShapeStyle(ctx, shape, field, value, settings)),
+        save
+      )
+    },
+    transformShapes: (ids, action) => {
+      const ctx = canvasRef.current?.getContext('2d')
+      const shapesToTransform = resolveShapes(ids)
+      const group = buildShapesGroup(shapesToTransform, settings)
+      if (!ctx || !group) return
+      transformShape(ctx, shapesToTransform, group.computed.center, action)
+    },
+    removeShapePoint: (id, pointIndex) => {
+      const shape = resolveShapes([id])[0]
+      if (!canRemoveShapePoint(shape, pointIndex)) return
+      updateShape([shape.type === 'curve' ? removeCurvePoint(shape, pointIndex, settings) : removePolygonPoint(shape, pointIndex, settings)], true)
+    },
+    addPicture: async (fileOrUrl, { maxWidth = width, maxHeight = height, select = true } = {}) => {
+      const pictureShape = await addPictureShape(fileOrUrl, maxWidth, maxHeight)
+      if (select) selectShapes([pictureShape])
+      return pictureShape
+    },
+    copy: ids => {
+      copyToClipboard(ids)
+    },
+    cut: ids => {
+      const cutShapes = copyToClipboard(ids)
+      if (cutShapes.length) removeShape(cutShapes)
+    },
+    paste: () => {
+      if (copiedShape) pasteShapes(copyShapes(copiedShape, settings))
+    },
+    undo: backwardShape,
+    redo: forwardShape,
+    saveShapes,
+    clearCanvas: () => {
+      if (typeof clearCallback !== 'string') {
+        void resetCanvas(clearCallback(), { clearHistory: false, source: 'user' })
+      } else if (clearCallback === 'defaultShapes' && defaultShapes !== undefined) {
+        void resetCanvas(defaultShapes, { clearHistory: false, source: 'user' })
       } else {
         resetCanvasWithShapeEntity([], { clearHistory: false, source: 'user' })
       }
-    }
-  }, [resetCanvasWithShapeEntity, resetCanvas, defaultShapes, clearCallback])
-
-  const removeShapePoint = useCallback(
-    (shape: ShapeEntity<'curve' | 'polygon'>, pointIndex: number) => {
-      const newShape = shape.type === 'curve' ? removeCurvePoint(shape, pointIndex, settings) : removePolygonPoint(shape, pointIndex, settings)
-      updateShape([newShape], true)
     },
-    [settings, updateShape]
+    loadFile: async file => {
+      const json = await decodeJson(file)
+      await resetCanvas((json as StateData).shapes ?? [], { clearHistory: true, source: 'remote' })
+    },
+    exportPicture: view => downloadFile(getCurrentImage(view), 'drawing.png'),
+    exportData: () => {
+      const content = encodeShapesInString(shapesRef.current, width, height)
+      if (!content) {
+        throw new Error("L'encodage a échoué")
+      }
+      downloadFile(content, 'drawing.json')
+    },
+    setZoom: setCanvasZoom,
+    resetZoom,
+    setGridGap,
+    closeContextMenu: () => {
+      setSelectionMode({ mode: 'default' })
+      canvasRef.current?.focus()
+    }
+  })
+
+  const interaction: InteractionState = useMemo(
+    () => ({
+      mode: selectionMode.mode,
+      hoveredShape,
+      selectionFrame: selectionFrame?.frame,
+      modifiers: { shift: isShiftPressed, alt: isAltPressed, space: isSpacePressed },
+      isPanning: canvasOffsetStartData !== undefined,
+      focus: { component: isInsideComponent, canvas: isInsideCanvas }
+    }),
+    [
+      selectionMode.mode,
+      hoveredShape,
+      selectionFrame,
+      isShiftPressed,
+      isAltPressed,
+      isSpacePressed,
+      canvasOffsetStartData,
+      isInsideComponent,
+      isInsideCanvas
+    ]
   )
 
-  useEffect(() => {
-    setAvailableTools(availableToolsFromProps as CustomTool[])
-  }, [availableToolsFromProps])
+  const contextMenu: ContextMenuState | undefined = useMemo(() => {
+    if (!withContextMenu || selectionMode.mode !== 'contextMenu') return undefined
+    const contextMenuShapes = getSelectedShapes(selectionMode.originalShape)
+    const anchorIndex = typeof selectionMode.anchor === 'number' ? selectionMode.anchor : undefined
+    return {
+      shapes: contextMenuShapes,
+      anchorIndex,
+      canRemoveAnchor: contextMenuShapes.length === 1 && canRemoveShapePoint(contextMenuShapes[0], anchorIndex),
+      canvasPosition: selectionMode.cursorStartPosition,
+      clientPosition: selectionMode.clientPosition
+    }
+  }, [withContextMenu, selectionMode])
 
-  const refs = {
-    canvas: canvasRef,
-    editor: editorRef,
-    setEditor
+  // each slice keeps its identity while unchanged, so that editors can memoize on it
+  const layout = useMemo(() => ({ size, canGrow, canShrink }), [size, canGrow, canShrink])
+  const view = useMemo(
+    () => ({
+      zoom: canvasZoom,
+      offset: canvasOffset,
+      displayWidth: canvasSize.width,
+      displayHeight: canvasSize.height,
+      scaleRatio: canvasSize.scaleRatio * canvasZoom
+    }),
+    [canvasZoom, canvasOffset, canvasSize]
+  )
+  const history = useMemo(() => ({ canUndo: canGoBackward, canRedo: canGoForward, canClear }), [canGoBackward, canGoForward, canClear])
+  const hasCopiedShape = copiedShape !== undefined
+  const clipboard = useMemo(() => ({ hasContent: hasCopiedShape }), [hasCopiedShape])
+
+  const state: EditorState = useMemo(
+    () => ({
+      mode,
+      disabled,
+      features,
+      width,
+      height,
+      layout,
+      view,
+      gridGap,
+      shapes,
+      selection: selectedShape,
+      selectedShapes,
+      activeTool,
+      tools: availableTools,
+      history,
+      clipboard,
+      withContextMenu,
+      interaction,
+      contextMenu
+    }),
+    [
+      mode,
+      disabled,
+      features,
+      width,
+      height,
+      layout,
+      view,
+      gridGap,
+      shapes,
+      selectedShape,
+      selectedShapes,
+      activeTool,
+      availableTools,
+      history,
+      clipboard,
+      withContextMenu,
+      interaction,
+      contextMenu
+    ]
+  )
+
+  const editorProps: EditorProps = useMemo(() => ({ state, actions, editorRef: setEditor }), [state, actions, setEditor])
+
+  const internalCanvasProps: InternalCanvasProps = {
+    shapes,
+    selectedShape,
+    selectionFrame,
+    hoveredShape,
+    hasCopiedShape,
+    copy: actions.copy,
+    cut: actions.cut,
+    paste: actions.paste,
+    addShape,
+    setSelectedShape,
+    setSelectionFrame,
+    refreshSelectedShapes,
+    refreshHoveredShape,
+    removeShape,
+    updateShape,
+    duplicateShapes,
+    backwardShape,
+    forwardShape,
+    saveShapes,
+    canvasRef,
+    width,
+    height,
+    settings,
+    setCanvasSize,
+    setCanvasOffset,
+    setCanvasZoom,
+    resetZoom,
+    selectAllShapes,
+    activeTool,
+    setActiveTool,
+    isInsideComponent,
+    isInsideCanvas,
+    isEditMode,
+    canvas: {
+      withSkeleton,
+      withFrameSelection,
+      withContextMenu,
+      canGrow,
+      canShrink
+    },
+    canvasOffsetStartData,
+    setCanvasOffsetStartData,
+    selectionMode,
+    setSelectionMode,
+    setCanvasMoveAcceleration,
+    isShiftPressed,
+    isAltPressed,
+    isSpacePressed,
+    setShiftPressed,
+    setAltPressed,
+    setIsSpacePressed
   }
 
   const annotationsProps = {
@@ -507,118 +592,8 @@ const useReactPaint = ({
 
   return {
     annotationsProps,
-    editorProps: {
-      shapes,
-      addPictureShape,
-      moveShapes,
-      swapShapes,
-      toggleShapeVisibility,
-      toggleShapeLock,
-      duplicateShapes,
-      canGoBackward,
-      canGoForward,
-      canClear,
-      selectedShape,
-      copiedShape,
-      setCopiedShape,
-      pasteShapes,
-      saveShapes,
-      removeShape,
-      updateShape,
-      backwardShape,
-      forwardShape,
-      removeShapePoint,
-      transformShape,
-      refs,
-      width,
-      height,
-      selectTool,
-      selectShapes,
-      selectAllShapes,
-      activeTool,
-      setActiveTool,
-      setAvailableTools,
-      isEditMode,
-      availableTools,
-      gridGap,
-      setGridGap,
-      loadFile,
-      exportPicture,
-      exportData,
-      clearCanvas,
-      selectionMode,
-      setSelectionMode,
-      settings,
-      setCanvasZoom,
-      resetZoom,
-      buildShapesGroup: editorBuildShapesGroup,
-      copyShapes: editorCopyShapes,
-      refreshShape: editorRefreshShape,
-      calculateTextFontSize,
-      canvas: {
-        canGrow,
-        canShrink,
-        layersManipulation,
-        withExport,
-        withLoadAndSave,
-        withUploadPicture,
-        withUrlPicture,
-        withContextMenu
-      }
-    },
-    canvasProps: {
-      shapes,
-      selectedShape,
-      selectionFrame,
-      hoveredShape,
-      copiedShape,
-      pasteShapes,
-      setCopiedShape,
-      addShape,
-      setSelectedShape,
-      setSelectionFrame,
-      refreshSelectedShapes,
-      refreshHoveredShape,
-      removeShape,
-      updateShape,
-      duplicateShapes,
-      backwardShape,
-      forwardShape,
-      saveShapes,
-      refs,
-      width,
-      height,
-      settings,
-      setCanvasSize,
-      setCanvasOffset,
-      setCanvasZoom,
-      resetZoom,
-      selectShapes,
-      selectAllShapes,
-      activeTool,
-      setActiveTool,
-      isInsideComponent,
-      isInsideCanvas,
-      isEditMode,
-      canvas: {
-        withSkeleton,
-        withFrameSelection,
-        withContextMenu,
-        canGrow,
-        canShrink
-      },
-      canvasOffsetStartData,
-      setCanvasOffsetStartData,
-      selectionMode,
-      setSelectionMode,
-      setCanvasMoveAcceleration,
-      isShiftPressed,
-      isAltPressed,
-      isSpacePressed,
-      setShiftPressed,
-      setAltPressed,
-      setIsSpacePressed
-    },
+    editorProps,
+    canvasProps: internalCanvasProps as unknown as CanvasProps,
     registerEvent,
     unregisterEvent,
     resetCanvas: resetCanvasFromRemote,

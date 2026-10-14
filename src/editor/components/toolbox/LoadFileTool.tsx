@@ -7,7 +7,7 @@ type LoadFileToolType = {
   disabled?: boolean
   loadFile: (file: File) => void
   type: ToolsType
-  img?: string
+  img?: string | undefined
   accept: string
   withText?: boolean
 }

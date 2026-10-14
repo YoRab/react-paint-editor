@@ -3,6 +3,7 @@ import type { ExportedDrawableShape } from '@common/types/Shapes'
 import type { CustomToolInput } from '@common/types/tools'
 import type { RecursivePartial } from '@common/types/utils'
 import { SELECTION_DEFAULT_COLOR, SELECTION_DEFAULT_PADDING, SELECTION_DEFAULT_WIDTH } from './shapes'
+import { DEFAULT_TOOLS } from './tools'
 
 export const APP_NAME = 'react_paint'
 
@@ -14,15 +15,10 @@ import type { BrushAlgo } from '@common/types/Settings'
 export type { BrushAlgo, UtilsSettings } from '@common/types/Settings'
 
 type AppOptionsType = {
-  layersManipulation: boolean
   grid: number
   canGrow: boolean
   canShrink: boolean
   availableTools: CustomToolInput[]
-  withExport: boolean
-  withLoadAndSave: boolean
-  withUploadPicture: boolean
-  withUrlPicture: boolean
   withFrameSelection: boolean
   withSkeleton: boolean
   withContextMenu: boolean
@@ -38,16 +34,11 @@ type AppOptionsType = {
 export type OptionalOptions = RecursivePartial<AppOptionsType>
 
 export const DEFAULT_OPTIONS: AppOptionsType = {
-  layersManipulation: true,
   grid: 0,
   canGrow: false,
   canShrink: true,
-  withExport: true,
-  withLoadAndSave: true,
-  withUploadPicture: true,
-  withUrlPicture: false,
   withContextMenu: true,
-  availableTools: [],
+  availableTools: DEFAULT_TOOLS,
   clearCallback: 'empty',
   brushAlgo: 'simple',
   isBrushShapeDoneOnMouseUp: true,
@@ -57,6 +48,12 @@ export const DEFAULT_OPTIONS: AppOptionsType = {
   size: 'fixed',
   canZoom: 'never',
   debug: false
+}
+
+export type CanvasOptions = {
+  canvasBackgroundColor?: string | undefined
+  canvasSelectionColor?: string | undefined
+  canvasSelectionWidth?: number | undefined
 }
 
 export const DEFAULT_CANVAS_OPTIONS: {

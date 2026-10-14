@@ -25,6 +25,7 @@ import LinkTo from '@storybook/addon-links/react';
         <li><a href="#Options" target="_self">Configuration Options</a></li>
         <li><a href="#Events" target="_self">Events</a></li>
         <li><a href="#Methods" target="_self">Methods</a></li>
+        <li><a href="#Helpers" target="_self">Helpers</a></li>
       </ul>
 
       <h2 id="useReactPaint">useReactPaint Hook</h2>
@@ -86,83 +87,61 @@ import LinkTo from '@storybook/addon-links/react';
       <p>The hook returns an object with the following properties:</p>
 
       <h4>editorProps</h4>
-      <p>Props to pass to the <code>Editor</code> component. Contains:</p>
+      <p>
+        Props to pass to the <code>Editor</code> component, or to your own editor. They form a public contract with three properties:
+      </p>
       <ul>
-        <li><code>shapesRef</code> - React ref containing current shapes array</li>
-        <li><code>addPictureShape</code> - Function to add a picture shape</li>
-        <li><code>moveShapes</code> - Function to move shapes in layer order</li>
-        <li><code>swapShapes</code> - Function to swap 2 shapes in layer order</li>
-        <li><code>toggleShapeVisibility</code> - Function to toggle shape visibility</li>
-        <li><code>toggleShapeLock</code> - Function to toggle shape lock state</li>
-        <li><code>canGoBackward</code> - Boolean indicating if undo is available</li>
-        <li><code>canGoForward</code> - Boolean indicating if redo is available</li>
-        <li><code>canClear</code> - Boolean indicating if clear is available</li>
-        <li><code>selectedShape</code> - Currently selected shape or group</li>
-        <li><code>removeShape</code> - Function to remove a shape</li>
-        <li><code>updateShape</code> - Function to update a shape</li>
-        <li><code>backwardShape</code> - Function to undo last action</li>
-        <li><code>forwardShape</code> - Function to redo last undone action</li>
-        <li><code>refs</code> - Object containing canvas and editor refs</li>
-        <li><code>width</code> - Canvas width</li>
-        <li><code>height</code> - Canvas height</li>
-        <li><code>selectTool</code> - Function to select a tool</li>
-        <li><code>selectShapes</code> - Function to select shapes</li>
-        <li><code>activeTool</code> - Currently active tool</li>
-        <li><code>setActiveTool</code> - Function to set active tool</li>
-        <li><code>setAvailableTools</code> - Function to update available tools</li>
-        <li><code>isEditMode</code> - Boolean indicating if in edit mode</li>
-        <li><code>availableTools</code> - Array of available tools</li>
-        <li><code>gridGap</code> - Current grid gap value</li>
-        <li><code>setGridGap</code> - Function to set grid gap</li>
-        <li><code>loadFile</code> - Function to load a file</li>
-        <li><code>exportPicture</code> - Function to export canvas as image</li>
-        <li><code>exportData</code> - Function to export canvas data as JSON</li>
-        <li><code>clearCanvas</code> - Function to clear the canvas</li>
-        <li><code>settings</code> - Current settings object</li>
-        <li><code>setCanvasZoom</code> - Function to set canvas zoom level</li>
-        <li><code>canvas</code> - Canvas configuration object</li>
+        <li><code>state</code> - Read-only state to render an editor (see below)</li>
+        <li><code>actions</code> - Commands to act on the canvas. Their identity never changes between renders</li>
+        <li><code>editorRef</code> - Callback ref to set on the editor root element. It defines the area where interactions and keyboard shortcuts are active</li>
       </ul>
 
-      <h4>canvasProps</h4>
-      <p>Props to pass to the <code>Canvas</code> component. Contains:</p>
+      <h5>state</h5>
       <ul>
-        <li><code>shapesRef</code> - React ref containing current shapes array</li>
-        <li><code>selectedShape</code> - Currently selected shape</li>
-        <li><code>selectionFrame</code> - Current selection frame data</li>
-        <li><code>hoveredShape</code> - Currently hovered shape</li>
-        <li><code>addShape</code> - Function to add shapes</li>
-        <li><code>setSelectedShape</code> - Function to set selected shape</li>
-        <li><code>setSelectionFrame</code> - Function to set selection frame</li>
-        <li><code>refreshSelectedShapes</code> - Function to refresh selected shapes</li>
-        <li><code>refreshHoveredShape</code> - Function to refresh hovered shape</li>
-        <li><code>removeShape</code> - Function to remove a shape</li>
-        <li><code>updateShape</code> - Function to update a shape</li>
-        <li><code>backwardShape</code> - Function to undo</li>
-        <li><code>forwardShape</code> - Function to redo</li>
-        <li><code>saveShapes</code> - Function to save shapes to history</li>
-        <li><code>refs</code> - Object containing canvas and editor refs</li>
-        <li><code>width</code> - Canvas width</li>
-        <li><code>height</code> - Canvas height</li>
-        <li><code>settings</code> - Current settings object</li>
-        <li><code>setCanvasSize</code> - Function to set canvas size</li>
-        <li><code>setCanvasOffset</code> - Function to set canvas offset</li>
-        <li><code>setCanvasZoom</code> - Function to set canvas zoom</li>
-        <li><code>selectShapes</code> - Function to select shapes</li>
-        <li><code>activeTool</code> - Currently active tool</li>
-        <li><code>setActiveTool</code> - Function to set active tool</li>
-        <li><code>isInsideComponent</code> - Boolean indicating if pointer is inside component</li>
-        <li><code>isEditMode</code> - Boolean indicating if in edit mode</li>
-        <li><code>canvas</code> - Canvas configuration object</li>
-        <li><code>canvasOffsetStartData</code> - Canvas offset start data</li>
-        <li><code>setCanvasOffsetStartData</code> - Function to set canvas offset start data</li>
-        <li><code>selectionMode</code> - Current selection mode</li>
-        <li><code>setSelectionMode</code> - Function to set selection mode</li>
-        <li><code>setCanvasMoveAcceleration</code> - Function to set canvas move acceleration</li>
-        <li><code>isShiftPressed</code> - Boolean indicating if Shift key is pressed</li>
-        <li><code>isAltPressed</code> - Boolean indicating if Alt key is pressed</li>
-        <li><code>setShiftPressed</code> - Function to set Shift pressed state</li>
-        <li><code>setAltPressed</code> - Function to set Alt pressed state</li>
+        <li><code>mode</code>, <code>disabled</code> - Values given to the hook</li>
+        <li><code>features</code> - <code>{'{ edition: boolean; zoom: boolean }'}</code></li>
+        <li><code>width</code>, <code>height</code> - Logical canvas size</li>
+        <li><code>layout</code> - <code>{"{ size: 'fixed' | 'infinite'; canGrow: boolean; canShrink: boolean }"}</code></li>
+        <li><code>view</code> - <code>{'{ zoom, offset, displayWidth, displayHeight, scaleRatio }'}</code></li>
+        <li><code>gridGap</code> - Current grid gap</li>
+        <li><code>shapes</code> - All shapes, from top to bottom</li>
+        <li><code>selection</code> - Selected shape, or group of shapes when several are selected</li>
+        <li><code>selectedShapes</code> - Selected shapes as an array</li>
+        <li><code>activeTool</code>, <code>tools</code> - Active tool (the selection tool, the move tool or one of the tools, kept up to date with them) and available drawing tools</li>
+        <li><code>history</code> - <code>{'{ canUndo: boolean; canRedo: boolean; canClear: boolean }'}</code></li>
+        <li><code>clipboard</code> - <code>{'{ hasContent: boolean }'}</code></li>
+        <li><code>withContextMenu</code> - Whether the context menu is enabled</li>
+        <li><code>interaction</code> - <code>{'{ mode, hoveredShape, selectionFrame, modifiers: { shift, alt, space }, isPanning, focus: { component, canvas } }'}</code></li>
+        <li><code>contextMenu</code> - <code>{'{ shapes, anchorIndex, canRemoveAnchor, canvasPosition, clientPosition }'}</code> when the context menu is open. <code>canRemoveAnchor</code> tells whether the point under the cursor can be removed with <code>removeShapePoint</code>, <code>undefined</code> otherwise</li>
       </ul>
+
+      <h5>actions</h5>
+      <ul>
+        <li><code>selectTool(toolOrId)</code> - Selects the selection tool, the move tool or one of the tools, found by id. An unknown tool is ignored</li>
+        <li><code>updateToolSettings(toolId, field, value)</code></li>
+        <li><code>selectShapes(ids)</code>, <code>selectAllShapes()</code>, <code>clearSelection()</code></li>
+        <li><code>removeShapes(ids)</code>, <code>duplicateShapes(ids, {'{ translate?, select? }'})</code></li>
+        <li><code>moveShapes(ids, 'first' | 'last' | 'forward' | 'backward')</code>, <code>swapShapes(firstId, secondId)</code></li>
+        <li><code>toggleShapesVisibility(ids)</code>, <code>toggleShapesLock(ids)</code> - Toggle each shape</li>
+        <li><code>setShapesVisibility(ids, visible)</code>, <code>setShapesLocked(ids, locked)</code> - Set the same value on all shapes</li>
+        <li><code>updateShapesStyle(ids, field, value, {'{ save? }'})</code> - Updates a style field. Text size is recomputed when changing the font</li>
+        <li><code>transformShapes(ids, 'flipHorizontally' | 'flipVertically' | 'rotateClockwise' | 'rotateCounterclockwise')</code></li>
+        <li><code>removeShapePoint(id, pointIndex)</code> - Removes a point of a polygon or a curve, which keep at least 2 points</li>
+        <li><code>addPicture(fileOrUrl, {'{ maxWidth?, maxHeight?, select? }'})</code></li>
+        <li><code>copy(ids?)</code>, <code>cut(ids?)</code>, <code>paste()</code> - Use the selection when no ids are given</li>
+        <li><code>undo()</code>, <code>redo()</code>, <code>saveShapes()</code> - <code>saveShapes</code> adds the current state to the history, after updates made with <code>{'{ save: false }'}</code></li>
+        <li><code>clearCanvas()</code>, <code>loadFile(file)</code>, <code>exportPicture(view)</code>, <code>exportData()</code></li>
+        <li><code>setZoom('zoom' | 'unzoom' | 'default')</code>, <code>resetZoom()</code>, <code>setGridGap(gap)</code></li>
+        <li><code>closeContextMenu()</code></li>
+      </ul>
+      <p>
+        See the <LinkTo title='React Paint/Custom editor' story='docs'>Custom editor</LinkTo> story for a complete example.
+      </p>
+
+      <h4>canvasProps</h4>
+      <p>
+        Props to pass as is to the <code>Canvas</code> component. Their content is internal to the library: they must not be read nor altered.
+      </p>
 
       <h4>Methods</h4>
       <ul>
@@ -197,7 +176,7 @@ import LinkTo from '@storybook/addon-links/react';
         <tbody>
           <tr>
             <td><code>editorProps</code></td>
-            <td><code>UseReactPaintReturnType['editorProps']</code></td>
+            <td><code>EditorProps</code></td>
             <td>Props from useReactPaint hook</td>
             <td>Yes</td>
           </tr>
@@ -305,6 +284,36 @@ import LinkTo from '@storybook/addon-links/react';
             <td>Hover font background color</td>
             <td><code>'#afd8d8'</code></td>
           </tr>
+          <tr>
+            <td><code>layersManipulation</code></td>
+            <td><code>boolean</code></td>
+            <td>Enable layers panel for shape management</td>
+            <td><code>true</code></td>
+          </tr>
+          <tr>
+            <td><code>withExport</code></td>
+            <td><code>boolean</code></td>
+            <td>Show export button in toolbar</td>
+            <td><code>true</code></td>
+          </tr>
+          <tr>
+            <td><code>withLoadAndSave</code></td>
+            <td><code>boolean</code></td>
+            <td>Show load/save buttons in toolbar</td>
+            <td><code>true</code></td>
+          </tr>
+          <tr>
+            <td><code>withUploadPicture</code></td>
+            <td><code>boolean</code></td>
+            <td>Show button to upload picture (base64)</td>
+            <td><code>true</code></td>
+          </tr>
+          <tr>
+            <td><code>withUrlPicture</code></td>
+            <td><code>boolean</code></td>
+            <td>Show button to add picture by URL</td>
+            <td><code>false</code></td>
+          </tr>
         </tbody>
       </table>
 
@@ -326,7 +335,7 @@ import LinkTo from '@storybook/addon-links/react';
         <tbody>
           <tr>
             <td><code>canvasProps</code></td>
-            <td><code>UseReactPaintReturnType['canvasProps']</code></td>
+            <td><code>CanvasProps</code></td>
             <td>Props from useReactPaint hook</td>
             <td>Yes</td>
           </tr>
@@ -399,12 +408,6 @@ import LinkTo from '@storybook/addon-links/react';
         </thead>
         <tbody>
           <tr>
-            <td><code>layersManipulation</code></td>
-            <td><code>boolean</code></td>
-            <td>Enable layers panel for shape management</td>
-            <td><code>true</code></td>
-          </tr>
-          <tr>
             <td><code>grid</code></td>
             <td><code>number</code></td>
             <td>Grid gap size in pixels (0 to disable)</td>
@@ -425,32 +428,8 @@ import LinkTo from '@storybook/addon-links/react';
           <tr>
             <td><code>availableTools</code></td>
             <td><code>CustomToolInput[]</code></td>
-            <td>Custom list of available tools</td>
-            <td>Default shape tools</td>
-          </tr>
-          <tr>
-            <td><code>withExport</code></td>
-            <td><code>boolean</code></td>
-            <td>Show export button in toolbar</td>
-            <td><code>true</code></td>
-          </tr>
-          <tr>
-            <td><code>withLoadAndSave</code></td>
-            <td><code>boolean</code></td>
-            <td>Show load/save buttons in toolbar</td>
-            <td><code>true</code></td>
-          </tr>
-          <tr>
-            <td><code>withUploadPicture</code></td>
-            <td><code>boolean</code></td>
-            <td>Show button to upload picture (base64)</td>
-            <td><code>true</code></td>
-          </tr>
-          <tr>
-            <td><code>withUrlPicture</code></td>
-            <td><code>boolean</code></td>
-            <td>Show button to add picture by URL</td>
-            <td><code>false</code></td>
+            <td>Custom list of available tools, each one merged with the default tool of the same type</td>
+            <td><code>DEFAULT_TOOLS</code></td>
           </tr>
           <tr>
             <td><code>withFrameSelection</code></td>
@@ -555,6 +534,22 @@ import LinkTo from '@storybook/addon-links/react';
         </tbody>
       </table>
 
+      <h3>selectionChanged</h3>
+      <p>
+        Fired when the set of selected shapes changes. It is not fired when the selected shapes are only modified (moved, resized, restyled...).
+      </p>
+      <Source language='typescript' code={`registerEvent('selectionChanged', (selectedShapes: ShapeEntity[]) => {
+  console.log('Selected shapes:', selectedShapes.map(shape => shape.id))
+})`} />
+
+      <h3>toolChanged</h3>
+      <p>
+        Fired when the active tool changes.
+      </p>
+      <Source language='typescript' code={`registerEvent('toolChanged', (tool: ToolsType) => {
+  console.log('Active tool:', tool.id)
+})`} />
+
       <h2 id="Methods">Methods</h2>
       <p>
         Methods available from the <code>useReactPaint</code> hook return value:
@@ -562,16 +557,16 @@ import LinkTo from '@storybook/addon-links/react';
 
       <h3>registerEvent</h3>
       <p>Register a listener for React Paint events.</p>
-      <Source language='typescript' code={`registerEvent(
-  event: 'dataChanged',
-  listener: (data: StateData, source: 'user' | 'remote') => void
+      <Source language='typescript' code={`registerEvent<E extends 'dataChanged' | 'selectionChanged' | 'toolChanged'>(
+  event: E,
+  listener: ReactPaintEvents[E]
 ): void`} />
 
       <h3>unregisterEvent</h3>
       <p>Unregister an event listener. If listener is omitted, all listeners for the event are removed.</p>
-      <Source language='typescript' code={`unregisterEvent(
-  event: 'dataChanged',
-  listener?: (data: StateData, source: 'user' | 'remote') => void
+      <Source language='typescript' code={`unregisterEvent<E extends 'dataChanged' | 'selectionChanged' | 'toolChanged'>(
+  event: E,
+  listener?: ReactPaintEvents[E]
 ): void`} />
 
       <h3>resetCanvas</h3>
@@ -758,6 +753,30 @@ import LinkTo from '@storybook/addon-links/react';
         Return type of the <code>useReactPaint</code> hook. Contains <code>editorProps</code>, <code>canvasProps</code>, and all methods.
       </p>
 
+      <h3>EditorProps, EditorState, EditorActions</h3>
+      <p>
+        Types of <code>editorProps</code> and of its <code>state</code> and <code>actions</code> (see <a href="#useReactPaint" target="_self">useReactPaint</a>).
+      </p>
+
+      <h3>CanvasProps</h3>
+      <p>
+        Opaque type of <code>canvasProps</code>.
+      </p>
+
+      <h3>ReactPaintEvents</h3>
+      <p>
+        Map of the events names to their listener types (see <a href="#Events" target="_self">Events</a>).
+      </p>
+
+      <h2 id="Helpers">Helpers</h2>
+      <p>Exported from the package root and from <code>@yorab/react-paint/canvas</code>, they are useful to build a custom editor:</p>
+      <ul>
+        <li><code>getSelectedShapes(selection)</code> - Returns the shapes of a selection, which can be a single shape or a group</li>
+        <li><code>getSelectedShapesTools(selection, tools)</code> - Returns the tool matching the selection. For several shapes, it returns a tool whose settings are the ones shared by all the shapes</li>
+        <li><code>DEFAULT_TOOLS</code> - Default drawing tools</li>
+        <li><code>SELECTION_TOOL</code>, <code>MOVE_TOOL</code> - Selection and move tools, to give to <code>actions.selectTool</code></li>
+      </ul>
+
       <h2>Shape-Specific Types</h2>
       
       <h3>Rect</h3>
@@ -897,11 +916,16 @@ function MyPaintApp() {
     canZoom: 'always',
     canGrow: true,
     grid: 20,
-    withExport: true,
     brushAlgo: 'quadratic',
     withContextMenu: true // set to false to disable the built-in context menu
   }
-})`} />
+})
+
+return (
+  <Editor editorProps={editorProps} options={{ withExport: false, withUrlPicture: true }}>
+    <Canvas canvasProps={canvasProps} />
+  </Editor>
+)`} />
 
       <h3>With Event Handling</h3>
       <Source language='typescript' code={`const { editorProps, canvasProps, registerEvent, unregisterEvent } = useReactPaint()

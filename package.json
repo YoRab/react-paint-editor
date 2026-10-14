@@ -1,8 +1,10 @@
 {
   "name": "@yorab/react-paint",
-  "version": "0.18.1",
+  "version": "1.0.0-beta.1",
   "type": "module",
-  "sideEffects": false,
+  "sideEffects": [
+    "**/*.css"
+  ],
   "keywords": [
     "react",
     "canvas",
@@ -41,7 +43,9 @@
       "types": "./dist/editor/index.d.ts",
       "import": "./dist/editor/index.js"
     },
-    "./react-paint.css": "./dist/react-paint.css"
+    "./react-paint.css": "./dist/react-paint.css",
+    "./canvas/canvas.css": "./dist/canvas/canvas.css",
+    "./editor/editor.css": "./dist/editor/editor.css"
   },
   "typesVersions": {
     "*": {
@@ -61,25 +65,25 @@
   ],
   "devDependencies": {
     "@biomejs/biome": "2.5.15",
-    "@storybook/addon-a11y": "10.6.1",
-    "@storybook/addon-docs": "10.6.1",
-    "@storybook/addon-links": "10.6.1",
-    "@storybook/addon-vitest": "10.6.1",
-    "@storybook/react-vite": "10.6.1",
+    "@storybook/addon-a11y": "10.6.2",
+    "@storybook/addon-docs": "10.6.2",
+    "@storybook/addon-links": "10.6.2",
+    "@storybook/addon-vitest": "10.6.2",
+    "@storybook/react-vite": "10.6.2",
     "@types/node": "26.6.5",
     "@types/react": "19.3.0",
     "@types/react-dom": "19.3.0",
     "@vitejs/plugin-react": "6.1.2",
-    "@vitest/browser-playwright": "5.0.3",
-    "@vitest/coverage-v8": "5.0.3",
-    "jsdom": "29.0.1",
-    "playwright": "1.64.0",
+    "@vitest/browser-playwright": "4.1.11",
+    "@vitest/coverage-v8": "4.1.11",
+    "jsdom": "30.1.2",
+    "playwright": "1.64.1",
     "react": "18.3.1",
     "react-dom": "18.3.1",
-    "storybook": "10.6.1",
+    "storybook": "10.6.2",
     "typescript": "6.0.3",
     "vite": "8.3.4",
-    "vitest": "5.0.3"
+    "vitest": "4.1.11"
   },
   "peerDependencies": {
     "react": "18.x",
@@ -88,7 +92,9 @@
   "scripts": {
     "build": "rm -rf dist && vite build --config vite.config.umd.ts && vite build",
     "build-storybook": "storybook build",
-    "declarationfiles": "pnpm tsc --project tsconfig.prod.json && node fixDtsPath.js",
+    "check-package": "pnpm dlx publint && pnpm dlx @arethetypeswrong/cli --pack . --ignore-rules cjs-resolves-to-esm false-esm --exclude-entrypoints react-paint.css canvas/canvas.css editor/editor.css",
+    "check-treeshake": "node scripts/check-treeshake.mjs",
+    "declarationfiles": "rm -rf declarationfiles && pnpm tsc --project tsconfig.prod.json && node fixDtsPath.js",
     "lint": "pnpm biome check --write src stories tests",
     "prepublishOnly": "pnpm build && pnpm declarationfiles",
     "publishnpm": "pnpm publish --access public",

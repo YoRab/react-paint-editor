@@ -1,6 +1,4 @@
 import type { UtilsSettings } from '@canvas/constants/app'
-import { ShapeTypeArray } from '@canvas/constants/shapes'
-import { SELECTION_TOOL } from '@canvas/constants/tools'
 import { useCanvasContext } from '@canvas/context/CanvasContext'
 import useDoubleClick from '@canvas/hooks/useDoubleClick'
 import useEventListener from '@canvas/hooks/useEventListener'
@@ -21,6 +19,8 @@ import { addCurveLine, addCurvePoint } from '@canvas/utils/shapes/curve'
 import { addPolygonLine, addPolygonPoint } from '@canvas/utils/shapes/polygon'
 import { transformShape } from '@canvas/utils/transform'
 import { isCursorInsideMask } from '@canvas/utils/zoom'
+import { ShapeTypeArray } from '@common/constants/shapes'
+import { SELECTION_TOOL } from '@common/constants/tools'
 import type { HoverModeData, SelectionModeData } from '@common/types/Mode'
 import type { Point, SelectionType, ShapeEntity } from '@common/types/Shapes'
 import type { CustomTool } from '@common/types/tools'
@@ -200,16 +200,18 @@ const useDrawableCanvas = (drawCanvasRef: React.RefObject<HTMLCanvasElement | nu
   const handleContextMenu = (e: MouseEvent | TouchEvent, canvasElt: HTMLCanvasElement) => {
     const ctx = canvasElt?.getContext('2d')
     if (!ctx) return
-    if (activeTool !== SELECTION_TOOL || !withContextMenu) {
+    if (activeTool.id !== SELECTION_TOOL.id || !withContextMenu) {
       setSelectedShape(undefined)
       setSelectionMode({ mode: 'default' })
     } else {
       const cursorPosition = getCursorPositionInTransformedCanvas(e, drawCanvasRef.current, settings)
       const { shape, mode } = selectShape(ctx, shapes, cursorPosition, settings, selectedShape, isTouchGesture(e), false)
+      const { clientX, clientY } = getCursorPosition(e)
       setSelectedShape(shape)
       setSelectionMode({
         mode: 'contextMenu',
         cursorStartPosition: cursorPosition,
+        clientPosition: { x: clientX, y: clientY },
         originalShape: shape,
         anchor: 'anchor' in mode ? mode.anchor : undefined
       })
