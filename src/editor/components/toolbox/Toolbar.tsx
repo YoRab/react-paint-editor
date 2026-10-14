@@ -1,13 +1,16 @@
-import type { ExportView } from '@common/types/editor'
+import { usePaint } from '@common/context/PaintContext'
+import usePaintState from '@common/hooks/usePaintState'
+import type { EditorState, ExportView } from '@common/types/editor'
 import type { ShapeType } from '@common/types/Shapes'
 import type { ToolsType } from '@common/types/tools'
+import { shallowEqual } from '@common/utils/equality'
 import Button from '@editor/components/common/Button'
 import Modal from '@editor/components/common/Modal'
 import { shapesIcon } from '@editor/constants/icons'
 import { CLEAR_TOOL, MOVE_TOOL_DISPLAY, REDO_TOOL, SELECTION_TOOL_DISPLAY, UNDO_TOOL } from '@editor/constants/tools'
-import type { DisplayTool } from '@editor/utils/style'
+import { getDisplayTool } from '@editor/utils/style'
 import { getCurrentStructure } from '@editor/utils/toolbar'
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import MenuGroup from './MenuGroup'
 import PictureUrlModal from './PictureUrlInput'
 import Tool from './Tool'
@@ -43,23 +46,20 @@ const TOOLBAR_STRUCTURE: (
   'text'
 ]
 
+const selectToolbarState = (state: EditorState) => ({
+  activeTool: state.activeTool,
+  tools: state.tools,
+  history: state.history,
+  width: state.view.displayWidth
+})
+
 type ToolboxType = {
-  width: number
   disabled: boolean
   withMoveTool: boolean
-  activeTool: ToolsType
-  hasActionToUndo?: boolean
-  hasActionToRedo?: boolean
-  hasActionToClear?: boolean
-  undoAction: () => void
-  redoAction: () => void
-  clearCanvas: () => void
-  setActiveTool: (toolOrId: ToolsType | string) => void
   loadFile: (file: File) => void
   addPicture: (file: File | string) => Promise<void>
   saveFile: () => void
   exportCanvasInFile: (view: ExportView) => void
-  availableTools: DisplayTool[]
   withLoadAndSave: boolean
   withExport: boolean
   withUrlPicture: boolean
@@ -69,25 +69,22 @@ type ToolboxType = {
 const Toolbar = ({
   disabled,
   withMoveTool,
-  width,
-  activeTool,
-  hasActionToUndo = false,
-  hasActionToRedo = false,
-  hasActionToClear = false,
   withLoadAndSave,
   withExport,
-  clearCanvas,
-  setActiveTool: setActiveToolFromProps,
-  undoAction,
-  redoAction,
   addPicture,
   loadFile,
   saveFile,
   exportCanvasInFile,
-  availableTools,
   withUrlPicture,
   withUploadPicture
 }: ToolboxType) => {
+  const paint = usePaint()
+  const { actions } = paint
+  const { activeTool, tools, history, width } = usePaintState(paint, selectToolbarState, shallowEqual)
+  const availableTools = useMemo(() => tools.map(getDisplayTool), [tools])
+  const { canUndo: hasActionToUndo, canRedo: hasActionToRedo, canClear: hasActionToClear } = history
+  const { undo: undoAction, redo: redoAction, clearCanvas } = actions
+
   const currentStructure = getCurrentStructure(availableTools, TOOLBAR_STRUCTURE)
 
   const fullToolbarSize = (6 + currentStructure.length) * TOOL_WIDTH
@@ -118,7 +115,7 @@ const Toolbar = ({
   }
 
   const setActiveTool = (toolOrId: ToolsType | string) => {
-    setActiveToolFromProps(toolOrId)
+    actions.selectTool(toolOrId)
     setIsMenuOpen(false)
   }
 

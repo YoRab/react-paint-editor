@@ -1,17 +1,29 @@
+import { usePaint } from '@common/context/PaintContext'
+import usePaintState from '@common/hooks/usePaintState'
+import type { EditorState } from '@common/types/editor'
 import type { ShapeEntity } from '@common/types/Shapes'
+import { shallowEqual } from '@common/utils/equality'
 import Button from '@editor/components/common/Button'
 import Panel from '@editor/components/common/Panel'
-import type { GridLabelType } from '@editor/constants/grid'
+import { type GridLabelType, GridValues } from '@editor/constants/grid'
 import { gridOffIcon, lockedIcon, trashIcon, unlockedIcon, visibilityIcon, visibilityOffIcon } from '@editor/constants/icons'
 import useDrag from '@editor/hooks/useDrag'
 import { getShapePicture } from '@editor/utils/style'
 import type React from 'react'
-import { useMemo, useRef, useState } from 'react'
+import { memo, useMemo, useRef, useState } from 'react'
 import './Layouts.css'
+
+/** What a layer shows of a shape: it does not change while the shape is moved */
+type LayerItem = {
+  id: string
+  type: ShapeEntity['type']
+  visible: boolean | undefined
+  locked: boolean | undefined
+}
 
 type LayoutType = {
   disabled?: boolean
-  shape: ShapeEntity
+  shape: LayerItem
   selected: boolean
   layoutDragging: string | undefined
   setLayoutDragging: (shapeId: string | undefined) => void
@@ -22,7 +34,8 @@ type LayoutType = {
   onSwapShapes: (firstShapeId: string, lastShapeId: string) => void
 }
 
-const Layout = ({
+// the props are stable: only the changed layers render again
+const Layout = memo(function Layout({
   disabled = false,
   shape,
   selected,
@@ -33,7 +46,7 @@ const Layout = ({
   handleRemove,
   handleSelect,
   onSwapShapes
-}: LayoutType) => {
+}: LayoutType) {
   const ref = useRef<HTMLDivElement>(null)
 
   const onRemove = (e: React.MouseEvent<HTMLElement>) => {
@@ -112,39 +125,47 @@ const Layout = ({
       <Button className='react-paint-editor-layouts-remove-button' title='Remove' disabled={disabled} onClick={onRemove} icon={trashIcon} />
     </div>
   )
+})
+
+const getGridFormat = (gridGap: number): GridLabelType =>
+  gridGap >= GridValues.large ? 'large' : gridGap >= GridValues.medium ? 'medium' : gridGap >= GridValues.small ? 'small' : 'none'
+
+/** The layers keep their identity while their shape is only moved or resized */
+const createLayersSelector = () => {
+  let lastShapes: ShapeEntity[] | undefined
+  let lastLayers: LayerItem[] = []
+  let cache = new Map<string, LayerItem>()
+  return ({ shapes }: EditorState) => {
+    if (shapes === lastShapes) return lastLayers
+    const layers = new Map<string, LayerItem>()
+    const items = shapes.map(({ id, type, visible, locked }) => {
+      const cached = cache.get(id)
+      const layer = cached?.type === type && cached.visible === visible && cached.locked === locked ? cached : { id, type, visible, locked }
+      layers.set(id, layer)
+      return layer
+    })
+    cache = layers
+    lastShapes = shapes
+    lastLayers = items
+    return items
+  }
 }
 
-type LayoutsType = {
-  gridFormat: GridLabelType
-  setGridFormat: (value: GridLabelType) => void
-  disabled: boolean
-  shapes: ShapeEntity[]
-  removeShapes: (ids: string[]) => void
-  toggleShapeVisibility: (ids: string[]) => void
-  toggleShapeLock: (ids: string[]) => void
-  selectedShapeIds: string[]
-  selectShapes: (ids: string[]) => void
-  swapShapes: (startPositionShapeId: string, endPositionShapeId: string) => void
-  isLayoutPanelShown: boolean
-}
+const selectSelectedShapeIds = (state: EditorState) => state.selectedShapeIds
 
-const Layouts = ({
-  gridFormat,
-  setGridFormat,
-  disabled,
-  shapes,
-  removeShapes,
-  toggleShapeVisibility,
-  toggleShapeLock,
-  selectedShapeIds,
-  swapShapes,
-  selectShapes,
-  isLayoutPanelShown
-}: LayoutsType) => {
+const LayoutsPanel = ({ disabled }: { disabled: boolean }) => {
+  const paint = usePaint()
+  const { actions } = paint
+  const [selectLayers] = useState(createLayersSelector)
+  const layers = usePaintState(paint, selectLayers, shallowEqual)
+  const selectedShapeIds = usePaintState(paint, selectSelectedShapeIds)
+  const gridFormat = getGridFormat(usePaintState(paint, state => state.gridGap))
   const [layoutDragging, setLayoutDragging] = useState<string | undefined>(undefined)
   const selectedShapeIdSet = useMemo(() => new Set(selectedShapeIds), [selectedShapeIds])
 
-  return isLayoutPanelShown ? (
+  const setGridFormat = (value: GridLabelType) => actions.setGridGap(GridValues[value])
+
+  return (
     <Panel alignment='right' className='react-paint-editor-layouts-panel' position='bottom'>
       <div className='react-paint-editor-layouts-panel-content'>
         <div className='react-paint-editor-layouts-scrolling-content'>
@@ -172,22 +193,22 @@ const Layouts = ({
           </div>
           <hr />
           <div className='react-paint-editor-layouts'>
-            {shapes.length === 0 ? (
+            {layers.length === 0 ? (
               <div className='react-paint-editor-layouts-placeholder'>No layer yet</div>
             ) : (
-              shapes.map(shape => (
+              layers.map(layer => (
                 <Layout
-                  key={shape.id}
-                  shape={shape}
+                  key={layer.id}
+                  shape={layer}
                   disabled={disabled}
                   layoutDragging={layoutDragging}
                   setLayoutDragging={setLayoutDragging}
-                  selected={selectedShapeIdSet.has(shape.id)}
-                  handleSelect={selectShapes}
-                  handleRemove={removeShapes}
-                  onSwapShapes={swapShapes}
-                  toggleShapeVisibility={toggleShapeVisibility}
-                  toggleShapeLock={toggleShapeLock}
+                  selected={selectedShapeIdSet.has(layer.id)}
+                  handleSelect={actions.selectShapes}
+                  handleRemove={actions.removeShapes}
+                  onSwapShapes={actions.swapShapes}
+                  toggleShapeVisibility={actions.toggleShapesVisibility}
+                  toggleShapeLock={actions.toggleShapesLock}
                 />
               ))
             )}
@@ -195,7 +216,15 @@ const Layouts = ({
         </div>
       </div>
     </Panel>
-  ) : null
+  )
 }
+
+type LayoutsType = {
+  disabled: boolean
+  isLayoutPanelShown: boolean
+}
+
+/** Panel of the layers and of the grid. It only reads the state while it is shown */
+const Layouts = ({ disabled, isLayoutPanelShown }: LayoutsType) => (isLayoutPanelShown ? <LayoutsPanel disabled={disabled} /> : null)
 
 export default Layouts

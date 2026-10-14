@@ -42,11 +42,11 @@ import LinkTo from '@storybook/addon-links/react';
 import '@yorab/react-paint/react-paint.css'
 
 function MyPaintApp() {
-  const { editorProps, canvasProps } = useReactPaint()
+  const paint = useReactPaint()
 
   return (
-    <Editor editorProps={editorProps}>
-      <Canvas canvasProps={canvasProps} />
+    <Editor paint={paint}>
+      <Canvas paint={paint} />
     </Editor>
   )
 }`} />
@@ -61,13 +61,13 @@ function MyPaintApp() {
       </p>
       
      <Source language='typescript' code={`import { useEffect, useState } from 'react'
-import { Canvas, Editor, useReactPaint, type DrawableShape, type StateData } from '@yorab/react-paint'
+import { Canvas, Editor, useReactPaint, type DrawableShape } from '@yorab/react-paint'
 import '@yorab/react-paint/react-paint.css'
 
 function AdvancedPaintApp() {
   const [shapes, setShapes] = useState<DrawableShape[]>([])
 
-  const { editorProps, canvasProps, registerEvent, unregisterEvent } = useReactPaint({
+  const paint = useReactPaint({
     width: 1920,
     height: 1080,
     shapes,
@@ -79,20 +79,12 @@ function AdvancedPaintApp() {
     }
   })
 
-  useEffect(() => {
-    const onDataChanged = (data: StateData, source: 'user' | 'remote') => {
-      setShapes(data.shapes)
-    }
-    registerEvent('dataChanged', onDataChanged)
-    
-    return () => {
-      unregisterEvent('dataChanged', onDataChanged)
-    }
-  }, [registerEvent, unregisterEvent])
+  // registerEvent returns the function that unregisters the listener
+  useEffect(() => paint.registerEvent('dataChanged', data => setShapes(data.shapes)), [paint])
 
   return (
-    <Editor editorProps={editorProps}>
-      <Canvas canvasProps={canvasProps} />
+    <Editor paint={paint}>
+      <Canvas paint={paint} />
     </Editor>
   )
 }`} />
@@ -101,17 +93,34 @@ function AdvancedPaintApp() {
       
       <h3>useReactPaint Hook</h3>
       <p>
-        The <code>useReactPaint</code> hook is the core of React Paint. It returns:
+        The <code>useReactPaint</code> hook is the core of React Paint. It returns a handle, <code>paint</code>, to give to the <code>Editor</code> and <code>Canvas</code> components, or to <LinkTo title='React Paint/Custom editor' story='docs'>your own editor</LinkTo>.
+        It keeps the same identity for the whole life of the component, and the component calling the hook does not render again when the drawing changes. The handle gives:
       </p>
       <ul>
-        <li><code>editorProps</code> - Props to pass to the <code>Editor</code> component, or to <LinkTo title='React Paint/Custom editor' story='docs'>your own editor</LinkTo></li>
-        <li><code>canvasProps</code> - Props to pass as is to the <code>Canvas</code> component</li>
-        <li><code>registerEvent</code> - Function to listen to events (like <code>dataChanged</code>)</li>
+        <li><code>actions</code> - Commands to act on the canvas: select a tool, undo, zoom, style the selected shapes...</li>
+        <li><code>getState</code> and <code>subscribe</code> - The current state, and a way to be told of its changes</li>
+        <li><code>registerEvent</code> - Function to listen to events (like <code>dataChanged</code>). It returns the function that stops listening</li>
         <li><code>unregisterEvent</code> - Function to stop listening to events</li>
         <li><code>resetCanvas</code> - Function to reset the canvas with new shapes</li>
         <li><code>getCurrentImage</code> - Function to export the canvas as a PNG image</li>
         <li><code>getCurrentData</code> - Function to get the current state of the canvas</li>
+        <li><code>editorRef</code> - Callback ref to set on the root element of a custom editor</li>
       </ul>
+
+      <h3>Reading the state</h3>
+      <p>
+        <code>usePaintState(paint, selector?, isEqual?)</code> reads the state during a render, and renders the component again only when the selected value changes.
+        When the selector builds an object or an array, give <code>shallowEqual</code> as third argument. Under the <code>Editor</code> or a <code>PaintProvider</code>, any component can get the handle with <code>usePaint()</code>.
+      </p>
+      <Source language='typescript' code={`import { shallowEqual, usePaint, usePaintState } from '@yorab/react-paint'
+
+const UndoButton = () => {
+  const paint = usePaint()
+  const canUndo = usePaintState(paint, state => state.history.canUndo)
+  return <button disabled={!canUndo} onClick={paint.actions.undo}>Undo</button>
+}
+
+const { shapes, selectedShapes } = usePaintState(paint, state => ({ shapes: state.shapes, selectedShapes: state.selectedShapes }), shallowEqual)`} />
       
       <h3>Editor Component</h3>
       <p>
@@ -134,8 +143,8 @@ import '@yorab/react-paint/canvas/canvas.css'
 import { Editor } from '@yorab/react-paint/editor'
 import '@yorab/react-paint/editor/editor.css'`} />
       <p>
-        To build your own editor, use <code>editorProps.state</code> to render it, <code>editorProps.actions</code> to act on the canvas, and set <code>editorProps.editorRef</code> on its root element.
-        See the <LinkTo title='React Paint/Custom editor' story='docs'>Custom editor</LinkTo> and <LinkTo title='React Paint/Canvas only' story='docs'>Canvas only</LinkTo> examples.
+        To build your own editor, read the state with <code>usePaintState</code>, act on the canvas with <code>paint.actions</code>, and set <code>paint.editorRef</code> on its root element.
+        See the <LinkTo title='React Paint/Custom editor' story='docs'>Custom editor</LinkTo>, <LinkTo title='React Paint/Canvas only' story='docs'>Canvas only</LinkTo> and <LinkTo title='React Paint/External toolbar' story='docs'>External toolbar</LinkTo> examples.
       </p>
       
       <h2>Configuration Options</h2>
@@ -158,7 +167,7 @@ import '@yorab/react-paint/editor/editor.css'`} />
       </p>
       
       <Source language='typescript' code={`<Editor 
-  editorProps={editorProps}
+  paint={paint}
   options={{
     toolbarBackgroundColor: '#ffffff',
     fontColor: '#364181',
@@ -166,7 +175,7 @@ import '@yorab/react-paint/editor/editor.css'`} />
   }}
 >
   <Canvas 
-    canvasProps={canvasProps}
+    paint={paint}
     options={{
       canvasBackgroundColor: '#f5f5f5',
       canvasSelectionColor: '#0066ff',
@@ -187,29 +196,26 @@ import '@yorab/react-paint/editor/editor.css'`} />
     console.log('Canvas data changed:', data)
     setShapes(data.shapes)
   }
-  
-  registerEvent('dataChanged', onDataChanged)
-  
-  return () => {
-    unregisterEvent('dataChanged', onDataChanged)
-  }
-}, [registerEvent, unregisterEvent])`} />
+
+  // returns the function that unregisters the listener
+  return paint.registerEvent('dataChanged', onDataChanged)
+}, [paint])`} />
       
       <h2>Exporting Images</h2>
       <p>
         Export your canvas as a PNG image:
       </p>
       
-   <Source language='typescript' code={`const { getCurrentImage } = useReactPaint()
+   <Source language='typescript' code={`const paint = useReactPaint()
 
 // Export with default view (canvas dimensions, no zoom)
-const imageUrl1 = getCurrentImage('defaultView')
+const imageUrl1 = paint.getCurrentImage('defaultView')
 
 // Export with current zoom and offset
-const imageUrl2 = getCurrentImage('currentZoom')
+const imageUrl2 = paint.getCurrentImage('currentZoom')
 
 // Export fitting all shapes
-const imageUrl3 = getCurrentImage('fitToShapes')
+const imageUrl3 = paint.getCurrentImage('fitToShapes')
 
 // Use the data URL (e.g., download or display)
 const link = document.createElement('a')
@@ -226,7 +232,7 @@ link.click()`} />
         <li><strong>viewer</strong> - Read-only mode that hides the editor toolbar and prevents modifications</li>
       </ul>
       
-    <Source language='typescript' code={`const { editorProps, canvasProps } = useReactPaint({
+    <Source language='typescript' code={`const paint = useReactPaint({
       mode: 'viewer' // Canvas is read-only
 })`} />
       

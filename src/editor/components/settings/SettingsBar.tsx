@@ -1,5 +1,7 @@
-import type { EditorActions, ShapeStyleField, ToolSettingValue } from '@common/types/editor'
-import type { SelectionType } from '@common/types/Shapes'
+import { usePaint } from '@common/context/PaintContext'
+import usePaintState from '@common/hooks/usePaintState'
+import type { EditorState, ShapeStyleField, ToolSettingValue } from '@common/types/editor'
+import type { StyleShape } from '@common/types/Shapes'
 import type { CustomTool, ToolsType } from '@common/types/tools'
 import Button from '@editor/components/common/Button'
 import Modal from '@editor/components/common/Modal'
@@ -14,6 +16,7 @@ import LineArrowField from './LineArrowField'
 import LineTypeField from './LineTypeField'
 import RangeField from './RangeField'
 import './SettingsBar.css'
+import { shallowEqual } from '@common/utils/equality'
 import { getSelectedShapesTools } from '@common/utils/selection'
 import ClosedPointsField from '@editor/components/settings/ClosedPointsField'
 import ZoomButton from '@editor/components/settings/ZoomButton'
@@ -24,7 +27,8 @@ const SETTING_WIDTH = 40
 type SettingsItemsType = {
   disabled?: boolean
   activeTool: ToolsType
-  selectedShape: SelectionType | undefined
+  hasSelection: boolean
+  selectedStyle: StyleShape | undefined
   selectedShapeTool: CustomTool | undefined
   selectedSettings: string | undefined
   setSelectedSettings: React.Dispatch<React.SetStateAction<string | undefined>>
@@ -34,7 +38,8 @@ type SettingsItemsType = {
 
 const SettingsItems = ({
   activeTool,
-  selectedShape,
+  hasSelection,
+  selectedStyle,
   selectedShapeTool,
   disabled,
   selectedSettings,
@@ -42,7 +47,7 @@ const SettingsItems = ({
   saveShapes,
   handleShapeStyleChange
 }: SettingsItemsType) => {
-  return selectedShape ? (
+  return hasSelection ? (
     selectedShapeTool && (
       <>
         {'strokeColor' in selectedShapeTool.settings && !selectedShapeTool.settings.strokeColor.hidden && (
@@ -53,7 +58,7 @@ const SettingsItems = ({
             mode='stroke'
             disabled={disabled}
             field='strokeColor'
-            value={selectedShape.style?.strokeColor}
+            value={selectedStyle?.strokeColor}
             valueChanged={handleShapeStyleChange}
             values={selectedShapeTool.settings.strokeColor.values}
           />
@@ -66,7 +71,7 @@ const SettingsItems = ({
             title='Couleur de fond'
             disabled={disabled}
             field='fillColor'
-            value={selectedShape.style?.fillColor}
+            value={selectedStyle?.fillColor}
             valueChanged={handleShapeStyleChange}
             values={selectedShapeTool.settings.fillColor.values}
           />
@@ -81,7 +86,7 @@ const SettingsItems = ({
             icon={lineWidthIcon}
             disabled={disabled}
             field='lineWidth'
-            value={selectedShape.style?.lineWidth}
+            value={selectedStyle?.lineWidth}
             valueChanged={handleShapeStyleChange}
             unity='px'
             min={selectedShapeTool.settings.lineWidth.min}
@@ -95,7 +100,7 @@ const SettingsItems = ({
             selectedSettings={selectedSettings}
             setSelectedSettings={setSelectedSettings}
             disabled={disabled}
-            defaultValue={selectedShape.style?.lineDash}
+            defaultValue={selectedStyle?.lineDash}
             valueChanged={handleShapeStyleChange}
             values={selectedShapeTool.settings.lineDash.values}
           />
@@ -106,7 +111,7 @@ const SettingsItems = ({
             selectedSettings={selectedSettings}
             setSelectedSettings={setSelectedSettings}
             disabled={disabled}
-            defaultValue={selectedShape.style?.lineArrow}
+            defaultValue={selectedStyle?.lineArrow}
             valueChanged={handleShapeStyleChange}
             values={selectedShapeTool.settings.lineArrow.values}
           />
@@ -118,7 +123,7 @@ const SettingsItems = ({
             setSelectedSettings={setSelectedSettings}
             disabled={disabled}
             valueChanged={handleShapeStyleChange}
-            defaultValue={selectedShape.style?.closedPoints}
+            defaultValue={selectedStyle?.closedPoints}
           />
         )}
 
@@ -129,7 +134,7 @@ const SettingsItems = ({
             disabled={disabled}
             valueChanged={handleShapeStyleChange}
             values={selectedShapeTool.settings.fontFamily.values}
-            defaultValue={selectedShape.style?.fontFamily}
+            defaultValue={selectedStyle?.fontFamily}
           />
         )}
 
@@ -142,7 +147,7 @@ const SettingsItems = ({
             title='Gras'
             valueChanged={handleShapeStyleChange}
             values={selectedShapeTool.settings.fontBold.values}
-            value={selectedShape.style?.fontBold}
+            value={selectedStyle?.fontBold}
           />
         )}
 
@@ -155,7 +160,7 @@ const SettingsItems = ({
             title='Italique'
             valueChanged={handleShapeStyleChange}
             values={selectedShapeTool.settings.fontItalic.values}
-            value={selectedShape.style?.fontItalic}
+            value={selectedStyle?.fontItalic}
           />
         )}
 
@@ -172,7 +177,7 @@ const SettingsItems = ({
             unity='%'
             disabled={disabled}
             field='opacity'
-            value={selectedShape.style?.opacity}
+            value={selectedStyle?.opacity}
             valueChanged={handleShapeStyleChange}
           />
         )}
@@ -315,41 +320,65 @@ const SettingsItems = ({
   ) : null
 }
 
-type SettingsBarType = {
+type SettingsBarState = {
   width: number
+  activeTool: ToolsType
+  /** Only the style of the selection is shown: its geometry changes on each move of a drag */
+  selectedStyle: StyleShape | undefined
+  selectedShapeIds: string[]
+  selectedShapeTool: CustomTool | undefined
+}
+
+const createSettingsBarSelector = () => {
+  // the tool of the selection only depends on the selected ids and on the tools: a shape keeps its type and its tool
+  let lastTool: { ids: string[]; tools: CustomTool[]; tool: CustomTool | undefined } | undefined
+  return (state: EditorState): SettingsBarState => {
+    if (lastTool?.ids !== state.selectedShapeIds || lastTool.tools !== state.tools) {
+      lastTool = { ids: state.selectedShapeIds, tools: state.tools, tool: getSelectedShapesTools(state.selection, state.tools) }
+    }
+    return {
+      width: state.view.displayWidth,
+      activeTool: state.activeTool,
+      selectedStyle: state.selection?.style,
+      selectedShapeIds: state.selectedShapeIds,
+      selectedShapeTool: lastTool.tool
+    }
+  }
+}
+
+const isSameSettingsBarState = (a: SettingsBarState, b: SettingsBarState) =>
+  a.width === b.width &&
+  a.activeTool === b.activeTool &&
+  a.selectedShapeIds === b.selectedShapeIds &&
+  a.selectedShapeTool === b.selectedShapeTool &&
+  shallowEqual(a.selectedStyle, b.selectedStyle)
+
+type SettingsBarType = {
   disabled: boolean
   withZoom: boolean
-  availableTools: CustomTool[]
-  updateToolSettings: (toolId: string, field: string, value: ToolSettingValue) => void
   layersManipulation?: boolean
-  activeTool: ToolsType
-  selectedShape: SelectionType | undefined
-  selectedShapeIds: string[]
-  updateShapesStyle: EditorActions['updateShapesStyle']
-  removeShapes: (ids: string[]) => void
   toggleLayoutPanel: () => void
   isZoomPanelShown: boolean
   setIsZoomPanelShown: React.Dispatch<React.SetStateAction<boolean>>
-  saveShapes: () => void
 }
 
 const SettingsBar = ({
-  width,
   disabled,
   withZoom,
-  availableTools,
-  updateToolSettings,
   layersManipulation = false,
   toggleLayoutPanel,
-  activeTool,
-  saveShapes,
-  selectedShape,
-  selectedShapeIds,
-  updateShapesStyle,
-  removeShapes,
   isZoomPanelShown,
   setIsZoomPanelShown
 }: SettingsBarType) => {
+  const paint = usePaint()
+  const { actions } = paint
+  const [selectSettingsBarState] = useState(createSettingsBarSelector)
+  const { width, activeTool, selectedStyle, selectedShapeIds, selectedShapeTool } = usePaintState(
+    paint,
+    selectSettingsBarState,
+    isSameSettingsBarState
+  )
+  const hasSelection = selectedShapeIds.length > 0
   const [selectedSettings, setSelectedSettings] = useState<string | undefined>(undefined)
   const [isMenuOpen, setIsMenuOpen] = useState(false)
 
@@ -360,8 +389,6 @@ const SettingsBar = ({
   const toggleZoom = () => {
     setIsZoomPanelShown(prev => !prev)
   }
-
-  const selectedShapeTool = getSelectedShapesTools(selectedShape, availableTools)
 
   const nbSettingsTools =
     (selectedShapeTool
@@ -378,10 +405,10 @@ const SettingsBar = ({
 
   const handleShapeStyleChange = (field: string, value: ToolSettingValue, needHistorySave = true) => {
     if (selectedShapeIds.length) {
-      updateShapesStyle(selectedShapeIds, field as ShapeStyleField, value, { save: needHistorySave })
-      selectedShapeTool && updateToolSettings(selectedShapeTool.id, field, value)
+      actions.updateShapesStyle(selectedShapeIds, field as ShapeStyleField, value, { save: needHistorySave })
+      selectedShapeTool && actions.updateToolSettings(selectedShapeTool.id, field, value)
     } else {
-      updateToolSettings(activeTool.id, field, value)
+      actions.updateToolSettings(activeTool.id, field, value)
     }
   }
 
@@ -393,14 +420,15 @@ const SettingsBar = ({
             <ZoomButton className={isZoomPanelShown ? 'react-paint-editor-bar-zoom-button-opened' : undefined} toggleZoomPanel={toggleZoom} />
           )}
           {settingsInMenu && nbSettingsTools > 2 && <Button disabled={disabled} onClick={toggleTools} title='Toggle settings' icon={settingsIcon} />}
-          {selectedShape
+          {hasSelection
             ? selectedShapeTool && (
                 <>
                   {!settingsInMenu && (
                     <SettingsItems
-                      saveShapes={saveShapes}
+                      saveShapes={actions.saveShapes}
                       activeTool={activeTool}
-                      selectedShape={selectedShape}
+                      hasSelection={hasSelection}
+                      selectedStyle={selectedStyle}
                       selectedShapeTool={selectedShapeTool}
                       disabled={disabled}
                       selectedSettings={selectedSettings}
@@ -410,15 +438,16 @@ const SettingsBar = ({
                   )}
 
                   {activeTool.type === 'selection' && (
-                    <DeleteButton disabled={disabled} selectedShapeIds={selectedShapeIds} removeShapes={removeShapes} />
+                    <DeleteButton disabled={disabled} selectedShapeIds={selectedShapeIds} removeShapes={actions.removeShapes} />
                   )}
                 </>
               )
             : !settingsInMenu && (
                 <SettingsItems
-                  saveShapes={saveShapes}
+                  saveShapes={actions.saveShapes}
                   activeTool={activeTool}
-                  selectedShape={selectedShape}
+                  hasSelection={hasSelection}
+                  selectedStyle={selectedStyle}
                   selectedShapeTool={selectedShapeTool}
                   disabled={disabled}
                   selectedSettings={selectedSettings}
@@ -433,9 +462,10 @@ const SettingsBar = ({
       {isMenuOpen && (
         <Modal className='react-paint-editor-settings-modal' onClose={toggleTools} position='bottom' title='Settings'>
           <SettingsItems
-            saveShapes={saveShapes}
+            saveShapes={actions.saveShapes}
             activeTool={activeTool}
-            selectedShape={selectedShape}
+            hasSelection={hasSelection}
+            selectedStyle={selectedStyle}
             selectedShapeTool={selectedShapeTool}
             disabled={disabled}
             selectedSettings={selectedSettings}

@@ -3,7 +3,6 @@ import Button from '@editor/components/common/Button'
 import Menu from '@editor/components/common/Menu'
 import { menuIcon, publicIcon } from '@editor/constants/icons'
 import { CLEAR_TOOL, EXPORT_TOOL, LOAD_TOOL, REDO_TOOL, SAVE_TOOL, UNDO_TOOL, UPLOAD_PICTURE_TOOL } from '@editor/constants/tools'
-import { useRef } from 'react'
 import LoadFileTool from './LoadFileTool'
 import './MenuGroup.css'
 import useMenu from '@editor/hooks/useMenu'
@@ -53,8 +52,7 @@ const MenuGroup = ({
   withUploadPicture,
   withUrlPicture
 }: MenuGroupType) => {
-  const buttonRef = useRef<HTMLDivElement>(null)
-  const { isOpen, closeMenu } = useMenu({ buttonElt: buttonRef.current })
+  const { ref: menuRef, isOpen, closeMenu } = useMenu()
 
   const triggerAndCloseMenu =
     <T extends unknown[]>(callback: (...args: T) => void | Promise<void>) =>
@@ -67,7 +65,7 @@ const MenuGroup = ({
 
   return withMenu ? (
     <div className='react-paint-editor-toolbox-relative'>
-      <div ref={buttonRef}>
+      <div ref={menuRef}>
         <Button title='Menu' disabled={disabled} icon={menuIcon} />
         {isOpen && (
           <Menu alignment='right' position='top'>

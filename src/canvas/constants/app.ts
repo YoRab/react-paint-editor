@@ -14,7 +14,7 @@ import type { BrushAlgo } from '@common/types/Settings'
 
 export type { BrushAlgo, UtilsSettings } from '@common/types/Settings'
 
-type AppOptionsType = {
+export type AppOptions = {
   grid: number
   canGrow: boolean
   canShrink: boolean
@@ -31,9 +31,9 @@ type AppOptionsType = {
   debug: boolean
 }
 
-export type OptionalOptions = RecursivePartial<AppOptionsType>
+export type OptionalOptions = RecursivePartial<AppOptions>
 
-export const DEFAULT_OPTIONS: AppOptionsType = {
+export const DEFAULT_OPTIONS: AppOptions = {
   grid: 0,
   canGrow: false,
   canShrink: true,

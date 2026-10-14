@@ -1,48 +1,40 @@
-import type { ExportView, EditorProps as ReactPaintEditorProps } from '@common/types/editor'
+import { PaintProvider } from '@common/context/PaintContext'
+import usePaintState from '@common/hooks/usePaintState'
+import type { EditorState, ExportView, ReactPaint } from '@common/types/editor'
+import { shallowEqual } from '@common/utils/equality'
 import { withDefaults } from '@common/utils/object'
 import Loading from '@editor/components/common/Loading'
 import SnackbarContainer from '@editor/components/common/Snackbar'
 import Layouts from '@editor/components/settings/Layouts'
 import SettingsBar from '@editor/components/settings/SettingsBar'
+import ZoomPanel from '@editor/components/settings/ZoomPanel'
 import Toolbar from '@editor/components/toolbox/Toolbar'
-import { type GridLabelType, GridValues } from '@editor/constants/grid'
 import { DEFAULT_EDITOR_OPTIONS, type EditorOptions } from '@editor/constants/options'
 import useSnackbar from '@editor/hooks/useSnackbar'
-import { getDisplayTool } from '@editor/utils/style'
-import { type CSSProperties, type ReactNode, useCallback, useMemo, useRef, useState } from 'react'
+import { type CSSProperties, type ReactNode, useCallback, useRef, useState } from 'react'
 import './index.css'
-import Button from '@editor/components/common/Button'
-import Panel from '@editor/components/common/Panel'
 import ContextMenu from '@editor/components/toolbox/ContextMenu'
-import { zoomIn, zoomOut } from '@editor/constants/icons'
 
 type EditorComponentProps = {
-  editorProps: ReactPaintEditorProps
+  /** Handle returned by useReactPaint */
+  paint: ReactPaint
   className?: string | undefined
   style?: CSSProperties | undefined
   children: ReactNode
   options?: EditorOptions | undefined
 }
 
-const Editor = ({ editorProps, className, style, options, children }: EditorComponentProps) => {
-  const { state, actions, editorRef } = editorProps
-  const {
-    mode,
-    features,
-    layout,
-    view,
-    width,
-    height,
-    gridGap,
-    shapes,
-    selection,
-    selectedShapes,
-    activeTool,
-    tools,
-    history,
-    clipboard,
-    contextMenu
-  } = state
+// The root only reads what it lays out: each panel reads its own part of the state
+const selectRootState = (state: EditorState) => ({
+  mode: state.mode,
+  features: state.features,
+  layout: state.layout,
+  width: state.width
+})
+
+const Editor = ({ paint, className, style, options, children }: EditorComponentProps) => {
+  const { actions, editorRef } = paint
+  const { mode, features, layout, width } = usePaintState(paint, selectRootState, shallowEqual)
 
   const {
     toolbarBackgroundColor,
@@ -66,8 +58,6 @@ const Editor = ({ editorProps, className, style, options, children }: EditorComp
   const isEditMode = mode !== 'viewer'
   const disabled = !features.edition
   const withZoom = layout.size === 'infinite' || features.zoom
-  const displayTools = useMemo(() => tools.map(getDisplayTool), [tools])
-  const selectedShapeIds = useMemo(() => selectedShapes.map(shape => shape.id), [selectedShapes])
 
   const rootRef = useRef<HTMLDivElement | null>(null)
   const setRootRef = useCallback(
@@ -83,12 +73,6 @@ const Editor = ({ editorProps, className, style, options, children }: EditorComp
   const [isZoomPanelOpen, setIsZoomPanelShown] = useState(withZoom)
 
   const isZoomPanelShown = withZoom && isZoomPanelOpen
-  const gridFormat: GridLabelType =
-    gridGap >= GridValues.large ? 'large' : gridGap >= GridValues.medium ? 'medium' : gridGap >= GridValues.small ? 'small' : 'none'
-
-  const setGridFormat = (newValue: GridLabelType) => {
-    actions.setGridGap(GridValues[newValue])
-  }
 
   const { snackbarList, addSnackbar } = useSnackbar()
 
@@ -146,7 +130,7 @@ const Editor = ({ editorProps, className, style, options, children }: EditorComp
     async (fileOrUrl: File | string) => {
       setIsLoading(true)
       try {
-        await actions.addPicture(fileOrUrl, { maxWidth: width, maxHeight: height, select: true })
+        await actions.addPicture(fileOrUrl)
       } catch (e) {
         if (e instanceof Error) {
           addSnackbar({ type: 'error', text: 'Le chargement a échoué' })
@@ -156,7 +140,7 @@ const Editor = ({ editorProps, className, style, options, children }: EditorComp
         setIsLoading(false)
       }
     },
-    [actions, addSnackbar, width, height]
+    [actions, addSnackbar]
   )
 
   const appClassName = `${className ? `${className} ` : ''}${isLayoutPanelShown ? 'react-paint-editor-layout-opened ' : ''}react-paint-editor-app`
@@ -181,81 +165,42 @@ const Editor = ({ editorProps, className, style, options, children }: EditorComp
         ...style
       }}
     >
-      {isEditMode && (
-        <Toolbar
-          disabled={disabled}
-          withMoveTool={withZoom}
-          width={view.displayWidth}
-          activeTool={activeTool}
-          clearCanvas={actions.clearCanvas}
-          setActiveTool={actions.selectTool}
-          exportCanvasInFile={exportCanvasInFile}
-          saveFile={saveFile}
-          loadFile={onLoadFile}
-          addPicture={addPicture}
-          hasActionToUndo={history.canUndo}
-          hasActionToRedo={history.canRedo}
-          hasActionToClear={history.canClear}
-          undoAction={actions.undo}
-          redoAction={actions.redo}
-          availableTools={displayTools}
-          withExport={withExport}
-          withLoadAndSave={withLoadAndSave}
-          withUploadPicture={withUploadPicture}
-          withUrlPicture={withUrlPicture}
-        />
-      )}
-      {children}
-      {isEditMode && layersManipulation && (
-        <Layouts
-          gridFormat={gridFormat}
-          setGridFormat={setGridFormat}
-          shapes={shapes}
-          swapShapes={actions.swapShapes}
-          selectedShapeIds={selectedShapeIds}
-          removeShapes={actions.removeShapes}
-          selectShapes={actions.selectShapes}
-          toggleShapeVisibility={actions.toggleShapesVisibility}
-          toggleShapeLock={actions.toggleShapesLock}
-          isLayoutPanelShown={isLayoutPanelShown}
-          disabled={disabled}
-        />
-      )}
-      {isZoomPanelShown && (
-        <Panel alignment='left' position='bottom' className='react-paint-editor-layouts-panel' data-edit={+isEditMode}>
-          <Button aria-label='Zoom out' className='react-paint-editor-zoom-button' icon={zoomOut} onClick={() => actions.setZoom('unzoom')} />
-          <Button className='react-paint-editor-zoom-button react-paint-editor-zoom-button-value' onClick={() => actions.setZoom('default')}>
-            {Math.round(view.zoom * 100)}%
-          </Button>
-          <Button aria-label='Zoom in' className='react-paint-editor-zoom-button' icon={zoomIn} onClick={() => actions.setZoom('zoom')} />
-        </Panel>
-      )}
-      {isEditMode && (
-        <>
-          <SettingsBar
+      <PaintProvider paint={paint}>
+        {isEditMode && (
+          <Toolbar
             disabled={disabled}
-            withZoom={withZoom}
-            saveShapes={actions.saveShapes}
-            width={view.displayWidth}
-            activeTool={activeTool}
-            availableTools={displayTools}
-            selectedShape={selection}
-            selectedShapeIds={selectedShapeIds}
-            removeShapes={actions.removeShapes}
-            updateShapesStyle={actions.updateShapesStyle}
-            layersManipulation={layersManipulation}
-            toggleLayoutPanel={() => {
-              setIsLayoutPanelShown(prev => !prev)
-            }}
-            isZoomPanelShown={isZoomPanelShown}
-            setIsZoomPanelShown={setIsZoomPanelShown}
-            updateToolSettings={actions.updateToolSettings}
+            withMoveTool={withZoom}
+            exportCanvasInFile={exportCanvasInFile}
+            saveFile={saveFile}
+            loadFile={onLoadFile}
+            addPicture={addPicture}
+            withExport={withExport}
+            withLoadAndSave={withLoadAndSave}
+            withUploadPicture={withUploadPicture}
+            withUrlPicture={withUrlPicture}
           />
-          <Loading isLoading={isLoading} />
-          <SnackbarContainer snackbarList={snackbarList} />
-        </>
-      )}
-      {contextMenu && <ContextMenu contextMenu={contextMenu} containerRef={rootRef} hasCopiedShapes={clipboard.hasContent} actions={actions} />}
+        )}
+        {children}
+        {isEditMode && layersManipulation && <Layouts isLayoutPanelShown={isLayoutPanelShown} disabled={disabled} />}
+        {isZoomPanelShown && <ZoomPanel isEditMode={isEditMode} />}
+        {isEditMode && (
+          <>
+            <SettingsBar
+              disabled={disabled}
+              withZoom={withZoom}
+              layersManipulation={layersManipulation}
+              toggleLayoutPanel={() => {
+                setIsLayoutPanelShown(prev => !prev)
+              }}
+              isZoomPanelShown={isZoomPanelShown}
+              setIsZoomPanelShown={setIsZoomPanelShown}
+            />
+            <Loading isLoading={isLoading} />
+            <SnackbarContainer snackbarList={snackbarList} />
+          </>
+        )}
+        <ContextMenu containerRef={rootRef} />
+      </PaintProvider>
     </div>
   )
 }

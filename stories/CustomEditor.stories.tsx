@@ -1,100 +1,150 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import type { ReactNode } from 'react'
 import { expect, userEvent, within } from 'storybook/test'
-import { Canvas, type EditorProps, getSelectedShapesTools, SELECTION_TOOL, useReactPaint } from '../src/index'
+import {
+  Canvas,
+  getSelectedShapesTools,
+  PaintProvider,
+  type ReactPaint,
+  SELECTION_TOOL,
+  shallowEqual,
+  usePaint,
+  usePaintState,
+  useReactPaint
+} from '../src/index'
 import './customEditor.css'
 
-/** A minimal editor, built only with editorProps: it does not use any component of the library editor */
-const MyEditor = ({ editorProps, children }: { editorProps: EditorProps; children: ReactNode }) => {
-  const { state, actions, editorRef } = editorProps
-  const selectedIds = state.selectedShapes.map(shape => shape.id)
-  const selectionTool = getSelectedShapesTools(state.selection, state.tools)
-  const strokeColors = selectionTool && 'strokeColor' in selectionTool.settings ? selectionTool.settings.strokeColor?.values : undefined
-  const contextMenuIds = state.contextMenu?.shapes.map(shape => shape.id) ?? []
+// Each part of the editor reads only what it shows, and renders again only when it changes
+
+const MyToolbar = () => {
+  const paint = usePaint()
+  const { actions } = paint
+  const { activeTool, tools, history } = usePaintState(
+    paint,
+    state => ({ activeTool: state.activeTool, tools: state.tools, history: state.history }),
+    shallowEqual
+  )
+  const selectedIds = usePaintState(paint, state => state.selectedShapeIds)
 
   return (
-    <div ref={editorRef} className='custom-editor'>
-      <div className='custom-editor-toolbar' role='toolbar'>
-        <button type='button' aria-pressed={state.activeTool.id === SELECTION_TOOL.id} onClick={() => actions.selectTool(SELECTION_TOOL.id)}>
-          select
-        </button>
-        {state.tools
-          .filter(tool => tool.type !== 'picture')
-          .map(tool => (
-            <button key={tool.id} type='button' aria-pressed={state.activeTool.id === tool.id} onClick={() => actions.selectTool(tool.id)}>
-              {tool.label ?? tool.type}
-            </button>
-          ))}
-        <button type='button' disabled={!state.history.canUndo} onClick={actions.undo}>
-          undo
-        </button>
-        <button type='button' disabled={!state.history.canRedo} onClick={actions.redo}>
-          redo
-        </button>
-        <button type='button' disabled={!selectedIds.length} onClick={() => actions.removeShapes(selectedIds)}>
-          delete
-        </button>
-      </div>
-      <div className='custom-editor-content'>
-        {children}
-        <div className='custom-editor-side'>
-          {strokeColors && (
-            <fieldset>
-              <legend>Stroke color</legend>
-              {strokeColors.map(color => (
-                <button
-                  key={color}
-                  type='button'
-                  aria-label={color}
-                  className='custom-editor-color'
-                  style={{ background: color }}
-                  onClick={() => actions.updateShapesStyle(selectedIds, 'strokeColor', color)}
-                />
-              ))}
-            </fieldset>
-          )}
-          <ul aria-label='Layers'>
-            {state.shapes.map(shape => (
-              <li key={shape.id} data-selected={selectedIds.includes(shape.id)} data-hovered={state.interaction.hoveredShape?.id === shape.id}>
-                <button type='button' onClick={() => actions.selectShapes([shape.id])}>
-                  {shape.type} - {shape.style?.strokeColor}
-                </button>
-              </li>
-            ))}
-          </ul>
-        </div>
-      </div>
-      {state.contextMenu && (
-        <div
-          role='menu'
-          className='custom-editor-context-menu'
-          style={{ left: state.contextMenu.clientPosition.x, top: state.contextMenu.clientPosition.y }}
-        >
-          <button
-            type='button'
-            role='menuitem'
-            onClick={() => {
-              actions.duplicateShapes(contextMenuIds, { translate: true, select: true })
-              actions.closeContextMenu()
-            }}
-          >
-            duplicate
+    <div className='custom-editor-toolbar' role='toolbar'>
+      <button type='button' aria-pressed={activeTool.id === SELECTION_TOOL.id} onClick={() => actions.selectTool(SELECTION_TOOL.id)}>
+        select
+      </button>
+      {tools
+        .filter(tool => tool.type !== 'picture')
+        .map(tool => (
+          <button key={tool.id} type='button' aria-pressed={activeTool.id === tool.id} onClick={() => actions.selectTool(tool.id)}>
+            {tool.label ?? tool.type}
           </button>
-          <button type='button' role='menuitem' onClick={actions.closeContextMenu}>
-            close
-          </button>
-        </div>
-      )}
+        ))}
+      <button type='button' disabled={!history.canUndo} onClick={actions.undo}>
+        undo
+      </button>
+      <button type='button' disabled={!history.canRedo} onClick={actions.redo}>
+        redo
+      </button>
+      <button type='button' disabled={!selectedIds.length} onClick={() => actions.removeShapes(selectedIds)}>
+        delete
+      </button>
     </div>
   )
 }
 
-const CustomEditor = () => {
-  const { editorProps, canvasProps } = useReactPaint({ width: 600, height: 400 })
+const MyStrokeColors = () => {
+  const paint = usePaint()
+  const selectedIds = usePaintState(paint, state => state.selectedShapeIds)
+  const strokeColors = usePaintState(paint, state => {
+    const selectionTool = getSelectedShapesTools(state.selection, state.tools)
+    return selectionTool && 'strokeColor' in selectionTool.settings ? selectionTool.settings.strokeColor?.values : undefined
+  })
+
+  return strokeColors ? (
+    <fieldset>
+      <legend>Stroke color</legend>
+      {strokeColors.map(color => (
+        <button
+          key={color}
+          type='button'
+          aria-label={color}
+          className='custom-editor-color'
+          style={{ background: color }}
+          onClick={() => paint.actions.updateShapesStyle(selectedIds, 'strokeColor', color)}
+        />
+      ))}
+    </fieldset>
+  ) : null
+}
+
+const MyLayers = () => {
+  const paint = usePaint()
+  const shapes = usePaintState(paint, state => state.shapes)
+  const selectedIds = usePaintState(paint, state => state.selectedShapeIds)
+  // reacts to the hovered shape
+  const hoveredId = usePaintState(paint, state => state.interaction.hoveredShape?.id)
 
   return (
-    <MyEditor editorProps={editorProps}>
-      <Canvas canvasProps={canvasProps} />
+    <ul aria-label='Layers'>
+      {shapes.map(shape => (
+        <li key={shape.id} data-selected={selectedIds.includes(shape.id)} data-hovered={hoveredId === shape.id}>
+          <button type='button' onClick={() => paint.actions.selectShapes([shape.id])}>
+            {shape.type} - {shape.style?.strokeColor}
+          </button>
+        </li>
+      ))}
+    </ul>
+  )
+}
+
+/** Context menu of the editor, opened by a right click on the canvas */
+const MyContextMenu = () => {
+  const paint = usePaint()
+  const contextMenu = usePaintState(paint, state => state.contextMenu)
+  if (!contextMenu) return null
+  const contextMenuIds = contextMenu.shapes.map(shape => shape.id)
+
+  return (
+    <div role='menu' className='custom-editor-context-menu' style={{ left: contextMenu.clientPosition.x, top: contextMenu.clientPosition.y }}>
+      <button
+        type='button'
+        role='menuitem'
+        onClick={() => {
+          paint.actions.duplicateShapes(contextMenuIds, { translate: true, select: true })
+          paint.actions.closeContextMenu()
+        }}
+      >
+        duplicate
+      </button>
+      <button type='button' role='menuitem' onClick={paint.actions.closeContextMenu}>
+        close
+      </button>
+    </div>
+  )
+}
+
+/** A minimal editor, built only with the canvas handle: it does not use any component of the library editor */
+const MyEditor = ({ paint, children }: { paint: ReactPaint; children: ReactNode }) => (
+  <PaintProvider paint={paint}>
+    <div ref={paint.editorRef} className='custom-editor'>
+      <MyToolbar />
+      <div className='custom-editor-content'>
+        {children}
+        <div className='custom-editor-side'>
+          <MyStrokeColors />
+          <MyLayers />
+        </div>
+      </div>
+      <MyContextMenu />
+    </div>
+  </PaintProvider>
+)
+
+const CustomEditor = () => {
+  const paint = useReactPaint({ width: 600, height: 400 })
+
+  return (
+    <MyEditor paint={paint}>
+      <Canvas paint={paint} />
     </MyEditor>
   )
 }
@@ -117,38 +167,61 @@ export const Default: Story = {
     docs: {
       description: {
         story:
-          'An editor built from scratch with `editorProps` only: `state` to render, `actions` to act on the canvas, and `editorRef` to set on the root element. It reacts to the hovered shape (`state.interaction.hoveredShape`) and handles its own context menu (`state.contextMenu`).'
+          'An editor built from scratch with the canvas handle only: `actions` to act on the canvas, `editorRef` to set on the root element, and `usePaintState` to read the state. Each part reads only what it shows with a selector, and renders again only when it changes: the toolbar does not render while a shape is dragged. The parts get the handle with `usePaint`, under a `PaintProvider`. The editor reacts to the hovered shape (`state.interaction.hoveredShape`) and handles its own context menu (`state.contextMenu`).'
       },
       source: {
-        code: `const MyEditor = ({ editorProps, children }) => {
-  const { state, actions, editorRef } = editorProps
-  const selectedIds = state.selectedShapes.map(shape => shape.id)
+        code: `const MyToolbar = () => {
+  const paint = usePaint()
+  // an object built by the selector needs shallowEqual
+  const { activeTool, tools, history } = usePaintState(
+    paint,
+    state => ({ activeTool: state.activeTool, tools: state.tools, history: state.history }),
+    shallowEqual
+  )
 
   return (
-    <div ref={editorRef}>
-      {state.tools.map(tool => (
-        <button key={tool.id} aria-pressed={state.activeTool.id === tool.id} onClick={() => actions.selectTool(tool.id)}>
+    <div>
+      {tools.map(tool => (
+        <button key={tool.id} aria-pressed={activeTool.id === tool.id} onClick={() => paint.actions.selectTool(tool.id)}>
           {tool.label ?? tool.type}
         </button>
       ))}
-      <button disabled={!state.history.canUndo} onClick={actions.undo}>undo</button>
-      {children}
-      <ul>
-        {state.shapes.map(shape => (
-          <li key={shape.id} data-hovered={state.interaction.hoveredShape?.id === shape.id}>
-            <button onClick={() => actions.selectShapes([shape.id])}>{shape.type}</button>
-          </li>
-        ))}
-      </ul>
+      <button disabled={!history.canUndo} onClick={paint.actions.undo}>undo</button>
     </div>
   )
 }
 
-const App = () => {
-  const { editorProps, canvasProps } = useReactPaint()
+const MyLayers = () => {
+  const paint = usePaint()
+  const shapes = usePaintState(paint, state => state.shapes)
+  const hoveredId = usePaintState(paint, state => state.interaction.hoveredShape?.id)
+
   return (
-    <MyEditor editorProps={editorProps}>
-      <Canvas canvasProps={canvasProps} />
+    <ul>
+      {shapes.map(shape => (
+        <li key={shape.id} data-hovered={hoveredId === shape.id}>
+          <button onClick={() => paint.actions.selectShapes([shape.id])}>{shape.type}</button>
+        </li>
+      ))}
+    </ul>
+  )
+}
+
+const MyEditor = ({ paint, children }) => (
+  <PaintProvider paint={paint}>
+    <div ref={paint.editorRef}>
+      <MyToolbar />
+      {children}
+      <MyLayers />
+    </div>
+  </PaintProvider>
+)
+
+const App = () => {
+  const paint = useReactPaint()
+  return (
+    <MyEditor paint={paint}>
+      <Canvas paint={paint} />
     </MyEditor>
   )
 }`,

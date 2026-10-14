@@ -3,11 +3,13 @@ import { useCallback, useEffect, useState, useTransition } from 'react'
 
 type UseMenuProps = {
   trigger?: 'click' | 'hover'
-  buttonElt: HTMLElement | null
   disabled?: boolean
 }
 
-const useMenu = ({ trigger = 'click', disabled = false, buttonElt }: UseMenuProps) => {
+/** Opens a menu from the element given to the returned ref, which may be mounted after the menu */
+const useMenu = ({ trigger = 'click', disabled = false }: UseMenuProps = {}) => {
+  // the element is kept in a state, so that the listeners are set once it is mounted
+  const [buttonElt, setButtonElt] = useState<HTMLElement | null>(null)
   const [isOpen, setIsOpen] = useState(false)
   const [, startTransition] = useTransition()
 
@@ -60,6 +62,6 @@ const useMenu = ({ trigger = 'click', disabled = false, buttonElt }: UseMenuProp
     }
   }, [buttonElt, isOpen, disabled, trigger])
 
-  return { isOpen, trigger, closeMenu }
+  return { ref: setButtonElt, isOpen, trigger, closeMenu }
 }
 export default useMenu

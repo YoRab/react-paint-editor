@@ -126,7 +126,7 @@ const Playground = (args: PlaygroundProps) => {
     canvasSelectionWidth
   }
 
-  const { editorProps, canvasProps } = useReactPaint({
+  const paint = useReactPaint({
     width,
     height,
     mode,
@@ -135,8 +135,8 @@ const Playground = (args: PlaygroundProps) => {
   })
 
   return (
-    <Editor editorProps={editorProps} options={editorOptions}>
-      <Canvas canvasProps={canvasProps} options={canvasOptions} />
+    <Editor paint={paint} options={editorOptions}>
+      <Canvas paint={paint} options={canvasOptions} />
     </Editor>
   )
 }
@@ -439,7 +439,7 @@ export const Default: Story = {
       canvasSelectionWidth
     }
 
-    const { editorProps, canvasProps } = useReactPaint({
+    const paint = useReactPaint({
       width,
       height,
       mode,
@@ -448,8 +448,8 @@ export const Default: Story = {
     })
 
     return (
-      <Editor editorProps={editorProps} options={editorOptions}>
-        <Canvas canvasProps={canvasProps} options={canvasOptions} />
+      <Editor paint={paint} options={editorOptions}>
+        <Canvas paint={paint} options={canvasOptions} />
       </Editor>
     )       
         `

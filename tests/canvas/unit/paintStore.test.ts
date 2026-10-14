@@ -1,0 +1,364 @@
+import { createPaintStore, type PaintStore } from '@canvas/store/paintStore'
+import { describe, expect, it, vi } from 'vitest'
+import { createLoadedStore, RECTS, stubPath2D } from './helpers'
+
+stubPath2D()
+
+const getIds = (store: PaintStore) => store.getState().document.shapes.map(shape => shape.id)
+
+const getSelectedIds = (store: PaintStore) => store.getEditorState().selectedShapes.map(shape => shape.id)
+
+const listenEvents = (store: PaintStore) => {
+  const events = { dataChanged: vi.fn(), selectionChanged: vi.fn(), toolChanged: vi.fn() }
+  store.registerEvent('dataChanged', events.dataChanged)
+  store.registerEvent('selectionChanged', events.selectionChanged)
+  store.registerEvent('toolChanged', events.toolChanged)
+  return events
+}
+
+describe('createPaintStore', () => {
+  it('builds the state from the props', () => {
+    const store = createPaintStore({ width: 800, height: 400, mode: 'viewer', options: { grid: 20, canZoom: 'always' } })
+    const state = store.getEditorState()
+    expect(state).toMatchObject({ width: 800, height: 400, mode: 'viewer', gridGap: 20, features: { edition: false, zoom: true } })
+    expect(state.activeTool.type).toBe('selection')
+    expect(state.tools.length).toBeGreaterThan(0)
+    expect(state.shapes).toEqual([])
+  })
+
+  it('loads the shapes of the props once, as remote data', async () => {
+    const store = createPaintStore({ shapes: RECTS })
+    const events = listenEvents(store)
+    store.init()
+    store.init()
+
+    await vi.waitFor(() => expect(store.getState().document.shapes).toHaveLength(3))
+    expect(events.dataChanged).toHaveBeenCalledTimes(1)
+    expect(events.dataChanged).toHaveBeenCalledWith(expect.objectContaining({ config: { width: 1000, height: 600 } }), 'remote')
+    expect(store.getEditorState().history.canUndo).toBe(false)
+  })
+
+  it('emits no event before any change', () => {
+    const store = createPaintStore({ shapes: RECTS })
+    const events = listenEvents(store)
+    store.setConfig({ shapes: RECTS })
+    expect(events.dataChanged).not.toHaveBeenCalled()
+    expect(events.selectionChanged).not.toHaveBeenCalled()
+    expect(events.toolChanged).not.toHaveBeenCalled()
+  })
+})
+
+describe('actions', () => {
+  it('selects shapes, all the unlocked shapes, or none', async () => {
+    const store = await createLoadedStore()
+    const [first, second, third] = getIds(store)
+    store.actions.selectShapes([second!])
+    expect(getSelectedIds(store)).toEqual([second])
+
+    store.actions.setShapesLocked([third!], true)
+    store.actions.selectAllShapes()
+    expect(getSelectedIds(store)).toEqual([first, second])
+
+    store.actions.clearSelection()
+    expect(store.getEditorState().selection).toBeUndefined()
+  })
+
+  it('removes shapes, and the selection with them', async () => {
+    const store = await createLoadedStore()
+    const [first, second, third] = getIds(store)
+    store.actions.selectShapes([first!])
+    store.actions.removeShapes([first!])
+    expect(getIds(store)).toEqual([second, third])
+    expect(store.getEditorState().selection).toBeUndefined()
+    expect(store.getEditorState().history).toEqual({ canUndo: true, canRedo: false, canClear: true })
+
+    store.actions.undo()
+    expect(getIds(store)).toEqual([first, second, third])
+    store.actions.redo()
+    expect(getIds(store)).toEqual([second, third])
+  })
+
+  it('duplicates shapes and selects the copies', async () => {
+    const store = await createLoadedStore()
+    const [first] = getIds(store)
+    store.actions.duplicateShapes([first!], { translate: true, select: true })
+    const ids = getIds(store)
+    expect(ids).toHaveLength(4)
+    expect(ids[1]).toBe(first)
+    expect(getSelectedIds(store)).toEqual([ids[0]])
+  })
+
+  it('reorders shapes', async () => {
+    const store = await createLoadedStore()
+    const [first, second, third] = getIds(store)
+    store.actions.moveShapes([third!], 'first')
+    expect(getIds(store)).toEqual([third, first, second])
+    store.actions.moveShapes([third!], 'backward')
+    expect(getIds(store)).toEqual([first, third, second])
+    store.actions.swapShapes(first!, second!)
+    expect(getIds(store)).toEqual([third, second, first])
+  })
+
+  it('sets the visibility and the lock whatever their current value', async () => {
+    const store = await createLoadedStore()
+    const ids = getIds(store)
+    const getFlags = () => store.getState().document.shapes.map(shape => `${shape.visible !== false}/${!!shape.locked}`)
+
+    store.actions.setShapesVisibility(ids, false)
+    store.actions.setShapesVisibility(ids, false)
+    expect(getFlags()).toEqual(['false/false', 'false/false', 'false/false'])
+
+    store.actions.toggleShapesLock([ids[0]!])
+    store.actions.setShapesLocked(ids, true)
+    expect(getFlags()).toEqual(['false/true', 'false/true', 'false/true'])
+  })
+
+  it('copies, cuts and pastes shapes', async () => {
+    const store = await createLoadedStore()
+    const [first, second] = getIds(store)
+    expect(store.getEditorState().clipboard.hasContent).toBe(false)
+
+    store.actions.copy([first!])
+    expect(store.getEditorState().clipboard.hasContent).toBe(true)
+    store.actions.paste()
+    const pasted = getIds(store)[0]!
+    expect(getIds(store)).toHaveLength(4)
+    expect(pasted).not.toBe(first)
+    expect(getSelectedIds(store)).toEqual([pasted])
+
+    store.actions.cut([second!])
+    expect(getIds(store)).not.toContain(second)
+  })
+
+  it('selects the known tools only, and clears the selection', async () => {
+    const store = await createLoadedStore()
+    store.actions.selectShapes([getIds(store)[0]!])
+    store.actions.selectTool('react-paint-rect')
+    expect(store.getEditorState().activeTool.id).toBe('react-paint-rect')
+    expect(store.getEditorState().selection).toBeUndefined()
+
+    store.actions.selectTool('unknown-tool')
+    expect(store.getEditorState().activeTool.id).toBe('react-paint-rect')
+  })
+
+  it('updates the settings of a tool', () => {
+    const store = createPaintStore()
+    store.actions.updateToolSettings('react-paint-rect', 'strokeColor', 'blue')
+    const rectTool = store.getEditorState().tools.find(tool => tool.id === 'react-paint-rect')
+    expect(rectTool?.type === 'rect' && rectTool.settings.strokeColor.default).toBe('blue')
+
+    // same value, or unknown tool, like the group tool of a selection
+    const { tools } = store.getEditorState()
+    store.actions.updateToolSettings('react-paint-rect', 'strokeColor', 'blue')
+    store.actions.updateToolSettings('react-paint-rect-react-paint-circle', 'strokeColor', 'red')
+    expect(store.getEditorState().tools).toBe(tools)
+  })
+
+  it('clears the canvas with the last clear callback, keeping the history', async () => {
+    const store = await createLoadedStore({ options: { clearCallback: () => [RECTS[0]!] } })
+    store.setConfig({ options: { clearCallback: () => [RECTS[0]!, RECTS[1]!] } })
+    store.actions.clearCanvas()
+    await vi.waitFor(() => expect(getIds(store)).toHaveLength(2))
+    expect(store.getEditorState().history.canUndo).toBe(true)
+
+    store.setConfig({ options: { clearCallback: 'empty' } })
+    store.actions.clearCanvas()
+    expect(getIds(store)).toEqual([])
+  })
+
+  it('zooms, moves and resets the view', () => {
+    const store = createPaintStore({ options: { size: 'infinite' } })
+    store.actions.setZoom('zoom')
+    expect(store.getEditorState().view.zoom).toBeGreaterThan(1)
+
+    store.actions.setOffset([-50, -20])
+    expect(store.getEditorState().view.offset).toEqual([-50, -20])
+
+    store.actions.resetZoom()
+    expect(store.getEditorState().view).toMatchObject({ zoom: 1, offset: [0, 0] })
+  })
+
+  it('keeps a fixed canvas inside its bounds', () => {
+    const store = createPaintStore()
+    store.actions.setOffset([-50, -20])
+    expect(store.getEditorState().view.offset).toEqual([0, 0])
+  })
+
+  it('sets the grid gap', () => {
+    const store = createPaintStore()
+    store.actions.setGridGap(40)
+    expect(store.getEditorState().gridGap).toBe(40)
+  })
+})
+
+describe('events', () => {
+  it('emits dataChanged once for each change of the history, as user data', async () => {
+    const store = await createLoadedStore()
+    const events = listenEvents(store)
+    const [first] = getIds(store)
+
+    store.actions.removeShapes([first!])
+    expect(events.dataChanged).toHaveBeenCalledTimes(1)
+    expect(events.dataChanged.mock.calls[0]![0].shapes).toHaveLength(2)
+    expect(events.dataChanged.mock.calls[0]![1]).toBe('user')
+
+    store.actions.selectAllShapes()
+    store.actions.setGridGap(20)
+    expect(events.dataChanged).toHaveBeenCalledTimes(1)
+
+    store.actions.undo()
+    expect(events.dataChanged).toHaveBeenCalledTimes(2)
+    expect(events.dataChanged.mock.calls[1]![1]).toBe('remote')
+  })
+
+  it('emits dataChanged when the size of the canvas changes', async () => {
+    const store = await createLoadedStore()
+    const events = listenEvents(store)
+    store.setConfig({ width: 800 })
+    expect(events.dataChanged).toHaveBeenCalledTimes(1)
+    expect(events.dataChanged.mock.calls[0]![0].config).toEqual({ width: 800, height: 600 })
+  })
+
+  it('emits selectionChanged only when the selected shapes change', async () => {
+    const store = await createLoadedStore()
+    const events = listenEvents(store)
+    const [first, second] = getIds(store)
+
+    store.actions.selectShapes([first!, second!])
+    expect(events.selectionChanged).toHaveBeenCalledTimes(1)
+    expect(events.selectionChanged.mock.calls[0]![0].map((shape: { id: string }) => shape.id)).toEqual([first, second])
+
+    // The selection object is rebuilt, with the same shapes
+    store.actions.selectShapes([first!, second!])
+    store.actions.updateShapesStyle([first!], 'strokeColor', 'blue')
+    expect(events.selectionChanged).toHaveBeenCalledTimes(1)
+
+    store.actions.clearSelection()
+    expect(events.selectionChanged).toHaveBeenCalledTimes(2)
+    expect(events.selectionChanged).toHaveBeenLastCalledWith([])
+  })
+
+  it('emits toolChanged when the active tool changes', () => {
+    const store = createPaintStore()
+    const events = listenEvents(store)
+    store.actions.selectTool('react-paint-rect')
+    store.actions.selectTool('react-paint-rect')
+    expect(events.toolChanged).toHaveBeenCalledTimes(1)
+    expect(events.toolChanged).toHaveBeenCalledWith(expect.objectContaining({ id: 'react-paint-rect' }))
+
+    // The active tool is removed from the tools: the selection tool is active
+    store.setConfig({ options: { availableTools: [{ type: 'brush', id: 'react-paint-brush' }] } })
+    expect(events.toolChanged).toHaveBeenCalledTimes(2)
+    expect(events.toolChanged).toHaveBeenLastCalledWith(expect.objectContaining({ id: 'react-paint-selection' }))
+  })
+
+  it('stops emitting to an unregistered listener', () => {
+    const store = createPaintStore()
+    const listener = vi.fn()
+    const unregister = store.registerEvent('toolChanged', listener)
+    unregister()
+    store.actions.selectTool('react-paint-rect')
+    expect(listener).not.toHaveBeenCalled()
+  })
+})
+
+describe('setConfig', () => {
+  it('does not notify when the props are equal in value', () => {
+    const store = createPaintStore({ options: { availableTools: [{ type: 'rect', id: 'react-paint-rect' }], canZoom: 'always' } })
+    const listener = vi.fn()
+    store.subscribe(listener)
+    const stateBefore = store.getEditorState()
+
+    store.setConfig({ options: { availableTools: [{ type: 'rect', id: 'react-paint-rect' }], canZoom: 'always', clearCallback: () => [] } })
+    expect(listener).not.toHaveBeenCalled()
+    expect(store.getEditorState()).toBe(stateBefore)
+  })
+
+  it('keeps the tool settings when the tools are unchanged', () => {
+    const store = createPaintStore({ options: { availableTools: [{ type: 'rect', id: 'react-paint-rect' }] } })
+    store.actions.updateToolSettings('react-paint-rect', 'strokeColor', 'blue')
+    store.setConfig({ options: { availableTools: [{ type: 'rect', id: 'react-paint-rect' }], canZoom: 'always' } })
+    const [rectTool] = store.getEditorState().tools
+    expect(rectTool?.type === 'rect' && rectTool.settings.strokeColor.default).toBe('blue')
+    expect(store.getEditorState().features.zoom).toBe(true)
+  })
+
+  it('resets the tools when they change in value', () => {
+    const store = createPaintStore({ options: { availableTools: [{ type: 'rect', id: 'react-paint-rect' }] } })
+    store.actions.updateToolSettings('react-paint-rect', 'strokeColor', 'blue')
+    store.setConfig({ options: { availableTools: [{ type: 'rect', id: 'react-paint-rect', settings: { strokeColor: { default: 'red' } } }] } })
+    const [rectTool] = store.getEditorState().tools
+    expect(rectTool?.type === 'rect' && rectTool.settings.strokeColor.default).toBe('red')
+  })
+})
+
+describe('consistency rules', () => {
+  it('ends the drawing of a polygon when another shape is selected', async () => {
+    const store = await createLoadedStore()
+    const [first, second] = getIds(store)
+    store.actions.selectShapes([first!])
+    store.setSelectionMode({ mode: 'preview' })
+    store.actions.selectShapes([second!])
+    expect(store.getState().interaction.selectionMode).toEqual({ mode: 'default' })
+  })
+
+  it('notifies a change of the hover mode only when its values change', () => {
+    const store = createPaintStore()
+    const listener = vi.fn()
+    store.subscribe(listener)
+
+    store.setHoverMode({ mode: 'resize', anchor: [1, 1] })
+    store.setHoverMode({ mode: 'resize', anchor: [1, 1] })
+    expect(listener).toHaveBeenCalledTimes(1)
+    store.setHoverMode({ mode: 'resize', anchor: [0, 1] })
+    store.setHoverMode({ mode: 'resize', anchor: 2 })
+    store.setHoverMode({ mode: 'resize', anchor: 2 })
+    expect(listener).toHaveBeenCalledTimes(3)
+  })
+
+  it('refreshes the shapes only when a setting they depend on changes', async () => {
+    const store = await createLoadedStore({ options: { size: 'infinite' } })
+    const { shapes } = store.getState().document
+
+    // Moving the view, or changing the grid, keeps the computed shapes
+    store.actions.setOffset([-30, -40])
+    store.actions.setGridGap(20)
+    expect(store.getState().document.shapes).toBe(shapes)
+
+    // The size of the selection anchors depends on the zoom
+    store.actions.setZoom('zoom')
+    expect(store.getState().document.shapes).not.toBe(shapes)
+    expect(store.getState().document.shapes.map(shape => shape.id)).toEqual(shapes.map(shape => shape.id))
+  })
+
+  it('scrolls the view by the auto scroll speed', () => {
+    const store = createPaintStore({ options: { size: 'infinite' } })
+    store.setMoveAcceleration([4, -2])
+    store.applyMoveAcceleration()
+    expect(store.getEditorState().view.offset).toEqual([-4, 2])
+    store.applyMoveAcceleration(0.5)
+    expect(store.getEditorState().view.offset).toEqual([-6, 3])
+  })
+
+  it('stops the auto scroll with the selection frame', () => {
+    const store = createPaintStore()
+    store.setSelectionMode({ mode: 'selectionFrame' })
+    store.setMoveAcceleration([5, 0])
+    store.setSelectionMode({ mode: 'default' })
+    expect(store.getState().interaction.moveAcceleration).toEqual([0, 0])
+  })
+
+  it('tracks the focus, unless the canvas can neither be edited nor zoomed', () => {
+    const store = createPaintStore()
+    const editorElement = new EventTarget() as HTMLElement
+    store.setEditorElement(editorElement)
+
+    editorElement.dispatchEvent(new Event('focusin'))
+    expect(store.getEditorState().interaction.focus).toEqual({ component: true, canvas: false })
+
+    store.setConfig({ mode: 'viewer' })
+    expect(store.getEditorState().interaction.focus).toEqual({ component: false, canvas: false })
+    editorElement.dispatchEvent(new Event('focusin'))
+    expect(store.getEditorState().interaction.focus.component).toBe(false)
+  })
+})

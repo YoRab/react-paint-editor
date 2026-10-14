@@ -90,6 +90,7 @@
     "react-dom": "18.x"
   },
   "scripts": {
+    "bench": "vitest run --project=perf --reporter=default",
     "build": "rm -rf dist && vite build --config vite.config.umd.ts && vite build",
     "build-storybook": "storybook build",
     "check-package": "pnpm dlx publint && pnpm dlx @arethetypeswrong/cli --pack . --ignore-rules cjs-resolves-to-esm false-esm --exclude-entrypoints react-paint.css canvas/canvas.css editor/editor.css",
