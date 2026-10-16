@@ -1,5 +1,6 @@
 import { ZOOM_DETECTION_OFFSET, ZOOM_STEPS } from '@canvas/constants/zoom'
 import useEventListener from '@canvas/hooks/useEventListener'
+import type { PaintStore } from '@canvas/store/paintStore'
 import { getCenter, getDistanceBetweenPoints } from '@canvas/utils/trigo'
 import { calculateNewZoomAndOffset } from '@canvas/utils/zoom'
 import type { CanvasSize, Size } from '@common/types/Canvas'
@@ -75,20 +76,15 @@ const getCanvasTransformation = ({
 }
 
 type UsePinchZoomProps = {
+  store: PaintStore
   canvasElt: HTMLElement | null
-  canvasTransformation: { offset: Point; zoom: number }
-  canvasSize: CanvasSize
-  size: Size
-  setCanvasTransformation: (transformation: { offset: Point; zoom: number }) => void
 }
 
-const usePinchZoomAndMove = ({ canvasElt, canvasTransformation, canvasSize, size, setCanvasTransformation }: UsePinchZoomProps) => {
+const usePinchZoomAndMove = ({ store, canvasElt }: UsePinchZoomProps) => {
   const evCache = useRef<PointerEvent[]>([])
   const [hasFingerOnElement, setHasFingerOnElement] = useState(evCache.current.length > 0)
 
   const pinchData = useRef<PinchData>(null)
-  const currentTransformation = useRef(canvasTransformation)
-  currentTransformation.current = canvasTransformation
 
   const scaleOnPosition = useCallback(
     ({
@@ -112,11 +108,12 @@ const usePinchZoomAndMove = ({ canvasElt, canvasTransformation, canvasSize, size
     }) => {
       if (!canvasElt || !currentDiff || !startDiff) return
 
+      const { config, view } = store.getState()
       const canvasBoundingRect = canvasElt.getBoundingClientRect()
       const canvasTransformation = getCanvasTransformation({
         canvasBoundingRect,
-        canvasSize,
-        size,
+        canvasSize: view.canvasSize,
+        size: config.options.size,
         startDiff,
         startZoom,
         startCenter,
@@ -127,9 +124,9 @@ const usePinchZoomAndMove = ({ canvasElt, canvasTransformation, canvasSize, size
         isZooming
       })
 
-      setCanvasTransformation(canvasTransformation)
+      store.setTransformation(canvasTransformation)
     },
-    [canvasElt, canvasSize, size, setCanvasTransformation]
+    [canvasElt, store]
   )
 
   const handleDown = (ev: PointerEvent) => {
@@ -139,12 +136,13 @@ const usePinchZoomAndMove = ({ canvasElt, canvasTransformation, canvasSize, size
       ev.stopPropagation()
 
       const { diff: startDiff, center: startCenter } = getDiffAndCenter(evCache.current as [PointerEvent, PointerEvent])
+      const { transformation } = store.getState().view
 
       pinchData.current = {
         startDiff,
         startCenter,
-        startZoom: currentTransformation.current.zoom,
-        startOffset: currentTransformation.current.offset,
+        startZoom: transformation.zoom,
+        startOffset: transformation.offset,
         isMoving: false,
         isZooming: false
       }

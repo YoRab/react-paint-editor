@@ -4,7 +4,7 @@ import { type RefObject, useEffect, useState } from 'react'
 type useDragType = {
   disabled?: boolean
   ref: RefObject<HTMLDivElement | null>
-  shape: ShapeEntity
+  shape: Pick<ShapeEntity, 'id'>
   layoutDragging: string | undefined
   setLayoutDragging: (shapeId: string | undefined) => void
   handleSelect: (ids: string[]) => void

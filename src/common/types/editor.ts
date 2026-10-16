@@ -1,10 +1,10 @@
 import type { Size } from '@common/types/Canvas'
 import type { SelectionModeData } from '@common/types/Mode'
-import type { Point, ShapeEntity, StateData, StyleShape } from '@common/types/Shapes'
+import type { ExportedDrawableShape, Point, ShapeEntity, StateData, StyleShape } from '@common/types/Shapes'
 import type { CustomTool, ToolsType } from '@common/types/tools'
 
 /*
- * Public contract between the canvas module (which implements it in useReactPaint)
+ * Public contract between the canvas module (which implements it with useReactPaint)
  * and any editor (the one provided by the library or a custom one).
  */
 
@@ -58,6 +58,8 @@ export type EditorState = {
   /** Selected shape, or group of shapes when several are selected */
   selection: ShapeEntity | undefined
   selectedShapes: ShapeEntity[]
+  /** Ids of the selected shapes, to give to the actions. The array keeps its identity while the same shapes are selected */
+  selectedShapeIds: string[]
   /** One of the selection tool, the move tool or the tools */
   activeTool: ToolsType
   tools: CustomTool[]
@@ -105,15 +107,10 @@ export type EditorActions = {
   exportData: () => void
   setZoom: (action: ZoomAction) => void
   resetZoom: () => void
+  /** Moves the view: the offset is kept inside the canvas when its size is fixed */
+  setOffset: (offset: Point) => void
   setGridGap: (gap: number) => void
   closeContextMenu: () => void
-}
-
-export type EditorProps = {
-  state: EditorState
-  actions: EditorActions
-  /** Callback ref to set on the editor root element, used to scope keyboard shortcuts */
-  editorRef: (element: HTMLElement | null) => void
 }
 
 export type ReactPaintEvents = {
@@ -123,3 +120,24 @@ export type ReactPaintEvents = {
 }
 
 export type ReactPaintEventName = keyof ReactPaintEvents
+
+/**
+ * Handle returned by useReactPaint, given to the Canvas and Editor components. Its identity never changes:
+ * read the state with usePaintState during a render, or with getState in a handler.
+ */
+export type ReactPaint = {
+  actions: EditorActions
+  /** Current state, without subscription. The same object is returned as long as nothing changes */
+  getState: () => EditorState
+  /** Calls the listener after each change of the state. Returns the function that unsubscribes it */
+  subscribe: (listener: () => void) => () => void
+  /** Returns the function that unregisters the listener */
+  registerEvent: <E extends ReactPaintEventName>(event: E, fn: ReactPaintEvents[E]) => () => void
+  /** Unregisters the listener, or all the listeners of the event when none is given */
+  unregisterEvent: <E extends ReactPaintEventName>(event: E, fn?: ReactPaintEvents[E]) => void
+  resetCanvas: (shapes?: ExportedDrawableShape[], clearHistory?: boolean) => void
+  getCurrentImage: (view: ExportView) => string
+  getCurrentData: () => StateData
+  /** Callback ref to set on the editor root element, used to scope the interactions and the keyboard shortcuts */
+  editorRef: (element: HTMLElement | null) => void
+}

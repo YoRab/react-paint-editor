@@ -1,181 +1,52 @@
 import CanvasElement from '@canvas/components/Canvas'
 import { type CanvasOptions, DEFAULT_CANVAS_OPTIONS } from '@canvas/constants/app'
-import CanvasContext from '@canvas/context/CanvasContext'
+import useAutoScroll from '@canvas/hooks/useAutoScroll'
 import useKeyboard from '@canvas/hooks/useKeyboard'
 import useResizeObserver from '@canvas/hooks/useResizeObserver'
-import type { CanvasProps, InternalCanvasProps } from '@canvas/types/canvasProps'
+import { getPaintStore } from '@canvas/store/internal'
+import type { ReactPaint } from '@common/types/editor'
 import { withDefaults } from '@common/utils/object'
-import { type CSSProperties, useCallback, useMemo, useRef } from 'react'
+import { type CSSProperties, useCallback, useEffect, useRef, useSyncExternalStore } from 'react'
 import './index.css'
 
 type CanvasComponentProps = {
-  canvasProps: CanvasProps
+  /** Handle returned by useReactPaint */
+  paint: ReactPaint
   className?: string | undefined
   style?: CSSProperties | undefined
   options?: CanvasOptions | undefined
 }
 
-const Canvas = ({ options, className, style, canvasProps }: CanvasComponentProps) => {
-  const {
-    shapes,
-    selectedShape,
-    selectionFrame,
-    hoveredShape,
-    addShape,
-    setSelectedShape,
-    selectAllShapes,
-    setSelectionFrame,
-    refreshSelectedShapes,
-    refreshHoveredShape,
-    duplicateShapes,
-    removeShape,
-    updateShape,
-    backwardShape,
-    forwardShape,
-    saveShapes,
-    canvasRef,
-    width,
-    height,
-    settings,
-    setCanvasSize,
-    setCanvasOffset,
-    activeTool,
-    setActiveTool,
-    isInsideComponent,
-    isInsideCanvas,
-    isEditMode,
-    canvas: { withSkeleton, withFrameSelection, withContextMenu, canGrow, canShrink },
-    canvasOffsetStartData,
-    setCanvasOffsetStartData,
-    selectionMode,
-    setSelectionMode,
-    setCanvasMoveAcceleration,
-    isShiftPressed,
-    isAltPressed,
-    isSpacePressed,
-    hasCopiedShape,
-    copy,
-    cut,
-    paste,
-    setShiftPressed,
-    setAltPressed,
-    setCanvasZoom,
-    resetZoom,
-    setIsSpacePressed
-  } = canvasProps as unknown as InternalCanvasProps
+const Canvas = ({ paint, options, className, style }: CanvasComponentProps) => {
+  const store = getPaintStore(paint)
+  // only what changes the DOM: the gestures do not render this component
+  const getView = useCallback(() => store.selectors.selectCanvasView(store.getState()), [store])
+  const view = useSyncExternalStore(store.subscribe, getView, getView)
+  const { width, height, canvasSize, canGrow, canShrink } = view
 
   const { canvasBackgroundColor, canvasSelectionColor, canvasSelectionWidth } = withDefaults(DEFAULT_CANVAS_OPTIONS, options)
 
   const containerRef = useRef<HTMLDivElement>(null)
 
+  // The size is applied in the next frame: the store renders the components synchronously, and a render inside
+  // the ResizeObserver callback would resize the observed element again during the same loop
+  const resizeFrame = useRef(0)
+  useEffect(() => () => cancelAnimationFrame(resizeFrame.current), [])
   const onResized = useCallback(
     (measuredWidth: number) => {
-      const measuredHeight = (height * measuredWidth) / width
-      const scaleRatio = measuredWidth / width
-      setCanvasSize({ realWidth: width, realHeight: height, width: measuredWidth, height: measuredHeight, scaleRatio })
+      cancelAnimationFrame(resizeFrame.current)
+      resizeFrame.current = requestAnimationFrame(() => {
+        const measuredHeight = (height * measuredWidth) / width
+        const scaleRatio = measuredWidth / width
+        store.setCanvasSize({ realWidth: width, realHeight: height, width: measuredWidth, height: measuredHeight, scaleRatio })
+      })
     },
-    [width, height, setCanvasSize]
+    [width, height, store]
   )
 
-  useKeyboard({
-    isInsideComponent,
-    isInsideCanvas,
-    isEditingText: selectionMode.mode === 'textedition',
-    settings,
-    selectedShape,
-    hasCopiedShape,
-    copy,
-    cut,
-    paste,
-    selectAllShapes,
-    setSelectedShape,
-    removeShape,
-    updateShapes: updateShape,
-    backwardShape,
-    forwardShape,
-    setShiftPressed,
-    setAltPressed,
-    setActiveTool,
-    setSelectionMode,
-    setSelectionFrame,
-    setCanvasZoom,
-    resetZoom,
-    setIsSpacePressed
-  })
+  useAutoScroll(store)
+  useKeyboard(store)
   useResizeObserver({ element: containerRef, onResized })
-
-  const contextValue = useMemo(
-    () => ({
-      shapes,
-      settings,
-      selectedShape,
-      hoveredShape,
-      selectionFrame,
-      selectionMode,
-      activeTool,
-      canvasOffsetStartData,
-      isInsideComponent,
-      isInsideCanvas,
-      isShiftPressed,
-      isAltPressed,
-      isSpacePressed,
-      selectionColor: canvasSelectionColor,
-      selectionWidth: canvasSelectionWidth,
-      isEditMode,
-      canGrow,
-      withFrameSelection,
-      withSkeleton,
-      withContextMenu,
-      setSelectedShape,
-      setSelectionFrame,
-      setSelectionMode,
-      setActiveTool,
-      setCanvasOffsetStartData,
-      setCanvasOffset,
-      setCanvasMoveAcceleration,
-      addShapes: addShape,
-      updateSingleShape: updateShape,
-      duplicateShapes,
-      saveShapes,
-      refreshHoveredShape,
-      refreshSelectedShapes
-    }),
-    [
-      shapes,
-      settings,
-      selectedShape,
-      hoveredShape,
-      selectionFrame,
-      selectionMode,
-      activeTool,
-      canvasOffsetStartData,
-      isInsideComponent,
-      isInsideCanvas,
-      isShiftPressed,
-      isAltPressed,
-      isSpacePressed,
-      canvasSelectionColor,
-      canvasSelectionWidth,
-      isEditMode,
-      canGrow,
-      withFrameSelection,
-      withSkeleton,
-      withContextMenu,
-      setSelectedShape,
-      setSelectionFrame,
-      setSelectionMode,
-      setActiveTool,
-      setCanvasOffsetStartData,
-      setCanvasOffset,
-      setCanvasMoveAcceleration,
-      addShape,
-      updateShape,
-      duplicateShapes,
-      saveShapes,
-      refreshHoveredShape,
-      refreshSelectedShapes
-    ]
-  )
 
   return (
     <div
@@ -184,34 +55,34 @@ const Canvas = ({ options, className, style, canvasProps }: CanvasComponentProps
       data-grow={canGrow}
       data-shrink={canShrink}
       style={{
-        '--react-paint-app-row-width': settings.canvasSize.width,
+        '--react-paint-app-row-width': canvasSize.width,
         '--react-paint-app-canvaswidth': width,
         '--react-paint-app-canvasheight': height,
-        '--react-paint-app-row-aspectratio': `calc(${settings.canvasSize.width} / ${settings.canvasSize.height})`,
+        '--react-paint-app-row-aspectratio': `calc(${canvasSize.width} / ${canvasSize.height})`,
         '--react-paint-app-canvas-bg': canvasBackgroundColor,
         ...style
       }}
     >
-      <CanvasContext.Provider value={contextValue}>
-        <CanvasElement ref={canvasRef} />
-      </CanvasContext.Provider>
+      <CanvasElement store={store} view={view} selectionColor={canvasSelectionColor} selectionWidth={canvasSelectionWidth} />
     </div>
   )
 }
 
 export { type CanvasOptions, DEFAULT_OPTIONS, type OptionalOptions, type OptionalOptions as UseReactPaintOptions } from '@canvas/constants/app'
 export { DEFAULT_TOOLS } from '@canvas/constants/tools'
+export { default as useAnnotationsStyle } from '@canvas/hooks/useAnnotationsStyle'
 export { default as useReactPaint, type UseReactPaintProps, type UseReactPaintReturnType } from '@canvas/hooks/useReactPaint'
-export type { CanvasProps } from '@canvas/types/canvasProps'
 export { MOVE_TOOL, SELECTION_TOOL } from '@common/constants/tools'
+export { PaintProvider, usePaint } from '@common/context/PaintContext'
+export { default as usePaintState } from '@common/hooks/usePaintState'
 export type {
   ContextMenuState,
   EditorActions,
-  EditorProps,
   EditorState,
   ExportView,
   InteractionMode,
   InteractionState,
+  ReactPaint,
   ReactPaintEventName,
   ReactPaintEvents,
   ShapeStyleField,
@@ -230,6 +101,7 @@ export type {
   StyleShape
 } from '@common/types/Shapes'
 export type { ActionsTool, CustomTool, CustomToolInput, ToolsType } from '@common/types/tools'
+export { shallowEqual } from '@common/utils/equality'
 export { getSelectedShapes, getSelectedShapesTools } from '@common/utils/selection'
 export type { CanvasComponentProps }
 export { Canvas }

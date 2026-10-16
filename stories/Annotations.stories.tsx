@@ -1,13 +1,13 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import { type SyntheticEvent, useState } from 'react'
-import { Canvas, Editor, useReactPaint } from '../src/index'
+import { Canvas, Editor, useAnnotationsStyle, useReactPaint } from '../src/index'
 import './annotations.css'
 import './button.css'
 
 const PictureWithAnnotations = ({ src, alt }: { src: string; alt: string }) => {
   const [isEdit, setIsEdit] = useState(false)
   const [dimensions, setDimensions] = useState<[number, number]>()
-  const { editorProps, canvasProps, annotationsProps } = useReactPaint({
+  const paint = useReactPaint({
     mode: isEdit ? 'editor' : 'viewer',
     width: dimensions?.[0],
     height: dimensions?.[1],
@@ -15,6 +15,8 @@ const PictureWithAnnotations = ({ src, alt }: { src: string; alt: string }) => {
       canZoom: isEdit ? 'always' : 'never'
     }
   })
+  // keeps the picture aligned with the canvas when it is zoomed or moved
+  const annotationsStyle = useAnnotationsStyle(paint)
 
   const canvasOptions = {
     canvasBackgroundColor: 'transparent'
@@ -36,11 +38,11 @@ const PictureWithAnnotations = ({ src, alt }: { src: string; alt: string }) => {
       </div>
       <div className='annotations-container'>
         <div className='pic-container'>
-          <img src={src} alt={alt} style={annotationsProps.style} className='picture' onLoad={onPictureLoad} />
+          <img src={src} alt={alt} style={annotationsStyle} className='picture' onLoad={onPictureLoad} />
         </div>
         {dimensions && (
-          <Editor editorProps={editorProps} className={`annotations ${isEdit ? 'editor' : 'view'}`}>
-            <Canvas canvasProps={canvasProps} options={canvasOptions} />
+          <Editor paint={paint} className={`annotations ${isEdit ? 'editor' : 'view'}`}>
+            <Canvas paint={paint} options={canvasOptions} />
           </Editor>
         )}
       </div>
@@ -118,11 +120,16 @@ export const Default: Story = {
   const PictureWithAnnotations = ({ src, alt }: { src: string; alt: string }) => {
   const [isEdit, setIsEdit] = useState(false)
   const [dimensions, setDimensions] = useState<[number, number]>()
-  const { editorProps, canvasProps } = useReactPaint({
+  const paint = useReactPaint({
     mode: isEdit ? 'editor' : 'viewer',
     width: dimensions?.[0],
-    height: dimensions?.[1]
+    height: dimensions?.[1],
+    options: {
+      canZoom: isEdit ? 'always' : 'never'
+    }
   })
+  // keeps the picture aligned with the canvas when it is zoomed or moved
+  const annotationsStyle = useAnnotationsStyle(paint)
 
   const canvasOptions = {
     canvasBackgroundColor: 'transparent'
@@ -143,10 +150,10 @@ export const Default: Story = {
         </div>
       </div>
       <div className='pic-container'>
-        <img src={src} alt={alt} className='picture' onLoad={onPictureLoad} />
+        <img src={src} alt={alt} style={annotationsStyle} className='picture' onLoad={onPictureLoad} />
         {dimensions && (
-          <Editor editorProps={editorProps} className={\`annotations \${isEdit ? 'editor' : 'view'}\`}>
-            <Canvas canvasProps={canvasProps} options={canvasOptions} />
+          <Editor paint={paint} className={\`annotations \${isEdit ? 'editor' : 'view'}\`}>
+            <Canvas paint={paint} options={canvasOptions} />
           </Editor>
         )}
       </div>

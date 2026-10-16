@@ -6,10 +6,10 @@ import useDebounce from '@common/hooks/useDebounce'
 import { useCallback, useRef, useState } from 'react'
 
 const ReactPaintWrapper = (args: Parameters<typeof useReactPaint>[0]) => {
-  const { editorProps, canvasProps } = useReactPaint(args)
+  const paint = useReactPaint(args)
   return (
-    <Editor editorProps={editorProps}>
-      <Canvas canvasProps={canvasProps} />
+    <Editor paint={paint}>
+      <Canvas paint={paint} />
     </Editor>
   )
 }
@@ -69,10 +69,10 @@ import useResizeObserver from '@canvas/hooks/useResizeObserver'
 import './whiteboard.css'
 
 const ReactPaintWrapper = (args: Parameters<typeof useReactPaint>[0]) => {
-  const { editorProps, canvasProps } = useReactPaint(args)
+  const paint = useReactPaint(args)
   return (
-    <Editor editorProps={editorProps}>
-      <Canvas canvasProps={canvasProps} />
+    <Editor paint={paint}>
+      <Canvas paint={paint} />
     </Editor>
   )
 }

@@ -5,15 +5,18 @@ For more details and links to Pull requests, see [Releases](https://github.com/Y
 ## V1.0.0-beta.1 (unreleased)
 Breaking changes, see the [migration guide](./MIGRATION.md).
 - split the library into two independent modules, canvas and editor, which only communicate through useReactPaint. The editor is now tree-shaken when unused, even when importing from the package root
-- editorProps becomes a public contract `{ state, actions, editorRef }` allowing to build a custom editor: actions take shape ids and replace raw setters and internal helpers
-- expose interaction state (hovered shape, selection frame, modifier keys, panning, context menu) in editorProps.state
+- useReactPaint returns a single handle, `paint`, given to Canvas and Editor instead of editorProps and canvasProps. Its identity never changes, and it is a public contract allowing to build a custom editor: actions take shape ids and replace raw setters and internal helpers
+- the state lives in an external store: the component calling useReactPaint no longer renders when the drawing changes. Read the state with usePaintState(paint, selector?, isEqual?) and shallowEqual during a render, or paint.getState() in a handler
+- add PaintProvider and usePaint to give the handle to deep components, Editor provides it to its children
+- expose interaction state (hovered shape, selection frame, modifier keys, panning, context menu) in the state
 - add canRemoveAnchor to the context menu state, and setShapesVisibility / setShapesLocked actions
-- canvasProps is now opaque
+- replace annotationsProps with the useAnnotationsStyle hook
+- move resetZoom, setCanvasZoom and setCanvasOffset to actions.resetZoom, actions.setZoom and the new actions.setOffset
 - move editor UI options (layersManipulation, withExport, withLoadAndSave, withUploadPicture, withUrlPicture) from useReactPaint to Editor options
 - replace DEFAULT_SHAPE_TOOLS (editor) with DEFAULT_TOOLS (canvas), without icons nor labels. useReactPaint from the canvas entry now provides default tools
 - define SELECTION_TOOL and MOVE_TOOL once for both modules, without icon nor label: icon and label of ActionsTool become optional
 - named exports for Canvas and Editor in all entry points
-- add selectionChanged and toolChanged events, registerEvent and unregisterEvent are typed by event
+- add selectionChanged and toolChanged events, registerEvent and unregisterEvent are typed by event. registerEvent returns the function that unregisters the listener, and events are emitted right after the change of the state
 - export getSelectedShapes, getSelectedShapesTools, SELECTION_TOOL and MOVE_TOOL
 - add canvas/canvas.css and editor/editor.css stylesheets
 - rename react-paint-editor-toolbox-edittextbox class to react-paint-canvas-edittextbox
@@ -22,7 +25,11 @@ Breaking changes, see the [migration guide](./MIGRATION.md).
 - fix unregisterEvent removing another listener when the given one is not registered
 - fix context menu not opening on the first right click after choosing the selection tool in the toolbar
 - fix active tool not following the tools given in props: it is now derived from them by id, and only known tools can be selected
-- add Custom editor and Canvas only stories
+- options of useReactPaint are compared by value: inline options, like availableTools, no longer reset the tool settings nor render in a loop
+- performance: the editor panels only render when their part of the state changes, and the canvas draws the gestures (hover, drag, selection frame, pan, brush) without rendering React components
+- performance: shapes are no longer recomputed when the view is moved or the grid changes, and the auto scroll of the selection frame follows the animation frames
+- add Custom editor, Canvas only and External toolbar stories
+- add a performance benchmark, run manually with pnpm bench
 
 ## V0.18.1
 - fix opacity problems with line and arrows

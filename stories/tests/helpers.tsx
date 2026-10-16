@@ -19,23 +19,23 @@ export const getCurrentDataRef = { current: null as null | (() => StateData) }
 export const eventsLog: ({ name: 'selectionChanged'; ids: string[] } | { name: 'toolChanged'; toolId: string })[] = []
 
 export const ReactPaintWrapper = ({ editorOptions, ...args }: UseReactPaintProps & { editorOptions?: EditorOptions }) => {
-  const { editorProps, canvasProps, getCurrentData, registerEvent, unregisterEvent } = useReactPaint(args)
-  getCurrentDataRef.current = getCurrentData
+  const paint = useReactPaint(args)
+  getCurrentDataRef.current = paint.getCurrentData
 
   useEffect(() => {
-    const onSelectionChanged = (shapes: ShapeEntity[]) => eventsLog.push({ name: 'selectionChanged', ids: shapes.map(shape => shape.id) })
-    const onToolChanged = (tool: ToolsType) => eventsLog.push({ name: 'toolChanged', toolId: tool.id })
-    registerEvent('selectionChanged', onSelectionChanged)
-    registerEvent('toolChanged', onToolChanged)
+    const unregisterSelection = paint.registerEvent('selectionChanged', (shapes: ShapeEntity[]) =>
+      eventsLog.push({ name: 'selectionChanged', ids: shapes.map(shape => shape.id) })
+    )
+    const unregisterTool = paint.registerEvent('toolChanged', (tool: ToolsType) => eventsLog.push({ name: 'toolChanged', toolId: tool.id }))
     return () => {
-      unregisterEvent('selectionChanged', onSelectionChanged)
-      unregisterEvent('toolChanged', onToolChanged)
+      unregisterSelection()
+      unregisterTool()
     }
-  }, [registerEvent, unregisterEvent])
+  }, [paint])
 
   return (
-    <Editor editorProps={editorProps} options={editorOptions}>
-      <Canvas canvasProps={canvasProps} />
+    <Editor paint={paint} options={editorOptions}>
+      <Canvas paint={paint} />
     </Editor>
   )
 }

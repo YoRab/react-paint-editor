@@ -1,132 +1,73 @@
-import { DRAWCANVAS_CLASSNAME, SELECTIONCANVAS_CLASSNAME, type UtilsSettings } from '@canvas/constants/app'
-import { useCanvasContext } from '@canvas/context/CanvasContext'
+import { DRAWCANVAS_CLASSNAME, SELECTIONCANVAS_CLASSNAME } from '@canvas/constants/app'
+import useCanvasRenderer from '@canvas/hooks/useCanvasRenderer'
 import useDrawableCanvas from '@canvas/hooks/useDrawableCanvas'
-import { initCanvasContext } from '@canvas/utils/canvas'
-import { drawGrid } from '@canvas/utils/grid'
-import { drawSelectionFrame, drawShape, drawShapeSelection, refreshShape } from '@canvas/utils/shapes'
+import useZoom from '@canvas/hooks/useZoom'
+import type { PaintStore } from '@canvas/store/paintStore'
+import type { CanvasView } from '@canvas/store/selectors'
+import { refreshShape } from '@canvas/utils/shapes'
 import { resizeTextShapeWithNewContent } from '@canvas/utils/shapes/text'
-import { clipMask, drawMask, getCurrentView } from '@canvas/utils/zoom'
-import type { HoverModeData, SelectionModeData } from '@common/types/Mode'
-import type { Point, SelectionType, ShapeEntity } from '@common/types/Shapes'
-import type { ToolsType } from '@common/types/tools'
 import { getSelectedShapes } from '@common/utils/selection'
-import React, { useCallback, useEffect, useImperativeHandle, useRef } from 'react'
+import type React from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import './Canvas.css'
 import EditTextBox from './EditTextBox'
 
-const renderDrawCanvas = (
-  drawCtx: CanvasRenderingContext2D,
-  selectionMode: SelectionModeData<number | Point>,
-  settings: UtilsSettings,
-  shapes: ShapeEntity[],
-  selectedShape: SelectionType | undefined
-) => {
-  initCanvasContext(drawCtx)
-  drawMask(drawCtx, settings)
-  drawGrid(drawCtx, settings)
-  const currentView = getCurrentView(settings)
-  for (let i = shapes.length - 1; i >= 0; i--) {
-    if (selectionMode.mode === 'textedition' && shapes[i] === selectedShape) continue
-    drawShape(drawCtx, getSelectedShapes(selectedShape).find(selected => selected.id === shapes[i]!.id) ?? shapes[i]!, settings, currentView)
-  }
+type CanvasElementProps = {
+  store: PaintStore
+  view: CanvasView
+  selectionColor: string
+  selectionWidth: number
 }
 
-const renderSelectionCanvas = (
-  selectionCtx: CanvasRenderingContext2D,
-  selectionMode: SelectionModeData<number | Point>,
-  settings: UtilsSettings,
-  activeTool: ToolsType,
-  selectionWidth: number,
-  selectionColor: string,
-  selectedShape: SelectionType | undefined,
-  hoveredShape: ShapeEntity | undefined,
-  hoverMode: HoverModeData,
-  selectionFrame: { oldSelection: SelectionType | undefined; frame: [Point, Point] } | undefined,
-  withSkeleton: boolean
-) => {
-  selectionCtx.reset()
-  clipMask(selectionCtx, settings)
-
-  withSkeleton &&
-    hoveredShape &&
-    !getSelectedShapes(selectedShape).find(selected => selected.id === hoveredShape.id) &&
-    activeTool.type === 'selection' &&
-    (selectionMode.mode === 'default' || selectionMode.mode === 'contextMenu' || selectionMode.mode === 'textedition') &&
-    drawShapeSelection({
-      ctx: selectionCtx,
-      shape: hoveredShape,
-      settings,
-      selectionWidth,
-      selectionColor,
-      hoverMode,
-      selectionMode,
-      withAnchors: false
-    })
-
-  selectedShape &&
-    activeTool.type !== 'brush' &&
-    drawShapeSelection({
-      ctx: selectionCtx,
-      shape: selectedShape,
-      settings,
-      selectionWidth,
-      selectionColor,
-      hoverMode,
-      selectionMode,
-      withAnchors: selectionMode.mode !== 'textedition'
-    })
-
-  selectionFrame &&
-    drawSelectionFrame({
-      ctx: selectionCtx,
-      selectionFrame,
-      settings
-    })
-}
-
-const Canvas = React.forwardRef<HTMLCanvasElement>((_, ref) => {
-  const {
-    shapes,
-    settings,
-    selectedShape,
-    hoveredShape,
-    selectionFrame,
-    selectionMode,
-    activeTool,
-    canvasOffsetStartData,
-    isSpacePressed,
-    selectionColor,
-    selectionWidth,
-    isEditMode,
-    canGrow,
-    withSkeleton,
-    updateSingleShape,
-    saveShapes
-  } = useCanvasContext()
-
-  const drawCanvasRef = useRef<HTMLCanvasElement | null>(null)
+/**
+ * Canvases of the drawing and of the selection. React only renders what changes the DOM (sizes, mode, text edition):
+ * the gestures update the store, which draws the canvases and sets the cursor directly.
+ */
+const Canvas = ({ store, view, selectionColor, selectionWidth }: CanvasElementProps) => {
+  const { canvasSize, isEditMode, canGrow, features, textEdition } = view
+  const boxRef = useRef<HTMLDivElement | null>(null)
   const selectionCanvasRef = useRef<HTMLCanvasElement | null>(null)
-  const canvasSize = settings.canvasSize
   const withSelectionCanvas = isEditMode
   const tabIndex = isEditMode ? 0 : -1
 
-  useImperativeHandle(ref, () => drawCanvasRef.current!)
+  // the element is kept in a state, so that the listeners are set once it is mounted
+  const [drawCanvas, setDrawCanvas] = useState<HTMLCanvasElement | null>(null)
+  const drawCanvasRef = useCallback(
+    (element: HTMLCanvasElement | null) => {
+      store.setCanvasElement(element)
+      setDrawCanvas(element)
+    },
+    [store]
+  )
 
-  const { hoverMode } = useDrawableCanvas(drawCanvasRef)
+  useDrawableCanvas(store, drawCanvas)
+  useZoom({ store, canvasElt: drawCanvas, zoomEnabled: features.zoom })
+  useCanvasRenderer({ store, drawCanvas, selectionCanvasRef, selectionColor, selectionWidth })
+
+  // The cursor follows the gestures: it is set without rendering
+  useEffect(() => {
+    const box = boxRef.current
+    if (!box) return
+    const applyCursor = (cursor: string) => box.style.setProperty('--react-paint-canvas-cursor', cursor)
+    applyCursor(store.selectors.selectCursor(store.getState()))
+    return store.watch(store.selectors.selectCursor, applyCursor)
+  }, [store])
 
   const updateSelectedShapeText = useCallback(
     (newText: string[]) => {
-      const firstShape = getSelectedShapes(selectedShape)[0]
+      const state = store.getState()
+      const firstShape = getSelectedShapes(state.document.selectedShape)[0]
       if (firstShape?.type !== 'text') return
 
-      const ctx = drawCanvasRef.current?.getContext('2d')
+      const ctx = drawCanvas?.getContext('2d')
       if (!ctx) return
 
+      const settings = store.getSettings(state)
       const newShape = refreshShape(resizeTextShapeWithNewContent(ctx, firstShape, newText, settings), settings)
 
-      updateSingleShape([newShape])
+      store.updateShapes([newShape])
     },
-    [updateSingleShape, selectedShape, settings]
+    [store, drawCanvas]
   )
 
   const preventRightClick = (e: React.MouseEvent | React.TouchEvent) => {
@@ -136,51 +77,8 @@ const Canvas = React.forwardRef<HTMLCanvasElement>((_, ref) => {
     return false
   }
 
-  useEffect(() => {
-    const drawCtx = drawCanvasRef.current?.getContext('2d')
-    drawCtx && window.requestAnimationFrame(() => renderDrawCanvas(drawCtx, selectionMode, settings, shapes, selectedShape))
-  }, [shapes, selectionMode, selectedShape, settings])
-
-  useEffect(() => {
-    const selectionCtx = selectionCanvasRef.current?.getContext('2d')
-
-    selectionCtx &&
-      window.requestAnimationFrame(() =>
-        renderSelectionCanvas(
-          selectionCtx,
-          selectionMode,
-          settings,
-          activeTool,
-          selectionWidth,
-          selectionColor,
-          selectedShape,
-          hoveredShape,
-          hoverMode,
-          selectionFrame,
-          withSkeleton
-        )
-      )
-  }, [hoveredShape, hoverMode, selectionFrame, selectionMode, selectedShape, activeTool, settings, selectionWidth, selectionColor, withSkeleton])
-
   return (
-    <div
-      className='react-paint-canvas-box'
-      style={{
-        '--react-paint-canvas-cursor': canvasOffsetStartData
-          ? 'grabbing'
-          : hoverMode.outOfView
-            ? 'default'
-            : hoverMode.mode === 'resize'
-              ? 'pointer'
-              : activeTool.type !== 'selection' && activeTool.type !== 'move'
-                ? 'crosshair'
-                : hoverMode.mode === 'translate'
-                  ? 'move'
-                  : hoverMode.mode === 'rotate' || activeTool.type === 'move' || isSpacePressed
-                    ? 'grab'
-                    : 'default'
-      }}
-    >
+    <div className='react-paint-canvas-box' ref={boxRef}>
       <div className='react-paint-canvas-container' data-grow={canGrow}>
         <canvas
           className={DRAWCANVAS_CLASSNAME}
@@ -202,19 +100,19 @@ const Canvas = React.forwardRef<HTMLCanvasElement>((_, ref) => {
             onContextMenu={preventRightClick}
           />
         )}
-        {isEditMode && selectionMode.mode === 'textedition' && getSelectedShapes(selectedShape)[0]?.type === 'text' && (
+        {isEditMode && textEdition && (
           <EditTextBox
-            disabled={!settings.features.edition}
-            shape={getSelectedShapes(selectedShape)[0] as ShapeEntity<'text'>}
-            defaultValue={selectionMode.defaultValue}
+            disabled={!features.edition}
+            shape={textEdition.shape}
+            defaultValue={textEdition.defaultValue}
             updateValue={updateSelectedShapeText}
-            saveShapes={saveShapes}
-            settings={settings}
+            saveShapes={store.actions.saveShapes}
+            settings={textEdition.settings}
           />
         )}
       </div>
     </div>
   )
-})
+}
 
 export default Canvas

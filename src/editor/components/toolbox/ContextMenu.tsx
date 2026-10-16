@@ -1,3 +1,5 @@
+import { usePaint } from '@common/context/PaintContext'
+import usePaintState from '@common/hooks/usePaintState'
 import type { ContextMenuState, EditorActions, ShapesOrderAction, ShapesTransformAction } from '@common/types/editor'
 import './ContextMenu.css'
 import { clamp } from '@common/utils/util'
@@ -5,7 +7,7 @@ import Button from '@editor/components/common/Button'
 import Menu from '@editor/components/common/Menu'
 import { rightChevronIcon } from '@editor/constants/icons'
 import useMenu from '@editor/hooks/useMenu'
-import { type RefObject, useEffect, useRef, useState } from 'react'
+import { type RefObject, useEffect, useState } from 'react'
 
 const BUTTON_HEIGHT = 36
 const HR_HEIGHT = 16
@@ -14,17 +16,14 @@ const MENU_MARGIN = 8
 const MENU_WIDTH = 160 + MENU_MARGIN * 2
 const SUB_MENU_WIDTH = 200
 
-type ContextMenuType = {
+type ContextMenuContentType = {
   contextMenu: ContextMenuState
   containerRef: RefObject<HTMLElement | null>
   hasCopiedShapes: boolean
   actions: EditorActions
 }
 
-const ContextMenu = ({ contextMenu, containerRef, hasCopiedShapes, actions }: ContextMenuType) => {
-  const organizeButtonRef = useRef<HTMLDivElement>(null)
-  const transformButtonRef = useRef<HTMLDivElement>(null)
-
+const ContextMenuContent = ({ contextMenu, containerRef, hasCopiedShapes, actions }: ContextMenuContentType) => {
   const { shapes: selectedShapes, anchorIndex, canRemoveAnchor, clientPosition } = contextMenu
   const selectedIds = selectedShapes.map(shape => shape.id)
   const hasSelectedShape = selectedShapes.length > 0
@@ -32,8 +31,8 @@ const ContextMenu = ({ contextMenu, containerRef, hasCopiedShapes, actions }: Co
 
   const isVisible = !selectedShapes.some(shape => shape.visible === false)
   const isLocked = selectedShapes.some(shape => shape.locked)
-  const { isOpen: isOrganizeMenuOpen } = useMenu({ trigger: 'hover', buttonElt: organizeButtonRef.current })
-  const { isOpen: isTransformMenuOpen } = useMenu({ trigger: 'hover', buttonElt: transformButtonRef.current, disabled: isLocked })
+  const { ref: organizeMenuRef, isOpen: isOrganizeMenuOpen } = useMenu({ trigger: 'hover' })
+  const { ref: transformMenuRef, isOpen: isTransformMenuOpen } = useMenu({ trigger: 'hover', disabled: isLocked })
 
   const menuHeight =
     MENU_PADDING_VERTICAL * 2 + BUTTON_HEIGHT * (2 + (hasSelectedShape ? 8 : 0) + (canRemoveAnchor ? 1 : 0)) + HR_HEIGHT * (hasSelectedShape ? 3 : 1)
@@ -92,7 +91,7 @@ const ContextMenu = ({ contextMenu, containerRef, hasCopiedShapes, actions }: Co
       {hasSelectedShape && (
         <>
           {canRemoveAnchor && <Button onClick={onDeleteAnchor}>Delete point</Button>}
-          <div className='react-paint-editor-toolbox-contextmenu-group' ref={organizeButtonRef}>
+          <div className='react-paint-editor-toolbox-contextmenu-group' ref={organizeMenuRef}>
             <Button icon={rightChevronIcon}>Organize</Button>
             {isOrganizeMenuOpen && (
               <Menu position={menuPosition?.subMenuPosition}>
@@ -103,7 +102,7 @@ const ContextMenu = ({ contextMenu, containerRef, hasCopiedShapes, actions }: Co
               </Menu>
             )}
           </div>
-          <div className='react-paint-editor-toolbox-contextmenu-group' ref={transformButtonRef}>
+          <div className='react-paint-editor-toolbox-contextmenu-group' ref={transformMenuRef}>
             <Button icon={rightChevronIcon} disabled={isLocked}>
               Transform
             </Button>
@@ -137,6 +136,17 @@ const ContextMenu = ({ contextMenu, containerRef, hasCopiedShapes, actions }: Co
       <Button onClick={onSelectAllShapes}>Select all</Button>
     </Menu>
   )
+}
+
+/** Context menu of the canvas, shown when the canvas opens it */
+const ContextMenu = ({ containerRef }: { containerRef: RefObject<HTMLElement | null> }) => {
+  const paint = usePaint()
+  const contextMenu = usePaintState(paint, state => state.contextMenu)
+  const hasCopiedShapes = usePaintState(paint, state => state.clipboard.hasContent)
+
+  return contextMenu ? (
+    <ContextMenuContent contextMenu={contextMenu} containerRef={containerRef} hasCopiedShapes={hasCopiedShapes} actions={paint.actions} />
+  ) : null
 }
 
 export default ContextMenu

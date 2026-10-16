@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import { expect, userEvent, within } from 'storybook/test'
-import { Canvas, type DrawableShape, useReactPaint } from '../src/index'
+import { Canvas, type DrawableShape, shallowEqual, usePaintState, useReactPaint } from '../src/index'
 import { makeCoordConverters } from './tests/helpers'
 
 const SQUARE: DrawableShape = {
@@ -15,12 +15,13 @@ const SQUARE: DrawableShape = {
 
 /** Canvas used without the library editor: editorRef is set on the wrapper to enable interactions and keyboard shortcuts */
 const CanvasOnly = () => {
-  const { editorProps, canvasProps } = useReactPaint({ shapes: [SQUARE] })
-  const { selectedShapes, shapes } = editorProps.state
+  const paint = useReactPaint({ shapes: [SQUARE] })
+  // the selector builds an object: shallowEqual keeps it while its values are unchanged
+  const { selectedShapes, shapes } = usePaintState(paint, state => ({ selectedShapes: state.selectedShapes, shapes: state.shapes }), shallowEqual)
 
   return (
-    <div ref={editorProps.editorRef} style={{ width: 600 }}>
-      <Canvas canvasProps={canvasProps} options={{ canvasBackgroundColor: '#f5f5f5' }} />
+    <div ref={paint.editorRef} style={{ width: 600 }}>
+      <Canvas paint={paint} options={{ canvasBackgroundColor: '#f5f5f5' }} />
       <output data-testid='status'>
         {shapes.length} shape(s) - selected:{' '}
         {selectedShapes.map(shape => ('x' in shape ? `${shape.type} at x=${Math.round(shape.x)}` : shape.type)).join(', ') || 'none'}
@@ -47,18 +48,18 @@ export const Default: Story = {
     docs: {
       description: {
         story:
-          'The `Canvas` component used alone, without the library `Editor`, which is then not bundled. Set `editorProps.editorRef` on an element wrapping the canvas: it defines the area where interactions and keyboard shortcuts are active.'
+          'The `Canvas` component used alone, without the library `Editor`, which is then not bundled. Set `paint.editorRef` on an element wrapping the canvas: it defines the area where interactions and keyboard shortcuts are active.'
       },
       source: {
         code: `import { Canvas, useReactPaint } from '@yorab/react-paint/canvas'
 import '@yorab/react-paint/canvas/canvas.css'
 
 const CanvasOnly = () => {
-  const { editorProps, canvasProps } = useReactPaint({ shapes })
+  const paint = useReactPaint({ shapes })
 
   return (
-    <div ref={editorProps.editorRef}>
-      <Canvas canvasProps={canvasProps} />
+    <div ref={paint.editorRef}>
+      <Canvas paint={paint} />
     </div>
   )
 }`,

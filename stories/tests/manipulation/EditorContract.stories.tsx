@@ -1,7 +1,15 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import { useState } from 'react'
 import { expect, userEvent, within } from 'storybook/test'
-import { Canvas, type DrawableShape, Editor, type UseReactPaintOptions, type UseReactPaintProps, useReactPaint } from '../../../src/index'
+import {
+  Canvas,
+  type DrawableShape,
+  Editor,
+  type UseReactPaintOptions,
+  type UseReactPaintProps,
+  usePaintState,
+  useReactPaint
+} from '../../../src/index'
 import { selectTool } from './../helpers'
 
 const SQUARE_STYLE = { fillColor: 'red', strokeColor: 'black', lineWidth: 1, opacity: 100, lineDash: 0, lineArrow: 0, closedPoints: 0 }
@@ -19,16 +27,17 @@ const BRUSH_TOOLS: UseReactPaintOptions['availableTools'] = [{ type: 'brush', id
 /** Drives the editor contract directly, and shows the parts of the state under test */
 const ContractHarness = (props: UseReactPaintProps) => {
   const [tools, setTools] = useState<UseReactPaintOptions['availableTools']>(undefined)
-  const { editorProps, canvasProps } = useReactPaint({ ...props, options: tools && { availableTools: tools } })
-  const { state, actions } = editorProps
+  const paint = useReactPaint({ ...props, options: tools && { availableTools: tools } })
+  const { actions } = paint
+  const state = usePaintState(paint)
   const ids = state.shapes.map(shape => shape.id)
   const { activeTool } = state
   const strokeColor = 'settings' in activeTool && 'strokeColor' in activeTool.settings ? activeTool.settings.strokeColor.default : ''
 
   return (
     <div>
-      <Editor editorProps={editorProps}>
-        <Canvas canvasProps={canvasProps} />
+      <Editor paint={paint}>
+        <Canvas paint={paint} />
       </Editor>
       <button type='button' onClick={() => actions.setShapesVisibility(ids, false)}>
         Hide all
