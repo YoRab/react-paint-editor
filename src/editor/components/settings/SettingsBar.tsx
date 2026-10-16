@@ -1,8 +1,15 @@
-import { usePaint } from '@common/context/PaintContext'
-import usePaintState from '@common/hooks/usePaintState'
-import type { EditorState, ShapeStyleField, ToolSettingValue } from '@common/types/editor'
-import type { StyleShape } from '@common/types/Shapes'
-import type { CustomTool, ToolsType } from '@common/types/tools'
+import {
+  type CustomTool,
+  type EditorState,
+  getSelectedShapesTools,
+  type ShapeStyleField,
+  type StyleShape,
+  shallowEqual,
+  type ToolSettingValue,
+  type ToolsType,
+  usePaint,
+  usePaintState
+} from '@canvas/index'
 import Button from '@editor/components/common/Button'
 import Modal from '@editor/components/common/Modal'
 import { boldIcon, italicIcon, lineWidthIcon, opacityIcon, settingsIcon } from '@editor/constants/icons'
@@ -16,8 +23,6 @@ import LineArrowField from './LineArrowField'
 import LineTypeField from './LineTypeField'
 import RangeField from './RangeField'
 import './SettingsBar.css'
-import { shallowEqual } from '@common/utils/equality'
-import { getSelectedShapesTools } from '@common/utils/selection'
 import ClosedPointsField from '@editor/components/settings/ClosedPointsField'
 import ZoomButton from '@editor/components/settings/ZoomButton'
 import ToggleField from './ToggleField'

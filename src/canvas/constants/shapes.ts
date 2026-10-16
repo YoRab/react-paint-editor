@@ -1,4 +1,4 @@
-import type { Point } from '@common/types/Shapes'
+import type { Point } from '@canvas/types/Shapes'
 
 export const SELECTION_DEFAULT_PADDING = 0
 export const SELECTION_DEFAULT_WIDTH = 2
@@ -18,3 +18,18 @@ export const SELECTION_RESIZE_ANCHOR_POSITIONS: Point[] = [
 
 export const SHAPES_WITH_ROTATION = ['rect', 'square', 'circle', 'ellipse', 'picture', 'text', 'triangle', 'brush', 'group']
 export const SHAPES_KEEPING_RATIO = ['square', 'circle', 'picture', 'text']
+
+export const ShapeTypeArray = [
+  'brush',
+  'rect',
+  'square',
+  'line',
+  'polygon',
+  'circle',
+  'curve',
+  'ellipse',
+  'picture',
+  'text',
+  'triangle',
+  'group'
+] as const

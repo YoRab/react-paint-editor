@@ -1,7 +1,7 @@
-import { isEqual, mergeWith, omit, set } from '@common/utils/object'
+import { isEqual, mergeWith, omit, set, withDefaults } from '@canvas/utils/object'
 import { describe, expect, it } from 'vitest'
 
-describe('common/utils/object', () => {
+describe('canvas/utils/object', () => {
   describe('omit', () => {
     it('should omit specified keys from the object', () => {
       const obj = { a: 1, b: 2, c: 3 }
@@ -215,6 +215,35 @@ describe('common/utils/object', () => {
       const arr1 = [1, { a: 2 }, [3, 4]]
       const arr2 = [1, { a: 3 }, [3, 4]]
       expect(isEqual(arr1, arr2)).toBe(false)
+    })
+  })
+
+  describe('withDefaults', () => {
+    const defaults = { color: 'black', width: 2, nested: { a: 1, b: 2 } }
+
+    it('should return the defaults when there are no options', () => {
+      expect(withDefaults(defaults, undefined)).toEqual(defaults)
+    })
+
+    it('should override the defaults with the options', () => {
+      expect(withDefaults(defaults, { color: 'red' })).toEqual({ color: 'red', width: 2, nested: { a: 1, b: 2 } })
+    })
+
+    it('should ignore the options set to undefined', () => {
+      expect(withDefaults(defaults, { color: undefined, width: 4 })).toEqual({ color: 'black', width: 4, nested: { a: 1, b: 2 } })
+    })
+
+    it('should keep the options set to null or to falsy values', () => {
+      expect(withDefaults(defaults, { color: null, width: 0 })).toEqual({ color: null, width: 0, nested: { a: 1, b: 2 } })
+    })
+
+    it('should replace nested objects instead of merging them', () => {
+      expect(withDefaults(defaults, { nested: { a: 3 } })).toEqual({ color: 'black', width: 2, nested: { a: 3 } })
+    })
+
+    it('should not mutate the defaults', () => {
+      withDefaults(defaults, { color: 'red' })
+      expect(defaults).toEqual({ color: 'black', width: 2, nested: { a: 1, b: 2 } })
     })
   })
 })

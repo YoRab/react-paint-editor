@@ -1,11 +1,11 @@
 import type { UtilsSettings } from '@canvas/constants/app'
 import { SELECTION_ANCHOR_SIZE, SELECTION_RESIZE_ANCHOR_POSITIONS, SELECTION_ROTATED_ANCHOR_POSITION } from '@canvas/constants/shapes'
+import type { SelectionModeResize } from '@canvas/types/Mode'
+import type { Point, Rect, SelectionDefaultType, SelectionType, ShapeEntity } from '@canvas/types/Shapes'
 import { transformCanvas, updateCanvasContext } from '@canvas/utils/canvas'
 import { createCirclePath, createLinePath, createRecPath } from '@canvas/utils/shapes/path'
 import { roundForGrid, roundValues } from '@canvas/utils/transform'
 import { rotatePoint } from '@canvas/utils/trigo'
-import type { SelectionModeResize } from '@common/types/Mode'
-import type { Point, Rect, SelectionDefaultType, SelectionType, ShapeEntity } from '@common/types/Shapes'
 
 export const createRecSelectionPath = (
   path: Path2D | undefined,

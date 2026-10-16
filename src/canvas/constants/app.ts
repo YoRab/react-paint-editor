@@ -1,7 +1,7 @@
-import type { Size } from '@common/types/Canvas'
-import type { ExportedDrawableShape } from '@common/types/Shapes'
-import type { CustomToolInput } from '@common/types/tools'
-import type { RecursivePartial } from '@common/types/utils'
+import type { Size } from '@canvas/types/Canvas'
+import type { ExportedDrawableShape } from '@canvas/types/Shapes'
+import type { CustomToolInput } from '@canvas/types/tools'
+import type { RecursivePartial } from '@canvas/types/utils'
 import { SELECTION_DEFAULT_COLOR, SELECTION_DEFAULT_PADDING, SELECTION_DEFAULT_WIDTH } from './shapes'
 import { DEFAULT_TOOLS } from './tools'
 
@@ -10,9 +10,9 @@ export const APP_NAME = 'react_paint'
 export const DRAWCANVAS_CLASSNAME = 'react-paint-canvas-drawcanvas'
 export const SELECTIONCANVAS_CLASSNAME = 'react-paint-canvas-selectioncanvas'
 
-import type { BrushAlgo } from '@common/types/Settings'
+import type { BrushAlgo } from '@canvas/types/Settings'
 
-export type { BrushAlgo, UtilsSettings } from '@common/types/Settings'
+export type { BrushAlgo, UtilsSettings } from '@canvas/types/Settings'
 
 export type AppOptions = {
   grid: number

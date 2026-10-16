@@ -1,10 +1,10 @@
-import { uniqueId } from '@common/utils/util'
 import Button from '@editor/components/common/Button'
 import Panel from '@editor/components/common/Panel'
+import useDebounce from '@editor/hooks/useDebounce'
+import { uniqueId } from '@editor/utils/util'
 import type React from 'react'
 import { useState } from 'react'
 import './RangeField.css'
-import useDebounce from '@common/hooks/useDebounce'
 
 type ShapeStyleColorType = {
   selectedSettings: string | undefined

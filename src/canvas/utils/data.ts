@@ -1,7 +1,7 @@
 import type { UtilsSettings } from '@canvas/constants/app'
-import type { DrawableShape, ShapeEntity, StateData } from '@common/types/Shapes'
-import { omit } from '@common/utils/object'
-import { uniqueId } from '@common/utils/util'
+import type { DrawableShape, ShapeEntity, StateData } from '@canvas/types/Shapes'
+import { omit } from '@canvas/utils/object'
+import { uniqueId } from '@canvas/utils/util'
 import { getStringifiedImage } from './file'
 import { refreshShape } from './shapes'
 

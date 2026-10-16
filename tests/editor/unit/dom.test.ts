@@ -1,4 +1,4 @@
-import { isEventInsideNode } from '@common/utils/dom'
+import { isEventInsideNode } from '@editor/utils/dom'
 import { describe, expect, it } from 'vitest'
 
 /**

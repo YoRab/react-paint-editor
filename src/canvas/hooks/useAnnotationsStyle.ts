@@ -1,5 +1,5 @@
-import usePaintState from '@common/hooks/usePaintState'
-import type { ReactPaint } from '@common/types/editor'
+import usePaintState from '@canvas/hooks/usePaintState'
+import type { ReactPaint } from '@canvas/types/editor'
 import { type CSSProperties, useMemo } from 'react'
 
 /** Style of an element laid over the canvas, like a picture to annotate, so that it follows the zoom and the moves of the view */

@@ -236,7 +236,8 @@ export type ToolsSettingsType<T extends ShapeType> = T extends 'rect'
                         ? ToolsGroupSettings
                         : never
 
-export type ActionsType = 'selection' | 'undo' | 'redo' | 'clear' | 'export' | 'loadfile' | 'savefile' | 'move' | 'uploadpicture' | 'addurlpicture'
+/** Tools handled by the canvas besides the drawing tools. The buttons of an editor (undo, export...) are not tools */
+export type ActionsType = 'selection' | 'move'
 
 export type ActionsTool = {
   id: string

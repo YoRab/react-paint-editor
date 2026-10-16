@@ -1,8 +1,8 @@
 import type { UtilsSettings } from '@canvas/constants/app'
+import type { SelectionModeResize } from '@canvas/types/Mode'
+import type { Point, SelectionType, ShapeEntity } from '@canvas/types/Shapes'
 import { resizeRectSelection } from '@canvas/utils/selection/rectSelection'
 import { rotatePoint } from '@canvas/utils/trigo'
-import type { SelectionModeResize } from '@common/types/Mode'
-import type { Point, SelectionType, ShapeEntity } from '@common/types/Shapes'
 
 /** Shared context when resizing shapes inside a group */
 export type GroupResizeContext = {

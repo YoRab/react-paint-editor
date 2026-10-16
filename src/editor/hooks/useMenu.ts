@@ -1,4 +1,4 @@
-import { isEventInsideNode } from '@common/utils/dom'
+import { isEventInsideNode } from '@editor/utils/dom'
 import { useCallback, useEffect, useState, useTransition } from 'react'
 
 type UseMenuProps = {

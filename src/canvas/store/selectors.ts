@@ -1,14 +1,14 @@
 import type { UtilsSettings } from '@canvas/constants/app'
+import { MOVE_TOOL, SELECTION_TOOL } from '@canvas/constants/tools'
 import type { InternalState } from '@canvas/store/types'
+import type { CanvasSize } from '@canvas/types/Canvas'
+import type { ContextMenuState, EditorState, InteractionState } from '@canvas/types/editor'
+import type { SelectionModeData } from '@canvas/types/Mode'
+import type { Point, SelectionType, ShapeEntity } from '@canvas/types/Shapes'
+import type { CustomTool, ToolsType } from '@canvas/types/tools'
+import { shallowEqual } from '@canvas/utils/equality'
+import { getSelectedShapes } from '@canvas/utils/selectedShapes'
 import { canRemoveShapePoint } from '@canvas/utils/shapes'
-import { MOVE_TOOL, SELECTION_TOOL } from '@common/constants/tools'
-import type { CanvasSize } from '@common/types/Canvas'
-import type { ContextMenuState, EditorState, InteractionState } from '@common/types/editor'
-import type { SelectionModeData } from '@common/types/Mode'
-import type { Point, SelectionType, ShapeEntity } from '@common/types/Shapes'
-import type { CustomTool, ToolsType } from '@common/types/tools'
-import { shallowEqual } from '@common/utils/equality'
-import { getSelectedShapes } from '@common/utils/selection'
 
 /** The text being edited, shown in a text box over the canvas */
 type TextEdition = { shape: ShapeEntity<'text'>; defaultValue: string[]; settings: UtilsSettings }

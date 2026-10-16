@@ -1,4 +1,4 @@
-import { shallowEqual } from '@common/utils/equality'
+import { shallowEqual } from '@canvas/utils/equality'
 import { describe, expect, it } from 'vitest'
 
 describe('shallowEqual', () => {

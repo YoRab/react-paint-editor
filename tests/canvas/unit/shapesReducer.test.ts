@@ -1,5 +1,5 @@
 import { INITIAL_SHAPES_STATE, type ShapesState, shapesReducer } from '@canvas/store/shapesReducer'
-import type { ShapeEntity } from '@common/types/Shapes'
+import type { ShapeEntity } from '@canvas/types/Shapes'
 import { describe, expect, it } from 'vitest'
 
 const shape = (id: string, x = 0) => ({ id, type: 'rect', x, y: 0, width: 10, height: 10 }) as unknown as ShapeEntity

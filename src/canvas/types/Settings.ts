@@ -1,4 +1,4 @@
-import type { Point } from '@common/types/Shapes'
+import type { Point } from '@canvas/types/Shapes'
 
 export type BrushAlgo = 'simple' | 'quadratic'
 

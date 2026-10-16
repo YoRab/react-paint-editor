@@ -1,7 +1,7 @@
 import type { UtilsSettings } from '@canvas/constants/app'
+import type { SelectionModeData } from '@canvas/types/Mode'
+import type { Point, ShapeEntity } from '@canvas/types/Shapes'
 import { transformCanvas, updateCanvasContext } from '@canvas/utils/canvas'
-import type { SelectionModeData } from '@common/types/Mode'
-import type { Point, ShapeEntity } from '@common/types/Shapes'
 
 export const drawSelectionGroup = (
   ctx: CanvasRenderingContext2D,

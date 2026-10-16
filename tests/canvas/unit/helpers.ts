@@ -1,6 +1,6 @@
 import { createPaintStore } from '@canvas/store/paintStore'
 import type { UseReactPaintProps } from '@canvas/store/types'
-import type { ExportedDrawableShape } from '@common/types/Shapes'
+import type { ExportedDrawableShape } from '@canvas/types/Shapes'
 import { vi } from 'vitest'
 
 /** Path2D only exists in a browser: the store builds the paths of the shapes, without drawing them */

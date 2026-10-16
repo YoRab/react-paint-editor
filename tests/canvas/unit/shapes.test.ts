@@ -1,5 +1,5 @@
+import type { Point, ShapeEntity } from '@canvas/types/Shapes'
 import { canRemoveShapePoint } from '@canvas/utils/shapes'
-import type { Point, ShapeEntity } from '@common/types/Shapes'
 import { describe, expect, it } from 'vitest'
 
 const withPoints = (type: 'polygon' | 'curve' | 'line', pointsCount: number) =>

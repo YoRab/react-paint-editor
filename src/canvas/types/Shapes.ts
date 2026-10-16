@@ -1,4 +1,4 @@
-import type { ShapeTypeArray } from '@common/constants/shapes'
+import type { ShapeTypeArray } from '@canvas/constants/shapes'
 
 export type ShapeType = (typeof ShapeTypeArray)[number]
 export type Point = [number, number]

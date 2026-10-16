@@ -1,4 +1,4 @@
-import type { ToolsType } from '@common/types/tools'
+import type { ToolsType } from '@canvas/index'
 import Button from '@editor/components/common/Button'
 
 type ToolComponentType = {

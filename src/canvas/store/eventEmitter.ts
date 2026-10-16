@@ -1,4 +1,4 @@
-import type { ReactPaintEventName, ReactPaintEvents } from '@common/types/editor'
+import type { ReactPaintEventName, ReactPaintEvents } from '@canvas/types/editor'
 
 type Listener = (...args: never[]) => void
 

@@ -1,10 +1,10 @@
 import { KeyboardCode, KeyboardCommand } from '@canvas/constants/keyboard'
+import { SELECTION_TOOL } from '@canvas/constants/tools'
 import type { PaintStore } from '@canvas/store/paintStore'
+import type { Point } from '@canvas/types/Shapes'
+import { getSelectedShapes } from '@canvas/utils/selectedShapes'
 import { translateShapes } from '@canvas/utils/shapes'
-import { SELECTION_TOOL } from '@common/constants/tools'
-import type { Point } from '@common/types/Shapes'
-import { getSelectedShapes } from '@common/utils/selection'
-import { isMacOs } from '@common/utils/util'
+import { isMacOs } from '@canvas/utils/util'
 import { useEffect } from 'react'
 
 /**

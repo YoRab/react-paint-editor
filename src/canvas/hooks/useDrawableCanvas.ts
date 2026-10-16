@@ -1,5 +1,9 @@
 import type { UtilsSettings } from '@canvas/constants/app'
+import { ShapeTypeArray } from '@canvas/constants/shapes'
+import { SELECTION_TOOL } from '@canvas/constants/tools'
 import type { PaintStore } from '@canvas/store/paintStore'
+import type { Point } from '@canvas/types/Shapes'
+import type { CustomTool } from '@canvas/types/tools'
 import {
   checkCurveLinesSelectionIntersection,
   checkPolygonLinesSelectionIntersection,
@@ -10,19 +14,15 @@ import {
   isTouchGesture,
   shouldCancelLongPress
 } from '@canvas/utils/intersect'
+import { getSelectedShapes } from '@canvas/utils/selectedShapes'
 import { buildShapesGroup, selectShape } from '@canvas/utils/selection'
 import { createShape } from '@canvas/utils/shapes'
 import { addNewPointGroupToShape } from '@canvas/utils/shapes/brush'
 import { addCurveLine, addCurvePoint } from '@canvas/utils/shapes/curve'
 import { addPolygonLine, addPolygonPoint } from '@canvas/utils/shapes/polygon'
 import { transformShape } from '@canvas/utils/transform'
+import { clamp } from '@canvas/utils/util'
 import { isCursorInsideMask } from '@canvas/utils/zoom'
-import { ShapeTypeArray } from '@common/constants/shapes'
-import { SELECTION_TOOL } from '@common/constants/tools'
-import type { Point } from '@common/types/Shapes'
-import type { CustomTool } from '@common/types/tools'
-import { getSelectedShapes } from '@common/utils/selection'
-import { clamp } from '@common/utils/util'
 import { useEffect } from 'react'
 
 const DOUBLE_CLICK_DELAY_MS = 300

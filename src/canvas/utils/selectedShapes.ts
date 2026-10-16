@@ -1,5 +1,5 @@
-import type { SelectionType, ShapeEntity } from '@common/types/Shapes'
-import type { CustomTool, ToolsGroupSettings } from '@common/types/tools'
+import type { SelectionType, ShapeEntity } from '@canvas/types/Shapes'
+import type { CustomTool, ToolsGroupSettings } from '@canvas/types/tools'
 
 export const getSelectedShapes = (selection: SelectionType | undefined): ShapeEntity[] => {
   if (!selection) return []

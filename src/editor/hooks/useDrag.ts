@@ -1,4 +1,4 @@
-import type { ShapeEntity } from '@common/types/Shapes'
+import type { ShapeEntity } from '@canvas/index'
 import { type RefObject, useEffect, useState } from 'react'
 
 type useDragType = {

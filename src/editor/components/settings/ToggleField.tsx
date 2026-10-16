@@ -1,5 +1,5 @@
-import { uniqueId } from '@common/utils/util'
 import Button from '@editor/components/common/Button'
+import { uniqueId } from '@editor/utils/util'
 import type React from 'react'
 import { useState } from 'react'
 
