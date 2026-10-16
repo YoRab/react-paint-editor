@@ -1,4 +1,4 @@
-import type { ReactPaint } from '@common/types/editor'
+import type { ReactPaint } from '@canvas/types/editor'
 import { createContext, type ReactNode, useContext } from 'react'
 
 const PaintContext = createContext<ReactPaint | undefined>(undefined)

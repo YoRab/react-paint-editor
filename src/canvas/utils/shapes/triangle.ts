@@ -1,9 +1,9 @@
 import type { UtilsSettings } from '@canvas/constants/app'
+import type { DrawableShape, Triangle, TriangleEntity } from '@canvas/types/Shapes'
 import { drawPathWithFillAndStroke } from '@canvas/utils/canvas'
 import { createTrianglePath, getComputedShapeInfos } from '@canvas/utils/shapes/path'
 import { getPolygonBorder } from '@canvas/utils/shapes/polygon'
-import type { DrawableShape, Triangle, TriangleEntity } from '@common/types/Shapes'
-import { uniqueId } from '@common/utils/util'
+import { uniqueId } from '@canvas/utils/util'
 
 const buildPath = (shape: DrawableShape<'triangle'> & { id: string }, settings: UtilsSettings): TriangleEntity => {
   return {

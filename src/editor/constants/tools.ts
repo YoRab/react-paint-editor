@@ -1,6 +1,5 @@
-import { MOVE_TOOL, SELECTION_TOOL, TOOL_ID_PREFIX } from '@common/constants/tools'
-import type { ShapeType } from '@common/types/Shapes'
-import type { ActionsTool } from '@common/types/tools'
+import { type ActionsTool, MOVE_TOOL, SELECTION_TOOL, type ShapeType } from '@canvas/index'
+import type { EditorActionTool } from '@editor/types/tools'
 import { clearIcon, cursorIcon, exportFileIcon, moveIcon, openFileIcon, pictureIcon, redoIcon, saveIcon, undoIcon } from './icons'
 
 export const TOOL_LABELS: Record<ShapeType, string> = {
@@ -31,50 +30,43 @@ export const MOVE_TOOL_DISPLAY: ActionsTool = {
   label: 'Move'
 }
 
-export const UNDO_TOOL: ActionsTool = {
-  id: `${TOOL_ID_PREFIX}undo`,
+export const UNDO_TOOL: EditorActionTool = {
   type: 'undo',
   icon: undoIcon,
   label: 'Undo'
 }
 
-export const REDO_TOOL: ActionsTool = {
-  id: `${TOOL_ID_PREFIX}redo`,
+export const REDO_TOOL: EditorActionTool = {
   type: 'redo',
   icon: redoIcon,
   label: 'Redo'
 }
 
-export const CLEAR_TOOL: ActionsTool = {
-  id: `${TOOL_ID_PREFIX}clear`,
+export const CLEAR_TOOL: EditorActionTool = {
   type: 'clear',
   icon: clearIcon,
   label: 'Clear'
 }
 
-export const EXPORT_TOOL: ActionsTool = {
-  id: `${TOOL_ID_PREFIX}export`,
+export const EXPORT_TOOL: EditorActionTool = {
   type: 'export',
   icon: exportFileIcon,
   label: 'Export PNG'
 }
 
-export const LOAD_TOOL: ActionsTool = {
-  id: `${TOOL_ID_PREFIX}load`,
+export const LOAD_TOOL: EditorActionTool = {
   type: 'loadfile',
   icon: openFileIcon,
   label: 'Load project'
 }
 
-export const SAVE_TOOL: ActionsTool = {
-  id: `${TOOL_ID_PREFIX}save`,
+export const SAVE_TOOL: EditorActionTool = {
   type: 'savefile',
   icon: saveIcon,
   label: 'Save project'
 }
 
-export const UPLOAD_PICTURE_TOOL: ActionsTool = {
-  id: `${TOOL_ID_PREFIX}upload-picture`,
+export const UPLOAD_PICTURE_TOOL: EditorActionTool = {
   type: 'uploadpicture',
   icon: pictureIcon,
   label: 'Upload picture'

@@ -1,8 +1,8 @@
 import { DEFAULT_TOOLS } from '@canvas/constants/tools'
-import type { CustomTool, CustomToolInput } from '@common/types/tools'
-import type { RecursivePartial } from '@common/types/utils'
-import { compact } from '@common/utils/array'
-import { mergeWith } from '@common/utils/object'
+import type { CustomTool, CustomToolInput } from '@canvas/types/tools'
+import type { RecursivePartial } from '@canvas/types/utils'
+import { compact } from '@canvas/utils/array'
+import { mergeWith } from '@canvas/utils/object'
 
 const arrayOverrideCustomizer = (objValue: unknown, srcValue: unknown) => {
   if (Array.isArray(objValue)) return srcValue

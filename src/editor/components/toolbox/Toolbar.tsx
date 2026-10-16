@@ -1,9 +1,4 @@
-import { usePaint } from '@common/context/PaintContext'
-import usePaintState from '@common/hooks/usePaintState'
-import type { EditorState, ExportView } from '@common/types/editor'
-import type { ShapeType } from '@common/types/Shapes'
-import type { ToolsType } from '@common/types/tools'
-import { shallowEqual } from '@common/utils/equality'
+import { type EditorState, type ExportView, type ShapeType, shallowEqual, type ToolsType, usePaint, usePaintState } from '@canvas/index'
 import Button from '@editor/components/common/Button'
 import Modal from '@editor/components/common/Modal'
 import { shapesIcon } from '@editor/constants/icons'
@@ -16,6 +11,7 @@ import PictureUrlModal from './PictureUrlInput'
 import Tool from './Tool'
 import './Toolbar.css'
 import ExportModal from '@editor/components/toolbox/ExportModal'
+import ActionButton from './ActionButton'
 import ToolbarGroup from './ToolbarGroup'
 
 const TOOL_WIDTH = 40
@@ -163,33 +159,14 @@ const Toolbar = ({
 
         {!actionsInMenu && (
           <>
-            <Tool
-              type={UNDO_TOOL}
-              disabled={disabled || !hasActionToUndo}
-              img={UNDO_TOOL.icon}
-              isActive={activeTool.id === UNDO_TOOL.id}
-              setActive={undoAction}
-            />
-            <Tool
-              type={REDO_TOOL}
-              disabled={disabled || !hasActionToRedo}
-              img={REDO_TOOL.icon}
-              isActive={activeTool.id === REDO_TOOL.id}
-              setActive={redoAction}
-            />
-            <Tool
-              type={CLEAR_TOOL}
-              disabled={disabled || !hasActionToClear}
-              img={CLEAR_TOOL.icon}
-              isActive={activeTool.id === CLEAR_TOOL.id}
-              setActive={clearCanvas}
-            />
+            <ActionButton type={UNDO_TOOL} disabled={disabled || !hasActionToUndo} onClick={undoAction} />
+            <ActionButton type={REDO_TOOL} disabled={disabled || !hasActionToRedo} onClick={redoAction} />
+            <ActionButton type={CLEAR_TOOL} disabled={disabled || !hasActionToClear} onClick={clearCanvas} />
           </>
         )}
         <MenuGroup
           withActionsInMenu={actionsInMenu}
           disabled={disabled}
-          activeTool={activeTool}
           addPicture={addPicture}
           loadFile={loadFile}
           saveFile={saveFile}

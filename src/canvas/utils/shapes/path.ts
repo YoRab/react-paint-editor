@@ -1,7 +1,7 @@
 import type { UtilsSettings } from '@canvas/constants/app'
+import type { Circle, DrawableShape, Line, Point, Rect } from '@canvas/types/Shapes'
 import { scalePoint } from '@canvas/utils/transform'
 import { rotatePoint } from '@canvas/utils/trigo'
-import type { Circle, DrawableShape, Line, Point, Rect } from '@common/types/Shapes'
 
 export const createRecPath = (rect: Rect): Path2D => {
   const path = new Path2D()

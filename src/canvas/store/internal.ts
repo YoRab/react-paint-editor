@@ -1,5 +1,5 @@
 import type { PaintStore } from '@canvas/store/paintStore'
-import type { ReactPaint } from '@common/types/editor'
+import type { ReactPaint } from '@canvas/types/editor'
 
 /**
  * Key of the internal store on the handle. It is not part of the public type: only the Canvas component reads it.

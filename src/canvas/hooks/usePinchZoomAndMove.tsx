@@ -1,11 +1,11 @@
 import { ZOOM_DETECTION_OFFSET, ZOOM_STEPS } from '@canvas/constants/zoom'
 import useEventListener from '@canvas/hooks/useEventListener'
 import type { PaintStore } from '@canvas/store/paintStore'
+import type { CanvasSize, Size } from '@canvas/types/Canvas'
+import type { Point } from '@canvas/types/Shapes'
 import { getCenter, getDistanceBetweenPoints } from '@canvas/utils/trigo'
+import { clamp } from '@canvas/utils/util'
 import { calculateNewZoomAndOffset } from '@canvas/utils/zoom'
-import type { CanvasSize, Size } from '@common/types/Canvas'
-import type { Point } from '@common/types/Shapes'
-import { clamp } from '@common/utils/util'
 import { useCallback, useRef, useState } from 'react'
 
 type PinchData = { startDiff: number; startZoom: number; startCenter: Point; startOffset: Point; isZooming: boolean; isMoving: boolean }

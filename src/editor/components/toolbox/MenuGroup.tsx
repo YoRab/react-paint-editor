@@ -1,4 +1,3 @@
-import type { ToolsType } from '@common/types/tools'
 import Button from '@editor/components/common/Button'
 import Menu from '@editor/components/common/Menu'
 import { menuIcon, publicIcon } from '@editor/constants/icons'
@@ -6,15 +5,11 @@ import { CLEAR_TOOL, EXPORT_TOOL, LOAD_TOOL, REDO_TOOL, SAVE_TOOL, UNDO_TOOL, UP
 import LoadFileTool from './LoadFileTool'
 import './MenuGroup.css'
 import useMenu from '@editor/hooks/useMenu'
-import Tool from './Tool'
+import ActionButton from './ActionButton'
 
 type MenuGroupType = {
-  activeTool: ToolsType
   withActionsInMenu: boolean
-  vertical?: boolean
-  title?: string
   disabled?: boolean
-  img?: string
   loadFile: (file: File) => void
   addPicture: (file: File) => Promise<void>
   saveFile: () => void
@@ -33,7 +28,6 @@ type MenuGroupType = {
 }
 
 const MenuGroup = ({
-  activeTool,
   withActionsInMenu,
   hasActionToUndo = false,
   hasActionToRedo = false,
@@ -71,30 +65,9 @@ const MenuGroup = ({
           <Menu alignment='right' position='top'>
             {withActionsInMenu && (
               <>
-                <Tool
-                  withText={true}
-                  type={UNDO_TOOL}
-                  disabled={disabled || !hasActionToUndo}
-                  img={UNDO_TOOL.icon}
-                  isActive={activeTool.id === UNDO_TOOL.id}
-                  setActive={triggerAndCloseMenu(undoAction)}
-                />
-                <Tool
-                  withText={true}
-                  type={REDO_TOOL}
-                  disabled={disabled || !hasActionToRedo}
-                  img={REDO_TOOL.icon}
-                  isActive={activeTool.id === REDO_TOOL.id}
-                  setActive={triggerAndCloseMenu(redoAction)}
-                />
-                <Tool
-                  withText={true}
-                  type={CLEAR_TOOL}
-                  disabled={disabled || !hasActionToClear}
-                  img={CLEAR_TOOL.icon}
-                  isActive={activeTool.id === CLEAR_TOOL.id}
-                  setActive={triggerAndCloseMenu(clearCanvas)}
-                />
+                <ActionButton withText={true} type={UNDO_TOOL} disabled={disabled || !hasActionToUndo} onClick={triggerAndCloseMenu(undoAction)} />
+                <ActionButton withText={true} type={REDO_TOOL} disabled={disabled || !hasActionToRedo} onClick={triggerAndCloseMenu(redoAction)} />
+                <ActionButton withText={true} type={CLEAR_TOOL} disabled={disabled || !hasActionToClear} onClick={triggerAndCloseMenu(clearCanvas)} />
                 {(withUploadPicture || withUrlPicture || withLoadAndSave) && <hr />}
               </>
             )}
@@ -105,7 +78,6 @@ const MenuGroup = ({
                 type={UPLOAD_PICTURE_TOOL}
                 disabled={disabled}
                 loadFile={triggerAndCloseMenu(addPicture)}
-                img={UPLOAD_PICTURE_TOOL.icon}
                 accept='image/png, image/gif, image/jpeg, image/svg+xml, image/webp'
               />
             )}
@@ -129,30 +101,13 @@ const MenuGroup = ({
                   type={LOAD_TOOL}
                   disabled={disabled}
                   loadFile={triggerAndCloseMenu(loadFile)}
-                  img={LOAD_TOOL.icon}
                   accept='application/JSON'
                 />
 
-                <Tool
-                  withText={true}
-                  disabled={disabled}
-                  type={SAVE_TOOL}
-                  img={SAVE_TOOL.icon}
-                  isActive={activeTool.id === SAVE_TOOL.id}
-                  setActive={triggerAndCloseMenu(saveFile)}
-                />
+                <ActionButton withText={true} disabled={disabled} type={SAVE_TOOL} onClick={triggerAndCloseMenu(saveFile)} />
               </>
             )}
-            {withExport && (
-              <Tool
-                withText={true}
-                disabled={disabled}
-                type={EXPORT_TOOL}
-                img={EXPORT_TOOL.icon}
-                isActive={activeTool.id === EXPORT_TOOL.id}
-                setActive={triggerAndCloseMenu(toggleExportModal)}
-              />
-            )}
+            {withExport && <ActionButton withText={true} disabled={disabled} type={EXPORT_TOOL} onClick={triggerAndCloseMenu(toggleExportModal)} />}
           </Menu>
         )}
       </div>

@@ -1,7 +1,7 @@
-import type { Size } from '@common/types/Canvas'
-import type { SelectionModeData } from '@common/types/Mode'
-import type { ExportedDrawableShape, Point, ShapeEntity, StateData, StyleShape } from '@common/types/Shapes'
-import type { CustomTool, ToolsType } from '@common/types/tools'
+import type { Size } from '@canvas/types/Canvas'
+import type { SelectionModeData } from '@canvas/types/Mode'
+import type { ExportedDrawableShape, Point, ShapeEntity, StateData, StyleShape } from '@canvas/types/Shapes'
+import type { CustomTool, ToolsType } from '@canvas/types/tools'
 
 /*
  * Public contract between the canvas module (which implements it with useReactPaint)

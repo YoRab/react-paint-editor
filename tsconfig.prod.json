@@ -21,8 +21,7 @@
     "types": ["node"],
     "paths": {
       "@editor/*": ["./src/editor/*"],
-      "@canvas/*": ["./src/canvas/*"],
-      "@common/*": ["./src/common/*"]
+      "@canvas/*": ["./src/canvas/*"]
     }
   },
   "include": ["src"]

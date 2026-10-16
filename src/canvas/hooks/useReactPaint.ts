@@ -1,7 +1,7 @@
 import { createReactPaint, getPaintStore } from '@canvas/store/internal'
 import { createPaintStore } from '@canvas/store/paintStore'
 import type { UseReactPaintProps } from '@canvas/store/types'
-import type { ReactPaint } from '@common/types/editor'
+import type { ReactPaint } from '@canvas/types/editor'
 import { useEffect, useLayoutEffect, useState } from 'react'
 
 export type { UseReactPaintProps } from '@canvas/store/types'

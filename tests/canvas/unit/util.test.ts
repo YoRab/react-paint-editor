@@ -1,7 +1,7 @@
-import { clamp, isMacOs, uniqueId } from '@common/utils/util'
+import { clamp, isMacOs, uniqueId } from '@canvas/utils/util'
 import { afterEach, describe, expect, it } from 'vitest'
 
-describe('common/utils/util', () => {
+describe('canvas/utils/util', () => {
   describe('uniqueId', () => {
     it('should generate unique IDs with a given prefix', () => {
       const id1 = uniqueId('test_')

@@ -1,4 +1,4 @@
-import type { Circle, Point, Rect } from '@common/types/Shapes'
+import type { Circle, Point, Rect } from '@canvas/types/Shapes'
 
 type Vector = [Point, Point]
 

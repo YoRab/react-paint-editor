@@ -35,7 +35,7 @@ for (const fileName of fileNames) {
     .then(str =>
       str // declarationfiles/index.ts will be resolved to '..' so we always remove the first dot
         .replace(
-          /@(editor|common|canvas)/g,
+          /@(editor|canvas)/g,
           (_match, group) => `${path.join(path.relative(fileName, 'declarationfiles'), group).slice(1).split(path.sep).join('/')}`
         )
         // css side effect imports are kept by tsc but can not be resolved by type checkers

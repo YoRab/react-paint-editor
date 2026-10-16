@@ -1,5 +1,4 @@
-import type { ShapeType } from '@common/types/Shapes'
-import type { CustomTool } from '@common/types/tools'
+import type { CustomTool, ShapeType } from '@canvas/index'
 import { arrowIcon, brushIcon, circleIcon, curveIcon, groupIcon, pictureIcon, polygonIcon, squareIcon, textIcon } from '@editor/constants/icons'
 import { TOOL_LABELS } from '@editor/constants/tools'
 

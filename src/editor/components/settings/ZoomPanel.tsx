@@ -1,5 +1,4 @@
-import { usePaint } from '@common/context/PaintContext'
-import usePaintState from '@common/hooks/usePaintState'
+import { usePaint, usePaintState } from '@canvas/index'
 import Button from '@editor/components/common/Button'
 import Panel from '@editor/components/common/Panel'
 import { zoomIn, zoomOut } from '@editor/constants/icons'

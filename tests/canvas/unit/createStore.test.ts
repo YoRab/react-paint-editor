@@ -1,4 +1,4 @@
-import { createStore } from '@common/store/createStore'
+import { createStore } from '@canvas/store/createStore'
 import { describe, expect, it, vi } from 'vitest'
 
 describe('createStore', () => {

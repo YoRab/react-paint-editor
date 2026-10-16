@@ -1,4 +1,4 @@
-import type { EditorState, ReactPaint } from '@common/types/editor'
+import type { EditorState, ReactPaint } from '@canvas/types/editor'
 import { useEffect, useMemo, useRef, useSyncExternalStore } from 'react'
 
 const selectAll = (state: EditorState) => state

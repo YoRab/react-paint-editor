@@ -4,8 +4,8 @@ import useAutoScroll from '@canvas/hooks/useAutoScroll'
 import useKeyboard from '@canvas/hooks/useKeyboard'
 import useResizeObserver from '@canvas/hooks/useResizeObserver'
 import { getPaintStore } from '@canvas/store/internal'
-import type { ReactPaint } from '@common/types/editor'
-import { withDefaults } from '@common/utils/object'
+import type { ReactPaint } from '@canvas/types/editor'
+import { withDefaults } from '@canvas/utils/object'
 import { type CSSProperties, useCallback, useEffect, useRef, useSyncExternalStore } from 'react'
 import './index.css'
 
@@ -69,12 +69,11 @@ const Canvas = ({ paint, options, className, style }: CanvasComponentProps) => {
 }
 
 export { type CanvasOptions, DEFAULT_OPTIONS, type OptionalOptions, type OptionalOptions as UseReactPaintOptions } from '@canvas/constants/app'
-export { DEFAULT_TOOLS } from '@canvas/constants/tools'
+export { DEFAULT_TOOLS, MOVE_TOOL, SELECTION_TOOL } from '@canvas/constants/tools'
+export { PaintProvider, usePaint } from '@canvas/context/PaintContext'
 export { default as useAnnotationsStyle } from '@canvas/hooks/useAnnotationsStyle'
+export { default as usePaintState } from '@canvas/hooks/usePaintState'
 export { default as useReactPaint, type UseReactPaintProps, type UseReactPaintReturnType } from '@canvas/hooks/useReactPaint'
-export { MOVE_TOOL, SELECTION_TOOL } from '@common/constants/tools'
-export { PaintProvider, usePaint } from '@common/context/PaintContext'
-export { default as usePaintState } from '@common/hooks/usePaintState'
 export type {
   ContextMenuState,
   EditorActions,
@@ -90,7 +89,7 @@ export type {
   ShapesTransformAction,
   ToolSettingValue,
   ZoomAction
-} from '@common/types/editor'
+} from '@canvas/types/editor'
 export type {
   ExportedDrawableShape as DrawableShape,
   ExportedDrawableShape,
@@ -99,9 +98,9 @@ export type {
   ShapeType,
   StateData,
   StyleShape
-} from '@common/types/Shapes'
-export type { ActionsTool, CustomTool, CustomToolInput, ToolsType } from '@common/types/tools'
-export { shallowEqual } from '@common/utils/equality'
-export { getSelectedShapes, getSelectedShapesTools } from '@common/utils/selection'
+} from '@canvas/types/Shapes'
+export type { ActionsTool, CustomTool, CustomToolInput, ToolsType } from '@canvas/types/tools'
+export { shallowEqual } from '@canvas/utils/equality'
+export { getSelectedShapes, getSelectedShapesTools } from '@canvas/utils/selectedShapes'
 export type { CanvasComponentProps }
 export { Canvas }

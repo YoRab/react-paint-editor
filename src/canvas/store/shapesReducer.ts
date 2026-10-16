@@ -1,5 +1,5 @@
-import type { SelectionType, ShapeEntity } from '@common/types/Shapes'
-import { isEqual, omit } from '@common/utils/object'
+import type { SelectionType, ShapeEntity } from '@canvas/types/Shapes'
+import { isEqual, omit } from '@canvas/utils/object'
 
 // --- Types ---
 

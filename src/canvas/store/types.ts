@@ -1,9 +1,9 @@
 import type { AppOptions, OptionalOptions } from '@canvas/constants/app'
 import type { ShapesState } from '@canvas/store/shapesReducer'
-import type { CanvasSize } from '@common/types/Canvas'
-import type { HoverModeData, SelectionModeData } from '@common/types/Mode'
-import type { ExportedDrawableShape, Point, SelectionType, ShapeEntity } from '@common/types/Shapes'
-import type { CustomTool } from '@common/types/tools'
+import type { CanvasSize } from '@canvas/types/Canvas'
+import type { HoverModeData, SelectionModeData } from '@canvas/types/Mode'
+import type { ExportedDrawableShape, Point, SelectionType, ShapeEntity } from '@canvas/types/Shapes'
+import type { CustomTool } from '@canvas/types/tools'
 
 export type UseReactPaintProps = {
   width?: number | undefined

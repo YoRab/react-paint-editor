@@ -1,6 +1,6 @@
 import { STYLE_FONT_DEFAULT } from '@canvas/constants/rendering'
-import { TOOL_ID_PREFIX } from '@common/constants/tools'
 import type {
+  ActionsTool,
   CustomToolInput,
   ToolsBrushSettings,
   ToolsLineSettings,
@@ -8,7 +8,23 @@ import type {
   ToolsPolygonSettings,
   ToolsRectSettings,
   ToolsTextSettings
-} from '@common/types/tools'
+} from '@canvas/types/tools'
+
+const TOOL_ID_PREFIX = 'react-paint-'
+
+/**
+ * Tools handled by the canvas besides the drawing tools. Like them, they hold no visual data:
+ * an editor gives them an icon and a label, and selects them by id.
+ */
+export const SELECTION_TOOL: ActionsTool = {
+  id: `${TOOL_ID_PREFIX}selection`,
+  type: 'selection'
+}
+
+export const MOVE_TOOL: ActionsTool = {
+  id: `${TOOL_ID_PREFIX}move`,
+  type: 'move'
+}
 
 export const PICTURE_TOOL_ID = `${TOOL_ID_PREFIX}picture`
 

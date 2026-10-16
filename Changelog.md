@@ -15,6 +15,7 @@ Breaking changes, see the [migration guide](./MIGRATION.md).
 - move editor UI options (layersManipulation, withExport, withLoadAndSave, withUploadPicture, withUrlPicture) from useReactPaint to Editor options
 - replace DEFAULT_SHAPE_TOOLS (editor) with DEFAULT_TOOLS (canvas), without icons nor labels. useReactPaint from the canvas entry now provides default tools
 - define SELECTION_TOOL and MOVE_TOOL once for both modules, without icon nor label: icon and label of ActionsTool become optional
+- reduce ActionsType to the tools handled by the canvas, selection and move: the buttons of the editor (undo, redo, clear, export, loadfile, savefile, uploadpicture, addurlpicture) are not part of the API anymore
 - named exports for Canvas and Editor in all entry points
 - add selectionChanged and toolChanged events, registerEvent and unregisterEvent are typed by event. registerEvent returns the function that unregisters the listener, and events are emitted right after the change of the state
 - export getSelectedShapes, getSelectedShapesTools, SELECTION_TOOL and MOVE_TOOL

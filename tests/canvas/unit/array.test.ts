@@ -1,4 +1,4 @@
-import { compact, moveItemPosition } from '@common/utils/array'
+import { compact, moveItemPosition } from '@canvas/utils/array'
 import { describe, expect, it } from 'vitest'
 
 describe('compact', () => {
