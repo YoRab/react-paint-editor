@@ -37,8 +37,19 @@ const toClient = ([x, y]: Point) => {
 }
 
 /** The selection canvas lets pointer events through: the draw canvas is the target of real events */
-const dispatchMouse = (type: string, point: Point, init: MouseEventInit = {}) =>
-  getDrawCanvas().dispatchEvent(new MouseEvent(type, { bubbles: true, cancelable: true, view: window, ...toClient(point), ...init }))
+const dispatchPointer = (type: string, point: Point, init: PointerEventInit = {}) =>
+  getDrawCanvas().dispatchEvent(
+    new PointerEvent(type, {
+      bubbles: true,
+      cancelable: true,
+      view: window,
+      pointerId: 1,
+      pointerType: 'mouse',
+      isPrimary: true,
+      ...toClient(point),
+      ...init
+    })
+  )
 
 const clickButton = (testId: string) => {
   const button = document.querySelector<HTMLButtonElement>(`[data-testid="${testId}"]`)
@@ -46,7 +57,7 @@ const clickButton = (testId: string) => {
   button.click()
 }
 
-/** Gives the focus to the canvas, which enables the interactions, then waits for the listeners to be set */
+/** Gives the focus to the canvas, which receives the keyboard shortcuts, then waits for the listeners to be set */
 export const focusCanvas = async () => {
   getDrawCanvas().focus()
   await nextFrame()
@@ -81,7 +92,7 @@ const hover: Scenario = {
   id: 'hover',
   run: async ({ shapes, eventsPerFrame }) => {
     const points = interpolate(getShapeCenter(shapes[0]!), getShapeCenter(shapes[shapes.length - 1]!), MOVES)
-    await playPoints(points, eventsPerFrame, point => dispatchMouse('mousemove', point))
+    await playPoints(points, eventsPerFrame, point => dispatchPointer('pointermove', point))
   },
   verify: ({ app }) => {
     expect(app.getState().interaction.hoveredShape).toBeDefined()
@@ -100,11 +111,11 @@ const translate: Scenario = {
   run: async ({ app, shapes, eventsPerFrame }) => {
     const index = app.getState().shapes.findIndex(shape => shape.id === translatedShape!.id)
     const start = getShapeCenter(shapes[index]!)
-    dispatchMouse('mousedown', start, { button: 0, buttons: 1 })
+    dispatchPointer('pointerdown', start, { button: 0, buttons: 1 })
     await nextFrame()
     const points = interpolate(start, [start[0] + 150, start[1] + 30], MOVES)
-    await playPoints(points, eventsPerFrame, point => dispatchMouse('mousemove', point, { buttons: 1 }))
-    dispatchMouse('mouseup', points[points.length - 1]!, { button: 0 })
+    await playPoints(points, eventsPerFrame, point => dispatchPointer('pointermove', point, { buttons: 1 }))
+    dispatchPointer('pointerup', points[points.length - 1]!, { button: 0 })
     await nextFrame()
   },
   verify: ({ app }) => {
@@ -119,11 +130,11 @@ const frame: Scenario = {
   run: async ({ eventsPerFrame }) => {
     // Starts in the empty band below the shapes, and ends close to the corner to trigger the auto scroll
     const start: Point = [SHAPES_AREA.width - 60, SHAPES_AREA.height + 40]
-    dispatchMouse('mousedown', start, { button: 0, buttons: 1 })
+    dispatchPointer('pointerdown', start, { button: 0, buttons: 1 })
     await nextFrame()
     const points = interpolate(start, [20, 20], MOVES)
-    await playPoints(points, eventsPerFrame, point => dispatchMouse('mousemove', point, { buttons: 1 }))
-    dispatchMouse('mouseup', points[points.length - 1]!, { button: 0 })
+    await playPoints(points, eventsPerFrame, point => dispatchPointer('pointermove', point, { buttons: 1 }))
+    dispatchPointer('pointerup', points[points.length - 1]!, { button: 0 })
     await nextFrame()
   },
   verify: ({ app, shapes }) => {
@@ -165,11 +176,11 @@ const brush: Scenario = {
   },
   run: async ({ eventsPerFrame }) => {
     const start: Point = [100, 550]
-    dispatchMouse('mousedown', start, { button: 0, buttons: 1 })
+    dispatchPointer('pointerdown', start, { button: 0, buttons: 1 })
     await nextFrame()
     const points = interpolate(start, [900, 520], MOVES).map(([x, y], index): Point => [x, y + Math.sin(index / 10) * 20])
-    await playPoints(points, eventsPerFrame, point => dispatchMouse('mousemove', point, { buttons: 1 }))
-    dispatchMouse('mouseup', points[points.length - 1]!, { button: 0 })
+    await playPoints(points, eventsPerFrame, point => dispatchPointer('pointermove', point, { buttons: 1 }))
+    dispatchPointer('pointerup', points[points.length - 1]!, { button: 0 })
     await nextFrame()
   },
   verify: ({ app, shapes }) => {
@@ -187,11 +198,13 @@ const undo: Scenario = {
   setup: async ({ shapes }) => {
     // Selects then removes a shape, to have an action to undo
     const center = getShapeCenter(shapes[0]!)
-    dispatchMouse('mousedown', center, { button: 0, buttons: 1 })
+    dispatchPointer('pointerdown', center, { button: 0, buttons: 1 })
     await nextFrame()
-    dispatchMouse('mouseup', center, { button: 0 })
+    dispatchPointer('pointerup', center, { button: 0 })
     await nextFrame()
-    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Delete', bubbles: true, cancelable: true }))
+    // the keyboard events are sent to the focused element, the canvas after a click
+    const focusedElement = document.activeElement ?? document.body
+    focusedElement.dispatchEvent(new KeyboardEvent('keydown', { key: 'Delete', bubbles: true, cancelable: true }))
     await nextFrame()
   },
   run: async () => {

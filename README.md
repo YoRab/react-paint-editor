@@ -160,7 +160,7 @@ The handle also gives `actions` (the commands), `registerEvent` / `unregisterEve
 
 ### Custom Editor
 
-The handle is a public contract: `usePaintState` gives everything an editor needs to render (shapes, selection, active tool, history, zoom, hovered shape, context menu...) and `actions` holds the commands to act on the canvas. Set `paint.editorRef` on the root element of your editor: it defines the area where interactions and keyboard shortcuts are active.
+The handle is a public contract: `usePaintState` gives everything an editor needs to render (shapes, selection, active tool, history, zoom, hovered shape, context menu...) and `actions` holds the commands to act on the canvas. Set `paint.scopeRef` on the root element of your editor: it defines the area where keyboard shortcuts are active, which is only the canvas otherwise. The pointer always works over the canvas.
 
 Under a `PaintProvider`, any component can get the handle with `usePaint`: each part of the editor reads only what it shows.
 
@@ -192,7 +192,7 @@ const MyToolbar = () => {
 
 const MyEditor = ({ paint, children }: { paint: ReactPaint; children: React.ReactNode }) => (
   <PaintProvider paint={paint}>
-    <div ref={paint.editorRef}>
+    <div ref={paint.scopeRef}>
       <MyToolbar />
       {children}
     </div>
@@ -210,7 +210,7 @@ function MyPaintApp() {
 }
 ```
 
-To use the canvas alone, set `paint.editorRef` on an element wrapping `Canvas`. The `Editor` component provides the handle to its children too, and a `PaintProvider` lets you place parts of your interface, like a toolbar, outside of the editor.
+The canvas can be used alone, with `<Canvas paint={paint} />`: the pointer works as soon as it is over it, and keyboard shortcuts while the focus is inside it. The `Editor` component provides the handle to its children too, and a `PaintProvider` lets you place parts of your interface, like a toolbar, outside of the editor.
 
 ### Picture annotation
 

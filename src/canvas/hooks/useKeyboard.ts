@@ -8,35 +8,35 @@ import { isMacOs } from '@canvas/utils/util'
 import { useEffect } from 'react'
 
 /**
- * Keyboard shortcuts and modifiers. The listeners are set once, and read the state when an event happens:
- * they only act while the focus is inside the editor.
+ * Keyboard shortcuts and modifiers. The listeners are set once on the scope (the Canvas, or the area set by scopeRef),
+ * which only receives the events while the focus is inside it, and read the state when an event happens.
  */
 const useKeyboard = (store: PaintStore) => {
   useEffect(() => {
-    const isInsideComponent = () => store.getState().interaction.focus.component
+    const isInteractive = () => store.selectors.selectIsInteractive(store.getState())
     const isEditingText = () => store.getState().interaction.selectionMode.mode === 'textedition'
     const hasSelection = () => store.getState().document.selectedShape !== undefined
 
     const handleCopy = (e: ClipboardEvent) => {
-      if (!isInsideComponent() || !hasSelection() || isEditingText()) return
+      if (!isInteractive() || !hasSelection() || isEditingText()) return
       e.preventDefault()
       store.actions.copy()
     }
 
     const handleCut = (e: ClipboardEvent) => {
-      if (!isInsideComponent() || !hasSelection() || isEditingText()) return
+      if (!isInteractive() || !hasSelection() || isEditingText()) return
       e.preventDefault()
       store.actions.cut()
     }
 
     const handlePaste = (e: ClipboardEvent) => {
-      if (!isInsideComponent() || store.getState().clipboard === undefined || isEditingText()) return
+      if (!isInteractive() || store.getState().clipboard === undefined || isEditingText()) return
       e.preventDefault()
       store.actions.paste()
     }
 
     const handleKeyUp = (e: KeyboardEvent) => {
-      if (!isInsideComponent()) return
+      if (!isInteractive()) return
       switch (e.key) {
         case KeyboardCode.Shift:
           store.setModifiers({ shift: false })
@@ -52,7 +52,7 @@ const useKeyboard = (store: PaintStore) => {
     }
 
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (!isInsideComponent()) return
+      if (!isInteractive()) return
       if (e.metaKey || e.ctrlKey) {
         if (e.key === KeyboardCode.Z || e.key === KeyboardCode.z) {
           e.preventDefault()
@@ -157,19 +157,13 @@ const useKeyboard = (store: PaintStore) => {
       }
     }
 
-    document.addEventListener('keydown', handleKeyDown)
-    document.addEventListener('keyup', handleKeyUp)
-    document.addEventListener(KeyboardCommand.Copy, handleCopy)
-    document.addEventListener(KeyboardCommand.Paste, handlePaste)
-    document.addEventListener(KeyboardCommand.Cut, handleCut)
-
-    return () => {
-      document.removeEventListener('keydown', handleKeyDown)
-      document.removeEventListener('keyup', handleKeyUp)
-      document.removeEventListener(KeyboardCommand.Copy, handleCopy)
-      document.removeEventListener(KeyboardCommand.Paste, handlePaste)
-      document.removeEventListener(KeyboardCommand.Cut, handleCut)
-    }
+    return store.listenScope({
+      keydown: handleKeyDown,
+      keyup: handleKeyUp,
+      [KeyboardCommand.Copy]: handleCopy,
+      [KeyboardCommand.Paste]: handlePaste,
+      [KeyboardCommand.Cut]: handleCut
+    })
   }, [store])
 }
 

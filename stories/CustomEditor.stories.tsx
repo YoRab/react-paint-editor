@@ -125,7 +125,7 @@ const MyContextMenu = () => {
 /** A minimal editor, built only with the canvas handle: it does not use any component of the library editor */
 const MyEditor = ({ paint, children }: { paint: ReactPaint; children: ReactNode }) => (
   <PaintProvider paint={paint}>
-    <div ref={paint.editorRef} className='custom-editor'>
+    <div ref={paint.scopeRef} className='custom-editor'>
       <MyToolbar />
       <div className='custom-editor-content'>
         {children}
@@ -167,7 +167,7 @@ export const Default: Story = {
     docs: {
       description: {
         story:
-          'An editor built from scratch with the canvas handle only: `actions` to act on the canvas, `editorRef` to set on the root element, and `usePaintState` to read the state. Each part reads only what it shows with a selector, and renders again only when it changes: the toolbar does not render while a shape is dragged. The parts get the handle with `usePaint`, under a `PaintProvider`. The editor reacts to the hovered shape (`state.interaction.hoveredShape`) and handles its own context menu (`state.contextMenu`).'
+          'An editor built from scratch with the canvas handle only: `actions` to act on the canvas, `scopeRef` to set on the root element so that the keyboard shortcuts also work from the toolbar, and `usePaintState` to read the state. Each part reads only what it shows with a selector, and renders again only when it changes: the toolbar does not render while a shape is dragged. The parts get the handle with `usePaint`, under a `PaintProvider`. The editor reacts to the hovered shape (`state.interaction.hoveredShape`) and handles its own context menu (`state.contextMenu`).'
       },
       source: {
         code: `const MyToolbar = () => {
@@ -209,7 +209,7 @@ const MyLayers = () => {
 
 const MyEditor = ({ paint, children }) => (
   <PaintProvider paint={paint}>
-    <div ref={paint.editorRef}>
+    <div ref={paint.scopeRef}>
       <MyToolbar />
       {children}
       <MyLayers />

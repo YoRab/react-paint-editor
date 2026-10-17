@@ -20,7 +20,7 @@ export const createReactPaint = (store: PaintStore): ReactPaint => {
     resetCanvas: (shapes, clearHistory) => void store.resetCanvas(shapes, clearHistory),
     getCurrentImage: store.getCurrentImage,
     getCurrentData: store.getCurrentData,
-    editorRef: store.setEditorElement,
+    scopeRef: store.setScopeElement,
     [STORE_KEY]: store
   }
   return paint

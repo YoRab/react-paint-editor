@@ -1,4 +1,4 @@
-import { DEFAULT_OPTIONS, DRAWCANVAS_CLASSNAME, SELECTIONCANVAS_CLASSNAME, type UtilsSettings } from '@canvas/constants/app'
+import { DEFAULT_OPTIONS, type UtilsSettings } from '@canvas/constants/app'
 import { SELECTION_TOOL } from '@canvas/constants/tools'
 import { createStore } from '@canvas/store/createStore'
 import { createEventEmitter } from '@canvas/store/eventEmitter'
@@ -39,6 +39,8 @@ import { getNewOffset, getNewZoomAndOffset, getNewZoomAndOffsetFromDelta } from 
 type ResetOptions = { clearHistory: boolean; source: 'user' | 'remote' }
 
 type Interaction = InternalState['interaction']
+
+type Listeners = { [K in keyof HTMLElementEventMap]?: (e: HTMLElementEventMap[K]) => void }
 
 const DEFAULT_TRANSFORMATION: CanvasTransformation = { offset: [0, 0], zoom: 1 }
 
@@ -113,7 +115,10 @@ export const createPaintStore = (props: UseReactPaintProps = {}) => {
   const { getState: get, batch } = store
 
   let canvasElement: HTMLCanvasElement | null = null
-  let editorElement: HTMLElement | null = null
+  let canvasRootElement: HTMLElement | null = null
+  let scopeElement: HTMLElement | null = null
+  // the element whose focus is tracked: the scope set by the consumer, or else the root of the Canvas
+  let focusScope: HTMLElement | null = null
   let initialized = false
 
   const getSettings = (state = get()): UtilsSettings => selectors.selectSettings(state)
@@ -263,12 +268,7 @@ export const createPaintStore = (props: UseReactPaintProps = {}) => {
       return { type: 'DUPLICATE', newShapesMap, newSelectedShape }
     })
 
-  const refreshHoveredShape = (e: MouseEvent | TouchEvent, ctx: CanvasRenderingContext2D, cursorPosition: Point, isInsideMask: boolean) => {
-    const isOverCanvas = !(
-      e.target &&
-      'className' in e.target &&
-      ![DRAWCANVAS_CLASSNAME, SELECTIONCANVAS_CLASSNAME].includes(e.target.className as string)
-    )
+  const refreshHoveredShape = (isOverCanvas: boolean, ctx: CanvasRenderingContext2D, cursorPosition: Point, isInsideMask: boolean) => {
     if (!isOverCanvas || !isInsideMask) {
       setInteractionField('hoveredShape', undefined)
       return
@@ -285,6 +285,13 @@ export const createPaintStore = (props: UseReactPaintProps = {}) => {
     )
     setInteractionField('hoveredShape', foundShape)
   }
+
+  /** The pointer left the canvas */
+  const clearHover = () =>
+    batch(() => {
+      setInteractionField('hoveredShape', undefined)
+      setHoverMode({ mode: 'default' })
+    })
 
   const updateShapes = (updatedShapes: ShapeEntity[], withSave = false) =>
     dispatch(state => {
@@ -580,32 +587,68 @@ export const createPaintStore = (props: UseReactPaintProps = {}) => {
 
   // --- Elements ---
 
-  const trackFocus = (key: keyof Focus) => ({
-    onFocusIn: () => selectors.selectIsInteractive(get()) && setFocus({ [key]: true }),
-    onFocusOut: () => selectors.selectIsInteractive(get()) && setFocus({ [key]: false })
-  })
-
-  const editorFocus = trackFocus('component')
-  const canvasFocus = trackFocus('canvas')
-
-  const listenFocus = (previous: HTMLElement | null, element: HTMLElement | null, { onFocusIn, onFocusOut }: ReturnType<typeof trackFocus>) => {
-    previous?.removeEventListener('focusin', onFocusIn)
-    previous?.removeEventListener('focusout', onFocusOut)
-    element?.addEventListener('focusin', onFocusIn)
-    element?.addEventListener('focusout', onFocusOut)
+  const moveListeners = (previous: HTMLElement | null, element: HTMLElement | null, listeners: Listeners) => {
+    for (const [type, listener] of Object.entries(listeners) as [string, EventListener][]) {
+      previous?.removeEventListener(type, listener)
+      element?.addEventListener(type, listener)
+    }
   }
 
-  /** Callback ref of the editor root, which scopes the interactions and the keyboard shortcuts */
-  const setEditorElement = (element: HTMLElement | null) => {
-    if (element === editorElement) return
-    listenFocus(editorElement, element, editorFocus)
-    editorElement = element
+  const trackFocus = (key: keyof Focus): Listeners => ({
+    focusin: () => selectors.selectIsInteractive(get()) && setFocus({ [key]: true }),
+    focusout: () => selectors.selectIsInteractive(get()) && setFocus({ [key]: false })
+  })
+
+  const scopeFocus: Listeners = {
+    focusin: () => selectors.selectIsInteractive(get()) && setFocus({ component: true }),
+    focusout: e => {
+      // a move of the focus inside the scope does not leave it
+      if (e.relatedTarget && focusScope?.contains(e.relatedTarget as Node)) return
+      batch(() => {
+        // the keys released outside of the scope are not received
+        setModifiers({ shift: false, alt: false, space: false })
+        setFocus({ component: false })
+      })
+    }
+  }
+  const canvasFocus = trackFocus('canvas')
+  // the listeners set on the scope: its focus and the keyboard shortcuts
+  const scopeListeners = new Set<Listeners>([scopeFocus])
+
+  /** Only one element is listened: the root of the Canvas is often inside the scope */
+  const refreshFocusScope = () => {
+    const element = scopeElement ?? canvasRootElement
+    if (element === focusScope) return
+    for (const listeners of scopeListeners) moveListeners(focusScope, element, listeners)
+    focusScope = element
+  }
+
+  /** Listens to events of the scope, which follow it when it changes. Returns the function that stops listening */
+  const listenScope = (listeners: Listeners) => {
+    scopeListeners.add(listeners)
+    moveListeners(null, focusScope, listeners)
+    return () => {
+      scopeListeners.delete(listeners)
+      moveListeners(focusScope, null, listeners)
+    }
+  }
+
+  /** Callback ref of the area where the keyboard shortcuts are active, the Canvas by default */
+  const setScopeElement = (element: HTMLElement | null) => {
+    scopeElement = element
+    refreshFocusScope()
+  }
+
+  /** Callback ref of the root of the Canvas, the default scope */
+  const setCanvasRootElement = (element: HTMLElement | null) => {
+    canvasRootElement = element
+    refreshFocusScope()
   }
 
   /** Callback ref of the draw canvas */
   const setCanvasElement = (element: HTMLCanvasElement | null) => {
     if (element === canvasElement) return
-    listenFocus(canvasElement, element, canvasFocus)
+    moveListeners(canvasElement, element, canvasFocus)
     canvasElement = element
   }
 
@@ -731,6 +774,8 @@ export const createPaintStore = (props: UseReactPaintProps = {}) => {
     setOffset,
     setGridGap,
     closeContextMenu: () => {
+      // nothing to close: a gesture started since then keeps its mode
+      if (get().interaction.selectionMode.mode !== 'contextMenu') return
       setSelectionMode({ mode: 'default' })
       canvasElement?.focus()
     }
@@ -753,13 +798,16 @@ export const createPaintStore = (props: UseReactPaintProps = {}) => {
     resetCanvas: (json: ExportedDrawableShape[] = [], clearHistory = true) => resetCanvas(json, { clearHistory, source: 'remote' }),
     getCurrentImage,
     getCurrentData,
-    setEditorElement,
+    setScopeElement,
+    setCanvasRootElement,
     setCanvasElement,
+    listenScope,
     // engine used by the canvas
     setSelectedShape,
     addShapes,
     duplicateShapes,
     refreshHoveredShape,
+    clearHover,
     updateShapes,
     removeShapes,
     refreshSelectedShapes,

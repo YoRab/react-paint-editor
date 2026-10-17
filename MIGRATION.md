@@ -114,7 +114,7 @@ In the table below, `state.x` stands for `usePaintState(paint, state => state.x)
 | `canvas.canGrow`, `canvas.canShrink`, `canvas.withContextMenu` | `state.layout.canGrow`, `state.layout.canShrink`, `state.withContextMenu` |
 | `canvas.layersManipulation`, `canvas.withExport`, ... | `Editor` options |
 | `selectionMode` | `state.interaction.mode`, and `state.contextMenu` when the context menu is open |
-| `refs.setEditor` | `paint.editorRef` |
+| `refs.setEditor` | `paint.scopeRef`, only needed to widen the area of the keyboard shortcuts beyond the `Canvas` |
 | `refs.canvas` | removed: use `paint.actions` |
 | `backwardShape`, `forwardShape`, `saveShapes` | `paint.actions.undo`, `paint.actions.redo`, `paint.actions.saveShapes` |
 | `selectTool(tool)`, `setActiveTool` | `paint.actions.selectTool(toolOrId)`: only the selection tool, the move tool and the tools can be selected |

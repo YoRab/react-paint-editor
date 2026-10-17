@@ -30,7 +30,7 @@ const selectRootState = (state: EditorState) => ({
 })
 
 const Editor = ({ paint, className, style, options, children }: EditorComponentProps) => {
-  const { actions, editorRef } = paint
+  const { actions, scopeRef } = paint
   const { mode, features, layout, width } = usePaintState(paint, selectRootState, shallowEqual)
 
   const {
@@ -60,9 +60,9 @@ const Editor = ({ paint, className, style, options, children }: EditorComponentP
   const setRootRef = useCallback(
     (element: HTMLDivElement | null) => {
       rootRef.current = element
-      editorRef(element)
+      scopeRef(element)
     },
-    [editorRef]
+    [scopeRef]
   )
 
   const [isLoading, setIsLoading] = useState(false)
