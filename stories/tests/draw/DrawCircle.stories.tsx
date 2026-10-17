@@ -1,10 +1,10 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import { expect, userEvent, within } from 'storybook/test'
 import {
-  ReactPaintWrapper,
-  getCurrentDataRef,
-  selectTool,
   assertNoInternalFields,
+  getCurrentDataRef,
+  ReactPaintWrapper,
+  selectTool,
   setColorSetting,
   setRangeSetting,
   setSelectSetting
@@ -59,6 +59,9 @@ export const DrawCircle: Story = {
     await new Promise(res => setTimeout(res, 50))
     await user.pointer({ target: drawCanvas, keys: '[/MouseLeft]', coords: { x: cx + OFFSET + 50, y: cy } })
     await new Promise(res => setTimeout(res, 100))
+
+    // --- Drawing on the canvas closes the panel of the tool ---
+    expect(view.queryByTestId('tool-circle')).toBeNull()
 
     // --- Shape 2 settings (shape 2 is now selected) ---
     await setColorSetting(view, 'Couleur du trait', 'green')

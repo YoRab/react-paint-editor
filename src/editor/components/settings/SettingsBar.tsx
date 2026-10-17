@@ -1,7 +1,15 @@
-import type { UtilsSettings } from '@common/types/Settings'
-import type { SelectionType, ShapeEntity } from '@common/types/Shapes'
-import type { CustomTool, ToolsType } from '@common/types/tools'
-import { set } from '@common/utils/object'
+import {
+  type CustomTool,
+  type EditorState,
+  getSelectedShapesTools,
+  type ShapeStyleField,
+  type StyleShape,
+  shallowEqual,
+  type ToolSettingValue,
+  type ToolsType,
+  usePaint,
+  usePaintState
+} from '@canvas/index'
 import Button from '@editor/components/common/Button'
 import Modal from '@editor/components/common/Modal'
 import { boldIcon, italicIcon, lineWidthIcon, opacityIcon, settingsIcon } from '@editor/constants/icons'
@@ -15,7 +23,6 @@ import LineArrowField from './LineArrowField'
 import LineTypeField from './LineTypeField'
 import RangeField from './RangeField'
 import './SettingsBar.css'
-import { getSelectedShapes, getSelectedShapesTools } from '@common/utils/selection'
 import ClosedPointsField from '@editor/components/settings/ClosedPointsField'
 import ZoomButton from '@editor/components/settings/ZoomButton'
 import ToggleField from './ToggleField'
@@ -25,27 +32,27 @@ const SETTING_WIDTH = 40
 type SettingsItemsType = {
   disabled?: boolean
   activeTool: ToolsType
-  selectedShape: SelectionType | undefined
+  hasSelection: boolean
+  selectedStyle: StyleShape | undefined
   selectedShapeTool: CustomTool | undefined
   selectedSettings: string | undefined
   setSelectedSettings: React.Dispatch<React.SetStateAction<string | undefined>>
   saveShapes: () => void
   handleShapeStyleChange: (field: string, value: string | number | boolean) => void
-  handleShapeFontFamilyChange: (field: string, value: string | number | boolean) => void
 }
 
 const SettingsItems = ({
   activeTool,
-  selectedShape,
+  hasSelection,
+  selectedStyle,
   selectedShapeTool,
   disabled,
   selectedSettings,
   setSelectedSettings,
   saveShapes,
-  handleShapeStyleChange,
-  handleShapeFontFamilyChange
+  handleShapeStyleChange
 }: SettingsItemsType) => {
-  return selectedShape ? (
+  return hasSelection ? (
     selectedShapeTool && (
       <>
         {'strokeColor' in selectedShapeTool.settings && !selectedShapeTool.settings.strokeColor.hidden && (
@@ -56,7 +63,7 @@ const SettingsItems = ({
             mode='stroke'
             disabled={disabled}
             field='strokeColor'
-            value={selectedShape.style?.strokeColor}
+            value={selectedStyle?.strokeColor}
             valueChanged={handleShapeStyleChange}
             values={selectedShapeTool.settings.strokeColor.values}
           />
@@ -69,7 +76,7 @@ const SettingsItems = ({
             title='Couleur de fond'
             disabled={disabled}
             field='fillColor'
-            value={selectedShape.style?.fillColor}
+            value={selectedStyle?.fillColor}
             valueChanged={handleShapeStyleChange}
             values={selectedShapeTool.settings.fillColor.values}
           />
@@ -84,7 +91,7 @@ const SettingsItems = ({
             icon={lineWidthIcon}
             disabled={disabled}
             field='lineWidth'
-            value={selectedShape.style?.lineWidth}
+            value={selectedStyle?.lineWidth}
             valueChanged={handleShapeStyleChange}
             unity='px'
             min={selectedShapeTool.settings.lineWidth.min}
@@ -98,7 +105,7 @@ const SettingsItems = ({
             selectedSettings={selectedSettings}
             setSelectedSettings={setSelectedSettings}
             disabled={disabled}
-            defaultValue={selectedShape.style?.lineDash}
+            defaultValue={selectedStyle?.lineDash}
             valueChanged={handleShapeStyleChange}
             values={selectedShapeTool.settings.lineDash.values}
           />
@@ -109,7 +116,7 @@ const SettingsItems = ({
             selectedSettings={selectedSettings}
             setSelectedSettings={setSelectedSettings}
             disabled={disabled}
-            defaultValue={selectedShape.style?.lineArrow}
+            defaultValue={selectedStyle?.lineArrow}
             valueChanged={handleShapeStyleChange}
             values={selectedShapeTool.settings.lineArrow.values}
           />
@@ -121,7 +128,7 @@ const SettingsItems = ({
             setSelectedSettings={setSelectedSettings}
             disabled={disabled}
             valueChanged={handleShapeStyleChange}
-            defaultValue={selectedShape.style?.closedPoints}
+            defaultValue={selectedStyle?.closedPoints}
           />
         )}
 
@@ -130,9 +137,9 @@ const SettingsItems = ({
             selectedSettings={selectedSettings}
             setSelectedSettings={setSelectedSettings}
             disabled={disabled}
-            valueChanged={handleShapeFontFamilyChange}
+            valueChanged={handleShapeStyleChange}
             values={selectedShapeTool.settings.fontFamily.values}
-            defaultValue={selectedShape.style?.fontFamily}
+            defaultValue={selectedStyle?.fontFamily}
           />
         )}
 
@@ -143,9 +150,9 @@ const SettingsItems = ({
             field='fontBold'
             icon={boldIcon}
             title='Gras'
-            valueChanged={handleShapeFontFamilyChange}
+            valueChanged={handleShapeStyleChange}
             values={selectedShapeTool.settings.fontBold.values}
-            value={selectedShape.style?.fontBold}
+            value={selectedStyle?.fontBold}
           />
         )}
 
@@ -156,9 +163,9 @@ const SettingsItems = ({
             field='fontItalic'
             icon={italicIcon}
             title='Italique'
-            valueChanged={handleShapeFontFamilyChange}
+            valueChanged={handleShapeStyleChange}
             values={selectedShapeTool.settings.fontItalic.values}
-            value={selectedShape.style?.fontItalic}
+            value={selectedStyle?.fontItalic}
           />
         )}
 
@@ -175,7 +182,7 @@ const SettingsItems = ({
             unity='%'
             disabled={disabled}
             field='opacity'
-            value={selectedShape.style?.opacity}
+            value={selectedStyle?.opacity}
             valueChanged={handleShapeStyleChange}
           />
         )}
@@ -265,7 +272,7 @@ const SettingsItems = ({
           selectedSettings={selectedSettings}
           setSelectedSettings={setSelectedSettings}
           disabled={disabled}
-          valueChanged={handleShapeFontFamilyChange}
+          valueChanged={handleShapeStyleChange}
           values={activeTool.settings.fontFamily.values}
           defaultValue={activeTool.settings.fontFamily.default}
         />
@@ -278,7 +285,7 @@ const SettingsItems = ({
           field='fontBold'
           icon={boldIcon}
           title='Gras'
-          valueChanged={handleShapeFontFamilyChange}
+          valueChanged={handleShapeStyleChange}
           values={activeTool.settings.fontBold.values}
           value={activeTool.settings.fontBold.default}
         />
@@ -291,7 +298,7 @@ const SettingsItems = ({
           field='fontItalic'
           icon={italicIcon}
           title='Italique'
-          valueChanged={handleShapeFontFamilyChange}
+          valueChanged={handleShapeStyleChange}
           values={activeTool.settings.fontItalic.values}
           value={activeTool.settings.fontItalic.default}
         />
@@ -318,56 +325,68 @@ const SettingsItems = ({
   ) : null
 }
 
-type SettingsBarType = {
+type SettingsBarState = {
   width: number
-  availableTools: CustomTool[]
-  updateToolSettings: (toolId: string, field: string, value: string | number | boolean) => void
-  layersManipulation?: boolean
   activeTool: ToolsType
-  selectedShape: SelectionType | undefined
-  canvas: HTMLCanvasElement | null
-  settings: UtilsSettings
-  updateShape: (shape: ShapeEntity[], withSave?: boolean) => void
-  removeShape: (shape: ShapeEntity[]) => void
+  /** Only the style of the selection is shown: its geometry changes on each move of a drag */
+  selectedStyle: StyleShape | undefined
+  selectedShapeIds: string[]
+  selectedShapeTool: CustomTool | undefined
+}
+
+const createSettingsBarSelector = () => {
+  // the tool of the selection only depends on the selected ids and on the tools: a shape keeps its type and its tool
+  let lastTool: { ids: string[]; tools: CustomTool[]; tool: CustomTool | undefined } | undefined
+  return (state: EditorState): SettingsBarState => {
+    if (lastTool?.ids !== state.selectedShapeIds || lastTool.tools !== state.tools) {
+      lastTool = { ids: state.selectedShapeIds, tools: state.tools, tool: getSelectedShapesTools(state.selection, state.tools) }
+    }
+    return {
+      width: state.view.displayWidth,
+      activeTool: state.activeTool,
+      selectedStyle: state.selection?.style,
+      selectedShapeIds: state.selectedShapeIds,
+      selectedShapeTool: lastTool.tool
+    }
+  }
+}
+
+const isSameSettingsBarState = (a: SettingsBarState, b: SettingsBarState) =>
+  a.width === b.width &&
+  a.activeTool === b.activeTool &&
+  a.selectedShapeIds === b.selectedShapeIds &&
+  a.selectedShapeTool === b.selectedShapeTool &&
+  shallowEqual(a.selectedStyle, b.selectedStyle)
+
+type SettingsBarType = {
+  disabled: boolean
+  withZoom: boolean
+  layersManipulation?: boolean
   toggleLayoutPanel: () => void
   isZoomPanelShown: boolean
   setIsZoomPanelShown: React.Dispatch<React.SetStateAction<boolean>>
-  setCanvasZoom: (action: 'unzoom' | 'zoom' | 'default') => void
-  saveShapes: () => void
-  refreshShape: (shape: ShapeEntity) => ShapeEntity
-  calculateTextFontSize: (
-    ctx: CanvasRenderingContext2D,
-    text: string[],
-    maxWidth: number,
-    fontBold: boolean,
-    fontItalic: boolean,
-    fontFamily?: string
-  ) => number
 }
 
 const SettingsBar = ({
-  width,
-  availableTools,
-  updateToolSettings,
+  disabled,
+  withZoom,
   layersManipulation = false,
   toggleLayoutPanel,
-  activeTool,
-  saveShapes,
-  selectedShape,
-  canvas,
-  settings,
-  updateShape,
-  removeShape,
   isZoomPanelShown,
-  setIsZoomPanelShown,
-  refreshShape,
-  calculateTextFontSize
+  setIsZoomPanelShown
 }: SettingsBarType) => {
+  const paint = usePaint()
+  const { actions } = paint
+  const [selectSettingsBarState] = useState(createSettingsBarSelector)
+  const { width, activeTool, selectedStyle, selectedShapeIds, selectedShapeTool } = usePaintState(
+    paint,
+    selectSettingsBarState,
+    isSameSettingsBarState
+  )
+  const hasSelection = selectedShapeIds.length > 0
   const [selectedSettings, setSelectedSettings] = useState<string | undefined>(undefined)
   const [isMenuOpen, setIsMenuOpen] = useState(false)
 
-  const withZoom = settings.size === 'infinite' || settings.features.zoom
-  const disabled = !settings.features.edition
   const toggleTools = () => {
     setIsMenuOpen(prev => !prev)
   }
@@ -375,8 +394,6 @@ const SettingsBar = ({
   const toggleZoom = () => {
     setIsZoomPanelShown(prev => !prev)
   }
-
-  const selectedShapeTool = getSelectedShapesTools(selectedShape, availableTools)
 
   const nbSettingsTools =
     (selectedShapeTool
@@ -391,44 +408,12 @@ const SettingsBar = ({
 
   const settingsInMenu = width < settingsBreakpoint
 
-  const handleShapeStyleChange = (field: string, value: string | number | boolean, needHistorySave = true) => {
-    if (getSelectedShapes(selectedShape).length) {
-      const refreshedShapes = getSelectedShapes(selectedShape).map(shape => {
-        return refreshShape(set(['style', field], value, shape))
-      })
-      updateShape(refreshedShapes, needHistorySave)
-      selectedShapeTool && updateToolSettings(selectedShapeTool.id, field, value)
+  const handleShapeStyleChange = (field: string, value: ToolSettingValue, needHistorySave = true) => {
+    if (selectedShapeIds.length) {
+      actions.updateShapesStyle(selectedShapeIds, field as ShapeStyleField, value, { save: needHistorySave })
+      selectedShapeTool && actions.updateToolSettings(selectedShapeTool.id, field, value)
     } else {
-      updateToolSettings(activeTool.id, field, value)
-    }
-  }
-
-  const handleShapeFontFamilyChange = (field: string, value: string | number | boolean) => {
-    if (getSelectedShapes(selectedShape).length) {
-      const refreshedShapes = getSelectedShapes(selectedShape).map(shape => {
-        if (shape.type !== 'text') return shape
-        const ctx = canvas?.getContext('2d')
-        if (!ctx) return shape
-        const newShape = set(['style', field], value, shape)
-        const fontSize = calculateTextFontSize(
-          ctx,
-          newShape.value,
-          newShape.width,
-          newShape.style?.fontBold ?? false,
-          newShape.style?.fontItalic ?? false,
-          newShape.style?.fontFamily
-        )
-        return refreshShape({
-          ...newShape,
-          fontSize,
-          height: fontSize * newShape.value.length
-        })
-      })
-
-      updateShape(refreshedShapes, true)
-      selectedShapeTool && updateToolSettings(selectedShapeTool.id, field, value)
-    } else {
-      updateToolSettings(activeTool.id, field, value)
+      actions.updateToolSettings(activeTool.id, field, value)
     }
   }
 
@@ -440,37 +425,39 @@ const SettingsBar = ({
             <ZoomButton className={isZoomPanelShown ? 'react-paint-editor-bar-zoom-button-opened' : undefined} toggleZoomPanel={toggleZoom} />
           )}
           {settingsInMenu && nbSettingsTools > 2 && <Button disabled={disabled} onClick={toggleTools} title='Toggle settings' icon={settingsIcon} />}
-          {selectedShape
+          {hasSelection
             ? selectedShapeTool && (
                 <>
                   {!settingsInMenu && (
                     <SettingsItems
-                      saveShapes={saveShapes}
+                      saveShapes={actions.saveShapes}
                       activeTool={activeTool}
-                      selectedShape={selectedShape}
+                      hasSelection={hasSelection}
+                      selectedStyle={selectedStyle}
                       selectedShapeTool={selectedShapeTool}
                       disabled={disabled}
                       selectedSettings={selectedSettings}
                       setSelectedSettings={setSelectedSettings}
                       handleShapeStyleChange={handleShapeStyleChange}
-                      handleShapeFontFamilyChange={handleShapeFontFamilyChange}
                     />
                   )}
 
-                  {activeTool.type === 'selection' && <DeleteButton disabled={disabled} selectedShape={selectedShape} removeShape={removeShape} />}
+                  {activeTool.type === 'selection' && (
+                    <DeleteButton disabled={disabled} selectedShapeIds={selectedShapeIds} removeShapes={actions.removeShapes} />
+                  )}
                 </>
               )
             : !settingsInMenu && (
                 <SettingsItems
-                  saveShapes={saveShapes}
+                  saveShapes={actions.saveShapes}
                   activeTool={activeTool}
-                  selectedShape={selectedShape}
+                  hasSelection={hasSelection}
+                  selectedStyle={selectedStyle}
                   selectedShapeTool={selectedShapeTool}
                   disabled={disabled}
                   selectedSettings={selectedSettings}
                   setSelectedSettings={setSelectedSettings}
                   handleShapeStyleChange={handleShapeStyleChange}
-                  handleShapeFontFamilyChange={handleShapeFontFamilyChange}
                 />
               )}
         </div>
@@ -480,15 +467,15 @@ const SettingsBar = ({
       {isMenuOpen && (
         <Modal className='react-paint-editor-settings-modal' onClose={toggleTools} position='bottom' title='Settings'>
           <SettingsItems
-            saveShapes={saveShapes}
+            saveShapes={actions.saveShapes}
             activeTool={activeTool}
-            selectedShape={selectedShape}
+            hasSelection={hasSelection}
+            selectedStyle={selectedStyle}
             selectedShapeTool={selectedShapeTool}
             disabled={disabled}
             selectedSettings={selectedSettings}
             setSelectedSettings={setSelectedSettings}
             handleShapeStyleChange={handleShapeStyleChange}
-            handleShapeFontFamilyChange={handleShapeFontFamilyChange}
           />
         </Modal>
       )}

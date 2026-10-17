@@ -1,12 +1,12 @@
 import type { UtilsSettings } from '@canvas/constants/app'
+import type { SelectionModeResize } from '@canvas/types/Mode'
+import type { DrawableShape, Point, Rect, SelectionType, ShapeEntity } from '@canvas/types/Shapes'
+import type { ToolsSettingsType } from '@canvas/types/tools'
+import { set } from '@canvas/utils/object'
 import { createRecSelectionPath, resizeRectSelection } from '@canvas/utils/selection/rectSelection'
 import { createBrushPath, expandRect, getComputedShapeInfos } from '@canvas/utils/shapes/path'
 import { roundValues, scalePoint } from '@canvas/utils/transform'
-import type { SelectionModeResize } from '@common/types/Mode'
-import type { DrawableShape, Point, Rect, SelectionType, ShapeEntity } from '@common/types/Shapes'
-import type { ToolsSettingsType } from '@common/types/tools'
-import { set } from '@common/utils/object'
-import { uniqueId } from '@common/utils/util'
+import { uniqueId } from '@canvas/utils/util'
 import { type GroupResizeContext, getPositionWithoutGroupRotation, getShapePositionInNewBorder } from './group'
 
 export const getBrushBorder = (brush: DrawableShape<'brush'>, { selectionPadding }: Pick<UtilsSettings, 'selectionPadding'>): Rect => {

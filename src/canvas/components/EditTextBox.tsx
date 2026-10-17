@@ -1,7 +1,7 @@
 import type { UtilsSettings } from '@canvas/constants/app'
 import { STYLE_FONT_DEFAULT } from '@canvas/constants/rendering'
+import type { ShapeEntity } from '@canvas/types/Shapes'
 import { radiansToDegrees, rotatePoint } from '@canvas/utils/trigo'
-import type { ShapeEntity } from '@common/types/Shapes'
 import type React from 'react'
 import { useEffect, useMemo, useRef } from 'react'
 import './EditTextBox.css'
@@ -103,7 +103,7 @@ const EditTextBox = ({ disabled = false, shape, defaultValue, updateValue, saveS
   return (
     // biome-ignore lint/a11y/useSemanticElements: contentEditable div is used to allow bounding box to fit content
     <div
-      className='react-paint-editor-toolbox-edittextbox'
+      className='react-paint-canvas-edittextbox'
       ref={ref}
       data-fontbold={shape.style?.fontBold ?? false}
       data-fontitalic={shape.style?.fontItalic ?? false}
@@ -113,12 +113,12 @@ const EditTextBox = ({ disabled = false, shape, defaultValue, updateValue, saveS
       tabIndex={isEditable ? 0 : undefined}
       onInput={updateContentEditable}
       style={{
-        '--react-paint-editor-toolbox-edittextbox-transform': transform,
-        '--react-paint-editor-toolbox-edittextbox-fontsize': `${shape.fontSize * settings.canvasSize.scaleRatio}px`,
-        '--react-paint-editor-toolbox-edittextbox-padding': `${settings.selectionPadding * settings.canvasSize.scaleRatio}px`,
-        '--react-paint-editor-toolbox-edittextbox-color': shape.style?.strokeColor ?? 'inherit',
-        '--react-paint-editor-toolbox-edittextbox-opacity': (shape.style?.opacity ?? 100) / 100,
-        '--react-paint-editor-toolbox-edittextbox-fontfamily': shape.style?.fontFamily ?? STYLE_FONT_DEFAULT
+        '--react-paint-canvas-edittextbox-transform': transform,
+        '--react-paint-canvas-edittextbox-fontsize': `${shape.fontSize * settings.canvasSize.scaleRatio}px`,
+        '--react-paint-canvas-edittextbox-padding': `${settings.selectionPadding * settings.canvasSize.scaleRatio}px`,
+        '--react-paint-canvas-edittextbox-color': shape.style?.strokeColor ?? 'inherit',
+        '--react-paint-canvas-edittextbox-opacity': (shape.style?.opacity ?? 100) / 100,
+        '--react-paint-canvas-edittextbox-fontfamily': shape.style?.fontFamily ?? STYLE_FONT_DEFAULT
       }}
     />
   )

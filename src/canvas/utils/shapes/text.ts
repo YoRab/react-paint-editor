@@ -1,10 +1,10 @@
 import type { UtilsSettings } from '@canvas/constants/app'
 import { STYLE_FONT_DEFAULT, STYLE_FONT_SIZE_DEFAULT } from '@canvas/constants/rendering'
+import type { SelectionModeResize } from '@canvas/types/Mode'
+import type { DrawableShape, Point, Rect, SelectionType, ShapeEntity, StyleShape, Text } from '@canvas/types/Shapes'
+import type { ToolsSettingsType } from '@canvas/types/tools'
 import { createRecSelectionPath, resizeRectSelection } from '@canvas/utils/selection/rectSelection'
-import type { SelectionModeResize } from '@common/types/Mode'
-import type { DrawableShape, Point, Rect, SelectionType, ShapeEntity, Text } from '@common/types/Shapes'
-import type { ToolsSettingsType } from '@common/types/tools'
-import { uniqueId } from '@common/utils/util'
+import { uniqueId } from '@canvas/utils/util'
 import { type GroupResizeContext, getPositionWithoutGroupRotation, getShapePositionInNewBorder } from './group'
 import { createRecPath, expandRect, getComputedShapeInfos } from './path'
 import { getRectOppositeAnchorAbsolutePosition } from './rectangle'
@@ -42,6 +42,22 @@ export const calculateTextFontSize = (
 
   const measuredFontsSizes = text.map((value: string) => maxWidth / ctx.measureText(value).width)
   return Math.min(...measuredFontsSizes) || STYLE_FONT_SIZE_DEFAULT
+}
+
+const FONT_STYLE_FIELDS: (keyof StyleShape)[] = ['fontFamily', 'fontBold', 'fontItalic']
+
+export const isFontStyleField = (field: keyof StyleShape) => FONT_STYLE_FIELDS.includes(field)
+
+export const fitTextFontSize = <T extends DrawableShape<'text'>>(ctx: CanvasRenderingContext2D, text: T): T => {
+  const fontSize = calculateTextFontSize(
+    ctx,
+    text.value,
+    text.width,
+    text.style?.fontBold ?? false,
+    text.style?.fontItalic ?? false,
+    text.style?.fontFamily
+  )
+  return { ...text, fontSize, height: fontSize * text.value.length }
 }
 
 export const createText = (

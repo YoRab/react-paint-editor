@@ -1,185 +1,143 @@
-import type { UtilsSettings } from '@canvas/constants/app'
 import { KeyboardCode, KeyboardCommand } from '@canvas/constants/keyboard'
 import { SELECTION_TOOL } from '@canvas/constants/tools'
-import { copyShapes, translateShapes } from '@canvas/utils/shapes'
-import type { SelectionModeData } from '@common/types/Mode'
-import type { Point, SelectionType, ShapeEntity } from '@common/types/Shapes'
-import type { ToolsType } from '@common/types/tools'
-import { getSelectedShapes } from '@common/utils/selection'
-import { isMacOs } from '@common/utils/util'
+import type { PaintStore } from '@canvas/store/paintStore'
+import type { Point } from '@canvas/types/Shapes'
+import { getSelectedShapes } from '@canvas/utils/selectedShapes'
+import { translateShapes } from '@canvas/utils/shapes'
+import { isMacOs } from '@canvas/utils/util'
 import { useEffect } from 'react'
 
-type UseKeyboardType = {
-  isInsideComponent: boolean
-  isInsideCanvas: boolean
-  selectedShape: SelectionType | undefined
-  pasteShapes: (shape: ShapeEntity[]) => void
-  updateShapes: (shapes: ShapeEntity[]) => void
-  setSelectedShape: (value: React.SetStateAction<SelectionType | undefined>) => void
-  selectAllShapes: () => void
-  removeShape: (shape: ShapeEntity[]) => void
-  backwardShape: () => void
-  forwardShape: () => void
-  setShiftPressed: (value: React.SetStateAction<boolean>) => void
-  setAltPressed: (value: React.SetStateAction<boolean>) => void
-  setIsSpacePressed: (value: React.SetStateAction<boolean>) => void
-  isEditingText: boolean
-  setActiveTool: (tool: ToolsType) => void
-  setSelectionMode: (mode: SelectionModeData<number | Point>) => void
-  setSelectionFrame: (args: { oldSelection: SelectionType | undefined; frame: [Point, Point] } | undefined) => void
-  settings: UtilsSettings
-  setCanvasZoom: (action: 'unzoom' | 'zoom' | 'default') => void
-  resetZoom: () => void
-  copiedShape: SelectionType | undefined
-  setCopiedShape: (shape: React.SetStateAction<SelectionType | undefined>) => void
-}
-
-const useKeyboard = ({
-  isInsideComponent,
-  isInsideCanvas,
-  selectedShape,
-  isEditingText,
-  settings,
-  copiedShape,
-  setCopiedShape,
-  setSelectedShape,
-  setActiveTool,
-  setCanvasZoom,
-  resetZoom,
-  setSelectionMode,
-  setSelectionFrame,
-  selectAllShapes,
-  removeShape,
-  pasteShapes,
-  updateShapes,
-  backwardShape,
-  forwardShape,
-  setShiftPressed,
-  setAltPressed,
-  setIsSpacePressed
-}: UseKeyboardType) => {
+/**
+ * Keyboard shortcuts and modifiers. The listeners are set once on the scope (the Canvas, or the area set by scopeRef),
+ * which only receives the events while the focus is inside it, and read the state when an event happens.
+ */
+const useKeyboard = (store: PaintStore) => {
   useEffect(() => {
-    const handleCopy = (e: ClipboardEvent) => {
-      if (!selectedShape) return
-      if (isEditingText) return
+    const isInteractive = () => store.selectors.selectIsInteractive(store.getState())
+    const isEditingText = () => store.getState().interaction.selectionMode.mode === 'textedition'
+    const hasSelection = () => store.getState().document.selectedShape !== undefined
 
+    const handleCopy = (e: ClipboardEvent) => {
+      if (!isInteractive() || !hasSelection() || isEditingText()) return
       e.preventDefault()
-      setCopiedShape({ ...selectedShape })
+      store.actions.copy()
     }
 
     const handleCut = (e: ClipboardEvent) => {
-      if (!selectedShape) return
-      if (isEditingText) return
-
+      if (!isInteractive() || !hasSelection() || isEditingText()) return
       e.preventDefault()
-      setCopiedShape({ ...selectedShape })
-      removeShape(getSelectedShapes(selectedShape))
+      store.actions.cut()
     }
 
     const handlePaste = (e: ClipboardEvent) => {
-      if (!copiedShape) return
-      if (isEditingText) return
+      if (!isInteractive() || store.getState().clipboard === undefined || isEditingText()) return
       e.preventDefault()
-      pasteShapes(copyShapes(copiedShape, settings))
+      store.actions.paste()
     }
 
     const handleKeyUp = (e: KeyboardEvent) => {
+      if (!isInteractive()) return
       switch (e.key) {
         case KeyboardCode.Shift:
-          setShiftPressed(false)
+          store.setModifiers({ shift: false })
           break
         case KeyboardCode.Alt:
         case KeyboardCode.Option:
-          setAltPressed(false)
+          store.setModifiers({ alt: false })
           break
         case KeyboardCode.Space:
-          setIsSpacePressed(false)
+          store.setModifiers({ space: false })
           break
       }
     }
 
     const handleKeyDown = (e: KeyboardEvent) => {
+      if (!isInteractive()) return
       if (e.metaKey || e.ctrlKey) {
         if (e.key === KeyboardCode.Z || e.key === KeyboardCode.z) {
           e.preventDefault()
           e.stopPropagation()
           if (e.shiftKey) {
-            forwardShape()
+            store.actions.redo()
           } else {
-            backwardShape()
+            store.actions.undo()
           }
           return
         }
         if (!isMacOs() && (e.key === KeyboardCode.Y || e.key === KeyboardCode.y)) {
           e.preventDefault()
           e.stopPropagation()
-          forwardShape()
+          store.actions.redo()
           return
         }
 
         if (e.key === KeyboardCode.A || e.key === KeyboardCode.a) {
           e.preventDefault()
           e.stopPropagation()
-          selectAllShapes()
+          store.actions.selectAllShapes()
           return
         }
 
         if (e.key === KeyboardCode.Plus) {
           e.preventDefault()
           e.stopPropagation()
-          setCanvasZoom('zoom')
+          store.actions.setZoom('zoom')
           return
         }
         if (e.key === KeyboardCode.Minus) {
           e.preventDefault()
           e.stopPropagation()
-          setCanvasZoom('unzoom')
+          store.actions.setZoom('unzoom')
           return
         }
         if (e.key === KeyboardCode.Zero) {
           e.preventDefault()
           e.stopPropagation()
-          resetZoom()
+          store.actions.resetZoom()
           return
         }
       }
       if (e.key === KeyboardCode.Shift) {
         e.preventDefault()
         e.stopPropagation()
-        setShiftPressed(true)
+        store.setModifiers({ shift: true })
         return
       }
       if (e.key === KeyboardCode.Space) {
-        if (isInsideCanvas) {
+        if (store.getState().interaction.focus.canvas) {
           e.preventDefault()
           e.stopPropagation()
-          setIsSpacePressed(true)
+          store.setModifiers({ space: true })
           return
         }
       }
       if (e.key === KeyboardCode.Alt || e.key === KeyboardCode.Option) {
         e.preventDefault()
         e.stopPropagation()
-        setAltPressed(true)
+        store.setModifiers({ alt: true })
         return
       }
 
+      const { selectedShape } = store.getState().document
       if (!selectedShape) return
 
       if (e.key === KeyboardCode.Escape) {
-        setSelectedShape(undefined)
-        setActiveTool(SELECTION_TOOL)
-        setSelectionMode({ mode: 'default' })
-        setSelectionFrame(undefined)
+        store.batch(() => {
+          store.setSelectedShape(undefined)
+          store.setActiveTool(SELECTION_TOOL)
+          store.setSelectionMode({ mode: 'default' })
+          store.setSelectionFrame(undefined)
+        })
         return
       }
-      if (isEditingText) return
+      if (isEditingText()) return
 
+      const { gridGap } = store.getSettings()
       const translationMap: { [key: string]: Point } = {
-        [KeyboardCode.ArrowLeft]: [settings.gridGap ? -settings.gridGap : -1, 0],
-        [KeyboardCode.ArrowRight]: [settings.gridGap ? settings.gridGap : 1, 0],
-        [KeyboardCode.ArrowDown]: [0, settings.gridGap ? settings.gridGap : 1],
-        [KeyboardCode.ArrowUp]: [0, settings.gridGap ? -settings.gridGap : -1]
+        [KeyboardCode.ArrowLeft]: [gridGap ? -gridGap : -1, 0],
+        [KeyboardCode.ArrowRight]: [gridGap ? gridGap : 1, 0],
+        [KeyboardCode.ArrowDown]: [0, gridGap ? gridGap : 1],
+        [KeyboardCode.ArrowUp]: [0, gridGap ? -gridGap : -1]
       }
       switch (e.key) {
         case KeyboardCode.ArrowLeft:
@@ -188,58 +146,25 @@ const useKeyboard = ({
         case KeyboardCode.ArrowUp:
           e.preventDefault()
           e.stopPropagation()
-          updateShapes(translateShapes(translationMap[e.key]!, selectedShape, [0, 0], settings, true))
+          store.updateShapes(translateShapes(translationMap[e.key]!, selectedShape, [0, 0], store.getSettings(), true))
           break
         case KeyboardCode.Delete:
         case KeyboardCode.Backspace:
           e.preventDefault()
           e.stopPropagation()
-          removeShape(getSelectedShapes(selectedShape))
+          store.removeShapes(getSelectedShapes(selectedShape))
           break
       }
     }
 
-    if (isInsideComponent) {
-      document.addEventListener('keydown', handleKeyDown)
-      document.addEventListener('keyup', handleKeyUp)
-      document.addEventListener(KeyboardCommand.Copy, handleCopy)
-      document.addEventListener(KeyboardCommand.Paste, handlePaste)
-      document.addEventListener(KeyboardCommand.Cut, handleCut)
-
-      return () => {
-        document.removeEventListener('keydown', handleKeyDown)
-        document.removeEventListener('keyup', handleKeyUp)
-        document.removeEventListener(KeyboardCommand.Copy, handleCopy)
-        document.removeEventListener(KeyboardCommand.Paste, handlePaste)
-        document.removeEventListener(KeyboardCommand.Cut, handleCut)
-      }
-    }
-  }, [
-    isInsideComponent,
-    isInsideCanvas,
-    copiedShape,
-    isEditingText,
-    selectedShape,
-    settings,
-    updateShapes,
-    removeShape,
-    setSelectedShape,
-    pasteShapes,
-    backwardShape,
-    forwardShape,
-    setShiftPressed,
-    setAltPressed,
-    setActiveTool,
-    setSelectionMode,
-    setSelectionFrame,
-    setCopiedShape,
-    setCanvasZoom,
-    resetZoom,
-    setIsSpacePressed,
-    selectAllShapes
-  ])
-
-  return {}
+    return store.listenScope({
+      keydown: handleKeyDown,
+      keyup: handleKeyUp,
+      [KeyboardCommand.Copy]: handleCopy,
+      [KeyboardCommand.Paste]: handlePaste,
+      [KeyboardCommand.Cut]: handleCut
+    })
+  }, [store])
 }
 
 export default useKeyboard

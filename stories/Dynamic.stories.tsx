@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import { useEffect, useState } from 'react'
-import { HELLO_THERE, TREE_AND_CLOUDS, WITH_PICTURE } from './fixture'
 import { Canvas, type DrawableShape, Editor, type StateData, useReactPaint } from '../src/index'
+import { HELLO_THERE, TREE_AND_CLOUDS, WITH_PICTURE } from './fixture'
 import './Dynamic.css'
 import './button.css'
 
@@ -9,7 +9,7 @@ const Dynamic = () => {
   const [preset, setPreset] = useState(0)
   const [shapes, setShapes] = useState<DrawableShape[] | undefined>(WITH_PICTURE)
 
-  const { registerEvent, unregisterEvent, resetCanvas, editorProps, canvasProps } = useReactPaint({
+  const paint = useReactPaint({
     shapes,
     options: {
       canZoom: 'always',
@@ -21,7 +21,7 @@ const Dynamic = () => {
 
   const choosePreset = (preset: number) => {
     setPreset(preset)
-    resetCanvas([WITH_PICTURE, TREE_AND_CLOUDS, HELLO_THERE][preset])
+    paint.resetCanvas([WITH_PICTURE, TREE_AND_CLOUDS, HELLO_THERE][preset])
   }
 
   useEffect(() => {
@@ -29,11 +29,9 @@ const Dynamic = () => {
       console.log(`data changed from ${source}`)
       setShapes(data.shapes)
     }
-    registerEvent('dataChanged', onDataChanged)
-    return () => {
-      unregisterEvent('dataChanged', onDataChanged)
-    }
-  }, [registerEvent, unregisterEvent])
+    // registerEvent returns the function that unregisters the listener
+    return paint.registerEvent('dataChanged', onDataChanged)
+  }, [paint])
 
   return (
     <>
@@ -51,8 +49,8 @@ const Dynamic = () => {
           </button>
         </div>
       </div>
-      <Editor editorProps={editorProps}>
-        <Canvas canvasProps={canvasProps} />
+      <Editor paint={paint}>
+        <Canvas paint={paint} />
       </Editor>
     </>
   )
@@ -82,7 +80,7 @@ export const Default: Story = {
         code: ` const [preset, setPreset] = useState(0)
   const [shapes, setShapes] = useState<DrawableShape[] | undefined>(WITH_PICTURE)
 
-  const { registerEvent, unregisterEvent, resetCanvas, editorProps, canvasProps } = useReactPaint({
+  const paint = useReactPaint({
     shapes,
     options: {
       clearCallback: () => {
@@ -93,7 +91,7 @@ export const Default: Story = {
 
   const choosePreset = (preset: number) => {
     setPreset(preset)
-    resetCanvas([WITH_PICTURE, TREE_AND_CLOUDS, HELLO_THERE][preset])
+    paint.resetCanvas([WITH_PICTURE, TREE_AND_CLOUDS, HELLO_THERE][preset])
   }
 
   useEffect(() => {
@@ -101,11 +99,9 @@ export const Default: Story = {
       console.log(\`data changed from \${source}\`)
       setShapes(data.shapes)
     }
-    registerEvent('dataChanged', onDataChanged)
-    return () => {
-      unregisterEvent('dataChanged', onDataChanged)
-    }
-  }, [registerEvent, unregisterEvent])
+    // registerEvent returns the function that unregisters the listener
+    return paint.registerEvent('dataChanged', onDataChanged)
+  }, [paint])
 
   return (
     <>
@@ -132,8 +128,8 @@ export const Default: Story = {
           Preset 3
         </button>
       </div>
-      <Editor editorProps={editorProps}>
-        <Canvas canvasProps={canvasProps} />
+      <Editor paint={paint}>
+        <Canvas paint={paint} />
       </Editor>
     </>
   )`,

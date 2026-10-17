@@ -1,6 +1,6 @@
-import { uniqueId } from '@common/utils/util'
 import { SNACKBAR_DEFAULT_SETTINGS } from '@editor/constants/snackbar'
 import type { SnackBarType, SnackbarTypeType } from '@editor/types/snackbar'
+import { uniqueId } from '@editor/utils/util'
 import { useEffect, useRef, useState } from 'react'
 
 const useSnackbar = () => {

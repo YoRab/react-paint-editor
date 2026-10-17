@@ -1,28 +1,22 @@
 import type { UtilsSettings } from '@canvas/constants/app'
 import { SELECTION_ANCHOR_SIZE, SELECTION_RESIZE_ANCHOR_POSITIONS, SELECTION_ROTATED_ANCHOR_POSITION } from '@canvas/constants/shapes'
+import type { CanvasSize } from '@canvas/types/Canvas'
+import type { HoverModeData } from '@canvas/types/Mode'
+import type { Point, Rect, SelectionType, ShapeEntity } from '@canvas/types/Shapes'
+import { getSelectedShapes } from '@canvas/utils/selectedShapes'
 import { catmullRomToBezier, createLinePath, getCatmullRomPoints } from '@canvas/utils/shapes/path'
 import { scalePoint } from '@canvas/utils/transform'
-import type { CanvasSize } from '@common/types/Canvas'
-import type { HoverModeData } from '@common/types/Mode'
-import type { Point, Rect, SelectionType, ShapeEntity } from '@common/types/Shapes'
-import { getSelectedShapes } from '@common/utils/selection'
 import { isCircleIntersectRect, isPointInsideRect, rotatePoint } from './trigo'
 
-export const getCursorPosition = (e: MouseEvent | TouchEvent): { clientX: number; clientY: number } => {
-  const { clientX = 0, clientY = 0 } =
-    'touches' in e && e.touches[0] ? e.touches[0] : 'changedTouches' in e && e.changedTouches[0] ? e.changedTouches[0] : 'clientX' in e ? e : {}
-  return { clientX, clientY }
-}
-
-export const getCursorPositionInElement = (e: MouseEvent | TouchEvent, element: HTMLElement, canvasSize: CanvasSize): Point => {
-  const { clientX, clientY } = getCursorPosition(e)
+export const getCursorPositionInElement = (e: MouseEvent, element: HTMLElement, canvasSize: CanvasSize): Point => {
+  const { clientX, clientY } = e
 
   const canvasBoundingRect = element.getBoundingClientRect()
   return [(clientX - canvasBoundingRect.left) / canvasSize.scaleRatio, (clientY - canvasBoundingRect.top) / canvasSize.scaleRatio]
 }
 
-export const getCursorPositionInTransformedCanvas = (e: MouseEvent | TouchEvent, canvas: HTMLElement | null, settings: UtilsSettings): Point => {
-  const { clientX, clientY } = getCursorPosition(e)
+export const getCursorPositionInTransformedCanvas = (e: MouseEvent, canvas: HTMLElement | null, settings: UtilsSettings): Point => {
+  const { clientX, clientY } = e
 
   const canvasBoundingRect = canvas?.getBoundingClientRect() ?? {
     left: 0,
@@ -38,8 +32,8 @@ export const getCursorPositionInTransformedCanvas = (e: MouseEvent | TouchEvent,
   ]
 }
 
-export const isTouchGesture = (e: MouseEvent | TouchEvent): e is TouchEvent => {
-  return 'touches' in e
+export const isTouchGesture = (e: PointerEvent): boolean => {
+  return e.pointerType === 'touch'
 }
 
 export const getPointPositionAfterCanvasTransformation = (point: Point, shapeRotation: number, [originX, originY]: Point): Point =>
@@ -360,10 +354,9 @@ export const checkSelectionFrameCollision = (ctx: CanvasRenderingContext2D, shap
 
 const LONG_PRESS_MOVE_THRESHOLD = 5
 
-export const shouldCancelLongPress = (e: MouseEvent | TouchEvent, startPosition: { clientX: number; clientY: number }): boolean => {
+export const shouldCancelLongPress = (e: PointerEvent, startPosition: { clientX: number; clientY: number }): boolean => {
   if (!isTouchGesture(e)) return true
-  const { clientX, clientY } = getCursorPosition(e)
-  const dx = clientX - startPosition.clientX
-  const dy = clientY - startPosition.clientY
+  const dx = e.clientX - startPosition.clientX
+  const dy = e.clientY - startPosition.clientY
   return dx * dx + dy * dy > LONG_PRESS_MOVE_THRESHOLD * LONG_PRESS_MOVE_THRESHOLD
 }

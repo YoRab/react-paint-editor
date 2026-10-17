@@ -1,11 +1,11 @@
 import type { UtilsSettings } from '@canvas/constants/app'
-import { CANVAS_DEFAULT_RECT_SETTINGS } from '@canvas/constants/tools'
+import { SETTINGS_DEFAULT_RECT } from '@canvas/constants/tools'
+import type { HoverModeData, SelectionModeData } from '@canvas/types/Mode'
+import type { Point, Rect, SelectionType, ShapeEntity } from '@canvas/types/Shapes'
+import { getSelectedShapes } from '@canvas/utils/selectedShapes'
 import { createRectangle } from '@canvas/utils/shapes/rectangle'
 import { roundValues } from '@canvas/utils/transform'
 import { rotatePoint } from '@canvas/utils/trigo'
-import type { HoverModeData, SelectionModeData } from '@common/types/Mode'
-import type { Point, Rect, SelectionType, ShapeEntity } from '@common/types/Shapes'
-import { getSelectedShapes } from '@common/utils/selection'
 import { checkPositionIntersection, checkSelectionIntersection } from './intersect'
 
 export const getNewSelectionData = (
@@ -241,7 +241,7 @@ export const buildShapesGroup = (shapes: ShapeEntity[], settings: UtilsSettings)
     {
       id: 'group_selection',
       type: 'rect',
-      settings: CANVAS_DEFAULT_RECT_SETTINGS
+      settings: SETTINGS_DEFAULT_RECT
     },
     [borders.x, borders.y],
     settings,

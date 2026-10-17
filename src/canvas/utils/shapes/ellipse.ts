@@ -1,11 +1,11 @@
 import type { UtilsSettings } from '@canvas/constants/app'
+import type { SelectionModeResize } from '@canvas/types/Mode'
+import type { DrawableShape, Ellipse, Point, Rect, SelectionType, ShapeEntity } from '@canvas/types/Shapes'
+import type { ToolsSettingsType } from '@canvas/types/tools'
 import { drawPathWithFillAndStroke } from '@canvas/utils/canvas'
 import { createRecSelectionPath, resizeRectSelection } from '@canvas/utils/selection/rectSelection'
 import { createEllipsePath, expandRect, getComputedShapeInfos } from '@canvas/utils/shapes/path'
-import type { SelectionModeResize } from '@common/types/Mode'
-import type { DrawableShape, Ellipse, Point, Rect, SelectionType, ShapeEntity } from '@common/types/Shapes'
-import type { ToolsSettingsType } from '@common/types/tools'
-import { uniqueId } from '@common/utils/util'
+import { uniqueId } from '@canvas/utils/util'
 import { type GroupResizeContext, getPositionWithoutGroupRotation, getShapePositionInNewBorder } from './group'
 
 const getEllipseBorder = (ellipse: Ellipse, settings: Pick<UtilsSettings, 'selectionPadding'>): Rect => {

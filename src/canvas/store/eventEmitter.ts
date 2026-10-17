@@ -1,0 +1,47 @@
+import type { ReactPaintEventName, ReactPaintEvents } from '@canvas/types/editor'
+
+type Listener = (...args: never[]) => void
+
+type EmitEvent = <E extends ReactPaintEventName>(event: E, ...args: Parameters<ReactPaintEvents[E]>) => void
+
+type EventEmitter = {
+  /** Returns the function that unregisters the listener */
+  registerEvent: <E extends ReactPaintEventName>(event: E, fn: ReactPaintEvents[E]) => () => void
+  /** Unregisters the listener, or all the listeners of the event when none is given */
+  unregisterEvent: <E extends ReactPaintEventName>(event: E, fn?: ReactPaintEvents[E]) => void
+  emit: EmitEvent
+}
+
+export const createEventEmitter = (): EventEmitter => {
+  const listeners: Record<ReactPaintEventName, Listener[]> = {
+    dataChanged: [],
+    selectionChanged: [],
+    toolChanged: []
+  }
+
+  const unregisterEvent: EventEmitter['unregisterEvent'] = (event, fn) => {
+    // biome-ignore lint/suspicious/noPrototypeBuiltins: be compliant with es2020
+    if (!listeners.hasOwnProperty(event)) return
+    if (fn) {
+      const currentFnIndex = listeners[event].indexOf(fn)
+      if (currentFnIndex === -1) return
+      listeners[event] = [...listeners[event].slice(0, currentFnIndex), ...listeners[event].slice(currentFnIndex + 1)]
+    } else {
+      listeners[event] = []
+    }
+  }
+
+  const registerEvent: EventEmitter['registerEvent'] = (event, fn) => {
+    // biome-ignore lint/suspicious/noPrototypeBuiltins: be compliant with es2020
+    if (listeners.hasOwnProperty(event)) listeners[event] = [...listeners[event], fn]
+    return () => unregisterEvent(event, fn)
+  }
+
+  const emit: EmitEvent = (event, ...args) => {
+    for (const listener of listeners[event]) {
+      ;(listener as unknown as (...listenerArgs: typeof args) => void)(...args)
+    }
+  }
+
+  return { registerEvent, unregisterEvent, emit }
+}

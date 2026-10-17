@@ -1,7 +1,12 @@
 import type { UtilsSettings } from '@canvas/constants/app'
 import { SHAPES_KEEPING_RATIO, SHAPES_WITH_ROTATION } from '@canvas/constants/shapes'
+import type { HoverModeData, SelectionModeData, SelectionModeResize } from '@canvas/types/Mode'
+import type { DrawableShape, Point, Rect, SelectionType, ShapeEntity, StyleShape } from '@canvas/types/Shapes'
+import type { CustomTool } from '@canvas/types/tools'
 import { transformCanvas, updateCanvasContext } from '@canvas/utils/canvas'
 import { getRectIntersection } from '@canvas/utils/intersect'
+import { set } from '@canvas/utils/object'
+import { getSelectedShapes } from '@canvas/utils/selectedShapes'
 import { buildShapesGroup } from '@canvas/utils/selection'
 import { drawSelectionGroup } from '@canvas/utils/selection/groupSelection'
 import { drawLineSelection } from '@canvas/utils/selection/lineSelection'
@@ -9,12 +14,8 @@ import { drawBoundingBox, drawSelectionRect } from '@canvas/utils/selection/rect
 import { drawFrame } from '@canvas/utils/selection/selectionFrame'
 import { boundVectorToSingleAxis, roundForGrid } from '@canvas/utils/transform'
 import { rotatePoint } from '@canvas/utils/trigo'
+import { uniqueId } from '@canvas/utils/util'
 import { getCurrentView } from '@canvas/utils/zoom'
-import type { HoverModeData, SelectionModeData, SelectionModeResize } from '@common/types/Mode'
-import type { DrawableShape, Point, Rect, SelectionType, ShapeEntity } from '@common/types/Shapes'
-import type { CustomTool } from '@common/types/tools'
-import { getSelectedShapes } from '@common/utils/selection'
-import { uniqueId } from '@common/utils/util'
 import { createBrush, drawBrush, refreshBrush, resizeBrush, resizeBrushInGroup } from './brush'
 import { createCircle, drawCircle, refreshCircle, resizeCircle, resizeCircleInGroup } from './circle'
 import { createCurve, drawCurve, refreshCurve, resizeCurve } from './curve'
@@ -24,7 +25,7 @@ import { createLine, drawLine, refreshLine, resizeLine, resizeLinePolygonCurveIn
 import { drawPicture, refreshPicture, resizePicture, resizePictureInGroup } from './picture'
 import { createPolygon, drawPolygon, refreshPolygon, resizePolygon } from './polygon'
 import { createRectangle, drawRect, refreshRect, resizeRect, resizeRectInGroup } from './rectangle'
-import { createText, drawText, refreshText, resizeText, resizeTextInGroup } from './text'
+import { createText, drawText, fitTextFontSize, isFontStyleField, refreshText, resizeText, resizeTextInGroup } from './text'
 
 export const createShape = (
   ctx: CanvasRenderingContext2D,
@@ -410,6 +411,34 @@ export const refreshShape = (shape: DrawableShape & { id: string }, settings: Ut
     default:
       return shape as never
   }
+}
+
+/** A point can only be removed from a polygon or a curve keeping at least 2 points */
+export const canRemoveShapePoint = (
+  shape: ShapeEntity | undefined,
+  pointIndex: number | undefined
+): shape is ShapeEntity<'polygon'> | ShapeEntity<'curve'> =>
+  (shape?.type === 'polygon' || shape?.type === 'curve') &&
+  pointIndex !== undefined &&
+  pointIndex >= 0 &&
+  pointIndex < shape.points.length &&
+  shape.points.length > 2
+
+/**
+ * Returns the shape with the new style value. Font fields only apply to texts, whose font size is fitted
+ * to their width: other shapes, or texts when no context is available, are returned unchanged.
+ */
+export const updateShapeStyle = (
+  ctx: CanvasRenderingContext2D | null | undefined,
+  shape: ShapeEntity,
+  field: keyof StyleShape,
+  value: unknown,
+  settings: UtilsSettings
+): ShapeEntity => {
+  const newShape = set(['style', field], value, shape)
+  if (!isFontStyleField(field)) return refreshShape(newShape, settings)
+  if (newShape.type !== 'text' || !ctx) return shape
+  return refreshShape(fitTextFontSize(ctx, newShape), settings)
 }
 
 export const drawShapeSelection = ({

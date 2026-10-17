@@ -1,14 +1,14 @@
 import type { UtilsSettings } from '@canvas/constants/app'
+import type { SelectionModeResize } from '@canvas/types/Mode'
+import type { DrawableShape, Point, Polygon, Rect, ShapeEntity } from '@canvas/types/Shapes'
+import type { ToolsSettingsType } from '@canvas/types/tools'
 import { drawPathWithFillAndStroke } from '@canvas/utils/canvas'
 import { getPointPositionAfterCanvasTransformation } from '@canvas/utils/intersect'
+import { set } from '@canvas/utils/object'
 import { createLineSelectionPath } from '@canvas/utils/selection/lineSelection'
 import { createPolygonPath, expandRect, getComputedShapeInfos } from '@canvas/utils/shapes/path'
 import { roundForGrid } from '@canvas/utils/transform'
-import type { SelectionModeResize } from '@common/types/Mode'
-import type { DrawableShape, Point, Polygon, Rect, ShapeEntity } from '@common/types/Shapes'
-import type { ToolsSettingsType } from '@common/types/tools'
-import { set } from '@common/utils/object'
-import { uniqueId } from '@common/utils/util'
+import { uniqueId } from '@canvas/utils/util'
 
 const buildPath = <T extends DrawableShape<'polygon'>>(shape: T & { id: string }, settings: UtilsSettings): ShapeEntity<'polygon'> => {
   const path = createPolygonPath(shape)

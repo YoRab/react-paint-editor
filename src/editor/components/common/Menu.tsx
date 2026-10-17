@@ -7,12 +7,14 @@ type MenuType = {
   className?: string
   style?: React.CSSProperties
   position?: 'top' | 'bottom' | 'left' | 'right' | undefined
+  /** Ref of the element of the menu, which contains its sub menus */
+  menuRef?: React.Ref<HTMLDivElement>
 }
 
-const Menu = ({ alignment, children, className, style, position }: MenuType) => {
+const Menu = ({ alignment, children, className, style, position, menuRef }: MenuType) => {
   return (
     <Panel alignment={alignment} position={position} className={className} style={style}>
-      <div className='react-paint-editor-menu' role='menu'>
+      <div className='react-paint-editor-menu' role='menu' ref={menuRef}>
         {children}
       </div>
     </Panel>

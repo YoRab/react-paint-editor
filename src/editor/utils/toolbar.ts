@@ -1,6 +1,5 @@
-import type { ShapeType } from '@common/types/Shapes'
-import type { CustomTool } from '@common/types/tools'
-import { compact } from '@common/utils/array'
+import type { CustomTool, ShapeType } from '@canvas/index'
+import { compact } from '@editor/utils/util'
 
 export const getCurrentStructure = (
   availableTools: CustomTool[],

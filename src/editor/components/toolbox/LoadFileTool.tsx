@@ -1,18 +1,17 @@
-import type { ToolsType } from '@common/types/tools'
 import Button from '@editor/components/common/Button'
+import type { EditorActionTool } from '@editor/types/tools'
 import type React from 'react'
 import { useRef } from 'react'
 
 type LoadFileToolType = {
   disabled?: boolean
   loadFile: (file: File) => void
-  type: ToolsType
-  img?: string
+  type: EditorActionTool
   accept: string
   withText?: boolean
 }
 
-const LoadFileTool = ({ disabled = false, withText = false, loadFile, type, img, accept }: LoadFileToolType) => {
+const LoadFileTool = ({ disabled = false, withText = false, loadFile, type, accept }: LoadFileToolType) => {
   const inputRef = useRef<HTMLInputElement>(null)
 
   const handleClick = () => {
@@ -32,8 +31,8 @@ const LoadFileTool = ({ disabled = false, withText = false, loadFile, type, img,
       onClick={handleClick}
       onChange={handleChange}
       accept={accept}
-      title={type.label ?? type.type}
-      icon={img}
+      title={type.label}
+      icon={type.icon}
       disabled={disabled}
     >
       {withText ? type.label : undefined}

@@ -1,17 +1,17 @@
-import type { ShapeType } from '@common/types/Shapes'
-import type { CustomTool, ToolsType } from '@common/types/tools'
+import { type EditorState, type ExportView, type ShapeType, shallowEqual, type ToolsType, usePaint, usePaintState } from '@canvas/index'
 import Button from '@editor/components/common/Button'
 import Modal from '@editor/components/common/Modal'
 import { shapesIcon } from '@editor/constants/icons'
-import { CLEAR_TOOL, MOVE_TOOL, REDO_TOOL, SELECTION_TOOL, UNDO_TOOL } from '@editor/constants/tools'
+import { CLEAR_TOOL, MOVE_TOOL_DISPLAY, REDO_TOOL, SELECTION_TOOL_DISPLAY, UNDO_TOOL } from '@editor/constants/tools'
+import { getDisplayTool } from '@editor/utils/style'
 import { getCurrentStructure } from '@editor/utils/toolbar'
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import MenuGroup from './MenuGroup'
 import PictureUrlModal from './PictureUrlInput'
 import Tool from './Tool'
 import './Toolbar.css'
-import type { UtilsSettings } from '@common/types/Settings'
 import ExportModal from '@editor/components/toolbox/ExportModal'
+import ActionButton from './ActionButton'
 import ToolbarGroup from './ToolbarGroup'
 
 const TOOL_WIDTH = 40
@@ -42,51 +42,46 @@ const TOOLBAR_STRUCTURE: (
   'text'
 ]
 
+const selectToolbarState = (state: EditorState) => ({
+  activeTool: state.activeTool,
+  tools: state.tools,
+  history: state.history,
+  width: state.view.displayWidth
+})
+
 type ToolboxType = {
-  width: number
-  activeTool: ToolsType
-  hasActionToUndo?: boolean
-  hasActionToRedo?: boolean
-  hasActionToClear?: boolean
-  undoAction: () => void
-  redoAction: () => void
-  clearCanvas: () => void
-  setActiveTool: (tool: ToolsType) => void
+  disabled: boolean
+  withMoveTool: boolean
   loadFile: (file: File) => void
   addPicture: (file: File | string) => Promise<void>
   saveFile: () => void
-  exportCanvasInFile: (view: 'fitToShapes' | 'defaultView' | 'currentZoom') => void
-  availableTools: CustomTool[]
+  exportCanvasInFile: (view: ExportView) => void
   withLoadAndSave: boolean
   withExport: boolean
   withUrlPicture: boolean
   withUploadPicture: boolean
-  settings: UtilsSettings
 }
 
 const Toolbar = ({
-  settings,
-  width,
-  activeTool,
-  hasActionToUndo = false,
-  hasActionToRedo = false,
-  hasActionToClear = false,
+  disabled,
+  withMoveTool,
   withLoadAndSave,
   withExport,
-  clearCanvas,
-  setActiveTool: setActiveToolFromProps,
-  undoAction,
-  redoAction,
   addPicture,
   loadFile,
   saveFile,
   exportCanvasInFile,
-  availableTools,
   withUrlPicture,
   withUploadPicture
 }: ToolboxType) => {
+  const paint = usePaint()
+  const { actions } = paint
+  const { activeTool, tools, history, width } = usePaintState(paint, selectToolbarState, shallowEqual)
+  const availableTools = useMemo(() => tools.map(getDisplayTool), [tools])
+  const { canUndo: hasActionToUndo, canRedo: hasActionToRedo, canClear: hasActionToClear } = history
+  const { undo: undoAction, redo: redoAction, clearCanvas } = actions
+
   const currentStructure = getCurrentStructure(availableTools, TOOLBAR_STRUCTURE)
-  const disabled = !settings.features.edition
 
   const fullToolbarSize = (6 + currentStructure.length) * TOOL_WIDTH
   const actionsInMenu = width < fullToolbarSize
@@ -115,13 +110,9 @@ const Toolbar = ({
     setIsExportModalOpen(prev => !prev)
   }
 
-  const setActiveTool = (tool: ToolsType) => {
-    setActiveToolFromProps(tool)
+  const setActiveTool = (toolOrId: ToolsType | string) => {
+    actions.selectTool(toolOrId)
     setIsMenuOpen(false)
-  }
-
-  const setActiveToolFromId = (toolId: string) => {
-    setActiveTool(availableTools.find(tool => tool.id === toolId) ?? activeTool)
   }
 
   const isAnyToolSelected = availableTools.find(tool => tool.type === activeTool.type) !== undefined
@@ -136,14 +127,20 @@ const Toolbar = ({
       >
         <div className='react-paint-editor-toolbar-shrinkable'>
           <Tool
-            type={SELECTION_TOOL}
+            type={SELECTION_TOOL_DISPLAY}
             disabled={disabled}
-            img={SELECTION_TOOL.icon}
-            isActive={activeTool.id === SELECTION_TOOL.id}
-            setActive={setActiveTool}
+            img={SELECTION_TOOL_DISPLAY.icon}
+            isActive={activeTool.id === SELECTION_TOOL_DISPLAY.id}
+            setActive={() => setActiveTool(SELECTION_TOOL_DISPLAY.id)}
           />
-          {(settings.size === 'infinite' || settings.features.zoom) && (
-            <Tool type={MOVE_TOOL} disabled={disabled} img={MOVE_TOOL.icon} isActive={activeTool.id === MOVE_TOOL.id} setActive={setActiveTool} />
+          {withMoveTool && (
+            <Tool
+              type={MOVE_TOOL_DISPLAY}
+              disabled={disabled}
+              img={MOVE_TOOL_DISPLAY.icon}
+              isActive={activeTool.id === MOVE_TOOL_DISPLAY.id}
+              setActive={() => setActiveTool(MOVE_TOOL_DISPLAY.id)}
+            />
           )}
           {toolsInMenu ? (
             <Button disabled={disabled} onClick={toggleTools} title='Toggle tools' icon={shapesIcon} selected={isAnyToolSelected} />
@@ -154,7 +151,7 @@ const Toolbar = ({
                 key={'id' in group ? group.id : group.title}
                 activeTool={activeTool}
                 group={group}
-                setActiveToolFromId={setActiveToolFromId}
+                setActiveToolFromId={setActiveTool}
               />
             ))
           )}
@@ -162,33 +159,14 @@ const Toolbar = ({
 
         {!actionsInMenu && (
           <>
-            <Tool
-              type={UNDO_TOOL}
-              disabled={disabled || !hasActionToUndo}
-              img={UNDO_TOOL.icon}
-              isActive={activeTool.id === UNDO_TOOL.id}
-              setActive={undoAction}
-            />
-            <Tool
-              type={REDO_TOOL}
-              disabled={disabled || !hasActionToRedo}
-              img={REDO_TOOL.icon}
-              isActive={activeTool.id === REDO_TOOL.id}
-              setActive={redoAction}
-            />
-            <Tool
-              type={CLEAR_TOOL}
-              disabled={disabled || !hasActionToClear}
-              img={CLEAR_TOOL.icon}
-              isActive={activeTool.id === CLEAR_TOOL.id}
-              setActive={clearCanvas}
-            />
+            <ActionButton type={UNDO_TOOL} disabled={disabled || !hasActionToUndo} onClick={undoAction} />
+            <ActionButton type={REDO_TOOL} disabled={disabled || !hasActionToRedo} onClick={redoAction} />
+            <ActionButton type={CLEAR_TOOL} disabled={disabled || !hasActionToClear} onClick={clearCanvas} />
           </>
         )}
         <MenuGroup
           withActionsInMenu={actionsInMenu}
           disabled={disabled}
-          activeTool={activeTool}
           addPicture={addPicture}
           loadFile={loadFile}
           saveFile={saveFile}
@@ -217,7 +195,7 @@ const Toolbar = ({
                 img={toolType.icon}
                 withText={false}
                 isActive={activeTool.id === toolType.id}
-                setActive={setActiveTool}
+                setActive={() => setActiveTool(toolType.id)}
               />
             )
           )}

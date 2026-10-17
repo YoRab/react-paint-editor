@@ -19,17 +19,22 @@ import LinkTo from '@storybook/addon-links/react';
       <h2>Table of Contents</h2>
       <ul>
         <li><a href="#useReactPaint" target="_self">useReactPaint Hook</a></li>
+        <li><a href="#usePaintState" target="_self">usePaintState Hook</a></li>
+        <li><a href="#PaintProvider" target="_self">PaintProvider and usePaint</a></li>
+        <li><a href="#useAnnotationsStyle" target="_self">useAnnotationsStyle Hook</a></li>
         <li><a href="#Editor" target="_self">Editor Component</a></li>
         <li><a href="#Canvas" target="_self">Canvas Component</a></li>
         <li><a href="#Types" target="_self">Type Definitions</a></li>
         <li><a href="#Options" target="_self">Configuration Options</a></li>
         <li><a href="#Events" target="_self">Events</a></li>
         <li><a href="#Methods" target="_self">Methods</a></li>
+        <li><a href="#Performance" target="_self">Performance</a></li>
+        <li><a href="#Helpers" target="_self">Helpers</a></li>
       </ul>
 
       <h2 id="useReactPaint">useReactPaint Hook</h2>
       <p>
-        The core hook that manages the paint editor state and provides all necessary props and methods.
+        The core hook: it creates a canvas, with its state and its logic, and returns its handle.
       </p>
 
       <h3>Parameters</h3>
@@ -82,102 +87,139 @@ import LinkTo from '@storybook/addon-links/react';
         </tbody>
       </table>
 
+      <p>
+        The props are compared by value: <code>options</code> can be written inline. <code>shapes</code> is only read when the canvas is created, and by <code>clearCallback: 'defaultShapes'</code>.
+      </p>
+
       <h3>Return Value</h3>
-      <p>The hook returns an object with the following properties:</p>
-
-      <h4>editorProps</h4>
-      <p>Props to pass to the <code>Editor</code> component. Contains:</p>
+      <p>
+        The hook returns a handle, <code>paint</code>, of type <code>ReactPaint</code>, to give to the <code>Editor</code> and <code>Canvas</code> components, or to your own editor.
+        Its identity never changes, and the component calling the hook does not render again when the state changes: read the state with <a href="#usePaintState" target="_self"><code>usePaintState</code></a>.
+      </p>
+      <Source language='typescript' code={`type ReactPaint = {
+  actions: EditorActions
+  getState: () => EditorState
+  subscribe: (listener: () => void) => () => void
+  registerEvent: <E extends ReactPaintEventName>(event: E, fn: ReactPaintEvents[E]) => () => void
+  unregisterEvent: <E extends ReactPaintEventName>(event: E, fn?: ReactPaintEvents[E]) => void
+  resetCanvas: (shapes?: DrawableShape[], clearHistory?: boolean) => void
+  getCurrentImage: (view: ExportView) => string
+  getCurrentData: () => StateData
+  scopeRef: (element: HTMLElement | null) => void
+}`} />
       <ul>
-        <li><code>shapesRef</code> - React ref containing current shapes array</li>
-        <li><code>addPictureShape</code> - Function to add a picture shape</li>
-        <li><code>moveShapes</code> - Function to move shapes in layer order</li>
-        <li><code>swapShapes</code> - Function to swap 2 shapes in layer order</li>
-        <li><code>toggleShapeVisibility</code> - Function to toggle shape visibility</li>
-        <li><code>toggleShapeLock</code> - Function to toggle shape lock state</li>
-        <li><code>canGoBackward</code> - Boolean indicating if undo is available</li>
-        <li><code>canGoForward</code> - Boolean indicating if redo is available</li>
-        <li><code>canClear</code> - Boolean indicating if clear is available</li>
-        <li><code>selectedShape</code> - Currently selected shape or group</li>
-        <li><code>removeShape</code> - Function to remove a shape</li>
-        <li><code>updateShape</code> - Function to update a shape</li>
-        <li><code>backwardShape</code> - Function to undo last action</li>
-        <li><code>forwardShape</code> - Function to redo last undone action</li>
-        <li><code>refs</code> - Object containing canvas and editor refs</li>
-        <li><code>width</code> - Canvas width</li>
-        <li><code>height</code> - Canvas height</li>
-        <li><code>selectTool</code> - Function to select a tool</li>
-        <li><code>selectShapes</code> - Function to select shapes</li>
-        <li><code>activeTool</code> - Currently active tool</li>
-        <li><code>setActiveTool</code> - Function to set active tool</li>
-        <li><code>setAvailableTools</code> - Function to update available tools</li>
-        <li><code>isEditMode</code> - Boolean indicating if in edit mode</li>
-        <li><code>availableTools</code> - Array of available tools</li>
-        <li><code>gridGap</code> - Current grid gap value</li>
-        <li><code>setGridGap</code> - Function to set grid gap</li>
-        <li><code>loadFile</code> - Function to load a file</li>
-        <li><code>exportPicture</code> - Function to export canvas as image</li>
-        <li><code>exportData</code> - Function to export canvas data as JSON</li>
-        <li><code>clearCanvas</code> - Function to clear the canvas</li>
-        <li><code>settings</code> - Current settings object</li>
-        <li><code>setCanvasZoom</code> - Function to set canvas zoom level</li>
-        <li><code>canvas</code> - Canvas configuration object</li>
+        <li><code>actions</code> - Commands to act on the canvas (see below). Their identity never changes</li>
+        <li><code>getState()</code> - The current state (see below), without subscription: to read in event handlers. The same object is returned as long as nothing changes</li>
+        <li><code>subscribe(listener)</code> - Calls the listener after each change of the state, and returns the function that unsubscribes it</li>
+        <li><code>registerEvent</code>, <code>unregisterEvent</code>, <code>resetCanvas</code>, <code>getCurrentImage</code>, <code>getCurrentData</code> - See <a href="#Methods" target="_self">Methods</a></li>
+        <li><code>scopeRef</code> - Callback ref defining the area where keyboard shortcuts are active, the canvas by default. The pointer always works over the canvas. Set it on the root element of a custom editor so that the shortcuts also work while its toolbar is focused. The <code>Editor</code> component sets it</li>
       </ul>
 
-      <h4>canvasProps</h4>
-      <p>Props to pass to the <code>Canvas</code> component. Contains:</p>
+      <h4>State</h4>
+      <p>The <code>EditorState</code> returned by <code>getState</code> and <code>usePaintState</code>. Each slice keeps its identity while it does not change.</p>
       <ul>
-        <li><code>shapesRef</code> - React ref containing current shapes array</li>
-        <li><code>selectedShape</code> - Currently selected shape</li>
-        <li><code>selectionFrame</code> - Current selection frame data</li>
-        <li><code>hoveredShape</code> - Currently hovered shape</li>
-        <li><code>addShape</code> - Function to add shapes</li>
-        <li><code>setSelectedShape</code> - Function to set selected shape</li>
-        <li><code>setSelectionFrame</code> - Function to set selection frame</li>
-        <li><code>refreshSelectedShapes</code> - Function to refresh selected shapes</li>
-        <li><code>refreshHoveredShape</code> - Function to refresh hovered shape</li>
-        <li><code>removeShape</code> - Function to remove a shape</li>
-        <li><code>updateShape</code> - Function to update a shape</li>
-        <li><code>backwardShape</code> - Function to undo</li>
-        <li><code>forwardShape</code> - Function to redo</li>
-        <li><code>saveShapes</code> - Function to save shapes to history</li>
-        <li><code>refs</code> - Object containing canvas and editor refs</li>
-        <li><code>width</code> - Canvas width</li>
-        <li><code>height</code> - Canvas height</li>
-        <li><code>settings</code> - Current settings object</li>
-        <li><code>setCanvasSize</code> - Function to set canvas size</li>
-        <li><code>setCanvasOffset</code> - Function to set canvas offset</li>
-        <li><code>setCanvasZoom</code> - Function to set canvas zoom</li>
-        <li><code>selectShapes</code> - Function to select shapes</li>
-        <li><code>activeTool</code> - Currently active tool</li>
-        <li><code>setActiveTool</code> - Function to set active tool</li>
-        <li><code>isInsideComponent</code> - Boolean indicating if pointer is inside component</li>
-        <li><code>isEditMode</code> - Boolean indicating if in edit mode</li>
-        <li><code>canvas</code> - Canvas configuration object</li>
-        <li><code>canvasOffsetStartData</code> - Canvas offset start data</li>
-        <li><code>setCanvasOffsetStartData</code> - Function to set canvas offset start data</li>
-        <li><code>selectionMode</code> - Current selection mode</li>
-        <li><code>setSelectionMode</code> - Function to set selection mode</li>
-        <li><code>setCanvasMoveAcceleration</code> - Function to set canvas move acceleration</li>
-        <li><code>isShiftPressed</code> - Boolean indicating if Shift key is pressed</li>
-        <li><code>isAltPressed</code> - Boolean indicating if Alt key is pressed</li>
-        <li><code>setShiftPressed</code> - Function to set Shift pressed state</li>
-        <li><code>setAltPressed</code> - Function to set Alt pressed state</li>
+        <li><code>mode</code>, <code>disabled</code> - Values given to the hook</li>
+        <li><code>features</code> - <code>{'{ edition: boolean; zoom: boolean }'}</code></li>
+        <li><code>width</code>, <code>height</code> - Logical canvas size</li>
+        <li><code>layout</code> - <code>{"{ size: 'fixed' | 'infinite'; canGrow: boolean; canShrink: boolean }"}</code></li>
+        <li><code>view</code> - <code>{'{ zoom, offset, displayWidth, displayHeight, scaleRatio }'}</code></li>
+        <li><code>gridGap</code> - Current grid gap</li>
+        <li><code>shapes</code> - All shapes, from top to bottom</li>
+        <li><code>selection</code> - Selected shape, or group of shapes when several are selected</li>
+        <li><code>selectedShapes</code> - Selected shapes as an array</li>
+        <li><code>selectedShapeIds</code> - Ids of the selected shapes, to give to the actions. The array keeps its identity while the same shapes are selected</li>
+        <li><code>activeTool</code>, <code>tools</code> - Active tool (the selection tool, the move tool or one of the tools, kept up to date with them) and available drawing tools</li>
+        <li><code>history</code> - <code>{'{ canUndo: boolean; canRedo: boolean; canClear: boolean }'}</code></li>
+        <li><code>clipboard</code> - <code>{'{ hasContent: boolean }'}</code></li>
+        <li><code>withContextMenu</code> - Whether the context menu is enabled</li>
+        <li><code>interaction</code> - <code>{'{ mode, hoveredShape, selectionFrame, modifiers: { shift, alt, space }, isPanning, focus: { component, canvas } }'}</code>. It changes on each move of the pointer</li>
+        <li><code>contextMenu</code> - <code>{'{ shapes, anchorIndex, canRemoveAnchor, canvasPosition, clientPosition }'}</code> when the context menu is open. <code>canRemoveAnchor</code> tells whether the point under the cursor can be removed with <code>removeShapePoint</code>, <code>undefined</code> otherwise</li>
       </ul>
 
-      <h4>Methods</h4>
+      <h4>Actions</h4>
       <ul>
-        <li><code>registerEvent</code> - Register an event listener</li>
-        <li><code>unregisterEvent</code> - Unregister an event listener</li>
-        <li><code>resetCanvas</code> - Reset canvas with new shapes</li>
-        <li><code>resetZoom</code> - Reset zoom to default</li>
-        <li><code>getCurrentImage</code> - Get current canvas as image data URL</li>
-        <li><code>getCurrentData</code> - Get current canvas state data</li>
-        <li><code>setCanvasOffset</code> - Set canvas offset programmatically</li>
-        <li><code>setCanvasZoom</code> - Set canvas zoom programmatically</li>
+        <li><code>selectTool(toolOrId)</code> - Selects the selection tool, the move tool or one of the tools, found by id. An unknown tool is ignored</li>
+        <li><code>updateToolSettings(toolId, field, value)</code></li>
+        <li><code>selectShapes(ids)</code>, <code>selectAllShapes()</code>, <code>clearSelection()</code></li>
+        <li><code>removeShapes(ids)</code>, <code>duplicateShapes(ids, {'{ translate?, select? }'})</code></li>
+        <li><code>moveShapes(ids, 'first' | 'last' | 'forward' | 'backward')</code>, <code>swapShapes(firstId, secondId)</code></li>
+        <li><code>toggleShapesVisibility(ids)</code>, <code>toggleShapesLock(ids)</code> - Toggle each shape</li>
+        <li><code>setShapesVisibility(ids, visible)</code>, <code>setShapesLocked(ids, locked)</code> - Set the same value on all shapes</li>
+        <li><code>updateShapesStyle(ids, field, value, {'{ save? }'})</code> - Updates a style field. Text size is recomputed when changing the font</li>
+        <li><code>transformShapes(ids, 'flipHorizontally' | 'flipVertically' | 'rotateClockwise' | 'rotateCounterclockwise')</code></li>
+        <li><code>removeShapePoint(id, pointIndex)</code> - Removes a point of a polygon or a curve, which keep at least 2 points</li>
+        <li><code>addPicture(fileOrUrl, {'{ maxWidth?, maxHeight?, select? }'})</code></li>
+        <li><code>copy(ids?)</code>, <code>cut(ids?)</code>, <code>paste()</code> - Use the selection when no ids are given</li>
+        <li><code>undo()</code>, <code>redo()</code>, <code>saveShapes()</code> - <code>saveShapes</code> adds the current state to the history, after updates made with <code>{'{ save: false }'}</code></li>
+        <li><code>clearCanvas()</code>, <code>loadFile(file)</code>, <code>exportPicture(view)</code>, <code>exportData()</code></li>
+        <li><code>setZoom('zoom' | 'unzoom' | 'default')</code>, <code>resetZoom()</code> - Zoom in, out, or back to 100%</li>
+        <li><code>setOffset(offset)</code> - Moves the view to the <code>Point</code> <code>[x, y]</code>. The offset is kept inside the canvas when its size is fixed</li>
+        <li><code>setGridGap(gap)</code></li>
+        <li><code>closeContextMenu()</code></li>
       </ul>
+      <p>
+        See the <LinkTo title='React Paint/Custom editor' story='docs'>Custom editor</LinkTo> story for a complete example.
+      </p>
 
-      <h4>annotationsProps</h4>
-      <p>Props for annotation layer styling (used internally).</p>
+      <h2 id="usePaintState">usePaintState Hook</h2>
+      <p>
+        Reads the state during a render, and renders the component again only when the selected value changes.
+      </p>
+      <Source language='typescript' code={`usePaintState(paint: ReactPaint): EditorState
+usePaintState<T>(paint: ReactPaint, selector: (state: EditorState) => T, isEqual?: (a: T, b: T) => boolean): T`} />
+      <ul>
+        <li><code>selector</code> - Picks a value in the state. Without selector, the whole state is returned, and the component renders on each change</li>
+        <li><code>isEqual</code> - Compares the previous and the new value (default: <code>Object.is</code>). An equal value keeps its identity</li>
+      </ul>
+      <Source language='typescript' code={`import { shallowEqual, usePaintState } from '@yorab/react-paint'
+
+const canUndo = usePaintState(paint, state => state.history.canUndo)
+const view = usePaintState(paint, state => state.view)
+// a selector building an object or an array needs an equality function
+const { shapes, selectedShapes } = usePaintState(paint, state => ({ shapes: state.shapes, selectedShapes: state.selectedShapes }), shallowEqual)`} />
+      <p>
+        <code>shallowEqual(a, b)</code> compares two values, and the first level of two objects or arrays, with <code>Object.is</code>.
+        In development, a warning is logged when a selector returns a new value on each call without an equality function telling they are equal.
+      </p>
+
+      <h2 id="PaintProvider">PaintProvider and usePaint</h2>
+      <p>
+        <code>PaintProvider</code> gives a handle to the components below it, which read it with <code>usePaint()</code>, without passing it through props.
+        The <code>Editor</code> component provides it to its children. Use it to place parts of your interface, like a toolbar, outside of the editor.
+      </p>
+      <Source language='typescript' code={`const UndoButton = () => {
+  const paint = usePaint()
+  const canUndo = usePaintState(paint, state => state.history.canUndo)
+  return <button disabled={!canUndo} onClick={paint.actions.undo}>Undo</button>
+}
+
+const App = () => {
+  const paint = useReactPaint()
+  return (
+    <PaintProvider paint={paint}>
+      <UndoButton />
+      <Editor paint={paint}>
+        <Canvas paint={paint} />
+      </Editor>
+    </PaintProvider>
+  )
+}`} />
+      <p>
+        See the <LinkTo title='React Paint/External toolbar' story='docs'>External toolbar</LinkTo> story.
+      </p>
+
+      <h2 id="useAnnotationsStyle">useAnnotationsStyle Hook</h2>
+      <p>
+        Returns the style of an element laid over the canvas, like a picture to annotate, so that it follows the zoom and the moves of the view.
+      </p>
+      <Source language='typescript' code={`const paint = useReactPaint({ width: pictureWidth, height: pictureHeight })
+const annotationsStyle = useAnnotationsStyle(paint)
+
+<img src={src} style={annotationsStyle} />`} />
+      <p>
+        See the <LinkTo title='React Paint/Picture annotation' story='docs'>Picture annotation</LinkTo> story.
+      </p>
+
 
       <h2 id="Editor">Editor Component</h2>
       <p>
@@ -196,9 +238,9 @@ import LinkTo from '@storybook/addon-links/react';
         </thead>
         <tbody>
           <tr>
-            <td><code>editorProps</code></td>
-            <td><code>UseReactPaintReturnType['editorProps']</code></td>
-            <td>Props from useReactPaint hook</td>
+            <td><code>paint</code></td>
+            <td><code>ReactPaint</code></td>
+            <td>Handle returned by the useReactPaint hook. The editor provides it to its children, which can read it with <code>usePaint</code></td>
             <td>Yes</td>
           </tr>
           <tr>
@@ -305,6 +347,36 @@ import LinkTo from '@storybook/addon-links/react';
             <td>Hover font background color</td>
             <td><code>'#afd8d8'</code></td>
           </tr>
+          <tr>
+            <td><code>layersManipulation</code></td>
+            <td><code>boolean</code></td>
+            <td>Enable layers panel for shape management</td>
+            <td><code>true</code></td>
+          </tr>
+          <tr>
+            <td><code>withExport</code></td>
+            <td><code>boolean</code></td>
+            <td>Show export button in toolbar</td>
+            <td><code>true</code></td>
+          </tr>
+          <tr>
+            <td><code>withLoadAndSave</code></td>
+            <td><code>boolean</code></td>
+            <td>Show load/save buttons in toolbar</td>
+            <td><code>true</code></td>
+          </tr>
+          <tr>
+            <td><code>withUploadPicture</code></td>
+            <td><code>boolean</code></td>
+            <td>Show button to upload picture (base64)</td>
+            <td><code>true</code></td>
+          </tr>
+          <tr>
+            <td><code>withUrlPicture</code></td>
+            <td><code>boolean</code></td>
+            <td>Show button to add picture by URL</td>
+            <td><code>false</code></td>
+          </tr>
         </tbody>
       </table>
 
@@ -325,9 +397,9 @@ import LinkTo from '@storybook/addon-links/react';
         </thead>
         <tbody>
           <tr>
-            <td><code>canvasProps</code></td>
-            <td><code>UseReactPaintReturnType['canvasProps']</code></td>
-            <td>Props from useReactPaint hook</td>
+            <td><code>paint</code></td>
+            <td><code>ReactPaint</code></td>
+            <td>Handle returned by the useReactPaint hook</td>
             <td>Yes</td>
           </tr>
           <tr>
@@ -399,12 +471,6 @@ import LinkTo from '@storybook/addon-links/react';
         </thead>
         <tbody>
           <tr>
-            <td><code>layersManipulation</code></td>
-            <td><code>boolean</code></td>
-            <td>Enable layers panel for shape management</td>
-            <td><code>true</code></td>
-          </tr>
-          <tr>
             <td><code>grid</code></td>
             <td><code>number</code></td>
             <td>Grid gap size in pixels (0 to disable)</td>
@@ -425,32 +491,8 @@ import LinkTo from '@storybook/addon-links/react';
           <tr>
             <td><code>availableTools</code></td>
             <td><code>CustomToolInput[]</code></td>
-            <td>Custom list of available tools</td>
-            <td>Default shape tools</td>
-          </tr>
-          <tr>
-            <td><code>withExport</code></td>
-            <td><code>boolean</code></td>
-            <td>Show export button in toolbar</td>
-            <td><code>true</code></td>
-          </tr>
-          <tr>
-            <td><code>withLoadAndSave</code></td>
-            <td><code>boolean</code></td>
-            <td>Show load/save buttons in toolbar</td>
-            <td><code>true</code></td>
-          </tr>
-          <tr>
-            <td><code>withUploadPicture</code></td>
-            <td><code>boolean</code></td>
-            <td>Show button to upload picture (base64)</td>
-            <td><code>true</code></td>
-          </tr>
-          <tr>
-            <td><code>withUrlPicture</code></td>
-            <td><code>boolean</code></td>
-            <td>Show button to add picture by URL</td>
-            <td><code>false</code></td>
+            <td>Custom list of available tools, each one merged with the default tool of the same type</td>
+            <td><code>DEFAULT_TOOLS</code></td>
           </tr>
           <tr>
             <td><code>withFrameSelection</code></td>
@@ -520,14 +562,15 @@ import LinkTo from '@storybook/addon-links/react';
 
       <h2 id="Events">Events</h2>
       <p>
-        React Paint emits events that you can listen to using <code>registerEvent</code> and <code>unregisterEvent</code>.
+        React Paint emits events that you can listen to using <code>paint.registerEvent</code> and <code>paint.unregisterEvent</code>.
+        They are emitted right after the change of the state, before React renders it.
       </p>
 
       <h3>dataChanged</h3>
       <p>
         Fired whenever the canvas state changes (shapes added, removed, or modified).
       </p>
-      <Source language='typescript' code={`registerEvent('dataChanged', (data: StateData, source: 'user' | 'remote') => {
+      <Source language='typescript' code={`paint.registerEvent('dataChanged', (data: StateData, source: 'user' | 'remote') => {
   // data.shapes contains all current shapes
   // source indicates if change came from user interaction ('user') or remote update ('remote')
   console.log('Canvas data changed:', data)
@@ -555,23 +598,40 @@ import LinkTo from '@storybook/addon-links/react';
         </tbody>
       </table>
 
+      <h3>selectionChanged</h3>
+      <p>
+        Fired when the set of selected shapes changes. It is not fired when the selected shapes are only modified (moved, resized, restyled...).
+      </p>
+      <Source language='typescript' code={`paint.registerEvent('selectionChanged', (selectedShapes: ShapeEntity[]) => {
+  console.log('Selected shapes:', selectedShapes.map(shape => shape.id))
+})`} />
+
+      <h3>toolChanged</h3>
+      <p>
+        Fired when the active tool changes.
+      </p>
+      <Source language='typescript' code={`paint.registerEvent('toolChanged', (tool: ToolsType) => {
+  console.log('Active tool:', tool.id)
+})`} />
+
       <h2 id="Methods">Methods</h2>
       <p>
-        Methods available from the <code>useReactPaint</code> hook return value:
+        Methods of the handle returned by <code>useReactPaint</code>. Like the handle, their identity never changes.
       </p>
 
       <h3>registerEvent</h3>
-      <p>Register a listener for React Paint events.</p>
-      <Source language='typescript' code={`registerEvent(
-  event: 'dataChanged',
-  listener: (data: StateData, source: 'user' | 'remote') => void
-): void`} />
+      <p>Register a listener for React Paint events. Returns the function that unregisters it, which fits the cleanup of an effect.</p>
+      <Source language='typescript' code={`registerEvent<E extends 'dataChanged' | 'selectionChanged' | 'toolChanged'>(
+  event: E,
+  listener: ReactPaintEvents[E]
+): () => void`} />
+      <Source language='typescript' code={`useEffect(() => paint.registerEvent('dataChanged', data => save(data)), [paint])`} />
 
       <h3>unregisterEvent</h3>
       <p>Unregister an event listener. If listener is omitted, all listeners for the event are removed.</p>
-      <Source language='typescript' code={`unregisterEvent(
-  event: 'dataChanged',
-  listener?: (data: StateData, source: 'user' | 'remote') => void
+      <Source language='typescript' code={`unregisterEvent<E extends 'dataChanged' | 'selectionChanged' | 'toolChanged'>(
+  event: E,
+  listener?: ReactPaintEvents[E]
 ): void`} />
 
       <h3>resetCanvas</h3>
@@ -584,10 +644,6 @@ import LinkTo from '@storybook/addon-links/react';
         <li><code>shapes</code> - Array of shapes to set on canvas</li>
         <li><code>clearHistory</code> - If <code>true</code>, clears undo/redo history (default: <code>true</code>)</li>
       </ul>
-
-      <h3>resetZoom</h3>
-      <p>Reset canvas zoom to default (100%).</p>
-      <Source language='typescript' code={`resetZoom(): void`} />
 
       <h3>getCurrentImage</h3>
       <p>Export the current canvas as a PNG image data URL.</p>
@@ -612,28 +668,22 @@ import LinkTo from '@storybook/addon-links/react';
       <Source language='typescript' code={`getCurrentData(): StateData`} />
       <p>Returns a <code>StateData</code> object containing shapes and canvas configuration.</p>
 
-      <h3>setCanvasOffset</h3>
-      <p>Set the canvas offset programmatically.</p>
-      <Source language='typescript' code={`setCanvasOffset(offset: Point): void`} />
-      <ul>
-        <li><code>offset</code> - A <code>Point</code> tuple <code>[x, y]</code> representing the offset</li>
-      </ul>
+      <h3>Zoom and view</h3>
+      <p>The zoom and the view are controlled with the actions:</p>
+      <Source language='typescript' code={`paint.actions.setZoom('zoom') // 'zoom' | 'unzoom' | 'default'
+paint.actions.resetZoom() // back to 100%, without offset
+paint.actions.setOffset([100, 50]) // kept inside the canvas when its size is fixed`} />
 
-      <h3>setCanvasZoom</h3>
-      <p>Set the canvas zoom level programmatically.</p>
-      <Source language='typescript' code={`setCanvasZoom(
-  zoom: number | 'zoom' | 'unzoom' | 'default'
-): void`} />
-      <p>Parameters:</p>
+      <h2 id="Performance">Performance</h2>
+      <p>
+        The component calling <code>useReactPaint</code> never renders again because of the drawing: the components that read the state with <code>usePaintState</code> do, when the value they select changes.
+        The gestures on the canvas (hover, drag, selection frame, pan, brush) are drawn without rendering the <code>Canvas</code> component.
+      </p>
       <ul>
-        <li>
-          <p><code>zoom</code> - Zoom level as a number (e.g., 1.5 for 150%), or a string:</p>
-          <ul>
-            <li><code>'zoom'</code> - Zoom in</li>
-            <li><code>'unzoom'</code> - Zoom out</li>
-            <li><code>'default'</code> - Reset to 100%</li>
-          </ul>
-        </li>
+        <li>Select precise slices of the state: a component reading <code>state.history.canUndo</code> does not render while a shape is dragged, one reading <code>state.shapes</code> does</li>
+        <li>When a selector builds an object or an array, give <code>shallowEqual</code> (or your own equality function), otherwise the component renders on each change of the state</li>
+        <li>Read <code>state.interaction</code> only when you need it: it changes on each move of the pointer</li>
+        <li>In event handlers, read the state with <code>paint.getState()</code> instead of subscribing to it</li>
       </ul>
 
       <h2 id="Types">Type Definitions</h2>
@@ -753,10 +803,26 @@ import LinkTo from '@storybook/addon-links/react';
         See <a href="#Options" target="_self">Configuration Options</a> for the complete list of available options.
       </p>
 
-      <h3>UseReactPaintReturnType</h3>
+      <h3>ReactPaint, EditorState, EditorActions</h3>
       <p>
-        Return type of the <code>useReactPaint</code> hook. Contains <code>editorProps</code>, <code>canvasProps</code>, and all methods.
+        Types of the handle returned by <code>useReactPaint</code>, of its state and of its <code>actions</code> (see <a href="#useReactPaint" target="_self">useReactPaint</a>).
+        <code>UseReactPaintReturnType</code> is an alias of <code>ReactPaint</code>.
       </p>
+
+      <h3>ReactPaintEvents</h3>
+      <p>
+        Map of the events names to their listener types (see <a href="#Events" target="_self">Events</a>).
+      </p>
+
+      <h2 id="Helpers">Helpers</h2>
+      <p>Exported from the package root and from <code>@yorab/react-paint/canvas</code>, they are useful to build a custom editor:</p>
+      <ul>
+        <li><code>getSelectedShapes(selection)</code> - Returns the shapes of a selection, which can be a single shape or a group</li>
+        <li><code>getSelectedShapesTools(selection, tools)</code> - Returns the tool matching the selection. For several shapes, it returns a tool whose settings are the ones shared by all the shapes</li>
+        <li><code>DEFAULT_TOOLS</code> - Default drawing tools</li>
+        <li><code>SELECTION_TOOL</code>, <code>MOVE_TOOL</code> - Selection and move tools, to give to <code>actions.selectTool</code></li>
+        <li><code>shallowEqual(a, b)</code> - Equality function for <code>usePaintState</code> selectors building an object or an array</li>
+      </ul>
 
       <h2>Shape-Specific Types</h2>
       
@@ -823,7 +889,7 @@ import LinkTo from '@storybook/addon-links/react';
 
       <h2>Keyboard Shortcuts</h2>
       <p>
-        React Paint supports the following keyboard shortcuts (when canvas is focused):
+        React Paint supports the following keyboard shortcuts, while the focus is inside the canvas, or inside the area set by <code>scopeRef</code> (the whole <code>Editor</code>):
       </p>
       <table>
         <thead>
@@ -879,17 +945,17 @@ import LinkTo from '@storybook/addon-links/react';
 import '@yorab/react-paint/react-paint.css'
 
 function MyPaintApp() {
-  const { editorProps, canvasProps } = useReactPaint()
+  const paint = useReactPaint()
 
   return (
-    <Editor editorProps={editorProps}>
-      <Canvas canvasProps={canvasProps} />
+    <Editor paint={paint}>
+      <Canvas paint={paint} />
     </Editor>
   )
 }`} />
 
       <h3>With Configuration</h3>
-      <Source language='typescript' code={`const { editorProps, canvasProps } = useReactPaint({
+      <Source language='typescript' code={`const paint = useReactPaint({
   width: 1920,
   height: 1080,
   mode: 'editor',
@@ -897,33 +963,35 @@ function MyPaintApp() {
     canZoom: 'always',
     canGrow: true,
     grid: 20,
-    withExport: true,
     brushAlgo: 'quadratic',
     withContextMenu: true // set to false to disable the built-in context menu
   }
-})`} />
+})
+
+return (
+  <Editor paint={paint} options={{ withExport: false, withUrlPicture: true }}>
+    <Canvas paint={paint} />
+  </Editor>
+)`} />
 
       <h3>With Event Handling</h3>
-      <Source language='typescript' code={`const { editorProps, canvasProps, registerEvent, unregisterEvent } = useReactPaint()
+      <Source language='typescript' code={`const paint = useReactPaint()
 
 useEffect(() => {
   const onDataChanged = (data: StateData, source: 'user' | 'remote') => {
     console.log('Shapes changed:', data.shapes)
     // Sync with server, update state, etc.
   }
-  
-  registerEvent('dataChanged', onDataChanged)
-  
-  return () => {
-    unregisterEvent('dataChanged', onDataChanged)
-  }
-}, [registerEvent, unregisterEvent])`} />
+
+  // returns the function that unregisters the listener
+  return paint.registerEvent('dataChanged', onDataChanged)
+}, [paint])`} />
 
       <h3>Exporting Images</h3>
-      <Source language='typescript' code={`const { getCurrentImage } = useReactPaint()
+      <Source language='typescript' code={`const paint = useReactPaint()
 
 // Export with default view
-const imageUrl = getCurrentImage('defaultView')
+const imageUrl = paint.getCurrentImage('defaultView')
 
 // Download the image
 const link = document.createElement('a')
@@ -932,24 +1000,22 @@ link.href = imageUrl
 link.click()`} />
 
       <h3>Programmatic Control</h3>
-      <Source language='typescript' code={`const { 
-  resetCanvas, 
-  setCanvasZoom, 
-  setCanvasOffset,
-  getCurrentData 
-} = useReactPaint()
+      <Source language='typescript' code={`const paint = useReactPaint()
 
 // Reset canvas
-resetCanvas([/* shapes */], true)
+paint.resetCanvas([/* shapes */], true)
 
-// Set zoom to 150%
-setCanvasZoom(1.5)
+// Zoom in
+paint.actions.setZoom('zoom')
 
 // Set offset
-setCanvasOffset([100, 50])
+paint.actions.setOffset([100, 50])
 
-// Get current state
-const currentState = getCurrentData()`} />
+// Get current data, to save it
+const currentData = paint.getCurrentData()
+
+// Read the state in a handler, without subscribing to it
+const { selectedShapes } = paint.getState()`} />
 
       <h2>Next Steps</h2>
       <ul>

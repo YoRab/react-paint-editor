@@ -1,4 +1,4 @@
-export const DEFAULT_EDITOR_OPTIONS: {
+type EditorOptionsType = {
   toolbarBackgroundColor: string
   dividerColor: string
   fontRadius: number
@@ -10,7 +10,18 @@ export const DEFAULT_EDITOR_OPTIONS: {
   fontSelectedBackgroundColor: string
   fontHoverColor: string
   fontHoverBackgroundColor: string
-} = {
+  layersManipulation: boolean
+  withExport: boolean
+  withLoadAndSave: boolean
+  withUploadPicture: boolean
+  withUrlPicture: boolean
+}
+
+export type EditorOptions = {
+  [K in keyof EditorOptionsType]?: EditorOptionsType[K] | undefined
+}
+
+export const DEFAULT_EDITOR_OPTIONS: EditorOptionsType = {
   toolbarBackgroundColor: 'white',
   dividerColor: '#36418129',
   fontRadius: 8,
@@ -21,5 +32,10 @@ export const DEFAULT_EDITOR_OPTIONS: {
   fontSelectedColor: 'white',
   fontSelectedBackgroundColor: '#364181',
   fontHoverColor: '#364181',
-  fontHoverBackgroundColor: '#afd8d8'
+  fontHoverBackgroundColor: '#afd8d8',
+  layersManipulation: true,
+  withExport: true,
+  withLoadAndSave: true,
+  withUploadPicture: true,
+  withUrlPicture: false
 }

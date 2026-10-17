@@ -1,15 +1,14 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import { Canvas, Editor, useReactPaint } from '../src/index'
 import './whiteboard.css'
-import useResizeObserver from '@canvas/hooks/useResizeObserver'
-import useDebounce from '@common/hooks/useDebounce'
 import { useCallback, useRef, useState } from 'react'
+import { useDebounce, useResizeObserver } from './hooks'
 
 const ReactPaintWrapper = (args: Parameters<typeof useReactPaint>[0]) => {
-  const { editorProps, canvasProps } = useReactPaint(args)
+  const paint = useReactPaint(args)
   return (
-    <Editor editorProps={editorProps}>
-      <Canvas canvasProps={canvasProps} />
+    <Editor paint={paint}>
+      <Canvas paint={paint} />
     </Editor>
   )
 }
@@ -65,14 +64,14 @@ export const Default: Story = {
       source: {
         code: `import { useCallback, useRef, useState } from 'react'
 import { Canvas, Editor, useReactPaint } from '../src/index'
-import useResizeObserver from '@canvas/hooks/useResizeObserver'
+import { useResizeObserver } from './hooks' // a ResizeObserver hook of your own
 import './whiteboard.css'
 
 const ReactPaintWrapper = (args: Parameters<typeof useReactPaint>[0]) => {
-  const { editorProps, canvasProps } = useReactPaint(args)
+  const paint = useReactPaint(args)
   return (
-    <Editor editorProps={editorProps}>
-      <Canvas canvasProps={canvasProps} />
+    <Editor paint={paint}>
+      <Canvas paint={paint} />
     </Editor>
   )
 }

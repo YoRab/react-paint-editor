@@ -1,9 +1,9 @@
 import type { UtilsSettings } from '@canvas/constants/app'
 import { SELECTION_ANCHOR_SIZE } from '@canvas/constants/shapes'
+import type { HoverModeData } from '@canvas/types/Mode'
+import type { DrawableShape, Point, Rect, SelectionLinesType, ShapeEntity } from '@canvas/types/Shapes'
 import { transformCanvas, updateCanvasContext } from '@canvas/utils/canvas'
 import { createCirclePath, createRecPath } from '@canvas/utils/shapes/path'
-import type { HoverModeData } from '@common/types/Mode'
-import type { DrawableShape, Point, Rect, SelectionLinesType, ShapeEntity } from '@common/types/Shapes'
 
 export const createLineSelectionPath = (
   path: Path2D | undefined,

@@ -1,9 +1,9 @@
-import type { ToolsType } from '@common/types/tools'
+import type { ToolsType } from '@canvas/index'
 import Button from '@editor/components/common/Button'
 
 type ToolComponentType = {
   type: ToolsType
-  img?: string
+  img?: string | undefined
   withText?: boolean
   isActive: boolean
   disabled?: boolean
@@ -16,7 +16,14 @@ const Tool = ({ type, img, isActive, withText = false, disabled = false, setActi
   }
 
   return (
-    <Button disabled={disabled} selected={isActive} onClick={handleClick} title={type.label ?? type.type} icon={img} data-testid={`tool-${type.type}`}>
+    <Button
+      disabled={disabled}
+      selected={isActive}
+      onClick={handleClick}
+      title={type.label ?? type.type}
+      icon={img}
+      data-testid={`tool-${type.type}`}
+    >
       {withText ? type.label : undefined}
     </Button>
   )

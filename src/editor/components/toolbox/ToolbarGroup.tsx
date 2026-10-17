@@ -1,8 +1,8 @@
-import type { CustomTool, ToolsType } from '@common/types/tools'
-import { isEventInsideNode } from '@common/utils/dom'
+import type { CustomTool, ToolsType } from '@canvas/index'
 import Button from '@editor/components/common/Button'
 import Panel from '@editor/components/common/Panel'
-import { useEffect, useRef, useState, useTransition } from 'react'
+import usePressOutside from '@editor/hooks/usePressOutside'
+import { useCallback, useRef, useState, useTransition } from 'react'
 import Tool from './Tool'
 import './ToolbarGroup.css'
 
@@ -30,22 +30,8 @@ const ToolbarGroup = ({ activeTool, group, disabled = false, setActiveToolFromId
     setActiveToolFromId(tool.id)
   }
 
-  useEffect(() => {
-    if (!isOpen) return
-
-    const closePanel = (event: MouseEvent | TouchEvent) => {
-      const isClickInsideToolbarGroup = isEventInsideNode(event, panelRef.current)
-      !isClickInsideToolbarGroup && setIsOpen(false)
-    }
-
-    document.addEventListener('mousedown', closePanel, { passive: false })
-    document.addEventListener('touchstart', closePanel, { passive: false })
-
-    return () => {
-      document.removeEventListener('mousedown', closePanel)
-      document.removeEventListener('touchstart', closePanel)
-    }
-  }, [isOpen])
+  const closePanel = useCallback(() => setIsOpen(false), [])
+  usePressOutside(panelRef, closePanel, isOpen)
 
   if ('type' in group) {
     return <Tool disabled={disabled} type={group} img={group.icon} isActive={activeTool.id === group.id} setActive={setActiveTool} />
