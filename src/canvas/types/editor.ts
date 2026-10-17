@@ -110,6 +110,7 @@ export type EditorActions = {
   /** Moves the view: the offset is kept inside the canvas when its size is fixed */
   setOffset: (offset: Point) => void
   setGridGap: (gap: number) => void
+  /** Closes the context menu and gives the focus back to the canvas. Does nothing when the menu is not open */
   closeContextMenu: () => void
 }
 
@@ -138,6 +139,9 @@ export type ReactPaint = {
   resetCanvas: (shapes?: ExportedDrawableShape[], clearHistory?: boolean) => void
   getCurrentImage: (view: ExportView) => string
   getCurrentData: () => StateData
-  /** Callback ref to set on the editor root element, used to scope the interactions and the keyboard shortcuts */
-  editorRef: (element: HTMLElement | null) => void
+  /**
+   * Callback ref of the area where the keyboard shortcuts are active, the Canvas by default. The pointer always works over the Canvas.
+   * Set it on the root element of an editor so that the shortcuts also work while its toolbar is focused. The Editor component sets it
+   */
+  scopeRef: (element: HTMLElement | null) => void
 }

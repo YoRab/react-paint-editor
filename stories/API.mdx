@@ -105,14 +105,14 @@ import LinkTo from '@storybook/addon-links/react';
   resetCanvas: (shapes?: DrawableShape[], clearHistory?: boolean) => void
   getCurrentImage: (view: ExportView) => string
   getCurrentData: () => StateData
-  editorRef: (element: HTMLElement | null) => void
+  scopeRef: (element: HTMLElement | null) => void
 }`} />
       <ul>
         <li><code>actions</code> - Commands to act on the canvas (see below). Their identity never changes</li>
         <li><code>getState()</code> - The current state (see below), without subscription: to read in event handlers. The same object is returned as long as nothing changes</li>
         <li><code>subscribe(listener)</code> - Calls the listener after each change of the state, and returns the function that unsubscribes it</li>
         <li><code>registerEvent</code>, <code>unregisterEvent</code>, <code>resetCanvas</code>, <code>getCurrentImage</code>, <code>getCurrentData</code> - See <a href="#Methods" target="_self">Methods</a></li>
-        <li><code>editorRef</code> - Callback ref to set on the root element of a custom editor. It defines the area where interactions and keyboard shortcuts are active. The <code>Editor</code> component sets it</li>
+        <li><code>scopeRef</code> - Callback ref defining the area where keyboard shortcuts are active, the canvas by default. The pointer always works over the canvas. Set it on the root element of a custom editor so that the shortcuts also work while its toolbar is focused. The <code>Editor</code> component sets it</li>
       </ul>
 
       <h4>State</h4>
@@ -889,7 +889,7 @@ paint.actions.setOffset([100, 50]) // kept inside the canvas when its size is fi
 
       <h2>Keyboard Shortcuts</h2>
       <p>
-        React Paint supports the following keyboard shortcuts (when canvas is focused):
+        React Paint supports the following keyboard shortcuts, while the focus is inside the canvas, or inside the area set by <code>scopeRef</code> (the whole <code>Editor</code>):
       </p>
       <table>
         <thead>

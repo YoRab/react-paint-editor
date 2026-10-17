@@ -8,6 +8,8 @@ Breaking changes, see the [migration guide](./MIGRATION.md).
 - useReactPaint returns a single handle, `paint`, given to Canvas and Editor instead of editorProps and canvasProps. Its identity never changes, and it is a public contract allowing to build a custom editor: actions take shape ids and replace raw setters and internal helpers
 - the state lives in an external store: the component calling useReactPaint no longer renders when the drawing changes. Read the state with usePaintState(paint, selector?, isEqual?) and shallowEqual during a render, or paint.getState() in a handler
 - add PaintProvider and usePaint to give the handle to deep components, Editor provides it to its children
+- the Canvas is the default area of the keyboard shortcuts: paint.scopeRef, formerly refs.setEditor, is only needed to widen it to a custom editor. The shortcuts are listened on this area instead of the document
+- the canvas handles the mouse, touch and pen with pointer events listened on the canvas only, instead of the document: the hover works without clicking the canvas first, and a page with many canvases only notifies the one under the pointer
 - expose interaction state (hovered shape, selection frame, modifier keys, panning, context menu) in the state
 - add canRemoveAnchor to the context menu state, and setShapesVisibility / setShapesLocked actions
 - replace annotationsProps with the useAnnotationsStyle hook

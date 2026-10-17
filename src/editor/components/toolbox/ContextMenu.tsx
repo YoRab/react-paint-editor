@@ -5,7 +5,8 @@ import Button from '@editor/components/common/Button'
 import Menu from '@editor/components/common/Menu'
 import { rightChevronIcon } from '@editor/constants/icons'
 import useMenu from '@editor/hooks/useMenu'
-import { type RefObject, useEffect, useState } from 'react'
+import usePressOutside from '@editor/hooks/usePressOutside'
+import { type RefObject, useEffect, useRef, useState } from 'react'
 
 const BUTTON_HEIGHT = 36
 const HR_HEIGHT = 16
@@ -55,6 +56,10 @@ const ContextMenuContent = ({ contextMenu, containerRef, hasCopiedShapes, action
         display: 'none'
       }
 
+  // a gesture started on the canvas has already closed the menu, closing it again does nothing
+  const menuRef = useRef<HTMLDivElement | null>(null)
+  usePressOutside(menuRef, actions.closeContextMenu)
+
   const runAndClose = (callback: () => void) => () => {
     callback()
     actions.closeContextMenu()
@@ -85,7 +90,7 @@ const ContextMenuContent = ({ contextMenu, containerRef, hasCopiedShapes, action
   const onToggleShapeLock = runAndClose(() => actions.setShapesLocked(selectedIds, !isLocked))
 
   return (
-    <Menu className='react-paint-editor-toolbox-contextmenu' style={style}>
+    <Menu className='react-paint-editor-toolbox-contextmenu' style={style} menuRef={menuRef}>
       {hasSelectedShape && (
         <>
           {canRemoveAnchor && <Button onClick={onDeleteAnchor}>Delete point</Button>}

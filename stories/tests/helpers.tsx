@@ -137,11 +137,7 @@ export async function setToggleSetting(view: ReturnType<typeof within>, title: s
 
 // ─── Context menu helper ────────────────────────────────────────────────────────
 
-/**
- * Right-clicks at (clientX, clientY) on the draw canvas to open the context menu,
- * retrying once if it did not appear (canvas may have lost focus after settings
- * interactions), then clicks the named menu item.
- */
+/** Right-clicks at (clientX, clientY) on the draw canvas to open the context menu, then clicks the named menu item. */
 export async function openContextMenuAndClick(
   user: ReturnType<typeof userEvent.setup>,
   drawCanvas: HTMLElement,
@@ -152,11 +148,6 @@ export async function openContextMenuAndClick(
 ) {
   await user.pointer({ target: drawCanvas, keys: '[MouseRight]', coords: { x: clientX, y: clientY } })
   await new Promise(res => setTimeout(res, 100))
-  if (!view.queryByRole('button', { name: itemName })) {
-    // isInsideCanvas may have been false (canvas lost focus during settings); retry once.
-    await user.pointer({ target: drawCanvas, keys: '[MouseRight]', coords: { x: clientX, y: clientY } })
-    await new Promise(res => setTimeout(res, 100))
-  }
   await userEvent.click(await view.findByRole('button', { name: itemName }))
   await new Promise(res => setTimeout(res, 100))
 }

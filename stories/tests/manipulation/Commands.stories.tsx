@@ -2,13 +2,13 @@ import type { Meta, StoryObj } from '@storybook/react-vite'
 import { expect, userEvent, within } from 'storybook/test'
 import type { DrawableShape } from '../../../src/index'
 import {
-  ReactPaintWrapper,
+  assertNoInternalFields,
   getCurrentDataRef,
   makeCoordConverters,
+  openContextMenuAndClick,
+  ReactPaintWrapper,
   selectTool,
-  assertNoInternalFields,
-  setColorSetting,
-  openContextMenuAndClick
+  setColorSetting
 } from './../helpers'
 
 const meta = {
@@ -21,6 +21,10 @@ const meta = {
 
 export default meta
 type Story = StoryObj<typeof meta>
+
+/** Like the browser, dispatches the clipboard event on the focused element, from which it bubbles */
+const dispatchClipboardEvent = (type: 'cut' | 'copy' | 'paste') =>
+  (document.activeElement ?? document.body).dispatchEvent(new ClipboardEvent(type, { bubbles: true }))
 
 // 100×100 filled square on the left side of the canvas, center at canvas (300, 300).
 const INITIAL_SQUARE: DrawableShape = {
@@ -62,8 +66,8 @@ export const Commands: Story = {
     await user.pointer({ target: drawCanvas, keys: '[MouseLeft]', coords: { x: toClientX(300), y: toClientY(300) } })
     await new Promise(res => setTimeout(res, 100))
 
-    // --- Cut (CTRL+X): clipboard event dispatched on document ---
-    document.dispatchEvent(new ClipboardEvent('cut'))
+    // --- Cut (CTRL+X): clipboard event dispatched on the focused element ---
+    dispatchClipboardEvent('cut')
     await new Promise(res => setTimeout(res, 100))
 
     // --- Assert shape is removed ---
@@ -71,7 +75,7 @@ export const Commands: Story = {
     expect(getCurrentDataRef.current!().shapes).toHaveLength(0)
 
     // --- Paste (CTRL+V): restored with +20 offset, new shape is selected ---
-    document.dispatchEvent(new ClipboardEvent('paste'))
+    dispatchClipboardEvent('paste')
     await new Promise(res => setTimeout(res, 100))
 
     // --- Assert shape is pasted ---
@@ -86,11 +90,11 @@ export const Commands: Story = {
     await setColorSetting(view, 'Couleur de fond', 'red')
 
     // --- Copy (CTRL+C) ---
-    document.dispatchEvent(new ClipboardEvent('copy'))
+    dispatchClipboardEvent('copy')
     await new Promise(res => setTimeout(res, 100))
 
     // --- Paste (CTRL+V): new copy at +20 offset, selected ---
-    document.dispatchEvent(new ClipboardEvent('paste'))
+    dispatchClipboardEvent('paste')
     await new Promise(res => setTimeout(res, 100))
 
     // --- Assert 2 shapes ---
@@ -118,5 +122,18 @@ export const Commands: Story = {
       assertNoInternalFields(shape)
       expect((shape as { type: string }).type).toBe('square')
     }
+
+    // =====================================================================
+    // A press outside of the canvas closes the context menu
+    // =====================================================================
+
+    await user.pointer({ target: drawCanvas, keys: '[MouseRight]', coords: { x: toClientX(340), y: toClientY(340) } })
+    await new Promise(res => setTimeout(res, 100))
+    expect(view.getByRole('button', { name: 'Duplicate' })).toBeInTheDocument()
+
+    await user.pointer({ target: document.body, keys: '[MouseLeft]' })
+    await new Promise(res => setTimeout(res, 100))
+    expect(view.queryByRole('button', { name: 'Duplicate' })).toBeNull()
+    expect(getCurrentDataRef.current!().shapes).toHaveLength(3)
   }
 }

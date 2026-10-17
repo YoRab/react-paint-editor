@@ -350,15 +350,79 @@ describe('consistency rules', () => {
 
   it('tracks the focus, unless the canvas can neither be edited nor zoomed', () => {
     const store = createPaintStore()
-    const editorElement = new EventTarget() as HTMLElement
-    store.setEditorElement(editorElement)
+    const scopeElement = new EventTarget() as HTMLElement
+    store.setScopeElement(scopeElement)
 
-    editorElement.dispatchEvent(new Event('focusin'))
+    scopeElement.dispatchEvent(new Event('focusin'))
     expect(store.getEditorState().interaction.focus).toEqual({ component: true, canvas: false })
 
     store.setConfig({ mode: 'viewer' })
     expect(store.getEditorState().interaction.focus).toEqual({ component: false, canvas: false })
-    editorElement.dispatchEvent(new Event('focusin'))
+    scopeElement.dispatchEvent(new Event('focusin'))
     expect(store.getEditorState().interaction.focus.component).toBe(false)
+  })
+
+  it('tracks the focus inside the Canvas by default, or inside the scope when one is set', () => {
+    const store = createPaintStore()
+    const isFocused = () => store.getEditorState().interaction.focus.component
+    const canvasRoot = new EventTarget() as HTMLElement
+    const scopeElement = new EventTarget() as HTMLElement
+    store.setCanvasRootElement(canvasRoot)
+
+    canvasRoot.dispatchEvent(new Event('focusin'))
+    expect(isFocused()).toBe(true)
+    canvasRoot.dispatchEvent(new Event('focusout'))
+    expect(isFocused()).toBe(false)
+
+    store.setScopeElement(scopeElement)
+    canvasRoot.dispatchEvent(new Event('focusin'))
+    expect(isFocused()).toBe(false)
+    scopeElement.dispatchEvent(new Event('focusin'))
+    expect(isFocused()).toBe(true)
+
+    store.setScopeElement(null)
+    scopeElement.dispatchEvent(new Event('focusout'))
+    expect(isFocused()).toBe(true)
+    canvasRoot.dispatchEvent(new Event('focusout'))
+    expect(isFocused()).toBe(false)
+  })
+
+  it('moves the listeners of the scope with it', () => {
+    const store = createPaintStore()
+    const canvasRoot = new EventTarget() as HTMLElement
+    const scopeElement = new EventTarget() as HTMLElement
+    const onKeyDown = vi.fn()
+    store.setCanvasRootElement(canvasRoot)
+    const stopListening = store.listenScope({ keydown: onKeyDown })
+
+    canvasRoot.dispatchEvent(new Event('keydown'))
+    expect(onKeyDown).toHaveBeenCalledTimes(1)
+
+    store.setScopeElement(scopeElement)
+    canvasRoot.dispatchEvent(new Event('keydown'))
+    scopeElement.dispatchEvent(new Event('keydown'))
+    expect(onKeyDown).toHaveBeenCalledTimes(2)
+
+    stopListening()
+    scopeElement.dispatchEvent(new Event('keydown'))
+    expect(onKeyDown).toHaveBeenCalledTimes(2)
+  })
+
+  it('releases the modifiers when the focus leaves the scope, not when it moves inside it', () => {
+    const store = createPaintStore()
+    const inside = new EventTarget()
+    const scopeElement = Object.assign(new EventTarget(), { contains: (node: unknown) => node === inside }) as unknown as HTMLElement
+    const focusOut = (relatedTarget: EventTarget | null) => scopeElement.dispatchEvent(Object.assign(new Event('focusout'), { relatedTarget }))
+    store.setScopeElement(scopeElement)
+    scopeElement.dispatchEvent(new Event('focusin'))
+    store.setModifiers({ shift: true, alt: true })
+
+    focusOut(inside)
+    expect(store.getEditorState().interaction.focus.component).toBe(true)
+    expect(store.getEditorState().interaction.modifiers).toEqual({ shift: true, alt: true, space: false })
+
+    focusOut(null)
+    expect(store.getEditorState().interaction.focus.component).toBe(false)
+    expect(store.getEditorState().interaction.modifiers).toEqual({ shift: false, alt: false, space: false })
   })
 })

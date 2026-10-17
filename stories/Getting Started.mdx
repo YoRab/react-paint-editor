@@ -104,7 +104,7 @@ function AdvancedPaintApp() {
         <li><code>resetCanvas</code> - Function to reset the canvas with new shapes</li>
         <li><code>getCurrentImage</code> - Function to export the canvas as a PNG image</li>
         <li><code>getCurrentData</code> - Function to get the current state of the canvas</li>
-        <li><code>editorRef</code> - Callback ref to set on the root element of a custom editor</li>
+        <li><code>scopeRef</code> - Callback ref to set on the root element of a custom editor, so that the keyboard shortcuts also work from its toolbar</li>
       </ul>
 
       <h3>Reading the state</h3>
@@ -143,7 +143,7 @@ import '@yorab/react-paint/canvas/canvas.css'
 import { Editor } from '@yorab/react-paint/editor'
 import '@yorab/react-paint/editor/editor.css'`} />
       <p>
-        To build your own editor, read the state with <code>usePaintState</code>, act on the canvas with <code>paint.actions</code>, and set <code>paint.editorRef</code> on its root element.
+        To build your own editor, read the state with <code>usePaintState</code>, act on the canvas with <code>paint.actions</code>, and set <code>paint.scopeRef</code> on its root element. Used alone, the <code>Canvas</code> needs nothing more.
         See the <LinkTo title='React Paint/Custom editor' story='docs'>Custom editor</LinkTo>, <LinkTo title='React Paint/Canvas only' story='docs'>Canvas only</LinkTo> and <LinkTo title='React Paint/External toolbar' story='docs'>External toolbar</LinkTo> examples.
       </p>
       

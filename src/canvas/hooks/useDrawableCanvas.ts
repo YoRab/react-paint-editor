@@ -8,7 +8,6 @@ import {
   checkCurveLinesSelectionIntersection,
   checkPolygonLinesSelectionIntersection,
   checkSelectionIntersection,
-  getCursorPosition,
   getCursorPositionInElement,
   getCursorPositionInTransformedCanvas,
   isTouchGesture,
@@ -21,6 +20,7 @@ import { addNewPointGroupToShape } from '@canvas/utils/shapes/brush'
 import { addCurveLine, addCurvePoint } from '@canvas/utils/shapes/curve'
 import { addPolygonLine, addPolygonPoint } from '@canvas/utils/shapes/polygon'
 import { transformShape } from '@canvas/utils/transform'
+import { isPointInsideRect } from '@canvas/utils/trigo'
 import { clamp } from '@canvas/utils/util'
 import { isCursorInsideMask } from '@canvas/utils/zoom'
 import { useEffect } from 'react'
@@ -35,15 +35,19 @@ const getAxisAcceleration = (position: number, size: number, settings: UtilsSett
   return Math.ceil(clamp(distance, -100, 100) / 5 / settings.canvasZoom)
 }
 
-const getMoveAcceleration = (e: MouseEvent | TouchEvent, canvas: HTMLCanvasElement, settings: UtilsSettings): Point => {
+const getMoveAcceleration = (e: PointerEvent, canvas: HTMLCanvasElement, settings: UtilsSettings): Point => {
   const [x, y] = getCursorPositionInElement(e, canvas, settings.canvasSize)
   const { width, height, scaleRatioWithNoZoom } = settings.canvasSize
   return [getAxisAcceleration(x, width / scaleRatioWithNoZoom, settings), getAxisAcceleration(y, height / scaleRatioWithNoZoom, settings)]
 }
 
+const isOverElement = (e: PointerEvent, element: HTMLElement) => isPointInsideRect(element.getBoundingClientRect(), [e.clientX, e.clientY])
+
 /**
- * Pointer interactions of the draw canvas. The listeners are set once and read the state of the store
- * when an event happens: the gestures do not need any render of React.
+ * Pointer interactions of the draw canvas, for the mouse, the touch and the pen. The listeners are set once and read the state
+ * of the store when an event happens: the gestures do not need any render of React.
+ * They are set on the canvas only, so that a page with many canvases only notifies the one under the pointer:
+ * a gesture captures its pointer, to keep receiving its moves outside of the canvas.
  */
 const useDrawableCanvas = (store: PaintStore, canvas: HTMLCanvasElement | null) => {
   useEffect(() => {
@@ -51,6 +55,10 @@ const useDrawableCanvas = (store: PaintStore, canvas: HTMLCanvasElement | null) 
 
     let longPressTimeout: { timeout: ReturnType<typeof setTimeout>; startPosition: { clientX: number; clientY: number } } | null = null
     let lastClickTimestamp: number | undefined
+    // the pointers down on the canvas: more than one is a pinch, handled by useZoom
+    const activePointers = new Set<number>()
+    // the pointer which started the current gesture
+    let gesturePointerId: number | undefined
 
     const read = () => {
       const state = store.getState()
@@ -62,7 +70,7 @@ const useDrawableCanvas = (store: PaintStore, canvas: HTMLCanvasElement | null) 
       }
     }
 
-    const handleContextMenu = (e: MouseEvent | TouchEvent) => {
+    const handleContextMenu = (e: PointerEvent) => {
       const { state, settings, activeTool, ctx } = read()
       if (!ctx) return
       store.batch(() => {
@@ -80,12 +88,11 @@ const useDrawableCanvas = (store: PaintStore, canvas: HTMLCanvasElement | null) 
             isTouchGesture(e),
             false
           )
-          const { clientX, clientY } = getCursorPosition(e)
           store.setSelectedShape(shape)
           store.setSelectionMode({
             mode: 'contextMenu',
             cursorStartPosition: cursorPosition,
-            clientPosition: { x: clientX, y: clientY },
+            clientPosition: { x: e.clientX, y: e.clientY },
             originalShape: shape,
             anchor: 'anchor' in mode ? mode.anchor : undefined
           })
@@ -95,13 +102,13 @@ const useDrawableCanvas = (store: PaintStore, canvas: HTMLCanvasElement | null) 
       })
     }
 
-    const handleMove = (e: MouseEvent | TouchEvent) => {
-      // the listener is set on the document: the moves outside of the editor are ignored first
-      if (!store.getState().interaction.focus.component) return
+    const handleMove = (e: PointerEvent) => {
+      // during a gesture, only its pointer acts
+      if (gesturePointerId !== undefined && e.pointerId !== gesturePointerId) return
       if (longPressTimeout && shouldCancelLongPress(e, longPressTimeout.startPosition)) {
         clearTimeout(longPressTimeout.timeout)
       }
-      if (isTouchGesture(e) && e.touches.length > 1) return
+      if (activePointers.size > 1 || !store.selectors.selectIsInteractive(store.getState())) return
       const { state, settings, ctx } = read()
       if (!ctx) return
 
@@ -140,7 +147,8 @@ const useDrawableCanvas = (store: PaintStore, canvas: HTMLCanvasElement | null) 
 
       store.batch(() => {
         if (!isTouchGesture(e)) {
-          store.refreshHoveredShape(e, ctx, cursorPosition, isInsideMask)
+          // a captured pointer keeps sending its moves outside of the canvas, any other one is over it
+          store.refreshHoveredShape(gesturePointerId === undefined || isOverElement(e, canvas), ctx, cursorPosition, isInsideMask)
         }
 
         if (selectedShape === undefined || selectedShape.locked) {
@@ -166,15 +174,12 @@ const useDrawableCanvas = (store: PaintStore, canvas: HTMLCanvasElement | null) 
       })
     }
 
-    const handleUp = (e: MouseEvent | TouchEvent) => {
-      if (!store.getState().interaction.focus.canvas) return
+    const handleUp = (e: PointerEvent) => {
       if (longPressTimeout) clearTimeout(longPressTimeout.timeout)
-      if (isTouchGesture(e) && e.touches.length > 1) return
       const { state, settings, ctx } = read()
       if (!ctx) return
 
-      const isRightClick = 'button' in e && e.button === 2
-      if (isRightClick) {
+      if (e.button === 2) {
         handleContextMenu(e)
         return
       }
@@ -231,13 +236,23 @@ const useDrawableCanvas = (store: PaintStore, canvas: HTMLCanvasElement | null) 
       }
     }
 
-    const handleDown = (e: MouseEvent | TouchEvent) => {
+    const handleDown = (e: PointerEvent) => {
       const { state, settings, activeTool, ctx } = read()
       const { features } = settings
       if (!store.selectors.selectIsInteractive(state)) return
       e.preventDefault()
-      if (isTouchGesture(e) && e.touches.length > 1) return
+      activePointers.add(e.pointerId)
+      if (activePointers.size > 1) {
+        if (longPressTimeout) clearTimeout(longPressTimeout.timeout)
+        return
+      }
 
+      gesturePointerId = e.pointerId
+      try {
+        canvas.setPointerCapture(e.pointerId)
+      } catch {
+        // the synthetic events have no active pointer to capture
+      }
       canvas.focus()
 
       if (!ctx) return
@@ -245,8 +260,8 @@ const useDrawableCanvas = (store: PaintStore, canvas: HTMLCanvasElement | null) 
       const { selectionMode } = state.interaction
       const cursorPosition = getCursorPositionInTransformedCanvas(e, canvas, settings)
 
-      const isWheelPressed = 'button' in e && e.button === 1
-      const isRightClick = 'button' in e && e.button === 2
+      const isWheelPressed = e.button === 1
+      const isRightClick = e.button === 2
 
       if (isWheelPressed || state.interaction.modifiers.space || (activeTool.type === 'move' && !isRightClick)) {
         store.setPanStart({ start: cursorPosition, originalOffset: settings.canvasOffset })
@@ -279,7 +294,7 @@ const useDrawableCanvas = (store: PaintStore, canvas: HTMLCanvasElement | null) 
         if (longPressTimeout) clearTimeout(longPressTimeout.timeout)
         longPressTimeout = {
           timeout: setTimeout(() => handleContextMenu(e), LONG_PRESS_DELAY_MS),
-          startPosition: getCursorPosition(e)
+          startPosition: { clientX: e.clientX, clientY: e.clientY }
         }
       }
 
@@ -348,7 +363,7 @@ const useDrawableCanvas = (store: PaintStore, canvas: HTMLCanvasElement | null) 
       }
     }
 
-    const handleDoubleClick = (e: MouseEvent | TouchEvent) => {
+    const handleDoubleClick = (e: PointerEvent) => {
       const { state, settings, activeTool, ctx } = read()
       if (activeTool.type !== 'selection' || !ctx) return
       const { selectedShape } = state.document
@@ -379,32 +394,43 @@ const useDrawableCanvas = (store: PaintStore, canvas: HTMLCanvasElement | null) 
       }
     }
 
-    const handleClick = (e: MouseEvent | TouchEvent) => {
-      if (!store.getState().interaction.focus.canvas) return
+    /**
+     * Ends the gesture when its pointer is released, cancelled by the browser or loses its capture.
+     * A release over the canvas with the main button is a click, which detects the double clicks
+     */
+    const handlePointerEnd = (e: PointerEvent) => {
+      activePointers.delete(e.pointerId)
+      if (e.pointerId !== gesturePointerId) return
+      gesturePointerId = undefined
+      // read before handleUp, whose renders would force a layout
+      const isClick = e.type === 'pointerup' && e.button === 0 && isOverElement(e, canvas)
+      handleUp(e)
+      if (!isClick) return
       const timestamp = Date.now()
       if (lastClickTimestamp && timestamp < lastClickTimestamp + DOUBLE_CLICK_DELAY_MS) handleDoubleClick(e)
-      lastClickTimestamp = Date.now()
+      lastClickTimestamp = timestamp
     }
 
-    canvas.addEventListener('mousedown', handleDown, { passive: false })
-    canvas.addEventListener('touchstart', handleDown, { passive: false })
-    canvas.addEventListener('click', handleClick)
-    canvas.addEventListener('touchend', handleClick)
-    document.addEventListener('mousemove', handleMove)
-    document.addEventListener('touchmove', handleMove)
-    document.addEventListener('mouseup', handleUp)
-    document.addEventListener('touchend', handleUp)
+    const handleLeave = () => {
+      if (gesturePointerId !== undefined) return
+      store.clearHover()
+    }
+
+    canvas.addEventListener('pointerdown', handleDown, { passive: false })
+    canvas.addEventListener('pointermove', handleMove)
+    canvas.addEventListener('pointerup', handlePointerEnd)
+    canvas.addEventListener('pointercancel', handlePointerEnd)
+    canvas.addEventListener('lostpointercapture', handlePointerEnd)
+    canvas.addEventListener('pointerleave', handleLeave)
 
     return () => {
       if (longPressTimeout) clearTimeout(longPressTimeout.timeout)
-      canvas.removeEventListener('mousedown', handleDown)
-      canvas.removeEventListener('touchstart', handleDown)
-      canvas.removeEventListener('click', handleClick)
-      canvas.removeEventListener('touchend', handleClick)
-      document.removeEventListener('mousemove', handleMove)
-      document.removeEventListener('touchmove', handleMove)
-      document.removeEventListener('mouseup', handleUp)
-      document.removeEventListener('touchend', handleUp)
+      canvas.removeEventListener('pointerdown', handleDown)
+      canvas.removeEventListener('pointermove', handleMove)
+      canvas.removeEventListener('pointerup', handlePointerEnd)
+      canvas.removeEventListener('pointercancel', handlePointerEnd)
+      canvas.removeEventListener('lostpointercapture', handlePointerEnd)
+      canvas.removeEventListener('pointerleave', handleLeave)
     }
   }, [store, canvas])
 }

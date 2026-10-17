@@ -26,7 +26,15 @@ const Canvas = ({ paint, options, className, style }: CanvasComponentProps) => {
 
   const { canvasBackgroundColor, canvasSelectionColor, canvasSelectionWidth } = withDefaults(DEFAULT_CANVAS_OPTIONS, options)
 
-  const containerRef = useRef<HTMLDivElement>(null)
+  const containerRef = useRef<HTMLDivElement | null>(null)
+  // the root of the Canvas is the default scope of the interactions
+  const setContainerRef = useCallback(
+    (element: HTMLDivElement | null) => {
+      containerRef.current = element
+      store.setCanvasRootElement(element)
+    },
+    [store]
+  )
 
   // The size is applied in the next frame: the store renders the components synchronously, and a render inside
   // the ResizeObserver callback would resize the observed element again during the same loop
@@ -50,7 +58,7 @@ const Canvas = ({ paint, options, className, style }: CanvasComponentProps) => {
 
   return (
     <div
-      ref={containerRef}
+      ref={setContainerRef}
       className={`react-paint-app-row${className ? ` ${className}` : ''}`}
       data-grow={canGrow}
       data-shrink={canShrink}
