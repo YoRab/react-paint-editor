@@ -5,8 +5,12 @@ import type { Point, Rect, SelectionType, ShapeEntity } from '@canvas/types/Shap
 import { getSelectedShapes } from '@canvas/utils/selectedShapes'
 import { createRectangle } from '@canvas/utils/shapes/rectangle'
 import { roundValues } from '@canvas/utils/transform'
-import { rotatePoint } from '@canvas/utils/trigo'
+import { getPointsBounds, rotatePoint } from '@canvas/utils/trigo'
 import { checkPositionIntersection, checkSelectionIntersection } from './intersect'
+
+/** Whether no gesture is running: the hovered shape is only searched and shown then */
+export const isIdleSelectionMode = ({ mode }: SelectionModeData<Point | number>) =>
+  mode === 'default' || mode === 'contextMenu' || mode === 'textedition'
 
 export const getNewSelectionData = (
   hoverMode: HoverModeData,
@@ -200,10 +204,7 @@ const buildGroupBorders = (shapes: ShapeEntity[], rotation: number, settings: Ut
         return movedOnCanvasCenter
       }) as [Point, Point, Point, Point]
   )
-  const movedbordersXMin = Math.min(...movedBorders.flatMap(shape => [shape[0][0], shape[1][0], shape[2][0], shape[3][0]]))
-  const movedBordersYMin = Math.min(...movedBorders.flatMap(shape => [shape[0][1], shape[1][1], shape[2][1], shape[3][1]]))
-  const movedBordersXMax = Math.max(...movedBorders.flatMap(shape => [shape[0][0], shape[1][0], shape[2][0], shape[3][0]]))
-  const movedBordersYMax = Math.max(...movedBorders.flatMap(shape => [shape[0][1], shape[1][1], shape[2][1], shape[3][1]]))
+  const { minX: movedbordersXMin, minY: movedBordersYMin, maxX: movedBordersXMax, maxY: movedBordersYMax } = getPointsBounds(movedBorders)
 
   const movedCenter = [(movedbordersXMin + movedBordersXMax) / 2, (movedBordersYMin + movedBordersYMax) / 2] as Point
 
@@ -271,7 +272,6 @@ export const buildShapesGroup = (shapes: ShapeEntity[], settings: UtilsSettings)
     rotation,
     visible: true,
     locked: false,
-    selection: groupRectangle.selection,
     x: groupRectangle.x,
     y: groupRectangle.y,
     width: groupRectangle.width,

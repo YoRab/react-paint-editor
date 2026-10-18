@@ -4,7 +4,7 @@ import type { DrawableShape, Point, Rect, SelectionType, ShapeEntity } from '@ca
 import type { ToolsSettingsType } from '@canvas/types/tools'
 import { drawPathWithFillAndStroke } from '@canvas/utils/canvas'
 import { getPointPositionBeforeCanvasTransformation } from '@canvas/utils/intersect'
-import { createRecSelectionPath, resizeRectSelection } from '@canvas/utils/selection/rectSelection'
+import { resizeRectSelection } from '@canvas/utils/selection/rectSelection'
 import { createShapeId } from '@canvas/utils/util'
 import { type GroupResizeContext, getPositionWithoutGroupRotation, getShapePositionInNewBorder } from './group'
 import { createRecPath, expandRect, getComputedShapeInfos } from './path'
@@ -17,8 +17,7 @@ const buildPath = <T extends rectish>(rect: DrawableShape<rectish> & { id: strin
   return {
     ...rect,
     path,
-    computed,
-    selection: createRecSelectionPath(path, computed, settings)
+    computed
   } as unknown as ShapeEntity<T>
 }
 

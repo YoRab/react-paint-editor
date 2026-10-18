@@ -82,15 +82,16 @@ export const isEqual = (a: unknown, b: unknown): boolean => {
   }
 
   const keysA = Object.keys(a)
-  const keysB = Object.keys(b)
 
-  if (keysA.length !== keysB.length) {
+  if (keysA.length !== Object.keys(b).length) {
     return false
   }
 
+  const recordA = a as Record<string, unknown>
+  const recordB = b as Record<string, unknown>
   for (const key of keysA) {
-    //@ts-expect-error unchecked access is intentional
-    if (!keysB.includes(key) || !isEqual(a[key], b[key])) {
+    // biome-ignore lint/suspicious/noPrototypeBuiltins: be compliant with es2020
+    if (!Object.prototype.hasOwnProperty.call(recordB, key) || !isEqual(recordA[key], recordB[key])) {
       return false
     }
   }

@@ -1,12 +1,13 @@
 import type { UtilsSettings } from '@canvas/constants/app'
-import { SELECTION_ANCHOR_SIZE, SELECTION_RESIZE_ANCHOR_POSITIONS, SELECTION_ROTATED_ANCHOR_POSITION } from '@canvas/constants/shapes'
+import { SELECTION_RESIZE_ANCHOR_POSITIONS } from '@canvas/constants/shapes'
 import type { CanvasSize } from '@canvas/types/Canvas'
 import type { HoverModeData } from '@canvas/types/Mode'
 import type { Point, Rect, SelectionType, ShapeEntity } from '@canvas/types/Shapes'
 import { getSelectedShapes } from '@canvas/utils/selectedShapes'
+import { getAnchorRadius, getResizeAnchorCenter, getRotationAnchorCenter, hasPointAnchors } from '@canvas/utils/selection/anchors'
 import { catmullRomToBezier, createLinePath, getCatmullRomPoints } from '@canvas/utils/shapes/path'
 import { scalePoint } from '@canvas/utils/transform'
-import { isCircleIntersectRect, isPointInsideRect, rotatePoint } from './trigo'
+import { getPointsBounds, isCircleIntersectRect, isPointInsideRect, rotatePoint } from './trigo'
 
 export const getCursorPositionInElement = (e: MouseEvent, element: HTMLElement, canvasSize: CanvasSize): Point => {
   const { clientX, clientY } = e
@@ -58,62 +59,20 @@ const isPartOfRect = (rect: Rect, point: Point, radius: number) =>
   radius ? isCircleIntersectRect(rect, { x: point[0], y: point[1], radius }) : isPointInsideRect(rect, point)
 
 const checkAnchorsSelection = (shape: ShapeEntity, newPosition: Point, settings: UtilsSettings, radius = 0): false | HoverModeData => {
-  const {
-    canvasSize: { scaleRatio }
-  } = settings
-  const { borders } = shape.computed
+  const anchorRadius = getAnchorRadius(settings)
+  // an anchor is hovered in the square around it
+  const isOverAnchor = ([x, y]: Point) =>
+    isPartOfRect({ x: x - anchorRadius, y: y - anchorRadius, width: anchorRadius * 2, height: anchorRadius * 2 }, newPosition, radius)
 
-  if (shape.type === 'line' || shape.type === 'polygon' || shape.type === 'curve') {
-    for (let i = 0; i < shape.points.length; i++) {
-      if (
-        isPartOfRect(
-          {
-            x: shape.points[i]![0] - SELECTION_ANCHOR_SIZE / 2 / scaleRatio,
-            y: shape.points[i]![1] - SELECTION_ANCHOR_SIZE / 2 / scaleRatio,
-            width: SELECTION_ANCHOR_SIZE / scaleRatio,
-            height: SELECTION_ANCHOR_SIZE / scaleRatio
-          },
-          newPosition,
-          radius
-        )
-      ) {
-        return { mode: 'resize', anchor: i }
-      }
-    }
-  } else {
-    if (
-      isPartOfRect(
-        {
-          x: borders.x + borders.width / 2 - SELECTION_ANCHOR_SIZE / 2 / scaleRatio,
-          y: borders.y - SELECTION_ANCHOR_SIZE / scaleRatio - SELECTION_ROTATED_ANCHOR_POSITION / scaleRatio,
-          width: SELECTION_ANCHOR_SIZE / scaleRatio,
-          height: SELECTION_ANCHOR_SIZE / scaleRatio
-        },
-        newPosition,
-        radius
-      )
-    ) {
-      return { mode: 'rotate' }
-    }
-
-    for (const anchorPosition of SELECTION_RESIZE_ANCHOR_POSITIONS) {
-      if (
-        isPartOfRect(
-          {
-            x: borders.x + borders.width * anchorPosition[0] - SELECTION_ANCHOR_SIZE / 2 / scaleRatio,
-            y: borders.y + borders.height * anchorPosition[1] - SELECTION_ANCHOR_SIZE / 2 / scaleRatio,
-            width: SELECTION_ANCHOR_SIZE / scaleRatio,
-            height: SELECTION_ANCHOR_SIZE / scaleRatio
-          },
-          newPosition,
-          radius
-        )
-      ) {
-        return { mode: 'resize', anchor: anchorPosition }
-      }
-    }
+  if (hasPointAnchors(shape)) {
+    const index = shape.points.findIndex(point => isOverAnchor(point))
+    return index > -1 ? { mode: 'resize', anchor: index } : false
   }
-  return false
+
+  const { borders } = shape.computed
+  if (isOverAnchor(getRotationAnchorCenter(borders, settings))) return { mode: 'rotate' }
+  const anchor = SELECTION_RESIZE_ANCHOR_POSITIONS.find(position => isOverAnchor(getResizeAnchorCenter(borders, position)))
+  return anchor ? { mode: 'resize', anchor } : false
 }
 
 export const checkSelectionIntersection = (
@@ -134,7 +93,7 @@ export const checkSelectionIntersection = (
     if (anchorSelection) return anchorSelection
   }
 
-  if (shape.selection?.type === 'line') {
+  if (hasPointAnchors(shape)) {
     ctx.lineWidth = (shape.style?.lineWidth ?? 0) + 15 / settings.canvasZoom
     const isPointOverShape = shouldCheckFillShape(shape, true)
       ? ctx.isPointInPath(shape.path, newPosition[0], newPosition[1])
@@ -291,12 +250,15 @@ export const checkSelectionFrameCollision = (ctx: CanvasRenderingContext2D, shap
     return true
   }
 
+  // a shape inside the frame is crossed by it, without searching its points
+  if (boundingBox.x >= minX && boundingBox.y >= minY && boundingBox.x + boundingBox.width <= maxX && boundingBox.y + boundingBox.height <= maxY) {
+    return true
+  }
+
   ctx.lineWidth = (shape.style?.lineWidth ?? 0) + COLLISION_OFFSET
 
   if (shape.type === 'brush') {
-    const brushPoints = shape.points.flat()
-    const brushMinX = Math.min(...brushPoints.map(point => point[0]))
-    const brushMinY = Math.min(...brushPoints.map(point => point[1]))
+    const { minX: brushMinX, minY: brushMinY } = getPointsBounds(shape.points)
     for (const points of shape.points) {
       if (points.length < 1) {
         break

@@ -3,7 +3,7 @@ import { STYLE_FONT_DEFAULT, STYLE_FONT_SIZE_DEFAULT } from '@canvas/constants/r
 import type { SelectionModeResize } from '@canvas/types/Mode'
 import type { DrawableShape, Point, Rect, SelectionType, ShapeEntity, StyleShape, Text, TextShapeInput } from '@canvas/types/Shapes'
 import type { ToolsSettingsType } from '@canvas/types/tools'
-import { createRecSelectionPath, resizeRectSelection } from '@canvas/utils/selection/rectSelection'
+import { resizeRectSelection } from '@canvas/utils/selection/rectSelection'
 import { createShapeId } from '@canvas/utils/util'
 import { type GroupResizeContext, getPositionWithoutGroupRotation, getShapePositionInNewBorder } from './group'
 import { createRecPath, expandRect, getComputedShapeInfos } from './path'
@@ -23,7 +23,6 @@ const buildPath = <T extends DrawableShape<'text'>>(shape: T & { id: string }, s
   return {
     ...shape,
     path,
-    selection: createRecSelectionPath(undefined, computed, settings),
     computed
   }
 }

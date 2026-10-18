@@ -6,7 +6,6 @@ import { getStringifiedImage } from './file'
 
 const propsToOmit: (string | [string, unknown[]])[] = [
   'img',
-  'selection',
   'path',
   'arrows',
   'tempPoint',

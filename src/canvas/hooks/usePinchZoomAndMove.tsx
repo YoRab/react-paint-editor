@@ -1,11 +1,10 @@
 import { ZOOM_DETECTION_OFFSET } from '@canvas/constants/zoom'
-import useEventListener from '@canvas/hooks/useEventListener'
 import type { PaintStore } from '@canvas/store/paintStore'
 import type { CanvasSize, Size } from '@canvas/types/Canvas'
 import type { Point } from '@canvas/types/Shapes'
 import { getCenter, getDistanceBetweenPoints } from '@canvas/utils/trigo'
 import { calculateNewZoomAndOffset, clampZoom } from '@canvas/utils/zoom'
-import { useCallback, useRef, useState } from 'react'
+import { useEffect } from 'react'
 
 type PinchData = { startDiff: number; startZoom: number; startCenter: Point; startOffset: Point; isZooming: boolean; isMoving: boolean }
 
@@ -79,107 +78,83 @@ type UsePinchZoomProps = {
   canvasElt: HTMLElement | null
 }
 
+/** Events of the document which end the press of a pointer */
+const POINTER_END_EVENTS = ['pointerup', 'pointerout', 'pointercancel', 'pointerleave'] as const
+
 const usePinchZoomAndMove = ({ store, canvasElt }: UsePinchZoomProps) => {
-  const evCache = useRef<PointerEvent[]>([])
-  const [hasFingerOnElement, setHasFingerOnElement] = useState(evCache.current.length > 0)
+  useEffect(() => {
+    if (!canvasElt) return
 
-  const pinchData = useRef<PinchData>(null)
+    // the pointers pressed on the canvas, and the start of the pinch when there are two
+    let evCache: PointerEvent[] = []
+    let pinchData: PinchData | undefined
 
-  const scaleOnPosition = useCallback(
-    ({
-      startDiff,
-      startZoom,
-      startCenter,
-      startOffset,
-      currentDiff,
-      currentCenter,
-      isMoving,
-      isZooming
-    }: {
-      startDiff: number
-      startZoom: number
-      startOffset: Point
-      startCenter: Point
-      currentDiff: number
-      currentCenter: Point
-      isMoving: boolean
-      isZooming: boolean
-    }) => {
-      if (!canvasElt || !currentDiff || !startDiff) return
+    const handleMove = (ev: PointerEvent) => {
+      const evIndex = evCache.findIndex(cachedEv => cachedEv.pointerId === ev.pointerId)
+      if (evIndex > -1) evCache[evIndex] = ev
+      if (evCache.length !== 2 || !pinchData) return
+
+      const { diff: currentDiff, center: currentCenter } = getDiffAndCenter(evCache as [PointerEvent, PointerEvent])
+      const isZooming = pinchData.isZooming || hasStartZooming(currentDiff, pinchData)
+      const isMoving = pinchData.isMoving || isZooming || hasStartMoving(currentCenter, pinchData)
+      pinchData = { ...pinchData, isMoving, isZooming }
+      if (!currentDiff || !pinchData.startDiff) return
 
       const { config, view } = store.getState()
-      const canvasBoundingRect = canvasElt.getBoundingClientRect()
-      const canvasTransformation = getCanvasTransformation({
-        canvasBoundingRect,
-        canvasSize: view.canvasSize,
-        size: config.options.size,
-        startDiff,
-        startZoom,
-        startCenter,
-        startOffset,
-        currentDiff,
-        currentCenter,
-        isMoving,
-        isZooming
-      })
+      store.setTransformation(
+        getCanvasTransformation({
+          ...pinchData,
+          canvasBoundingRect: canvasElt.getBoundingClientRect(),
+          canvasSize: view.canvasSize,
+          size: config.options.size,
+          currentDiff,
+          currentCenter
+        })
+      )
+    }
 
-      store.setTransformation(canvasTransformation)
-    },
-    [canvasElt, store]
-  )
-
-  const handleDown = (ev: PointerEvent) => {
-    evCache.current = [...evCache.current, ev]
-    setHasFingerOnElement(evCache.current.length > 0)
-    if (evCache.current.length === 2) {
-      ev.stopPropagation()
-
-      const { diff: startDiff, center: startCenter } = getDiffAndCenter(evCache.current as [PointerEvent, PointerEvent])
-      const { transformation } = store.getState().view
-
-      pinchData.current = {
-        startDiff,
-        startCenter,
-        startZoom: transformation.zoom,
-        startOffset: transformation.offset,
-        isMoving: false,
-        isZooming: false
+    // the document is listened while a pointer is down on the canvas: the listeners are set without any render
+    const listenDocument = (listen: boolean) => {
+      if (listen) {
+        document.addEventListener('pointermove', handleMove)
+        for (const event of POINTER_END_EVENTS) document.addEventListener(event, handleUp)
+      } else {
+        document.removeEventListener('pointermove', handleMove)
+        for (const event of POINTER_END_EVENTS) document.removeEventListener(event, handleUp)
       }
     }
-  }
 
-  const handleMove = (ev: PointerEvent) => {
-    const evIndex = evCache.current.findIndex(cachedEv => cachedEv.pointerId === ev.pointerId)
-    if (evIndex > -1) evCache.current[evIndex] = ev
+    const handleDown = (ev: PointerEvent) => {
+      evCache = [...evCache, ev]
+      if (evCache.length === 1) listenDocument(true)
+      if (evCache.length === 2) {
+        ev.stopPropagation()
 
-    if (evCache.current.length === 2 && pinchData.current) {
-      const { diff: currentDiff, center: currentCenter } = getDiffAndCenter(evCache.current as [PointerEvent, PointerEvent])
+        const { diff: startDiff, center: startCenter } = getDiffAndCenter(evCache as [PointerEvent, PointerEvent])
+        const { transformation } = store.getState().view
 
-      const isZooming = pinchData.current.isZooming || hasStartZooming(currentDiff, pinchData.current)
-      const isMoving = pinchData.current.isMoving || isZooming || hasStartMoving(currentCenter, pinchData.current)
-      pinchData.current = { ...pinchData.current, isMoving, isZooming }
-
-      scaleOnPosition({
-        ...pinchData.current,
-        currentDiff,
-        currentCenter
-      })
+        pinchData = {
+          startDiff,
+          startCenter,
+          startZoom: transformation.zoom,
+          startOffset: transformation.offset,
+          isMoving: false,
+          isZooming: false
+        }
+      }
     }
-  }
 
-  const handleUp = (ev: PointerEvent) => {
-    evCache.current = evCache.current.filter(event => event.pointerId !== ev.pointerId)
-    setHasFingerOnElement(evCache.current.length > 0)
-  }
+    const handleUp = (ev: PointerEvent) => {
+      evCache = evCache.filter(event => event.pointerId !== ev.pointerId)
+      if (!evCache.length) listenDocument(false)
+    }
 
-  useEventListener(canvasElt, 'pointerdown', handleDown)
-
-  const conditionalDocument = hasFingerOnElement ? document : null
-  useEventListener(conditionalDocument, 'pointermove', handleMove)
-  useEventListener(conditionalDocument, 'pointerup', handleUp)
-  useEventListener(conditionalDocument, 'pointerout', handleUp)
-  useEventListener(conditionalDocument, 'pointercancel', handleUp)
-  useEventListener(conditionalDocument, 'pointerleave', handleUp)
+    canvasElt.addEventListener('pointerdown', handleDown)
+    return () => {
+      canvasElt.removeEventListener('pointerdown', handleDown)
+      listenDocument(false)
+    }
+  }, [canvasElt, store])
 }
 
 export default usePinchZoomAndMove

@@ -1,33 +1,8 @@
 import type { UtilsSettings } from '@canvas/constants/app'
-import { SELECTION_ANCHOR_SIZE } from '@canvas/constants/shapes'
 import type { HoverModeData } from '@canvas/types/Mode'
-import type { DrawableShape, Point, Rect, SelectionLinesType, ShapeEntity } from '@canvas/types/Shapes'
+import type { ShapeEntity } from '@canvas/types/Shapes'
 import { transformCanvas, updateCanvasContext } from '@canvas/utils/canvas'
-import { createCirclePath, createRecPath } from '@canvas/utils/shapes/path'
-
-export const createLineSelectionPath = (
-  path: Path2D | undefined,
-  shape: DrawableShape<'line' | 'polygon' | 'curve'> & {
-    points: readonly Point[]
-  },
-  computed: { borders: Rect; outerBorders: Rect; center: Point },
-  settings: UtilsSettings
-): SelectionLinesType => {
-  return {
-    type: 'line',
-    border: createRecPath(computed.borders),
-    shapePath: path,
-    anchors: [
-      ...shape.points.map(point =>
-        createCirclePath({
-          x: point[0],
-          y: point[1],
-          radius: SELECTION_ANCHOR_SIZE / 2 / settings.canvasSize.scaleRatio
-        })
-      )
-    ]
-  }
-}
+import { drawAnchor, setAnchorsStyle } from '@canvas/utils/selection/anchors'
 
 export const drawLineSelection = ({
   ctx,
@@ -46,7 +21,6 @@ export const drawLineSelection = ({
   hoverMode: HoverModeData
   settings: UtilsSettings
 }) => {
-  if (!shape.selection) return
   transformCanvas(ctx, settings, shape.rotation, shape.computed.center)
 
   if (settings.debug) {
@@ -70,27 +44,12 @@ export const drawLineSelection = ({
     lineWidth: selectionWidth / settings.canvasSize.scaleRatio
   })
 
-  if (shape.selection.shapePath) ctx.stroke(shape.selection.shapePath)
+  ctx.stroke(shape.path)
 
   if (!withAnchors || shape.locked) return
 
-  updateCanvasContext(ctx, {
-    fillColor: 'rgb(255,255,255)',
-    strokeColor: 'rgb(150,150,150)',
-    lineWidth: 2 / settings.canvasSize.scaleRatio,
-    shadowColor: selectionColor,
-    shadowBlur: 0
+  setAnchorsStyle(ctx, settings)
+  shape.points.forEach((point, index) => {
+    drawAnchor(ctx, point, settings, hoverMode.mode === 'resize' && hoverMode.anchor === index ? selectionColor : undefined)
   })
-
-  for (let i = 0; i < shape.selection.anchors.length; i++) {
-    const anchor = shape.selection.anchors[i]!
-    if (hoverMode.mode === 'resize' && hoverMode.anchor === i) {
-      ctx.shadowBlur = 10
-      ctx.fill(anchor)
-      ctx.shadowBlur = 0
-    } else {
-      ctx.fill(anchor)
-    }
-    ctx.stroke(anchor)
-  }
 }

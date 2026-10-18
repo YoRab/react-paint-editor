@@ -3,7 +3,7 @@ import { PICTURE_TOOL_ID } from '@canvas/constants/tools'
 import type { SelectionModeResize } from '@canvas/types/Mode'
 import type { DrawableShape, Point, SelectionType, ShapeEntity } from '@canvas/types/Shapes'
 import { addSizeAndConvertSvgToObjectUrl, fetchAndStringify, isSvg } from '@canvas/utils/file'
-import { createRecSelectionPath, resizeRectSelection } from '@canvas/utils/selection/rectSelection'
+import { resizeRectSelection } from '@canvas/utils/selection/rectSelection'
 import { fitContentInsideContainer } from '@canvas/utils/transform'
 import { createShapeId } from '@canvas/utils/util'
 import { type GroupResizeContext, getPositionWithoutGroupRotation, getShapePositionInNewBorder } from './group'
@@ -16,7 +16,6 @@ const buildPath = <T extends DrawableShape<'picture'>>(shape: T & { id: string }
   return {
     ...shape,
     path,
-    selection: createRecSelectionPath(undefined, computed, settings),
     computed
   }
 }

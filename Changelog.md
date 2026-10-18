@@ -51,6 +51,7 @@ Breaking changes, see the [migration guide](./MIGRATION.md).
 - updateToolSettings ignores a field the tool has not. Changing the style of a selection of several types of shapes in the editor now updates the tool of each shape
 - transformShapes no longer selects the transformed shapes
 - performance: the data given to dataChanged are only built while it is listened, and the pictures are encoded once
+- performance: zooming and resizing the canvas no longer recompute the shapes: the outline and the anchors of the selection are drawn at the scale of the view. Breaking: ShapeEntity has no selection field anymore
 - add the Programmatic API story
 
 ## V0.18.1

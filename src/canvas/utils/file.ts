@@ -5,6 +5,7 @@ import type { DrawableShape, Point, ShapeEntity } from '@canvas/types/Shapes'
 import { initCanvasContext, transformCanvas } from '@canvas/utils/canvas'
 import { buildDataToExport } from '@canvas/utils/data'
 import { drawShape } from '@canvas/utils/shapes'
+import { getBoundingRect } from '@canvas/utils/trigo'
 
 export const addSizeAndConvertSvgToObjectUrl = (svgFileContent: string): string => {
   const parser = new DOMParser()
@@ -132,20 +133,17 @@ export const getCanvasImage = ({
   if (view === 'fitToShapes' && !shapes.length) throw new Error('No image found to export')
 
   if (view === 'fitToShapes') {
-    const minX = Math.min(...shapes.map(shape => shape.computed.boundingBox.x))
-    const maxX = Math.max(...shapes.map(shape => shape.computed.boundingBox.x + shape.computed.boundingBox.width))
-    const minY = Math.min(...shapes.map(shape => shape.computed.boundingBox.y))
-    const maxY = Math.max(...shapes.map(shape => shape.computed.boundingBox.y + shape.computed.boundingBox.height))
+    const box = getBoundingRect(shapes.map(shape => shape.computed.boundingBox))
 
     const printSettings = {
       ...settings,
-      canvasOffset: [-minX, -minY] as Point,
+      canvasOffset: [-box.x, -box.y] as Point,
       canvasZoom: 1,
       canvasSize: {
-        realWidth: maxX - minX,
-        realHeight: maxY - minY,
-        width: maxX - minX,
-        height: maxY - minY,
+        realWidth: box.width,
+        realHeight: box.height,
+        width: box.width,
+        height: box.height,
         scaleRatio: 1,
         scaleRatioWithNoZoom: 1
       }

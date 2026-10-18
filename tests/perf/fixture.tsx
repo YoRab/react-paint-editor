@@ -1,14 +1,14 @@
 // The only file of the benchmark that depends on the public API of the library:
 // scenarios drive the app with DOM events and read its state through `getState`.
 
-import { Profiler } from 'react'
+import { Profiler, useEffect } from 'react'
 import { createRoot } from 'react-dom/client'
 import {
   Canvas,
-  type DrawableShape,
   Editor,
   type EditorState,
   type ReactPaint,
+  type ShapeInput,
   type UseReactPaintOptions,
   usePaintState,
   useReactPaint
@@ -17,14 +17,22 @@ import { nextFrame, type Recorder, waitFor } from './metrics'
 
 export type PerfApp = {
   getState: () => EditorState
+  /** Number of dataChanged events received, when they are listened */
+  getDataEvents: () => number
   unmount: () => void
 }
 
-type HostProps = {
-  shapes: DrawableShape[]
+type MountOptions = {
+  shapes: ShapeInput[]
   options: UseReactPaintOptions | undefined
   recorder: Recorder
+  /** Listens to dataChanged, like an automatic save */
+  listenData?: boolean | undefined
+}
+
+type HostProps = MountOptions & {
   paintRef: { current: ReactPaint | undefined }
+  dataEvents: { count: number }
 }
 
 const SIBLING_ITEMS = Array.from({ length: 150 }, (_, index) => index)
@@ -49,10 +57,17 @@ const HistoryProbe = ({ paint }: { paint: ReactPaint }) => {
   return <output>{history.canUndo ? 'can undo' : 'nothing to undo'}</output>
 }
 
-const Host = ({ shapes, options, recorder, paintRef }: HostProps) => {
+const Host = ({ shapes, options, recorder, listenData, paintRef, dataEvents }: HostProps) => {
   recorder.counters.hostRenders++
   const paint = useReactPaint({ shapes, options })
   paintRef.current = paint
+
+  useEffect(() => {
+    if (!listenData) return
+    return paint.registerEvent('dataChanged', () => {
+      dataEvents.count++
+    })
+  }, [paint, listenData, dataEvents])
 
   return (
     <>
@@ -73,24 +88,17 @@ const Host = ({ shapes, options, recorder, paintRef }: HostProps) => {
   )
 }
 
-export const mountApp = async ({
-  shapes,
-  options,
-  recorder
-}: {
-  shapes: DrawableShape[]
-  options: UseReactPaintOptions | undefined
-  recorder: Recorder
-}): Promise<PerfApp> => {
+export const mountApp = async ({ shapes, options, recorder, listenData }: MountOptions): Promise<PerfApp> => {
   const container = document.createElement('div')
   document.body.appendChild(container)
   const root = createRoot(container)
   const paintRef: HostProps['paintRef'] = { current: undefined }
+  const dataEvents = { count: 0 }
   const getState = () => paintRef.current!.getState()
 
   root.render(
     <Profiler id='root' onRender={recorder.onRender}>
-      <Host shapes={shapes} options={options} recorder={recorder} paintRef={paintRef} />
+      <Host shapes={shapes} options={options} recorder={recorder} listenData={listenData} paintRef={paintRef} dataEvents={dataEvents} />
     </Profiler>
   )
 
@@ -100,6 +108,7 @@ export const mountApp = async ({
 
   return {
     getState,
+    getDataEvents: () => dataEvents.count,
     unmount: () => {
       root.unmount()
       container.remove()

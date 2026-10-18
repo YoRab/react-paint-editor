@@ -5,7 +5,6 @@ import type { ToolsSettingsType } from '@canvas/types/tools'
 import { drawPathWithFillAndStroke } from '@canvas/utils/canvas'
 import { getPointPositionAfterCanvasTransformation } from '@canvas/utils/intersect'
 import { set } from '@canvas/utils/object'
-import { createLineSelectionPath } from '@canvas/utils/selection/lineSelection'
 import { catmullRomToBezier, createCurvePath, getCatmullRomPoints, getComputedShapeInfos, getCubicBezierBounds } from '@canvas/utils/shapes/path'
 import { getRectBorder } from '@canvas/utils/shapes/rectangle'
 import { roundForGrid } from '@canvas/utils/transform'
@@ -53,7 +52,6 @@ const buildPath = <T extends DrawableShape<'curve'>>(shape: T & { id: string }, 
   return {
     ...shape,
     path,
-    selection: createLineSelectionPath(path, shape, computed, settings),
     computed
   }
 }

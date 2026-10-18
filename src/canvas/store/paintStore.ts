@@ -120,13 +120,11 @@ const isSamePoint = (a: Point, b: Point) => a[0] === b[0] && a[1] === b[1]
 const isSameTransformation = (a: CanvasTransformation, b: CanvasTransformation) => a.zoom === b.zoom && isSamePoint(a.offset, b.offset)
 
 /**
- * Whether a setting read by refreshShape has changed: the padding of the selection, the algorithm of the brushes,
- * and the scale (canvas size and zoom) which gives the size of the selection anchors. Moving the view does not need it.
+ * Whether a setting read by refreshShape has changed: the padding of the selection and the algorithm of the brushes.
+ * Moving or zooming the view and resizing the canvas do not need it: the anchors of the selection are drawn at the scale.
  */
 const hasShapeSettingsChanged = (a: InternalState, b: InternalState) =>
-  a.config.options.canvasSelectionPadding !== b.config.options.canvasSelectionPadding ||
-  a.config.options.brushAlgo !== b.config.options.brushAlgo ||
-  a.view.canvasSize.scaleRatio * a.view.transformation.zoom !== b.view.canvasSize.scaleRatio * b.view.transformation.zoom
+  a.config.options.canvasSelectionPadding !== b.config.options.canvasSelectionPadding || a.config.options.brushAlgo !== b.config.options.brushAlgo
 
 const isSameHoverMode = (a: HoverModeData, b: HoverModeData) => {
   if (a.mode !== b.mode || a.outOfView !== b.outOfView) return false
@@ -218,12 +216,14 @@ export const createPaintStore = (props: UseReactPaintProps = {}) => {
 
   const refreshAllShapes = (state: InternalState, settings: UtilsSettings): InternalState => {
     const shapes = state.document.shapes.map(shape => refreshShape(shape, settings))
+    const refreshed = new Map(state.document.shapes.map((shape, index) => [shape, shapes[index]!]))
     const previousSelection = state.document.selectedShape
+    // a selected shape which is the one of the list stays the same: only the copies which differ are refreshed apart
     const newSelectedShape =
       previousSelection === undefined
         ? undefined
         : buildShapesGroup(
-            getSelectedShapes(previousSelection).map(shape => refreshShape(shape, settings)),
+            getSelectedShapes(previousSelection).map(shape => refreshed.get(shape) ?? refreshShape(shape, settings)),
             settings
           )
     return { ...state, document: shapesReducer(state.document, { type: 'REFRESH_ALL', shapes, newSelectedShape }) }
@@ -539,13 +539,15 @@ export const createPaintStore = (props: UseReactPaintProps = {}) => {
         return checkSelectionFrameCollision(ctx, shape, frame)
       })
 
-      const settings = getSettings(state)
-      const newSelectedShape = state.interaction.modifiers.shift
-        ? buildShapesGroup(addToSelectedShapes(previousFrame?.oldSelection, foundShapes), settings)
-        : buildShapesGroup(foundShapes, settings)
+      const shapesToSelect = state.interaction.modifiers.shift ? addToSelectedShapes(previousFrame?.oldSelection, foundShapes) : foundShapes
+      // the same shapes keep the same selection: neither the drawing nor the editor are refreshed
+      const { selectedShape } = state.document
+      const isSameSelection = shallowEqual(shapesToSelect, getSelectedShapes(selectedShape))
       return {
         ...withInteraction(state, { selectionFrame: { oldSelection: previousFrame?.oldSelection, frame } }),
-        document: shapesReducer(state.document, { type: 'SET_SELECTION', newSelectedShape })
+        document: isSameSelection
+          ? state.document
+          : shapesReducer(state.document, { type: 'SET_SELECTION', newSelectedShape: buildShapesGroup(shapesToSelect, getSettings(state)) })
       }
     })
 

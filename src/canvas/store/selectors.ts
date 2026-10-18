@@ -37,7 +37,7 @@ export const memoizeLast = <A extends unknown[], R>(compute: (...args: A) => R):
 }
 
 /** Returns the previous object while the new one has the same values, so that it keeps its identity */
-const keepIfSame = <T extends object>() => {
+export const keepIfSame = <T extends object>() => {
   let last: T | undefined
   return (next: T): T => {
     if (last === undefined || !shallowEqual(last, next)) last = next

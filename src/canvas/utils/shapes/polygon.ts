@@ -5,9 +5,9 @@ import type { ToolsSettingsType } from '@canvas/types/tools'
 import { drawPathWithFillAndStroke } from '@canvas/utils/canvas'
 import { getPointPositionAfterCanvasTransformation } from '@canvas/utils/intersect'
 import { set } from '@canvas/utils/object'
-import { createLineSelectionPath } from '@canvas/utils/selection/lineSelection'
 import { createPolygonPath, expandRect, getComputedShapeInfos } from '@canvas/utils/shapes/path'
 import { roundForGrid } from '@canvas/utils/transform'
+import { getPointsBounds } from '@canvas/utils/trigo'
 import { createShapeId } from '@canvas/utils/util'
 
 const buildPath = <T extends DrawableShape<'polygon'>>(shape: T & { id: string }, settings: UtilsSettings): ShapeEntity<'polygon'> => {
@@ -16,7 +16,6 @@ const buildPath = <T extends DrawableShape<'polygon'>>(shape: T & { id: string }
   return {
     ...shape,
     path,
-    selection: createLineSelectionPath(path, shape, computed, settings),
     computed
   }
 }
@@ -56,11 +55,7 @@ export const drawPolygon = (ctx: CanvasRenderingContext2D, polygon: ShapeEntity<
 }
 
 export const getPolygonBorder = (polygon: Polygon, settings: Pick<UtilsSettings, 'selectionPadding'>): Rect => {
-  const minX = Math.min(...polygon.points.map(point => point[0]))
-  const maxX = Math.max(...polygon.points.map(point => point[0]))
-
-  const minY = Math.min(...polygon.points.map(point => point[1]))
-  const maxY = Math.max(...polygon.points.map(point => point[1]))
+  const { minX, minY, maxX, maxY } = getPointsBounds([polygon.points])
 
   const baseRect: Rect = { x: minX, width: maxX - minX, y: minY, height: maxY - minY }
   return expandRect(baseRect, settings.selectionPadding)

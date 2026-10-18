@@ -324,15 +324,28 @@ describe('consistency rules', () => {
     const store = await createLoadedStore({ options: { size: 'infinite' } })
     const { shapes } = store.getState().document
 
-    // Moving the view, or changing the grid, keeps the computed shapes
+    // Moving or zooming the view, resizing the canvas, or changing the grid keeps the computed shapes
     store.actions.setOffset([-30, -40])
+    store.actions.setZoom('zoom')
+    store.setCanvasSize({ realWidth: 1000, realHeight: 600, width: 500, height: 300, scaleRatio: 0.5 })
     store.actions.setGridGap(20)
     expect(store.getState().document.shapes).toBe(shapes)
 
-    // The size of the selection anchors depends on the zoom
-    store.actions.setZoom('zoom')
+    // The padding of the selection is part of their borders
+    store.actions.setOptions({ canvasSelectionPadding: 10 })
     expect(store.getState().document.shapes).not.toBe(shapes)
     expect(store.getState().document.shapes.map(shape => shape.id)).toEqual(shapes.map(shape => shape.id))
+  })
+
+  it('keeps the selected shapes identical to the ones of the list when they are refreshed', async () => {
+    const store = await createLoadedStore({ options: { size: 'infinite' } })
+    store.actions.selectShapes(getIds(store).slice(0, 2))
+
+    store.actions.setOptions({ canvasSelectionPadding: 10 })
+    const { shapes } = store.getState().document
+    const [first, second] = store.getEditorState().selectedShapes
+    expect(first).toBe(shapes[0])
+    expect(second).toBe(shapes[1])
   })
 
   it('scrolls the view by the auto scroll speed', () => {
@@ -428,5 +441,32 @@ describe('consistency rules', () => {
     focusOut(null)
     expect(store.getEditorState().interaction.focus.component).toBe(false)
     expect(store.getEditorState().interaction.modifiers).toEqual({ shift: false, alt: false, space: false })
+  })
+})
+
+describe('selection frame', () => {
+  // no point of the shapes is ever found: only the shapes inside the frame are selected
+  const ctx = { lineWidth: 1, isPointInPath: () => false, isPointInStroke: () => false } as unknown as CanvasRenderingContext2D
+
+  it('selects the shapes inside the frame, and keeps the selection while they stay the same', async () => {
+    const store = await createLoadedStore()
+    store.setSelectionFrame({
+      oldSelection: undefined,
+      frame: [
+        [50, 50],
+        [50, 50]
+      ]
+    })
+
+    store.refreshSelectedShapes(ctx, [450, 250])
+    const selection = store.getState().document.selectedShape
+    expect(getSelectedIds(store)).toEqual(getIds(store).slice(0, 2))
+
+    store.refreshSelectedShapes(ctx, [460, 260])
+    expect(store.getState().document.selectedShape).toBe(selection)
+    expect(store.getState().interaction.selectionFrame?.frame[1]).toEqual([460, 260])
+
+    store.refreshSelectedShapes(ctx, [650, 260])
+    expect(getSelectedIds(store)).toEqual(getIds(store))
   })
 })

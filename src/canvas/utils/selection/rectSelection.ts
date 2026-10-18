@@ -1,48 +1,16 @@
 import type { UtilsSettings } from '@canvas/constants/app'
-import { SELECTION_ANCHOR_SIZE, SELECTION_RESIZE_ANCHOR_POSITIONS, SELECTION_ROTATED_ANCHOR_POSITION } from '@canvas/constants/shapes'
 import type { SelectionModeResize } from '@canvas/types/Mode'
-import type { Point, Rect, SelectionDefaultType, SelectionType, ShapeEntity } from '@canvas/types/Shapes'
+import type { Point, Rect, SelectionType, ShapeEntity } from '@canvas/types/Shapes'
 import { transformCanvas, updateCanvasContext } from '@canvas/utils/canvas'
-import { createCirclePath, createLinePath, createRecPath } from '@canvas/utils/shapes/path'
+import { drawRectAnchors, strokeBorders } from '@canvas/utils/selection/anchors'
 import { roundForGrid, roundValues } from '@canvas/utils/transform'
 import { rotatePoint } from '@canvas/utils/trigo'
 
-export const createRecSelectionPath = (
-  path: Path2D | undefined,
-  computed: { borders: Rect; outerBorders: Rect; center: Point },
-  settings: UtilsSettings
-): SelectionDefaultType => {
-  const { borders } = computed
-
-  return {
-    type: 'rect',
-    border: createRecPath(borders),
-    shapePath: path,
-    line: createLinePath({
-      points: [
-        [borders.x + borders.width / 2, borders.y],
-        [borders.x + borders.width / 2, borders.y - (SELECTION_ANCHOR_SIZE / 2 + SELECTION_ROTATED_ANCHOR_POSITION) / settings.canvasSize.scaleRatio]
-      ]
-    }),
-    anchors: [
-      createCirclePath({
-        x: borders.x + borders.width / 2,
-        y: borders.y - (SELECTION_ANCHOR_SIZE / 2 + SELECTION_ROTATED_ANCHOR_POSITION) / settings.canvasSize.scaleRatio,
-        radius: SELECTION_ANCHOR_SIZE / 2 / settings.canvasSize.scaleRatio
-      }),
-      ...SELECTION_RESIZE_ANCHOR_POSITIONS.map(anchorPosition =>
-        createCirclePath({
-          x: borders.x + borders.width * anchorPosition[0],
-          y: borders.y + borders.height * anchorPosition[1],
-          radius: SELECTION_ANCHOR_SIZE / 2 / settings.canvasSize.scaleRatio
-        })
-      )
-    ]
-  }
-}
+/** Outline of a shape drawn by its selection: its path, but for a picture or a text, which are framed by their borders */
+export const getSelectionOutline = (shape: ShapeEntity): Path2D | undefined =>
+  shape.type === 'picture' || shape.type === 'text' ? undefined : shape.path
 
 export const drawBoundingBox = (ctx: CanvasRenderingContext2D, shape: SelectionType, selectionWidth: number, settings: UtilsSettings): void => {
-  if (!shape.selection) return
   if (settings.debug) {
     ctx.save()
     ctx.scale(settings.canvasSize.scaleRatio, settings.canvasSize.scaleRatio)
@@ -61,13 +29,12 @@ export const drawBoundingBox = (ctx: CanvasRenderingContext2D, shape: SelectionT
 
 export const drawSelectionRect = (
   ctx: CanvasRenderingContext2D,
-  shape: ShapeEntity & { selection?: SelectionDefaultType | undefined },
+  shape: ShapeEntity,
   selectionColor: string,
   selectionWidth: number,
   settings: UtilsSettings,
   withAnchors: boolean
 ): void => {
-  if (!shape.selection) return
   transformCanvas(ctx, settings, shape.rotation, shape.computed.center)
 
   if (settings.debug) {
@@ -90,26 +57,15 @@ export const drawSelectionRect = (
     strokeColor: selectionColor,
     lineWidth: selectionWidth / settings.canvasSize.scaleRatio
   })
-  if (shape.selection.shapePath) ctx.stroke(shape.selection.shapePath)
-  else ctx.stroke(shape.selection.border)
+  const { borders } = shape.computed
+  const outline = getSelectionOutline(shape)
+  if (outline) ctx.stroke(outline)
+  else strokeBorders(ctx, borders)
 
   if (!withAnchors || shape.locked) return
 
-  if (shape.selection.shapePath) ctx.stroke(shape.selection.border)
-  if (shape.selection.line) ctx.stroke(shape.selection.line)
-
-  updateCanvasContext(ctx, {
-    fillColor: 'rgb(255,255,255)',
-    strokeColor: 'rgb(150,150,150)',
-    lineWidth: 2 / settings.canvasSize.scaleRatio,
-    shadowColor: selectionColor,
-    shadowBlur: 0
-  })
-
-  for (const anchor of shape.selection.anchors) {
-    ctx.fill(anchor)
-    ctx.stroke(anchor)
-  }
+  if (outline) strokeBorders(ctx, borders)
+  drawRectAnchors(ctx, borders, settings)
 }
 
 const getSelectionData = ({

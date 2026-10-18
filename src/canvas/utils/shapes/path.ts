@@ -1,7 +1,7 @@
 import type { UtilsSettings } from '@canvas/constants/app'
 import type { Circle, DrawableShape, Line, Point, Rect } from '@canvas/types/Shapes'
 import { scalePoint } from '@canvas/utils/transform'
-import { rotatePoint } from '@canvas/utils/trigo'
+import { type Bounds, getPointsBounds, rotatePoint } from '@canvas/utils/trigo'
 
 export const createRecPath = (rect: Rect): Path2D => {
   const path = new Path2D()
@@ -33,12 +33,7 @@ export const createBrushPath = (brush: DrawableShape<'brush'>, { brushAlgo }: Ut
 
   if (brush.points.length < 1) return path
 
-  const brushPoints = brush.points.flat()
-  const brushPointX = brushPoints.map(point => point[0])
-  const brushPointY = brushPoints.map(point => point[1])
-
-  const minX = Math.min(...brushPointX)
-  const minY = Math.min(...brushPointY)
+  const { minX, minY } = getPointsBounds(brush.points)
 
   for (const points of brush.points) {
     if (!points.length) continue
@@ -73,7 +68,7 @@ export const createBrushPath = (brush: DrawableShape<'brush'>, { brushAlgo }: Ut
 }
 
 /** Bounding box of a cubic Bezier segment B(t) = (1-t)³P0 + 3(1-t)²t P1 + 3(1-t)t² P2 + t³ P3 */
-export const getCubicBezierBounds = (p0: Point, p1: Point, p2: Point, p3: Point): { minX: number; maxX: number; minY: number; maxY: number } => {
+export const getCubicBezierBounds = (p0: Point, p1: Point, p2: Point, p3: Point): Bounds => {
   const evalX = (t: number) => (1 - t) ** 3 * p0[0] + 3 * (1 - t) ** 2 * t * p1[0] + 3 * (1 - t) * t ** 2 * p2[0] + t ** 3 * p3[0]
   const evalY = (t: number) => (1 - t) ** 3 * p0[1] + 3 * (1 - t) ** 2 * t * p1[1] + 3 * (1 - t) * t ** 2 * p2[1] + t ** 3 * p3[1]
 
@@ -238,10 +233,7 @@ const getBoundingBox = (outerBorders: Rect, center: Point, rotation = 0) => {
     })
   )
 
-  const minX = Math.min(...rotatedPoints.map(point => point[0]))
-  const minY = Math.min(...rotatedPoints.map(point => point[1]))
-  const maxX = Math.max(...rotatedPoints.map(point => point[0]))
-  const maxY = Math.max(...rotatedPoints.map(point => point[1]))
+  const { minX, minY, maxX, maxY } = getPointsBounds([rotatedPoints])
 
   return {
     x: minX,

@@ -3,21 +3,21 @@ import type { SelectionModeResize } from '@canvas/types/Mode'
 import type { DrawableShape, Point, Rect, SelectionType, ShapeEntity } from '@canvas/types/Shapes'
 import type { ToolsSettingsType } from '@canvas/types/tools'
 import { set } from '@canvas/utils/object'
-import { createRecSelectionPath, resizeRectSelection } from '@canvas/utils/selection/rectSelection'
+import { resizeRectSelection } from '@canvas/utils/selection/rectSelection'
 import { createBrushPath, expandRect, getComputedShapeInfos } from '@canvas/utils/shapes/path'
 import { roundValues, scalePoint } from '@canvas/utils/transform'
+import { getPointsBounds } from '@canvas/utils/trigo'
 import { createShapeId } from '@canvas/utils/util'
 import { type GroupResizeContext, getPositionWithoutGroupRotation, getShapePositionInNewBorder } from './group'
 
 export const getBrushBorder = (brush: DrawableShape<'brush'>, { selectionPadding }: Pick<UtilsSettings, 'selectionPadding'>): Rect => {
-  const brushPoints = brush.points.flat()
-  const minX = Math.min(...brushPoints.map(point => point[0]))
-  const minY = Math.min(...brushPoints.map(point => point[1]))
+  const bounds = getPointsBounds(brush.points)
+  const { minX, minY } = bounds
 
-  const scaledPoints = brushPoints.map(point => scalePoint(point, minX, minY, brush.scaleX, brush.scaleY))
-
-  const maxX = Math.max(...scaledPoints.map(point => point[0]))
-  const maxY = Math.max(...scaledPoints.map(point => point[1]))
+  // the points are scaled from the top left corner, which stays in place: the farthest point stays the farthest one
+  const [scaledMaxX, scaledMaxY] = scalePoint([bounds.maxX, bounds.maxY], minX, minY, brush.scaleX, brush.scaleY)
+  const maxX = Math.max(minX, scaledMaxX)
+  const maxY = Math.max(minY, scaledMaxY)
 
   const baseRect: Rect = {
     x: minX,
@@ -35,7 +35,6 @@ const buildPath = <T extends DrawableShape<'brush'>>(brush: T & { id: string }, 
   return {
     ...brush,
     path,
-    selection: createRecSelectionPath(path, computed, settings),
     computed
   }
 }

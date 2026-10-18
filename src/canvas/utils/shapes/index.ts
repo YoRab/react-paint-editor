@@ -1,9 +1,9 @@
 import type { UtilsSettings } from '@canvas/constants/app'
-import { SHAPES_KEEPING_RATIO, SHAPES_WITH_ROTATION } from '@canvas/constants/shapes'
+import { SELECTION_DEFAULT_WIDTH, SHAPES_KEEPING_RATIO, SHAPES_WITH_ROTATION } from '@canvas/constants/shapes'
 import type { HoverModeData, SelectionModeData, SelectionModeResize } from '@canvas/types/Mode'
 import type { DrawableShape, Point, Rect, SelectionType, ShapeEntity, StyleShape } from '@canvas/types/Shapes'
 import type { CustomTool } from '@canvas/types/tools'
-import { transformCanvas, updateCanvasContext } from '@canvas/utils/canvas'
+import { createDetachedContext, initCanvasContext, transformCanvas, updateCanvasContext } from '@canvas/utils/canvas'
 import { getRectIntersection } from '@canvas/utils/intersect'
 import { getSelectedShapes } from '@canvas/utils/selectedShapes'
 import { buildShapesGroup } from '@canvas/utils/selection'
@@ -12,7 +12,7 @@ import { drawLineSelection } from '@canvas/utils/selection/lineSelection'
 import { drawBoundingBox, drawSelectionRect } from '@canvas/utils/selection/rectSelection'
 import { drawFrame } from '@canvas/utils/selection/selectionFrame'
 import { boundVectorToSingleAxis, roundForGrid } from '@canvas/utils/transform'
-import { rotatePoint } from '@canvas/utils/trigo'
+import { getPointsBounds, rotatePoint } from '@canvas/utils/trigo'
 import { createShapeId } from '@canvas/utils/util'
 import { getCurrentView } from '@canvas/utils/zoom'
 import { createBrush, drawBrush, refreshBrush, resizeBrush, resizeBrushInGroup } from './brush'
@@ -21,6 +21,7 @@ import { createCurve, drawCurve, refreshCurve, resizeCurve } from './curve'
 import { createEllipse, drawEllipse, refreshEllipse, resizeEllipse, resizeEllipseInGroup } from './ellipse'
 import { buildGroupResizeContext, type GroupResizeContext, getGroupResizeContext } from './group'
 import { createLine, drawLine, refreshLine, resizeLine, resizeLinePolygonCurveInGroup } from './line'
+import { expandRect } from './path'
 import { drawPicture, refreshPicture, resizePicture, resizePictureInGroup } from './picture'
 import { createPolygon, drawPolygon, refreshPolygon, resizePolygon } from './polygon'
 import { createRectangle, drawRect, refreshRect, resizeRect, resizeRectInGroup } from './rectangle'
@@ -89,29 +90,114 @@ const drawShapeByType = (ctx: CanvasRenderingContext2D, shape: ShapeEntity): voi
   }
 }
 
+const isVisibleColor = (color: string | undefined) => color !== undefined && color !== 'transparent'
+
 /**
- * Renders a shape with opacity on a temporary canvas and then draws it on the main canvas
- * @param ctx - The main canvas context
- * @param shape - The shape to draw
+ * Whether the opacity of the shape must be applied to its drawing as a whole, on a layer: drawn with the opacity, the
+ * overlaps would be darker. It is the case of several operations which overlap, like a fill and a stroke, and of a stroke
+ * thinner than a pixel, drawn segment by segment. A single operation (a stroke, even of several lines, a fill, an image)
+ * is drawn directly
  */
-const drawShapeWithOpacity = (ctx: CanvasRenderingContext2D, shape: ShapeEntity): void => {
-  const { outerBorders } = shape.computed
-  const tempCanvasSize = {
-    width: outerBorders.width * 2,
-    height: outerBorders.height * 2
+const needsLayer = (shape: ShapeEntity, scaleRatio: number): boolean => {
+  if (shape.type === 'picture') return false
+  if (shape.type === 'text') return shape.value.length > 1
+  // an undefined stroke color is drawn with the default color
+  const hasStroke = shape.style?.strokeColor !== 'transparent'
+  if (hasStroke && (shape.style?.lineWidth ?? SELECTION_DEFAULT_WIDTH) * scaleRatio <= 1) return true
+  if (shape.type === 'line') return !!shape.arrows?.length
+  if (shape.type === 'brush') return false
+  return hasStroke && isVisibleColor(shape.style?.fillColor)
+}
+
+/**
+ * Canvases out of the page, shared by the shapes drawn with their opacity on a canvas, one for each size: once drawn on
+ * the canvas, a layer is copied as a whole the next time it is changed, so the smallest layer fitting a shape is used.
+ * The layers of a canvas are freed with it, and when its size changes
+ */
+const layersByCanvas = new WeakMap<HTMLCanvasElement, { width: number; height: number; layers: Map<number, CanvasRenderingContext2D | null> }>()
+
+/** Sizes of the layers: powers of 2, at most the size of the canvas */
+const getLayerSize = (size: number, max: number) => Math.min(max, Math.max(32, 2 ** Math.ceil(Math.log2(size))))
+
+const getLayerContext = (width: number, height: number, canvas: HTMLCanvasElement): CanvasRenderingContext2D | null => {
+  let canvasLayers = layersByCanvas.get(canvas)
+  if (canvasLayers?.width !== canvas.width || canvasLayers.height !== canvas.height) {
+    canvasLayers = { width: canvas.width, height: canvas.height, layers: new Map() }
+    layersByCanvas.set(canvas, canvasLayers)
   }
-  if (tempCanvasSize.width === 0 || tempCanvasSize.height === 0) return
-  const tempCanvas = document.createElement('canvas')
-  const tempCtx = tempCanvas.getContext('2d')
-  if (!tempCtx) throw new Error('No context found for canvas')
-  tempCanvas.width = tempCanvasSize.width
-  tempCanvas.height = tempCanvasSize.height
-  tempCtx.translate(tempCanvasSize.width / 4 - outerBorders.x, tempCanvasSize.height / 4 - outerBorders.y)
-  updateCanvasContext(tempCtx, { ...shape.style, opacity: 100 })
+  const layerWidth = getLayerSize(width, canvas.width)
+  const layerHeight = getLayerSize(height, canvas.height)
+  // the sizes of a canvas are below 65536 pixels
+  const key = layerWidth * 65536 + layerHeight
+  let layer = canvasLayers.layers.get(key)
+  if (layer === undefined) {
+    layer = createDetachedContext()
+    if (layer) {
+      layer.canvas.width = layerWidth
+      layer.canvas.height = layerHeight
+      initCanvasContext(layer)
+    }
+    canvasLayers.layers.set(key, layer)
+  }
+  return layer
+}
 
-  drawShapeByType(tempCtx, shape)
+/**
+ * Margin around the outer borders of a shape, in the units of the drawing: the arrows of a line and the glyphs of a text
+ * go beyond them, and the outer borders of a curve leave out the half of its stroke
+ */
+const getLayerMargin = (shape: ShapeEntity) => {
+  if (shape.type === 'text') return shape.fontSize / 4
+  const lineWidth = shape.style?.lineWidth ?? SELECTION_DEFAULT_WIDTH
+  return shape.type === 'line' ? 10 + lineWidth * 2 : lineWidth / 2
+}
 
-  ctx.drawImage(tempCanvas, outerBorders.x - tempCanvasSize.width / 4, outerBorders.y - tempCanvasSize.height / 4)
+/** Margin of the layers in pixels, for the antialiasing */
+const LAYER_PIXEL_MARGIN = 2
+
+/** Box in pixels of a rectangle of the shape transformed by the matrix: only its part inside the canvas is drawn */
+const getPixelBox = (canvas: HTMLCanvasElement, matrix: DOMMatrix, { x, y, width, height }: Rect): Rect => {
+  const corners = (
+    [
+      [x, y],
+      [x + width, y],
+      [x, y + height],
+      [x + width, y + height]
+    ] as const
+  ).map(([cornerX, cornerY]): Point => [matrix.a * cornerX + matrix.c * cornerY + matrix.e, matrix.b * cornerX + matrix.d * cornerY + matrix.f])
+  const { minX, minY, maxX, maxY } = getPointsBounds([corners])
+  const left = Math.max(0, Math.floor(minX) - LAYER_PIXEL_MARGIN)
+  const top = Math.max(0, Math.floor(minY) - LAYER_PIXEL_MARGIN)
+  return {
+    x: left,
+    y: top,
+    width: Math.min(canvas.width, Math.ceil(maxX) + LAYER_PIXEL_MARGIN) - left,
+    height: Math.min(canvas.height, Math.ceil(maxY) + LAYER_PIXEL_MARGIN) - top
+  }
+}
+
+/**
+ * Draws a shape painted several times, with its opacity: it is painted opaque on a shared layer, at the resolution of the
+ * canvas, then the layer is copied with the opacity
+ */
+const drawShapeOnLayer = (ctx: CanvasRenderingContext2D, shape: ShapeEntity): void => {
+  const matrix = ctx.getTransform()
+  const box = getPixelBox(ctx.canvas, matrix, expandRect(shape.computed.outerBorders, getLayerMargin(shape)))
+  if (box.width <= 0 || box.height <= 0) return
+  const layerCtx = getLayerContext(box.width, box.height, ctx.canvas)
+  if (!layerCtx) return
+
+  layerCtx.setTransform(1, 0, 0, 1, 0, 0)
+  layerCtx.clearRect(0, 0, box.width, box.height)
+  // the transformation of the canvas, moved to the corner of the layer
+  layerCtx.setTransform(matrix.a, matrix.b, matrix.c, matrix.d, matrix.e - box.x, matrix.f - box.y)
+  updateCanvasContext(layerCtx, { ...shape.style, opacity: 100 })
+  drawShapeByType(layerCtx, shape)
+
+  ctx.save()
+  ctx.setTransform(1, 0, 0, 1, 0, 0)
+  ctx.drawImage(layerCtx.canvas, 0, 0, box.width, box.height, box.x, box.y, box.width, box.height)
+  ctx.restore()
 }
 
 const isInView = (shape: ShapeEntity, settings: UtilsSettings, currentView?: Rect): boolean => {
@@ -126,12 +212,11 @@ export const drawShape = (ctx: CanvasRenderingContext2D, shape: ShapeEntity, set
   transformCanvas(ctx, settings, shape.rotation, shape.computed.center)
   updateCanvasContext(ctx, shape.style)
 
-  if (ctx.globalAlpha !== 1) {
-    drawShapeWithOpacity(ctx, shape)
-    ctx.restore()
-    return
+  if (ctx.globalAlpha < 1 && needsLayer(shape, settings.canvasSize.scaleRatio)) {
+    drawShapeOnLayer(ctx, shape)
+  } else if (ctx.globalAlpha > 0) {
+    drawShapeByType(ctx, shape)
   }
-  drawShapeByType(ctx, shape)
 
   ctx.restore()
 }
