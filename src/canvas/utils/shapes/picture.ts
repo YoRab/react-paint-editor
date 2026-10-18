@@ -2,6 +2,7 @@ import type { UtilsSettings } from '@canvas/constants/app'
 import { PICTURE_TOOL_ID } from '@canvas/constants/tools'
 import type { SelectionModeResize } from '@canvas/types/Mode'
 import type { DrawableShape, Point, SelectionType, ShapeEntity } from '@canvas/types/Shapes'
+import { createDetachedContext } from '@canvas/utils/canvas'
 import { addSizeAndConvertSvgToObjectUrl, fetchAndStringify, isSvg } from '@canvas/utils/file'
 import { resizeRectSelection } from '@canvas/utils/selection/rectSelection'
 import { fitContentInsideContainer } from '@canvas/utils/transform'
@@ -130,12 +131,50 @@ export const createPicture = (
   })
 }
 
+/**
+ * Reduced copies of the images, by level: the level n is the image halved n times. Drawn much smaller than it is, an image
+ * is resampled from its full size at each frame by some browsers (Firefox, Safari), slower and grainier: it is drawn from
+ * its smallest copy at least as large as it is drawn. A copy is made once, the first time it is needed, and is freed with
+ * its image
+ */
+const reducedImages = new WeakMap<HTMLImageElement, Map<number, HTMLCanvasElement>>()
+
+/** Number of times the image can be halved and stay at least as large as the picture, in pixels of the canvas */
+const getReductionLevel = (ctx: CanvasRenderingContext2D, picture: ShapeEntity<'picture'>): number => {
+  const { naturalWidth, naturalHeight } = picture.img
+  const { a, b, c, d } = ctx.getTransform()
+  const drawnWidth = picture.width * Math.hypot(a, b)
+  const drawnHeight = picture.height * Math.hypot(c, d)
+  if (!naturalWidth || !naturalHeight || drawnWidth <= 0 || drawnHeight <= 0) return 0
+  return Math.max(0, Math.floor(Math.log2(Math.min(naturalWidth / drawnWidth, naturalHeight / drawnHeight))))
+}
+
+const getReducedImage = (img: HTMLImageElement, level: number): CanvasImageSource => {
+  if (level === 0) return img
+  const levels = reducedImages.get(img) ?? new Map<number, HTMLCanvasElement>()
+  const reduced = levels.get(level)
+  if (reduced) return reduced
+
+  const reducedCtx = createDetachedContext()
+  if (!reducedCtx) return img
+  reducedCtx.canvas.width = Math.ceil(img.naturalWidth / 2 ** level)
+  reducedCtx.canvas.height = Math.ceil(img.naturalHeight / 2 ** level)
+  reducedCtx.imageSmoothingQuality = 'high'
+  reducedCtx.drawImage(img, 0, 0, reducedCtx.canvas.width, reducedCtx.canvas.height)
+  // a lost context empties the canvas: the copy is made again
+  reducedCtx.canvas.addEventListener('contextlost', () => levels.delete(level))
+  levels.set(level, reducedCtx.canvas)
+  reducedImages.set(img, levels)
+  return reducedCtx.canvas
+}
+
 export const drawPicture = (ctx: CanvasRenderingContext2D, picture: ShapeEntity<'picture'>): void => {
   if (ctx.globalAlpha === 0) return
+  const image = getReducedImage(picture.img, getReductionLevel(ctx, picture))
   ctx.beginPath()
   ctx.scale(picture.flipX ? -1 : 1, picture.flipY ? -1 : 1)
   ctx.drawImage(
-    picture.img,
+    image,
     picture.flipX ? -picture.x - picture.width : picture.x,
     picture.flipY ? -picture.y - picture.height : picture.y,
     picture.width,

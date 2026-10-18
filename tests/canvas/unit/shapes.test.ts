@@ -2,7 +2,8 @@ import type { UtilsSettings } from '@canvas/constants/app'
 import type { Point, ShapeEntity } from '@canvas/types/Shapes'
 import { canRemoveShapePoint } from '@canvas/utils/shapes'
 import { addNewPointGroupToShape, addNewPointToShape, getBrushBorder, refreshBrush } from '@canvas/utils/shapes/brush'
-import { describe, expect, it } from 'vitest'
+import { drawPicture } from '@canvas/utils/shapes/picture'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { stubPath2D } from './helpers'
 
 stubPath2D()
@@ -75,5 +76,80 @@ describe('addNewPointToShape', () => {
         [80, 10]
       ]
     ])
+  })
+})
+
+describe('drawPicture', () => {
+  type FakeCanvas = { width: number; height: number; source?: unknown }
+  let copies: FakeCanvas[] = []
+
+  // the copies are made on canvases out of the page
+  beforeEach(() => {
+    copies = []
+    vi.stubGlobal('document', {
+      createElement: () => {
+        const canvas: FakeCanvas & { addEventListener: () => void; getContext: () => unknown } = {
+          width: 0,
+          height: 0,
+          addEventListener: () => {},
+          getContext: () => ({
+            canvas,
+            drawImage: (source: unknown) => {
+              canvas.source = source
+            }
+          })
+        }
+        copies.push(canvas)
+        return canvas
+      }
+    })
+  })
+
+  afterEach(() => {
+    vi.unstubAllGlobals()
+    stubPath2D()
+  })
+
+  /** The source drawn for a picture of 300 × 200 pixels of the drawing, scaled and rotated by the canvas */
+  const drawnSource = (img: HTMLImageElement, scale: number, rotation = 0) => {
+    const drawImage = vi.fn()
+    const ctx = {
+      globalAlpha: 1,
+      getTransform: () => ({
+        a: scale * Math.cos(rotation),
+        b: scale * Math.sin(rotation),
+        c: -scale * Math.sin(rotation),
+        d: scale * Math.cos(rotation)
+      }),
+      beginPath: () => {},
+      scale: () => {},
+      drawImage
+    } as unknown as CanvasRenderingContext2D
+    drawPicture(ctx, { type: 'picture', img, x: 0, y: 0, width: 300, height: 200 } as ShapeEntity<'picture'>)
+    return drawImage.mock.calls[0]![0] as FakeCanvas | HTMLImageElement
+  }
+
+  const photo = (naturalWidth = 3000, naturalHeight = 2000) => ({ naturalWidth, naturalHeight }) as HTMLImageElement
+
+  it('draws a picture much smaller than its image from the smallest copy at least as large, made once', () => {
+    const img = photo()
+    const source = drawnSource(img, 1)
+    expect(source).toMatchObject({ width: 375, height: 250, source: img })
+    expect(drawnSource(img, 1)).toBe(source)
+    expect(copies).toHaveLength(1)
+  })
+
+  it('follows the scale and the rotation of the canvas', () => {
+    const img = photo()
+    expect(drawnSource(img, 2)).toMatchObject({ width: 750, height: 500 })
+    expect(drawnSource(img, 2, Math.PI / 5)).toMatchObject({ width: 750, height: 500 })
+    // more than half of the image
+    expect(drawnSource(img, 6)).toBe(img)
+  })
+
+  it('draws the image itself until it is loaded', () => {
+    const img = photo(0, 0)
+    expect(drawnSource(img, 1)).toBe(img)
+    expect(copies).toHaveLength(0)
   })
 })

@@ -53,6 +53,7 @@ Breaking changes, see the [migration guide](./MIGRATION.md).
 - performance: the data given to dataChanged are only built while it is listened, and the pictures are encoded once
 - performance: zooming and resizing the canvas no longer recompute the shapes: the outline and the anchors of the selection are drawn at the scale of the view. Breaking: ShapeEntity has no selection field anymore
 - performance: each point of a brush stroke extends its path instead of building it again from all the points, and the quadratic brush no longer slows down more and more along a stroke
+- performance: a picture drawn much smaller than its image is drawn from a reduced copy of the image, made once: faster and less grainy in Firefox and Safari
 - add the Programmatic API story
 
 ## V0.18.1
