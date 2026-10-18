@@ -1,5 +1,5 @@
 import type { UtilsSettings } from '@canvas/constants/app'
-import type { Circle, DrawableShape, Line, Point, Rect } from '@canvas/types/Shapes'
+import type { Circle, DrawableShape, Line, Point, Rect, ShapeEntity } from '@canvas/types/Shapes'
 import { scalePoint } from '@canvas/utils/transform'
 import { type Bounds, getPointsBounds, rotatePoint } from '@canvas/utils/trigo'
 
@@ -28,36 +28,79 @@ export const createLinePath = (line: Line) => {
   return path
 }
 
+/** Bounds of the lists of points made by addBrushPoint, so that a growing stroke does not measure all its points again */
+const strokeBounds = new WeakMap<Point[][], Bounds>()
+
+/** Bounds of the points of a brush, without its scale */
+export const getBrushPointsBounds = (points: Point[][]): Bounds => strokeBounds.get(points) ?? getPointsBounds(points)
+
+/** The points of a brush with a new point at the end of a stroke, or in a new stroke when the index is the number of strokes */
+export const addBrushPoint = (points: Point[][], strokeIndex: number, point: Point): Point[][] => {
+  const newPoints = [...points]
+  newPoints[strokeIndex] = [...(points[strokeIndex] ?? []), point]
+  const { minX, minY, maxX, maxY } = getBrushPointsBounds(points)
+  strokeBounds.set(newPoints, {
+    minX: Math.min(minX, point[0]),
+    minY: Math.min(minY, point[1]),
+    maxX: Math.max(maxX, point[0]),
+    maxY: Math.max(maxY, point[1])
+  })
+  return newPoints
+}
+
+/** Whether the points of the brush are drawn as they are: a new point of a stroke then only extends its path */
+const isUnscaledBrush = (brush: DrawableShape<'brush'>) => (brush.scaleX ?? 1) === 1 && (brush.scaleY ?? 1) === 1
+
+const keepPoint = (point: Point) => point
+
+/** Places the points of a brush as they are drawn: scaled from the top left corner of the brush */
+export const getBrushPointScaler = (brush: DrawableShape<'brush'>): ((point: Point) => Point) => {
+  if (isUnscaledBrush(brush)) return keepPoint
+  const { minX, minY } = getBrushPointsBounds(brush.points)
+  return point => scalePoint(point, minX, minY, brush.scaleX, brush.scaleY)
+}
+
+/**
+ * The path of the brush with a new point at the end of its last stroke, extended instead of built again from all
+ * the points. Undefined when it must be built again: a single point is drawn as a square, and the end of a smoothed
+ * stroke changes with each point
+ */
+export const extendBrushPath = (brush: ShapeEntity<'brush'>, point: Point, { brushAlgo }: UtilsSettings): Path2D | undefined => {
+  if (!isUnscaledBrush(brush) || brushAlgo === 'quadratic' || brush.points[brush.points.length - 1]!.length < 2) return undefined
+  const path = new Path2D(brush.path)
+  path.lineTo(...point)
+  return path
+}
+
 export const createBrushPath = (brush: DrawableShape<'brush'>, { brushAlgo }: UtilsSettings): Path2D => {
   const path = new Path2D()
 
   if (brush.points.length < 1) return path
 
-  const { minX, minY } = getPointsBounds(brush.points)
+  const scale = getBrushPointScaler(brush)
 
   for (const points of brush.points) {
     if (!points.length) continue
     if (points.length === 1) {
-      path.rect(...scalePoint(points[0]!, minX, minY, brush.scaleX, brush.scaleY), 1, 1)
+      path.rect(...scale(points[0]!), 1, 1)
     } else {
-      path.moveTo(...scalePoint(points[0]!, minX, minY, brush.scaleX, brush.scaleY))
+      path.moveTo(...scale(points[0]!))
       switch (brushAlgo) {
-        case 'quadratic':
-          for (let i = 0; i < points.slice(1).length - 2; i++) {
-            const scaledPoint = scalePoint(points[i]!, minX, minY, brush.scaleX, brush.scaleY)
-            const scaledPoint2 = scalePoint(points[i + 1]!, minX, minY, brush.scaleX, brush.scaleY)
+        case 'quadratic': {
+          let scaledPoint = scale(points[0]!)
+          for (let i = 0; i < points.length - 3; i++) {
+            const scaledPoint2 = scale(points[i + 1]!)
             const xc = (scaledPoint[0] + scaledPoint2[0]) / 2
             const yc = (scaledPoint[1] + scaledPoint2[1]) / 2
             path.quadraticCurveTo(...scaledPoint, xc, yc)
+            scaledPoint = scaledPoint2
           }
-          path.quadraticCurveTo(
-            ...scalePoint(points[points.length - 2]!, minX, minY, brush.scaleX, brush.scaleY),
-            ...scalePoint(points[points.length - 1]!, minX, minY, brush.scaleX, brush.scaleY)
-          )
+          path.quadraticCurveTo(...scale(points[points.length - 2]!), ...scale(points[points.length - 1]!))
           break
+        }
         default:
-          for (const point of points.slice(1)) {
-            path.lineTo(...scalePoint(point, minX, minY, brush.scaleX, brush.scaleY))
+          for (let i = 1; i < points.length; i++) {
+            path.lineTo(...scale(points[i]!))
           }
           break
       }

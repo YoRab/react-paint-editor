@@ -5,9 +5,8 @@ import type { HoverModeData } from '@canvas/types/Mode'
 import type { Point, Rect, SelectionType, ShapeEntity } from '@canvas/types/Shapes'
 import { getSelectedShapes } from '@canvas/utils/selectedShapes'
 import { getAnchorRadius, getResizeAnchorCenter, getRotationAnchorCenter, hasPointAnchors } from '@canvas/utils/selection/anchors'
-import { catmullRomToBezier, createLinePath, getCatmullRomPoints } from '@canvas/utils/shapes/path'
-import { scalePoint } from '@canvas/utils/transform'
-import { getPointsBounds, isCircleIntersectRect, isPointInsideRect, rotatePoint } from './trigo'
+import { catmullRomToBezier, createLinePath, getBrushPointScaler, getCatmullRomPoints } from '@canvas/utils/shapes/path'
+import { isCircleIntersectRect, isPointInsideRect, rotatePoint } from './trigo'
 
 export const getCursorPositionInElement = (e: MouseEvent, element: HTMLElement, canvasSize: CanvasSize): Point => {
   const { clientX, clientY } = e
@@ -258,28 +257,20 @@ export const checkSelectionFrameCollision = (ctx: CanvasRenderingContext2D, shap
   ctx.lineWidth = (shape.style?.lineWidth ?? 0) + COLLISION_OFFSET
 
   if (shape.type === 'brush') {
-    const { minX: brushMinX, minY: brushMinY } = getPointsBounds(shape.points)
+    const scale = getBrushPointScaler(shape)
     for (const points of shape.points) {
       if (points.length < 1) {
         break
       }
       if (points.length < 2) {
-        const point = scalePoint(points[0]!, brushMinX, brushMinY, shape.scaleX, shape.scaleY)
+        const point = scale(points[0]!)
         if (isCircleIntersectRect(frameCollision, { x: point[0], y: point[1], radius: (shape.style?.lineWidth ?? 1) / 2 })) {
           return true
         }
       }
       for (let i = 0; i < points.length - 1; i++) {
-        const point1 = getPointPositionBeforeCanvasTransformation(
-          scalePoint(points[i]!, brushMinX, brushMinY, shape.scaleX, shape.scaleY),
-          shape.rotation ?? 0,
-          center
-        )
-        const point2 = getPointPositionBeforeCanvasTransformation(
-          scalePoint(points[i + 1]!, brushMinX, brushMinY, shape.scaleX, shape.scaleY),
-          shape.rotation ?? 0,
-          center
-        )
+        const point1 = getPointPositionBeforeCanvasTransformation(scale(points[i]!), shape.rotation ?? 0, center)
+        const point2 = getPointPositionBeforeCanvasTransformation(scale(points[i + 1]!), shape.rotation ?? 0, center)
         const pointMinX = Math.min(point1[0], point2[0])
         const pointMinY = Math.min(point1[1], point2[1])
 
