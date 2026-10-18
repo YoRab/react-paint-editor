@@ -10,6 +10,15 @@ export const isPointInsideRect = (rect: Rect, point: Point) => {
   return point[0] >= rect.x && point[0] <= rect.x + rect.width && point[1] >= rect.y && point[1] <= rect.y + rect.height
 }
 
+/** Smallest rectangle containing the rectangles */
+export const getBoundingRect = (rects: Rect[]): Rect => {
+  const x = Math.min(...rects.map(rect => rect.x))
+  const y = Math.min(...rects.map(rect => rect.y))
+  const right = Math.max(...rects.map(rect => rect.x + rect.width))
+  const bottom = Math.max(...rects.map(rect => rect.y + rect.height))
+  return { x, y, width: right - x, height: bottom - y }
+}
+
 export const isCircleIntersectRect = (rect: Rect, circle: Circle) => {
   const distX = circle.x - Math.min(Math.max(circle.x, rect.x), rect.x + rect.width)
   const distY = circle.y - Math.min(Math.max(circle.y, rect.y), rect.y + rect.height)

@@ -136,7 +136,7 @@ export const selectShape = (
       }
     }
     if (behavior === 'remove') {
-      const foundShapeGroup = buildShapesGroup(omitFromSelectedShapes(selectedShape, foundShape), settings)
+      const foundShapeGroup = buildShapesGroup(omitFromSelectedShapes(selectedShape, [foundShape]), settings)
       return {
         shape: foundShapeGroup,
         mode: {
@@ -295,6 +295,7 @@ export const addToSelectedShapes = (selection: SelectionType | undefined, shapes
   return [...new Set([...currentShapes, ...shapes])]
 }
 
-export const omitFromSelectedShapes = (selection: SelectionType | undefined, shape: ShapeEntity): ShapeEntity[] => {
-  return getSelectedShapes(selection).filter(selectedShape => selectedShape.id !== shape.id)
+export const omitFromSelectedShapes = (selection: SelectionType | undefined, shapes: ShapeEntity[]): ShapeEntity[] => {
+  const omittedIds = new Set(shapes.map(shape => shape.id))
+  return getSelectedShapes(selection).filter(selectedShape => !omittedIds.has(selectedShape.id))
 }

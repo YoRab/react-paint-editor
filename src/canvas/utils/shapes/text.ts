@@ -1,10 +1,10 @@
 import type { UtilsSettings } from '@canvas/constants/app'
 import { STYLE_FONT_DEFAULT, STYLE_FONT_SIZE_DEFAULT } from '@canvas/constants/rendering'
 import type { SelectionModeResize } from '@canvas/types/Mode'
-import type { DrawableShape, Point, Rect, SelectionType, ShapeEntity, StyleShape, Text } from '@canvas/types/Shapes'
+import type { DrawableShape, Point, Rect, SelectionType, ShapeEntity, StyleShape, Text, TextShapeInput } from '@canvas/types/Shapes'
 import type { ToolsSettingsType } from '@canvas/types/tools'
 import { createRecSelectionPath, resizeRectSelection } from '@canvas/utils/selection/rectSelection'
-import { uniqueId } from '@canvas/utils/util'
+import { createShapeId } from '@canvas/utils/util'
 import { type GroupResizeContext, getPositionWithoutGroupRotation, getShapePositionInNewBorder } from './group'
 import { createRecPath, expandRect, getComputedShapeInfos } from './path'
 import { getRectOppositeAnchorAbsolutePosition } from './rectangle'
@@ -57,7 +57,21 @@ export const fitTextFontSize = <T extends DrawableShape<'text'>>(ctx: CanvasRend
     text.style?.fontItalic ?? false,
     text.style?.fontFamily
   )
-  return { ...text, fontSize, height: fontSize * text.value.length }
+  const height = fontSize * text.value.length
+  return { ...text, fontSize, height, ratio: text.width / height }
+}
+
+/** Completes the size of a text which misses it: from its width, from its font size, or else with the default font size */
+export const sizeText = <T extends TextShapeInput>(ctx: CanvasRenderingContext2D, text: T): T & DrawableShape<'text'> => {
+  type SizedText = T & DrawableShape<'text'>
+  if (text.width !== undefined && text.height !== undefined && text.fontSize !== undefined) return text as SizedText
+  if (text.width !== undefined && text.fontSize === undefined) return fitTextFontSize(ctx, text as SizedText)
+  const { fontBold = false, fontItalic = false, fontFamily } = text.style ?? {}
+  const lines = text.value.length || 1
+  const fontSize = text.fontSize ?? (text.height !== undefined ? text.height / lines : STYLE_FONT_SIZE_DEFAULT)
+  const width = text.width ?? calculateTextWidth(ctx, text.value, fontSize, fontBold, fontItalic, fontFamily)
+  const height = text.height ?? fontSize * lines
+  return { ...text, fontSize, width, height, ratio: width / height } as SizedText
 }
 
 export const createText = (
@@ -85,7 +99,7 @@ export const createText = (
     {
       toolId: shape.id,
       type: shape.type,
-      id: uniqueId(`${shape.type}_`),
+      id: createShapeId(shape.type),
       x: cursorPosition[0] - width,
       y: cursorPosition[1] - height,
       value: DEFAULT_TEXT_VALUE,

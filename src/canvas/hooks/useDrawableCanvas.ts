@@ -77,28 +77,26 @@ const useDrawableCanvas = (store: PaintStore, canvas: HTMLCanvasElement | null) 
         if (activeTool.id !== SELECTION_TOOL.id || !store.selectors.selectWithContextMenu(state)) {
           store.setSelectedShape(undefined)
           store.setSelectionMode({ mode: 'default' })
-        } else {
-          const cursorPosition = getCursorPositionInTransformedCanvas(e, canvas, settings)
-          const { shape, mode } = selectShape(
-            ctx,
-            state.document.shapes,
-            cursorPosition,
-            settings,
-            state.document.selectedShape,
-            isTouchGesture(e),
-            false
-          )
-          store.setSelectedShape(shape)
-          store.setSelectionMode({
-            mode: 'contextMenu',
-            cursorStartPosition: cursorPosition,
-            clientPosition: { x: e.clientX, y: e.clientY },
-            originalShape: shape,
-            anchor: 'anchor' in mode ? mode.anchor : undefined
-          })
+          store.setActiveTool(SELECTION_TOOL)
+          store.setSelectionFrame(undefined)
+          return
         }
-        store.setActiveTool(SELECTION_TOOL)
-        store.setSelectionFrame(undefined)
+        const cursorPosition = getCursorPositionInTransformedCanvas(e, canvas, settings)
+        const { shape, mode } = selectShape(
+          ctx,
+          state.document.shapes,
+          cursorPosition,
+          settings,
+          state.document.selectedShape,
+          isTouchGesture(e),
+          false
+        )
+        store.showContextMenu({
+          cursorStartPosition: cursorPosition,
+          clientPosition: { x: e.clientX, y: e.clientY },
+          originalShape: shape,
+          anchor: 'anchor' in mode ? mode.anchor : undefined
+        })
       })
     }
 

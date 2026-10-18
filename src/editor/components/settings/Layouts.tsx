@@ -1,13 +1,14 @@
-import { type EditorState, type ShapeEntity, shallowEqual, usePaint, usePaintState } from '@canvas/index'
+import { type EditorState, GRID_PRESETS, type ShapeEntity, shallowEqual, usePaint, usePaintState } from '@canvas/index'
 import Button from '@editor/components/common/Button'
 import Panel from '@editor/components/common/Panel'
-import { type GridLabelType, GridValues } from '@editor/constants/grid'
 import { gridOffIcon, lockedIcon, trashIcon, unlockedIcon, visibilityIcon, visibilityOffIcon } from '@editor/constants/icons'
 import useDrag from '@editor/hooks/useDrag'
 import { getShapePicture } from '@editor/utils/style'
 import type React from 'react'
 import { memo, useMemo, useRef, useState } from 'react'
 import './Layouts.css'
+
+type GridLabelType = keyof typeof GRID_PRESETS
 
 /** What a layer shows of a shape: it does not change while the shape is moved */
 type LayerItem = {
@@ -124,7 +125,7 @@ const Layout = memo(function Layout({
 })
 
 const getGridFormat = (gridGap: number): GridLabelType =>
-  gridGap >= GridValues.large ? 'large' : gridGap >= GridValues.medium ? 'medium' : gridGap >= GridValues.small ? 'small' : 'none'
+  gridGap >= GRID_PRESETS.large ? 'large' : gridGap >= GRID_PRESETS.medium ? 'medium' : gridGap >= GRID_PRESETS.small ? 'small' : 'none'
 
 /** The layers keep their identity while their shape is only moved or resized */
 const createLayersSelector = () => {
@@ -159,7 +160,7 @@ const LayoutsPanel = ({ disabled }: { disabled: boolean }) => {
   const [layoutDragging, setLayoutDragging] = useState<string | undefined>(undefined)
   const selectedShapeIdSet = useMemo(() => new Set(selectedShapeIds), [selectedShapeIds])
 
-  const setGridFormat = (value: GridLabelType) => actions.setGridGap(GridValues[value])
+  const setGridFormat = (value: GridLabelType) => actions.setGridGap(GRID_PRESETS[value])
 
   return (
     <Panel alignment='right' className='react-paint-editor-layouts-panel' position='bottom'>

@@ -5,7 +5,7 @@ import type { ToolsSettingsType } from '@canvas/types/tools'
 import { drawPathWithFillAndStroke } from '@canvas/utils/canvas'
 import { getPointPositionBeforeCanvasTransformation } from '@canvas/utils/intersect'
 import { createRecSelectionPath, resizeRectSelection } from '@canvas/utils/selection/rectSelection'
-import { uniqueId } from '@canvas/utils/util'
+import { createShapeId } from '@canvas/utils/util'
 import { type GroupResizeContext, getPositionWithoutGroupRotation, getShapePositionInNewBorder } from './group'
 import { createRecPath, expandRect, getComputedShapeInfos } from './path'
 
@@ -38,7 +38,7 @@ export const createRectangle = <T extends rectish>(
   const recShape = {
     toolId: shape.id,
     type: shape.type,
-    id: uniqueId(`${shape.type}_`),
+    id: createShapeId(shape.type),
     x: cursorPosition[0],
     y: cursorPosition[1],
     width,

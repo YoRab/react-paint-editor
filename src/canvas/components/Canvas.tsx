@@ -1,12 +1,12 @@
 import { DRAWCANVAS_CLASSNAME, SELECTIONCANVAS_CLASSNAME } from '@canvas/constants/app'
 import useCanvasRenderer from '@canvas/hooks/useCanvasRenderer'
 import useDrawableCanvas from '@canvas/hooks/useDrawableCanvas'
+import useShapeEvents from '@canvas/hooks/useShapeEvents'
 import useZoom from '@canvas/hooks/useZoom'
 import type { PaintStore } from '@canvas/store/paintStore'
 import type { CanvasView } from '@canvas/store/selectors'
 import { getSelectedShapes } from '@canvas/utils/selectedShapes'
-import { refreshShape } from '@canvas/utils/shapes'
-import { resizeTextShapeWithNewContent } from '@canvas/utils/shapes/text'
+import { applyShapePatch } from '@canvas/utils/shapePatch'
 import type React from 'react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import './Canvas.css'
@@ -41,6 +41,7 @@ const Canvas = ({ store, view, selectionColor, selectionWidth }: CanvasElementPr
   )
 
   useDrawableCanvas(store, drawCanvas)
+  useShapeEvents(store, drawCanvas)
   useZoom({ store, canvasElt: drawCanvas, zoomEnabled: features.zoom })
   useCanvasRenderer({ store, drawCanvas, selectionCanvasRef, selectionColor, selectionWidth })
 
@@ -62,10 +63,8 @@ const Canvas = ({ store, view, selectionColor, selectionWidth }: CanvasElementPr
       const ctx = drawCanvas?.getContext('2d')
       if (!ctx) return
 
-      const settings = store.getSettings(state)
-      const newShape = refreshShape(resizeTextShapeWithNewContent(ctx, firstShape, newText, settings), settings)
-
-      store.updateShapes([newShape])
+      // same rules as an update by the API: the box of the text follows its content
+      store.updateShapes([applyShapePatch(ctx, firstShape, { id: firstShape.id, value: newText }, store.getSettings(state))])
     },
     [store, drawCanvas]
   )

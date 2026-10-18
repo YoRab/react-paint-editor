@@ -5,7 +5,6 @@ import type { DrawableShape, Point, Rect, SelectionType, ShapeEntity, StyleShape
 import type { CustomTool } from '@canvas/types/tools'
 import { transformCanvas, updateCanvasContext } from '@canvas/utils/canvas'
 import { getRectIntersection } from '@canvas/utils/intersect'
-import { set } from '@canvas/utils/object'
 import { getSelectedShapes } from '@canvas/utils/selectedShapes'
 import { buildShapesGroup } from '@canvas/utils/selection'
 import { drawSelectionGroup } from '@canvas/utils/selection/groupSelection'
@@ -14,13 +13,13 @@ import { drawBoundingBox, drawSelectionRect } from '@canvas/utils/selection/rect
 import { drawFrame } from '@canvas/utils/selection/selectionFrame'
 import { boundVectorToSingleAxis, roundForGrid } from '@canvas/utils/transform'
 import { rotatePoint } from '@canvas/utils/trigo'
-import { uniqueId } from '@canvas/utils/util'
+import { createShapeId } from '@canvas/utils/util'
 import { getCurrentView } from '@canvas/utils/zoom'
 import { createBrush, drawBrush, refreshBrush, resizeBrush, resizeBrushInGroup } from './brush'
 import { createCircle, drawCircle, refreshCircle, resizeCircle, resizeCircleInGroup } from './circle'
 import { createCurve, drawCurve, refreshCurve, resizeCurve } from './curve'
 import { createEllipse, drawEllipse, refreshEllipse, resizeEllipse, resizeEllipseInGroup } from './ellipse'
-import { getGroupResizeContext } from './group'
+import { buildGroupResizeContext, type GroupResizeContext, getGroupResizeContext } from './group'
 import { createLine, drawLine, refreshLine, resizeLine, resizeLinePolygonCurveInGroup } from './line'
 import { drawPicture, refreshPicture, resizePicture, resizePictureInGroup } from './picture'
 import { createPolygon, drawPolygon, refreshPolygon, resizePolygon } from './polygon'
@@ -211,6 +210,51 @@ export const resizeShape = <T extends ShapeEntity>(
   }
 }
 
+/**
+ * Whether shapes resized together keep their proportions: a group with a shape keeping its ratio, or with shapes
+ * turned differently, cannot be stretched
+ */
+export const mustKeepRatio = (shapes: ShapeEntity[]): boolean => {
+  const shapesWithRotation = shapes.filter(s => SHAPES_WITH_ROTATION.includes(s.type))
+  const sameRotation = !shapesWithRotation.some(s => (s.rotation ?? 0) !== (shapesWithRotation[0]?.rotation ?? 0))
+  const hasRotationButWithShapesWithoutRotation = (shapesWithRotation[0]?.rotation ?? 0) !== 0 && shapesWithRotation.length !== shapes.length
+  const hasShapesWithRatio = shapes.some(s => SHAPES_KEEPING_RATIO.includes(s.type))
+  return !sameRotation || hasShapesWithRatio || hasRotationButWithShapesWithoutRotation
+}
+
+/** Resizes a shape of a group (or a single shape) to the new borders of the group described by the context */
+export const resizeShapeInGroup = (
+  ctx: CanvasRenderingContext2D,
+  shape: ShapeEntity,
+  group: SelectionType,
+  groupCtx: GroupResizeContext
+): ShapeEntity => {
+  if (shape.locked) return shape
+  // a single shape is resized as a group of one shape
+  const asGroup = group as SelectionType & { type: 'group' }
+  switch (shape.type) {
+    case 'rect':
+    case 'square':
+      return resizeRectInGroup(shape, asGroup, groupCtx)
+    case 'picture':
+      return resizePictureInGroup(shape, asGroup, groupCtx)
+    case 'text':
+      return resizeTextInGroup(ctx, shape, asGroup, groupCtx)
+    case 'ellipse':
+      return resizeEllipseInGroup(shape, asGroup, groupCtx)
+    case 'circle':
+      return resizeCircleInGroup(shape, asGroup, groupCtx)
+    case 'brush':
+      return resizeBrushInGroup(shape, asGroup, groupCtx)
+    case 'line':
+    case 'polygon':
+    case 'curve':
+      return resizeLinePolygonCurveInGroup(shape, asGroup, groupCtx)
+    default:
+      return shape
+  }
+}
+
 export const resizeShapes = (
   ctx: CanvasRenderingContext2D,
   cursorPosition: Point,
@@ -228,99 +272,72 @@ export const resizeShapes = (
 
   const group = originalShape
   const groupShapes = getSelectedShapes(group)
-  const shapesWithRotation = groupShapes.filter(s => SHAPES_WITH_ROTATION.includes(s.type))
-  const sameRotation = !shapesWithRotation.some(s => (s.rotation ?? 0) !== (shapesWithRotation[0]?.rotation ?? 0))
-  const hasRotationButWithShapesWithoutRotation = (shapesWithRotation[0]?.rotation ?? 0) !== 0 && shapesWithRotation.length !== groupShapes.length
-  const hasShapesWithRatio = groupShapes.some(s => SHAPES_KEEPING_RATIO.includes(s.type))
-  const keepRatio = isShiftPressed || !sameRotation || hasShapesWithRatio || hasRotationButWithShapesWithoutRotation
+  const keepRatio = isShiftPressed || mustKeepRatio(groupShapes)
 
   const groupCtx = getGroupResizeContext(cursorPosition, group, selectionMode as SelectionModeResize, settings, keepRatio, isAltPressed)
 
-  return groupShapes.map(shape => {
-    if (shape.locked) return shape
-    switch (shape.type) {
-      case 'rect':
-      case 'square':
-        return resizeRectInGroup(shape, group, groupCtx)
-      case 'picture':
-        return resizePictureInGroup(shape, group, groupCtx)
-      case 'text':
-        return resizeTextInGroup(ctx, shape, group, groupCtx)
-      case 'ellipse':
-        return resizeEllipseInGroup(shape, group, groupCtx)
-      case 'circle':
-        return resizeCircleInGroup(shape, group, groupCtx)
-      case 'brush':
-        return resizeBrushInGroup(shape, group, groupCtx)
-      case 'line':
-      case 'polygon':
-      case 'curve':
-        return resizeLinePolygonCurveInGroup(shape, group, groupCtx)
-      default: // group, should not happen
-        return resizeShape(ctx, cursorPosition, shape, selectionMode, settings, isShiftPressed, isAltPressed)
-    }
-  })
+  return groupShapes.map(shape =>
+    shape.type === 'group'
+      ? resizeShape(ctx, cursorPosition, shape, selectionMode, settings, isShiftPressed, isAltPressed) // should not happen
+      : resizeShapeInGroup(ctx, shape, group, groupCtx)
+  )
 }
 
+/** Content box of a selection: its borders without the padding of the selection */
+export const getSelectionBounds = (selection: SelectionType, settings: UtilsSettings): Rect => {
+  const { borders } = selection.computed
+  const padding = settings.selectionPadding
+  return { x: borders.x + padding, y: borders.y + padding, width: borders.width - 2 * padding, height: borders.height - 2 * padding }
+}
+
+/**
+ * Resizes shapes so that the content box of their selection becomes the given box. When they must keep their
+ * proportions, the box is reduced to keep them, from its top left corner
+ */
+export const resizeShapesToBounds = (ctx: CanvasRenderingContext2D, shapes: ShapeEntity[], bounds: Rect, settings: UtilsSettings): ShapeEntity[] => {
+  const selection = buildShapesGroup(shapes, settings)
+  if (!selection) return shapes
+  const current = getSelectionBounds(selection, settings)
+  let { width, height } = bounds
+  if (mustKeepRatio(shapes) && current.width > 0 && current.height > 0) {
+    const scale = Math.min(width / current.width, height / current.height)
+    width = current.width * scale
+    height = current.height * scale
+  }
+  const padding = settings.selectionPadding
+  const groupCtx = buildGroupResizeContext(
+    selection,
+    { x: bounds.x - padding, y: bounds.y - padding, width: width + 2 * padding, height: height + 2 * padding },
+    settings
+  )
+  return shapes.map(shape => resizeShapeInGroup(ctx, shape, selection, groupCtx))
+}
+
+/** Flips shapes around the center of their group */
 export const flipShapes = (
   ctx: CanvasRenderingContext2D,
   shapes: ShapeEntity[],
-  selectedShapes: ShapeEntity[],
-  center: Point,
   action: 'flipHorizontally' | 'flipVertically',
   settings: UtilsSettings
 ): ShapeEntity[] => {
-  if (selectedShapes.length === 0) return shapes
-
-  const group = buildShapesGroup(selectedShapes, settings) as SelectionType & { type: 'group' }
-  const borders = group.computed.borders
+  const group = buildShapesGroup(shapes, settings)
+  if (!group) return []
 
   const groupCtx = {
-    newBorderX: borders.x,
-    newBorderY: borders.y,
-    newBorderWidth: borders.width,
-    newBorderHeight: borders.height,
+    ...buildGroupResizeContext(group, group.computed.borders, settings, {
+      isXinverted: action === 'flipHorizontally',
+      isYinverted: action === 'flipVertically',
+      rotation: 0 // group rotation is 0 to force flipping single shapes with rotation
+    }),
     widthMultiplier: 1,
     heightMultiplier: 1,
-    isXinverted: action === 'flipHorizontally',
-    isYinverted: action === 'flipVertically',
-    groupCenter: center,
-    rotation: 0, // group rotation is 0 to force flipping single shapes with rotation
-    settings,
-    originalBorders: borders
+    groupCenter: group.computed.center
   }
 
-  const selectedIds = new Set(selectedShapes.map(shape => shape.id))
-
-  return shapes.map(shape => {
-    if (shape.locked) return shape
-    if (!selectedIds.has(shape.id)) return shape
-
-    switch (shape.type) {
-      case 'rect':
-      case 'square':
-        return resizeRectInGroup(shape, group, groupCtx)
-      case 'picture':
-        return resizePictureInGroup(shape, group, groupCtx)
-      case 'text':
-        return resizeTextInGroup(ctx, shape, group, groupCtx)
-      case 'ellipse':
-        return resizeEllipseInGroup(shape, group, groupCtx)
-      case 'circle':
-        return resizeCircleInGroup(shape, group, groupCtx)
-      case 'brush':
-        return resizeBrushInGroup(shape, group, groupCtx)
-      case 'line':
-      case 'polygon':
-      case 'curve':
-        return resizeLinePolygonCurveInGroup(shape, group, groupCtx)
-      default:
-        return shape
-    }
-  })
+  return shapes.map(shape => resizeShapeInGroup(ctx, shape, group, groupCtx))
 }
 
-const translateShape = (shape: ShapeEntity, translationX: number, translationY: number, settings: UtilsSettings): ShapeEntity => {
+export const translateShape = (shape: ShapeEntity, translationX: number, translationY: number, settings: UtilsSettings): ShapeEntity => {
   if (shape.locked) return shape
   switch (shape.type) {
     case 'rect':
@@ -425,20 +442,15 @@ export const canRemoveShapePoint = (
   shape.points.length > 2
 
 /**
- * Returns the shape with the new style value. Font fields only apply to texts, whose font size is fitted
- * to their width: other shapes, or texts when no context is available, are returned unchanged.
+ * Returns the shape with the new style values. Font fields only apply to texts, whose font size is fitted
+ * to their width: a shape is returned unchanged when no field applies to it.
  */
-export const updateShapeStyle = (
-  ctx: CanvasRenderingContext2D | null | undefined,
-  shape: ShapeEntity,
-  field: keyof StyleShape,
-  value: unknown,
-  settings: UtilsSettings
-): ShapeEntity => {
-  const newShape = set(['style', field], value, shape)
-  if (!isFontStyleField(field)) return refreshShape(newShape, settings)
-  if (newShape.type !== 'text' || !ctx) return shape
-  return refreshShape(fitTextFontSize(ctx, newShape), settings)
+export const updateShapeStyle = (ctx: CanvasRenderingContext2D, shape: ShapeEntity, style: StyleShape, settings: UtilsSettings): ShapeEntity => {
+  const fields = (Object.keys(style) as (keyof StyleShape)[]).filter(field => shape.type === 'text' || !isFontStyleField(field))
+  if (!fields.length) return shape
+  const newShape = { ...shape, style: { ...shape.style, ...Object.fromEntries(fields.map(field => [field, style[field]])) } }
+  if (newShape.type === 'text' && fields.some(isFontStyleField)) return refreshShape(fitTextFontSize(ctx, newShape), settings)
+  return refreshShape(newShape, settings)
 }
 
 export const drawShapeSelection = ({
@@ -507,11 +519,12 @@ export const drawSelectionFrame = ({
   ctx.restore()
 }
 
-export const copyShapes = (groupShape: SelectionType, settings: UtilsSettings): ShapeEntity[] => {
-  return getSelectedShapes(groupShape).map(shape => {
-    return {
-      ...translateShape(shape, 20, 20, settings),
-      id: uniqueId(`${shape.type}_`)
-    }
-  })
-}
+/** Copy of a shape with a new id. The copy does not share the data of the application with the original */
+export const cloneShape = <T extends ShapeEntity>(shape: T): T => ({
+  ...shape,
+  id: createShapeId(shape.type),
+  ...(shape.data ? { data: structuredClone(shape.data) } : {})
+})
+
+export const copyShapes = (groupShape: SelectionType, settings: UtilsSettings): ShapeEntity[] =>
+  getSelectedShapes(groupShape).map(shape => cloneShape(translateShape(shape, 20, 20, settings)))

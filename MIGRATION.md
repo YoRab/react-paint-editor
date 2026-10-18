@@ -22,7 +22,7 @@ The functions returned next to `editorProps` move to the handle:
 | 0.x | 1.0 |
 | --- | --- |
 | `registerEvent`, `unregisterEvent` | `paint.registerEvent`, `paint.unregisterEvent`. `registerEvent` returns the function that unregisters the listener |
-| `resetCanvas`, `getCurrentImage`, `getCurrentData` | `paint.resetCanvas`, `paint.getCurrentImage`, `paint.getCurrentData` |
+| `resetCanvas`, `getCurrentImage(view)`, `getCurrentData` | `paint.resetCanvas`, `paint.getCurrentImage({ view })`, `paint.getCurrentData`, see [exported data](#exported-data-and-images) |
 | `resetZoom()`, `setCanvasZoom(action)`, `setCanvasOffset(offset)` | `paint.actions.resetZoom()`, `paint.actions.setZoom(action)`, `paint.actions.setOffset(offset)` |
 | `annotationsProps.style` | `useAnnotationsStyle(paint)`, see [below](#annotationsprops) |
 
@@ -88,7 +88,7 @@ Options that only drive the editor interface are now given to the `Editor` compo
 
 The same goes for the selection and move tools, exported as `SELECTION_TOOL` and `MOVE_TOOL`: `icon` and `label` of `ActionsTool` become optional. Select them by id, with `paint.actions.selectTool(SELECTION_TOOL.id)`.
 
-`ActionsType`, the type of `ActionsTool`, is reduced to the tools handled by the canvas: `'selection' | 'move'`. The buttons of the editor (`undo`, `redo`, `clear`, `export`, `loadfile`, `savefile`, `uploadpicture`, `addurlpicture`) are not part of the API anymore: a custom editor calls the matching actions (`paint.actions.undo()`, `paint.actions.exportPicture(view)`...) from its own buttons.
+`ActionsType`, the type of `ActionsTool`, is reduced to the tools handled by the canvas: `'selection' | 'move'`. The buttons of the editor (`undo`, `redo`, `clear`, `export`, `loadfile`, `savefile`, `uploadpicture`, `addurlpicture`) are not part of the API anymore: a custom editor calls the matching actions (`paint.actions.undo()`, `paint.actions.exportPicture({ view })`...) from its own buttons.
 
 `useReactPaint` from `@yorab/react-paint/canvas` now provides the default tools too, like the one from the package root.
 
@@ -131,7 +131,7 @@ In the table below, `state.x` stands for `usePaintState(paint, state => state.x)
 | `setCopiedShape`, `copyShapes`, `buildShapesGroup`, `pasteShapes` | `paint.actions.copy(ids?)`, `paint.actions.cut(ids?)`, `paint.actions.paste()` |
 | `setSelectionMode({ mode: 'default' })` to close the context menu | `paint.actions.closeContextMenu()` |
 | `setCanvasZoom`, `resetZoom`, `setGridGap` | `paint.actions.setZoom`, `paint.actions.resetZoom`, `paint.actions.setGridGap` |
-| `loadFile`, `exportPicture`, `exportData`, `clearCanvas` | same names in `paint.actions` |
+| `loadFile`, `exportPicture(view)`, `exportData`, `clearCanvas` | `paint.actions.loadFile`, `paint.actions.exportPicture({ view })`, `paint.actions.exportData`, `paint.actions.clearCanvas` |
 
 `paint` and `paint.actions` keep the same identity for the whole life of the component, so they can safely be used in hooks dependencies.
 
@@ -152,7 +152,7 @@ paint.registerEvent('toolChanged', (tool: ToolsType) => {})
 useEffect(() => paint.registerEvent('dataChanged', (data, source) => save(data)), [paint])
 ```
 
-The events are emitted right after the change of the state, before React renders it. `dataChanged` doesn't change otherwise.
+The events are emitted right after the change of the state, before React renders it. `dataChanged` keeps its first two arguments, and receives a third one: the shapes added, updated and removed since the previous state.
 
 ## `annotationsProps`
 
@@ -165,6 +165,29 @@ The events are emitted right after the change of the state, before React renders
 + const annotationsStyle = useAnnotationsStyle(paint)
 + <img src={src} style={annotationsStyle} />
 ```
+
+## Exported data and images
+
+The shapes keep their `id` in the exported data (`getCurrentData`, `dataChanged`, `exportData`), and when they are loaded again: an application can store data linked to a shape by its id. A missing or already used id is replaced by a new one. The ids of new shapes are random, like `rect_0b6c…`, instead of a counter.
+
+`getCurrentImage` and `exportPicture` take an object of options instead of the view:
+
+```diff
+- paint.getCurrentImage('fitToShapes')
++ paint.getCurrentImage({ view: 'fitToShapes' })
+- paint.actions.exportPicture('currentZoom')
++ paint.actions.exportPicture({ view: 'currentZoom', format: 'jpeg', quality: 0.9, fileName: 'drawing.jpg' })
+```
+
+The options also give a `backgroundColor`, and a `backgroundImage` drawn under the shapes, like the picture laid under the canvas with `useAnnotationsStyle`.
+
+## Other changes
+
+- `updateToolSettings` ignores a field the tool has not, instead of adding it.
+- `transformShapes` no longer selects the transformed shapes.
+- The grid follows a change of the `grid` option after the creation.
+
+Everything the editor does can now be done from the code: see [Driving the canvas from the code](./README.md#driving-the-canvas-from-the-code).
 
 ## CSS
 

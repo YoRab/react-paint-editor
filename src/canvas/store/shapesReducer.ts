@@ -1,4 +1,6 @@
+import type { ChangeSource } from '@canvas/types/editor'
 import type { SelectionType, ShapeEntity } from '@canvas/types/Shapes'
+import { insertAt } from '@canvas/utils/array'
 import { isEqual, omit } from '@canvas/utils/object'
 
 // --- Types ---
@@ -6,7 +8,7 @@ import { isEqual, omit } from '@canvas/utils/object'
 type HistoryEntry = {
   shapes: ShapeEntity[]
   selectedShape: SelectionType | undefined
-  source: 'user' | 'remote'
+  source: ChangeSource
 }
 
 export type ShapesState = {
@@ -16,17 +18,19 @@ export type ShapesState = {
 }
 
 export type ShapesAction =
-  | { type: 'ADD'; newShapes: ShapeEntity[] }
-  | { type: 'UPDATE'; updatedShapes: ShapeEntity[]; newSelectedShape: SelectionType | undefined; save: boolean }
-  | { type: 'REMOVE'; ids: Set<string>; newSelectedShape: SelectionType | undefined }
+  | { type: 'ADD'; newShapes: ShapeEntity[]; index?: number | undefined }
+  | { type: 'UPDATE'; updatedShapes: ShapeEntity[]; newSelectedShape: SelectionType | undefined; save: boolean; source?: ChangeSource | undefined }
+  | { type: 'REMOVE'; ids: Set<string>; newSelectedShape: SelectionType | undefined; source?: ChangeSource | undefined }
   | { type: 'DUPLICATE'; newShapesMap: Map<string, ShapeEntity>; newSelectedShape: SelectionType | undefined }
   | { type: 'RESET_AND_SAVE'; shapes: ShapeEntity[]; newSelectedShape: SelectionType | undefined }
   | { type: 'SET_SELECTION'; newSelectedShape: SelectionType | undefined }
-  | { type: 'SAVE' }
+  | { type: 'SAVE'; source?: ChangeSource | undefined }
   | { type: 'UNDO' }
   | { type: 'REDO' }
-  | { type: 'CLEAR'; shapes: ShapeEntity[]; clearHistory: boolean; source: 'user' | 'remote' }
+  | { type: 'CLEAR'; shapes: ShapeEntity[]; clearHistory: boolean; source: ChangeSource }
   | { type: 'REFRESH_ALL'; shapes: ShapeEntity[]; newSelectedShape: SelectionType | undefined }
+  /** Merges the steps added after the cursor `from` into a single one, the last */
+  | { type: 'SQUASH_HISTORY'; from: number }
 
 export const INITIAL_SHAPES_STATE: ShapesState = {
   shapes: [],
@@ -40,7 +44,7 @@ const addHistoryEntry = (
   history: ShapesState['history'],
   shapes: ShapeEntity[],
   selectedShape: SelectionType | undefined,
-  source: 'user' | 'remote'
+  source: ChangeSource = 'user'
 ): ShapesState['history'] => {
   if (isEqual(history.states[history.cursor]?.shapes, shapes)) return history
   return {
@@ -54,13 +58,13 @@ const addHistoryEntry = (
 export const shapesReducer = (state: ShapesState, action: ShapesAction): ShapesState => {
   switch (action.type) {
     case 'ADD':
-      return { ...state, shapes: [...action.newShapes, ...state.shapes] }
+      return { ...state, shapes: insertAt(state.shapes, action.index ?? 0, ...action.newShapes) }
 
     case 'UPDATE': {
       const byId = new Map(action.updatedShapes.map(s => [s.id, s]))
       const newShapes = state.shapes.map(s => byId.get(s.id) ?? s)
       const next = { ...state, shapes: newShapes, selectedShape: action.newSelectedShape }
-      return action.save ? { ...next, history: addHistoryEntry(next.history, newShapes, action.newSelectedShape, 'user') } : next
+      return action.save ? { ...next, history: addHistoryEntry(next.history, newShapes, action.newSelectedShape, action.source) } : next
     }
 
     case 'REMOVE': {
@@ -69,7 +73,7 @@ export const shapesReducer = (state: ShapesState, action: ShapesAction): ShapesS
         ...state,
         shapes: newShapes,
         selectedShape: action.newSelectedShape,
-        history: addHistoryEntry(state.history, newShapes, action.newSelectedShape, 'user')
+        history: addHistoryEntry(state.history, newShapes, action.newSelectedShape, action.source)
       }
     }
 
@@ -87,7 +91,7 @@ export const shapesReducer = (state: ShapesState, action: ShapesAction): ShapesS
         ...state,
         shapes: pureShapes,
         selectedShape: action.newSelectedShape,
-        history: addHistoryEntry(state.history, pureShapes, action.newSelectedShape, 'user')
+        history: addHistoryEntry(state.history, pureShapes, action.newSelectedShape)
       }
     }
 
@@ -95,7 +99,7 @@ export const shapesReducer = (state: ShapesState, action: ShapesAction): ShapesS
       return { ...state, selectedShape: action.newSelectedShape }
 
     case 'SAVE':
-      return { ...state, history: addHistoryEntry(state.history, state.shapes, state.selectedShape, 'user') }
+      return { ...state, history: addHistoryEntry(state.history, state.shapes, state.selectedShape, action.source) }
 
     case 'UNDO': {
       if (state.history.cursor <= 0) return state
@@ -127,6 +131,12 @@ export const shapesReducer = (state: ShapesState, action: ShapesAction): ShapesS
 
     case 'REFRESH_ALL':
       return { ...state, shapes: action.shapes, selectedShape: action.newSelectedShape }
+
+    case 'SQUASH_HISTORY': {
+      const { states, cursor } = state.history
+      if (cursor <= action.from + 1) return state
+      return { ...state, history: { states: [...states.slice(0, action.from + 1), states[cursor]!], cursor: action.from + 1 } }
+    }
 
     default:
       return state

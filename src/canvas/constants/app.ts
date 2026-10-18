@@ -1,5 +1,5 @@
 import type { Size } from '@canvas/types/Canvas'
-import type { ExportedDrawableShape } from '@canvas/types/Shapes'
+import type { ShapeInput } from '@canvas/types/Shapes'
 import type { CustomToolInput } from '@canvas/types/tools'
 import type { RecursivePartial } from '@canvas/types/utils'
 import { SELECTION_DEFAULT_COLOR, SELECTION_DEFAULT_PADDING, SELECTION_DEFAULT_WIDTH } from './shapes'
@@ -22,7 +22,7 @@ export type AppOptions = {
   withFrameSelection: boolean
   withSkeleton: boolean
   withContextMenu: boolean
-  clearCallback: 'empty' | 'defaultShapes' | (() => ExportedDrawableShape[])
+  clearCallback: 'empty' | 'defaultShapes' | (() => ShapeInput[])
   brushAlgo: BrushAlgo
   isBrushShapeDoneOnMouseUp: boolean
   canvasSelectionPadding: number

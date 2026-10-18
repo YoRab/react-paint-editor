@@ -67,3 +67,25 @@ export const drawPathWithFillAndStroke = (
     ctx.stroke(path)
   }
 }
+
+/** A 2D context of a canvas out of the page, to measure texts and test points when no Canvas is mounted. Null outside of a browser */
+export const createDetachedContext = (): CanvasRenderingContext2D | null => {
+  if (typeof document === 'undefined') return null
+  try {
+    return document.createElement('canvas').getContext('2d')
+  } catch {
+    return null
+  }
+}
+
+/**
+ * Measures texts without a canvas, about 0.6 em per character, so that texts can still be created outside of a browser.
+ * It only has the members used to measure a text
+ */
+export const createApproximateTextContext = (): CanvasRenderingContext2D => {
+  const context = {
+    font: '10px sans-serif',
+    measureText: (text: string) => ({ width: text.length * Number.parseFloat(/([\d.]+)px/.exec(context.font)?.[1] ?? '10') * 0.6 })
+  }
+  return context as unknown as CanvasRenderingContext2D
+}

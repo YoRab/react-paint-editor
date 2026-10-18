@@ -1,6 +1,6 @@
 import { createPaintStore } from '@canvas/store/paintStore'
 import type { UseReactPaintProps } from '@canvas/store/types'
-import type { ExportedDrawableShape } from '@canvas/types/Shapes'
+import type { ExportedDrawableShape, ShapeInput } from '@canvas/types/Shapes'
 import { vi } from 'vitest'
 
 /** Path2D only exists in a browser: the store builds the paths of the shapes, without drawing them */
@@ -31,7 +31,7 @@ export const RECTS: ExportedDrawableShape[] = [
 ]
 
 /** A store holding the shapes, RECTS by default */
-export const createLoadedStore = async (props: UseReactPaintProps = {}, shapes: ExportedDrawableShape[] = RECTS) => {
+export const createLoadedStore = async (props: UseReactPaintProps = {}, shapes: ShapeInput[] = RECTS) => {
   const store = createPaintStore(props)
   await store.resetCanvas(shapes)
   return store

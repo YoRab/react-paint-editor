@@ -1,5 +1,7 @@
 import type { SelectionType, ShapeEntity } from '@canvas/types/Shapes'
 import type { CustomTool, ToolsGroupSettings } from '@canvas/types/tools'
+import { compact } from '@canvas/utils/array'
+import { findShapeTool } from '@canvas/utils/tools'
 
 export const getSelectedShapes = (selection: SelectionType | undefined): ShapeEntity[] => {
   if (!selection) return []
@@ -7,12 +9,7 @@ export const getSelectedShapes = (selection: SelectionType | undefined): ShapeEn
 }
 
 export const getSelectedShapesTools = (selection: SelectionType | undefined, availableTools: CustomTool[]): CustomTool | undefined => {
-  const selectedShapes = getSelectedShapes(selection)
-  const tools = selectedShapes
-    .map(shape => {
-      return availableTools.find(tool => tool.id === shape?.toolId) || availableTools.find(tool => tool.type === shape?.type)
-    })
-    .filter(tool => tool !== undefined)
+  const tools = compact(getSelectedShapes(selection).map(shape => findShapeTool(availableTools, shape)))
   if (!tools.length) return undefined
   if (tools.length === 1) return tools[0]
 

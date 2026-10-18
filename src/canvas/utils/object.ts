@@ -33,13 +33,18 @@ export const set = <T extends Record<string, any> | unknown[]>(path: string | nu
   return result
 }
 
-/** Shallow merges the options into the defaults, ignoring the options set to undefined */
-export const withDefaults = <T extends object>(defaults: T, options: object | undefined): T =>
-  ({ ...defaults, ...Object.fromEntries(Object.entries(options ?? {}).filter(([, value]) => value !== undefined)) }) as T
+/** Copy of the object without its entries set to undefined */
+export const omitUndefined = <T extends object>(obj: T): T => Object.fromEntries(Object.entries(obj).filter(([, value]) => value !== undefined)) as T
 
-const isRecord = (value: unknown): value is Record<string, unknown> => {
+/** Shallow merges the options into the defaults, ignoring the options set to undefined */
+export const withDefaults = <T extends object>(defaults: T, options: object | undefined): T => ({ ...defaults, ...omitUndefined(options ?? {}) }) as T
+
+export const isRecord = (value: unknown): value is Record<string, unknown> => {
   return typeof value === 'object' && !Array.isArray(value) && value !== null
 }
+
+/** Customizer of mergeWith which replaces the arrays instead of merging them */
+export const replaceArrays = (objValue: unknown, srcValue: unknown) => (Array.isArray(objValue) ? srcValue : undefined)
 
 export const mergeWith = (
   customMergeFn: (objValue: unknown, srcValue: unknown, key: string) => unknown,

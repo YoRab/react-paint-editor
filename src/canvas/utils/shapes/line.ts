@@ -9,7 +9,7 @@ import { createLineSelectionPath } from '@canvas/utils/selection/lineSelection'
 import { createLinePath, getComputedShapeInfos } from '@canvas/utils/shapes/path'
 import { roundForGrid, shortenLine } from '@canvas/utils/transform'
 import { getAngleFromVector, rotatePoint } from '@canvas/utils/trigo'
-import { uniqueId } from '@canvas/utils/util'
+import { createShapeId } from '@canvas/utils/util'
 import { refreshCurve } from './curve'
 import { type GroupResizeContext, getPositionWithoutGroupRotation, getShapePositionInNewBorder } from './group'
 import { refreshPolygon } from './polygon'
@@ -76,7 +76,7 @@ export const createLine = (
   const lineShape = {
     toolId: shape.id,
     type: shape.type,
-    id: uniqueId(`${shape.type}_`),
+    id: createShapeId(shape.type),
     points: [cursorPosition, cursorPosition] as const,
     style: {
       opacity: shape.settings.opacity.default,

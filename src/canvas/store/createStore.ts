@@ -5,8 +5,8 @@ type Store<T> = {
   /** Replaces the state. Listeners are notified when it changes, once at the end of the outermost batch */
   setState: (updater: T | ((state: T) => T)) => void
   subscribe: (listener: StoreListener) => () => void
-  /** Calls onChange when the selected value changes, compared with isEqual. Returns the function that unsubscribes it */
-  watch: <S>(select: (state: T) => S, onChange: (value: S) => void, isEqual?: (a: S, b: S) => boolean) => () => void
+  /** Calls onChange with the new and the previous value when the selected value changes, compared with isEqual. Returns the function that unsubscribes it */
+  watch: <S>(select: (state: T) => S, onChange: (value: S, previous: S) => void, isEqual?: (a: S, b: S) => boolean) => () => void
   /** Runs the function and notifies the listeners only once at the end, if the state changed */
   batch: <R>(fn: () => R) => R
 }
@@ -49,8 +49,9 @@ export const createStore = <T>(initialState: T): Store<T> => {
       return subscribe(() => {
         const value = select(state)
         if (isEqual(lastValue, value)) return
+        const previous = lastValue
         lastValue = value
-        onChange(value)
+        onChange(value, previous)
       })
     },
     batch: fn => {

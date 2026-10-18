@@ -5,7 +5,7 @@ import type { DrawableShape, Point, SelectionType, ShapeEntity } from '@canvas/t
 import { addSizeAndConvertSvgToObjectUrl, fetchAndStringify, isSvg } from '@canvas/utils/file'
 import { createRecSelectionPath, resizeRectSelection } from '@canvas/utils/selection/rectSelection'
 import { fitContentInsideContainer } from '@canvas/utils/transform'
-import { uniqueId } from '@canvas/utils/util'
+import { createShapeId } from '@canvas/utils/util'
 import { type GroupResizeContext, getPositionWithoutGroupRotation, getShapePositionInNewBorder } from './group'
 import { createRecPath, getComputedShapeInfos } from './path'
 import { getRectBorder } from './rectangle'
@@ -35,7 +35,7 @@ const createPictureShape = (
     {
       toolId: PICTURE_TOOL_ID,
       type: 'picture',
-      id: uniqueId(`${'picture'}_`),
+      id: createShapeId('picture'),
       x: -settings.canvasOffset[0] + settings.canvasSize.realWidth / settings.canvasZoom / 2 - width / 2,
       y: -settings.canvasOffset[1] + settings.canvasSize.realHeight / settings.canvasZoom / 2 - height / 2,
       width,

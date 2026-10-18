@@ -9,7 +9,7 @@ import { createLineSelectionPath } from '@canvas/utils/selection/lineSelection'
 import { catmullRomToBezier, createCurvePath, getCatmullRomPoints, getComputedShapeInfos, getCubicBezierBounds } from '@canvas/utils/shapes/path'
 import { getRectBorder } from '@canvas/utils/shapes/rectangle'
 import { roundForGrid } from '@canvas/utils/transform'
-import { uniqueId } from '@canvas/utils/util'
+import { createShapeId } from '@canvas/utils/util'
 import { getPolygonBorder } from './polygon'
 
 const getCurveOuterBorder = (curve: DrawableShape<'curve'>, _borders: Rect, settings: Pick<UtilsSettings, 'selectionPadding'>): Rect => {
@@ -73,7 +73,7 @@ export const createCurve = (
     {
       toolId: shape.id,
       type: shape.type,
-      id: uniqueId(`${shape.type}_`),
+      id: createShapeId(shape.type),
       points: [cursorPosition],
       style: {
         opacity: shape.settings.opacity.default,

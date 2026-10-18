@@ -88,8 +88,9 @@ export async function selectTool(view: ReturnType<typeof within>, toolId: string
 
 // ─── Assertion helpers ─────────────────────────────────────────────────────────
 
+/** An exported shape keeps its id, but none of the data computed by the canvas */
 export function assertNoInternalFields(shape: unknown) {
-  expect(shape).not.toHaveProperty('id')
+  expect(shape).toHaveProperty('id', expect.any(String))
   expect(shape).not.toHaveProperty('path')
   expect(shape).not.toHaveProperty('computed')
   expect(shape).not.toHaveProperty('selection')

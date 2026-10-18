@@ -1,6 +1,6 @@
 import type { UtilsSettings } from '@canvas/constants/app'
 import type { SelectionModeResize } from '@canvas/types/Mode'
-import type { Point, SelectionType, ShapeEntity } from '@canvas/types/Shapes'
+import type { Point, Rect, SelectionType, ShapeEntity } from '@canvas/types/Shapes'
 import { resizeRectSelection } from '@canvas/utils/selection/rectSelection'
 import { rotatePoint } from '@canvas/utils/trigo'
 
@@ -20,6 +20,37 @@ export type GroupResizeContext = {
   originalBorders: { x: number; y: number; width: number; height: number }
 }
 
+/** Context to resize the shapes of a group (or a single shape) so that the borders of the group become the new ones */
+export const buildGroupResizeContext = (
+  group: SelectionType,
+  newBorders: Rect,
+  settings: UtilsSettings,
+  {
+    isXinverted = false,
+    isYinverted = false,
+    rotation = group.rotation ?? 0
+  }: { isXinverted?: boolean; isYinverted?: boolean; rotation?: number } = {}
+): GroupResizeContext => {
+  const { borders } = group.computed
+  const widthMultiplier = (newBorders.width - 2 * settings.selectionPadding) / (borders.width - 2 * settings.selectionPadding || 1)
+  const heightMultiplier = (newBorders.height - 2 * settings.selectionPadding) / (borders.height - 2 * settings.selectionPadding || 1)
+
+  return {
+    newBorderX: newBorders.x,
+    newBorderY: newBorders.y,
+    newBorderWidth: newBorders.width,
+    newBorderHeight: newBorders.height,
+    widthMultiplier,
+    heightMultiplier,
+    isXinverted,
+    isYinverted,
+    groupCenter: [newBorders.x + newBorders.width / 2, newBorders.y + newBorders.height / 2],
+    rotation,
+    settings,
+    originalBorders: borders
+  }
+}
+
 export const getGroupResizeContext = (
   cursorPosition: Point,
   group: SelectionType & { type: 'group' },
@@ -28,33 +59,15 @@ export const getGroupResizeContext = (
   keepRatio: boolean,
   isAltPressed: boolean
 ): GroupResizeContext => {
-  const { borders } = group.computed
-  const {
-    borderX: newBorderX,
-    borderHeight: newBorderHeight,
-    borderY: newBorderY,
-    borderWidth: newBorderWidth,
-    isXinverted,
-    isYinverted
-  } = resizeRectSelection(cursorPosition, group, selectionMode, settings, keepRatio, isAltPressed)
-
-  const widthMultiplier = (newBorderWidth - 2 * settings.selectionPadding) / (borders.width - 2 * settings.selectionPadding || 1)
-  const heightMultiplier = (newBorderHeight - 2 * settings.selectionPadding) / (borders.height - 2 * settings.selectionPadding || 1)
-
-  return {
-    newBorderX,
-    newBorderY,
-    newBorderWidth,
-    newBorderHeight,
-    widthMultiplier,
-    heightMultiplier,
-    isXinverted,
-    isYinverted,
-    groupCenter: [newBorderX + newBorderWidth / 2, newBorderY + newBorderHeight / 2],
-    rotation: group.rotation ?? 0,
+  const { borderX, borderHeight, borderY, borderWidth, isXinverted, isYinverted } = resizeRectSelection(
+    cursorPosition,
+    group,
+    selectionMode,
     settings,
-    originalBorders: borders
-  }
+    keepRatio,
+    isAltPressed
+  )
+  return buildGroupResizeContext(group, { x: borderX, y: borderY, width: borderWidth, height: borderHeight }, settings, { isXinverted, isYinverted })
 }
 
 export const getShapePositionInNewBorder = (

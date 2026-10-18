@@ -156,7 +156,7 @@ const zoom = usePaintState(paint, state => state.view.zoom)
 const { shapes, selectedShapes } = usePaintState(paint, state => ({ shapes: state.shapes, selectedShapes: state.selectedShapes }), shallowEqual)
 ```
 
-The handle also gives `actions` (the commands), `registerEvent` / `unregisterEvent`, `resetCanvas`, `getCurrentImage` and `getCurrentData`.
+The handle also gives `actions` (the commands), `registerEvent` / `unregisterEvent`, `batch`, `getShape`, `getBounds`, `getShapesAt`, `resetCanvas`, `getCurrentImage` and `getCurrentData`. See [Driving the canvas from the code](#driving-the-canvas-from-the-code).
 
 ### Custom Editor
 
@@ -212,9 +212,57 @@ function MyPaintApp() {
 
 The canvas can be used alone, with `<Canvas paint={paint} />`: the pointer works as soon as it is over it, and keyboard shortcuts while the focus is inside it. The `Editor` component provides the handle to its children too, and a `PaintProvider` lets you place parts of your interface, like a toolbar, outside of the editor.
 
+### Driving the canvas from the code
+
+Everything the editor and the canvas gestures do can be done from the code, without the `Editor` and even without a mounted `Canvas`. Shapes are designated by their ids, which are kept in the exported data and when the data are loaded again.
+
+```tsx
+const paint = useReactPaint()
+
+// a single step of the history, and a single dataChanged event, for the whole batch
+const [rectId, textId] = paint.batch(() =>
+  paint.actions.addShapes([
+    { type: 'rect', x: 60, y: 60, width: 160, height: 100, style: { fillColor: 'yellow' }, data: { comment: 'to check' } },
+    // the size of a text is computed from its font size
+    { type: 'text', x: 280, y: 80, value: ['Created', 'from code'], fontSize: 28 }
+  ])
+)
+
+paint.actions.updateShapes([{ id: rectId, x: 20, width: 200, style: { strokeColor: 'red' } }])
+paint.actions.rotateShapes([rectId, textId], Math.PI / 12)
+paint.actions.resizeShapes([textId], { x: 300, y: 300, width: 200, height: 80 })
+
+paint.registerEvent('shapeClicked', (shape, { canvasPosition }) => console.log(shape.id, shape.data, canvasPosition))
+```
+
+| Operation | API |
+| --- | --- |
+| Create, update, remove shapes | `actions.addShapes(shapes, { select, index })`, `actions.updateShapes(patches)`, `actions.removeShapes(ids)` |
+| Move, turn, resize, flip | `actions.translateShapes(ids, [dx, dy])`, `actions.rotateShapes(ids, angle, { center })`, `actions.resizeShapes(ids, box)`, `actions.transformShapes(ids, action)` |
+| Style of shapes, default style of tools | `actions.setShapesStyle(ids, style, { updateTool })`, `actions.setToolStyle(toolId, style)` |
+| Order | `actions.moveShapes(ids, 'first' \| 'last' \| 'forward' \| 'backward')`, `actions.setShapeIndex(id, index)`, `actions.reorderShapes(ids)` |
+| Points of lines, polygons and curves | `actions.insertShapePoint`, `actions.moveShapePoint`, `actions.removeShapePoint` |
+| Visibility, lock | `actions.setShapesVisibility(ids, visible)`, `actions.setShapesLocked(ids, locked)` |
+| Selection | `actions.selectShapes(ids, { mode: 'replace' \| 'add' \| 'remove' })`, `actions.selectAllShapes()`, `actions.clearSelection()` |
+| Text edition, context menu | `actions.editText(id)`, `actions.openContextMenu({ clientPosition, ids })`, `actions.closeContextMenu()` |
+| Duplicate, copy, cut, paste | `actions.duplicateShapes`, `actions.copy`, `actions.cut`, `actions.paste` |
+| History | `actions.undo()`, `actions.redo()`, `paint.batch(fn)` |
+| View and grid | `actions.zoomTo(level, { center })`, `actions.zoomToShapes(ids, { padding })`, `actions.setZoom`, `actions.resetZoom`, `actions.panBy([dx, dy])`, `actions.setOffset`, `actions.setGridGap(GRID_PRESETS.medium)` |
+| Options and settings | `actions.setOptions(options)`, `actions.resetOptions()`, `actions.resetSettings()` |
+| Data and images | `actions.loadData(data)`, `actions.loadFile(file)`, `paint.getCurrentData()`, `paint.getCurrentImage({ view, format, quality, backgroundColor, backgroundImage })`, `actions.exportPicture`, `actions.exportData` |
+| Read the shapes | `paint.getShape(id)`, `paint.getBounds(ids)`, `paint.getShapesAt(point)`, `usePaintState(paint, state => state.shapes)` |
+
+- The actions changing shapes add a step to the history. Give `{ save: false }` for continuous changes, then call `actions.saveShapes()`, and `{ source: 'remote' }` to apply changes received from elsewhere: `dataChanged` gives this source.
+- `addShapes` and `updateShapes` check their input and throw an error, without changing anything, when a shape is invalid. The style of a new shape is completed with the default style of its tool.
+- The `data` field of a shape holds data of your application. It is not drawn, and is kept in the history, the copies and the exported data.
+- Coordinates are in the units of the drawing, angles are in radians, clockwise. The actions work in every mode: `viewer` and `disabled` only restrict the user.
+- `shapeClicked` and `shapeHovered` are also emitted in viewer mode, to make the shapes clickable.
+- `dataChanged(data, source, changes)` gives the shapes added, updated (with their previous version) and removed since the previous state, to send only what changed: `changes.added`, `changes.updated`, `changes.removed`, and `changes.reordered`. An undo gives the reverse changes.
+- `setOptions` overrides options of `useReactPaint` until `resetOptions`. `resetSettings` restores what was changed while editing: the default styles of the tools, the grid, the zoom and the active tool.
+
 ### Picture annotation
 
-To lay a picture under the canvas, give it the style returned by `useAnnotationsStyle(paint)`: it follows the zoom and the moves of the view.
+To lay a picture under the canvas, give it the style returned by `useAnnotationsStyle(paint)`: it follows the zoom and the moves of the view. To export the picture with the shapes, give the image element as `backgroundImage` to `paint.getCurrentImage` or `paint.actions.exportPicture`.
 
 ### Performance
 

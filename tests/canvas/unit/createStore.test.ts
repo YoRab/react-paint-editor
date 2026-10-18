@@ -88,7 +88,7 @@ describe('createStore', () => {
     store.setState(state => ({ ...state, other: 1 }))
     expect(onChange).not.toHaveBeenCalled()
     store.setState(state => ({ ...state, count: 1 }))
-    expect(onChange).toHaveBeenCalledExactlyOnceWith(1)
+    expect(onChange).toHaveBeenCalledExactlyOnceWith(1, 0)
 
     unwatch()
     store.setState(state => ({ ...state, count: 2 }))
@@ -107,7 +107,7 @@ describe('createStore', () => {
     store.setState(state => ({ ...state }))
     expect(onChange).not.toHaveBeenCalled()
     store.setState(state => ({ ...state, b: 1 }))
-    expect(onChange).toHaveBeenCalledExactlyOnceWith([0, 1])
+    expect(onChange).toHaveBeenCalledExactlyOnceWith([0, 1], [0, 0])
   })
 
   it('keeps notifying the current listeners when one unsubscribes another during the notification', () => {

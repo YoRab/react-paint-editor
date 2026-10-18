@@ -410,8 +410,8 @@ const SettingsBar = ({
 
   const handleShapeStyleChange = (field: string, value: ToolSettingValue, needHistorySave = true) => {
     if (selectedShapeIds.length) {
-      actions.updateShapesStyle(selectedShapeIds, field as ShapeStyleField, value, { save: needHistorySave })
-      selectedShapeTool && actions.updateToolSettings(selectedShapeTool.id, field, value)
+      // the tools of the shapes keep the value for the next shapes
+      actions.setShapesStyle(selectedShapeIds, { [field as ShapeStyleField]: value }, { save: needHistorySave, updateTool: true })
     } else {
       actions.updateToolSettings(activeTool.id, field, value)
     }

@@ -10,13 +10,17 @@ type EventEmitter = {
   /** Unregisters the listener, or all the listeners of the event when none is given */
   unregisterEvent: <E extends ReactPaintEventName>(event: E, fn?: ReactPaintEvents[E]) => void
   emit: EmitEvent
+  /** Whether a listener is registered, to skip the work of an event nobody listens to */
+  hasListeners: (event: ReactPaintEventName) => boolean
 }
 
 export const createEventEmitter = (): EventEmitter => {
   const listeners: Record<ReactPaintEventName, Listener[]> = {
     dataChanged: [],
     selectionChanged: [],
-    toolChanged: []
+    toolChanged: [],
+    shapeClicked: [],
+    shapeHovered: []
   }
 
   const unregisterEvent: EventEmitter['unregisterEvent'] = (event, fn) => {
@@ -43,5 +47,7 @@ export const createEventEmitter = (): EventEmitter => {
     }
   }
 
-  return { registerEvent, unregisterEvent, emit }
+  const hasListeners: EventEmitter['hasListeners'] = event => listeners[event].length > 0
+
+  return { registerEvent, unregisterEvent, emit, hasListeners }
 }
