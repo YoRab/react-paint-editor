@@ -26,6 +26,9 @@ jobs:
       - name: Install dependencies
         run: pnpm install
 
+      - name: Run Biome
+        run: pnpm biome ci
+
       - name: Run build
         run: pnpm build
 

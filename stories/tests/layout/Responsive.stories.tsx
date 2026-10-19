@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import { expect, userEvent, within } from 'storybook/test'
 import type { DrawableShape } from '../../../src/index'
-import { ReactPaintWrapper, makeCoordConverters, selectTool } from './../helpers'
+import { makeCoordConverters, ReactPaintWrapper, selectTool } from './../helpers'
 
 const meta = {
   title: 'Tests/Layout',
@@ -71,9 +71,7 @@ export const Responsive: Story = {
     // Step 3: Default viewport — settings bar
     // 5 settings (strokeColor, opacity, fontFamily, fontBold, fontItalic) + 1 delete = 6
     // =====================================================================
-    const defaultSettingsButtons = canvasElement.querySelectorAll(
-      '.react-paint-editor-settings-shrinkable button'
-    )
+    const defaultSettingsButtons = canvasElement.querySelectorAll('.react-paint-editor-settings-shrinkable button')
     expect(defaultSettingsButtons.length).toBe(6)
 
     // =====================================================================
@@ -113,9 +111,7 @@ export const Responsive: Story = {
     // Step 8: Narrow layout — settings bar
     // settingsInMenu=true: "Toggle settings" button + delete button = 2
     // =====================================================================
-    const narrowSettingsButtons = canvasElement.querySelectorAll(
-      '.react-paint-editor-settings-shrinkable button'
-    )
+    const narrowSettingsButtons = canvasElement.querySelectorAll('.react-paint-editor-settings-shrinkable button')
     expect(narrowSettingsButtons.length).toBe(2)
 
     // =====================================================================

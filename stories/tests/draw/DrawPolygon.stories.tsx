@@ -1,14 +1,14 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import { expect, userEvent, within } from 'storybook/test'
 import {
-  ReactPaintWrapper,
-  getCurrentDataRef,
-  selectTool,
   assertNoInternalFields,
+  getCurrentDataRef,
+  openContextMenuAndClick,
+  ReactPaintWrapper,
+  selectTool,
   setColorSetting,
   setRangeSetting,
-  setSelectSetting,
-  openContextMenuAndClick
+  setSelectSetting
 } from './../helpers'
 
 const meta = {

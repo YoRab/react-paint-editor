@@ -1,10 +1,10 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import { expect, userEvent, within } from 'storybook/test'
 import {
-  ReactPaintWrapper,
-  getCurrentDataRef,
-  selectTool,
   assertNoInternalFields,
+  getCurrentDataRef,
+  ReactPaintWrapper,
+  selectTool,
   setColorSetting,
   setRangeSetting,
   setSelectSetting,

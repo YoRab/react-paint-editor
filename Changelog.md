@@ -62,6 +62,7 @@ Breaking changes, see the [migration guide](./MIGRATION.md).
 - security: a picture which cannot be loaded is left out of the loaded data with a warning, instead of failing the whole load, and its loading times out after 4 seconds. An image which cannot be encoded no longer breaks the export of the data
 - security: pictures larger than 16384 pixels and data files larger than 100 MB are refused
 - fix the title of a group of tools being rendered as HTML when its tools have no icon
+- support React 19
 
 ## V0.18.1
 - fix opacity problems with line and arrows
