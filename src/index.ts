@@ -30,6 +30,7 @@ export {
   MOVE_TOOL,
   type OptionalOptions,
   PaintProvider,
+  type PictureSrcResolver,
   type Point,
   type ReactPaint,
   type ReactPaintEventName,

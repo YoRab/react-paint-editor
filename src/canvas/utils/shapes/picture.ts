@@ -1,9 +1,10 @@
-import type { UtilsSettings } from '@canvas/constants/app'
+import type { PictureSrcResolver, UtilsSettings } from '@canvas/constants/app'
 import { PICTURE_TOOL_ID } from '@canvas/constants/tools'
 import type { SelectionModeResize } from '@canvas/types/Mode'
 import type { DrawableShape, Point, SelectionType, ShapeEntity } from '@canvas/types/Shapes'
-import { addSizeAndConvertSvgToObjectUrl, fetchAndStringify, isSvg } from '@canvas/utils/file'
-import { createRecSelectionPath, resizeRectSelection } from '@canvas/utils/selection/rectSelection'
+import { createDetachedContext } from '@canvas/utils/canvas'
+import { addSizeAndConvertSvgToObjectUrl, isSvg, loadPicture, readFileAsDataUrl } from '@canvas/utils/file'
+import { resizeRectSelection } from '@canvas/utils/selection/rectSelection'
 import { fitContentInsideContainer } from '@canvas/utils/transform'
 import { createShapeId } from '@canvas/utils/util'
 import { type GroupResizeContext, getPositionWithoutGroupRotation, getShapePositionInNewBorder } from './group'
@@ -16,7 +17,6 @@ const buildPath = <T extends DrawableShape<'picture'>>(shape: T & { id: string }
   return {
     ...shape,
     path,
-    selection: createRecSelectionPath(undefined, computed, settings),
     computed
   }
 }
@@ -51,92 +51,83 @@ const createPictureShape = (
   )
 }
 
-const createFilePicture = (
+/** Loads the image of a new picture, and returns the source kept in its shape: the URL, or the content of the file */
+const loadNewPicture = async (
   img: HTMLImageElement,
-  resolve: (value: ShapeEntity<'picture'> | PromiseLike<ShapeEntity<'picture'>>) => void,
-  file: File,
-  maxPictureWidth: number,
-  maxPictureHeight: number,
-  settings: UtilsSettings
-): void => {
-  if (isSvg(file)) {
-    file.text().then(svgFileContent => {
-      const svgUrl = addSizeAndConvertSvgToObjectUrl(svgFileContent)
-      img.onload = async () => {
-        URL.revokeObjectURL(img.src)
-        const pictureShape = createPictureShape(img, svgFileContent, maxPictureWidth, maxPictureHeight, settings)
-        resolve(pictureShape)
-      }
-      img.src = svgUrl
-    })
-  } else {
-    img.onload = async () => {
-      URL.revokeObjectURL(img.src)
-      const pictureShape = createPictureShape(img, img.src, maxPictureWidth, maxPictureHeight, settings)
-      resolve(pictureShape)
-    }
-    img.src = URL.createObjectURL(file)
+  fileOrUrl: File | string,
+  resolvePictureSrc: PictureSrcResolver | undefined
+): Promise<string> => {
+  if (!(fileOrUrl instanceof File)) {
+    await loadPicture(img, fileOrUrl, resolvePictureSrc)
+    return fileOrUrl
   }
+  if (isSvg(fileOrUrl)) {
+    const svgFileContent = await fileOrUrl.text()
+    await loadPicture(img, addSizeAndConvertSvgToObjectUrl(svgFileContent))
+    return svgFileContent
+  }
+  // the content of the file is the source of the picture, read while its image loads: the image would else be encoded
+  // in PNG on its first export, which freezes the page for a large photo
+  const [dataUrl] = await Promise.all([readFileAsDataUrl(fileOrUrl), loadPicture(img, URL.createObjectURL(fileOrUrl))])
+  return dataUrl
 }
 
-const createUrlPicture = (
-  img: HTMLImageElement,
-  resolve: (value: ShapeEntity<'picture'> | PromiseLike<ShapeEntity<'picture'>>) => void,
-  url: string,
-  maxPictureWidth: number,
-  maxPictureHeight: number,
-  settings: UtilsSettings
-): void => {
-  img.onload = () => {
-    URL.revokeObjectURL(img.src)
-    const pictureShape = createPictureShape(img, url, maxPictureWidth, maxPictureHeight, settings)
-    resolve(pictureShape)
-  }
-
-  fetchAndStringify(url)
-    .then(picData => {
-      img.src = picData
-    })
-    .catch(() => {
-      img.src = '' // trigger onerror
-    })
-}
-
-export const createPicture = (
+export const createPicture = async (
   fileOrUrl: File | string,
   maxPictureWidth: number,
   maxPictureHeight: number,
-  settings: UtilsSettings
+  settings: UtilsSettings,
+  resolvePictureSrc: PictureSrcResolver | undefined
 ): Promise<ShapeEntity<'picture'>> => {
-  return new Promise<ShapeEntity<'picture'>>((resolve, reject) => {
-    const img = new Image()
+  const img = new Image()
+  const storedSrc = await loadNewPicture(img, fileOrUrl, resolvePictureSrc)
+  return createPictureShape(img, storedSrc, maxPictureWidth, maxPictureHeight, settings)
+}
 
-    const timeoutId = setTimeout(() => {
-      reject(new Error('Timeout while loading images'))
-    }, 4000)
+/**
+ * Reduced copies of the images, by level: the level n is the image halved n times. Drawn much smaller than it is, an image
+ * is resampled from its full size at each frame by some browsers (Firefox, Safari), slower and grainier: it is drawn from
+ * its smallest copy at least as large as it is drawn. A copy is made once, the first time it is needed, and is freed with
+ * its image
+ */
+const reducedImages = new WeakMap<HTMLImageElement, Map<number, HTMLCanvasElement>>()
 
-    const resolveWithCleanup = (value: ShapeEntity<'picture'> | PromiseLike<ShapeEntity<'picture'>>) => {
-      clearTimeout(timeoutId)
-      resolve(value)
-    }
+/** Number of times the image can be halved and stay at least as large as the picture, in pixels of the canvas */
+const getReductionLevel = (ctx: CanvasRenderingContext2D, picture: ShapeEntity<'picture'>): number => {
+  const { naturalWidth, naturalHeight } = picture.img
+  const { a, b, c, d } = ctx.getTransform()
+  const drawnWidth = picture.width * Math.hypot(a, b)
+  const drawnHeight = picture.height * Math.hypot(c, d)
+  if (!naturalWidth || !naturalHeight || drawnWidth <= 0 || drawnHeight <= 0) return 0
+  return Math.max(0, Math.floor(Math.log2(Math.min(naturalWidth / drawnWidth, naturalHeight / drawnHeight))))
+}
 
-    img.onerror = () => {
-      clearTimeout(timeoutId)
-      reject(new Error('Some images could not be loaded'))
-    }
+const getReducedImage = (img: HTMLImageElement, level: number): CanvasImageSource => {
+  if (level === 0) return img
+  const levels = reducedImages.get(img) ?? new Map<number, HTMLCanvasElement>()
+  const reduced = levels.get(level)
+  if (reduced) return reduced
 
-    fileOrUrl instanceof File
-      ? createFilePicture(img, resolveWithCleanup, fileOrUrl, maxPictureWidth, maxPictureHeight, settings)
-      : createUrlPicture(img, resolveWithCleanup, fileOrUrl, maxPictureWidth, maxPictureHeight, settings)
-  })
+  const reducedCtx = createDetachedContext()
+  if (!reducedCtx) return img
+  reducedCtx.canvas.width = Math.ceil(img.naturalWidth / 2 ** level)
+  reducedCtx.canvas.height = Math.ceil(img.naturalHeight / 2 ** level)
+  reducedCtx.imageSmoothingQuality = 'high'
+  reducedCtx.drawImage(img, 0, 0, reducedCtx.canvas.width, reducedCtx.canvas.height)
+  // a lost context empties the canvas: the copy is made again
+  reducedCtx.canvas.addEventListener('contextlost', () => levels.delete(level))
+  levels.set(level, reducedCtx.canvas)
+  reducedImages.set(img, levels)
+  return reducedCtx.canvas
 }
 
 export const drawPicture = (ctx: CanvasRenderingContext2D, picture: ShapeEntity<'picture'>): void => {
   if (ctx.globalAlpha === 0) return
+  const image = getReducedImage(picture.img, getReductionLevel(ctx, picture))
   ctx.beginPath()
   ctx.scale(picture.flipX ? -1 : 1, picture.flipY ? -1 : 1)
   ctx.drawImage(
-    picture.img,
+    image,
     picture.flipX ? -picture.x - picture.width : picture.x,
     picture.flipY ? -picture.y - picture.height : picture.y,
     picture.width,

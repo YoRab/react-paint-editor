@@ -47,7 +47,9 @@ export default defineConfig({
           testTimeout: 600_000,
           provide: {
             perfLabel: process.env.PERF_LABEL ?? 'latest',
-            perfShapes: process.env.PERF_SHAPES ?? '50,500'
+            perfShapes: process.env.PERF_SHAPES ?? '50,500',
+            perfCpu: process.env.PERF_CPU ?? '1',
+            perfEvents: process.env.PERF_EVENTS ?? '1'
           },
           browser: {
             enabled: true,

@@ -68,21 +68,6 @@ export type StyleShape = {
   fontBold?: boolean
 }
 
-export type SelectionDefaultType = {
-  type: 'rect'
-  border: Path2D
-  line: Path2D | undefined
-  shapePath: Path2D | undefined
-  anchors: Path2D[]
-}
-
-export type SelectionLinesType = {
-  type: 'line'
-  border: Path2D
-  shapePath: Path2D | undefined
-  anchors: Path2D[]
-}
-
 /** Data of the application attached to a shape: it is not drawn, and is kept in the history, the copies and the exported data */
 export type ShapeData = Record<string, unknown>
 
@@ -174,16 +159,10 @@ export type ShapeEntity<T extends Exclude<ShapeType, 'triangle'> = Exclude<Shape
   (
     | {
         type: 'line'
-        selection?: SelectionLinesType | undefined
         arrows?: TriangleEntity[]
       }
     | {
-        type: 'polygon' | 'curve'
-        selection?: SelectionLinesType | undefined
-      }
-    | {
-        type: 'text' | 'picture' | 'rect' | 'square' | 'circle' | 'ellipse' | 'group' | 'brush'
-        selection?: SelectionDefaultType | undefined
+        type: Exclude<ShapeType, 'line' | 'triangle'>
       }
   )
 

@@ -3,7 +3,7 @@ import type { SelectionModeResize } from '@canvas/types/Mode'
 import type { DrawableShape, Ellipse, Point, Rect, SelectionType, ShapeEntity } from '@canvas/types/Shapes'
 import type { ToolsSettingsType } from '@canvas/types/tools'
 import { drawPathWithFillAndStroke } from '@canvas/utils/canvas'
-import { createRecSelectionPath, resizeRectSelection } from '@canvas/utils/selection/rectSelection'
+import { resizeRectSelection } from '@canvas/utils/selection/rectSelection'
 import { createEllipsePath, expandRect, getComputedShapeInfos } from '@canvas/utils/shapes/path'
 import { createShapeId } from '@canvas/utils/util'
 import { type GroupResizeContext, getPositionWithoutGroupRotation, getShapePositionInNewBorder } from './group'
@@ -24,7 +24,6 @@ const buildPath = <T extends DrawableShape<'ellipse'>>(shape: T & { id: string }
   return {
     ...shape,
     path,
-    selection: createRecSelectionPath(path, computed, settings),
     computed
   }
 }

@@ -2,6 +2,7 @@ import type { ShapeType } from './Shapes'
 
 export type CustomToolInput = {
   id: string
+  /** SVG markup, rendered as HTML by the editor: it must be trusted, never built from what a user typed or loaded */
   icon?: string
   label?: string
 } & (
@@ -49,6 +50,7 @@ export type CustomToolInput = {
 
 export type CustomTool = {
   id: string
+  /** SVG markup, rendered as HTML by the editor: it must be trusted, never built from what a user typed or loaded */
   icon?: string
   label?: string
 } & (
@@ -242,6 +244,7 @@ export type ActionsType = 'selection' | 'move'
 export type ActionsTool = {
   id: string
   type: ActionsType
+  /** SVG markup, rendered as HTML by the editor: it must be trusted, never built from what a user typed or loaded */
   icon?: string
   label?: string
 }

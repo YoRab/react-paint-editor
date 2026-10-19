@@ -3,8 +3,14 @@
 [![npm version](https://img.shields.io/npm/v/@yorab/react-paint)](https://www.npmjs.com/package/@yorab/react-paint)
 [![License: MIT](https://img.shields.io/npm/l/@yorab/react-paint)](https://github.com/YoRab/react-paint-editor/blob/main/LICENSE.txt)
 [![Build and Test](https://github.com/YoRab/react-paint-editor/actions/workflows/build-and-test.yaml/badge.svg)](https://github.com/YoRab/react-paint-editor/actions/workflows/build-and-test.yaml)
+[![Socket Badge](https://socket.dev/api/badge/npm/package/@yorab/react-paint)](https://socket.dev/npm/package/@yorab/react-paint)
+[![Checked with Biome](https://img.shields.io/badge/Checked_with-Biome-60a5fa?style=flat&logo=biome)](https://biomejs.dev)
 
 An open-source canvas-based library for React used for image annotation or as a digital whiteboard.
+
+![The React Paint editor: a drawing of a tree on a hill, with the trunk selected](https://raw.githubusercontent.com/YoRab/react-paint-editor/main/docs/screenshot.png)
+
+**[Live demo and documentation](https://yorab.github.io/react-paint-editor/)**
 
 ## Features
 
@@ -26,7 +32,7 @@ An open-source canvas-based library for React used for image annotation or as a 
 npm install @yorab/react-paint
 ```
 
-**Note:** React Paint requires `react` and `react-dom` (version 18.x) as peer dependencies.
+**Note:** React Paint requires `react` and `react-dom` (version 18 or 19) as peer dependencies.
 
 ### Import Styles
 
@@ -255,6 +261,7 @@ paint.registerEvent('shapeClicked', (shape, { canvasPosition }) => console.log(s
 - The actions changing shapes add a step to the history. Give `{ save: false }` for continuous changes, then call `actions.saveShapes()`, and `{ source: 'remote' }` to apply changes received from elsewhere: `dataChanged` gives this source.
 - `addShapes` and `updateShapes` check their input and throw an error, without changing anything, when a shape is invalid. The style of a new shape is completed with the default style of its tool.
 - The `data` field of a shape holds data of your application. It is not drawn, and is kept in the history, the copies and the exported data.
+- The exported data (`getCurrentData`, `dataChanged`, `exportData`) round the positions and the sizes to 3 decimals, and the angles and the factors (`rotation`, `scaleX`, `scaleY`, `ratio`) to 6, which changes nothing visible. The shapes keep their full precision while drawing, and `data` and `style` are exported as they are.
 - Coordinates are in the units of the drawing, angles are in radians, clockwise. The actions work in every mode: `viewer` and `disabled` only restrict the user.
 - `shapeClicked` and `shapeHovered` are also emitted in viewer mode, to make the shapes clickable.
 - `dataChanged(data, source, changes)` gives the shapes added, updated (with their previous version) and removed since the previous state, to send only what changed: `changes.added`, `changes.updated`, `changes.removed`, and `changes.reordered`. An undo gives the reverse changes.
@@ -296,6 +303,12 @@ The other properties of the canvas elements are not set inline, or keep the canv
 
 Version 1 replaces `editorProps` and `canvasProps` with a single handle and moves some options. See the [migration guide](https://github.com/YoRab/react-paint-editor/blob/main/MIGRATION.md).
 
+## Compatibility
+
+- **React**: 18 or 19, the only (peer) dependencies.
+- **Browsers**: Chrome and Edge 98+, Firefox 94+, Safari 15.4+, with a mouse, a pen or touch (pinch to zoom). The automated tests run in Chromium.
+- **Server-side rendering**: the components can be rendered on the server, the canvas draws once hydrated. The package has no `'use client'` directive: with the Next.js App Router, import it from a `'use client'` file.
+
 ## Documentation
 
 For complete documentation, API reference, examples, and interactive demos, visit our **Storybook**:
@@ -309,10 +322,31 @@ The Storybook includes:
 - Usage examples
 - Configuration options
 
+## Security
+
+A drawing loaded from a source you do not control is untrusted, filter its pictures with the `resolvePictureSrc` option. The `icon` of a tool is rendered as HTML and must be trusted. See the [security model](https://github.com/YoRab/react-paint-editor/blob/main/SECURITY.md#security-model), and the [security policy](https://github.com/YoRab/react-paint-editor/blob/main/SECURITY.md#reporting-a-vulnerability) to report a vulnerability.
+
 ## Resources
 
 - [Changelog](https://github.com/YoRab/react-paint-editor/blob/main/Changelog.md)
 - [License](https://github.com/YoRab/react-paint-editor/blob/main/LICENSE.txt) (MIT)
 - [GitHub Repository](https://github.com/YoRab/react-paint-editor)
+- Questions and ideas: [GitHub Discussions](https://github.com/YoRab/react-paint-editor/discussions)
+- Bug reports: [Issues](https://github.com/YoRab/react-paint-editor/issues)
 
 ## Contributing
+
+Issues and pull requests are welcome. For a large change, open a discussion or an issue first.
+
+The project uses Node 24 and pnpm (the version is set by the `packageManager` field, enable it with `corepack enable`). Pull requests target the `main` branch.
+
+```bash
+pnpm install
+pnpm start                         # Storybook on http://localhost:6006
+pnpm test                          # unit tests
+npx playwright install chromium    # once, before the UI tests
+pnpm test-storybook                # interaction and accessibility tests, in Chromium
+pnpm lint                          # Biome, fixes what it can
+```
+
+Every pull request runs the [Build and Test workflow](https://github.com/YoRab/react-paint-editor/blob/main/.github/workflows/build-and-test.yaml).

@@ -14,6 +14,15 @@ import type { BrushAlgo } from '@canvas/types/Settings'
 
 export type { BrushAlgo, UtilsSettings } from '@canvas/types/Settings'
 
+/** Largest data file read by loadFile, in bytes */
+export const DATA_FILE_MAX_SIZE = 100 * 1024 * 1024
+
+/**
+ * Receives the absolute URL of a remote picture before it is fetched, and returns the URL to fetch instead, or null to
+ * refuse the picture. The source kept in the shape and in the exported data is not changed
+ */
+export type PictureSrcResolver = (url: string) => string | null | Promise<string | null>
+
 export type AppOptions = {
   grid: number
   canGrow: boolean
@@ -23,6 +32,8 @@ export type AppOptions = {
   withSkeleton: boolean
   withContextMenu: boolean
   clearCallback: 'empty' | 'defaultShapes' | (() => ShapeInput[])
+  /** Filters or rewrites the URLs of the remote pictures, which may come from data drawn by someone else */
+  resolvePictureSrc: PictureSrcResolver | undefined
   brushAlgo: BrushAlgo
   isBrushShapeDoneOnMouseUp: boolean
   canvasSelectionPadding: number
@@ -40,6 +51,7 @@ export const DEFAULT_OPTIONS: AppOptions = {
   withContextMenu: true,
   availableTools: DEFAULT_TOOLS,
   clearCallback: 'empty',
+  resolvePictureSrc: undefined,
   brushAlgo: 'simple',
   isBrushShapeDoneOnMouseUp: true,
   withFrameSelection: true,

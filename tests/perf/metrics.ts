@@ -7,6 +7,8 @@ declare module 'vitest' {
   export interface ProvidedContext {
     perfLabel: string
     perfShapes: string
+    perfCpu: string
+    perfEvents: string
   }
 }
 
@@ -79,6 +81,9 @@ export const readMainThreadTimes = async () => {
 }
 
 export const enableMainThreadTimes = () => cdp().send('Performance.enable')
+
+/** Slows the CPU down by the rate, like a slower machine: 1 is the speed of the machine */
+export const setCpuThrottling = (rate: number) => cdp().send('Emulation.setCPUThrottlingRate', { rate })
 
 // ─── Metrics of a run ──────────────────────────────────────────────────────────
 
@@ -154,6 +159,10 @@ export type Report = {
   label: string
   date: string
   userAgent: string
+  /** Slowdown of the CPU during the run */
+  cpuRate: number
+  /** Pointer and wheel events sent in each frame */
+  eventsPerFrame: number
   /** Metrics by "scenario@shapes" */
   results: Record<string, Metrics>
 }

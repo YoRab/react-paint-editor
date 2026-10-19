@@ -14,12 +14,12 @@ import {
   shouldCancelLongPress
 } from '@canvas/utils/intersect'
 import { getSelectedShapes } from '@canvas/utils/selectedShapes'
-import { buildShapesGroup, selectShape } from '@canvas/utils/selection'
+import { buildShapesGroup, isIdleSelectionMode, selectShape } from '@canvas/utils/selection'
 import { createShape } from '@canvas/utils/shapes'
 import { addNewPointGroupToShape } from '@canvas/utils/shapes/brush'
 import { addCurveLine, addCurvePoint } from '@canvas/utils/shapes/curve'
 import { addPolygonLine, addPolygonPoint } from '@canvas/utils/shapes/polygon'
-import { transformShape } from '@canvas/utils/transform'
+import { transformSelectedShapes } from '@canvas/utils/transform'
 import { isPointInsideRect } from '@canvas/utils/trigo'
 import { clamp } from '@canvas/utils/util'
 import { isCursorInsideMask } from '@canvas/utils/zoom'
@@ -142,11 +142,15 @@ const useDrawableCanvas = (store: PaintStore, canvas: HTMLCanvasElement | null) 
       }
 
       const isInsideMask = isCursorInsideMask(cursorPosition, settings)
+      // the selected shapes are transformed, or a brush stroke is drawn
+      const isTransforming = !isIdleSelectionMode(selectionMode)
 
       store.batch(() => {
         if (!isTouchGesture(e)) {
-          // a captured pointer keeps sending its moves outside of the canvas, any other one is over it
-          store.refreshHoveredShape(gesturePointerId === undefined || isOverElement(e, canvas), ctx, cursorPosition, isInsideMask)
+          // a captured pointer keeps sending its moves outside of the canvas, any other one is over it.
+          // The hovered shape is not shown during a transformation: it is not searched
+          const isOverCanvas = !isTransforming && (gesturePointerId === undefined || isOverElement(e, canvas))
+          store.refreshHoveredShape(isOverCanvas, ctx, cursorPosition, isInsideMask)
         }
 
         if (selectedShape === undefined || selectedShape.locked) {
@@ -154,15 +158,14 @@ const useDrawableCanvas = (store: PaintStore, canvas: HTMLCanvasElement | null) 
           return
         }
 
-        if (selectionMode.mode === 'default' || selectionMode.mode === 'textedition' || selectionMode.mode === 'contextMenu') {
+        if (!isTransforming) {
           if (!isInsideMask) {
             store.setHoverMode({ mode: 'default' })
             return
           }
           store.setHoverMode(checkSelectionIntersection(ctx, selectedShape, cursorPosition, settings, true) || { mode: 'default' })
         } else {
-          const newShape = transformShape(ctx, selectedShape, cursorPosition, selectionMode, settings, modifiers.shift, modifiers.alt)
-          store.updateShapes(getSelectedShapes(newShape))
+          store.updateShapes(transformSelectedShapes(ctx, selectedShape, cursorPosition, selectionMode, settings, modifiers.shift, modifiers.alt))
         }
 
         if (selectionMode.mode === 'translate' && modifiers.alt && !selectionMode.hasBeenDuplicated) {

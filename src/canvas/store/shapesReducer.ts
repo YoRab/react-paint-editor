@@ -86,7 +86,8 @@ export const shapesReducer = (state: ShapesState, action: ShapesAction): ShapesS
     }
 
     case 'RESET_AND_SAVE': {
-      const pureShapes = action.shapes.map(s => omit(['chosen'], s))
+      // only the shapes with the flag of an old list of layers are copied: the others keep their identity
+      const pureShapes = action.shapes.map(s => ('chosen' in s ? omit(['chosen'], s) : s))
       return {
         ...state,
         shapes: pureShapes,

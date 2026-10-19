@@ -2,6 +2,8 @@ import type { UtilsSettings } from '@canvas/constants/app'
 import type { SelectionModeData } from '@canvas/types/Mode'
 import type { Point, ShapeEntity } from '@canvas/types/Shapes'
 import { transformCanvas, updateCanvasContext } from '@canvas/utils/canvas'
+import { drawRectAnchors, strokeBorders } from '@canvas/utils/selection/anchors'
+import { getSelectionOutline } from '@canvas/utils/selection/rectSelection'
 
 export const drawSelectionGroup = (
   ctx: CanvasRenderingContext2D,
@@ -12,8 +14,6 @@ export const drawSelectionGroup = (
   settings: UtilsSettings,
   withAnchors: boolean
 ): void => {
-  if (!shape.selection) return
-
   shape.shapes.forEach(shape => {
     updateCanvasContext(ctx, {
       fillColor: 'transparent',
@@ -22,7 +22,8 @@ export const drawSelectionGroup = (
     })
 
     transformCanvas(ctx, settings, shape.rotation, shape.computed.center)
-    if (shape.selection?.shapePath) ctx.stroke(shape.selection.shapePath)
+    const outline = getSelectionOutline(shape)
+    if (outline) ctx.stroke(outline)
     ctx.restore()
   })
 
@@ -52,18 +53,7 @@ export const drawSelectionGroup = (
   })
 
   if (withAnchors && !shape.locked) {
-    ctx.stroke(shape.selection.border)
-    if (shape.selection.line) ctx.stroke(shape.selection.line)
-
-    updateCanvasContext(ctx, {
-      fillColor: 'rgb(255,255,255)',
-      strokeColor: 'rgb(150,150,150)',
-      lineWidth: 2 / settings.canvasSize.scaleRatio
-    })
-
-    for (const anchor of shape.selection.anchors) {
-      ctx.fill(anchor)
-      ctx.stroke(anchor)
-    }
+    strokeBorders(ctx, shape.computed.borders)
+    drawRectAnchors(ctx, shape.computed.borders, settings)
   }
 }

@@ -1,28 +1,38 @@
 import type { UtilsSettings } from '@canvas/constants/app'
 import type { PaintStore } from '@canvas/store/paintStore'
+import { keepIfSame, memoizeLast } from '@canvas/store/selectors'
 import type { InternalState } from '@canvas/store/types'
+import type { SelectionType, ShapeEntity } from '@canvas/types/Shapes'
 import { initCanvasContext } from '@canvas/utils/canvas'
 import { shallowEqual } from '@canvas/utils/equality'
 import { drawGrid } from '@canvas/utils/grid'
 import { getSelectedShapes } from '@canvas/utils/selectedShapes'
+import { isIdleSelectionMode } from '@canvas/utils/selection'
 import { drawSelectionFrame, drawShape, drawShapeSelection } from '@canvas/utils/shapes'
 import { clipMask, drawMask, getCurrentView } from '@canvas/utils/zoom'
 import type React from 'react'
 import { useEffect } from 'react'
 
-const renderDrawCanvas = (drawCtx: CanvasRenderingContext2D, state: InternalState, settings: UtilsSettings) => {
-  const { shapes, selectedShape } = state.document
-  const { selectionMode } = state.interaction
+/** The shapes as they are drawn, in the order of the list: the selected copy of a shape in place of the shape, without the text being edited */
+const getDrawnShapes = (shapes: ShapeEntity[], selectedShape: SelectionType | undefined, isTextEdition: boolean): ShapeEntity[] => {
+  const selectedShapes = getSelectedShapes(selectedShape)
+  if (!selectedShapes.length) return shapes
+  const selectedById = new Map(selectedShapes.map(shape => [shape.id, shape]))
+  const drawnShapes: ShapeEntity[] = []
+  for (const shape of shapes) {
+    if (isTextEdition && shape === selectedShape) continue
+    drawnShapes.push(selectedById.get(shape.id) ?? shape)
+  }
+  return drawnShapes
+}
+
+const renderDrawCanvas = (drawCtx: CanvasRenderingContext2D, shapes: ShapeEntity[], settings: UtilsSettings) => {
   initCanvasContext(drawCtx)
   drawMask(drawCtx, settings)
   drawGrid(drawCtx, settings)
   const currentView = getCurrentView(settings)
-  // the selected copy of a shape is drawn in place of the shape
-  const selectedById = new Map(getSelectedShapes(selectedShape).map(shape => [shape.id, shape]))
   for (let i = shapes.length - 1; i >= 0; i--) {
-    const shape = shapes[i]!
-    if (selectionMode.mode === 'textedition' && shape === selectedShape) continue
-    drawShape(drawCtx, selectedById.get(shape.id) ?? shape, settings, currentView)
+    drawShape(drawCtx, shapes[i]!, settings, currentView)
   }
 }
 
@@ -43,7 +53,7 @@ const renderSelectionCanvas = (
     hoveredShape &&
     !getSelectedShapes(selectedShape).find(selected => selected.id === hoveredShape.id) &&
     activeTool.type === 'selection' &&
-    (selectionMode.mode === 'default' || selectionMode.mode === 'contextMenu' || selectionMode.mode === 'textedition') &&
+    isIdleSelectionMode(selectionMode) &&
     drawShapeSelection({
       ctx: selectionCtx,
       shape: hoveredShape,
@@ -108,21 +118,28 @@ const useCanvasRenderer = ({ store, drawCanvas, selectionCanvasRef, selectionCol
       }
     }
 
-    const selectDrawInputs = (state: InternalState) => [
-      state.document.shapes,
-      state.document.selectedShape,
-      store.getSettings(state),
-      state.interaction.selectionMode
-    ]
+    // the drawn shapes keep their identity while they are the same: a new selection of the same shapes does not change
+    // the drawing, only a selected copy which differs from its shape does, like a polygon being drawn
+    const keepDrawnShapes = keepIfSame<ShapeEntity[]>()
+    const computeDrawnShapes = memoizeLast((shapes: ShapeEntity[], selectedShape: SelectionType | undefined, isTextEdition: boolean) =>
+      keepDrawnShapes(getDrawnShapes(shapes, selectedShape, isTextEdition))
+    )
+    const selectDrawnShapes = (state: InternalState) =>
+      computeDrawnShapes(state.document.shapes, state.document.selectedShape, state.interaction.selectionMode.mode === 'textedition')
 
-    const stopDrawLayer = watchLayer(selectDrawInputs, state => {
-      const drawCtx = drawCanvas?.getContext('2d')
-      if (drawCtx) renderDrawCanvas(drawCtx, state, store.getSettings(state))
-    })
+    const stopDrawLayer = watchLayer(
+      state => [selectDrawnShapes(state), store.getSettings(state)],
+      state => {
+        const drawCtx = drawCanvas?.getContext('2d')
+        if (drawCtx) renderDrawCanvas(drawCtx, selectDrawnShapes(state), store.getSettings(state))
+      }
+    )
 
     const stopSelectionLayer = watchLayer(
       state => [
-        ...selectDrawInputs(state),
+        state.document.selectedShape,
+        store.getSettings(state),
+        state.interaction.selectionMode,
         state.interaction.hoveredShape,
         state.interaction.hoverMode,
         state.interaction.selectionFrame,

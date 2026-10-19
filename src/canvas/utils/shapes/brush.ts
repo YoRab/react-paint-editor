@@ -2,22 +2,20 @@ import type { UtilsSettings } from '@canvas/constants/app'
 import type { SelectionModeResize } from '@canvas/types/Mode'
 import type { DrawableShape, Point, Rect, SelectionType, ShapeEntity } from '@canvas/types/Shapes'
 import type { ToolsSettingsType } from '@canvas/types/tools'
-import { set } from '@canvas/utils/object'
-import { createRecSelectionPath, resizeRectSelection } from '@canvas/utils/selection/rectSelection'
-import { createBrushPath, expandRect, getComputedShapeInfos } from '@canvas/utils/shapes/path'
+import { resizeRectSelection } from '@canvas/utils/selection/rectSelection'
+import { addBrushPoint, createBrushPath, expandRect, extendBrushPath, getBrushPointsBounds, getComputedShapeInfos } from '@canvas/utils/shapes/path'
 import { roundValues, scalePoint } from '@canvas/utils/transform'
 import { createShapeId } from '@canvas/utils/util'
 import { type GroupResizeContext, getPositionWithoutGroupRotation, getShapePositionInNewBorder } from './group'
 
 export const getBrushBorder = (brush: DrawableShape<'brush'>, { selectionPadding }: Pick<UtilsSettings, 'selectionPadding'>): Rect => {
-  const brushPoints = brush.points.flat()
-  const minX = Math.min(...brushPoints.map(point => point[0]))
-  const minY = Math.min(...brushPoints.map(point => point[1]))
+  const bounds = getBrushPointsBounds(brush.points)
+  const { minX, minY } = bounds
 
-  const scaledPoints = brushPoints.map(point => scalePoint(point, minX, minY, brush.scaleX, brush.scaleY))
-
-  const maxX = Math.max(...scaledPoints.map(point => point[0]))
-  const maxY = Math.max(...scaledPoints.map(point => point[1]))
+  // the points are scaled from the top left corner, which stays in place: the farthest point stays the farthest one
+  const [scaledMaxX, scaledMaxY] = scalePoint([bounds.maxX, bounds.maxY], minX, minY, brush.scaleX, brush.scaleY)
+  const maxX = Math.max(minX, scaledMaxX)
+  const maxY = Math.max(minY, scaledMaxY)
 
   const baseRect: Rect = {
     x: minX,
@@ -29,13 +27,15 @@ export const getBrushBorder = (brush: DrawableShape<'brush'>, { selectionPadding
   return expandRect(baseRect, selectionPadding)
 }
 
-const buildPath = <T extends DrawableShape<'brush'>>(brush: T & { id: string }, settings: UtilsSettings): ShapeEntity<'brush'> => {
-  const path = createBrushPath(brush, settings)
+const buildPath = <T extends DrawableShape<'brush'>>(
+  brush: T & { id: string },
+  settings: UtilsSettings,
+  path = createBrushPath(brush, settings)
+): ShapeEntity<'brush'> => {
   const computed = getComputedShapeInfos(brush, getBrushBorder, settings)
   return {
     ...brush,
     path,
-    selection: createRecSelectionPath(path, computed, settings),
     computed
   }
 }
@@ -159,26 +159,13 @@ export const resizeBrushInGroup = (
   )
 }
 
+const roundPoint = ([x, y]: Point): Point => [Math.round(x), Math.round(y)]
+
 export const addNewPointToShape = (shape: ShapeEntity<'brush'>, cursorPosition: Point, settings: UtilsSettings): ShapeEntity<'brush'> => {
-  const brushShape = {
-    ...shape,
-    ...{
-      points: set(
-        shape.points.length - 1,
-        [...shape.points[shape.points.length - 1]!, [Math.round(cursorPosition[0]), Math.round(cursorPosition[1])]],
-        shape.points
-      )
-    }
-  }
-  return buildPath(brushShape, settings)
+  const point = roundPoint(cursorPosition)
+  const brushShape = { ...shape, points: addBrushPoint(shape.points, shape.points.length - 1, point) }
+  return buildPath(brushShape, settings, extendBrushPath(shape, point, settings))
 }
 
-export const addNewPointGroupToShape = (shape: ShapeEntity<'brush'>, cursorPosition: Point, settings: UtilsSettings): ShapeEntity<'brush'> => {
-  const brushShape = {
-    ...shape,
-    ...{
-      points: set(shape.points.length, [[Math.round(cursorPosition[0]), Math.round(cursorPosition[1])]], shape.points)
-    }
-  }
-  return buildPath(brushShape, settings)
-}
+export const addNewPointGroupToShape = (shape: ShapeEntity<'brush'>, cursorPosition: Point, settings: UtilsSettings): ShapeEntity<'brush'> =>
+  buildPath({ ...shape, points: addBrushPoint(shape.points, shape.points.length, roundPoint(cursorPosition)) }, settings)

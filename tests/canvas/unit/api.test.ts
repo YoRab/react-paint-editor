@@ -545,6 +545,26 @@ describe('dataChanged', () => {
     expect(listener).toHaveBeenCalledTimes(1)
   })
 
+  it('gives new objects on each change: the data received can be changed without changing the next ones', () => {
+    const store = createPaintStore()
+    const listener = vi.fn()
+    store.registerEvent('dataChanged', listener)
+    const [id] = store.actions.addShapes([RECT])
+    const exported = listener.mock.lastCall?.[0].shapes[0]
+    expect(exported).toMatchObject({ id, ...RECT })
+    expect(exported).not.toHaveProperty('computed')
+    expect(exported).not.toHaveProperty('path')
+    exported.x = 999
+
+    // the new shape is in the foreground, first
+    store.actions.addShapes([{ ...RECT, y: 300 }])
+    const kept = listener.mock.lastCall?.[0].shapes[1]
+    expect(kept).not.toBe(exported)
+    // the x of RECT
+    expect(kept).toEqual({ ...exported, x: 10 })
+    expect(store.getCurrentData().shapes?.[1]).toEqual(kept)
+  })
+
   it('gives the shapes added, updated and removed since the previous state', () => {
     const store = createPaintStore()
     const listener = vi.fn()
@@ -589,5 +609,122 @@ describe('dataChanged', () => {
       removed: [],
       reordered: false
     })
+  })
+})
+
+describe('rounded export', () => {
+  const SHAPES: ShapeInput[] = [
+    { type: 'rect', x: 1 / 3, y: 20.0004, width: 100 / 3, height: 50, rotation: Math.PI / 4, style: { lineWidth: 1 / 3 }, data: { value: 1 / 3 } },
+    { type: 'circle', x: 0, y: 0, radius: 10 / 3 },
+    {
+      type: 'polygon',
+      points: [
+        [0.123456, 1 / 3],
+        [10, 10]
+      ]
+    },
+    {
+      type: 'brush',
+      points: [
+        [
+          [0.55555, 1],
+          [2, 3]
+        ],
+        [[4, 5]]
+      ],
+      scaleX: 1 / 3,
+      scaleY: 1
+    },
+    { type: 'text', x: 0, y: 0, width: 200 / 3, height: 20, fontSize: 20 / 3, value: ['a', 'b', 'c'], ratio: 10 / 3 }
+  ]
+
+  it('rounds the positions and the sizes to 3 decimals, the angles and the factors to 6, and keeps the exact shapes', () => {
+    const store = createPaintStore()
+    const [rectId] = store.actions.addShapes(SHAPES)
+    const [rect, circle, polygon, brush, text] = store.getCurrentData().shapes ?? []
+
+    // the data and the style of the application are not changed
+    expect(rect).toMatchObject({
+      x: 0.333,
+      y: 20,
+      width: 33.333,
+      height: 50,
+      rotation: 0.785398,
+      style: { lineWidth: 1 / 3 },
+      data: { value: 1 / 3 }
+    })
+    expect(circle).toMatchObject({ radius: 3.333 })
+    expect(polygon).toMatchObject({
+      points: [
+        [0.123, 0.333],
+        [10, 10]
+      ]
+    })
+    expect(brush).toMatchObject({
+      points: [
+        [
+          [0.556, 1],
+          [2, 3]
+        ],
+        [[4, 5]]
+      ],
+      scaleX: 0.333333,
+      scaleY: 1
+    })
+    expect(text).toMatchObject({ width: 66.667, height: 20, fontSize: 6.667, ratio: 3.333333 })
+
+    // the drawing keeps its precision
+    expect(getShape<'rect'>(store, rectId!)).toMatchObject({ x: 1 / 3, rotation: Math.PI / 4 })
+  })
+
+  it('gives the same data when the export is loaded again, without updated shapes', async () => {
+    const store = createPaintStore()
+    store.actions.addShapes(SHAPES)
+    const data = store.getCurrentData()
+    const listener = vi.fn()
+    store.registerEvent('dataChanged', listener)
+
+    await store.actions.loadData(data, { clearHistory: false })
+    expect(listener).toHaveBeenCalledTimes(1)
+    expect(listener.mock.lastCall?.[2]).toEqual({ added: [], updated: [], removed: [], reordered: false })
+    expect(store.getCurrentData()).toEqual(data)
+  })
+
+  it('does not copy the points which are already rounded', () => {
+    const store = createPaintStore()
+    const [id] = store.actions.addShapes([
+      {
+        type: 'brush',
+        points: [
+          [
+            [0, 1],
+            [2, 3]
+          ]
+        ]
+      }
+    ])
+    const [exported] = store.getCurrentData().shapes ?? []
+    expect(exported?.type === 'brush' && exported.points).toBe(getShape<'brush'>(store, id!).points)
+  })
+
+  it('does not round again the points of a shape rebuilt without moving', () => {
+    const store = createPaintStore()
+    const [id] = store.actions.addShapes([
+      {
+        type: 'polygon',
+        points: [
+          [0.5555, 1 / 3],
+          [10, 10]
+        ]
+      }
+    ])
+    const getPoints = () => {
+      const [exported] = store.getCurrentData().shapes ?? []
+      return exported?.type === 'polygon' ? exported.points : undefined
+    }
+    const points = getPoints()
+
+    store.actions.setShapesStyle([id!], { strokeColor: 'red' })
+    expect(getPoints()).toBe(points)
   })
 })
