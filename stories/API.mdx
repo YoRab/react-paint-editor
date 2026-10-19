@@ -532,6 +532,15 @@ const annotationsStyle = useAnnotationsStyle(paint)
             <td><code>'empty'</code></td>
           </tr>
           <tr>
+            <td><code>resolvePictureSrc</code></td>
+            <td><code>(url: string) =&gt; string | null | Promise&lt;string | null&gt;</code></td>
+            <td>
+              Called with the absolute URL of each remote picture before it is fetched, whether it is loaded, added or updated. Return the URL to fetch, like the
+              one of a proxy, or <code>null</code> to refuse the picture. The source kept in the shape and in the exported data is not changed
+            </td>
+            <td>-</td>
+          </tr>
+          <tr>
             <td><code>brushAlgo</code></td>
             <td><code>'simple' | 'quadratic'</code></td>
             <td>Brush rendering algorithm: <code>'simple'</code> uses raw path, <code>'quadratic'</code> uses quadratic Bézier curves</td>
@@ -798,6 +807,12 @@ paint.actions.panBy([50, 0]) // scrolls the view, in the units of the drawing`} 
         <li><code>addShapes</code> keeps a free id, completes the style with the default style of the tool, and computes the size of a text from its font size or its font size from its width. A picture is drawn once its source is loaded</li>
         <li><code>updateShapes</code> merges the style and replaces the <code>data</code>. The box of a text follows its new content, or its font size follows its new width. Locked shapes are updated, whereas the transformations leave them unchanged</li>
         <li><code>setOptions</code> overrides options of <code>useReactPaint</code> until <code>resetOptions</code>: objects are merged, arrays like <code>availableTools</code> are replaced. <code>resetSettings</code> restores the default styles of the tools, the grid, the zoom and the active tool</li>
+        <li>
+          The source of a picture is an image data URL, a blob URL, SVG markup or a URL of the web, relative ones included. Other sources are refused. A URL of the web
+          goes through the <code>resolvePictureSrc</code> option, then is fetched without the cookies nor the address of the page. An image larger than 16384 pixels is refused.
+          A picture which cannot be loaded within 4 seconds is left out of <code>loadData</code> and <code>loadFile</code> with a warning, the other shapes are loaded.
+          <code>loadFile</code> refuses files larger than 100 MB
+        </li>
       </ul>
       <Source language='typescript' code={`const [rectId] = paint.actions.addShapes([
   { type: 'rect', x: 60, y: 60, width: 160, height: 100, data: { comment: 'to check' } }
@@ -911,6 +926,7 @@ const patch: ShapePatch = { id: 'rect_1', width: 200, style: { fillColor: 'red' 
       </p>
       <Source language='typescript' code={`type CustomToolInput = {
   id: string
+  // SVG markup, rendered as HTML by the editor: it must be trusted, never built from what a user typed or loaded
   icon?: string
   label?: string
   type: ShapeType

@@ -83,7 +83,13 @@ const Canvas = ({ paint, options, className, style }: CanvasComponentProps) => {
   )
 }
 
-export { type CanvasOptions, DEFAULT_OPTIONS, type OptionalOptions, type OptionalOptions as UseReactPaintOptions } from '@canvas/constants/app'
+export {
+  type CanvasOptions,
+  DEFAULT_OPTIONS,
+  type OptionalOptions,
+  type OptionalOptions as UseReactPaintOptions,
+  type PictureSrcResolver
+} from '@canvas/constants/app'
 export { GRID_PRESETS } from '@canvas/constants/grid'
 export { DEFAULT_TOOLS, MOVE_TOOL, SELECTION_TOOL } from '@canvas/constants/tools'
 export { PaintProvider, usePaint } from '@canvas/context/PaintContext'

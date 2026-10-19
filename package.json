@@ -63,6 +63,7 @@
     "dist/"
   ],
   "devDependencies": {
+    "@arethetypeswrong/cli": "0.18.5",
     "@biomejs/biome": "2.5.15",
     "@storybook/addon-a11y": "10.6.2",
     "@storybook/addon-docs": "10.6.2",
@@ -77,6 +78,7 @@
     "@vitest/coverage-v8": "4.1.11",
     "jsdom": "30.1.2",
     "playwright": "1.64.1",
+    "publint": "0.3.25",
     "react": "18.3.1",
     "react-dom": "18.3.1",
     "storybook": "10.6.2",
@@ -92,7 +94,7 @@
     "bench": "vitest run --project=perf --reporter=default",
     "build": "rm -rf dist && vite build --config vite.config.umd.ts && vite build",
     "build-storybook": "storybook build",
-    "check-package": "pnpm dlx publint && pnpm dlx @arethetypeswrong/cli --pack . --ignore-rules cjs-resolves-to-esm false-esm --exclude-entrypoints react-paint.css editor/editor.css",
+    "check-package": "publint && attw --pack . --ignore-rules cjs-resolves-to-esm false-esm --exclude-entrypoints react-paint.css editor/editor.css",
     "check-treeshake": "node scripts/check-treeshake.mjs",
     "declarationfiles": "rm -rf declarationfiles && pnpm tsc --project tsconfig.prod.json && node fixDtsPath.js",
     "lint": "pnpm biome check --write src stories tests",

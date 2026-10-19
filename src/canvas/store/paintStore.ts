@@ -88,9 +88,9 @@ const resolveConfig = (
   overrides: OptionalOptions
 ) => {
   const mergedOptions = mergeWith(replaceArrays, options ?? {}, overrides) as OptionalOptions
-  const { clearCallback, ...resolvedOptions } = withDefaults(DEFAULT_OPTIONS, mergedOptions)
+  const { clearCallback, resolvePictureSrc, ...resolvedOptions } = withDefaults(DEFAULT_OPTIONS, mergedOptions)
   const config: PaintConfig = { width, height, mode, disabled, options: resolvedOptions }
-  return { config, clearCallback }
+  return { config, clearCallback, resolvePictureSrc }
 }
 
 const createInitialState = (config: PaintConfig): InternalState => ({
@@ -705,13 +705,17 @@ export const createPaintStore = (props: UseReactPaintProps = {}) => {
       setTransformation(DEFAULT_TRANSFORMATION)
     })
 
+  /** The resolver of the sources of the pictures, read when they are loaded: it may be written inline */
+  const getPictureSrcResolver = () => resolveConfig(latest.props, latest.overrides).resolvePictureSrc
+
   const resetCanvas = async (json: ShapeInput[], options: ResetOptions) => {
     const state = get()
     const shapes = await decodeImportedData(json, {
       ctx: getMeasureContext(),
       settings: getSettings(state),
       tools: state.tools.available,
-      usedIds: new Set()
+      usedIds: new Set(),
+      resolvePictureSrc: getPictureSrcResolver()
     })
     resetCanvasWithShapeEntity(shapes, options)
   }
@@ -839,7 +843,7 @@ export const createPaintStore = (props: UseReactPaintProps = {}) => {
   /** Redraws a picture once its image is loaded: the shape is replaced by a copy, without a step in the history */
   const loadPictureOf = (shape: ShapeEntity) => {
     if (shape.type !== 'picture') return
-    loadPicture(shape.img, shape.src)
+    loadPicture(shape.img, shape.src, getPictureSrcResolver())
       .then(() => {
         const loaded = get().document.shapes.find(current => current.id === shape.id)
         if (loaded?.type === 'picture' && loaded.img === shape.img) updateShapes([{ ...loaded }])
@@ -994,7 +998,7 @@ export const createPaintStore = (props: UseReactPaintProps = {}) => {
       })
     },
     addPicture: async (fileOrUrl, { maxWidth = get().config.width, maxHeight = get().config.height, select = true } = {}) => {
-      const pictureShape = await createPicture(fileOrUrl, maxWidth, maxHeight, getSettings())
+      const pictureShape = await createPicture(fileOrUrl, maxWidth, maxHeight, getSettings(), getPictureSrcResolver())
       insertShapes([pictureShape], { select })
       return pictureShape
     },

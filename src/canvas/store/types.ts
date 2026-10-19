@@ -15,7 +15,7 @@ export type UseReactPaintProps = {
 }
 
 /** Options of the hook, with their defaults. The functions are kept out of the state, so that options can be compared by value */
-export type ResolvedOptions = Omit<AppOptions, 'clearCallback'>
+export type ResolvedOptions = Omit<AppOptions, 'clearCallback' | 'resolvePictureSrc'>
 
 export type PaintConfig = {
   width: number

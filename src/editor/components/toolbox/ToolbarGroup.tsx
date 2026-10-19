@@ -52,7 +52,7 @@ const ToolbarGroup = ({ activeTool, group, disabled = false, setActiveToolFromId
 
   const isActive = group?.toolsType.find(tool => tool.type === activeTool.type) !== undefined
 
-  const groupIcon = (localActiveTool ? localActiveTool.icon : group.toolsType?.[0]?.icon) ?? group.title
+  const groupIcon = localActiveTool ? localActiveTool.icon : group.toolsType?.[0]?.icon
 
   const openPanel = () => {
     if (localActiveTool) setActiveToolFromId(localActiveTool.id)
@@ -64,7 +64,10 @@ const ToolbarGroup = ({ activeTool, group, disabled = false, setActiveToolFromId
 
   return (
     <div className='react-paint-editor-toolbargroup-relative'>
-      <Button selected={isActive} title={group.title} disabled={disabled} onClick={openPanel} icon={groupIcon} />
+      {/* the icon is rendered as HTML, the title as text */}
+      <Button selected={isActive} title={group.title} disabled={disabled} onClick={openPanel} icon={groupIcon}>
+        {groupIcon === undefined ? group.title : undefined}
+      </Button>
       {isOpen && (
         <Panel alignment='center' position='top'>
           <div className='react-paint-editor-toolbargroup-panel-content' data-vertical={+group.vertical} ref={panelRef}>

@@ -14,9 +14,8 @@ export default meta
 type Story = StoryObj<typeof meta>
 
 // A small inline SVG used as a data-URI for the URL picture test.
-// isSvg() checks for '.svg' in the string — this URL doesn't match, so the
-// non-SVG fetch path is taken. The original URL is stored as shape.src, and
-// since it contains '<svg', cleanShapesBeforeExport keeps it verbatim.
+// An image data URL is loaded as it is, without a fetch. The URL is stored as
+// shape.src, and exported as it is.
 const SVG_DATA_URI =
   "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='100' height='100'><rect width='100' height='100' fill='blue'/></svg>"
 

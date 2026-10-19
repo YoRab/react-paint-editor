@@ -57,6 +57,11 @@ Breaking changes, see the [migration guide](./MIGRATION.md).
 - performance: a picture added from a file keeps the content of the file as its source, a data URL instead of a revoked blob URL: it is exported as it is, instead of being encoded in PNG on its first export, which froze the page for a large photo, and the exported data are lighter for a photo
 - the exported data round the positions and the sizes to 3 decimals, and the angles and the factors to 6: about half the size, without visible change. The shapes keep their full precision while drawing
 - add the Programmatic API story
+- security: add the resolvePictureSrc option, to filter or proxy the URLs of the remote pictures, which may come from data drawn by someone else
+- security: remote pictures are fetched without the cookies nor the address of the page, protocol-relative and relative URLs included. Sources other than image data URLs, blob URLs, SVG markup and URLs of the web are refused. The sources are exported as they are: only blob URLs, which do not outlive the page, are encoded from their image
+- security: a picture which cannot be loaded is left out of the loaded data with a warning, instead of failing the whole load, and its loading times out after 4 seconds. An image which cannot be encoded no longer breaks the export of the data
+- security: pictures larger than 16384 pixels and data files larger than 100 MB are refused
+- fix the title of a group of tools being rendered as HTML when its tools have no icon
 
 ## V0.18.1
 - fix opacity problems with line and arrows

@@ -93,9 +93,10 @@ const getCachedExport = (shape: ShapeEntity): ExportedShape => {
 /** The export of a shape, shared between the calls: it is copied before it is given to the consumers */
 const getExportedShape = (shape: ShapeEntity): ExportedShape => {
   const exported = getCachedExport(shape)
-  // the source of a picture may be encoded from its image, which may be loaded after the first export
+  // the source of a picture may be encoded from its image, which may be loaded after the first export. An image which cannot
+  // be encoded keeps its source
   return shape.type === 'picture' && isSourceEncodedOnExport(shape.src)
-    ? ({ ...exported, src: getBase64Image(shape.img) } as ExportedShape)
+    ? ({ ...exported, src: getBase64Image(shape.img) ?? shape.src } as ExportedShape)
     : exported
 }
 
