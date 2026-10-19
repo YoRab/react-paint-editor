@@ -255,6 +255,7 @@ paint.registerEvent('shapeClicked', (shape, { canvasPosition }) => console.log(s
 - The actions changing shapes add a step to the history. Give `{ save: false }` for continuous changes, then call `actions.saveShapes()`, and `{ source: 'remote' }` to apply changes received from elsewhere: `dataChanged` gives this source.
 - `addShapes` and `updateShapes` check their input and throw an error, without changing anything, when a shape is invalid. The style of a new shape is completed with the default style of its tool.
 - The `data` field of a shape holds data of your application. It is not drawn, and is kept in the history, the copies and the exported data.
+- The exported data (`getCurrentData`, `dataChanged`, `exportData`) round the positions and the sizes to 3 decimals, and the angles and the factors (`rotation`, `scaleX`, `scaleY`, `ratio`) to 6, which changes nothing visible. The shapes keep their full precision while drawing, and `data` and `style` are exported as they are.
 - Coordinates are in the units of the drawing, angles are in radians, clockwise. The actions work in every mode: `viewer` and `disabled` only restrict the user.
 - `shapeClicked` and `shapeHovered` are also emitted in viewer mode, to make the shapes clickable.
 - `dataChanged(data, source, changes)` gives the shapes added, updated (with their previous version) and removed since the previous state, to send only what changed: `changes.added`, `changes.updated`, `changes.removed`, and `changes.reordered`. An undo gives the reverse changes.

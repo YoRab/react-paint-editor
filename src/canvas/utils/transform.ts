@@ -9,7 +9,8 @@ import { addNewPointToShape } from './shapes/brush'
 import { getAngleFromVector, rotatePoint } from './trigo'
 
 export const roundValues = (prop: number, precision = 2): number => {
-  return Math.round(prop * 10 ** precision) / 10 ** precision
+  const factor = 10 ** precision
+  return Math.round(prop * factor) / factor
 }
 
 export const scalePoint = (point: Point, minX: number, minY: number, scaleX = 1, scaleY = 1): Point => {

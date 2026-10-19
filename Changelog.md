@@ -55,6 +55,7 @@ Breaking changes, see the [migration guide](./MIGRATION.md).
 - performance: each point of a brush stroke extends its path instead of building it again from all the points, and the quadratic brush no longer slows down more and more along a stroke
 - performance: a picture drawn much smaller than its image is drawn from a reduced copy of the image, made once: faster and less grainy in Firefox and Safari
 - performance: a picture added from a file keeps the content of the file as its source, a data URL instead of a revoked blob URL: it is exported as it is, instead of being encoded in PNG on its first export, which froze the page for a large photo, and the exported data are lighter for a photo
+- the exported data round the positions and the sizes to 3 decimals, and the angles and the factors to 6: about half the size, without visible change. The shapes keep their full precision while drawing
 - add the Programmatic API story
 
 ## V0.18.1
