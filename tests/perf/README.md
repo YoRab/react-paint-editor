@@ -25,7 +25,7 @@ PERF_LABEL=slow-cpu PERF_CPU=4 pnpm bench
 
 The results are ignored by git. When `results/baseline.json` exists, the report shows the gap of each metric to it, in %: compare only reports made with the same `PERF_CPU` and `PERF_EVENTS`.
 
-A full run takes about 15 minutes: 14 scenarios, 2 sizes, 1 warm-up run and 5 measured runs each, on a new mount every time. The median of the measured runs is kept.
+A full run takes about 15 minutes: 16 scenarios, 2 sizes, 1 warm-up run and 5 measured runs each, on a new mount every time. The median of the measured runs is kept.
 
 ## Scenarios
 
@@ -49,6 +49,8 @@ The drawing is a grid of opaque rectangles, unless another one is given (`shapes
 | `long-brush` | rectangles, `isBrushShapeDoneOnMouseUp: false` | 4 brush strokes of 300 moves, added to the same shape |
 | `frame-inside` | rectangles under a large rectangle which is only stroked | selection frame inside the large rectangle, 150 moves: each point of the frame is checked against its stroke |
 | `undo-autosave` | rectangles, with a listener of `dataChanged` | as `undo`: each click exports the data |
+| `layers` | rectangles, with the panel of the layers open | 20 clicks alternating hiding and showing a shape in the panel: each click saves the shapes again |
+| `layers-autosave` | as `layers`, with a listener of `dataChanged` | as `layers`: each click exports the data |
 
 `fixture.tsx` mounts the measured app: a host calling `useReactPaint`, a heavy sibling standing for the UI of the consumer, the editor, the canvas, and a probe subscribed to `state.history`. It is the only file that depends on the public API.
 
@@ -70,5 +72,5 @@ The counts are deterministic: they are the acceptance criteria. The times depend
 Each scenario gives its own maximums (`criteria` in `scenarios.ts`). The test fails when a count goes over one:
 
 - no render of the host nor of the sibling during all the gestures but `undo` and `undo-autosave`;
-- no commit of the probe during `hover`, `frame`, `frame-inside`, `pan`, `zoom` and `zoom-mixed`, and at most 1 (the save of the history on release) during `translate`, `opacity`, `mixed`, `pictures` and `brush`, at most 1 per stroke during `long-brush`;
-- no commit of the canvas during `hover`, `translate`, `frame`, `frame-inside`, `opacity`, `mixed`, `pictures`, `brush` and `long-brush`.
+- no commit of the probe during `hover`, `frame`, `frame-inside`, `pan`, `zoom` and `zoom-mixed`, and at most 1 (the save of the history on release) during `translate`, `opacity`, `mixed`, `pictures` and `brush`, at most 1 per stroke during `long-brush`, at most 1 (the first step to undo) during `layers` and `layers-autosave`;
+- no commit of the canvas during `hover`, `translate`, `frame`, `frame-inside`, `opacity`, `mixed`, `pictures`, `brush`, `long-brush`, `layers` and `layers-autosave`.

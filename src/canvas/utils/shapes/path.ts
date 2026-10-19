@@ -1,7 +1,7 @@
 import type { UtilsSettings } from '@canvas/constants/app'
 import type { Circle, DrawableShape, Line, Point, Rect, ShapeEntity } from '@canvas/types/Shapes'
 import { scalePoint } from '@canvas/utils/transform'
-import { type Bounds, getPointsBounds, rotatePoint } from '@canvas/utils/trigo'
+import { type Bounds, getPointsBounds, getRectCorners, rotatePoint } from '@canvas/utils/trigo'
 
 export const createRecPath = (rect: Rect): Path2D => {
   const path = new Path2D()
@@ -261,14 +261,7 @@ const getDefaultOuterBorder = (shape: DrawableShape, border: Rect) => {
 
 const getBoundingBox = (outerBorders: Rect, center: Point, rotation = 0) => {
   if (rotation === 0) return outerBorders
-  const rotatedPoints = (
-    [
-      [outerBorders.x, outerBorders.y],
-      [outerBorders.x + outerBorders.width, outerBorders.y],
-      [outerBorders.x + outerBorders.width, outerBorders.y + outerBorders.height],
-      [outerBorders.x, outerBorders.y + outerBorders.height]
-    ] as Point[]
-  ).map(point =>
+  const rotatedPoints = getRectCorners(outerBorders).map(point =>
     rotatePoint({
       point,
       origin: center,

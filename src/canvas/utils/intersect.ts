@@ -5,8 +5,8 @@ import type { HoverModeData } from '@canvas/types/Mode'
 import type { Point, Rect, SelectionType, ShapeEntity } from '@canvas/types/Shapes'
 import { getSelectedShapes } from '@canvas/utils/selectedShapes'
 import { getAnchorRadius, getResizeAnchorCenter, getRotationAnchorCenter, hasPointAnchors } from '@canvas/utils/selection/anchors'
-import { catmullRomToBezier, createLinePath, getBrushPointScaler, getCatmullRomPoints } from '@canvas/utils/shapes/path'
-import { isCircleIntersectRect, isPointInsideRect, rotatePoint } from './trigo'
+import { catmullRomToBezier, createLinePath, expandRect, getBrushPointScaler, getCatmullRomPoints } from '@canvas/utils/shapes/path'
+import { getRectCorners, isCircleIntersectRect, isPointInsideRect, rotatePoint } from './trigo'
 
 export const getCursorPositionInElement = (e: MouseEvent, element: HTMLElement, canvasSize: CanvasSize): Point => {
   const { clientX, clientY } = e
@@ -232,6 +232,45 @@ const rectSearch = ({
 
 const COLLISION_OFFSET = 10
 
+/** Margin kept from the outline of a stroke, which the browser approximates */
+const HOLE_MARGIN = 1
+
+/**
+ * Test of the points of the hole of a rectangle, a circle or an ellipse, farther than the margin from its outline, in the
+ * coordinates of the shape. Undefined for the other shapes, and for a hole thinner than the margin
+ */
+const getHoleTest = (shape: ShapeEntity, margin: number): ((point: Point) => boolean) | undefined => {
+  switch (shape.type) {
+    case 'rect':
+    case 'square': {
+      const hole = expandRect(shape, -margin)
+      return point => isPointInsideRect(hole, point)
+    }
+    case 'circle':
+    case 'ellipse': {
+      const radiusX = Math.abs(shape.type === 'circle' ? shape.radius : shape.radiusX)
+      const radiusY = Math.abs(shape.type === 'circle' ? shape.radius : shape.radiusY)
+      // a point at the ratio r of the radii, inside the ellipse, is at least (1 - r) × the smallest radius from its outline
+      const maxRatio = 1 - margin / Math.min(radiusX, radiusY)
+      if (maxRatio <= 0) return undefined
+      return ([x, y]) => ((x - shape.x) / radiusX) ** 2 + ((y - shape.y) / radiusY) ** 2 < maxRatio ** 2
+    }
+    default:
+      return undefined
+  }
+}
+
+/**
+ * Whether a rectangle of the drawing is inside the hole of a shape, farther than the distance from its outline: no point
+ * of it is then in the stroke. The rectangle and the hole are convex, so their 4 corners are enough
+ */
+const isRectInsideHole = (shape: ShapeEntity, rect: Rect, distance: number): boolean => {
+  const isInHole = getHoleTest(shape, distance + HOLE_MARGIN)
+  if (!isInHole) return false
+  const { center } = shape.computed
+  return getRectCorners(rect).every(corner => isInHole(getPointPositionAfterCanvasTransformation(corner, shape.rotation ?? 0, center)))
+}
+
 export const checkSelectionFrameCollision = (ctx: CanvasRenderingContext2D, shape: ShapeEntity, selectionFrame: [Point, Point]): boolean => {
   const { borders, center, boundingBox } = shape.computed
 
@@ -254,7 +293,8 @@ export const checkSelectionFrameCollision = (ctx: CanvasRenderingContext2D, shap
     return true
   }
 
-  ctx.lineWidth = (shape.style?.lineWidth ?? 0) + COLLISION_OFFSET
+  const strokeWidth = (shape.style?.lineWidth ?? 0) + COLLISION_OFFSET
+  ctx.lineWidth = strokeWidth
 
   if (shape.type === 'brush') {
     const scale = getBrushPointScaler(shape)
@@ -305,6 +345,8 @@ export const checkSelectionFrameCollision = (ctx: CanvasRenderingContext2D, shap
   }
 
   const checkFill = shouldCheckFillShape(shape)
+  // a frame inside the hole of a shape which is not filled, like a large frame around a drawing, never crosses its stroke
+  if (!checkFill && isRectInsideHole(shape, frameCollision, strokeWidth / 2)) return false
 
   return rectSearch({ ctx, path: shape.path, rect: frameCollision, offset: COLLISION_OFFSET, center, rotation: shape.rotation ?? 0, checkFill })
 }

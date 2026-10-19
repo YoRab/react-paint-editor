@@ -81,4 +81,13 @@ describe('shapesReducer', () => {
     })
     expect(duplicated.shapes.map(item => item.id)).toEqual(['a', 'b2', 'b'])
   })
+
+  it('keeps the shapes of a new order, and leaves out the flag of an old list of layers', () => {
+    const first = shape('a')
+    const second = { ...shape('b'), chosen: true } as unknown as ShapeEntity
+    const reordered = shapesReducer(withShapes([first, second]), { type: 'RESET_AND_SAVE', shapes: [second, first], newSelectedShape: undefined })
+    expect(reordered.shapes[1]).toBe(first)
+    expect(reordered.shapes[0]).toEqual(shape('b'))
+    expect(reordered.history.states[reordered.history.cursor]?.shapes).toBe(reordered.shapes)
+  })
 })

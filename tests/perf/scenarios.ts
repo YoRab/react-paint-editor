@@ -48,11 +48,13 @@ export type Scenario = {
 
 // ─── DOM helpers ───────────────────────────────────────────────────────────────
 
-const getDrawCanvas = () => {
-  const canvas = document.querySelector<HTMLCanvasElement>('[data-testid="draw-canvas"]')
-  if (!canvas) throw new Error('No draw canvas')
-  return canvas
+const getElement = <T extends Element>(selector: string): T => {
+  const element = document.querySelector<T>(selector)
+  if (!element) throw new Error(`No element ${selector}`)
+  return element
 }
+
+const getDrawCanvas = () => getElement<HTMLCanvasElement>('[data-testid="draw-canvas"]')
 
 const toClient = ([x, y]: Point) => {
   const rect = getDrawCanvas().getBoundingClientRect()
@@ -77,11 +79,10 @@ const dispatchPointer = (type: string, point: Point, init: PointerEventInit = {}
 const dispatchWheel = (point: Point, init: WheelEventInit) =>
   getDrawCanvas().dispatchEvent(new WheelEvent('wheel', { bubbles: true, cancelable: true, ...toClient(point), ...init }))
 
-const clickButton = (testId: string) => {
-  const button = document.querySelector<HTMLButtonElement>(`[data-testid="${testId}"]`)
-  if (!button) throw new Error(`No button ${testId}`)
-  button.click()
-}
+const clickButton = (testId: string) => getElement<HTMLButtonElement>(`[data-testid="${testId}"]`).click()
+
+/** The indexes of a number of clicks, to send with playPoints */
+const clicks = (count: number) => Array.from({ length: count }, (_, index) => index)
 
 /** Gives the focus to the canvas, which receives the keyboard shortcuts, then waits for the listeners to be set */
 export const focusCanvas = async () => {
@@ -330,13 +331,7 @@ const createUndoScenario = ({ id, listenData = false }: Pick<Scenario, 'id' | 'l
       await nextFrame()
       dataEventsBefore = app.getDataEvents()
     },
-    run: async () => {
-      for (let index = 0; index < UNDO_CLICKS; index++) {
-        clickButton(index % 2 === 0 ? 'tool-undo' : 'tool-redo')
-        await nextFrame()
-      }
-      await nextFrame()
-    },
+    run: async () => playPoints(clicks(UNDO_CLICKS), 1, index => clickButton(index % 2 === 0 ? 'tool-undo' : 'tool-redo')),
     verify: ({ app, shapes }) => {
       expect(app.getState().shapes).toHaveLength(shapes.length - 1)
       expect(app.getState().history.canUndo).toBe(true)
@@ -349,6 +344,47 @@ const createUndoScenario = ({ id, listenData = false }: Pick<Scenario, 'id' | 'l
 const undo = createUndoScenario({ id: 'undo' })
 
 const undoAutosave = createUndoScenario({ id: 'undo-autosave', listenData: true })
+
+const LAYER_CLICKS = 20
+
+const VISIBILITY_BUTTONS = '.react-paint-editor-layouts-visible-button'
+
+/** Clicks alternating hiding and showing the middle shape in the panel of the layers: each click saves the shapes again */
+const createLayersScenario = ({ id, listenData = false }: Pick<Scenario, 'id' | 'listenData'>): Scenario => {
+  let visibilityButton: HTMLButtonElement | undefined
+  let shapeId = ''
+  let dataEventsBefore = 0
+  return {
+    id,
+    listenData,
+    setup: async ({ app }) => {
+      getElement<HTMLButtonElement>('button[title="Toggle layers panel"]').click()
+      await waitFor(() => document.querySelectorAll(VISIBILITY_BUTTONS).length === app.getState().shapes.length, 'layers panel shown')
+      // the panel narrows the canvas, resized in the next frame
+      await nextFrame()
+      await nextFrame()
+      const { shapes } = app.getState()
+      const index = Math.floor(shapes.length / 2)
+      shapeId = shapes[index]!.id
+      // a layer keeps its element while its shape changes
+      visibilityButton = document.querySelectorAll<HTMLButtonElement>(VISIBILITY_BUTTONS)[index]
+      dataEventsBefore = app.getDataEvents()
+    },
+    run: async () => playPoints(clicks(LAYER_CLICKS), 1, () => visibilityButton?.click()),
+    verify: ({ app }) => {
+      // an even number of clicks shows the shape again
+      expect(app.getState().shapes.find(shape => shape.id === shapeId)?.visible).toBe(true)
+      expect(app.getState().history.canUndo).toBe(true)
+      if (listenData) expect(app.getDataEvents() - dataEventsBefore).toBe(LAYER_CLICKS)
+    },
+    // the first click gives something to undo
+    criteria: GESTURE_CRITERIA
+  }
+}
+
+const layers = createLayersScenario({ id: 'layers' })
+
+const layersAutosave = createLayersScenario({ id: 'layers-autosave', listenData: true })
 
 export const SCENARIOS: Scenario[] = [
   hover,
@@ -364,5 +400,7 @@ export const SCENARIOS: Scenario[] = [
   pictures,
   longBrush,
   frameInside,
-  undoAutosave
+  undoAutosave,
+  layers,
+  layersAutosave
 ]

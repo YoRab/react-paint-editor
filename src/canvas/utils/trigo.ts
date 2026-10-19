@@ -33,6 +33,14 @@ export const getPointsBounds = (pointLists: readonly (readonly Point[])[]): Boun
   return { minX, minY, maxX, maxY }
 }
 
+/** The 4 corners of a rectangle, clockwise from its top left corner */
+export const getRectCorners = ({ x, y, width, height }: Rect): Point[] => [
+  [x, y],
+  [x + width, y],
+  [x + width, y + height],
+  [x, y + height]
+]
+
 /** Smallest rectangle containing the rectangles */
 export const getBoundingRect = (rects: Rect[]): Rect => {
   let x = Number.POSITIVE_INFINITY

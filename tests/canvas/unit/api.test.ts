@@ -545,6 +545,26 @@ describe('dataChanged', () => {
     expect(listener).toHaveBeenCalledTimes(1)
   })
 
+  it('gives new objects on each change: the data received can be changed without changing the next ones', () => {
+    const store = createPaintStore()
+    const listener = vi.fn()
+    store.registerEvent('dataChanged', listener)
+    const [id] = store.actions.addShapes([RECT])
+    const exported = listener.mock.lastCall?.[0].shapes[0]
+    expect(exported).toMatchObject({ id, ...RECT })
+    expect(exported).not.toHaveProperty('computed')
+    expect(exported).not.toHaveProperty('path')
+    exported.x = 999
+
+    // the new shape is in the foreground, first
+    store.actions.addShapes([{ ...RECT, y: 300 }])
+    const kept = listener.mock.lastCall?.[0].shapes[1]
+    expect(kept).not.toBe(exported)
+    // the x of RECT
+    expect(kept).toEqual({ ...exported, x: 10 })
+    expect(store.getCurrentData().shapes?.[1]).toEqual(kept)
+  })
+
   it('gives the shapes added, updated and removed since the previous state', () => {
     const store = createPaintStore()
     const listener = vi.fn()

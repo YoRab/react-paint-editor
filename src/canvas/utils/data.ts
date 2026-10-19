@@ -1,28 +1,49 @@
 import type { DataChanges } from '@canvas/types/editor'
 import type { ExportedShape, ShapeEntity, StateData } from '@canvas/types/Shapes'
 import { shallowEqual } from '@canvas/utils/equality'
-import { isEqual, omit } from '@canvas/utils/object'
+import { isEqual } from '@canvas/utils/object'
 import { getStringifiedImage } from './file'
 
-const propsToOmit: (string | [string, unknown[]])[] = [
-  'img',
-  'path',
-  'arrows',
-  'tempPoint',
-  'computed',
-  ['flipX', [undefined, false]],
-  ['flipY', [undefined, false]]
-]
+/** Fields left out of the export: the image, the paths and the computed data are built again from the others */
+const OMITTED_FIELDS = new Set(['img', 'path', 'arrows', 'tempPoint', 'computed'])
 
-/** The shape as exported: its id and its data are kept, the computed data are left out */
-const cleanShapeBeforeExport = (shape: ShapeEntity): ExportedShape => {
-  if (shape.type === 'picture') {
-    if (!shape.src.startsWith('http')) {
-      return omit(propsToOmit, { ...shape, src: getStringifiedImage(shape) }) as unknown as ExportedShape
-    }
+/** Flags only exported when they are set */
+const OPTIONAL_FLAGS = new Set(['flipX', 'flipY'])
+
+/** The fields kept, copied into a new object: removing fields from a copy would slow down the access to the copy */
+const buildExportedShape = (shape: ShapeEntity): ExportedShape => {
+  const exported: Record<string, unknown> = {}
+  for (const field of Object.keys(shape)) {
+    const value = (shape as Record<string, unknown>)[field]
+    if (OMITTED_FIELDS.has(field) || (OPTIONAL_FLAGS.has(field) && (value === undefined || value === false))) continue
+    exported[field] = value
   }
-  return omit(propsToOmit, shape) as unknown as ExportedShape
+  return exported as unknown as ExportedShape
 }
+
+/**
+ * Exports of the shapes, built once per shape: a shape is never changed, only replaced, and all the shapes are exported on
+ * each change of the history
+ */
+const exportCache = new WeakMap<ShapeEntity, ExportedShape>()
+
+const getCachedExport = (shape: ShapeEntity): ExportedShape => {
+  const cached = exportCache.get(shape)
+  if (cached) return cached
+  const exported = buildExportedShape(shape)
+  exportCache.set(shape, exported)
+  return exported
+}
+
+/** The export of a shape, shared between the calls: it is copied before it is given to the consumers */
+const getExportedShape = (shape: ShapeEntity): ExportedShape => {
+  const exported = getCachedExport(shape)
+  // the source of a picture is encoded from its image, which may be loaded after the first export
+  return shape.type === 'picture' && !shape.src.startsWith('http') ? ({ ...exported, src: getStringifiedImage(shape) } as ExportedShape) : exported
+}
+
+/** The shape as exported: its id and its data are kept, the computed data are left out. Each call returns a new object */
+const cleanShapeBeforeExport = (shape: ShapeEntity): ExportedShape => ({ ...getExportedShape(shape) })
 
 export const cleanShapesBeforeExport = (shapes: ShapeEntity[]): ExportedShape[] => shapes.map(cleanShapeBeforeExport)
 
@@ -49,8 +70,8 @@ export const getDataChanges = (previousShapes: ShapeEntity[], shapes: ShapeEntit
       added.push(exportedShape)
     } else if (previousShape !== shape) {
       // a shape is rebuilt without change when its computed data are refreshed
-      const previous = cleanShapeBeforeExport(previousShape)
-      if (!isEqual(previous, exportedShape)) updated.push({ shape: exportedShape, previous })
+      const previous = getExportedShape(previousShape)
+      if (!isEqual(previous, exportedShape)) updated.push({ shape: exportedShape, previous: { ...previous } })
     }
   })
   const keptIds = shapes.filter(shape => previousById.has(shape.id)).map(shape => shape.id)

@@ -12,7 +12,7 @@ import { drawLineSelection } from '@canvas/utils/selection/lineSelection'
 import { drawBoundingBox, drawSelectionRect } from '@canvas/utils/selection/rectSelection'
 import { drawFrame } from '@canvas/utils/selection/selectionFrame'
 import { boundVectorToSingleAxis, roundForGrid } from '@canvas/utils/transform'
-import { getPointsBounds, rotatePoint } from '@canvas/utils/trigo'
+import { getPointsBounds, getRectCorners, rotatePoint } from '@canvas/utils/trigo'
 import { createShapeId } from '@canvas/utils/util'
 import { getCurrentView } from '@canvas/utils/zoom'
 import { createBrush, drawBrush, refreshBrush, resizeBrush, resizeBrushInGroup } from './brush'
@@ -156,15 +156,10 @@ const getLayerMargin = (shape: ShapeEntity) => {
 const LAYER_PIXEL_MARGIN = 2
 
 /** Box in pixels of a rectangle of the shape transformed by the matrix: only its part inside the canvas is drawn */
-const getPixelBox = (canvas: HTMLCanvasElement, matrix: DOMMatrix, { x, y, width, height }: Rect): Rect => {
-  const corners = (
-    [
-      [x, y],
-      [x + width, y],
-      [x, y + height],
-      [x + width, y + height]
-    ] as const
-  ).map(([cornerX, cornerY]): Point => [matrix.a * cornerX + matrix.c * cornerY + matrix.e, matrix.b * cornerX + matrix.d * cornerY + matrix.f])
+const getPixelBox = (canvas: HTMLCanvasElement, matrix: DOMMatrix, rect: Rect): Rect => {
+  const corners = getRectCorners(rect).map(
+    ([cornerX, cornerY]): Point => [matrix.a * cornerX + matrix.c * cornerY + matrix.e, matrix.b * cornerX + matrix.d * cornerY + matrix.f]
+  )
   const { minX, minY, maxX, maxY } = getPointsBounds([corners])
   const left = Math.max(0, Math.floor(minX) - LAYER_PIXEL_MARGIN)
   const top = Math.max(0, Math.floor(minY) - LAYER_PIXEL_MARGIN)

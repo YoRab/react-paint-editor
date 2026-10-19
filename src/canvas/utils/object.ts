@@ -1,16 +1,6 @@
-export const omit = <T extends Record<string, unknown>>(keys: (string | [string, unknown[]])[], obj: T): T => {
+export const omit = <T extends Record<string, unknown>>(keys: string[], obj: T): T => {
   const result = { ...obj }
-
-  for (const key of keys) {
-    if (Array.isArray(key)) {
-      if (key[1].includes(result[key[0]])) {
-        delete result[key[0]]
-      }
-    } else {
-      delete result[key]
-    }
-  }
-
+  for (const key of keys) delete result[key]
   return result
 }
 
