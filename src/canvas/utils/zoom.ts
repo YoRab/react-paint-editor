@@ -4,6 +4,9 @@ import type { CanvasSize, Size } from '@canvas/types/Canvas'
 import type { Point, Rect } from '@canvas/types/Shapes'
 import { clamp, isMacOs } from '@canvas/utils/util'
 
+/** Keeps a zoom level between the smallest and the largest zoom steps */
+export const clampZoom = (zoom: number): number => clamp(zoom, ZOOM_STEPS[0]!, ZOOM_STEPS[ZOOM_STEPS.length - 1]!)
+
 export const getNewOffset = ({
   size,
   zoom,
@@ -134,7 +137,7 @@ export const getNewZoomAndOffsetFromDelta = ({
   offset: Point
   zoom: number
 } => {
-  const newZoom = clamp(currentZoom * (1 - delta / 1000), ZOOM_STEPS[0]!, ZOOM_STEPS[ZOOM_STEPS.length - 1]!)
+  const newZoom = clampZoom(currentZoom * (1 - delta / 1000))
 
   return calculateNewZoomAndOffset({
     size,
@@ -144,6 +147,31 @@ export const getNewZoomAndOffsetFromDelta = ({
     zoom: newZoom,
     centerPoint
   })
+}
+
+/** Zoom and offset showing the whole box in the middle of the view, with a margin in pixels of the screen */
+export const getZoomAndOffsetToFit = ({
+  size,
+  canvasSize,
+  box,
+  padding
+}: {
+  size: Size
+  canvasSize: CanvasSize
+  box: Rect
+  padding: number
+}): {
+  offset: Point
+  zoom: number
+} => {
+  const margin = (2 * padding) / canvasSize.scaleRatio
+  // a flat box, like a horizontal line, is fitted along its other side
+  const zoom = clampZoom(
+    Math.min((canvasSize.realWidth - margin) / Math.max(box.width, 1), (canvasSize.realHeight - margin) / Math.max(box.height, 1))
+  )
+  // the center of the box is displayed in the center of the view: (point + offset) * zoom
+  const newOffset: Point = [canvasSize.realWidth / 2 / zoom - (box.x + box.width / 2), canvasSize.realHeight / 2 / zoom - (box.y + box.height / 2)]
+  return getNewOffset({ size, zoom, canvasSize, newOffset })
 }
 
 export const getCurrentView = (settings: UtilsSettings): Rect => {

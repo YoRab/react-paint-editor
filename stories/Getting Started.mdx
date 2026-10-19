@@ -28,10 +28,14 @@ import LinkTo from '@storybook/addon-links/react';
       
       <h2>Import Styles</h2>
       <p>
-        Don't forget to import the CSS file in your application:
+        When you use the <code>Editor</code>, don't forget to import the CSS file in your application:
       </p>
       
             <Source language='typescript' code={`import '@yorab/react-paint/react-paint.css'`}/>
+
+      <p>
+        The <code>Canvas</code> needs no stylesheet: its styles are inline.
+      </p>
 
       <h2>Basic Usage</h2>
       <p>
@@ -135,10 +139,9 @@ const { shapes, selectedShapes } = usePaintState(paint, state => ({ shapes: stat
       <h3>Modules</h3>
       <p>
         The library is made of two independent modules: <strong>canvas</strong> (<code>Canvas</code> and <code>useReactPaint</code>) and <strong>editor</strong> (<code>Editor</code>).
-        When you don't use <code>Editor</code>, it is removed from your bundle. Each module can also be imported with its own styles:
+        When you don't use <code>Editor</code>, it is removed from your bundle. Each module can also be imported separately, only the editor has a stylesheet:
       </p>
       <Source language='typescript' code={`import { Canvas, useReactPaint } from '@yorab/react-paint/canvas'
-import '@yorab/react-paint/canvas/canvas.css'
 
 import { Editor } from '@yorab/react-paint/editor'
 import '@yorab/react-paint/editor/editor.css'`} />

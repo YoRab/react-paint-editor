@@ -34,7 +34,11 @@ describe('createPaintStore', () => {
 
     await vi.waitFor(() => expect(store.getState().document.shapes).toHaveLength(3))
     expect(events.dataChanged).toHaveBeenCalledTimes(1)
-    expect(events.dataChanged).toHaveBeenCalledWith(expect.objectContaining({ config: { width: 1000, height: 600 } }), 'remote')
+    expect(events.dataChanged).toHaveBeenCalledWith(
+      expect.objectContaining({ config: { width: 1000, height: 600 } }),
+      'remote',
+      expect.objectContaining({ added: expect.arrayContaining([expect.objectContaining({ type: 'rect' })]) })
+    )
     expect(store.getEditorState().history.canUndo).toBe(false)
   })
 

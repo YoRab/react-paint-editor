@@ -15,7 +15,11 @@ export const getCursorPositionInElement = (e: MouseEvent, element: HTMLElement, 
   return [(clientX - canvasBoundingRect.left) / canvasSize.scaleRatio, (clientY - canvasBoundingRect.top) / canvasSize.scaleRatio]
 }
 
-export const getCursorPositionInTransformedCanvas = (e: MouseEvent, canvas: HTMLElement | null, settings: UtilsSettings): Point => {
+export const getCursorPositionInTransformedCanvas = (
+  e: Pick<MouseEvent, 'clientX' | 'clientY'>,
+  canvas: HTMLElement | null,
+  settings: UtilsSettings
+): Point => {
   const { clientX, clientY } = e
 
   const canvasBoundingRect = canvas?.getBoundingClientRect() ?? {
@@ -352,11 +356,27 @@ export const checkSelectionFrameCollision = (ctx: CanvasRenderingContext2D, shap
   return rectSearch({ ctx, path: shape.path, rect: frameCollision, offset: COLLISION_OFFSET, center, rotation: shape.rotation ?? 0, checkFill })
 }
 
-const LONG_PRESS_MOVE_THRESHOLD = 5
+const POINTER_MOVE_THRESHOLD = 5
 
-export const shouldCancelLongPress = (e: PointerEvent, startPosition: { clientX: number; clientY: number }): boolean => {
-  if (!isTouchGesture(e)) return true
+type ClientPosition = Pick<MouseEvent, 'clientX' | 'clientY'>
+
+/** Whether the pointer has moved by more than a few pixels since the start of a press */
+export const hasPointerMoved = (e: ClientPosition, startPosition: ClientPosition): boolean => {
   const dx = e.clientX - startPosition.clientX
   const dy = e.clientY - startPosition.clientY
-  return dx * dx + dy * dy > LONG_PRESS_MOVE_THRESHOLD * LONG_PRESS_MOVE_THRESHOLD
+  return dx * dx + dy * dy > POINTER_MOVE_THRESHOLD * POINTER_MOVE_THRESHOLD
 }
+
+export const shouldCancelLongPress = (e: PointerEvent, startPosition: ClientPosition): boolean =>
+  !isTouchGesture(e) || hasPointerMoved(e, startPosition)
+
+const isShapeAt = (ctx: CanvasRenderingContext2D, shape: ShapeEntity, point: Point, settings: UtilsSettings) =>
+  shape.visible !== false && isPointInsideRect(shape.computed.boundingBox, point) && !!checkPositionIntersection(ctx, shape, point, settings)
+
+/** Visible shapes under a point, from the foreground. Locked shapes are found too */
+export const findShapesAt = (ctx: CanvasRenderingContext2D, shapes: ShapeEntity[], point: Point, settings: UtilsSettings): ShapeEntity[] =>
+  shapes.filter(shape => isShapeAt(ctx, shape, point, settings))
+
+/** The shape of the foreground under a point, as found by findShapesAt */
+export const findShapeAt = (ctx: CanvasRenderingContext2D, shapes: ShapeEntity[], point: Point, settings: UtilsSettings): ShapeEntity | undefined =>
+  shapes.find(shape => isShapeAt(ctx, shape, point, settings))

@@ -2,13 +2,13 @@ import type { AppOptions, OptionalOptions } from '@canvas/constants/app'
 import type { ShapesState } from '@canvas/store/shapesReducer'
 import type { CanvasSize } from '@canvas/types/Canvas'
 import type { HoverModeData, SelectionModeData } from '@canvas/types/Mode'
-import type { ExportedDrawableShape, Point, SelectionType, ShapeEntity } from '@canvas/types/Shapes'
+import type { Point, SelectionType, ShapeEntity, ShapeInput } from '@canvas/types/Shapes'
 import type { CustomTool } from '@canvas/types/tools'
 
 export type UseReactPaintProps = {
   width?: number | undefined
   height?: number | undefined
-  shapes?: ExportedDrawableShape[] | undefined
+  shapes?: ShapeInput[] | undefined
   mode?: 'editor' | 'viewer' | undefined
   disabled?: boolean | undefined
   options?: OptionalOptions | undefined

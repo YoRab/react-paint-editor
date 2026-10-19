@@ -83,12 +83,19 @@ export type SelectionLinesType = {
   anchors: Path2D[]
 }
 
+/** Data of the application attached to a shape: it is not drawn, and is kept in the history, the copies and the exported data */
+export type ShapeData = Record<string, unknown>
+
 type GenericDrawableShape = {
+  /** Kept when the shape is exported and loaded again. A new id is created when it is missing or already used */
+  id?: string
   rotation?: number
   toolId?: string
   visible?: boolean
   locked?: boolean
   style?: StyleShape | undefined
+  /** Free data of the application, which must be serializable in JSON. A patch replaces it as a whole */
+  data?: ShapeData | undefined
 } & (
   | (Line & {
       type: 'line'
@@ -180,8 +187,29 @@ export type ShapeEntity<T extends Exclude<ShapeType, 'triangle'> = Exclude<Shape
       }
   )
 
+/** A shape as exported: without the computed data, and with its id */
+export type ExportedShape = ExportedDrawableShape & { id: string }
+
+/** Types of the shapes which can be created and edited: triangles and groups are only built by the canvas */
+export type EditableShapeType = Exclude<ShapeType, 'triangle' | 'group'>
+
+/** A text can be given without its size: it is computed from its font size, or from its width */
+export type TextShapeInput = Omit<ExportedDrawableShape<'text'>, 'width' | 'height' | 'fontSize'> &
+  Partial<Pick<DrawableShape<'text'>, 'width' | 'height' | 'fontSize'>>
+
+/**
+ * A shape given by the consumer, to create or to load it. Triangles and groups are refused by addShapes and left out
+ * when loading: they are accepted by the type so that data typed as DrawableShape can be given
+ */
+export type ShapeInput = ExportedDrawableShape | TextShapeInput
+
+type DistributivePatch<T> = T extends unknown ? { id: string } & Partial<Omit<T, 'id' | 'type' | 'img'>> : never
+
+/** Fields of a shape to update, found by its id. Its type cannot change, and its style is merged with the current one */
+export type ShapePatch = DistributivePatch<ExportedDrawableShape<EditableShapeType>>
+
 export type StateData = {
-  shapes?: DrawableShape[]
+  shapes?: ExportedShape[]
   config?: {
     width: number
     height: number

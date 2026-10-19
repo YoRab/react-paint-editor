@@ -3,8 +3,8 @@ import react from '@vitejs/plugin-react'
 import { defineConfig } from 'vite'
 
 // CSS emitted for each module chunk. The aggregated react-paint.css is emitted by the UMD build.
+// The canvas has no stylesheet (its styles are inline): any other asset fails the build.
 const CSS_FILE_NAMES: Record<string, string> = {
-  'canvas.css': 'canvas/canvas.css',
   'editor.css': 'editor/editor.css'
 }
 

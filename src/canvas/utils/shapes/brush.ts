@@ -6,7 +6,7 @@ import { set } from '@canvas/utils/object'
 import { createRecSelectionPath, resizeRectSelection } from '@canvas/utils/selection/rectSelection'
 import { createBrushPath, expandRect, getComputedShapeInfos } from '@canvas/utils/shapes/path'
 import { roundValues, scalePoint } from '@canvas/utils/transform'
-import { uniqueId } from '@canvas/utils/util'
+import { createShapeId } from '@canvas/utils/util'
 import { type GroupResizeContext, getPositionWithoutGroupRotation, getShapePositionInNewBorder } from './group'
 
 export const getBrushBorder = (brush: DrawableShape<'brush'>, { selectionPadding }: Pick<UtilsSettings, 'selectionPadding'>): Rect => {
@@ -55,7 +55,7 @@ export const createBrush = (
     {
       toolId: shape.id,
       type: shape.type,
-      id: uniqueId(`${shape.type}_`),
+      id: createShapeId(shape.type),
       points: [[cursorPosition]],
       scaleX: 1,
       scaleY: 1,

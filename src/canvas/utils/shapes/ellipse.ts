@@ -5,7 +5,7 @@ import type { ToolsSettingsType } from '@canvas/types/tools'
 import { drawPathWithFillAndStroke } from '@canvas/utils/canvas'
 import { createRecSelectionPath, resizeRectSelection } from '@canvas/utils/selection/rectSelection'
 import { createEllipsePath, expandRect, getComputedShapeInfos } from '@canvas/utils/shapes/path'
-import { uniqueId } from '@canvas/utils/util'
+import { createShapeId } from '@canvas/utils/util'
 import { type GroupResizeContext, getPositionWithoutGroupRotation, getShapePositionInNewBorder } from './group'
 
 const getEllipseBorder = (ellipse: Ellipse, settings: Pick<UtilsSettings, 'selectionPadding'>): Rect => {
@@ -44,7 +44,7 @@ export const createEllipse = (
     {
       toolId: shape.id,
       type: shape.type,
-      id: uniqueId(`${shape.type}_`),
+      id: createShapeId(shape.type),
       x: cursorPosition[0],
       y: cursorPosition[1],
       radiusX: 0,

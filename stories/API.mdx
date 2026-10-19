@@ -28,6 +28,7 @@ import LinkTo from '@storybook/addon-links/react';
         <li><a href="#Options" target="_self">Configuration Options</a></li>
         <li><a href="#Events" target="_self">Events</a></li>
         <li><a href="#Methods" target="_self">Methods</a></li>
+        <li><a href="#Actions" target="_self">Driving the canvas from the code</a></li>
         <li><a href="#Performance" target="_self">Performance</a></li>
         <li><a href="#Helpers" target="_self">Helpers</a></li>
       </ul>
@@ -102,8 +103,12 @@ import LinkTo from '@storybook/addon-links/react';
   subscribe: (listener: () => void) => () => void
   registerEvent: <E extends ReactPaintEventName>(event: E, fn: ReactPaintEvents[E]) => () => void
   unregisterEvent: <E extends ReactPaintEventName>(event: E, fn?: ReactPaintEvents[E]) => void
-  resetCanvas: (shapes?: DrawableShape[], clearHistory?: boolean) => void
-  getCurrentImage: (view: ExportView) => string
+  batch: <R>(fn: () => R) => R
+  getShape: (id: string) => ShapeEntity | undefined
+  getBounds: (ids: string[]) => ShapesBounds | undefined
+  getShapesAt: (point: Point) => ShapeEntity[]
+  resetCanvas: (shapes?: ShapeInput[], clearHistory?: boolean) => void
+  getCurrentImage: (options?: ExportImageOptions) => string
   getCurrentData: () => StateData
   scopeRef: (element: HTMLElement | null) => void
 }`} />
@@ -111,7 +116,7 @@ import LinkTo from '@storybook/addon-links/react';
         <li><code>actions</code> - Commands to act on the canvas (see below). Their identity never changes</li>
         <li><code>getState()</code> - The current state (see below), without subscription: to read in event handlers. The same object is returned as long as nothing changes</li>
         <li><code>subscribe(listener)</code> - Calls the listener after each change of the state, and returns the function that unsubscribes it</li>
-        <li><code>registerEvent</code>, <code>unregisterEvent</code>, <code>resetCanvas</code>, <code>getCurrentImage</code>, <code>getCurrentData</code> - See <a href="#Methods" target="_self">Methods</a></li>
+        <li><code>registerEvent</code>, <code>unregisterEvent</code>, <code>batch</code>, <code>getShape</code>, <code>getBounds</code>, <code>getShapesAt</code>, <code>resetCanvas</code>, <code>getCurrentImage</code>, <code>getCurrentData</code> - See <a href="#Methods" target="_self">Methods</a></li>
         <li><code>scopeRef</code> - Callback ref defining the area where keyboard shortcuts are active, the canvas by default. The pointer always works over the canvas. Set it on the root element of a custom editor so that the shortcuts also work while its toolbar is focused. The <code>Editor</code> component sets it</li>
       </ul>
 
@@ -139,23 +144,28 @@ import LinkTo from '@storybook/addon-links/react';
       <h4>Actions</h4>
       <ul>
         <li><code>selectTool(toolOrId)</code> - Selects the selection tool, the move tool or one of the tools, found by id. An unknown tool is ignored</li>
-        <li><code>updateToolSettings(toolId, field, value)</code></li>
-        <li><code>selectShapes(ids)</code>, <code>selectAllShapes()</code>, <code>clearSelection()</code></li>
+        <li><code>updateToolSettings(toolId, field, value)</code>, <code>setToolStyle(toolId, style)</code> - Default values of a tool, a field the tool has not is ignored</li>
+        <li><code>selectShapes(ids, {"{ mode? }"})</code>, <code>selectAllShapes()</code>, <code>clearSelection()</code> - <code>mode</code> is <code>'replace'</code>, <code>'add'</code> or <code>'remove'</code></li>
+        <li><code>addShapes(shapes, {'{ select?, index?, save?, source? }'})</code>, <code>updateShapes(patches, {'{ save?, source? }'})</code> - See <a href="#Actions" target="_self">Driving the canvas from the code</a></li>
         <li><code>removeShapes(ids)</code>, <code>duplicateShapes(ids, {'{ translate?, select? }'})</code></li>
-        <li><code>moveShapes(ids, 'first' | 'last' | 'forward' | 'backward')</code>, <code>swapShapes(firstId, secondId)</code></li>
+        <li><code>translateShapes(ids, [dx, dy])</code>, <code>rotateShapes(ids, angle, {'{ center? }'})</code>, <code>resizeShapes(ids, box)</code></li>
+        <li><code>moveShapes(ids, 'first' | 'last' | 'forward' | 'backward')</code>, <code>swapShapes(firstId, secondId)</code>, <code>setShapeIndex(id, index)</code>, <code>reorderShapes(ids)</code></li>
         <li><code>toggleShapesVisibility(ids)</code>, <code>toggleShapesLock(ids)</code> - Toggle each shape</li>
         <li><code>setShapesVisibility(ids, visible)</code>, <code>setShapesLocked(ids, locked)</code> - Set the same value on all shapes</li>
-        <li><code>updateShapesStyle(ids, field, value, {'{ save? }'})</code> - Updates a style field. Text size is recomputed when changing the font</li>
+        <li><code>setShapesStyle(ids, style, {'{ updateTool?, save? }'})</code>, <code>updateShapesStyle(ids, field, value, {'{ save? }'})</code> - Updates style fields. Text size is recomputed when changing the font</li>
         <li><code>transformShapes(ids, 'flipHorizontally' | 'flipVertically' | 'rotateClockwise' | 'rotateCounterclockwise')</code></li>
-        <li><code>removeShapePoint(id, pointIndex)</code> - Removes a point of a polygon or a curve, which keep at least 2 points</li>
+        <li><code>insertShapePoint(id, index, point)</code>, <code>moveShapePoint(id, index, point)</code>, <code>removeShapePoint(id, pointIndex)</code> - Points of a line, a polygon or a curve, which keep at least 2 points</li>
+        <li><code>editText(id)</code> - Opens the edition box of a text</li>
         <li><code>addPicture(fileOrUrl, {'{ maxWidth?, maxHeight?, select? }'})</code></li>
         <li><code>copy(ids?)</code>, <code>cut(ids?)</code>, <code>paste()</code> - Use the selection when no ids are given</li>
         <li><code>undo()</code>, <code>redo()</code>, <code>saveShapes()</code> - <code>saveShapes</code> adds the current state to the history, after updates made with <code>{'{ save: false }'}</code></li>
-        <li><code>clearCanvas()</code>, <code>loadFile(file)</code>, <code>exportPicture(view)</code>, <code>exportData()</code></li>
-        <li><code>setZoom('zoom' | 'unzoom' | 'default')</code>, <code>resetZoom()</code> - Zoom in, out, or back to 100%</li>
-        <li><code>setOffset(offset)</code> - Moves the view to the <code>Point</code> <code>[x, y]</code>. The offset is kept inside the canvas when its size is fixed</li>
-        <li><code>setGridGap(gap)</code></li>
-        <li><code>closeContextMenu()</code></li>
+        <li><code>clearCanvas()</code>, <code>loadFile(file)</code>, <code>loadData(data)</code>, <code>exportPicture(options)</code>, <code>exportData(options)</code></li>
+        <li><code>setZoom('zoom' | 'unzoom' | 'default')</code>, <code>zoomTo(level, {'{ center? }'})</code>, <code>resetZoom()</code> - Zoom in, out, to a level, or back to 100%</li>
+        <li><code>zoomToShapes(ids?, {'{ padding? }'})</code> - Zooms and scrolls so that the shapes fill the view, all the visible shapes by default. The padding is in pixels of the screen</li>
+        <li><code>setOffset(offset)</code>, <code>panBy([dx, dy])</code> - Moves the view. The offset is kept inside the canvas when its size is fixed</li>
+        <li><code>setGridGap(gap)</code> - See <code>GRID_PRESETS</code></li>
+        <li><code>openContextMenu({'{ clientPosition, canvasPosition?, ids? }'})</code>, <code>closeContextMenu()</code></li>
+        <li><code>setOptions(options)</code>, <code>resetOptions()</code>, <code>resetSettings()</code></li>
       </ul>
       <p>
         See the <LinkTo title='React Paint/Custom editor' story='docs'>Custom editor</LinkTo> story for a complete example.
@@ -570,10 +580,11 @@ const annotationsStyle = useAnnotationsStyle(paint)
       <p>
         Fired whenever the canvas state changes (shapes added, removed, or modified).
       </p>
-      <Source language='typescript' code={`paint.registerEvent('dataChanged', (data: StateData, source: 'user' | 'remote') => {
+      <Source language='typescript' code={`paint.registerEvent('dataChanged', (data: StateData, source: 'user' | 'remote', changes: DataChanges) => {
   // data.shapes contains all current shapes
   // source indicates if change came from user interaction ('user') or remote update ('remote')
-  console.log('Canvas data changed:', data)
+  // changes.added, changes.updated and changes.removed contain only the shapes which changed
+  console.log('Canvas data changed:', data, changes)
 })`} />
 
       <table>
@@ -593,10 +604,16 @@ const annotationsStyle = useAnnotationsStyle(paint)
           <tr>
             <td><code>source</code></td>
             <td><code>'user' | 'remote'</code></td>
-            <td>Origin of the change: <code>'user'</code> for local interactions, <code>'remote'</code> for programmatic updates</td>
+            <td>Origin of the change: <code>'user'</code> for local interactions and actions, <code>'remote'</code> for loaded data, undo / redo, and actions given <code>{`{ source: 'remote' }`}</code></td>
+          </tr>
+          <tr>
+            <td><code>changes</code></td>
+            <td><code>DataChanges</code></td>
+            <td>Shapes changed since the previous state, in the format of <code>data.shapes</code>: <code>added</code>, <code>updated</code> as <code>{`{ shape, previous }`}</code>, <code>removed</code>, and <code>reordered</code> when the shapes still there are in another order. An undo gives the reverse changes</td>
           </tr>
         </tbody>
       </table>
+      <p>The data are only built while a listener is registered: the pictures are encoded in them. The changes allow to send only what changed to a server: a shape is only given as updated when its exported data differ.</p>
 
       <h3>selectionChanged</h3>
       <p>
@@ -614,6 +631,17 @@ const annotationsStyle = useAnnotationsStyle(paint)
   console.log('Active tool:', tool.id)
 })`} />
 
+      <h3>shapeClicked and shapeHovered</h3>
+      <p>
+        Fired when a visible shape is clicked, and when the pointer enters a shape or leaves it (<code>undefined</code>). They are also fired in viewer mode, where the cursor shows the clickable shapes, and for locked shapes.
+        The shapes under the pointer are only searched while one of these events is listened.
+      </p>
+      <Source language='typescript' code={`paint.registerEvent('shapeClicked', (shape: ShapeEntity, info: ShapePointerInfo) => {
+  // info.canvasPosition: position in the drawing, info.clientPosition: position in the viewport
+  openComment(shape.id, shape.data, info.clientPosition)
+})
+paint.registerEvent('shapeHovered', (shape: ShapeEntity | undefined) => setHighlighted(shape?.id))`} />
+
       <h2 id="Methods">Methods</h2>
       <p>
         Methods of the handle returned by <code>useReactPaint</code>. Like the handle, their identity never changes.
@@ -621,7 +649,7 @@ const annotationsStyle = useAnnotationsStyle(paint)
 
       <h3>registerEvent</h3>
       <p>Register a listener for React Paint events. Returns the function that unregisters it, which fits the cleanup of an effect.</p>
-      <Source language='typescript' code={`registerEvent<E extends 'dataChanged' | 'selectionChanged' | 'toolChanged'>(
+      <Source language='typescript' code={`registerEvent<E extends ReactPaintEventName>(
   event: E,
   listener: ReactPaintEvents[E]
 ): () => void`} />
@@ -629,15 +657,29 @@ const annotationsStyle = useAnnotationsStyle(paint)
 
       <h3>unregisterEvent</h3>
       <p>Unregister an event listener. If listener is omitted, all listeners for the event are removed.</p>
-      <Source language='typescript' code={`unregisterEvent<E extends 'dataChanged' | 'selectionChanged' | 'toolChanged'>(
+      <Source language='typescript' code={`unregisterEvent<E extends ReactPaintEventName>(
   event: E,
   listener?: ReactPaintEvents[E]
 ): void`} />
 
+      <h3>batch</h3>
+      <p>Runs a function: the changes it makes give a single step of the history, a single <code>dataChanged</code> event and a single render. Returns what the function returns. The changes made before an error are kept.</p>
+      <Source language='typescript' code={`const ids = paint.batch(() => {
+  const ids = paint.actions.addShapes(shapes)
+  paint.actions.translateShapes(ids, [20, 0])
+  return ids
+})`} />
+
+      <h3>getShape, getBounds and getShapesAt</h3>
+      <p>Read the shapes without subscribing to the state: a shape by its id, the box of shapes (in the frame of their selection, without padding), and the visible shapes under a point of the drawing, from the foreground.</p>
+      <Source language='typescript' code={`getShape(id: string): ShapeEntity | undefined
+getBounds(ids: string[]): (Rect & { rotation: number; center: Point }) | undefined
+getShapesAt(point: Point): ShapeEntity[]`} />
+
       <h3>resetCanvas</h3>
-      <p>Reset the canvas with new shapes.</p>
+      <p>Reset the canvas with new shapes. The shapes keep their ids when they are free.</p>
       <Source language='typescript' code={`resetCanvas(
-  shapes: DrawableShape[],
+  shapes: ShapeInput[],
   clearHistory?: boolean
 ): void`} />
       <ul>
@@ -646,10 +688,14 @@ const annotationsStyle = useAnnotationsStyle(paint)
       </ul>
 
       <h3>getCurrentImage</h3>
-      <p>Export the current canvas as a PNG image data URL.</p>
-      <Source language='typescript' code={`getCurrentImage(
-  view: 'fitToShapes' | 'defaultView' | 'currentZoom'
-): string`} />
+      <p>Export the current canvas as an image data URL.</p>
+      <Source language='typescript' code={`getCurrentImage(options?: {
+  view?: 'fitToShapes' | 'defaultView' | 'currentZoom' // 'defaultView' by default
+  format?: 'png' | 'jpeg' | 'webp' // 'png' by default
+  quality?: number // between 0 and 1, for jpeg and webp
+  backgroundColor?: string // white by default for jpeg
+  backgroundImage?: CanvasImageSource // drawn under the shapes, over the whole canvas
+}): string`} />
       <p>Parameters:</p>
       <ul>
         <li>
@@ -660,8 +706,9 @@ const annotationsStyle = useAnnotationsStyle(paint)
             <li><code>'fitToShapes'</code> - Fits all shapes in view</li>
           </ul>
         </li>
+        <li><code>backgroundImage</code> - For instance the picture laid under the canvas with <code>useAnnotationsStyle</code>. An image from another origin without CORS headers makes the export fail with a <code>SecurityError</code></li>
       </ul>
-      <p>Returns a data URL string that can be used as an image source or downloaded.</p>
+      <p>Returns a data URL string that can be used as an image source or downloaded. <code>actions.exportPicture</code> takes the same options and a <code>fileName</code>, and downloads the image.</p>
 
       <h3>getCurrentData</h3>
       <p>Get the current canvas state as a data object.</p>
@@ -671,8 +718,93 @@ const annotationsStyle = useAnnotationsStyle(paint)
       <h3>Zoom and view</h3>
       <p>The zoom and the view are controlled with the actions:</p>
       <Source language='typescript' code={`paint.actions.setZoom('zoom') // 'zoom' | 'unzoom' | 'default'
+paint.actions.zoomTo(2, { center: [150, 150] }) // any level, keeping a point of the drawing still
+paint.actions.zoomToShapes(ids, { padding: 20 }) // the shapes fill the view, all the visible shapes without ids
 paint.actions.resetZoom() // back to 100%, without offset
-paint.actions.setOffset([100, 50]) // kept inside the canvas when its size is fixed`} />
+paint.actions.setOffset([100, 50]) // kept inside the canvas when its size is fixed
+paint.actions.panBy([50, 0]) // scrolls the view, in the units of the drawing`} />
+
+      <h2 id="Actions">Driving the canvas from the code</h2>
+      <p>
+        Everything the editor and the canvas gestures do can be done with <code>paint.actions</code>, without the <code>Editor</code> and even without a mounted <code>Canvas</code>.
+        Shapes are designated by their ids, which are kept in the exported data. Coordinates are in the units of the drawing, angles in radians, clockwise.
+        The actions work in every mode: <code>viewer</code> and <code>disabled</code> only restrict the user.
+      </p>
+      <table>
+        <thead>
+          <tr>
+            <th>Operation</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Create, update, remove shapes</td>
+            <td><code>addShapes(shapes, {`{ select, index }`})</code>, <code>updateShapes(patches)</code>, <code>removeShapes(ids)</code></td>
+          </tr>
+          <tr>
+            <td>Move, turn, resize, flip</td>
+            <td><code>translateShapes(ids, [dx, dy])</code>, <code>rotateShapes(ids, angle, {`{ center }`})</code>, <code>resizeShapes(ids, box)</code>, <code>transformShapes(ids, action)</code></td>
+          </tr>
+          <tr>
+            <td>Style</td>
+            <td><code>setShapesStyle(ids, style, {`{ updateTool }`})</code>, <code>updateShapesStyle(ids, field, value)</code>, <code>setToolStyle(toolId, style)</code>, <code>updateToolSettings(toolId, field, value)</code></td>
+          </tr>
+          <tr>
+            <td>Order</td>
+            <td><code>moveShapes(ids, action)</code>, <code>setShapeIndex(id, index)</code> (0 is the foreground), <code>reorderShapes(ids)</code>, <code>swapShapes(id, id)</code></td>
+          </tr>
+          <tr>
+            <td>Points of lines, polygons and curves</td>
+            <td><code>insertShapePoint(id, index, point)</code>, <code>moveShapePoint(id, index, point)</code>, <code>removeShapePoint(id, index)</code></td>
+          </tr>
+          <tr>
+            <td>Visibility, lock</td>
+            <td><code>setShapesVisibility(ids, visible)</code>, <code>setShapesLocked(ids, locked)</code>, <code>toggleShapesVisibility(ids)</code>, <code>toggleShapesLock(ids)</code></td>
+          </tr>
+          <tr>
+            <td>Selection</td>
+            <td><code>selectShapes(ids, {`{ mode: 'replace' | 'add' | 'remove' }`})</code>, <code>selectAllShapes()</code>, <code>clearSelection()</code></td>
+          </tr>
+          <tr>
+            <td>Text edition, context menu</td>
+            <td><code>editText(id)</code>, <code>openContextMenu({`{ clientPosition, ids }`})</code>, <code>closeContextMenu()</code></td>
+          </tr>
+          <tr>
+            <td>Duplicate, clipboard</td>
+            <td><code>duplicateShapes(ids, {`{ translate, select }`})</code>, <code>copy(ids)</code>, <code>cut(ids)</code>, <code>paste()</code></td>
+          </tr>
+          <tr>
+            <td>History</td>
+            <td><code>undo()</code>, <code>redo()</code>, <code>saveShapes()</code>, and <code>paint.batch(fn)</code></td>
+          </tr>
+          <tr>
+            <td>Grid</td>
+            <td><code>setGridGap(GRID_PRESETS.medium)</code>, 0 hides it</td>
+          </tr>
+          <tr>
+            <td>Options and settings</td>
+            <td><code>setOptions(options)</code>, <code>resetOptions()</code>, <code>resetSettings()</code></td>
+          </tr>
+          <tr>
+            <td>Data and files</td>
+            <td><code>loadData(data | json, {`{ clearHistory }`})</code>, <code>loadFile(file)</code>, <code>exportData({`{ fileName }`})</code>, <code>exportPicture(options)</code>, <code>addPicture(fileOrUrl)</code>, <code>clearCanvas()</code></td>
+          </tr>
+        </tbody>
+      </table>
+      <ul>
+        <li>The actions changing shapes add a step to the history and take <code>{`{ save, source }`}</code> options: <code>save: false</code> for continuous changes (then call <code>saveShapes</code>), <code>source: 'remote'</code> to apply changes received from elsewhere, given to <code>dataChanged</code></li>
+        <li><code>addShapes</code> and <code>updateShapes</code> check their input and throw an error, without changing anything, when a shape or a patch is invalid</li>
+        <li><code>addShapes</code> keeps a free id, completes the style with the default style of the tool, and computes the size of a text from its font size or its font size from its width. A picture is drawn once its source is loaded</li>
+        <li><code>updateShapes</code> merges the style and replaces the <code>data</code>. The box of a text follows its new content, or its font size follows its new width. Locked shapes are updated, whereas the transformations leave them unchanged</li>
+        <li><code>setOptions</code> overrides options of <code>useReactPaint</code> until <code>resetOptions</code>: objects are merged, arrays like <code>availableTools</code> are replaced. <code>resetSettings</code> restores the default styles of the tools, the grid, the zoom and the active tool</li>
+      </ul>
+      <Source language='typescript' code={`const [rectId] = paint.actions.addShapes([
+  { type: 'rect', x: 60, y: 60, width: 160, height: 100, data: { comment: 'to check' } }
+])
+paint.actions.updateShapes([{ id: rectId, x: 20, style: { strokeColor: 'red' } }])
+paint.actions.rotateShapes([rectId], Math.PI / 4)
+const box = paint.getBounds([rectId])`} />
 
       <h2 id="Performance">Performance</h2>
       <p>
@@ -696,6 +828,8 @@ paint.actions.setOffset([100, 50]) // kept inside the canvas when its size is fi
         Base type for all drawable shapes. All shapes extend this type with shape-specific properties.
       </p>
       <Source language='typescript' code={`type DrawableShape<T extends ShapeType = ShapeType> = {
+  id?: string // kept in the exported data, created when missing
+  data?: Record<string, unknown> // data of the application, not drawn
   toolId?: string
   visible?: boolean
   locked?: boolean
@@ -743,7 +877,7 @@ paint.actions.setOffset([100, 50]) // kept inside the canvas when its size is fi
       <h3>StateData</h3>
       <p>Complete canvas state data structure.</p>
       <Source language='typescript' code={`type StateData = {
-  shapes?: DrawableShape[]
+  shapes?: ExportedShape[] // ExportedDrawableShape with its id
   config?: {
     width: number
     height: number
@@ -754,6 +888,14 @@ paint.actions.setOffset([100, 50]) // kept inside the canvas when its size is fi
       <p>
         Shape type for export/import. Same as <code>DrawableShape</code> except picture shapes don't include the <code>img</code> property.
       </p>
+
+      <h3>ShapeInput and ShapePatch</h3>
+      <p>
+        <code>ShapeInput</code> is a shape given to <code>addShapes</code>, <code>resetCanvas</code> or <code>useReactPaint</code>: an <code>ExportedDrawableShape</code>, whose text can be given without its size.
+        <code>ShapePatch</code> is given to <code>updateShapes</code>: the id of a shape and the fields to change, its type excepted.
+      </p>
+      <Source language='typescript' code={`const text: ShapeInput = { type: 'text', x: 0, y: 0, value: ['Hello'], fontSize: 24 }
+const patch: ShapePatch = { id: 'rect_1', width: 200, style: { fillColor: 'red' } }`} />
 
       <h3>ShapeEntity</h3>
       <p>
@@ -991,7 +1133,10 @@ useEffect(() => {
       <Source language='typescript' code={`const paint = useReactPaint()
 
 // Export with default view
-const imageUrl = paint.getCurrentImage('defaultView')
+const imageUrl = paint.getCurrentImage({ view: 'defaultView' })
+
+// or as a JPEG, with the annotated picture under the shapes
+const jpegUrl = paint.getCurrentImage({ format: 'jpeg', quality: 0.9, backgroundImage: pictureElement })
 
 // Download the image
 const link = document.createElement('a')
@@ -1004,6 +1149,12 @@ link.click()`} />
 
 // Reset canvas
 paint.resetCanvas([/* shapes */], true)
+
+// Create and change shapes, in a single step of the history
+paint.batch(() => {
+  const [id] = paint.actions.addShapes([{ type: 'circle', x: 200, y: 200, radius: 50 }])
+  paint.actions.setShapesStyle([id], { fillColor: 'yellow' })
+})
 
 // Zoom in
 paint.actions.setZoom('zoom')

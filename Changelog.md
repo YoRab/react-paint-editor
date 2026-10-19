@@ -21,7 +21,7 @@ Breaking changes, see the [migration guide](./MIGRATION.md).
 - named exports for Canvas and Editor in all entry points
 - add selectionChanged and toolChanged events, registerEvent and unregisterEvent are typed by event. registerEvent returns the function that unregisters the listener, and events are emitted right after the change of the state
 - export getSelectedShapes, getSelectedShapesTools, SELECTION_TOOL and MOVE_TOOL
-- add canvas/canvas.css and editor/editor.css stylesheets
+- the canvas needs no stylesheet anymore: its styles are inline, and react-paint.css only contains the styles of the editor. Its CSS variables can be set on any parent element to override its styles. Add the editor/editor.css stylesheet
 - rename react-paint-editor-toolbox-edittextbox class to react-paint-canvas-edittextbox
 - fix stale declaration files being published, and css imports in declaration files
 - fix declaration files for node16 / nodenext module resolutions
@@ -33,6 +33,25 @@ Breaking changes, see the [migration guide](./MIGRATION.md).
 - performance: shapes are no longer recomputed when the view is moved or the grid changes, and the auto scroll of the selection frame follows the animation frames
 - add Custom editor, Canvas only and External toolbar stories
 - add a performance benchmark, run manually with pnpm bench
+- everything the editor and the canvas gestures do can be done from the code, without the Editor and even without a mounted Canvas:
+  - shapes keep their id in the exported data and when they are loaded again. New ids are random, so that they do not collide with saved ones
+  - add actions.addShapes and actions.updateShapes, to create shapes and to update any of their fields (geometry, points, text, style, data). The style of a new shape is completed with its tool, and the size of a text can be left out
+  - add actions.translateShapes, rotateShapes (any angle) and resizeShapes (to a box), and paint.getShape, getBounds and getShapesAt
+  - add dedicated actions: setShapesStyle (several fields, and the defaults of the tools), setToolStyle, setShapeIndex, reorderShapes, insertShapePoint, moveShapePoint, editText, zoomTo, panBy, openContextMenu, loadData, and selectShapes with an add or remove mode
+  - add paint.batch, which gives a single step of the history and a single dataChanged event for several actions
+  - the actions changing shapes take save and source options: changes received from elsewhere can be applied as remote changes
+  - add actions.setOptions, resetOptions and resetSettings: options overridden from the code are kept over the props until they are reset
+  - add a data field to the shapes, kept in the history, the copies and the exported data
+  - add shapeClicked and shapeHovered events, also emitted in viewer mode
+  - dataChanged gives the changes since the previous state as a third argument: the shapes added, updated (with their previous version) and removed, and whether their order changed
+  - add actions.zoomToShapes, which zooms and scrolls so that shapes fill the view
+  - getCurrentImage and exportPicture take options: format (png, jpeg, webp), quality, background color, and a background image like the annotated picture. Breaking: getCurrentImage(view) becomes getCurrentImage({ view })
+  - export GRID_PRESETS, the gaps of the grid offered by the editor
+- the grid follows a change of the grid option after the creation
+- updateToolSettings ignores a field the tool has not. Changing the style of a selection of several types of shapes in the editor now updates the tool of each shape
+- transformShapes no longer selects the transformed shapes
+- performance: the data given to dataChanged are only built while it is listened, and the pictures are encoded once
+- add the Programmatic API story
 
 ## V0.18.1
 - fix opacity problems with line and arrows

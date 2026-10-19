@@ -1,11 +1,10 @@
-import { ZOOM_DETECTION_OFFSET, ZOOM_STEPS } from '@canvas/constants/zoom'
+import { ZOOM_DETECTION_OFFSET } from '@canvas/constants/zoom'
 import useEventListener from '@canvas/hooks/useEventListener'
 import type { PaintStore } from '@canvas/store/paintStore'
 import type { CanvasSize, Size } from '@canvas/types/Canvas'
 import type { Point } from '@canvas/types/Shapes'
 import { getCenter, getDistanceBetweenPoints } from '@canvas/utils/trigo'
-import { clamp } from '@canvas/utils/util'
-import { calculateNewZoomAndOffset } from '@canvas/utils/zoom'
+import { calculateNewZoomAndOffset, clampZoom } from '@canvas/utils/zoom'
 import { useCallback, useRef, useState } from 'react'
 
 type PinchData = { startDiff: number; startZoom: number; startCenter: Point; startOffset: Point; isZooming: boolean; isMoving: boolean }
@@ -51,7 +50,7 @@ const getCanvasTransformation = ({
   offset: Point
   zoom: number
 } => {
-  const newZoom = isZooming ? clamp((currentDiff / startDiff) * startZoom, ZOOM_STEPS[0]!, ZOOM_STEPS[ZOOM_STEPS.length - 1]!) : startZoom
+  const newZoom = isZooming ? clampZoom((currentDiff / startDiff) * startZoom) : startZoom
 
   const newOffset: Point = isMoving
     ? [

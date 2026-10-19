@@ -1,10 +1,9 @@
 import type { UtilsSettings } from '@canvas/constants/app'
 import { PICTURE_DEFAULT_SIZE } from '@canvas/constants/picture'
-import { ShapeTypeArray } from '@canvas/constants/shapes'
-import type { DrawableShape, ExportedDrawableShape, Point, ShapeEntity } from '@canvas/types/Shapes'
-import { compact } from '@canvas/utils/array'
-import { initCanvasContext } from '@canvas/utils/canvas'
-import { addDefaultAndTempShapeProps, buildDataToExport } from '@canvas/utils/data'
+import type { ExportImageFormat, ExportImageOptions } from '@canvas/types/editor'
+import type { DrawableShape, Point, ShapeEntity } from '@canvas/types/Shapes'
+import { initCanvasContext, transformCanvas } from '@canvas/utils/canvas'
+import { buildDataToExport } from '@canvas/utils/data'
 import { drawShape } from '@canvas/utils/shapes'
 
 export const addSizeAndConvertSvgToObjectUrl = (svgFileContent: string): string => {
@@ -50,7 +49,12 @@ export const downloadFile = (content: string, fileName: string) => {
   document.body.removeChild(a)
 }
 
+/** Encoded images, computed once per image: the data are exported on each change of the drawing */
+const base64Images = new WeakMap<HTMLImageElement, string>()
+
 export const getBase64Image = (img: HTMLImageElement) => {
+  const cached = base64Images.get(img)
+  if (cached !== undefined) return cached
   const canvas = document.createElement('canvas')
   canvas.width = img.width
   canvas.height = img.height
@@ -58,16 +62,31 @@ export const getBase64Image = (img: HTMLImageElement) => {
   if (!ctx) return ''
   ctx.drawImage(img, 0, 0)
   const dataURL = canvas.toDataURL('image/png')
+  // an image which is not loaded yet is encoded again later
+  if (img.complete && img.width > 0) base64Images.set(img, dataURL)
   return dataURL
 }
 
-export const getStringifiedImage = (shape: DrawableShape<'picture'>) => (shape.src.includes('<svg') ? shape.src : getBase64Image(shape.img))
+/** Source of a picture as exported: an SVG or a data URL is kept, other sources (often revoked blob URLs) are encoded */
+export const getStringifiedImage = (shape: DrawableShape<'picture'>) =>
+  shape.src.includes('<svg') || shape.src.startsWith('data:') ? shape.src : getBase64Image(shape.img)
 
 const encodeObjectToString = (objectToEncode: unknown) => {
   return `data:text/plain;charset=utf-8,${encodeURIComponent(JSON.stringify(objectToEncode))}`
 }
 
-const getShapesDataUrl = ({ shapes, settings }: { shapes: ShapeEntity[]; settings: UtilsSettings }): string => {
+const MIME_TYPES: Record<ExportImageFormat, string> = {
+  png: 'image/png',
+  jpeg: 'image/jpeg',
+  webp: 'image/webp'
+}
+
+type DrawOptions = Omit<ExportImageOptions, 'view'> & {
+  /** Logical size of the canvas, where the background image is drawn */
+  canvasRect: { width: number; height: number }
+}
+
+const getShapesDataUrl = ({ shapes, settings, options }: { shapes: ShapeEntity[]; settings: UtilsSettings; options: DrawOptions }): string => {
   const newCanvas = document.createElement('canvas')
   const ctx = newCanvas.getContext('2d')
   if (!ctx) throw new Error('No context found for canvas')
@@ -77,21 +96,39 @@ const getShapesDataUrl = ({ shapes, settings }: { shapes: ShapeEntity[]; setting
   newCanvas.height = height
   ctx.clearRect(0, 0, width, height)
   initCanvasContext(ctx)
+
+  const format = options.format ?? 'png'
+  // a JPEG has no transparency: its background is white unless another color is given
+  const backgroundColor = options.backgroundColor ?? (format === 'jpeg' ? 'white' : undefined)
+  if (backgroundColor) {
+    ctx.fillStyle = backgroundColor
+    ctx.fillRect(0, 0, width, height)
+  }
+  if (options.backgroundImage) {
+    transformCanvas(ctx, settings)
+    ctx.drawImage(options.backgroundImage, 0, 0, options.canvasRect.width, options.canvasRect.height)
+    ctx.restore()
+  }
   for (let i = shapes.length - 1; i >= 0; i--) {
     drawShape(ctx, shapes[i]!, settings)
   }
-  return newCanvas.toDataURL('image/png')
+  return newCanvas.toDataURL(MIME_TYPES[format], options.quality)
 }
 
 export const getCanvasImage = ({
   shapes,
   settings,
-  view
+  options = {}
 }: {
   shapes: ShapeEntity[]
   settings: UtilsSettings
-  view: 'fitToShapes' | 'defaultView' | 'currentZoom'
+  options?: ExportImageOptions | undefined
 }): string => {
+  const { view = 'defaultView', ...imageOptions } = options
+  const drawOptions: DrawOptions = {
+    ...imageOptions,
+    canvasRect: { width: settings.canvasSize.realWidth, height: settings.canvasSize.realHeight }
+  }
   if (view === 'fitToShapes' && !shapes.length) throw new Error('No image found to export')
 
   if (view === 'fitToShapes') {
@@ -113,7 +150,7 @@ export const getCanvasImage = ({
         scaleRatioWithNoZoom: 1
       }
     }
-    return getShapesDataUrl({ shapes, settings: printSettings })
+    return getShapesDataUrl({ shapes, settings: printSettings, options: drawOptions })
   }
 
   if (view === 'defaultView') {
@@ -129,7 +166,7 @@ export const getCanvasImage = ({
         scaleRatioWithNoZoom: 1
       }
     }
-    return getShapesDataUrl({ shapes, settings: printSettings })
+    return getShapesDataUrl({ shapes, settings: printSettings, options: drawOptions })
   }
 
   const printSettings = {
@@ -142,7 +179,7 @@ export const getCanvasImage = ({
       scaleRatioWithNoZoom: 1
     }
   }
-  return getShapesDataUrl({ shapes, settings: printSettings })
+  return getShapesDataUrl({ shapes, settings: printSettings, options: drawOptions })
 }
 
 export const encodeShapesInString = (shapes: ShapeEntity[], width: number, height: number): string => {
@@ -166,55 +203,4 @@ export const decodeJson = async (file: File) => {
     reader.onerror = () => reject(new Error('Failed to read file'))
     reader.readAsText(file)
   })
-}
-
-export const decodeImportedData = async (shapesForJson: ExportedDrawableShape[], settings: UtilsSettings) => {
-  if (!shapesForJson) return []
-  const promisesArray: Promise<void>[] = []
-
-  const shapes: ShapeEntity[] = compact(
-    shapesForJson.map(shape => {
-      if (!shape || !ShapeTypeArray.includes(shape.type)) return null
-      if (shape.type === 'picture') {
-        const img = new Image()
-        const newPromise = new Promise<void>((resolve, reject) => {
-          img.onload = () => {
-            URL.revokeObjectURL(img.src)
-            resolve()
-          }
-
-          img.onerror = () => {
-            reject(new Error('Some images could not be loaded'))
-          }
-        })
-        promisesArray.push(newPromise)
-        if (shape.src.startsWith('http')) {
-          fetchAndStringify(shape.src)
-            .then(picData => {
-              img.src = picData
-            })
-            .catch(() => {
-              img.src = '' // to trigger onerror
-            })
-        } else if (shape.src.includes('<svg')) {
-          const blob = new Blob([shape.src], { type: 'image/svg+xml' })
-          img.src = URL.createObjectURL(blob)
-        } else {
-          img.src = shape.src
-        }
-
-        return addDefaultAndTempShapeProps(
-          {
-            ...shape,
-            img
-          },
-          settings
-        )
-      }
-      return addDefaultAndTempShapeProps(shape, settings)
-    })
-  )
-
-  await Promise.all(promisesArray)
-  return shapes
 }

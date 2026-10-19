@@ -1,5 +1,13 @@
+import { clamp } from '@canvas/utils/util'
+
 export const compact = <T>(array: (T | undefined | null)[]): T[] => {
   return array.filter((item): item is T => item !== undefined && item !== null)
+}
+
+/** Copy of the array with the items inserted at the index, kept inside the array */
+export const insertAt = <T>(array: readonly T[], index: number, ...items: T[]): T[] => {
+  const position = clamp(Math.round(index), 0, array.length)
+  return [...array.slice(0, position), ...items, ...array.slice(position)]
 }
 
 export const moveItemPosition = <T>(array: T[], positionToMove: number, positionToEnd: number): T[] => {

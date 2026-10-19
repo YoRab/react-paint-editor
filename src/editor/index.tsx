@@ -77,7 +77,7 @@ const Editor = ({ paint, className, style, options, children }: EditorComponentP
     (exportView: ExportView) => {
       setIsLoading(true)
       try {
-        actions.exportPicture(exportView)
+        actions.exportPicture({ view: exportView })
       } catch (e) {
         if (e instanceof Error) {
           addSnackbar({ type: 'error', text: `L'export a échoué : ${e.message}` })

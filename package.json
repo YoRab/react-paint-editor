@@ -44,7 +44,6 @@
       "import": "./dist/editor/index.js"
     },
     "./react-paint.css": "./dist/react-paint.css",
-    "./canvas/canvas.css": "./dist/canvas/canvas.css",
     "./editor/editor.css": "./dist/editor/editor.css"
   },
   "typesVersions": {
@@ -93,7 +92,7 @@
     "bench": "vitest run --project=perf --reporter=default",
     "build": "rm -rf dist && vite build --config vite.config.umd.ts && vite build",
     "build-storybook": "storybook build",
-    "check-package": "pnpm dlx publint && pnpm dlx @arethetypeswrong/cli --pack . --ignore-rules cjs-resolves-to-esm false-esm --exclude-entrypoints react-paint.css canvas/canvas.css editor/editor.css",
+    "check-package": "pnpm dlx publint && pnpm dlx @arethetypeswrong/cli --pack . --ignore-rules cjs-resolves-to-esm false-esm --exclude-entrypoints react-paint.css editor/editor.css",
     "check-treeshake": "node scripts/check-treeshake.mjs",
     "declarationfiles": "rm -rf declarationfiles && pnpm tsc --project tsconfig.prod.json && node fixDtsPath.js",
     "lint": "pnpm biome check --write src stories tests",

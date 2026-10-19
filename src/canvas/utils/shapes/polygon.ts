@@ -8,7 +8,7 @@ import { set } from '@canvas/utils/object'
 import { createLineSelectionPath } from '@canvas/utils/selection/lineSelection'
 import { createPolygonPath, expandRect, getComputedShapeInfos } from '@canvas/utils/shapes/path'
 import { roundForGrid } from '@canvas/utils/transform'
-import { uniqueId } from '@canvas/utils/util'
+import { createShapeId } from '@canvas/utils/util'
 
 const buildPath = <T extends DrawableShape<'polygon'>>(shape: T & { id: string }, settings: UtilsSettings): ShapeEntity<'polygon'> => {
   const path = createPolygonPath(shape)
@@ -36,7 +36,7 @@ export const createPolygon = (
     {
       toolId: shape.id,
       type: shape.type,
-      id: uniqueId(`${shape.type}_`),
+      id: createShapeId(shape.type),
       points: [cursorPosition],
       style: {
         opacity: shape.settings.opacity.default,
