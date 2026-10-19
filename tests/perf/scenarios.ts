@@ -1,15 +1,19 @@
 import { expect } from 'vitest'
-import type { Point, ShapeInput, UseReactPaintOptions } from '../../src/index'
+import type { EditorState, Point, ShapeInput, UseReactPaintOptions } from '../../src/index'
 import type { PerfApp } from './fixture'
 import { nextFrame, waitFor } from './metrics'
 import {
   CANVAS_HEIGHT,
   CANVAS_WIDTH,
+  generateLongBrush,
   generateMixedShapes,
   generateOutlinedShapes,
   generatePictures,
   generateTransparentShapes,
+  getGrabPoint,
+  getPhotoFile,
   getShapeCenter,
+  LONG_BRUSH_STROKES,
   OUTLINE_ID,
   SHAPES_AREA
 } from './shapes'
@@ -81,6 +85,10 @@ const dispatchWheel = (point: Point, init: WheelEventInit) =>
 
 const clickButton = (testId: string) => getElement<HTMLButtonElement>(`[data-testid="${testId}"]`).click()
 
+/** Presses a key in the focused element, the canvas after a click or focusCanvas: it receives the keyboard shortcuts */
+const pressKey = (key: string, init: KeyboardEventInit = {}) =>
+  (document.activeElement ?? document.body).dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true, cancelable: true, ...init }))
+
 /** The indexes of a number of clicks, to send with playPoints */
 const clicks = (count: number) => Array.from({ length: count }, (_, index) => index)
 
@@ -115,9 +123,10 @@ const drag = async (start: Point, points: Point[], eventsPerFrame: number) => {
   await nextFrame()
 }
 
-const getShapeX = (app: PerfApp, id: string) => {
-  const shape = app.getState().shapes.find(item => item.id === id)
-  return shape?.type === 'rect' || shape?.type === 'picture' ? shape.x : undefined
+/** Abscissa of a rectangle or a picture, or of the first point of a brush */
+const getShapeX = (shape: EditorState['shapes'][number]) => {
+  if (shape.type === 'brush') return shape.points[0]![0]![0]
+  return shape.type === 'rect' || shape.type === 'picture' ? shape.x : undefined
 }
 
 /** The brush tool may be inside a group of the toolbar, to open first */
@@ -151,36 +160,49 @@ const hover: Scenario = {
   criteria: { ...GESTURE_CRITERIA, probeCommits: 0 }
 }
 
-/** Drag of a shape by 150 px: the one found by `pick` among the generated shapes, the middle one by default */
+/**
+ * Drag of a shape by 150 px: the one found by `pick` among the generated shapes, the middle one by default. With
+ * `selectAll`, all the shapes are selected first, and dragged together from this one
+ */
 const createTranslateScenario = ({
   id,
   pick = shapes => Math.floor(shapes.length / 2),
+  selectAll = false,
   ...scenario
-}: Pick<Scenario, 'id' | 'generate' | 'options'> & { pick?: (shapes: ShapeInput[]) => number }): Scenario => {
-  let translatedShape: { id: string; x: number | undefined } | undefined
+}: Pick<Scenario, 'id' | 'generate' | 'options'> & { pick?: (shapes: ShapeInput[]) => number; selectAll?: boolean }): Scenario => {
+  let movedShapes: { id: string; x: number | undefined }[] = []
   let index = 0
   return {
     id,
     ...scenario,
     setup: async ({ app, shapes }) => {
       index = pick(shapes)
-      const shape = app.getState().shapes[index]!
-      translatedShape = { id: shape.id, x: getShapeX(app, shape.id) }
+      if (selectAll) {
+        pressKey('a', { ctrlKey: true })
+        await waitFor(() => app.getState().selectedShapes.length === shapes.length, 'all the shapes selected')
+      }
+      const currentShapes = app.getState().shapes
+      movedShapes = (selectAll ? currentShapes : [currentShapes[index]!]).map(shape => ({ id: shape.id, x: getShapeX(shape) }))
     },
     run: async ({ shapes, eventsPerFrame }) => {
-      const start = getShapeCenter(shapes[index]!)
+      const start = getGrabPoint(shapes[index]!)
       await drag(start, interpolate(start, [start[0] + 150, start[1] + 30], MOVES), eventsPerFrame)
     },
     verify: ({ app }) => {
-      const { id: shapeId, x } = translatedShape!
-      expect(app.getState().selectedShapes.map(shape => shape.id)).toEqual([shapeId])
-      expect(getShapeX(app, shapeId)).toBeCloseTo(x! + 150, 0)
+      const { selectedShapes } = app.getState()
+      expect(selectedShapes.map(shape => shape.id)).toEqual(movedShapes.map(shape => shape.id))
+      for (const [position, shape] of selectedShapes.entries()) expect(getShapeX(shape)).toBeCloseTo(movedShapes[position]!.x! + 150, 0)
     },
     criteria: GESTURE_CRITERIA
   }
 }
 
 const translate = createTranslateScenario({ id: 'translate' })
+
+const translateAll = createTranslateScenario({ id: 'translate-all', selectAll: true })
+
+// the brush is in the foreground
+const translateLongBrush = createTranslateScenario({ id: 'translate-long-brush', generate: generateLongBrush, pick: () => 0 })
 
 const opacity = createTranslateScenario({ id: 'opacity', generate: generateTransparentShapes })
 
@@ -287,8 +309,6 @@ const brush: Scenario = {
   criteria: GESTURE_CRITERIA
 }
 
-const LONG_BRUSH_STROKES = 4
-
 const longBrush: Scenario = {
   id: 'long-brush',
   // the strokes are added to the same shape, which keeps growing
@@ -325,9 +345,7 @@ const createUndoScenario = ({ id, listenData = false }: Pick<Scenario, 'id' | 'l
       await nextFrame()
       dispatchPointer('pointerup', center, { button: 0 })
       await nextFrame()
-      // the keyboard events are sent to the focused element, the canvas after a click
-      const focusedElement = document.activeElement ?? document.body
-      focusedElement.dispatchEvent(new KeyboardEvent('keydown', { key: 'Delete', bubbles: true, cancelable: true }))
+      pressKey('Delete')
       await nextFrame()
       dataEventsBefore = app.getDataEvents()
     },
@@ -386,6 +404,56 @@ const layers = createLayersScenario({ id: 'layers' })
 
 const layersAutosave = createLayersScenario({ id: 'layers-autosave', listenData: true })
 
+const ADDED_PICTURES = 3
+
+const UPLOAD_INPUT = 'label[title="Upload picture"] input[type="file"]'
+
+/** Adds photos from the menu of the toolbar, as files chosen by the user. Each one is added once loaded, then exported if listened */
+const createAddPictureScenario = ({ id, listenData = false }: Pick<Scenario, 'id' | 'listenData'>): Scenario => {
+  let files: FileList | null = null
+  let dataEventsBefore = 0
+  return {
+    id,
+    listenData,
+    setup: async ({ app }) => {
+      const transfer = new DataTransfer()
+      transfer.items.add(await getPhotoFile())
+      files = transfer.files
+      dataEventsBefore = app.getDataEvents()
+    },
+    run: async ({ app }) => {
+      for (let added = 0; added < ADDED_PICTURES; added++) {
+        const shapesBefore = app.getState().shapes.length
+        const dataEventsBeforePicture = app.getDataEvents()
+        getElement<HTMLButtonElement>('button[title="Menu"]').click()
+        await waitFor(() => !!document.querySelector(UPLOAD_INPUT), 'menu open')
+        const input = getElement<HTMLInputElement>(UPLOAD_INPUT)
+        input.files = files
+        input.dispatchEvent(new Event('change', { bubbles: true }))
+        await waitFor(
+          () => app.getState().shapes.length > shapesBefore && (!listenData || app.getDataEvents() > dataEventsBeforePicture),
+          'picture added'
+        )
+        // the picture is drawn
+        await nextFrame()
+      }
+    },
+    verify: ({ app, shapes }) => {
+      const pictures = app.getState().shapes.filter(shape => shape.type === 'picture')
+      expect(pictures).toHaveLength(ADDED_PICTURES)
+      expect(app.getState().shapes).toHaveLength(shapes.length + ADDED_PICTURES)
+      // one save for each picture
+      if (listenData) expect(app.getDataEvents() - dataEventsBefore).toBe(ADDED_PICTURES)
+    },
+    // the first picture gives something to undo
+    criteria: GESTURE_CRITERIA
+  }
+}
+
+const addPicture = createAddPictureScenario({ id: 'add-picture' })
+
+const addPictureAutosave = createAddPictureScenario({ id: 'add-picture-autosave', listenData: true })
+
 export const SCENARIOS: Scenario[] = [
   hover,
   translate,
@@ -402,5 +470,9 @@ export const SCENARIOS: Scenario[] = [
   frameInside,
   undoAutosave,
   layers,
-  layersAutosave
+  layersAutosave,
+  translateAll,
+  translateLongBrush,
+  addPicture,
+  addPictureAutosave
 ]

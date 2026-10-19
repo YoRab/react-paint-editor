@@ -162,8 +162,8 @@ const getPhoto = () => {
 }
 
 /**
- * The grid of rectangles under 3 large photos, in the foreground. Their sources are blob URLs, like files added
- * by the user: a URL is revoked once its picture is loaded, so each call gives new ones
+ * The grid of rectangles under 3 large photos, in the foreground. Their sources are blob URLs, as a consumer may give
+ * them: a URL is revoked once its picture is loaded, so each call gives new ones
  */
 export const generatePictures = async (count: number): Promise<ShapeInput[]> => {
   const blob = await getPhoto()
@@ -171,8 +171,40 @@ export const generatePictures = async (count: number): Promise<ShapeInput[]> => 
   return [...pictures, ...generateShapes(count - pictures.length)]
 }
 
+/** The photo of generatePictures, as a file chosen by the user */
+export const getPhotoFile = async () => new File([await getPhoto()], 'photo.jpg', { type: 'image/jpeg' })
+
+/** Strokes of a long brush: drawn by the long-brush scenario, and given by generateLongBrush */
+export const LONG_BRUSH_STROKES = 4
+const LONG_BRUSH_POINTS = 1000
+
+/**
+ * The grid, under a brush of 4 strokes of 1000 points in the foreground: several minutes of drawing in the same shape,
+ * when the brush is not done on release. The points are rounded, like the ones of the cursor
+ */
+export const generateLongBrush = (count: number): ShapeInput[] => [
+  {
+    type: 'brush',
+    points: Array.from({ length: LONG_BRUSH_STROKES }, (_, stroke) =>
+      Array.from(
+        { length: LONG_BRUSH_POINTS },
+        (_, step): Point => [Math.round(50 + (900 * step) / (LONG_BRUSH_POINTS - 1)), Math.round(100 + stroke * 120 + Math.sin(step / 10) * 20)]
+      )
+    ),
+    style: { ...STYLE, lineWidth: 2 }
+  },
+  ...generateShapes(count - 1)
+]
+
 /** Center of a rectangle, in canvas coordinates */
 export const getShapeCenter = (shape: ShapeInput): Point => {
   if (shape.type !== 'rect' && shape.type !== 'picture') throw new Error('Only the center of a rectangle or a picture is known')
   return [shape.x + shape.width / 2, shape.y + shape.height / 2]
+}
+
+/** A point where the shape can be grabbed: the center of a rectangle or a picture, the middle point of the first stroke of a brush */
+export const getGrabPoint = (shape: ShapeInput): Point => {
+  if (shape.type !== 'brush') return getShapeCenter(shape)
+  const stroke = shape.points[0]!
+  return stroke[Math.floor(stroke.length / 2)]!
 }

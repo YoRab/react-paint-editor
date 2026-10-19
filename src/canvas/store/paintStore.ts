@@ -31,7 +31,7 @@ import { compact, insertAt, moveItemPosition } from '@canvas/utils/array'
 import { createApproximateTextContext, createDetachedContext } from '@canvas/utils/canvas'
 import { buildDataToExport, getDataChanges } from '@canvas/utils/data'
 import { shallowEqual } from '@canvas/utils/equality'
-import { decodeJson, downloadFile, encodeShapesInString, getCanvasImage } from '@canvas/utils/file'
+import { decodeJson, downloadFile, encodeShapesInString, getCanvasImage, loadPicture } from '@canvas/utils/file'
 import {
   checkPositionIntersection,
   checkSelectionFrameCollision,
@@ -43,7 +43,7 @@ import {
 import { isEqual, isRecord, mergeWith, omitUndefined, replaceArrays, set, withDefaults } from '@canvas/utils/object'
 import { getSelectedShapes } from '@canvas/utils/selectedShapes'
 import { addToSelectedShapes, buildShapesGroup, omitFromSelectedShapes } from '@canvas/utils/selection'
-import { assertValidShapes, buildShapeEntity, decodeImportedData, loadPicture } from '@canvas/utils/shapeInput'
+import { assertValidShapes, buildShapeEntity, decodeImportedData } from '@canvas/utils/shapeInput'
 import { applyShapePatch, assertValidPatches } from '@canvas/utils/shapePatch'
 import {
   canRemoveShapePoint,

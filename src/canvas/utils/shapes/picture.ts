@@ -3,7 +3,7 @@ import { PICTURE_TOOL_ID } from '@canvas/constants/tools'
 import type { SelectionModeResize } from '@canvas/types/Mode'
 import type { DrawableShape, Point, SelectionType, ShapeEntity } from '@canvas/types/Shapes'
 import { createDetachedContext } from '@canvas/utils/canvas'
-import { addSizeAndConvertSvgToObjectUrl, fetchAndStringify, isSvg } from '@canvas/utils/file'
+import { addSizeAndConvertSvgToObjectUrl, fetchAndStringify, isSvg, loadPicture, readFileAsDataUrl } from '@canvas/utils/file'
 import { resizeRectSelection } from '@canvas/utils/selection/rectSelection'
 import { fitContentInsideContainer } from '@canvas/utils/transform'
 import { createShapeId } from '@canvas/utils/util'
@@ -54,6 +54,7 @@ const createPictureShape = (
 const createFilePicture = (
   img: HTMLImageElement,
   resolve: (value: ShapeEntity<'picture'> | PromiseLike<ShapeEntity<'picture'>>) => void,
+  reject: (reason: unknown) => void,
   file: File,
   maxPictureWidth: number,
   maxPictureHeight: number,
@@ -62,7 +63,7 @@ const createFilePicture = (
   if (isSvg(file)) {
     file.text().then(svgFileContent => {
       const svgUrl = addSizeAndConvertSvgToObjectUrl(svgFileContent)
-      img.onload = async () => {
+      img.onload = () => {
         URL.revokeObjectURL(img.src)
         const pictureShape = createPictureShape(img, svgFileContent, maxPictureWidth, maxPictureHeight, settings)
         resolve(pictureShape)
@@ -70,12 +71,12 @@ const createFilePicture = (
       img.src = svgUrl
     })
   } else {
-    img.onload = async () => {
-      URL.revokeObjectURL(img.src)
-      const pictureShape = createPictureShape(img, img.src, maxPictureWidth, maxPictureHeight, settings)
-      resolve(pictureShape)
-    }
-    img.src = URL.createObjectURL(file)
+    // the content of the file is the source of the picture, read while its image loads: the image would else be encoded
+    // in PNG on its first export, which freezes the page for a large photo
+    Promise.all([readFileAsDataUrl(file), loadPicture(img, URL.createObjectURL(file))]).then(
+      ([dataUrl]) => resolve(createPictureShape(img, dataUrl, maxPictureWidth, maxPictureHeight, settings)),
+      reject
+    )
   }
 }
 
@@ -108,26 +109,23 @@ export const createPicture = (
   maxPictureHeight: number,
   settings: UtilsSettings
 ): Promise<ShapeEntity<'picture'>> => {
+  const img = new Image()
+  let timeoutId: ReturnType<typeof setTimeout> | undefined
   return new Promise<ShapeEntity<'picture'>>((resolve, reject) => {
-    const img = new Image()
-
-    const timeoutId = setTimeout(() => {
+    timeoutId = setTimeout(() => {
       reject(new Error('Timeout while loading images'))
     }, 4000)
 
-    const resolveWithCleanup = (value: ShapeEntity<'picture'> | PromiseLike<ShapeEntity<'picture'>>) => {
-      clearTimeout(timeoutId)
-      resolve(value)
-    }
-
-    img.onerror = () => {
-      clearTimeout(timeoutId)
-      reject(new Error('Some images could not be loaded'))
-    }
+    img.onerror = () => reject(new Error('Some images could not be loaded'))
 
     fileOrUrl instanceof File
-      ? createFilePicture(img, resolveWithCleanup, fileOrUrl, maxPictureWidth, maxPictureHeight, settings)
-      : createUrlPicture(img, resolveWithCleanup, fileOrUrl, maxPictureWidth, maxPictureHeight, settings)
+      ? createFilePicture(img, resolve, reject, fileOrUrl, maxPictureWidth, maxPictureHeight, settings)
+      : createUrlPicture(img, resolve, fileOrUrl, maxPictureWidth, maxPictureHeight, settings)
+  }).finally(() => {
+    clearTimeout(timeoutId)
+    // the image lives with the picture: its handlers would keep the file and the loading alive
+    img.onload = null
+    img.onerror = null
   })
 }
 

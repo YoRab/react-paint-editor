@@ -54,6 +54,7 @@ Breaking changes, see the [migration guide](./MIGRATION.md).
 - performance: zooming and resizing the canvas no longer recompute the shapes: the outline and the anchors of the selection are drawn at the scale of the view. Breaking: ShapeEntity has no selection field anymore
 - performance: each point of a brush stroke extends its path instead of building it again from all the points, and the quadratic brush no longer slows down more and more along a stroke
 - performance: a picture drawn much smaller than its image is drawn from a reduced copy of the image, made once: faster and less grainy in Firefox and Safari
+- performance: a picture added from a file keeps the content of the file as its source, a data URL instead of a revoked blob URL: it is exported as it is, instead of being encoded in PNG on its first export, which froze the page for a large photo, and the exported data are lighter for a photo
 - add the Programmatic API story
 
 ## V0.18.1

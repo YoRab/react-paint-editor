@@ -1,7 +1,7 @@
 import type { UtilsSettings } from '@canvas/constants/app'
 import { PICTURE_DEFAULT_SIZE } from '@canvas/constants/picture'
 import type { ExportImageFormat, ExportImageOptions } from '@canvas/types/editor'
-import type { DrawableShape, Point, ShapeEntity } from '@canvas/types/Shapes'
+import type { Point, ShapeEntity } from '@canvas/types/Shapes'
 import { initCanvasContext, transformCanvas } from '@canvas/utils/canvas'
 import { buildDataToExport } from '@canvas/utils/data'
 import { drawShape } from '@canvas/utils/shapes'
@@ -68,9 +68,36 @@ export const getBase64Image = (img: HTMLImageElement) => {
   return dataURL
 }
 
-/** Source of a picture as exported: an SVG or a data URL is kept, other sources (often revoked blob URLs) are encoded */
-export const getStringifiedImage = (shape: DrawableShape<'picture'>) =>
-  shape.src.includes('<svg') || shape.src.startsWith('data:') ? shape.src : getBase64Image(shape.img)
+/**
+ * Whether the source of a picture is exported encoded from its image: a URL, a data URL or an SVG is kept, other sources
+ * (often revoked blob URLs) are encoded. The cheap checks come first: a data URL can weigh megabytes
+ */
+export const isSourceEncodedOnExport = (src: string) => !src.startsWith('http') && !src.startsWith('data:') && !src.includes('<svg')
+
+/** Loads the source of a picture in its image: a URL is fetched first, so that the canvas can still be exported */
+export const loadPicture = (img: HTMLImageElement, src: string): Promise<void> =>
+  new Promise<void>((resolve, reject) => {
+    img.onload = () => {
+      URL.revokeObjectURL(img.src)
+      resolve()
+    }
+    img.onerror = () => {
+      reject(new Error('Some images could not be loaded'))
+    }
+    if (src.startsWith('http')) {
+      fetchAndStringify(src)
+        .then(picData => {
+          img.src = picData
+        })
+        .catch(() => {
+          img.src = '' // to trigger onerror
+        })
+    } else if (src.includes('<svg')) {
+      img.src = URL.createObjectURL(new Blob([src], { type: 'image/svg+xml' }))
+    } else {
+      img.src = src
+    }
+  })
 
 const encodeObjectToString = (objectToEncode: unknown) => {
   return `data:text/plain;charset=utf-8,${encodeURIComponent(JSON.stringify(objectToEncode))}`
@@ -184,6 +211,15 @@ export const encodeShapesInString = (shapes: ShapeEntity[], width: number, heigh
   const dataToExport = buildDataToExport(shapes, width, height)
   return encodeObjectToString(dataToExport)
 }
+
+/** Content of a file as a data URL, read without blocking the page */
+export const readFileAsDataUrl = (file: Blob) =>
+  new Promise<string>((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = () => resolve(reader.result as string)
+    reader.onerror = () => reject(reader.error ?? new Error('Failed to read file'))
+    reader.readAsDataURL(file)
+  })
 
 export const decodeJson = async (file: File) => {
   return new Promise<unknown>((resolve, reject) => {

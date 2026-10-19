@@ -2,7 +2,7 @@ import type { UtilsSettings } from '@canvas/constants/app'
 import type { DrawableShape, EditableShapeType, Point, ShapeEntity, ShapeInput } from '@canvas/types/Shapes'
 import type { CustomTool } from '@canvas/types/tools'
 import { compact } from '@canvas/utils/array'
-import { fetchAndStringify } from '@canvas/utils/file'
+import { loadPicture } from '@canvas/utils/file'
 import { isRecord } from '@canvas/utils/object'
 import { refreshShape } from '@canvas/utils/shapes'
 import { sizeText } from '@canvas/utils/shapes/text'
@@ -136,31 +136,6 @@ export const buildShapeEntity = (input: ShapeInput, { ctx, settings, tools, used
       return refreshShape(shape as DrawableShape & { id: string }, settings)
   }
 }
-
-/** Loads the source of a picture in its image: a URL is fetched first, so that the canvas can still be exported */
-export const loadPicture = (img: HTMLImageElement, src: string): Promise<void> =>
-  new Promise<void>((resolve, reject) => {
-    img.onload = () => {
-      URL.revokeObjectURL(img.src)
-      resolve()
-    }
-    img.onerror = () => {
-      reject(new Error('Some images could not be loaded'))
-    }
-    if (src.startsWith('http')) {
-      fetchAndStringify(src)
-        .then(picData => {
-          img.src = picData
-        })
-        .catch(() => {
-          img.src = '' // to trigger onerror
-        })
-    } else if (src.includes('<svg')) {
-      img.src = URL.createObjectURL(new Blob([src], { type: 'image/svg+xml' }))
-    } else {
-      img.src = src
-    }
-  })
 
 /**
  * Builds the shapes of loaded data and waits for their pictures. The shapes of an unknown type are left out,

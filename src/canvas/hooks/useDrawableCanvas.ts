@@ -19,7 +19,7 @@ import { createShape } from '@canvas/utils/shapes'
 import { addNewPointGroupToShape } from '@canvas/utils/shapes/brush'
 import { addCurveLine, addCurvePoint } from '@canvas/utils/shapes/curve'
 import { addPolygonLine, addPolygonPoint } from '@canvas/utils/shapes/polygon'
-import { transformShape } from '@canvas/utils/transform'
+import { transformSelectedShapes } from '@canvas/utils/transform'
 import { isPointInsideRect } from '@canvas/utils/trigo'
 import { clamp } from '@canvas/utils/util'
 import { isCursorInsideMask } from '@canvas/utils/zoom'
@@ -165,8 +165,7 @@ const useDrawableCanvas = (store: PaintStore, canvas: HTMLCanvasElement | null) 
           }
           store.setHoverMode(checkSelectionIntersection(ctx, selectedShape, cursorPosition, settings, true) || { mode: 'default' })
         } else {
-          const newShape = transformShape(ctx, selectedShape, cursorPosition, selectionMode, settings, modifiers.shift, modifiers.alt)
-          store.updateShapes(getSelectedShapes(newShape))
+          store.updateShapes(transformSelectedShapes(ctx, selectedShape, cursorPosition, selectionMode, settings, modifiers.shift, modifiers.alt))
         }
 
         if (selectionMode.mode === 'translate' && modifiers.alt && !selectionMode.hasBeenDuplicated) {

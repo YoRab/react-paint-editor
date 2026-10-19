@@ -2,7 +2,7 @@ import type { DataChanges } from '@canvas/types/editor'
 import type { ExportedShape, ShapeEntity, StateData } from '@canvas/types/Shapes'
 import { shallowEqual } from '@canvas/utils/equality'
 import { isEqual } from '@canvas/utils/object'
-import { getStringifiedImage } from './file'
+import { getBase64Image, isSourceEncodedOnExport } from './file'
 
 /** Fields left out of the export: the image, the paths and the computed data are built again from the others */
 const OMITTED_FIELDS = new Set(['img', 'path', 'arrows', 'tempPoint', 'computed'])
@@ -38,8 +38,10 @@ const getCachedExport = (shape: ShapeEntity): ExportedShape => {
 /** The export of a shape, shared between the calls: it is copied before it is given to the consumers */
 const getExportedShape = (shape: ShapeEntity): ExportedShape => {
   const exported = getCachedExport(shape)
-  // the source of a picture is encoded from its image, which may be loaded after the first export
-  return shape.type === 'picture' && !shape.src.startsWith('http') ? ({ ...exported, src: getStringifiedImage(shape) } as ExportedShape) : exported
+  // the source of a picture may be encoded from its image, which may be loaded after the first export
+  return shape.type === 'picture' && isSourceEncodedOnExport(shape.src)
+    ? ({ ...exported, src: getBase64Image(shape.img) } as ExportedShape)
+    : exported
 }
 
 /** The shape as exported: its id and its data are kept, the computed data are left out. Each call returns a new object */

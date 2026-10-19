@@ -4,7 +4,6 @@ import { PICTURE_DEFAULT_SIZE } from '@canvas/constants/picture'
 import type { SelectionModeData } from '@canvas/types/Mode'
 import type { DrawableShape, Line, Point, SelectionType, ShapeEntity } from '@canvas/types/Shapes'
 import { getSelectedShapes } from '@canvas/utils/selectedShapes'
-import { buildShapesGroup } from '@canvas/utils/selection'
 import { refreshShape, resizeShapes, rotateShape, translateShapes } from './shapes'
 import { addNewPointToShape } from './shapes/brush'
 import { getAngleFromVector, rotatePoint } from './trigo'
@@ -35,7 +34,8 @@ export const boundVectorToSingleAxis = (vector: Point, isShiftPressed: boolean):
   return vector
 }
 
-export const transformShape = (
+/** The selected shapes, transformed by the gesture: the selection is built again from them when they are updated */
+export const transformSelectedShapes = (
   ctx: CanvasRenderingContext2D,
   selectedShape: SelectionType,
   cursorPosition: Point,
@@ -43,12 +43,9 @@ export const transformShape = (
   settings: UtilsSettings,
   isShiftPressed: boolean,
   isAltPressed: boolean
-): SelectionType => {
+): ShapeEntity[] => {
   if (selectionMode.mode === 'translate') {
-    return buildShapesGroup(
-      translateShapes(cursorPosition, selectionMode.originalShape, selectionMode.cursorStartPosition, settings, isShiftPressed),
-      settings
-    )!
+    return translateShapes(cursorPosition, selectionMode.originalShape, selectionMode.cursorStartPosition, settings, isShiftPressed)
   }
 
   if (selectionMode.mode === 'rotate') {
@@ -60,27 +57,18 @@ export const transformShape = (
       settings,
       isShiftPressed
     )
-    const shapesGroup = getSelectedShapes(originalShape).map(shape => refreshShape(rotateShape(shape, rotationToAdd, center), settings))
-    return buildShapesGroup(shapesGroup, settings)!
+    return getSelectedShapes(originalShape).map(shape => refreshShape(rotateShape(shape, rotationToAdd, center), settings))
   }
 
   if (selectionMode.mode === 'resize') {
-    return buildShapesGroup(
-      resizeShapes(ctx, cursorPosition, selectionMode.originalShape, selectionMode, settings, isShiftPressed, isAltPressed),
-      settings
-    )!
+    return resizeShapes(ctx, cursorPosition, selectionMode.originalShape, selectionMode, settings, isShiftPressed, isAltPressed)
   }
 
   if (selectionMode.mode === 'brush') {
-    return buildShapesGroup(
-      getSelectedShapes(selectedShape).map(shape => {
-        return addNewPointToShape(shape as ShapeEntity<'brush'>, cursorPosition, settings)
-      }),
-      settings
-    )!
+    return getSelectedShapes(selectedShape).map(shape => addNewPointToShape(shape as ShapeEntity<'brush'>, cursorPosition, settings))
   }
 
-  return selectedShape
+  return getSelectedShapes(selectedShape)
 }
 
 export const fitContentInsideContainer = (
