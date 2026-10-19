@@ -53,10 +53,9 @@ Under the `Editor`, or a `PaintProvider`, any component can get the handle with 
 + import { Editor } from '@yorab/react-paint/editor'
 ```
 
-Imports from the package root don't change. Each module now also has its own stylesheet, `react-paint.css` still contains both:
+Imports from the package root don't change. The `Canvas` no longer needs a stylesheet, and the editor now also has its own, which `react-paint.css` still contains:
 
 ```ts
-import '@yorab/react-paint/canvas/canvas.css'
 import '@yorab/react-paint/editor/editor.css'
 ```
 
@@ -192,3 +191,5 @@ Everything the editor does can now be done from the code: see [Driving the canva
 ## CSS
 
 The class of the text edition box, which belongs to the canvas, is renamed from `react-paint-editor-toolbox-edittextbox` to `react-paint-canvas-edittextbox`, with its CSS variables (`--react-paint-canvas-edittextbox-*`).
+
+The styles of the canvas are now inline: `react-paint.css` only contains the styles of the editor. Its CSS variables keep their names, but the canvas now reads them instead of setting them: set one on a parent element to override the value of the canvas, without `!important` (see [Customizing the canvas styles](./README.md#customizing-the-canvas-styles)). The class names of the canvas elements are kept: a stylesheet overriding another inline property needs `!important`, prefer the `style` and `className` props of `Canvas`, which apply to its root element.

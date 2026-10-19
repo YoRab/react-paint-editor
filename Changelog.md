@@ -21,7 +21,7 @@ Breaking changes, see the [migration guide](./MIGRATION.md).
 - named exports for Canvas and Editor in all entry points
 - add selectionChanged and toolChanged events, registerEvent and unregisterEvent are typed by event. registerEvent returns the function that unregisters the listener, and events are emitted right after the change of the state
 - export getSelectedShapes, getSelectedShapesTools, SELECTION_TOOL and MOVE_TOOL
-- add canvas/canvas.css and editor/editor.css stylesheets
+- the canvas needs no stylesheet anymore: its styles are inline, and react-paint.css only contains the styles of the editor. Its CSS variables can be set on any parent element to override its styles. Add the editor/editor.css stylesheet
 - rename react-paint-editor-toolbox-edittextbox class to react-paint-canvas-edittextbox
 - fix stale declaration files being published, and css imports in declaration files
 - fix declaration files for node16 / nodenext module resolutions

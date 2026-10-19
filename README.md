@@ -30,11 +30,13 @@ npm install @yorab/react-paint
 
 ### Import Styles
 
-Don't forget to import the CSS file in your application:
+When you use the `Editor`, don't forget to import the CSS file in your application:
 
 ```tsx
 import '@yorab/react-paint/react-paint.css'
 ```
+
+The `Canvas` needs no stylesheet: its styles are inline, see [Customizing the canvas styles](#customizing-the-canvas-styles).
 
 ## Modules
 
@@ -45,11 +47,10 @@ The library is made of two independent modules:
 
 They only communicate through the handle returned by `useReactPaint`, given to `Canvas` and `Editor`, or to your own editor.
 
-When you don't use `Editor`, it is removed from your bundle, even when importing from the package root. You can also import each module and its styles separately:
+When you don't use `Editor`, it is removed from your bundle, even when importing from the package root. You can also import each module separately, only the editor has a stylesheet:
 
 ```tsx
 import { Canvas, useReactPaint } from '@yorab/react-paint/canvas'
-import '@yorab/react-paint/canvas/canvas.css'
 
 import { Editor } from '@yorab/react-paint/editor'
 import '@yorab/react-paint/editor/editor.css'
@@ -166,7 +167,6 @@ Under a `PaintProvider`, any component can get the handle with `usePaint`: each 
 
 ```tsx
 import { Canvas, PaintProvider, type ReactPaint, shallowEqual, usePaint, usePaintState, useReactPaint } from '@yorab/react-paint/canvas'
-import '@yorab/react-paint/canvas/canvas.css'
 
 const MyToolbar = () => {
   const paint = usePaint()
@@ -263,6 +263,27 @@ paint.registerEvent('shapeClicked', (shape, { canvasPosition }) => console.log(s
 ### Picture annotation
 
 To lay a picture under the canvas, give it the style returned by `useAnnotationsStyle(paint)`: it follows the zoom and the moves of the view. To export the picture with the shapes, give the image element as `backgroundImage` to `paint.getCurrentImage` or `paint.actions.exportPicture`.
+
+### Customizing the canvas styles
+
+The styles of the canvas are inline. Some of its properties read a CSS variable: set it on any parent element (your wrapper, the editor, or the `style` prop of `Canvas`) to override the value computed by the canvas, without `!important`.
+
+```css
+.my-wrapper {
+  --react-paint-app-canvas-bg: #fafafa;
+}
+```
+
+| Variable | Element | Property |
+| --- | --- | --- |
+| `--react-paint-app-canvas-bg` | drawing area | `background-color`, instead of the `canvasBackgroundColor` option |
+| `--react-paint-canvas-cursor` | drawing area | `cursor`: replaces every cursor of the gestures |
+| `--react-paint-app-canvaswidth` | root | `max-width` when the canvas cannot grow, `min-width` when it cannot shrink, as a unitless number of pixels |
+| `--react-paint-app-row-aspectratio` | root | `aspect-ratio` |
+| `--react-paint-canvas-edittextbox-color`, `-opacity`, `-fontfamily` | text edition box | `color`, `opacity`, `font-family` |
+| `--react-paint-canvas-edittextbox-transform`, `-fontsize`, `-padding` | text edition box | `transform`, `font-size`, `padding`: they follow the edited text, overriding them moves the box away from it |
+
+The other properties of the canvas elements are not set inline, or keep the canvas working (stacked canvases, touch): style the root with the `className` and `style` props of `Canvas`.
 
 ### Performance
 

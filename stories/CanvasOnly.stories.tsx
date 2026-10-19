@@ -54,7 +54,6 @@ export const Default: Story = {
       },
       source: {
         code: `import { Canvas, useReactPaint } from '@yorab/react-paint/canvas'
-import '@yorab/react-paint/canvas/canvas.css'
 
 const CanvasOnly = () => {
   const paint = useReactPaint({ shapes })

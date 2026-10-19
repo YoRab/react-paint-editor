@@ -6,8 +6,8 @@ import useResizeObserver from '@canvas/hooks/useResizeObserver'
 import { getPaintStore } from '@canvas/store/internal'
 import type { ReactPaint } from '@canvas/types/editor'
 import { withDefaults } from '@canvas/utils/object'
+import { cssVar } from '@canvas/utils/util'
 import { type CSSProperties, useCallback, useEffect, useRef, useSyncExternalStore } from 'react'
-import './index.css'
 
 type CanvasComponentProps = {
   /** Handle returned by useReactPaint */
@@ -56,22 +56,29 @@ const Canvas = ({ paint, options, className, style }: CanvasComponentProps) => {
   useKeyboard(store)
   useResizeObserver({ element: containerRef, onResized })
 
+  // unitless, like the variable that overrides it
+  const canvasWidth = `calc(${cssVar('--react-paint-app-canvaswidth', width)} * 1px)`
+
   return (
     <div
       ref={setContainerRef}
       className={`react-paint-app-row${className ? ` ${className}` : ''}`}
-      data-grow={canGrow}
-      data-shrink={canShrink}
       style={{
-        '--react-paint-app-row-width': canvasSize.width,
-        '--react-paint-app-canvaswidth': width,
-        '--react-paint-app-canvasheight': height,
-        '--react-paint-app-row-aspectratio': `calc(${canvasSize.width} / ${canvasSize.height})`,
-        '--react-paint-app-canvas-bg': canvasBackgroundColor,
+        position: 'relative',
+        width: '100%',
+        maxWidth: canGrow ? '100%' : canvasWidth,
+        minWidth: canShrink ? undefined : canvasWidth,
+        aspectRatio: cssVar('--react-paint-app-row-aspectratio', `${canvasSize.width} / ${canvasSize.height}`),
         ...style
       }}
     >
-      <CanvasElement store={store} view={view} selectionColor={canvasSelectionColor} selectionWidth={canvasSelectionWidth} />
+      <CanvasElement
+        store={store}
+        view={view}
+        backgroundColor={canvasBackgroundColor}
+        selectionColor={canvasSelectionColor}
+        selectionWidth={canvasSelectionWidth}
+      />
     </div>
   )
 }
