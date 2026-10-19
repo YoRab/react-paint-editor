@@ -8,6 +8,7 @@ declare module 'vitest' {
     perfLabel: string
     perfShapes: string
     perfCpu: string
+    perfEvents: string
   }
 }
 
@@ -160,6 +161,8 @@ export type Report = {
   userAgent: string
   /** Slowdown of the CPU during the run */
   cpuRate: number
+  /** Pointer and wheel events sent in each frame */
+  eventsPerFrame: number
   /** Metrics by "scenario@shapes" */
   results: Record<string, Metrics>
 }

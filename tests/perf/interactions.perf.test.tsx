@@ -22,10 +22,10 @@ const SIZES = inject('perfShapes')
   .map(Number)
   .filter(size => size > 0)
 const CPU_RATE = Math.max(1, Number(inject('perfCpu')) || 1)
+const EVENTS_PER_FRAME = Math.max(1, Math.floor(Number(inject('perfEvents'))) || 1)
 
 const WARMUP_RUNS = 1
 const MEASURED_RUNS = 5
-const EVENTS_PER_FRAME = 1
 
 const results: Record<string, Metrics> = {}
 let baseline: Record<string, Metrics> | undefined
@@ -82,11 +82,19 @@ beforeAll(async () => {
 afterAll(async () => {
   if (CPU_RATE > 1) await setCpuThrottling(1)
   if (!Object.keys(results).length) return
-  const report: Report = { label: LABEL, date: new Date().toISOString(), userAgent: navigator.userAgent, cpuRate: CPU_RATE, results }
+  const report: Report = {
+    label: LABEL,
+    date: new Date().toISOString(),
+    userAgent: navigator.userAgent,
+    cpuRate: CPU_RATE,
+    eventsPerFrame: EVENTS_PER_FRAME,
+    results
+  }
   await commands.writeFile(`tests/perf/results/${LABEL}.json`, `${JSON.stringify(report, null, 2)}\n`)
 
   const cpu = CPU_RATE > 1 ? `, CPU slowed down ${CPU_RATE}×` : ''
-  const header = `Benchmark "${LABEL}"${cpu}${baseline && LABEL !== 'baseline' ? ', compared to baseline.json' : ''}`
+  const events = EVENTS_PER_FRAME > 1 ? `, ${EVENTS_PER_FRAME} events per frame` : ''
+  const header = `Benchmark "${LABEL}"${cpu}${events}${baseline && LABEL !== 'baseline' ? ', compared to baseline.json' : ''}`
   const tables = SCENARIOS.map(scenario => {
     const scenarioResults = Object.fromEntries(Object.entries(results).filter(([key]) => key.startsWith(`${scenario.id}@`)))
     return Object.keys(scenarioResults).length ? formatTable(scenario.id, scenarioResults, LABEL !== 'baseline' ? baseline : undefined) : ''

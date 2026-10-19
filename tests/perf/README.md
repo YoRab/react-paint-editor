@@ -13,6 +13,7 @@ pnpm bench
 | `PERF_LABEL` | `latest` | Name of the report, written to `tests/perf/results/<label>.json` |
 | `PERF_SHAPES` | `50,500` | Numbers of shapes to measure, separated by commas |
 | `PERF_CPU` | `1` | Slows the CPU down by this rate (Chrome DevTools Protocol), like a slower machine: `4` stands for a mid-range phone |
+| `PERF_EVENTS` | `1` | Pointer and wheel events sent in each frame: `1` stands for a 60 Hz mouse, `4` for a faster mouse in a browser which does not align the events on the frames |
 
 ```bash
 PERF_LABEL=baseline pnpm bench          # bash
@@ -22,13 +23,13 @@ pnpm bench -t "pan with"                # one scenario
 PERF_LABEL=slow-cpu PERF_CPU=4 pnpm bench
 ```
 
-The results are ignored by git. When `results/baseline.json` exists, the report shows the gap of each metric to it, in %: compare only reports made with the same `PERF_CPU`.
+The results are ignored by git. When `results/baseline.json` exists, the report shows the gap of each metric to it, in %: compare only reports made with the same `PERF_CPU` and `PERF_EVENTS`.
 
 A full run takes about 15 minutes: 14 scenarios, 2 sizes, 1 warm-up run and 5 measured runs each, on a new mount every time. The median of the measured runs is kept.
 
 ## Scenarios
 
-The scenarios are driven only by DOM events (`scenarios.ts`), sent one per frame like a 60 Hz mouse (`EVENTS_PER_FRAME` in the test simulates faster mice). Each one ends with a functional check (the shape moved, the shapes are selected, the view moved...), so that a gesture broken by a change is never measured.
+The scenarios are driven only by DOM events (`scenarios.ts`), sent one per frame like a 60 Hz mouse (`PERF_EVENTS` simulates faster mice). Each one ends with a functional check (the shape moved, the shapes are selected, the view moved...), so that a gesture broken by a change is never measured.
 
 The drawing is a grid of opaque rectangles, unless another one is given (`shapes.ts`).
 
