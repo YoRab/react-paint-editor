@@ -26,7 +26,7 @@ The functions returned next to `editorProps` move to the handle:
 | `resetZoom()`, `setCanvasZoom(action)`, `setCanvasOffset(offset)` | `paint.actions.resetZoom()`, `paint.actions.setZoom(action)`, `paint.actions.setOffset(offset)` |
 | `annotationsProps.style` | `useAnnotationsStyle(paint)`, see [below](#annotationsprops) |
 
-The props of `useReactPaint` don't change. Its `options` are compared by value: they can be written inline, without `useMemo`.
+The props of `useReactPaint` don't change, except the `canGrow` and `canShrink` options, replaced by [`resize`](#cangrow-and-canshrink). Its `options` are compared by value: they can be written inline, without `useMemo`.
 
 ## Reading the state
 
@@ -81,6 +81,17 @@ Options that only drive the editor interface are now given to the `Editor` compo
   </Editor>
 ```
 
+## `canGrow` and `canShrink`
+
+The `canGrow` and `canShrink` options are replaced by `resize`, which also adds `'extend'`: the canvas fills its container at the scale 1, and its visible area follows the container.
+
+| 0.x | 1.0 |
+| --- | --- |
+| `canGrow: false, canShrink: true` (default) | `resize: 'scaleDown'` (default) |
+| `canGrow: true, canShrink: true` | `resize: 'scale'` |
+| `canGrow: true, canShrink: false` | `resize: 'scaleUp'` |
+| `canGrow: false, canShrink: false` | `resize: 'none'` |
+
 ## Default tools
 
 `DEFAULT_SHAPE_TOOLS` (editor) is replaced by `DEFAULT_TOOLS` (canvas). Default tools don't have an icon nor a label anymore: the editor resolves them from the tool type. Tools given in `options.availableTools` can still define their own `icon` and `label`.
@@ -110,7 +121,7 @@ In the table below, `state.x` stands for `usePaintState(paint, state => state.x)
 | `settings.canvasZoom`, `settings.canvasOffset`, `settings.canvasSize` | `state.view.zoom`, `state.view.offset`, `state.view.displayWidth` / `displayHeight` / `scaleRatio` |
 | `settings.features`, `settings.size` | `state.features`, `state.layout.size` |
 | `gridGap` | `state.gridGap` |
-| `canvas.canGrow`, `canvas.canShrink`, `canvas.withContextMenu` | `state.layout.canGrow`, `state.layout.canShrink`, `state.withContextMenu` |
+| `canvas.canGrow`, `canvas.canShrink`, `canvas.withContextMenu` | `state.layout.resize`, see [`canGrow` and `canShrink`](#cangrow-and-canshrink), `state.withContextMenu` |
 | `canvas.layersManipulation`, `canvas.withExport`, ... | `Editor` options |
 | `selectionMode` | `state.interaction.mode`, and `state.contextMenu` when the context menu is open |
 | `refs.setEditor` | `paint.scopeRef`, only needed to widen the area of the keyboard shortcuts beyond the `Canvas` |

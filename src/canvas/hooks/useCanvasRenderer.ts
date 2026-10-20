@@ -2,6 +2,7 @@ import type { UtilsSettings } from '@canvas/constants/app'
 import type { PaintStore } from '@canvas/store/paintStore'
 import { keepIfSame, memoizeLast } from '@canvas/store/selectors'
 import type { InternalState } from '@canvas/store/types'
+import type { CanvasSize } from '@canvas/types/Canvas'
 import type { SelectionType, ShapeEntity } from '@canvas/types/Shapes'
 import { initCanvasContext } from '@canvas/utils/canvas'
 import { shallowEqual } from '@canvas/utils/equality'
@@ -11,7 +12,7 @@ import { isIdleSelectionMode } from '@canvas/utils/selection'
 import { drawSelectionFrame, drawShape, drawShapeSelection } from '@canvas/utils/shapes'
 import { clipMask, drawMask, getCurrentView } from '@canvas/utils/zoom'
 import type React from 'react'
-import { useEffect } from 'react'
+import { useEffect, useLayoutEffect, useRef } from 'react'
 
 /** The shapes as they are drawn, in the order of the list: the selected copy of a shape in place of the shape, without the text being edited */
 const getDrawnShapes = (shapes: ShapeEntity[], selectedShape: SelectionType | undefined, isTextEdition: boolean): ShapeEntity[] => {
@@ -92,29 +93,39 @@ type UseCanvasRendererProps = {
   selectionCanvasRef: React.RefObject<HTMLCanvasElement | null>
   selectionColor: string
   selectionWidth: number
+  canvasSize: CanvasSize
 }
+
+type Layer = { drawNow: () => void; stop: () => void }
 
 /**
  * Draws the two layers of the canvas when their inputs change, outside of the renders of React:
  * each layer is drawn at most once per frame, with the last state.
  */
-const useCanvasRenderer = ({ store, drawCanvas, selectionCanvasRef, selectionColor, selectionWidth }: UseCanvasRendererProps) => {
+const useCanvasRenderer = ({ store, drawCanvas, selectionCanvasRef, selectionColor, selectionWidth, canvasSize }: UseCanvasRendererProps) => {
+  const layersRef = useRef<Layer[]>([])
+
   useEffect(() => {
     /** Draws the layer in the next frame when its inputs change, and once at the start */
-    const watchLayer = (selectInputs: (state: InternalState) => unknown[], render: (state: InternalState) => void) => {
+    const watchLayer = (selectInputs: (state: InternalState) => unknown[], render: (state: InternalState) => void): Layer => {
       let frame = 0
+      const drawNow = () => {
+        cancelAnimationFrame(frame)
+        frame = 0
+        render(store.getState())
+      }
       const scheduleDraw = () => {
         if (frame) return
-        frame = requestAnimationFrame(() => {
-          frame = 0
-          render(store.getState())
-        })
+        frame = requestAnimationFrame(drawNow)
       }
       scheduleDraw()
       const unwatch = store.watch(selectInputs, scheduleDraw, shallowEqual)
-      return () => {
-        unwatch()
-        cancelAnimationFrame(frame)
+      return {
+        drawNow,
+        stop: () => {
+          unwatch()
+          cancelAnimationFrame(frame)
+        }
       }
     }
 
@@ -127,7 +138,7 @@ const useCanvasRenderer = ({ store, drawCanvas, selectionCanvasRef, selectionCol
     const selectDrawnShapes = (state: InternalState) =>
       computeDrawnShapes(state.document.shapes, state.document.selectedShape, state.interaction.selectionMode.mode === 'textedition')
 
-    const stopDrawLayer = watchLayer(
+    const drawLayer = watchLayer(
       state => [selectDrawnShapes(state), store.getSettings(state)],
       state => {
         const drawCtx = drawCanvas?.getContext('2d')
@@ -135,7 +146,7 @@ const useCanvasRenderer = ({ store, drawCanvas, selectionCanvasRef, selectionCol
       }
     )
 
-    const stopSelectionLayer = watchLayer(
+    const selectionLayer = watchLayer(
       state => [
         state.document.selectedShape,
         store.getSettings(state),
@@ -161,11 +172,19 @@ const useCanvasRenderer = ({ store, drawCanvas, selectionCanvasRef, selectionCol
       }
     )
 
+    layersRef.current = [drawLayer, selectionLayer]
     return () => {
-      stopDrawLayer()
-      stopSelectionLayer()
+      drawLayer.stop()
+      selectionLayer.stop()
     }
   }, [store, drawCanvas, selectionCanvasRef, selectionColor, selectionWidth])
+
+  // A new size of a canvas clears it when React sets it: both layers are drawn again before the next paint, the frame
+  // painted after a resize is not empty
+  // biome-ignore lint/correctness/useExhaustiveDependencies: the size is the trigger, read from the state by the layers
+  useLayoutEffect(() => {
+    for (const layer of layersRef.current) layer.drawNow()
+  }, [canvasSize.width, canvasSize.height])
 }
 
 export default useCanvasRenderer

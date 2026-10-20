@@ -76,8 +76,7 @@ function AdvancedPaintApp() {
     height: 1080,
     shapes,
     options: {
-      canGrow: true,
-      canShrink: true,
+      resize: 'scale',
       brushAlgo: 'quadratic',
       clearCallback: 'empty'
     }
@@ -156,7 +155,8 @@ import '@yorab/react-paint/editor/editor.css'`} />
       </p>
       <ul>
         <li><strong>Canvas Size</strong> - Set <code>width</code> and <code>height</code> for fixed-size canvas, or use <code>size: 'infinite'</code> for unlimited canvas</li>
-        <li><strong>Zoom & Pan</strong> - Enable with <code>canZoom: 'always'</code> and control growth/shrink with <code>canGrow</code> and <code>canShrink</code></li>
+        <li><strong>Resize</strong> - By default the canvas is scaled down in a narrower container: <code>resize: 'scale'</code>, <code>'scaleUp'</code> and <code>'none'</code> change the bounds of its scale, and with <code>resize: 'extend'</code> it fills its container at a constant scale, like a whiteboard</li>
+        <li><strong>Zoom & Pan</strong> - Enable with <code>canZoom: 'always'</code></li>
         <li><strong>Grid</strong> - Add a grid overlay with <code>grid: 20</code> (size in pixels)</li>
         <li><strong>Features</strong> - Toggle export, save/load, picture upload, frame selection, and more</li>
         <li><strong>Brush Algorithm</strong> - Choose between <code>'simple'</code> or <code>'quadratic'</code> for brush rendering</li>

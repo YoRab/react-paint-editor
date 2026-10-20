@@ -1,4 +1,4 @@
-import type { Size } from '@canvas/types/Canvas'
+import type { Resize, Size } from '@canvas/types/Canvas'
 import type { ShapeInput } from '@canvas/types/Shapes'
 import type { CustomToolInput } from '@canvas/types/tools'
 import type { RecursivePartial } from '@canvas/types/utils'
@@ -25,8 +25,6 @@ export type PictureSrcResolver = (url: string) => string | null | Promise<string
 
 export type AppOptions = {
   grid: number
-  canGrow: boolean
-  canShrink: boolean
   availableTools: CustomToolInput[]
   withFrameSelection: boolean
   withSkeleton: boolean
@@ -38,6 +36,11 @@ export type AppOptions = {
   isBrushShapeDoneOnMouseUp: boolean
   canvasSelectionPadding: number
   size: Size
+  /**
+   * 'scaleDown', 'scale', 'scaleUp' and 'none' keep the width and the height and show the whole drawing, scaled to the
+   * width of the container within their bounds. 'extend' fills the container at the scale 1: the visible area follows it
+   */
+  resize: Resize
   canZoom: 'never' | 'always'
   debug: boolean
 }
@@ -46,8 +49,6 @@ export type OptionalOptions = RecursivePartial<AppOptions>
 
 export const DEFAULT_OPTIONS: AppOptions = {
   grid: 0,
-  canGrow: false,
-  canShrink: true,
   withContextMenu: true,
   availableTools: DEFAULT_TOOLS,
   clearCallback: 'empty',
@@ -58,6 +59,7 @@ export const DEFAULT_OPTIONS: AppOptions = {
   withSkeleton: true,
   canvasSelectionPadding: SELECTION_DEFAULT_PADDING,
   size: 'fixed',
+  resize: 'scaleDown',
   canZoom: 'never',
   debug: false
 }

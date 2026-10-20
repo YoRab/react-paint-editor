@@ -45,6 +45,41 @@ return (
   }
 }
 
+/** A page of a fixed size in a resizable container: it is shown at the scale 1, centered when the container is larger */
+export const FixedPageInResizableContainer: Story = {
+  args: {
+    shapes: TREE_AND_CLOUDS,
+    options: {
+      size: 'fixed',
+      resize: 'extend',
+      canZoom: 'always'
+    }
+  },
+  decorators: [
+    Story => (
+      <div style={{ width: 700, height: 450, resize: 'both', overflow: 'hidden', border: '1px dashed gray' }}>
+        <Story />
+      </div>
+    )
+  ],
+  parameters: {
+    docs: {
+      source: {
+        code: `const paint = useReactPaint({ shapes: TREE_AND_CLOUDS, options: { size: 'fixed', resize: 'extend', canZoom: 'always' } })
+
+return (
+  <div style={{ width: 700, height: 450, resize: 'both', overflow: 'hidden' }}>
+    <Editor paint={paint}>
+      <Canvas paint={paint} />
+    </Editor>
+  </div>
+)`,
+        language: 'tsx'
+      }
+    }
+  }
+}
+
 export const LoadedFromJSON: Story = {
   args: {
     shapes: TREE_AND_CLOUDS,

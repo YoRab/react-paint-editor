@@ -5,9 +5,21 @@ import useKeyboard from '@canvas/hooks/useKeyboard'
 import useResizeObserver from '@canvas/hooks/useResizeObserver'
 import { getPaintStore } from '@canvas/store/internal'
 import type { ReactPaint } from '@canvas/types/editor'
+import { canScaleDown, canScaleUp, getScaledCanvasSize, getUnscaledCanvasSize } from '@canvas/utils/canvas'
 import { withDefaults } from '@canvas/utils/object'
 import { cssVar } from '@canvas/utils/util'
 import { type CSSProperties, useCallback, useEffect, useRef, useSyncExternalStore } from 'react'
+
+// fills its parent, also as an item of a flex column, whatever the size of the canvas
+const EXTEND_ROOT_STYLE: CSSProperties = {
+  position: 'relative',
+  width: '100%',
+  height: '100%',
+  flex: '1 1 0',
+  minWidth: 0,
+  minHeight: 0,
+  overflow: 'hidden'
+}
 
 type CanvasComponentProps = {
   /** Handle returned by useReactPaint */
@@ -22,7 +34,7 @@ const Canvas = ({ paint, options, className, style }: CanvasComponentProps) => {
   // only what changes the DOM: the gestures do not render this component
   const getView = useCallback(() => store.selectors.selectCanvasView(store.getState()), [store])
   const view = useSyncExternalStore(store.subscribe, getView, getView)
-  const { width, height, canvasSize, canGrow, canShrink } = view
+  const { width, canvasSize, resize } = view
 
   const { canvasBackgroundColor, canvasSelectionColor, canvasSelectionWidth } = withDefaults(DEFAULT_CANVAS_OPTIONS, options)
 
@@ -36,20 +48,27 @@ const Canvas = ({ paint, options, className, style }: CanvasComponentProps) => {
     [store]
   )
 
-  // The size is applied in the next frame: the store renders the components synchronously, and a render inside
-  // the ResizeObserver callback would resize the observed element again during the same loop
   const resizeFrame = useRef(0)
   useEffect(() => () => cancelAnimationFrame(resizeFrame.current), [])
   const onResized = useCallback(
-    (measuredWidth: number) => {
+    (measuredWidth: number, measuredHeight: number) => {
       cancelAnimationFrame(resizeFrame.current)
+      if (resize === 'extend') {
+        // The visible area follows the container at the scale 1. It is applied at once, so that the canvas is redrawn before
+        // the next paint: the size of the root does not depend on the canvas, which cannot resize it again
+        const displayWidth = Math.round(measuredWidth)
+        const displayHeight = Math.round(measuredHeight)
+        if (displayWidth && displayHeight) store.setCanvasSize(getUnscaledCanvasSize(displayWidth, displayHeight))
+        return
+      }
+      // The size is applied in the next frame: the store renders the components synchronously, and a render inside
+      // the ResizeObserver callback would resize the observed element again during the same loop
       resizeFrame.current = requestAnimationFrame(() => {
-        const measuredHeight = (height * measuredWidth) / width
-        const scaleRatio = measuredWidth / width
-        store.setCanvasSize({ realWidth: width, realHeight: height, width: measuredWidth, height: measuredHeight, scaleRatio })
+        const { config } = store.getState()
+        store.setCanvasSize(getScaledCanvasSize(measuredWidth, config.width, config.height))
       })
     },
-    [width, height, store]
+    [resize, store]
   )
 
   useAutoScroll(store)
@@ -58,20 +77,19 @@ const Canvas = ({ paint, options, className, style }: CanvasComponentProps) => {
 
   // unitless, like the variable that overrides it
   const canvasWidth = `calc(${cssVar('--react-paint-app-canvaswidth', width)} * 1px)`
+  const rootStyle: CSSProperties =
+    resize === 'extend'
+      ? EXTEND_ROOT_STYLE
+      : {
+          position: 'relative',
+          width: '100%',
+          maxWidth: canScaleUp(resize) ? '100%' : canvasWidth,
+          minWidth: canScaleDown(resize) ? undefined : canvasWidth,
+          aspectRatio: cssVar('--react-paint-app-row-aspectratio', `${canvasSize.width} / ${canvasSize.height}`)
+        }
 
   return (
-    <div
-      ref={setContainerRef}
-      className={`react-paint-app-row${className ? ` ${className}` : ''}`}
-      style={{
-        position: 'relative',
-        width: '100%',
-        maxWidth: canGrow ? '100%' : canvasWidth,
-        minWidth: canShrink ? undefined : canvasWidth,
-        aspectRatio: cssVar('--react-paint-app-row-aspectratio', `${canvasSize.width} / ${canvasSize.height}`),
-        ...style
-      }}
-    >
+    <div ref={setContainerRef} className={`react-paint-app-row${className ? ` ${className}` : ''}`} style={{ ...rootStyle, ...style }}>
       <CanvasElement
         store={store}
         view={view}

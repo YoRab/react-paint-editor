@@ -1,9 +1,8 @@
 import { ZOOM_DETECTION_OFFSET } from '@canvas/constants/zoom'
 import type { PaintStore } from '@canvas/store/paintStore'
-import type { CanvasSize, Size } from '@canvas/types/Canvas'
 import type { Point } from '@canvas/types/Shapes'
 import { getCenter, getDistanceBetweenPoints } from '@canvas/utils/trigo'
-import { calculateNewZoomAndOffset, clampZoom } from '@canvas/utils/zoom'
+import { calculateNewZoomAndOffset, clampZoom, type ViewBounds } from '@canvas/utils/zoom'
 import { useEffect } from 'react'
 
 type PinchData = { startDiff: number; startZoom: number; startCenter: Point; startOffset: Point; isZooming: boolean; isMoving: boolean }
@@ -23,8 +22,6 @@ const getDiffAndCenter = (evCache: [PointerEvent, PointerEvent]) => {
 
 const getCanvasTransformation = ({
   canvasBoundingRect,
-  canvasSize,
-  size,
   startDiff,
   startZoom,
   startCenter,
@@ -32,11 +29,10 @@ const getCanvasTransformation = ({
   currentDiff,
   currentCenter,
   isMoving,
-  isZooming
-}: {
+  isZooming,
+  ...bounds
+}: ViewBounds & {
   canvasBoundingRect: DOMRect
-  canvasSize: CanvasSize
-  size: Size
   startDiff: number
   startZoom: number
   startOffset: Point
@@ -49,6 +45,7 @@ const getCanvasTransformation = ({
   offset: Point
   zoom: number
 } => {
+  const { canvasSize } = bounds
   const newZoom = isZooming ? clampZoom((currentDiff / startDiff) * startZoom) : startZoom
 
   const newOffset: Point = isMoving
@@ -64,8 +61,7 @@ const getCanvasTransformation = ({
   ]
 
   return calculateNewZoomAndOffset({
-    size,
-    canvasSize,
+    ...bounds,
     currentOffset: newOffset,
     currentZoom: startZoom,
     zoom: newZoom,
@@ -100,13 +96,11 @@ const usePinchZoomAndMove = ({ store, canvasElt }: UsePinchZoomProps) => {
       pinchData = { ...pinchData, isMoving, isZooming }
       if (!currentDiff || !pinchData.startDiff) return
 
-      const { config, view } = store.getState()
       store.setTransformation(
         getCanvasTransformation({
           ...pinchData,
+          ...store.getViewBounds(),
           canvasBoundingRect: canvasElt.getBoundingClientRect(),
-          canvasSize: view.canvasSize,
-          size: config.options.size,
           currentDiff,
           currentCenter
         })

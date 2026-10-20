@@ -2,7 +2,7 @@ import { DATA_FILE_MAX_SIZE, type PictureSrcResolver, type UtilsSettings } from 
 import { PICTURE_DEFAULT_SIZE, PICTURE_LOAD_TIMEOUT, PICTURE_MAX_SIZE } from '@canvas/constants/picture'
 import type { ExportImageFormat, ExportImageOptions } from '@canvas/types/editor'
 import type { Point, ShapeEntity } from '@canvas/types/Shapes'
-import { createDetachedContext, initCanvasContext, transformCanvas } from '@canvas/utils/canvas'
+import { createDetachedContext, getUnscaledCanvasSize, initCanvasContext, transformCanvas } from '@canvas/utils/canvas'
 import { buildDataToExport } from '@canvas/utils/data'
 import { drawShape } from '@canvas/utils/shapes'
 import { getBoundingRect } from '@canvas/utils/trigo'
@@ -177,12 +177,15 @@ const MIME_TYPES: Record<ExportImageFormat, string> = {
   webp: 'image/webp'
 }
 
-type DrawOptions = Omit<ExportImageOptions, 'view'> & {
-  /** Logical size of the canvas, where the background image is drawn */
-  canvasRect: { width: number; height: number }
-}
-
-const getShapesDataUrl = ({ shapes, settings, options }: { shapes: ShapeEntity[]; settings: UtilsSettings; options: DrawOptions }): string => {
+const getShapesDataUrl = ({
+  shapes,
+  settings,
+  options
+}: {
+  shapes: ShapeEntity[]
+  settings: UtilsSettings
+  options: Omit<ExportImageOptions, 'view'>
+}): string => {
   const newCanvas = document.createElement('canvas')
   const ctx = newCanvas.getContext('2d')
   if (!ctx) throw new Error('No context found for canvas')
@@ -202,7 +205,8 @@ const getShapesDataUrl = ({ shapes, settings, options }: { shapes: ShapeEntity[]
   }
   if (options.backgroundImage) {
     transformCanvas(ctx, settings)
-    ctx.drawImage(options.backgroundImage, 0, 0, options.canvasRect.width, options.canvasRect.height)
+    // the background image covers the drawing
+    ctx.drawImage(options.backgroundImage, 0, 0, settings.drawingSize.width, settings.drawingSize.height)
     ctx.restore()
   }
   for (let i = shapes.length - 1; i >= 0; i--) {
@@ -210,6 +214,14 @@ const getShapesDataUrl = ({ shapes, settings, options }: { shapes: ShapeEntity[]
   }
   return newCanvas.toDataURL(MIME_TYPES[format], options.quality)
 }
+
+/** Settings printing an area of the drawing at the scale 1, from the point at the given offset */
+const getUnscaledPrintSettings = (settings: UtilsSettings, offset: Point, { width, height }: UtilsSettings['drawingSize']): UtilsSettings => ({
+  ...settings,
+  canvasOffset: offset,
+  canvasZoom: 1,
+  canvasSize: { ...getUnscaledCanvasSize(width, height), scaleRatioWithNoZoom: 1 }
+})
 
 export const getCanvasImage = ({
   shapes,
@@ -221,45 +233,18 @@ export const getCanvasImage = ({
   options?: ExportImageOptions | undefined
 }): string => {
   const { view = 'defaultView', ...imageOptions } = options
-  const drawOptions: DrawOptions = {
-    ...imageOptions,
-    canvasRect: { width: settings.canvasSize.realWidth, height: settings.canvasSize.realHeight }
-  }
   if (view === 'fitToShapes' && !shapes.length) throw new Error('No image found to export')
 
   if (view === 'fitToShapes') {
     const box = getBoundingRect(shapes.map(shape => shape.computed.boundingBox))
-
-    const printSettings = {
-      ...settings,
-      canvasOffset: [-box.x, -box.y] as Point,
-      canvasZoom: 1,
-      canvasSize: {
-        realWidth: box.width,
-        realHeight: box.height,
-        width: box.width,
-        height: box.height,
-        scaleRatio: 1,
-        scaleRatioWithNoZoom: 1
-      }
-    }
-    return getShapesDataUrl({ shapes, settings: printSettings, options: drawOptions })
+    const printSettings = getUnscaledPrintSettings(settings, [-box.x, -box.y], box)
+    return getShapesDataUrl({ shapes, settings: printSettings, options: imageOptions })
   }
 
+  // the drawing from its origin, whatever the visible area
   if (view === 'defaultView') {
-    const printSettings = {
-      ...settings,
-      canvasOffset: [0, 0] as Point,
-      canvasZoom: 1,
-      canvasSize: {
-        ...settings.canvasSize,
-        width: settings.canvasSize.realWidth,
-        height: settings.canvasSize.realHeight,
-        scaleRatio: 1,
-        scaleRatioWithNoZoom: 1
-      }
-    }
-    return getShapesDataUrl({ shapes, settings: printSettings, options: drawOptions })
+    const printSettings = getUnscaledPrintSettings(settings, [0, 0], settings.drawingSize)
+    return getShapesDataUrl({ shapes, settings: printSettings, options: imageOptions })
   }
 
   const printSettings = {
@@ -272,7 +257,7 @@ export const getCanvasImage = ({
       scaleRatioWithNoZoom: 1
     }
   }
-  return getShapesDataUrl({ shapes, settings: printSettings, options: drawOptions })
+  return getShapesDataUrl({ shapes, settings: printSettings, options: imageOptions })
 }
 
 export const encodeShapesInString = (shapes: ShapeEntity[], width: number, height: number): string => {

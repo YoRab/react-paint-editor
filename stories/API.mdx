@@ -125,8 +125,8 @@ import LinkTo from '@storybook/addon-links/react';
       <ul>
         <li><code>mode</code>, <code>disabled</code> - Values given to the hook</li>
         <li><code>features</code> - <code>{'{ edition: boolean; zoom: boolean }'}</code></li>
-        <li><code>width</code>, <code>height</code> - Logical canvas size</li>
-        <li><code>layout</code> - <code>{"{ size: 'fixed' | 'infinite'; canGrow: boolean; canShrink: boolean }"}</code></li>
+        <li><code>width</code>, <code>height</code> - Logical size of the drawing</li>
+        <li><code>layout</code> - <code>{"{ size: 'fixed' | 'infinite'; resize: 'scaleDown' | 'scale' | 'scaleUp' | 'none' | 'extend' }"}</code></li>
         <li><code>view</code> - <code>{'{ zoom, offset, displayWidth, displayHeight, scaleRatio }'}</code></li>
         <li><code>gridGap</code> - Current grid gap</li>
         <li><code>shapes</code> - All shapes, from top to bottom</li>
@@ -162,7 +162,7 @@ import LinkTo from '@storybook/addon-links/react';
         <li><code>clearCanvas()</code>, <code>loadFile(file)</code>, <code>loadData(data)</code>, <code>exportPicture(options)</code>, <code>exportData(options)</code></li>
         <li><code>setZoom('zoom' | 'unzoom' | 'default')</code>, <code>zoomTo(level, {'{ center? }'})</code>, <code>resetZoom()</code> - Zoom in, out, to a level, or back to 100%</li>
         <li><code>zoomToShapes(ids?, {'{ padding? }'})</code> - Zooms and scrolls so that the shapes fill the view, all the visible shapes by default. The padding is in pixels of the screen</li>
-        <li><code>setOffset(offset)</code>, <code>panBy([dx, dy])</code> - Moves the view. The offset is kept inside the canvas when its size is fixed</li>
+        <li><code>setOffset(offset)</code>, <code>panBy([dx, dy])</code> - Moves the view. The offset is kept inside the drawing when its size is fixed</li>
         <li><code>setGridGap(gap)</code> - See <code>GRID_PRESETS</code></li>
         <li><code>openContextMenu({'{ clientPosition, canvasPosition?, ids? }'})</code>, <code>closeContextMenu()</code></li>
         <li><code>setOptions(options)</code>, <code>resetOptions()</code>, <code>resetSettings()</code></li>
@@ -487,18 +487,6 @@ const annotationsStyle = useAnnotationsStyle(paint)
             <td><code>0</code></td>
           </tr>
           <tr>
-            <td><code>canGrow</code></td>
-            <td><code>boolean</code></td>
-            <td>Allow canvas to grow beyond initial size</td>
-            <td><code>false</code></td>
-          </tr>
-          <tr>
-            <td><code>canShrink</code></td>
-            <td><code>boolean</code></td>
-            <td>Allow canvas to shrink below initial size</td>
-            <td><code>true</code></td>
-          </tr>
-          <tr>
             <td><code>availableTools</code></td>
             <td><code>CustomToolInput[]</code></td>
             <td>Custom list of available tools, each one merged with the default tool of the same type</td>
@@ -563,6 +551,17 @@ const annotationsStyle = useAnnotationsStyle(paint)
             <td><code>'fixed' | 'infinite'</code></td>
             <td>Canvas size mode: <code>'fixed'</code> bounds canvas to width/height, <code>'infinite'</code> has no bounds</td>
             <td><code>'fixed'</code></td>
+          </tr>
+          <tr>
+            <td><code>resize</code></td>
+            <td><code>'scaleDown' | 'scale' | 'scaleUp' | 'none' | 'extend'</code></td>
+            <td>
+              How the canvas follows its container. The first four show the whole drawing, scaled to the width of the container:{' '}
+              <code>'scaleDown'</code> at most width pixels wide, <code>'scale'</code> without bounds, <code>'scaleUp'</code> at least width pixels wide,{' '}
+              <code>'none'</code> always width×height pixels. <code>'extend'</code> fills the container, which must have a height, at the scale 1: the
+              visible area follows the container, a fixed page is centered in it
+            </td>
+            <td><code>'scaleDown'</code></td>
           </tr>
           <tr>
             <td><code>canZoom</code></td>
@@ -730,7 +729,7 @@ getShapesAt(point: Point): ShapeEntity[]`} />
 paint.actions.zoomTo(2, { center: [150, 150] }) // any level, keeping a point of the drawing still
 paint.actions.zoomToShapes(ids, { padding: 20 }) // the shapes fill the view, all the visible shapes without ids
 paint.actions.resetZoom() // back to 100%, without offset
-paint.actions.setOffset([100, 50]) // kept inside the canvas when its size is fixed
+paint.actions.setOffset([100, 50]) // kept inside the drawing when its size is fixed
 paint.actions.panBy([50, 0]) // scrolls the view, in the units of the drawing`} />
 
       <h2 id="Actions">Driving the canvas from the code</h2>
@@ -1119,7 +1118,7 @@ function MyPaintApp() {
   mode: 'editor',
   options: {
     canZoom: 'always',
-    canGrow: true,
+    resize: 'scale',
     grid: 20,
     brushAlgo: 'quadratic',
     withContextMenu: true // set to false to disable the built-in context menu

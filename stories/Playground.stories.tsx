@@ -11,8 +11,7 @@ type PlaygroundProps = {
   // OptionalOptions
   layersManipulation?: boolean
   grid?: number
-  canGrow?: boolean
-  canShrink?: boolean
+  resize?: 'scaleDown' | 'scale' | 'scaleUp' | 'none' | 'extend'
   withExport?: boolean
   withLoadAndSave?: boolean
   withUploadPicture?: boolean
@@ -53,8 +52,7 @@ const Playground = (args: PlaygroundProps) => {
     disabled,
     layersManipulation,
     grid,
-    canGrow,
-    canShrink,
+    resize,
     withExport,
     withLoadAndSave,
     withUploadPicture,
@@ -87,8 +85,7 @@ const Playground = (args: PlaygroundProps) => {
 
   const options: OptionalOptions = {
     grid,
-    canGrow,
-    canShrink,
+    resize,
     withFrameSelection,
     withSkeleton,
     withContextMenu,
@@ -134,11 +131,14 @@ const Playground = (args: PlaygroundProps) => {
     options
   })
 
-  return (
+  const editor = (
     <Editor paint={paint} options={editorOptions}>
       <Canvas paint={paint} options={canvasOptions} />
     </Editor>
   )
+
+  // the canvas fills its container, which needs a size in the centered layout
+  return resize === 'extend' ? <div style={{ width: '90vw', height: '80vh' }}>{editor}</div> : editor
 }
 
 const meta = {
@@ -159,8 +159,7 @@ const meta = {
     size: 'fixed',
     canZoom: 'never',
     grid: 0,
-    canGrow: false,
-    canShrink: true,
+    resize: 'scaleDown',
     canvasSelectionPadding: 0,
     // Brush options
     brushAlgo: 'simple',
@@ -235,15 +234,16 @@ const meta = {
       description: 'Grid gap in pixels (0 to disable grid)',
       table: { category: 'Canvas Options', defaultValue: { summary: '0' }, type: { summary: 'number' } }
     },
-    canGrow: {
-      control: { type: 'boolean' },
-      description: 'Allow canvas to grow within its container',
-      table: { category: 'Canvas Options', defaultValue: { summary: 'false' }, type: { summary: 'boolean' } }
-    },
-    canShrink: {
-      control: { type: 'boolean' },
-      description: 'Allow canvas to shrink within its container',
-      table: { category: 'Canvas Options', defaultValue: { summary: 'true' }, type: { summary: 'boolean' } }
+    resize: {
+      control: { type: 'select' },
+      options: ['scaleDown', 'scale', 'scaleUp', 'none', 'extend'],
+      description:
+        'How the canvas follows its container: scaled down only, scaled up and down, scaled up only, never scaled, or filling the container at the scale 1 (the container needs a height)',
+      table: {
+        category: 'Canvas Options',
+        defaultValue: { summary: "'scaleDown'" },
+        type: { summary: "'scaleDown' | 'scale' | 'scaleUp' | 'none' | 'extend'" }
+      }
     },
     canvasSelectionPadding: {
       control: { type: 'number', min: 0, max: 50, step: 1 },
@@ -400,8 +400,7 @@ export const Default: Story = {
         code: `
     const options: OptionalOptions = {
       grid,
-      canGrow,
-      canShrink,
+      resize,
       withFrameSelection,
       withSkeleton,
       withContextMenu,

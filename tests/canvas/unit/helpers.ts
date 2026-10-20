@@ -1,6 +1,7 @@
-import { createPaintStore } from '@canvas/store/paintStore'
+import { createPaintStore, type PaintStore } from '@canvas/store/paintStore'
 import type { UseReactPaintProps } from '@canvas/store/types'
 import type { ExportedDrawableShape, ShapeInput } from '@canvas/types/Shapes'
+import { getUnscaledCanvasSize } from '@canvas/utils/canvas'
 import { vi } from 'vitest'
 
 /** Path2D only exists in a browser: the store builds the paths of the shapes, without drawing them */
@@ -36,3 +37,6 @@ export const createLoadedStore = async (props: UseReactPaintProps = {}, shapes: 
   await store.resetCanvas(shapes)
   return store
 }
+
+/** Size measured by a Canvas filling its container: the scale is 1 */
+export const extendTo = (store: PaintStore, width: number, height: number) => store.setCanvasSize(getUnscaledCanvasSize(width, height))

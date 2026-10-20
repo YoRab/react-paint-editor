@@ -28,7 +28,7 @@ import type { HoverModeData, SelectionModeContextMenu, SelectionModeData } from 
 import type { Point, SelectionType, ShapeEntity, ShapeInput, ShapePatch, StateData, StyleShape } from '@canvas/types/Shapes'
 import type { ToolsType } from '@canvas/types/tools'
 import { compact, insertAt, moveItemPosition } from '@canvas/utils/array'
-import { createApproximateTextContext, createDetachedContext } from '@canvas/utils/canvas'
+import { createApproximateTextContext, createDetachedContext, getScaledCanvasSize, getUnscaledCanvasSize } from '@canvas/utils/canvas'
 import { buildDataToExport, getDataChanges } from '@canvas/utils/data'
 import { shallowEqual } from '@canvas/utils/equality'
 import { decodeJson, downloadFile, encodeShapesInString, getCanvasImage, loadPicture } from '@canvas/utils/file'
@@ -69,7 +69,8 @@ import {
   getNewOffset,
   getNewZoomAndOffset,
   getNewZoomAndOffsetFromDelta,
-  getZoomAndOffsetToFit
+  getZoomAndOffsetToFit,
+  type ViewBounds
 } from '@canvas/utils/zoom'
 
 type ResetOptions = { clearHistory: boolean; source: ChangeSource }
@@ -99,7 +100,7 @@ const createInitialState = (config: PaintConfig): InternalState => ({
   clipboard: undefined,
   tools: { available: buildAvailableTools(config.options.availableTools), activeToolId: SELECTION_TOOL.id },
   view: {
-    canvasSize: { realWidth: config.width, realHeight: config.height, width: config.width, height: config.height, scaleRatio: 1 },
+    canvasSize: getUnscaledCanvasSize(config.width, config.height),
     transformation: DEFAULT_TRANSFORMATION,
     gridGap: config.options.grid
   },
@@ -126,6 +127,14 @@ const isSameTransformation = (a: CanvasTransformation, b: CanvasTransformation) 
 const hasShapeSettingsChanged = (a: InternalState, b: InternalState) =>
   a.config.options.canvasSelectionPadding !== b.config.options.canvasSelectionPadding || a.config.options.brushAlgo !== b.config.options.brushAlgo
 
+/** Whether the view or the drawing it shows has changed: the size of the canvas, the zoom, the offset or the size of the drawing */
+const hasViewBoundsChanged = (a: InternalState, b: InternalState) =>
+  a.view.canvasSize !== b.view.canvasSize ||
+  a.view.transformation !== b.view.transformation ||
+  a.config.width !== b.config.width ||
+  a.config.height !== b.config.height ||
+  a.config.options.size !== b.config.options.size
+
 const isSameHoverMode = (a: HoverModeData, b: HoverModeData) => {
   if (a.mode !== b.mode || a.outOfView !== b.outOfView) return false
   if (a.mode !== 'resize' || b.mode !== 'resize') return true
@@ -140,6 +149,9 @@ const withInteraction = (state: InternalState, patch: Partial<Interaction>): Int
   const interaction = patchObject(state.interaction, patch)
   return interaction === state.interaction ? state : { ...state, interaction }
 }
+
+const withTransformation = (state: InternalState, transformation: CanvasTransformation): InternalState =>
+  isSameTransformation(transformation, state.view.transformation) ? state : { ...state, view: { ...state.view, transformation } }
 
 /** Sets default values of the settings of a tool. The fields the tool has not, and unchanged values, are ignored */
 const setToolDefaults = (state: InternalState, toolId: string, style: Record<string, unknown>): InternalState => {
@@ -190,6 +202,13 @@ export const createPaintStore = (props: UseReactPaintProps = {}) => {
   let initialized = false
 
   const getSettings = (state = get()): UtilsSettings => selectors.selectSettings(state)
+
+  /** Bounds of the view given to the zoom computations */
+  const getViewBounds = (state = get()): ViewBounds => ({
+    size: state.config.options.size,
+    canvasSize: state.view.canvasSize,
+    drawingSize: { width: state.config.width, height: state.config.height }
+  })
 
   // --- Contexts ---
 
@@ -254,7 +273,15 @@ export const createPaintStore = (props: UseReactPaintProps = {}) => {
     // The computed data of the shapes depend on some settings
     if (hasShapeSettingsChanged(previous, state)) state = refreshAllShapes(state, getSettings(state))
 
+    // The view stays inside a drawing of a fixed size, also when the canvas is resized or the zoom is reset
+    if (state.config.options.size === 'fixed' && hasViewBoundsChanged(previous, state)) state = constrainView(state)
+
     return state
+  }
+
+  const constrainView = (state: InternalState): InternalState => {
+    const { transformation } = state.view
+    return withTransformation(state, getNewOffset({ ...getViewBounds(state), zoom: transformation.zoom, newOffset: transformation.offset }))
   }
 
   const update = (updater: (state: InternalState) => InternalState) => store.setState(state => reconcile(state, updater(state)))
@@ -334,11 +361,18 @@ export const createPaintStore = (props: UseReactPaintProps = {}) => {
       const options = optionsChanged ? config.options : current.options
       const toolsChanged = optionsChanged && !isEqual(current.options.availableTools, options.availableTools)
       const gridChanged = options.grid !== current.options.grid
+      // a scaled canvas shows the whole drawing: it follows a new size at once, keeping its display width, also when the
+      // Canvas is not mounted
+      const scaledSizeChanged =
+        options.resize !== 'extend' && (current.options.resize === 'extend' || current.width !== config.width || current.height !== config.height)
+      let { view } = state
+      if (gridChanged) view = { ...view, gridGap: options.grid }
+      if (scaledSizeChanged) view = { ...view, canvasSize: getScaledCanvasSize(view.canvasSize.width, config.width, config.height) }
       return {
         ...state,
         config: { ...config, options },
         tools: toolsChanged ? { ...state.tools, available: buildAvailableTools(options.availableTools) } : state.tools,
-        view: gridChanged ? { ...state.view, gridGap: options.grid } : state.view
+        view
       }
     })
   }
@@ -587,20 +621,16 @@ export const createPaintStore = (props: UseReactPaintProps = {}) => {
     update(state => (isEqual(canvasSize, state.view.canvasSize) ? state : { ...state, view: { ...state.view, canvasSize } }))
 
   const updateTransformation = (compute: (transformation: CanvasTransformation, state: InternalState) => CanvasTransformation) =>
-    update(state => {
-      const transformation = compute(state.view.transformation, state)
-      return isSameTransformation(transformation, state.view.transformation) ? state : { ...state, view: { ...state.view, transformation } }
-    })
+    update(state => withTransformation(state, compute(state.view.transformation, state)))
 
   const setTransformation = (transformation: CanvasTransformation) => updateTransformation(() => transformation)
 
-  /** Moves the view: the offset is kept inside the canvas when its size is fixed */
+  /** Moves the view: the offset is kept inside the drawing when its size is fixed */
   const moveView = (getOffset: (transformation: CanvasTransformation, state: InternalState) => Point) =>
     updateTransformation((transformation, state) =>
       getNewOffset({
+        ...getViewBounds(state),
         zoom: transformation.zoom,
-        size: state.config.options.size,
-        canvasSize: state.view.canvasSize,
         newOffset: getOffset(transformation, state)
       })
     )
@@ -608,20 +638,20 @@ export const createPaintStore = (props: UseReactPaintProps = {}) => {
   const setOffset = (newOffset: Point) => moveView(() => newOffset)
 
   const setZoom = (action: ZoomAction) =>
-    updateTransformation(({ offset, zoom }, { config, view }) =>
-      getNewZoomAndOffset({ size: config.options.size, canvasSize: view.canvasSize, currentOffset: offset, currentZoom: zoom, action })
+    updateTransformation(({ offset, zoom }, state) =>
+      getNewZoomAndOffset({ ...getViewBounds(state), currentOffset: offset, currentZoom: zoom, action })
     )
 
   /** Sets the zoom level, keeping a point of the drawing still: the center of the view by default */
   const zoomTo = (level: number, center?: Point) =>
-    updateTransformation(({ offset, zoom }, { config, view }) => {
+    updateTransformation(({ offset, zoom }, state) => {
+      const { canvasSize } = state.view
       // the point is given in the drawing, the zoom computation needs it in the view
       const centerPoint: Point = center
         ? [(center[0] + offset[0]) * zoom, (center[1] + offset[1]) * zoom]
-        : [view.canvasSize.realWidth / 2, view.canvasSize.realHeight / 2]
+        : [canvasSize.realWidth / 2, canvasSize.realHeight / 2]
       return calculateNewZoomAndOffset({
-        size: config.options.size,
-        canvasSize: view.canvasSize,
+        ...getViewBounds(state),
         currentOffset: offset,
         currentZoom: zoom,
         zoom: clampZoom(level),
@@ -633,17 +663,17 @@ export const createPaintStore = (props: UseReactPaintProps = {}) => {
   const zoomToShapes = (shapes: ShapeEntity[], padding: number) => {
     if (!shapes.length) return
     const box = getBoundingRect(shapes.map(shape => shape.computed.boundingBox))
-    updateTransformation((_, { config, view }) => getZoomAndOffsetToFit({ size: config.options.size, canvasSize: view.canvasSize, box, padding }))
+    updateTransformation((_, state) => getZoomAndOffsetToFit({ ...getViewBounds(state), box, padding }))
   }
 
-  const resetZoom = () => setTransformation(DEFAULT_TRANSFORMATION)
+  /** Zoom 1 at the origin, kept inside a drawing of a fixed size: the view does not change when it is already there */
+  const resetZoom = () => updateTransformation((_, state) => getNewOffset({ ...getViewBounds(state), zoom: 1, newOffset: [0, 0] }))
 
   /** Zooms around a point of the canvas, by a wheel or a pinch delta */
   const zoomBy = (delta: number, centerPoint: Point) =>
-    updateTransformation(({ offset, zoom }, { config, view }) =>
+    updateTransformation(({ offset, zoom }, state) =>
       getNewZoomAndOffsetFromDelta({
-        size: config.options.size,
-        canvasSize: view.canvasSize,
+        ...getViewBounds(state),
         currentOffset: offset,
         currentZoom: zoom,
         delta,
@@ -702,7 +732,7 @@ export const createPaintStore = (props: UseReactPaintProps = {}) => {
     batch(() => {
       clearShapes(shapesToInit, options)
       selectTool(SELECTION_TOOL)
-      setTransformation(DEFAULT_TRANSFORMATION)
+      resetZoom()
     })
 
   /** The resolver of the sources of the pictures, read when they are loaded: it may be written inline */
@@ -1157,6 +1187,7 @@ export const createPaintStore = (props: UseReactPaintProps = {}) => {
     setModifiers,
     setCanvasSize,
     setTransformation,
+    getViewBounds,
     zoomBy,
     scrollBy,
     applyMoveAcceleration

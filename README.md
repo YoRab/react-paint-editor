@@ -15,7 +15,7 @@ An open-source canvas-based library for React used for image annotation or as a 
 ## Features
 
 - **Rich Drawing Tools** - Brush, shapes (rectangles, circles, ellipses, polygons, curves), lines, text, and picture support
-- **Interactive Canvas** - Full support for zoom, pan, pinch gestures, and infinite or fixed-size canvases
+- **Interactive Canvas** - Full support for zoom, pan, pinch gestures, and infinite or fixed-size canvases, scaled to their container or filling it
 - **Shape Manipulation** - Select, move, resize, rotate, and transform shapes with intuitive controls
 - **Customizable Styling** - Control colors, line widths, opacity, line styles, arrows, and fonts
 - **Layer Management** - Built-in layer manipulation panel for organizing your drawings
@@ -121,8 +121,7 @@ function AdvancedPaintApp() {
     height: 1080,
     shapes,
     options: {
-      canGrow: true,
-      canShrink: true,
+      resize: 'scale',
       brushAlgo: 'quadratic',
       clearCallback: 'defaultShapes'
     }
@@ -149,6 +148,36 @@ function AdvancedPaintApp() {
 ```
 
 Options are compared by value: they can be written inline.
+
+### Size of the canvas
+
+The `resize` option sets how the canvas follows its container. The first four values keep its logical size, `width`×`height`, and show the whole drawing, its width following the container within their bounds:
+
+| `resize` | Width of the canvas on the page |
+| --- | --- |
+| `'scaleDown'` (default) | the width of the container, at most `width` pixels |
+| `'scale'` | the width of the container |
+| `'scaleUp'` | the width of the container, at least `width` pixels |
+| `'none'` | always `width` pixels |
+
+With `resize: 'extend'`, the canvas fills its container at the scale 1 and its visible area follows the container, redrawn in the same frame: a whiteboard needs no ResizeObserver. The container must have a height. `width` and `height` stay the size of the drawing:
+
+- with `size: 'infinite'`, they are the area exported by the `defaultView` of `exportPicture` and the size given in the exported data. The top left corner of the view stays still when the container is resized.
+- with `size: 'fixed'`, they are the page: it is centered with a mask around it when the container is larger, and the view is kept inside it otherwise.
+
+```tsx
+const paint = useReactPaint({ options: { size: 'infinite', resize: 'extend', canZoom: 'always' } })
+
+return (
+  <div style={{ height: '100vh' }}>
+    <Editor paint={paint}>
+      <Canvas paint={paint} />
+    </Editor>
+  </div>
+)
+```
+
+`--react-paint-app-canvaswidth` and `--react-paint-app-row-aspectratio` have no effect with `extend`. A page larger than its container is scrolled with the wheel when `canZoom` is `'always'`, and in edit mode by dragging with the space key or the wheel button pressed.
 
 ### Reading the state
 
@@ -269,7 +298,7 @@ paint.registerEvent('shapeClicked', (shape, { canvasPosition }) => console.log(s
 
 ### Picture annotation
 
-To lay a picture under the canvas, give it the style returned by `useAnnotationsStyle(paint)`: it follows the zoom and the moves of the view. To export the picture with the shapes, give the image element as `backgroundImage` to `paint.getCurrentImage` or `paint.actions.exportPicture`.
+To lay a picture under the canvas, give it the style returned by `useAnnotationsStyle(paint)`: it follows the zoom and the moves of the view. With `resize: 'extend'`, give the picture the size of the drawing in pixels, `width`×`height`, instead of the size of the canvas. To export the picture with the shapes, give the image element as `backgroundImage` to `paint.getCurrentImage` or `paint.actions.exportPicture`.
 
 ### Customizing the canvas styles
 
@@ -285,8 +314,8 @@ The styles of the canvas are inline. Some of its properties read a CSS variable:
 | --- | --- | --- |
 | `--react-paint-app-canvas-bg` | drawing area | `background-color`, instead of the `canvasBackgroundColor` option |
 | `--react-paint-canvas-cursor` | drawing area | `cursor`: replaces every cursor of the gestures |
-| `--react-paint-app-canvaswidth` | root | `max-width` when the canvas cannot grow, `min-width` when it cannot shrink, as a unitless number of pixels |
-| `--react-paint-app-row-aspectratio` | root | `aspect-ratio` |
+| `--react-paint-app-canvaswidth` | root | `max-width` with `resize` `'scaleDown'` and `'none'`, `min-width` with `'scaleUp'` and `'none'`, as a unitless number of pixels. Set on the editor or one of its parents, it bounds the editor too |
+| `--react-paint-app-row-aspectratio` | root | `aspect-ratio`. Not with `resize: 'extend'` |
 | `--react-paint-canvas-edittextbox-color`, `-opacity`, `-fontfamily` | text edition box | `color`, `opacity`, `font-family` |
 | `--react-paint-canvas-edittextbox-transform`, `-fontsize`, `-padding` | text edition box | `transform`, `font-size`, `padding`: they follow the edited text, overriding them moves the box away from it |
 

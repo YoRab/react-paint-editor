@@ -4,6 +4,7 @@ import {
   Canvas,
   Editor,
   type EditorOptions,
+  type ReactPaint,
   type ShapeEntity,
   type StateData,
   type ToolsType,
@@ -15,11 +16,20 @@ import {
 
 export const getCurrentDataRef = { current: null as null | (() => StateData) }
 
+/** Handle of the last rendered harness, driven by the tests */
+export const paintRef = { current: null as ReactPaint | null }
+
+export const getPaint = () => {
+  if (!paintRef.current) throw new Error('The harness is not rendered')
+  return paintRef.current
+}
+
 /** Log of the selectionChanged / toolChanged events emitted by the last rendered wrapper */
 export const eventsLog: ({ name: 'selectionChanged'; ids: string[] } | { name: 'toolChanged'; toolId: string })[] = []
 
 export const ReactPaintWrapper = ({ editorOptions, ...args }: UseReactPaintProps & { editorOptions?: EditorOptions }) => {
   const paint = useReactPaint(args)
+  paintRef.current = paint
   getCurrentDataRef.current = paint.getCurrentData
 
   useEffect(() => {

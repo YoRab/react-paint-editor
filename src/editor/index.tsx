@@ -146,8 +146,10 @@ const Editor = ({ paint, className, style, options, children }: EditorComponentP
     <div
       ref={setRootRef}
       className={appClassName}
+      data-resize={layout.resize}
       style={{
-        '--react-paint-editor-app-maxWidth': layout.canGrow ? '100%' : `${width}px`,
+        // bounds the width of the editor according to data-resize, like the canvas, which reads the same variable
+        '--react-paint-editor-app-canvasWidth': `calc(var(--react-paint-app-canvaswidth, ${width}) * 1px)`,
         '--react-paint-editor-app-toolbar-bg': toolbarBackgroundColor,
         '--react-paint-editor-app-divider-color': dividerColor,
         '--react-paint-editor-app-font-radius': `${fontRadius}px`,

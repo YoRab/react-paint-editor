@@ -28,14 +28,27 @@ const CONTAINER_STYLE: CSSProperties = {
   display: 'grid'
 }
 
-// both canvases are stacked in the same cell of the grid
-const CANVAS_STYLE: CSSProperties = {
-  position: 'relative',
+const CANVAS_BASE_STYLE: CSSProperties = {
   userSelect: 'none',
-  maxWidth: '100%',
   // prevent scroll on touch
-  touchAction: 'none',
-  gridArea: '1 / 1'
+  touchAction: 'none'
+}
+
+type LayoutStyles = { box: CSSProperties; container: CSSProperties; canvas: CSSProperties }
+
+// A scaled canvas fills the root, which has the bounds of the scale. Both canvases are stacked in the same cell of the grid
+const SCALED_STYLES: LayoutStyles = {
+  box: BOX_STYLE,
+  container: { ...CONTAINER_STYLE, width: '100%', height: '100%' },
+  canvas: { ...CANVAS_BASE_STYLE, position: 'relative', width: '100%', gridArea: '1 / 1' }
+}
+
+// When the canvas follows its container, the box and the container fill the root, and both canvases are stacked at the
+// top left with the size of their pixels: they are never stretched, even before they are resized
+const EXTEND_STYLES: LayoutStyles = {
+  box: { position: 'absolute', inset: 0 },
+  container: { ...CONTAINER_STYLE, position: 'absolute', inset: 0 },
+  canvas: { ...CANVAS_BASE_STYLE, position: 'absolute', left: 0, top: 0 }
 }
 
 type CanvasElementProps = {
@@ -51,12 +64,12 @@ type CanvasElementProps = {
  * the gestures update the store, which draws the canvases and sets the cursor directly.
  */
 const Canvas = ({ store, view, backgroundColor, selectionColor, selectionWidth }: CanvasElementProps) => {
-  const { canvasSize, isEditMode, canGrow, features, textEdition } = view
+  const { canvasSize, resize, isEditMode, features, textEdition } = view
   const containerRef = useRef<HTMLDivElement | null>(null)
   const selectionCanvasRef = useRef<HTMLCanvasElement | null>(null)
   const withSelectionCanvas = isEditMode
   const tabIndex = isEditMode ? 0 : -1
-  const growSize = canGrow ? '100%' : undefined
+  const styles = resize === 'extend' ? EXTEND_STYLES : SCALED_STYLES
 
   // the element is kept in a state, so that the listeners are set once it is mounted
   const [drawCanvas, setDrawCanvas] = useState<HTMLCanvasElement | null>(null)
@@ -71,7 +84,7 @@ const Canvas = ({ store, view, backgroundColor, selectionColor, selectionWidth }
   useDrawableCanvas(store, drawCanvas)
   useShapeEvents(store, drawCanvas)
   useZoom({ store, canvasElt: drawCanvas, zoomEnabled: features.zoom })
-  useCanvasRenderer({ store, drawCanvas, selectionCanvasRef, selectionColor, selectionWidth })
+  useCanvasRenderer({ store, drawCanvas, selectionCanvasRef, selectionColor, selectionWidth, canvasSize })
 
   // The cursor follows the gestures: it is set without rendering, and the style given by React does not hold it
   useEffect(() => {
@@ -107,21 +120,16 @@ const Canvas = ({ store, view, backgroundColor, selectionColor, selectionWidth }
   }
 
   return (
-    <div className='react-paint-canvas-box' style={BOX_STYLE}>
+    <div className='react-paint-canvas-box' style={styles.box}>
       <div
         className='react-paint-canvas-container'
         ref={containerRef}
-        style={{
-          ...CONTAINER_STYLE,
-          backgroundColor: cssVar('--react-paint-app-canvas-bg', backgroundColor),
-          width: growSize,
-          height: growSize
-        }}
+        style={{ ...styles.container, backgroundColor: cssVar('--react-paint-app-canvas-bg', backgroundColor) }}
       >
         <canvas
           className={DRAWCANVAS_CLASSNAME}
           ref={drawCanvasRef}
-          style={{ ...CANVAS_STYLE, width: growSize }}
+          style={styles.canvas}
           data-testid='draw-canvas'
           width={canvasSize.width}
           height={canvasSize.height}
@@ -132,7 +140,7 @@ const Canvas = ({ store, view, backgroundColor, selectionColor, selectionWidth }
           <canvas
             className={SELECTIONCANVAS_CLASSNAME}
             ref={selectionCanvasRef}
-            style={{ ...CANVAS_STYLE, width: growSize, pointerEvents: 'none' }}
+            style={{ ...styles.canvas, pointerEvents: 'none' }}
             width={canvasSize.width}
             height={canvasSize.height}
             onContextMenu={preventRightClick}

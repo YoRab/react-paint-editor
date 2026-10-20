@@ -1,7 +1,8 @@
 import { createPaintStore, type PaintStore } from '@canvas/store/paintStore'
 import type { ShapeEntity, ShapeInput } from '@canvas/types/Shapes'
+import { getScaledCanvasSize } from '@canvas/utils/canvas'
 import { describe, expect, it, vi } from 'vitest'
-import { createLoadedStore, RECTS, stubPath2D } from './helpers'
+import { createLoadedStore, extendTo, RECTS, stubPath2D } from './helpers'
 
 vi.mock('@canvas/utils/data', async importOriginal => {
   const actual = await importOriginal<typeof import('@canvas/utils/data')>()
@@ -504,6 +505,72 @@ describe('options and settings', () => {
     const rectTool = state.tools.find(tool => tool.id === 'react-paint-rect')
     expect(rectTool?.type === 'rect' && rectTool.settings.strokeColor.default).toBe('black')
     expect(state).toMatchObject({ gridGap: 10, view: { zoom: 1, offset: [0, 0] }, activeTool: { type: 'selection' } })
+  })
+})
+
+describe('canvas following its container', () => {
+  it('exposes the resize option in the layout', () => {
+    const store = createPaintStore()
+    expect(store.getEditorState().layout).toEqual({ size: 'fixed', resize: 'scaleDown' })
+    store.actions.setOptions({ resize: 'extend' })
+    expect(store.getEditorState().layout).toEqual({ size: 'fixed', resize: 'extend' })
+  })
+
+  it('shows the whole drawing again when it stops following its container', () => {
+    const store = createPaintStore({ width: 1000, height: 600, options: { resize: 'extend' } })
+    extendTo(store, 1500, 300)
+    store.actions.setOptions({ resize: 'scaleDown' })
+    expect(store.getEditorState().view).toMatchObject({ displayWidth: 1500, displayHeight: 900, scaleRatio: 1.5 })
+
+    // the bounds of the scale change, not the logical size: the Canvas measures its container again
+    const { canvasSize } = store.getState().view
+    store.actions.setOptions({ resize: 'scale' })
+    expect(store.getState().view.canvasSize).toBe(canvasSize)
+  })
+
+  it('keeps the view inside a drawing of a fixed size when the container is resized', () => {
+    const store = createPaintStore({ width: 400, height: 300, options: { size: 'fixed', resize: 'extend' } })
+    // larger container: the drawing is centered
+    extendTo(store, 800, 600)
+    expect(store.getEditorState().view.offset).toEqual([200, 150])
+
+    // smaller container: the drawing covers the view
+    extendTo(store, 300, 200)
+    expect(store.getEditorState().view.offset).toEqual([0, 0])
+    store.actions.setOffset([-500, -500])
+    expect(store.getEditorState().view.offset).toEqual([-100, -100])
+
+    // a reset of the zoom stays inside the drawing
+    extendTo(store, 800, 600)
+    store.actions.resetZoom()
+    expect(store.getEditorState().view).toMatchObject({ zoom: 1, offset: [200, 150] })
+  })
+
+  it('keeps the offset of an infinite drawing: its top left corner stays still', () => {
+    const store = createPaintStore({ options: { size: 'infinite', resize: 'extend' } })
+    store.actions.setOffset([-30, 40])
+    extendTo(store, 1500, 300)
+    expect(store.getEditorState().view).toMatchObject({ offset: [-30, 40], displayWidth: 1500, displayHeight: 300, scaleRatio: 1 })
+  })
+
+  it('follows a new size of a scaled drawing at once, keeping its display width and the grid', () => {
+    const store = createPaintStore({ width: 1000, height: 600 })
+    store.setCanvasSize(getScaledCanvasSize(500, 1000, 600))
+    store.actions.setGridGap(30)
+    store.setConfig({ width: 800, height: 400 })
+    expect(store.getEditorState()).toMatchObject({
+      view: { displayWidth: 500, displayHeight: 250, scaleRatio: 0.625, offset: [0, 0] },
+      gridGap: 30
+    })
+  })
+
+  it('does not change the data', () => {
+    const store = createPaintStore({ options: { size: 'infinite', resize: 'extend' } })
+    const listener = vi.fn()
+    store.registerEvent('dataChanged', listener)
+    extendTo(store, 1500, 300)
+    expect(listener).not.toHaveBeenCalled()
+    expect(store.getCurrentData().config).toEqual({ width: 1000, height: 600 })
   })
 })
 

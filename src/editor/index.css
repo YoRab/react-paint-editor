@@ -4,7 +4,22 @@
   position: relative;
   flex-direction: column;
   font-family: Arial, Helvetica, sans-serif;
-  max-width: min(100%, var(--react-paint-editor-app-maxWidth));
+  max-width: 100%;
+}
+
+/* the editor has the bounds of the canvas: it is not wider than it when it cannot scale up, nor narrower when it cannot scale down */
+.react-paint-editor-app:is([data-resize='scaleDown'], [data-resize='none']) {
+  max-width: min(100%, var(--react-paint-editor-app-canvasWidth));
+}
+
+.react-paint-editor-app:is([data-resize='scaleUp'], [data-resize='none']) {
+  min-width: var(--react-paint-editor-app-canvasWidth);
+}
+
+/* the canvas follows the size of the editor, between the toolbars */
+.react-paint-editor-app[data-resize='extend'] {
+  width: 100%;
+  height: 100%;
 }
 
 .react-paint-editor-app hr {

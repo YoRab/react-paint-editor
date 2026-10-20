@@ -1,7 +1,7 @@
 import type { UtilsSettings } from '@canvas/constants/app'
 import { MOVE_TOOL, SELECTION_TOOL } from '@canvas/constants/tools'
 import type { InternalState } from '@canvas/store/types'
-import type { CanvasSize } from '@canvas/types/Canvas'
+import type { CanvasSize, Resize } from '@canvas/types/Canvas'
 import type { ContextMenuState, EditorState, InteractionState } from '@canvas/types/editor'
 import type { SelectionModeData } from '@canvas/types/Mode'
 import type { Point, SelectionType, ShapeEntity } from '@canvas/types/Shapes'
@@ -17,8 +17,7 @@ export type CanvasView = {
   width: number
   height: number
   canvasSize: CanvasSize
-  canGrow: boolean
-  canShrink: boolean
+  resize: Resize
   isEditMode: boolean
   features: UtilsSettings['features']
   textEdition: TextEdition | undefined
@@ -75,6 +74,8 @@ export const createSelectors = () => {
       size: UtilsSettings['size'],
       selectionPadding: number,
       canvasSize: CanvasSize,
+      drawingWidth: number,
+      drawingHeight: number,
       canvasOffset: Point,
       canvasZoom: number,
       gridGap: number,
@@ -91,6 +92,7 @@ export const createSelectors = () => {
         scaleRatioWithNoZoom: canvasSize.scaleRatio,
         scaleRatio: canvasSize.scaleRatio * canvasZoom
       },
+      drawingSize: { width: drawingWidth, height: drawingHeight },
       size,
       canvasOffset,
       canvasZoom,
@@ -102,7 +104,7 @@ export const createSelectors = () => {
 
   /** Settings given to the drawing utils */
   const selectSettings = memoizeLast((state: InternalState): UtilsSettings => {
-    const { options } = state.config
+    const { options, width, height } = state.config
     const { canvasSize, transformation, gridGap } = state.view
     return buildSettings(
       options.brushAlgo,
@@ -111,6 +113,8 @@ export const createSelectors = () => {
       options.size,
       options.canvasSelectionPadding,
       canvasSize,
+      width,
+      height,
       transformation.offset,
       transformation.zoom,
       gridGap,
@@ -165,7 +169,10 @@ export const createSelectors = () => {
       features: selectFeatures(state),
       width: config.width,
       height: config.height,
-      layout: keepLayout({ size: config.options.size, canGrow: config.options.canGrow, canShrink: config.options.canShrink }),
+      layout: keepLayout({
+        size: config.options.size,
+        resize: config.options.resize
+      }),
       view: keepView({
         zoom,
         offset,
@@ -218,8 +225,7 @@ export const createSelectors = () => {
       width: config.width,
       height: config.height,
       canvasSize: view.canvasSize,
-      canGrow: config.options.canGrow,
-      canShrink: config.options.canShrink,
+      resize: config.options.resize,
       isEditMode: config.mode !== 'viewer',
       features: selectFeatures(state),
       textEdition: buildTextEdition(interaction.selectionMode, document.selectedShape, selectSettings(state))

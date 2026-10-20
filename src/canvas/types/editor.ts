@@ -1,5 +1,5 @@
 import type { OptionalOptions } from '@canvas/constants/app'
-import type { Size } from '@canvas/types/Canvas'
+import type { Resize, Size } from '@canvas/types/Canvas'
 import type { SelectionModeData } from '@canvas/types/Mode'
 import type { ExportedShape, Point, Rect, ShapeEntity, ShapeInput, ShapePatch, StateData, StyleShape } from '@canvas/types/Shapes'
 import type { CustomTool, ToolsType } from '@canvas/types/tools'
@@ -49,10 +49,10 @@ export type EditorState = {
   mode: 'editor' | 'viewer'
   disabled: boolean
   features: { edition: boolean; zoom: boolean }
-  /** Logical size of the canvas */
+  /** Logical size of the drawing: the visible area follows the container when the resize option is 'extend' */
   width: number
   height: number
-  layout: { size: Size; canGrow: boolean; canShrink: boolean }
+  layout: { size: Size; resize: Resize }
   view: { zoom: number; offset: Point; displayWidth: number; displayHeight: number; scaleRatio: number }
   gridGap: number
   shapes: ShapeEntity[]

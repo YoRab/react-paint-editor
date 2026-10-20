@@ -1,19 +1,11 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import { useEffect } from 'react'
 import { expect, userEvent, waitFor, within } from 'storybook/test'
-import { Canvas, type ReactPaint, type ShapeEntity, type UseReactPaintProps, useReactPaint } from '../../../src/index'
-import { makeCoordConverters } from './../helpers'
-
-/** Handle of the last rendered harness, driven by the tests */
-const paintRef = { current: null as ReactPaint | null }
+import { Canvas, type ShapeEntity, type UseReactPaintProps, useReactPaint } from '../../../src/index'
+import { getPaint, makeCoordConverters, paintRef } from './../helpers'
 
 /** Ids of the shapes given to shapeClicked / shapeHovered, by the last rendered harness */
 const shapeEvents: { name: 'clicked' | 'hovered'; id: string | undefined }[] = []
-
-const getPaint = () => {
-  if (!paintRef.current) throw new Error('The harness is not rendered')
-  return paintRef.current
-}
 
 /** Canvas alone, without Editor, listening to the shape events. withCanvas false keeps the Canvas unmounted */
 const ApiHarness = ({
