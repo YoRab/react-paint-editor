@@ -4,23 +4,62 @@ on:
   push:
     branches:
       - "main"
+  workflow_dispatch:
 
 permissions:
   contents: read
   pages: write
   id-token: write
 
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
 jobs:
-  deploy:
+  build:
     runs-on: ubuntu-latest
+    container:
+      # Same image as the test job of build-and-test.yaml, the coverage runs the Storybook tests in Chromium
+      image: mcr.microsoft.com/playwright:v1.64.0-noble
     steps:
-      - uses: actions/checkout@v6
-      - uses: pnpm/action-setup@v6
-      - uses: actions/setup-node@v6
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v6
+
+      - name: Setup Node
+        uses: actions/setup-node@v6
         with:
           node-version: "24.x"
-      - uses: bitovi/github-actions-storybook-to-github-pages@v1.0.3
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Build Storybook
+        run: pnpm build-storybook
+
+      - name: Run tests with coverage
+        run: pnpm test-coverage
+
+      # The README badge reads coverage/badge.json, published with the HTML report
+      - name: Add coverage report and badge to Storybook
+        run: |
+          pnpm coverage-badge
+          cp -r coverage storybook-static/coverage
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v5
         with:
-          install_command: pnpm install
           path: storybook-static
-          checkout: false
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v5
