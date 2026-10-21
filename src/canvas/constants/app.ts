@@ -29,6 +29,8 @@ export type AppOptions = {
   withFrameSelection: boolean
   withSkeleton: boolean
   withContextMenu: boolean
+  /** Adds the image files dropped on the canvas as pictures, when the picture tool is available */
+  withDropPicture: boolean
   clearCallback: 'empty' | 'defaultShapes' | (() => ShapeInput[])
   /** Filters or rewrites the URLs of the remote pictures, which may come from data drawn by someone else */
   resolvePictureSrc: PictureSrcResolver | undefined
@@ -50,6 +52,7 @@ export type OptionalOptions = RecursivePartial<AppOptions>
 export const DEFAULT_OPTIONS: AppOptions = {
   grid: 0,
   withContextMenu: true,
+  withDropPicture: true,
   availableTools: DEFAULT_TOOLS,
   clearCallback: 'empty',
   resolvePictureSrc: undefined,

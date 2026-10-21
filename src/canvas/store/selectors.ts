@@ -136,6 +136,10 @@ export const createSelectors = () => {
 
   const selectWithContextMenu = ({ config }: InternalState) => config.options.withContextMenu && config.mode !== 'viewer' && !config.disabled
 
+  /** Image files can be dropped on the canvas when it is edited, and a picture can be added to it */
+  const selectWithDropPicture = (state: InternalState) =>
+    state.config.options.withDropPicture && selectFeatures(state).edition && state.tools.available.some(tool => tool.type === 'picture')
+
   const keepLayout = keepIfSame<EditorState['layout']>()
   const keepView = keepIfSame<EditorState['view']>()
   const keepHistory = keepIfSame<EditorState['history']>()
@@ -251,6 +255,7 @@ export const createSelectors = () => {
     selectActiveTool,
     selectSelectedShapes,
     selectWithContextMenu,
+    selectWithDropPicture,
     selectEditorState,
     selectCanvasView,
     selectCursor

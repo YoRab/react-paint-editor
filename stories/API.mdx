@@ -156,7 +156,7 @@ import LinkTo from '@storybook/addon-links/react';
         <li><code>transformShapes(ids, 'flipHorizontally' | 'flipVertically' | 'rotateClockwise' | 'rotateCounterclockwise')</code></li>
         <li><code>insertShapePoint(id, index, point)</code>, <code>moveShapePoint(id, index, point)</code>, <code>removeShapePoint(id, pointIndex)</code> - Points of a line, a polygon or a curve, which keep at least 2 points</li>
         <li><code>editText(id)</code> - Opens the edition box of a text</li>
-        <li><code>addPicture(fileOrUrl, {'{ maxWidth?, maxHeight?, select? }'})</code></li>
+        <li><code>addPicture(fileOrUrl, {'{ maxWidth?, maxHeight?, select?, position? }'})</code> - adds the picture at the center of the visible area, or centered on <code>position</code> (in the units of the drawing)</li>
         <li><code>copy(ids?)</code>, <code>cut(ids?)</code>, <code>paste()</code> - Use the selection when no ids are given</li>
         <li><code>undo()</code>, <code>redo()</code>, <code>saveShapes()</code> - <code>saveShapes</code> adds the current state to the history, after updates made with <code>{'{ save: false }'}</code></li>
         <li><code>clearCanvas()</code>, <code>loadFile(file)</code>, <code>loadData(data)</code>, <code>exportPicture(options)</code>, <code>exportData(options)</code></li>
@@ -378,7 +378,10 @@ const annotationsStyle = useAnnotationsStyle(paint)
           <tr>
             <td><code>withUploadPicture</code></td>
             <td><code>boolean</code></td>
-            <td>Show button to upload picture (base64)</td>
+            <td>
+              Show button to upload picture (base64). Set to <code>false</code> to also disable the drop of image files on the canvas: the
+              editor turns the <code>withDropPicture</code> option of the canvas off with <code>setOptions</code>, and gives it back to the props afterwards.
+            </td>
             <td><code>true</code></td>
           </tr>
           <tr>
@@ -510,6 +513,16 @@ const annotationsStyle = useAnnotationsStyle(paint)
             <td>
               Enable right-click context menu on the canvas and current selection. Set to <code>false</code> to disable the context menu entirely
               (useful if you want to handle right-click yourself).
+            </td>
+            <td><code>true</code></td>
+          </tr>
+          <tr>
+            <td><code>withDropPicture</code></td>
+            <td><code>boolean</code></td>
+            <td>
+              Add the image files (png, gif, jpeg, svg, webp) dropped from the file explorer on the canvas as pictures, centered on the cursor.
+              Needs the picture tool in <code>availableTools</code> and the edition mode. Set to <code>false</code> to leave the drop to the browser.
+              A file which is not an accepted image, or cannot be loaded, fires <code>pictureDropFailed</code>.
             </td>
             <td><code>true</code></td>
           </tr>
@@ -649,6 +662,14 @@ const annotationsStyle = useAnnotationsStyle(paint)
   openComment(shape.id, shape.data, info.clientPosition)
 })
 paint.registerEvent('shapeHovered', (shape: ShapeEntity | undefined) => setHighlighted(shape?.id))`} />
+
+      <h3>pictureDropFailed</h3>
+      <p>
+        Fired for each file dropped on the canvas which is not added as a picture (see the <code>withDropPicture</code> option): its type is not an accepted image, or the image cannot be loaded. The Editor shows an error message for it.
+      </p>
+      <Source language='typescript' code={`paint.registerEvent('pictureDropFailed', (file: File, error: unknown) => {
+  console.warn('Cannot add', file.name, error)
+})`} />
 
       <h2 id="Methods">Methods</h2>
       <p>

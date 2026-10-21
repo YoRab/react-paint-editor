@@ -181,7 +181,11 @@ export type EditorActions = {
   removeShapePoint: (id: string, pointIndex: number) => void
   /** Selects a text and opens its edition box, like a double click. Does nothing when the Canvas is not mounted */
   editText: (id: string) => void
-  addPicture: (fileOrUrl: File | string, options?: { maxWidth?: number; maxHeight?: number; select?: boolean }) => Promise<ShapeEntity>
+  /** Adds a picture from a file or an URL, at the center of the visible area, or centered on the position (in the units of the drawing) */
+  addPicture: (
+    fileOrUrl: File | string,
+    options?: { maxWidth?: number; maxHeight?: number; select?: boolean; position?: Point }
+  ) => Promise<ShapeEntity>
 
   copy: (ids?: string[]) => void
   cut: (ids?: string[]) => void
@@ -248,6 +252,8 @@ export type ReactPaintEvents = {
   shapeClicked: (shape: ShapeEntity, info: ShapePointerInfo) => void
   /** The pointer enters a visible shape, or leaves it (undefined). Only computed while a listener is registered */
   shapeHovered: (shape: ShapeEntity | undefined, info: ShapePointerInfo) => void
+  /** A file dropped on the canvas is not added as a picture: its type is not an accepted image, or the image could not be loaded */
+  pictureDropFailed: (file: File, error: unknown) => void
 }
 
 export type ReactPaintEventName = keyof ReactPaintEvents

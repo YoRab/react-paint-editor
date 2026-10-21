@@ -4,42 +4,11 @@ import { createPaintStore } from '@canvas/store/paintStore'
 import type { ShapeInput } from '@canvas/types/Shapes'
 import { decodeJson, getPictureSource, loadPicture } from '@canvas/utils/file'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { createLoadedStore, RECTS, stubPath2D } from './helpers'
+import { createLoadedStore, FakeImage, RECTS, stubPath2D } from './helpers'
 
 /**
  * @vitest-environment jsdom
  */
-
-/** Images of the tests: they load once their source is set, as large as given by size, or fail when fails says so */
-class FakeImage {
-  static fails = (_src: string) => false
-  static size = (_src: string) => 100
-  complete = false
-  width = 0
-  height = 0
-  naturalWidth = 0
-  naturalHeight = 0
-  onload: (() => void) | null = null
-  onerror: (() => void) | null = null
-  source = ''
-
-  get src() {
-    return this.source
-  }
-
-  set src(value: string) {
-    this.source = value
-    setTimeout(() => {
-      this.complete = true
-      if (FakeImage.fails(value)) {
-        this.onerror?.()
-        return
-      }
-      this.width = this.height = this.naturalWidth = this.naturalHeight = FakeImage.size(value)
-      this.onload?.()
-    })
-  }
-}
 
 const PNG_DATA_URL = 'data:image/png;base64,iVBORw0KGgo='
 

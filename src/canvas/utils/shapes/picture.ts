@@ -28,16 +28,21 @@ const createPictureShape = (
   storedSrc: string,
   maxPictureWidth: number,
   maxPictureHeight: number,
-  settings: UtilsSettings
+  settings: UtilsSettings,
+  center: Point | undefined
 ): ShapeEntity<'picture'> => {
   const [width, height] = fitContentInsideContainer(img.width, img.height, maxPictureWidth, maxPictureHeight, true)
+  const [centerX, centerY] = center ?? [
+    -settings.canvasOffset[0] + settings.canvasSize.realWidth / settings.canvasZoom / 2,
+    -settings.canvasOffset[1] + settings.canvasSize.realHeight / settings.canvasZoom / 2
+  ]
   return buildPath(
     {
       toolId: PICTURE_TOOL_ID,
       type: 'picture',
       id: createShapeId('picture'),
-      x: -settings.canvasOffset[0] + settings.canvasSize.realWidth / settings.canvasZoom / 2 - width / 2,
-      y: -settings.canvasOffset[1] + settings.canvasSize.realHeight / settings.canvasZoom / 2 - height / 2,
+      x: centerX - width / 2,
+      y: centerY - height / 2,
       width,
       height,
       ratio: height === 0 ? 1 : width / height,
@@ -77,11 +82,13 @@ export const createPicture = async (
   maxPictureWidth: number,
   maxPictureHeight: number,
   settings: UtilsSettings,
-  resolvePictureSrc: PictureSrcResolver | undefined
+  resolvePictureSrc: PictureSrcResolver | undefined,
+  /** Center of the picture in the drawing, the center of the visible area by default */
+  center?: Point
 ): Promise<ShapeEntity<'picture'>> => {
   const img = new Image()
   const storedSrc = await loadNewPicture(img, fileOrUrl, resolvePictureSrc)
-  return createPictureShape(img, storedSrc, maxPictureWidth, maxPictureHeight, settings)
+  return createPictureShape(img, storedSrc, maxPictureWidth, maxPictureHeight, settings, center)
 }
 
 /**

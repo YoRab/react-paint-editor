@@ -20,7 +20,8 @@ export const createEventEmitter = (): EventEmitter => {
     selectionChanged: [],
     toolChanged: [],
     shapeClicked: [],
-    shapeHovered: []
+    shapeHovered: [],
+    pictureDropFailed: []
   }
 
   const unregisterEvent: EventEmitter['unregisterEvent'] = (event, fn) => {
