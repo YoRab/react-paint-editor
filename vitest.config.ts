@@ -13,6 +13,15 @@ export default defineConfig({
     tsconfigPaths: true
   },
   test: {
+    // Used by `pnpm test-coverage` (CI badge) and by the coverage option of the Storybook test runner,
+    // which keeps include/exclude but replaces the reporters
+    coverage: {
+      provider: 'v8',
+      // without include, Vitest only reports the files loaded by the tests, stories and .storybook included
+      include: ['src/**/*.{ts,tsx}'],
+      exclude: ['src/**/*.d.ts'],
+      reporter: ['text-summary', 'html', 'json-summary']
+    },
     projects: [
       {
         extends: true,

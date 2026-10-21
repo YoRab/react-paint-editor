@@ -3,6 +3,7 @@
 [![npm version](https://img.shields.io/npm/v/@yorab/react-paint)](https://www.npmjs.com/package/@yorab/react-paint)
 [![License: MIT](https://img.shields.io/npm/l/@yorab/react-paint)](https://github.com/YoRab/react-paint-editor/blob/main/LICENSE.txt)
 [![Build and Test](https://github.com/YoRab/react-paint-editor/actions/workflows/build-and-test.yaml/badge.svg)](https://github.com/YoRab/react-paint-editor/actions/workflows/build-and-test.yaml)
+[![Coverage](https://img.shields.io/endpoint?url=https%3A%2F%2Fyorab.github.io%2Freact-paint-editor%2Fcoverage%2Fbadge.json)](https://yorab.github.io/react-paint-editor/coverage/)
 [![Socket Badge](https://socket.dev/api/badge/npm/package/@yorab/react-paint)](https://socket.dev/npm/package/@yorab/react-paint)
 [![Checked with Biome](https://img.shields.io/badge/Checked_with-Biome-60a5fa?style=flat&logo=biome)](https://biomejs.dev)
 

@@ -96,12 +96,14 @@
     "build-storybook": "storybook build",
     "check-package": "publint && attw --pack . --ignore-rules cjs-resolves-to-esm false-esm --exclude-entrypoints react-paint.css editor/editor.css",
     "check-treeshake": "node scripts/check-treeshake.mjs",
+    "coverage-badge": "node scripts/coverage-badge.mjs",
     "declarationfiles": "rm -rf declarationfiles && pnpm tsc --project tsconfig.prod.json && node fixDtsPath.js",
     "lint": "pnpm biome check --write",
     "prepublishOnly": "pnpm build && pnpm declarationfiles",
     "publishnpm": "pnpm publish --access public",
     "start": "storybook dev -p 6006 --host 0.0.0.0",
     "test": "vitest --project=unit",
-    "test-storybook": "vitest --project=storybook"
+    "test-storybook": "vitest --project=storybook",
+    "test-coverage": "vitest run --project=unit --project=storybook --coverage"
   }
 }
