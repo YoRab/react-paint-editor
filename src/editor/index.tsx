@@ -8,7 +8,7 @@ import Toolbar from '@editor/components/toolbox/Toolbar'
 import { DEFAULT_EDITOR_OPTIONS, type EditorOptions } from '@editor/constants/options'
 import useSnackbar from '@editor/hooks/useSnackbar'
 import { withDefaults } from '@editor/utils/util'
-import { type CSSProperties, type ReactNode, useCallback, useRef, useState } from 'react'
+import { type CSSProperties, type ReactNode, useCallback, useEffect, useRef, useState } from 'react'
 import './index.css'
 import ContextMenu from '@editor/components/toolbox/ContextMenu'
 
@@ -139,6 +139,18 @@ const Editor = ({ paint, className, style, options, children }: EditorComponentP
     },
     [actions, addSnackbar]
   )
+
+  useEffect(
+    () => paint.registerEvent('pictureDropFailed', () => addSnackbar({ type: 'error', text: 'Le chargement a échoué' })),
+    [paint, addSnackbar]
+  )
+
+  // the upload of a picture also covers the drop of a file on the canvas: the option comes back to the props afterwards
+  useEffect(() => {
+    if (withUploadPicture) return
+    actions.setOptions({ withDropPicture: false })
+    return () => actions.setOptions({ withDropPicture: undefined })
+  }, [actions, withUploadPicture])
 
   const appClassName = `${className ? `${className} ` : ''}${isLayoutPanelShown ? 'react-paint-editor-layout-opened ' : ''}react-paint-editor-app`
 

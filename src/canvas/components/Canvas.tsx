@@ -1,6 +1,7 @@
 import { DRAWCANVAS_CLASSNAME, SELECTIONCANVAS_CLASSNAME } from '@canvas/constants/app'
 import useCanvasRenderer from '@canvas/hooks/useCanvasRenderer'
 import useDrawableCanvas from '@canvas/hooks/useDrawableCanvas'
+import useDropPicture from '@canvas/hooks/useDropPicture'
 import useShapeEvents from '@canvas/hooks/useShapeEvents'
 import useZoom from '@canvas/hooks/useZoom'
 import type { PaintStore } from '@canvas/store/paintStore'
@@ -83,6 +84,7 @@ const Canvas = ({ store, view, backgroundColor, selectionColor, selectionWidth }
 
   useDrawableCanvas(store, drawCanvas)
   useShapeEvents(store, drawCanvas)
+  useDropPicture(store, drawCanvas)
   useZoom({ store, canvasElt: drawCanvas, zoomEnabled: features.zoom })
   useCanvasRenderer({ store, drawCanvas, selectionCanvasRef, selectionColor, selectionWidth, canvasSize })
 

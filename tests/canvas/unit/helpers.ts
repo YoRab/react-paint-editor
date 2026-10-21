@@ -4,6 +4,37 @@ import type { ExportedDrawableShape, ShapeInput } from '@canvas/types/Shapes'
 import { getUnscaledCanvasSize } from '@canvas/utils/canvas'
 import { vi } from 'vitest'
 
+/** Images of the tests: they load once their source is set, as large as given by size, or fail when fails says so */
+export class FakeImage {
+  static fails = (_src: string) => false
+  static size = (_src: string) => 100
+  complete = false
+  width = 0
+  height = 0
+  naturalWidth = 0
+  naturalHeight = 0
+  onload: (() => void) | null = null
+  onerror: (() => void) | null = null
+  source = ''
+
+  get src() {
+    return this.source
+  }
+
+  set src(value: string) {
+    this.source = value
+    setTimeout(() => {
+      this.complete = true
+      if (FakeImage.fails(value)) {
+        this.onerror?.()
+        return
+      }
+      this.width = this.height = this.naturalWidth = this.naturalHeight = FakeImage.size(value)
+      this.onload?.()
+    })
+  }
+}
+
 /** Path2D only exists in a browser: the store builds the paths of the shapes, without drawing them */
 export const stubPath2D = () =>
   vi.stubGlobal(

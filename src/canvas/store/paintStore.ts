@@ -1027,8 +1027,8 @@ export const createPaintStore = (props: UseReactPaintProps = {}) => {
         setSelectionMode({ mode: 'textedition', defaultValue: shape.value })
       })
     },
-    addPicture: async (fileOrUrl, { maxWidth = get().config.width, maxHeight = get().config.height, select = true } = {}) => {
-      const pictureShape = await createPicture(fileOrUrl, maxWidth, maxHeight, getSettings(), getPictureSrcResolver())
+    addPicture: async (fileOrUrl, { maxWidth = get().config.width, maxHeight = get().config.height, select = true, position } = {}) => {
+      const pictureShape = await createPicture(fileOrUrl, maxWidth, maxHeight, getSettings(), getPictureSrcResolver(), position)
       insertShapes([pictureShape], { select })
       return pictureShape
     },

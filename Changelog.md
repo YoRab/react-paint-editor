@@ -12,6 +12,7 @@ Breaking changes, see the [migration guide](./MIGRATION.md).
 - the canvas handles the mouse, touch and pen with pointer events listened on the canvas only, instead of the document: the hover works without clicking the canvas first, and a page with many canvases only notifies the one under the pointer
 - expose interaction state (hovered shape, selection frame, modifier keys, panning, context menu) in the state
 - add canRemoveAnchor to the context menu state, and setShapesVisibility / setShapesLocked actions
+- add the drop of image files from the file explorer on the canvas: they are added as pictures, centered on the cursor. It is controlled by the withDropPicture option (true by default, needs the picture tool), and disabled by the withUploadPicture option of the Editor. Add the pictureDropFailed event, and the position option of actions.addPicture
 - replace annotationsProps with the useAnnotationsStyle hook
 - move resetZoom, setCanvasZoom and setCanvasOffset to actions.resetZoom, actions.setZoom and the new actions.setOffset
 - move editor UI options (layersManipulation, withExport, withLoadAndSave, withUploadPicture, withUrlPicture) from useReactPaint to Editor options
