@@ -1,7 +1,7 @@
 import { createPaintStore } from '@canvas/store/paintStore'
 import { getUnscaledCanvasSize } from '@canvas/utils/canvas'
-import { getMaskRect, getNewOffset, hasMask, isCursorInsideMask, type ViewBounds } from '@canvas/utils/zoom'
-import { describe, expect, it } from 'vitest'
+import { getMaskRect, getNewOffset, hasMask, isCursorInsideMask, normalizeWheel, type ViewBounds } from '@canvas/utils/zoom'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { extendTo } from './helpers'
 
 /** A view of the given size at the scale 1, showing a drawing of the given size */
@@ -58,5 +58,67 @@ describe('mask of a fixed drawing', () => {
     store.actions.zoomTo(0.5)
     expect(hasMask(store.getSettings())).toBe(true)
     expect(getMaskRect(store.getSettings())).toEqual({ x: 100, y: 75, width: 200, height: 150 })
+  })
+})
+
+describe('zoom steps', () => {
+  it('unzooms to the previous step, and stops at the smallest one', () => {
+    const store = createPaintStore({ options: { size: 'infinite' } })
+    store.actions.setZoom('unzoom')
+    expect(store.getEditorState().view.zoom).toBe(0.5)
+
+    store.actions.zoomTo(0.7)
+    store.actions.setZoom('unzoom')
+    expect(store.getEditorState().view.zoom).toBe(0.5)
+
+    store.actions.zoomTo(0.05)
+    store.actions.setZoom('unzoom')
+    expect(store.getEditorState().view.zoom).toBe(0.05)
+  })
+})
+
+describe('wheel', () => {
+  beforeEach(() => {
+    vi.stubGlobal('WheelEvent', { DOM_DELTA_PIXEL: 0, DOM_DELTA_LINE: 1, DOM_DELTA_PAGE: 2 })
+  })
+
+  afterEach(() => {
+    vi.unstubAllGlobals()
+  })
+
+  it('zooms by a delta around a point, within the zoom limits', () => {
+    const store = createPaintStore({ options: { size: 'infinite' } })
+    store.zoomBy(-100, [0, 0])
+    expect(store.getEditorState().view).toMatchObject({ offset: [0, 0] })
+    expect(store.getEditorState().view.zoom).toBeCloseTo(1.1)
+
+    store.zoomBy(100_000, [0, 0])
+    expect(store.getEditorState().view.zoom).toBe(0.05)
+  })
+
+  it('scrolls an infinite drawing, and tells that a drawing filling the view cannot move', () => {
+    const infinite = createPaintStore({ options: { size: 'infinite' } })
+    expect(infinite.scrollBy([100, 50])).toBe(true)
+    expect(infinite.getEditorState().view.offset).toEqual([-100, -50])
+
+    const fixed = createPaintStore()
+    expect(fixed.scrollBy([100, 50])).toBe(false)
+    expect(fixed.getEditorState().view.offset).toEqual([0, 0])
+  })
+
+  it('converts the lines and the pages of a wheel to pixels', () => {
+    vi.stubGlobal('window', { innerHeight: 800 })
+    const wheel = (deltaMode: number) => ({ deltaX: 2, deltaY: 3, deltaMode, ctrlKey: false }) as WheelEvent
+    expect(normalizeWheel(wheel(0), 1000)).toEqual({ deltaX: 2, deltaY: 3 })
+    expect(normalizeWheel(wheel(1), 1000)).toEqual({ deltaX: 32, deltaY: 48 })
+    expect(normalizeWheel(wheel(2), 1000)).toEqual({ deltaX: 1600, deltaY: 2400 })
+  })
+
+  it('amplifies the small and close deltas of a pinch on a trackpad of macOS', () => {
+    vi.stubGlobal('navigator', { userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)' })
+    const pinch = { deltaX: 0, deltaY: 3, deltaMode: 0, ctrlKey: true } as WheelEvent
+    expect(normalizeWheel(pinch, 10)).toEqual({ deltaX: 0, deltaY: 15 })
+    // a wheel event long after the previous one comes from a mouse
+    expect(normalizeWheel(pinch, 100)).toEqual({ deltaX: 0, deltaY: 3 })
   })
 })

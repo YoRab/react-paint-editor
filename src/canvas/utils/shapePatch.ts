@@ -3,7 +3,7 @@ import type { ShapeEntity, ShapePatch, StyleShape } from '@canvas/types/Shapes'
 import { isRecord } from '@canvas/utils/object'
 import { getCommonFieldsError, getGeometryError, getUnknownFieldError, isEditableShapeType } from '@canvas/utils/shapeInput'
 import { refreshShape } from '@canvas/utils/shapes'
-import { fitTextFontSize, getComputedText, isFontStyleField, resizeTextShapeWithNewContent } from '@canvas/utils/shapes/text'
+import { fitTextFontSize, getComputedText, getTextLineCount, isFontStyleField, resizeTextShapeWithNewContent } from '@canvas/utils/shapes/text'
 
 /** Checks a patch against the shape it updates. Returns the error message, or undefined when the patch is valid */
 const getPatchError = (shape: ShapeEntity | undefined, patch: Record<string, unknown>): string | undefined => {
@@ -42,7 +42,7 @@ export const applyShapePatch = (ctx: CanvasRenderingContext2D, shape: ShapeEntit
     const hasFontChanged = Object.keys(fields.style ?? {}).some(field => isFontStyleField(field as keyof StyleShape))
     if ('width' in fields || (hasFontChanged && !hasContentChanged)) return refreshShape(fitTextFontSize(ctx, next), settings)
     if (hasContentChanged) {
-      const fontSize = 'fontSize' in fields ? next.fontSize : 'height' in fields ? next.height / (next.value.length || 1) : next.fontSize
+      const fontSize = 'fontSize' in fields ? next.fontSize : 'height' in fields ? next.height / getTextLineCount(next.value) : next.fontSize
       // the text keeps its top left corner, found from the center of the patched box
       const anchored = { ...next, fontSize, computed: getComputedText(next, settings) }
       return refreshShape(resizeTextShapeWithNewContent(ctx, anchored, next.value, settings), settings)

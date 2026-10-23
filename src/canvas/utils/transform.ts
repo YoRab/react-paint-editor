@@ -16,16 +16,23 @@ export const roundValues = (prop: number, precision = 2): number => {
 export const scalePoint = (point: Point, minX: number, minY: number, scaleX = 1, scaleY = 1): Point => {
   return [minX + (point[0] - minX) * scaleX, minY + (point[1] - minY) * scaleY]
 }
+/**
+ * The closest multiple of the gap. The remainder keeps the sign of the value: the step takes it too, so that a negative
+ * value goes to its closest step instead of the step closer to 0
+ */
+const roundToStep = (value: number, gap: number) => {
+  const step = value >= 0 ? gap : -gap
+  return value + step / 2 - ((value + step / 2) % step)
+}
+
 export const roundForGrid = (value: number, settings: UtilsSettings, gridOffset = 0) => {
   if (!settings.gridGap) return roundValues(value)
-  const valueWithOffset = value + gridOffset
-  const step = valueWithOffset >= 0 ? settings.gridGap : -settings.gridGap
-  return valueWithOffset + step / 2 - ((valueWithOffset + step / 2) % step) - gridOffset
+  return roundToStep(value + gridOffset, settings.gridGap) - gridOffset
 }
 
 export const roundRotationForGrid = (rotation: number, settings: UtilsSettings, isShiftPressed: boolean) => {
   if (!settings.gridGap && !isShiftPressed) return roundValues(rotation, 3)
-  return rotation + Math.PI / GRID_ROTATION_STEPS / 2 - ((rotation + Math.PI / GRID_ROTATION_STEPS / 2) % (Math.PI / GRID_ROTATION_STEPS))
+  return roundToStep(rotation, Math.PI / GRID_ROTATION_STEPS)
 }
 
 export const boundVectorToSingleAxis = (vector: Point, isShiftPressed: boolean): Point => {

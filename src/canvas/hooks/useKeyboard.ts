@@ -17,6 +17,9 @@ const useKeyboard = (store: PaintStore) => {
     const isEditingText = () => store.getState().interaction.selectionMode.mode === 'textedition'
     const hasSelection = () => store.getState().document.selectedShape !== undefined
 
+    // like a drag of the mouse, a move made with the arrows is saved once, when the last held arrow is released
+    const pressedArrows = new Set<string>()
+
     const handleCopy = (e: ClipboardEvent) => {
       if (!isInteractive() || !hasSelection() || isEditingText()) return
       e.preventDefault()
@@ -36,6 +39,8 @@ const useKeyboard = (store: PaintStore) => {
     }
 
     const handleKeyUp = (e: KeyboardEvent) => {
+      // the move is saved even if the canvas is no longer interactive: it was made
+      if (pressedArrows.delete(e.key) && !pressedArrows.size) store.actions.saveShapes()
       if (!isInteractive()) return
       switch (e.key) {
         case KeyboardCode.Shift:
@@ -146,6 +151,7 @@ const useKeyboard = (store: PaintStore) => {
         case KeyboardCode.ArrowUp:
           e.preventDefault()
           e.stopPropagation()
+          pressedArrows.add(e.key)
           store.updateShapes(translateShapes(translationMap[e.key]!, selectedShape, [0, 0], store.getSettings(), true))
           break
         case KeyboardCode.Delete:
@@ -157,9 +163,17 @@ const useKeyboard = (store: PaintStore) => {
       }
     }
 
+    // the keys released outside of the scope are not received: the move ends when the focus leaves it
+    const handleFocusOut = (e: FocusEvent) => {
+      if (!pressedArrows.size || (e.relatedTarget && (e.currentTarget as Node).contains(e.relatedTarget as Node))) return
+      pressedArrows.clear()
+      store.actions.saveShapes()
+    }
+
     return store.listenScope({
       keydown: handleKeyDown,
       keyup: handleKeyUp,
+      focusout: handleFocusOut,
       [KeyboardCommand.Copy]: handleCopy,
       [KeyboardCommand.Paste]: handlePaste,
       [KeyboardCommand.Cut]: handleCut

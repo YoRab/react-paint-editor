@@ -1,5 +1,5 @@
 import { DATA_FILE_MAX_SIZE } from '@canvas/constants/app'
-import { PICTURE_LOAD_TIMEOUT, PICTURE_MAX_SIZE } from '@canvas/constants/picture'
+import { PICTURE_DEFAULT_SIZE, PICTURE_LOAD_TIMEOUT, PICTURE_MAX_SIZE } from '@canvas/constants/picture'
 import { createPaintStore } from '@canvas/store/paintStore'
 import type { ShapeInput } from '@canvas/types/Shapes'
 import { decodeJson, getPictureSource, loadPicture } from '@canvas/utils/file'
@@ -71,6 +71,7 @@ describe('getPictureSource', () => {
     expect(getPictureSource('javascript:alert(1)')).toEqual({ kind: 'refused' })
     expect(getPictureSource('data:text/html,<script>alert(1)</script>')).toEqual({ kind: 'refused' })
     expect(getPictureSource('file:///etc/passwd')).toEqual({ kind: 'refused' })
+    expect(getPictureSource('http://[')).toEqual({ kind: 'refused' })
     expect(getPictureSource('')).toEqual({ kind: 'refused' })
   })
 })
@@ -95,6 +96,40 @@ describe('loadPicture', () => {
     expect(createObjectURL.mock.lastCall?.[0].type).toBe('application/octet-stream')
     // the blob URL is revoked when the image fails too
     expect(revokeObjectURL).toHaveBeenCalledWith(createObjectURL.mock.results[0]?.value)
+  })
+
+  it('loads SVG markup from a blob URL of its content', async () => {
+    const img = new Image()
+    await loadPicture(img, SVG)
+    const blob = createObjectURL.mock.lastCall![0]
+    expect(blob.type).toBe('image/svg+xml')
+    await expect(blob.text()).resolves.toBe(SVG)
+    expect(img.src).toBe(createObjectURL.mock.results[0]?.value)
+  })
+
+  it('gives a fetched SVG without size the size of its view box, or the default size', async () => {
+    const sizes: string[] = []
+    for (const svg of ["<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 20'/>", "<svg xmlns='http://www.w3.org/2000/svg'/>"]) {
+      fetchMock.mockImplementation(async () => pictureResponse({ type: 'image/svg+xml', body: svg }))
+      await loadPicture(new Image(), 'https://example.com/a.svg')
+      const content = await createObjectURL.mock.lastCall![0].text()
+      sizes.push(`${content.match(/width="(\d+)"/)?.[1]}×${content.match(/height="(\d+)"/)?.[1]}`)
+    }
+    expect(sizes).toEqual(['30×20', `${PICTURE_DEFAULT_SIZE}×${PICTURE_DEFAULT_SIZE}`])
+  })
+
+  it('revokes the blob URL of a picture fetched after the delay', async () => {
+    vi.useFakeTimers()
+    let respond: (response: ReturnType<typeof pictureResponse>) => void = () => undefined
+    fetchMock.mockImplementation(() => new Promise(resolve => (respond = resolve)))
+    const img = new Image()
+    const loading = expect(loadPicture(img, 'https://slow.example/a.png')).rejects.toThrow('Timeout')
+    await vi.advanceTimersByTimeAsync(PICTURE_LOAD_TIMEOUT)
+    await loading
+
+    respond(pictureResponse())
+    await vi.waitFor(() => expect(revokeObjectURL).toHaveBeenCalledWith(createObjectURL.mock.results[0]?.value))
+    expect(img.src).toBe('')
   })
 
   it('fails when the picture cannot be fetched', async () => {
@@ -172,6 +207,44 @@ describe('loaded data', () => {
     store.actions.addShapes([RECTS[0]!])
     expect(listener).toHaveBeenCalledTimes(1)
     expect(listener.mock.lastCall?.[0].shapes[1]).toMatchObject({ type: 'picture', src })
+  })
+
+  it('redraws a picture added by the consumer once its image is loaded, without a step in the history', async () => {
+    const store = createPaintStore()
+    const [id] = store.actions.addShapes([picture(PNG_DATA_URL)])
+    const added = store.getShape(id!)
+    const historyLength = store.getState().document.history.states.length
+    await vi.waitFor(() => expect(store.getShape(id!)).not.toBe(added))
+    expect(store.getShape(id!)).toMatchObject({ type: 'picture', img: { src: PNG_DATA_URL, complete: true } })
+    expect(store.getState().document.history.states).toHaveLength(historyLength)
+  })
+
+  it('loads a new image when the source of a picture is changed, and warns when it fails', async () => {
+    const otherSrc = 'data:image/png;base64,b3RoZXI='
+    const store = await createLoadedStore({}, [{ ...picture(PNG_DATA_URL), id: 'pic' }])
+    const { img } = store.getShape('pic') as { img: HTMLImageElement }
+    store.actions.updateShapes([{ id: 'pic', src: otherSrc }])
+    const updated = store.getShape('pic') as { img: HTMLImageElement }
+    expect(updated.img).not.toBe(img)
+    await vi.waitFor(() => expect((store.getShape('pic') as { img: HTMLImageElement }).img.complete).toBe(true))
+    expect(updated.img.src).toBe(otherSrc)
+
+    FakeImage.fails = () => true
+    store.actions.updateShapes([{ id: 'pic', src: PNG_DATA_URL }])
+    await vi.waitFor(() => expect(console.warn).toHaveBeenCalledWith(expect.stringContaining('pic could not be loaded'), expect.any(Error)))
+    // the shape is kept with its new source
+    expect(store.getCurrentData().shapes?.[0]).toMatchObject({ src: PNG_DATA_URL })
+  })
+
+  it('resizes a picture with other shapes, keeping its proportions', async () => {
+    const store = await createLoadedStore({}, [
+      { type: 'picture', id: 'pic', x: 0, y: 0, width: 200, height: 100, src: PNG_DATA_URL },
+      { ...RECTS[0]!, id: 'rect' }
+    ])
+    // from (0, 0) to (200, 200)
+    store.actions.resizeShapes(['pic', 'rect'], { x: 0, y: 0, width: 400, height: 400 })
+    expect(store.getShape('pic')).toMatchObject({ x: 0, y: 0, width: 400, height: 200 })
+    expect(store.getShape('rect')).toMatchObject({ x: 200, y: 200, width: 200, height: 200 })
   })
 
   it('refuses a data file larger than the limit without reading it', async () => {

@@ -2,7 +2,10 @@ import type { UtilsSettings } from '@canvas/constants/app'
 import type { Point, ShapeEntity } from '@canvas/types/Shapes'
 import { canRemoveShapePoint } from '@canvas/utils/shapes'
 import { addNewPointGroupToShape, addNewPointToShape, getBrushBorder, refreshBrush } from '@canvas/utils/shapes/brush'
+import { refreshCurve } from '@canvas/utils/shapes/curve'
+import { catmullRomToBezier, createBrushPath, getCatmullRomPoints, getCubicBezierBounds } from '@canvas/utils/shapes/path'
 import { drawPicture } from '@canvas/utils/shapes/picture'
+import { type Bounds, getPointsBounds } from '@canvas/utils/trigo'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { stubPath2D } from './helpers'
 
@@ -79,6 +82,62 @@ describe('addNewPointToShape', () => {
   })
 })
 
+describe('createBrushPath', () => {
+  const STROKE: Point[] = [
+    [0, 0],
+    [10, 0],
+    [20, 10],
+    [30, 0],
+    [40, 0]
+  ]
+  const brush = { type: 'brush' as const, points: [STROKE, [[50, 50] as Point]], scaleX: 1, scaleY: 1 }
+
+  afterEach(() => {
+    vi.restoreAllMocks()
+  })
+
+  it('draws the strokes with lines, and a point drawn alone with a dot', () => {
+    const lineTo = vi.spyOn(Path2D.prototype, 'lineTo')
+    const rect = vi.spyOn(Path2D.prototype, 'rect')
+    createBrushPath(brush, { brushAlgo: 'simple' } as UtilsSettings)
+    expect(lineTo).toHaveBeenCalledTimes(4)
+    expect(rect).toHaveBeenCalledWith(50, 50, 1, 1)
+  })
+
+  it('smooths the strokes with quadratic curves controlled by each inner point, up to their last point', () => {
+    const lineTo = vi.spyOn(Path2D.prototype, 'lineTo')
+    const quadraticCurveTo = vi.spyOn(Path2D.prototype, 'quadraticCurveTo')
+    createBrushPath(brush, { brushAlgo: 'quadratic' } as UtilsSettings)
+    expect(lineTo).not.toHaveBeenCalled()
+    // each curve ends in the middle of the next segment, the last one at the last point
+    expect(quadraticCurveTo.mock.calls).toEqual([
+      [10, 0, 15, 5],
+      [20, 10, 25, 5],
+      [30, 0, 40, 0]
+    ])
+  })
+
+  it('draws a short stroke with a single quadratic curve', () => {
+    const quadraticCurveTo = vi.spyOn(Path2D.prototype, 'quadraticCurveTo')
+    const strokes: Point[][] = [
+      [
+        [0, 0],
+        [10, 0]
+      ],
+      [
+        [0, 0],
+        [10, 10],
+        [20, 0]
+      ]
+    ]
+    createBrushPath({ type: 'brush', points: strokes, scaleX: 1, scaleY: 1 }, { brushAlgo: 'quadratic' } as UtilsSettings)
+    expect(quadraticCurveTo.mock.calls).toEqual([
+      [0, 0, 10, 0],
+      [10, 10, 20, 0]
+    ])
+  })
+})
+
 describe('drawPicture', () => {
   type FakeCanvas = { width: number; height: number; source?: unknown }
   let copies: FakeCanvas[] = []
@@ -151,5 +210,73 @@ describe('drawPicture', () => {
     const img = photo(0, 0)
     expect(drawnSource(img, 1)).toBe(img)
     expect(copies).toHaveLength(0)
+  })
+})
+
+describe('bounds of the curves', () => {
+  const STEPS = 1000
+
+  /** Points of a cubic Bezier segment, sampled from its start to its end */
+  const sampleBezier = (p0: Point, p1: Point, p2: Point, p3: Point): Point[] =>
+    Array.from({ length: STEPS + 1 }, (_, index) => {
+      const t = index / STEPS
+      const at = (axis: 0 | 1) => (1 - t) ** 3 * p0[axis] + 3 * (1 - t) ** 2 * t * p1[axis] + 3 * (1 - t) * t ** 2 * p2[axis] + t ** 3 * p3[axis]
+      return [at(0), at(1)]
+    })
+
+  const expectBoundsCloseTo = (bounds: Bounds, expected: Bounds) => {
+    for (const key of ['minX', 'maxX', 'minY', 'maxY'] as const) expect(bounds[key]).toBeCloseTo(expected[key], 2)
+  }
+
+  it('bounds a straight segment by its ends', () => {
+    expect(getCubicBezierBounds([0, 0], [10, 0], [20, 0], [30, 0])).toEqual({ minX: 0, maxX: 30, minY: 0, maxY: 0 })
+  })
+
+  it('bounds a curve going beyond its ends, at its extremum', () => {
+    // the top of the arch is at the middle of the curve: 3/8 × -100 twice
+    expect(getCubicBezierBounds([0, 0], [0, -100], [100, -100], [100, 0])).toEqual({ minX: 0, maxX: 100, minY: -75, maxY: 0 })
+  })
+
+  it('bounds an S-shaped curve going beyond its ends on both sides', () => {
+    const points: [Point, Point, Point, Point] = [
+      [0, 0],
+      [-100, -100],
+      [200, 200],
+      [100, 100]
+    ]
+    const bounds = getCubicBezierBounds(...points)
+    expectBoundsCloseTo(bounds, getPointsBounds([sampleBezier(...points)]))
+    expect(bounds.minX).toBeLessThan(0)
+    expect(bounds.maxX).toBeGreaterThan(100)
+  })
+
+  it('frames a closed curve, which goes beyond the triangle of its points, with the selection padding around it', () => {
+    const curveSettings = { selectionPadding: 5 } as UtilsSettings
+    const curve = refreshCurve(
+      {
+        id: 'curve_1',
+        type: 'curve',
+        points: [
+          [0, 0],
+          [100, 0],
+          [50, 100]
+        ],
+        style: { closedPoints: 1 }
+      },
+      curveSettings
+    )
+    const pts = getCatmullRomPoints(curve, curve.points)
+    const drawn = pts.slice(1, -2).flatMap((p1, index) => {
+      const p0 = pts[index]!
+      const p2 = pts[index + 2]!
+      const p3 = pts[index + 3]!
+      const { cp1, cp2 } = catmullRomToBezier(p0, p1, p2, p3)
+      return sampleBezier(p1, cp1, cp2, p2)
+    })
+    const sampled = getPointsBounds([drawn])
+    expect(sampled.minY).toBeLessThan(0)
+
+    const { x, y, width, height } = curve.computed.outerBorders
+    expectBoundsCloseTo({ minX: x + 5, maxX: x + width - 5, minY: y + 5, maxY: y + height - 5 }, sampled)
   })
 })

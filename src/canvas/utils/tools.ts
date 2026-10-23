@@ -13,7 +13,7 @@ export const buildAvailableTools = (tools: RecursivePartial<CustomToolInput>[] |
   if (!tools) return DEFAULT_TOOLS
   return compact(
     tools.map(tool => {
-      if (typeof tool !== 'object' || !tool.type) return null
+      if (!isRecord(tool) || !tool.type) return null
       const defaultTool = DEFAULT_TOOLS.find(d => d.type === tool.type)
       return defaultTool ? (mergeWith(replaceArrays, defaultTool, tool) as CustomTool) : (tool as CustomTool)
     })

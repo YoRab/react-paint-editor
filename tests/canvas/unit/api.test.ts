@@ -86,6 +86,15 @@ describe('addShapes', () => {
     expect(getShape<'text'>(store, byWidth!).fontSize).toBeCloseTo(20)
   })
 
+  it('gives the default font size to a text without characters, which cannot be fitted to its width', () => {
+    const store = createPaintStore()
+    const [empty] = store.actions.addShapes([{ type: 'text', x: 0, y: 0, value: [''], width: 100 }])
+    expect(getShape<'text'>(store, empty!)).toMatchObject({ fontSize: 36, width: 100, height: 36 })
+    store.actions.updateShapes([{ id: empty!, width: 200 }])
+    expect(getShape<'text'>(store, empty!)).toMatchObject({ fontSize: 36, width: 200, height: 36 })
+    expect(store.getCurrentData().shapes?.[0]).toMatchObject({ fontSize: 36, height: 36 })
+  })
+
   it('throws without creating any shape when one of them is invalid', () => {
     const store = createPaintStore()
     const add = (shape: unknown) => () => store.actions.addShapes([RECT, shape as ShapeInput])
@@ -275,6 +284,18 @@ describe('transformations', () => {
     const [square] = store.actions.addShapes([{ type: 'square', x: 0, y: 0, width: 10, height: 10 }])
     store.actions.resizeShapes([square!], { x: 5, y: 5, width: 40, height: 20 })
     expect(getShape<'square'>(store, square!)).toMatchObject({ x: 5, y: 5, width: 20, height: 20 })
+  })
+
+  it('scales the radii of ellipses and circles resized together', () => {
+    const store = createPaintStore()
+    // from (0, 25) to (175, 75)
+    const [ellipse, circle] = store.actions.addShapes([
+      { type: 'ellipse', x: 50, y: 50, radiusX: 50, radiusY: 25 },
+      { type: 'circle', x: 150, y: 50, radius: 25 }
+    ])
+    store.actions.resizeShapes([ellipse!, circle!], { x: 0, y: 0, width: 350, height: 100 })
+    expect(getShape<'ellipse'>(store, ellipse!)).toMatchObject({ x: 100, y: 50, radiusX: 100, radiusY: 50 })
+    expect(getShape<'circle'>(store, circle!)).toMatchObject({ x: 300, y: 50, radius: 50 })
   })
 
   it('resizes turned shapes in their own frame', async () => {
@@ -472,6 +493,18 @@ describe('options and settings', () => {
 
     store.actions.resetOptions()
     expect(store.getEditorState()).toMatchObject({ features: { zoom: false }, gridGap: 0 })
+  })
+
+  it('always allows to zoom an infinite drawing, unless the canvas is disabled', () => {
+    const store = createPaintStore({ options: { size: 'infinite', canZoom: 'never' } })
+    expect(store.getEditorState().features.zoom).toBe(true)
+    expect(createPaintStore({ disabled: true, options: { size: 'infinite' } }).getEditorState().features.zoom).toBe(false)
+
+    const fixed = createPaintStore()
+    fixed.actions.setOptions({ size: 'infinite' })
+    expect(fixed.getEditorState().features.zoom).toBe(true)
+    fixed.actions.resetOptions()
+    expect(fixed.getEditorState().features.zoom).toBe(false)
   })
 
   it('stops overriding an option set to undefined', () => {

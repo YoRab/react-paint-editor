@@ -29,18 +29,33 @@ const buildPath = <T extends DrawableShape<'text'>>(shape: T & { id: string }, s
 
 export const refreshText = buildPath
 
+/** A text without lines, emptied in the edition box, keeps the height of one */
+export const getTextLineCount = (value: string[]) => value.length || 1
+
+/** Width of the widest line at the font size, 0 for a text without characters */
+const measureWidestLine = (
+  ctx: CanvasRenderingContext2D,
+  text: string[],
+  fontSize: number,
+  fontBold: boolean,
+  fontItalic: boolean,
+  fontFamily: string | undefined = STYLE_FONT_DEFAULT
+) => {
+  ctx.font = `${fontItalic ? 'italic' : ''} ${fontBold ? 'bold' : ''} ${fontSize}px ${fontFamily}`
+  return Math.max(0, ...text.map((value: string) => ctx.measureText(value).width))
+}
+
 export const calculateTextFontSize = (
   ctx: CanvasRenderingContext2D,
   text: string[],
   maxWidth: number,
   fontBold: boolean,
   fontItalic: boolean,
-  fontFamily: string | undefined = STYLE_FONT_DEFAULT
+  fontFamily?: string
 ) => {
-  ctx.font = `${fontItalic ? 'italic' : ''} ${fontBold ? 'bold' : ''} 1px ${fontFamily}`
-
-  const measuredFontsSizes = text.map((value: string) => maxWidth / ctx.measureText(value).width)
-  return Math.min(...measuredFontsSizes) || STYLE_FONT_SIZE_DEFAULT
+  const fontSize = maxWidth / measureWidestLine(ctx, text, 1, fontBold, fontItalic, fontFamily)
+  // a text without characters measures 0 and gives an infinite size: it gets the default size
+  return Number.isFinite(fontSize) && fontSize !== 0 ? fontSize : STYLE_FONT_SIZE_DEFAULT
 }
 
 const FONT_STYLE_FIELDS: (keyof StyleShape)[] = ['fontFamily', 'fontBold', 'fontItalic']
@@ -56,7 +71,7 @@ export const fitTextFontSize = <T extends DrawableShape<'text'>>(ctx: CanvasRend
     text.style?.fontItalic ?? false,
     text.style?.fontFamily
   )
-  const height = fontSize * text.value.length
+  const height = fontSize * getTextLineCount(text.value)
   return { ...text, fontSize, height, ratio: text.width / height }
 }
 
@@ -66,7 +81,7 @@ export const sizeText = <T extends TextShapeInput>(ctx: CanvasRenderingContext2D
   if (text.width !== undefined && text.height !== undefined && text.fontSize !== undefined) return text as SizedText
   if (text.width !== undefined && text.fontSize === undefined) return fitTextFontSize(ctx, text as SizedText)
   const { fontBold = false, fontItalic = false, fontFamily } = text.style ?? {}
-  const lines = text.value.length || 1
+  const lines = getTextLineCount(text.value)
   const fontSize = text.fontSize ?? (text.height !== undefined ? text.height / lines : STYLE_FONT_SIZE_DEFAULT)
   const width = text.width ?? calculateTextWidth(ctx, text.value, fontSize, fontBold, fontItalic, fontFamily)
   const height = text.height ?? fontSize * lines
@@ -93,7 +108,7 @@ export const createText = (
   )
 
   const width = DEFAULT_TEXT_WIDTH
-  const height = fontSize * (DEFAULT_TEXT_VALUE.length || 1)
+  const height = fontSize * DEFAULT_TEXT_VALUE.length
   return buildPath(
     {
       toolId: shape.id,
@@ -238,12 +253,8 @@ const calculateTextWidth = (
   fontSize: number,
   fontBold: boolean,
   fontItalic: boolean,
-  fontFamily: string | undefined = STYLE_FONT_DEFAULT
-) => {
-  ctx.font = `${fontItalic ? 'italic' : ''} ${fontBold ? 'bold' : ''} ${fontSize}px ${fontFamily}`
-  const measuredText = text.map((value: string) => ctx.measureText(value).width)
-  return Math.max(...measuredText) || 20
-}
+  fontFamily?: string
+) => measureWidestLine(ctx, text, fontSize, fontBold, fontItalic, fontFamily) || 20
 
 export const resizeTextShapeWithNewContent = (
   ctx: CanvasRenderingContext2D,
@@ -260,7 +271,7 @@ export const resizeTextShapeWithNewContent = (
     newShape.style?.fontItalic ?? false,
     newShape.style?.fontFamily
   )
-  const newHeight = newShape.fontSize * newShape.value.length
+  const newHeight = newShape.fontSize * getTextLineCount(newShape.value)
 
   const ratio = newWidth / newHeight
 
