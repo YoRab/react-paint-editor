@@ -110,6 +110,7 @@ export {
 } from '@canvas/constants/app'
 export { GRID_PRESETS } from '@canvas/constants/grid'
 export { DEFAULT_TOOLS, MOVE_TOOL, SELECTION_TOOL } from '@canvas/constants/tools'
+export { ZOOM_LEVELS } from '@canvas/constants/zoom'
 export { PaintProvider, usePaint } from '@canvas/context/PaintContext'
 export { default as useAnnotationsStyle } from '@canvas/hooks/useAnnotationsStyle'
 export { default as usePaintState } from '@canvas/hooks/usePaintState'
@@ -128,6 +129,8 @@ export type {
   ReactPaint,
   ReactPaintEventName,
   ReactPaintEvents,
+  ResolvedOptions,
+  SelectionHover,
   SelectionUpdateMode,
   ShapePointerInfo,
   ShapeStyleField,

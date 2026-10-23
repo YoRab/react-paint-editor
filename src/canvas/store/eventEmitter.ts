@@ -1,27 +1,27 @@
-import type { ReactPaintEventName, ReactPaintEvents } from '@canvas/types/editor'
+import type { ReactPaint, ReactPaintEventArgs, ReactPaintEventName, ReactPaintEvents } from '@canvas/types/editor'
 
-type Listener = (...args: never[]) => void
-
-type EmitEvent = <E extends ReactPaintEventName>(event: E, ...args: Parameters<ReactPaintEvents[E]>) => void
+type EmitEvent = <E extends ReactPaintEventName>(event: E, ...args: ReactPaintEventArgs[E]) => void
 
 type EventEmitter = {
-  /** Returns the function that unregisters the listener */
-  registerEvent: <E extends ReactPaintEventName>(event: E, fn: ReactPaintEvents[E]) => () => void
-  /** Unregisters the listener, or all the listeners of the event when none is given */
-  unregisterEvent: <E extends ReactPaintEventName>(event: E, fn?: ReactPaintEvents[E]) => void
+  registerEvent: ReactPaint['registerEvent']
+  unregisterEvent: ReactPaint['unregisterEvent']
   emit: EmitEvent
   /** Whether a listener is registered, to skip the work of an event nobody listens to */
   hasListeners: (event: ReactPaintEventName) => boolean
 }
 
 export const createEventEmitter = (): EventEmitter => {
-  const listeners: Record<ReactPaintEventName, Listener[]> = {
+  const listeners: { [E in ReactPaintEventName]: ReactPaintEvents[E][] } = {
     dataChanged: [],
     selectionChanged: [],
     toolChanged: [],
     shapeClicked: [],
     shapeHovered: [],
-    pictureDropFailed: []
+    canvasClicked: [],
+    canvasDoubleClicked: [],
+    pictureDropFailed: [],
+    pictureLoaded: [],
+    pictureLoadFailed: []
   }
 
   const unregisterEvent: EventEmitter['unregisterEvent'] = (event, fn) => {
@@ -29,23 +29,21 @@ export const createEventEmitter = (): EventEmitter => {
     if (!listeners.hasOwnProperty(event)) return
     if (fn) {
       const currentFnIndex = listeners[event].indexOf(fn)
-      if (currentFnIndex === -1) return
-      listeners[event] = [...listeners[event].slice(0, currentFnIndex), ...listeners[event].slice(currentFnIndex + 1)]
+      if (currentFnIndex !== -1) listeners[event].splice(currentFnIndex, 1)
     } else {
-      listeners[event] = []
+      listeners[event].length = 0
     }
   }
 
   const registerEvent: EventEmitter['registerEvent'] = (event, fn) => {
     // biome-ignore lint/suspicious/noPrototypeBuiltins: be compliant with es2020
-    if (listeners.hasOwnProperty(event)) listeners[event] = [...listeners[event], fn]
+    if (listeners.hasOwnProperty(event)) listeners[event].push(fn)
     return () => unregisterEvent(event, fn)
   }
 
+  // a copy: the listeners registered or unregistered by a listener do not change this emission
   const emit: EmitEvent = (event, ...args) => {
-    for (const listener of listeners[event]) {
-      ;(listener as unknown as (...listenerArgs: typeof args) => void)(...args)
-    }
+    for (const listener of [...listeners[event]]) listener(...args)
   }
 
   const hasListeners: EventEmitter['hasListeners'] = event => listeners[event].length > 0

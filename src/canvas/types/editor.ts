@@ -1,4 +1,4 @@
-import type { OptionalOptions } from '@canvas/constants/app'
+import type { AppOptions, OptionalOptions } from '@canvas/constants/app'
 import type { Resize, Size } from '@canvas/types/Canvas'
 import type { SelectionModeData } from '@canvas/types/Mode'
 import type { ExportedShape, Point, Rect, ShapeEntity, ShapeInput, ShapePatch, StateData, StyleShape } from '@canvas/types/Shapes'
@@ -23,6 +23,12 @@ export type ShapeStyleField = keyof StyleShape
 
 export type ToolSettingValue = string | number | boolean
 
+/**
+ * Options of useReactPaint with the overrides of setOptions and their defaults. The functions are kept out of the state,
+ * so that options can be compared by value
+ */
+export type ResolvedOptions = Omit<AppOptions, 'clearCallback' | 'resolvePictureSrc'>
+
 export type ContextMenuState = {
   /** Shapes targeted by the context menu (empty when opened on an empty area) */
   shapes: ShapeEntity[]
@@ -36,9 +42,20 @@ export type ContextMenuState = {
   clientPosition: { x: number; y: number }
 }
 
+/**
+ * Part of the selection under the pointer, which a press drags: its inside (translate), the anchor of the rotation, or an
+ * anchor of the resize. The anchor is the index of a point of a line, a polygon or a curve, or else its place on the
+ * borders of the selection before its rotation, from [0, 0] (top left) to [1, 1] (bottom right)
+ */
+export type SelectionHover = { mode: 'translate' } | { mode: 'rotate' } | { mode: 'resize'; anchor: Point | number }
+
 export type InteractionState = {
+  /** The gesture running, like 'translate', 'rotate', 'resize', 'selectionFrame' or 'brush', or 'default' between them */
   mode: InteractionMode
+  /** Shape under the mouse, between the gestures. The anchors of the selection outside of its shape are given by selectionHover */
   hoveredShape: ShapeEntity | undefined
+  /** Part of the selection under the pointer, which tells the gesture a press starts. It follows the moves between the gestures */
+  selectionHover: SelectionHover | undefined
   selectionFrame: [Point, Point] | undefined
   modifiers: { shift: boolean; alt: boolean; space: boolean }
   isPanning: boolean
@@ -53,7 +70,13 @@ export type EditorState = {
   width: number
   height: number
   layout: { size: Size; resize: Resize }
-  view: { zoom: number; offset: Point; displayWidth: number; displayHeight: number; scaleRatio: number }
+  /**
+   * A point of the drawing is displayed at (point + offset) × scaleRatio pixels from the top left corner of the canvas.
+   * visibleArea is the part of the drawing displayed, in its units: it goes beyond a fixed drawing smaller than the view
+   */
+  view: { zoom: number; offset: Point; displayWidth: number; displayHeight: number; scaleRatio: number; visibleArea: Rect }
+  /** Options in effect. The grid and the default styles of the tools changed while editing are in gridGap and tools */
+  options: ResolvedOptions
   gridGap: number
   shapes: ShapeEntity[]
   /** Selected shape, or group of shapes when several are selected */
@@ -67,6 +90,8 @@ export type EditorState = {
   history: { canUndo: boolean; canRedo: boolean; canClear: boolean }
   clipboard: { hasContent: boolean }
   withContextMenu: boolean
+  /** Whether image files dropped on the canvas are added: the withDropPicture option, the edition and the picture tool */
+  withDropPicture: boolean
   interaction: InteractionState
   contextMenu: ContextMenuState | undefined
 }
@@ -234,7 +259,7 @@ export type EditorActions = {
   resetSettings: () => void
 }
 
-/** Pointer event over a shape */
+/** Pointer event over the canvas */
 export type ShapePointerInfo = {
   /** Position in the units of the drawing */
   canvasPosition: Point
@@ -243,18 +268,38 @@ export type ShapePointerInfo = {
   originalEvent: PointerEvent
 }
 
-export type ReactPaintEvents = {
+/**
+ * Arguments given to the listeners of each event. The listeners are typed from them, so that the event of a listener
+ * is found from its name only: a union of the listeners of all the events would be too complex for TypeScript
+ */
+export type ReactPaintEventArgs = {
   /** The drawing changes: its data, the origin of the change, and the shapes added, updated and removed */
-  dataChanged: (data: StateData, source: ChangeSource, changes: DataChanges) => void
-  selectionChanged: (selectedShapes: ShapeEntity[]) => void
-  toolChanged: (tool: ToolsType) => void
+  dataChanged: [data: StateData, source: ChangeSource, changes: DataChanges]
+  selectionChanged: [selectedShapes: ShapeEntity[]]
+  toolChanged: [tool: ToolsType]
   /** A visible shape is clicked, also in viewer mode. Locked shapes are clicked too */
-  shapeClicked: (shape: ShapeEntity, info: ShapePointerInfo) => void
+  shapeClicked: [shape: ShapeEntity, info: ShapePointerInfo]
   /** The pointer enters a visible shape, or leaves it (undefined). Only computed while a listener is registered */
-  shapeHovered: (shape: ShapeEntity | undefined, info: ShapePointerInfo) => void
+  shapeHovered: [shape: ShapeEntity | undefined, info: ShapePointerInfo]
+  /**
+   * The drawing is clicked, on a visible shape or on an empty area (undefined), in every mode. A click outside of a fixed
+   * drawing smaller than the view is ignored
+   */
+  canvasClicked: [shape: ShapeEntity | undefined, info: ShapePointerInfo]
+  /** The drawing is clicked twice at the same place, after the second canvasClicked */
+  canvasDoubleClicked: [shape: ShapeEntity | undefined, info: ShapePointerInfo]
   /** A file dropped on the canvas is not added as a picture: its type is not an accepted image, or the image could not be loaded */
-  pictureDropFailed: (file: File, error: unknown) => void
+  pictureDropFailed: [file: File, error: unknown]
+  /** A picture added by addShapes, or whose source is changed by updateShapes, is loaded and drawn */
+  pictureLoaded: [shape: ShapeEntity<'picture'>]
+  /**
+   * The image of a picture cannot be loaded. The picture is left out of loaded data, and stays in the drawing, not drawn,
+   * when it was added by addShapes or updateShapes: getShape(shape.id) tells which
+   */
+  pictureLoadFailed: [shape: ShapeEntity<'picture'>, error: unknown]
 }
+
+export type ReactPaintEvents = { [E in keyof ReactPaintEventArgs]: (...args: ReactPaintEventArgs[E]) => void }
 
 export type ReactPaintEventName = keyof ReactPaintEvents
 
@@ -283,6 +328,10 @@ export type ReactPaint = {
   getBounds: (ids: string[]) => ShapesBounds | undefined
   /** Visible shapes under a point of the drawing, from the foreground. Needs a browser */
   getShapesAt: (point: Point) => ShapeEntity[]
+  /** Point of the drawing at a position of the viewport. Undefined while the Canvas is not mounted or not displayed */
+  toCanvasPosition: (clientPosition: { x: number; y: number }) => Point | undefined
+  /** Position in the viewport of a point of the drawing, to place an element over it. Undefined while the Canvas is not mounted or not displayed */
+  toClientPosition: (point: Point) => { x: number; y: number } | undefined
   resetCanvas: (shapes?: ShapeInput[], clearHistory?: boolean) => void
   getCurrentImage: (options?: ExportImageOptions) => string
   getCurrentData: () => StateData

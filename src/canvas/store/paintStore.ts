@@ -33,12 +33,13 @@ import { buildDataToExport, getDataChanges } from '@canvas/utils/data'
 import { shallowEqual } from '@canvas/utils/equality'
 import { decodeJson, downloadFile, encodeShapesInString, getCanvasImage, loadPicture } from '@canvas/utils/file'
 import {
+  canvasToClientPosition,
   checkPositionIntersection,
   checkSelectionFrameCollision,
   checkSelectionIntersection,
+  clientToCanvasPosition,
   findShapeAt,
-  findShapesAt,
-  getCursorPositionInTransformedCanvas
+  findShapesAt
 } from '@canvas/utils/intersect'
 import { isEqual, isRecord, mergeWith, omitUndefined, replaceArrays, set, withDefaults } from '@canvas/utils/object'
 import { getSelectedShapes } from '@canvas/utils/selectedShapes'
@@ -108,7 +109,7 @@ const createInitialState = (config: PaintConfig): InternalState => ({
   },
   interaction: {
     selectionMode: { mode: 'default' },
-    hoveredShape: undefined,
+    hoveredShapeId: undefined,
     hoverMode: { mode: 'default' },
     selectionFrame: undefined,
     modifiers: { shift: false, alt: false, space: false },
@@ -267,6 +268,12 @@ export const createPaintStore = (props: UseReactPaintProps = {}) => {
       state = withInteraction(state, { moveAcceleration: [0, 0] })
     }
 
+    // A removed or locked selection has no part under the pointer: neither the cursor nor the state keep its hover
+    const { selectedShape } = state.document
+    if ((selectedShape === undefined || selectedShape.locked) && state.interaction.hoverMode.mode !== 'default') {
+      state = withInteraction(state, { hoverMode: { mode: 'default' } })
+    }
+
     // The interactions are off when the canvas can neither be edited nor zoomed
     if (!selectors.selectIsInteractive(state) && (state.interaction.focus.component || state.interaction.focus.canvas)) {
       state = withInteraction(state, { focus: { component: false, canvas: false } })
@@ -423,7 +430,7 @@ export const createPaintStore = (props: UseReactPaintProps = {}) => {
 
   const refreshHoveredShape = (isOverCanvas: boolean, ctx: CanvasRenderingContext2D, cursorPosition: Point, isInsideMask: boolean) => {
     if (!isOverCanvas || !isInsideMask) {
-      setInteractionField('hoveredShape', undefined)
+      setInteractionField('hoveredShapeId', undefined)
       return
     }
 
@@ -436,13 +443,13 @@ export const createPaintStore = (props: UseReactPaintProps = {}) => {
         ? !!checkSelectionIntersection(ctx, shape, cursorPosition, settings)
         : !!checkPositionIntersection(ctx, shape, cursorPosition, settings)
     )
-    setInteractionField('hoveredShape', foundShape)
+    setInteractionField('hoveredShapeId', foundShape?.id)
   }
 
   /** The pointer left the canvas */
   const clearHover = () =>
     batch(() => {
-      setInteractionField('hoveredShape', undefined)
+      setInteractionField('hoveredShapeId', undefined)
       setHoverMode({ mode: 'default' })
     })
 
@@ -742,7 +749,7 @@ export const createPaintStore = (props: UseReactPaintProps = {}) => {
 
   const resetCanvas = async (json: ShapeInput[], options: ResetOptions) => {
     const state = get()
-    const shapes = await decodeImportedData(json, {
+    const { shapes, failedPictures } = await decodeImportedData(json, {
       ctx: getMeasureContext(),
       settings: getSettings(state),
       tools: state.tools.available,
@@ -750,6 +757,8 @@ export const createPaintStore = (props: UseReactPaintProps = {}) => {
       resolvePictureSrc: getPictureSrcResolver()
     })
     resetCanvasWithShapeEntity(shapes, options)
+    // once the other shapes are loaded, so that the listeners read the new drawing
+    for (const { shape, error } of failedPictures) emit('pictureLoadFailed', shape, error)
   }
 
   /** Loads the shapes given in the props of the hook, once */
@@ -833,6 +842,24 @@ export const createPaintStore = (props: UseReactPaintProps = {}) => {
     canvasElement = element
   }
 
+  /** Place of the draw canvas in the viewport, while it is displayed: the positions of the viewport are measured on it */
+  const getCanvasRect = () => {
+    const rect = canvasElement?.getBoundingClientRect()
+    return rect?.width && rect.height ? rect : undefined
+  }
+
+  /** Point of the drawing at a position of the viewport */
+  const toCanvasPosition = ({ x, y }: { x: number; y: number }): Point | undefined => {
+    const rect = getCanvasRect()
+    return rect ? clientToCanvasPosition({ clientX: x, clientY: y }, rect, getSettings()) : undefined
+  }
+
+  /** Position in the viewport of a point of the drawing */
+  const toClientPosition = (point: Point): { x: number; y: number } | undefined => {
+    const rect = getCanvasRect()
+    return rect ? canvasToClientPosition(point, rect, getSettings()) : undefined
+  }
+
   // --- Editor contract ---
 
   // built again only when the shapes or the selection change
@@ -872,15 +899,31 @@ export const createPaintStore = (props: UseReactPaintProps = {}) => {
     return shapesToCopy
   }
 
-  /** Redraws a picture once its image is loaded: the shape is replaced by a copy, without a step in the history */
+  /**
+   * Redraws a picture once its image is loaded: the shape is replaced by a copy, without a step in the history. The events
+   * are only emitted while the picture is still in the drawing with this image: it may have been removed or given another source
+   */
   const loadPictureOf = (shape: ShapeEntity) => {
     if (shape.type !== 'picture') return
-    loadPicture(shape.img, shape.src, getPictureSrcResolver())
-      .then(() => {
-        const loaded = get().document.shapes.find(current => current.id === shape.id)
-        if (loaded?.type === 'picture' && loaded.img === shape.img) updateShapes([{ ...loaded }])
-      })
-      .catch((error: unknown) => console.warn(`react-paint: the picture ${shape.id} could not be loaded`, error))
+    const findCurrent = () => {
+      const current = get().document.shapes.find(item => item.id === shape.id)
+      return current?.type === 'picture' && current.img === shape.img ? (current as ShapeEntity<'picture'>) : undefined
+    }
+    // a listener throwing is not taken for a failure of the load
+    loadPicture(shape.img, shape.src, getPictureSrcResolver()).then(
+      () => {
+        const current = findCurrent()
+        if (!current) return
+        const loaded = { ...current }
+        updateShapes([loaded])
+        emit('pictureLoaded', loaded)
+      },
+      (error: unknown) => {
+        console.warn(`react-paint: the picture ${shape.id} could not be loaded`, error)
+        const current = findCurrent()
+        if (current) emit('pictureLoadFailed', current, error)
+      }
+    )
   }
 
   /** Creates shapes given by the consumer, and returns their ids */
@@ -1092,9 +1135,8 @@ export const createPaintStore = (props: UseReactPaintProps = {}) => {
       // a menu which cannot be shown would block the gestures
       if (!selectors.selectWithContextMenu(state)) return
       const settings = getSettings(state)
-      const clientPoint = { clientX: clientPosition.x, clientY: clientPosition.y }
       showContextMenu({
-        cursorStartPosition: canvasPosition ?? (canvasElement ? getCursorPositionInTransformedCanvas(clientPoint, canvasElement, settings) : [0, 0]),
+        cursorStartPosition: canvasPosition ?? toCanvasPosition(clientPosition) ?? [0, 0],
         clientPosition,
         originalShape: buildShapesGroup(ids ? resolveShapes(ids) : getSelectedShapes(state.document.selectedShape), settings),
         anchor: undefined
@@ -1166,6 +1208,8 @@ export const createPaintStore = (props: UseReactPaintProps = {}) => {
     getBounds,
     getShapesAt,
     getShapeAt,
+    toCanvasPosition,
+    toClientPosition,
     setScopeElement,
     setCanvasRootElement,
     setCanvasElement,

@@ -22,6 +22,14 @@ Breaking changes, see the [migration guide](./MIGRATION.md).
 - named exports for Canvas and Editor in all entry points
 - add selectionChanged and toolChanged events, registerEvent and unregisterEvent are typed by event. registerEvent returns the function that unregisters the listener, and events are emitted right after the change of the state
 - export getSelectedShapes, getSelectedShapesTools, SELECTION_TOOL and MOVE_TOOL
+- add the canvasClicked and canvasDoubleClicked events, emitted for any click on the drawing with the shape under the pointer or undefined, also in viewer mode
+- fix the double clicks of the canvas, which edit a text and add a point to a polygon or a curve: the end of a drag or a long press is no longer taken for a click, so a drag soon after a click no longer adds a point, a third click starts a new double click, and the two clicks must be at the same place (a finger may move by 20 pixels). canvasDoubleClicked follows the same rule
+- add the pictureLoaded and pictureLoadFailed events: a picture added by addShapes or updateShapes is drawn, or the image of a picture cannot be loaded. A picture of loaded data which cannot be loaded is left out, and the Editor shows an error message
+- add paint.toCanvasPosition and paint.toClientPosition, to convert positions between the viewport and the drawing
+- expose the options in effect (state.options), whether dropped images are added (state.withDropPicture) and the part of the drawing displayed (state.view.visibleArea) in the state
+- export ZOOM_LEVELS, the levels of setZoom between which the zoom stays: the zoom buttons of the Editor are disabled at the first and the last one
+- add state.interaction.selectionHover, the part of the selection under the pointer: its inside, the anchor of the rotation, or an anchor of the resize
+- fix the hovered shape kept after its removal: its outline stayed drawn, and state.interaction.hoveredShape gave it, until the next move of the mouse. It also follows the changes of its shape
 - the canvas needs no stylesheet anymore: its styles are inline, and react-paint.css only contains the styles of the editor. Its CSS variables can be set on any parent element to override its styles. Add the editor/editor.css stylesheet
 - rename react-paint-editor-toolbox-edittextbox class to react-paint-canvas-edittextbox
 - fix stale declaration files being published, and css imports in declaration files

@@ -526,6 +526,38 @@ describe('options and settings', () => {
     expect(store.getEditorState().gridGap).toBe(40)
   })
 
+  it('gives the options in effect, with their defaults and the overrides, without the functions', () => {
+    const store = createPaintStore({ options: { grid: 10, brushAlgo: 'quadratic', clearCallback: 'defaultShapes', resolvePictureSrc: url => url } })
+    const { options } = store.getEditorState()
+    expect(options).toMatchObject({ grid: 10, brushAlgo: 'quadratic', withContextMenu: true, size: 'fixed', canZoom: 'never' })
+    expect(options).not.toHaveProperty('clearCallback')
+    expect(options).not.toHaveProperty('resolvePictureSrc')
+
+    store.actions.setOptions({ withFrameSelection: false, size: 'infinite' })
+    // an infinite drawing can always be zoomed
+    expect(store.getEditorState().options).toMatchObject({ withFrameSelection: false, size: 'infinite', canZoom: 'always' })
+    store.actions.resetOptions()
+    expect(store.getEditorState().options).toMatchObject({ withFrameSelection: true, size: 'fixed', canZoom: 'never' })
+  })
+
+  it('keeps the identity of the options while they do not change', async () => {
+    const store = await createLoadedStore({ options: { grid: 10 } })
+    const { options } = store.getEditorState()
+    store.actions.selectAllShapes()
+    store.setConfig({ options: { grid: 10 } })
+    expect(store.getEditorState().options).toBe(options)
+  })
+
+  it('tells whether the image files dropped on the canvas are added', () => {
+    expect(createPaintStore().getEditorState().withDropPicture).toBe(true)
+    expect(createPaintStore({ mode: 'viewer' }).getEditorState().withDropPicture).toBe(false)
+    expect(createPaintStore({ options: { availableTools: [{ type: 'rect', id: 'rect' }] } }).getEditorState().withDropPicture).toBe(false)
+
+    const store = createPaintStore()
+    store.actions.setOptions({ withDropPicture: false })
+    expect(store.getEditorState().withDropPicture).toBe(false)
+  })
+
   it('restores the settings changed while editing', () => {
     const store = createPaintStore({ options: { grid: 10, size: 'infinite' } })
     store.actions.setToolStyle('react-paint-rect', { strokeColor: 'red' })
@@ -604,6 +636,77 @@ describe('canvas following its container', () => {
     extendTo(store, 1500, 300)
     expect(listener).not.toHaveBeenCalled()
     expect(store.getCurrentData().config).toEqual({ width: 1000, height: 600 })
+  })
+})
+
+describe('visible area', () => {
+  it('is the whole drawing of a scaled canvas at the zoom 1', () => {
+    const store = createPaintStore({ width: 1000, height: 600 })
+    store.setCanvasSize(getScaledCanvasSize(500, 1000, 600))
+    expect(store.getEditorState().view.visibleArea).toEqual({ x: 0, y: 0, width: 1000, height: 600 })
+  })
+
+  it('follows the container, the zoom and the moves of the view', () => {
+    const store = createPaintStore({ options: { size: 'infinite', resize: 'extend' } })
+    extendTo(store, 800, 400)
+    expect(store.getEditorState().view.visibleArea).toEqual({ x: 0, y: 0, width: 800, height: 400 })
+
+    store.actions.zoomTo(2, { center: [0, 0] })
+    store.actions.panBy([100, 50])
+    expect(store.getEditorState().view.visibleArea).toEqual({ x: 100, y: 50, width: 400, height: 200 })
+  })
+
+  it('goes beyond a fixed drawing smaller than the view, which is centered', () => {
+    const store = createPaintStore({ width: 400, height: 300, options: { size: 'fixed', resize: 'extend' } })
+    extendTo(store, 800, 600)
+    expect(store.getEditorState().view.visibleArea).toEqual({ x: -200, y: -150, width: 800, height: 600 })
+  })
+
+  it('keeps the identity of the view while it does not move', async () => {
+    const store = await createLoadedStore({ options: { size: 'infinite' } })
+    const { view } = store.getEditorState()
+    store.actions.selectAllShapes()
+    store.actions.setGridGap(20)
+    expect(store.getEditorState().view).toBe(view)
+
+    store.actions.panBy([10, 0])
+    expect(store.getEditorState().view.visibleArea).toMatchObject({ x: 10, y: 0 })
+  })
+})
+
+describe('positions on the screen', () => {
+  /** A draw canvas measured at the given place of the viewport */
+  const setCanvas = (store: PaintStore, rect: Pick<DOMRect, 'left' | 'top' | 'width' | 'height'>) =>
+    store.setCanvasElement({
+      addEventListener: () => {},
+      removeEventListener: () => {},
+      getBoundingClientRect: () => rect
+    } as unknown as HTMLCanvasElement)
+
+  it('converts the positions between the viewport and the drawing, through the scale, the zoom and the offset', () => {
+    const store = createPaintStore({ width: 1000, height: 600, options: { size: 'infinite' } })
+    store.setCanvasSize(getScaledCanvasSize(500, 1000, 600))
+    setCanvas(store, { left: 10, top: 20, width: 500, height: 300 })
+    store.actions.zoomTo(2, { center: [0, 0] })
+    store.actions.panBy([100, 50])
+
+    // the view starts at (100, 50) of the drawing, which is displayed at the scale 0.5 × 2
+    expect(store.toClientPosition([150, 80])).toEqual({ x: 60, y: 50 })
+    expect(store.toCanvasPosition({ x: 60, y: 50 })).toEqual([150, 80])
+
+    // the context menu opened at a position of the viewport is at the point under it
+    store.actions.openContextMenu({ clientPosition: { x: 60, y: 50 } })
+    expect(store.getEditorState().contextMenu?.canvasPosition).toEqual([150, 80])
+  })
+
+  it('gives undefined while the Canvas is not mounted or not displayed', () => {
+    const store = createPaintStore()
+    expect(store.toCanvasPosition({ x: 10, y: 10 })).toBeUndefined()
+    expect(store.toClientPosition([10, 10])).toBeUndefined()
+
+    setCanvas(store, { left: 0, top: 0, width: 0, height: 0 })
+    expect(store.toCanvasPosition({ x: 10, y: 10 })).toBeUndefined()
+    expect(store.toClientPosition([10, 10])).toBeUndefined()
   })
 })
 

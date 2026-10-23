@@ -139,22 +139,30 @@ export const buildShapeEntity = (input: ShapeInput, { ctx, settings, tools, used
 
 type DecodeOptions = Omit<BuildShapeOptions, 'completeStyle'> & { resolvePictureSrc: PictureSrcResolver | undefined }
 
+/** A picture of loaded data whose image cannot be loaded, and the reason */
+type FailedPicture = { shape: ShapeEntity<'picture'>; error: unknown }
+
 /**
  * Builds the shapes of loaded data and waits for their pictures. The shapes of an unknown type are left out, like the
- * pictures which cannot be loaded, with a warning: the others keep their style.
+ * pictures which cannot be loaded, with a warning: these pictures are returned apart. The others keep their style.
  */
-export const decodeImportedData = async (inputs: ShapeInput[], { resolvePictureSrc, ...options }: DecodeOptions): Promise<ShapeEntity[]> => {
-  if (!inputs) return []
+export const decodeImportedData = async (
+  inputs: ShapeInput[],
+  { resolvePictureSrc, ...options }: DecodeOptions
+): Promise<{ shapes: ShapeEntity[]; failedPictures: FailedPicture[] }> => {
+  if (!inputs) return { shapes: [], failedPictures: [] }
   const shapes = compact(
     inputs.map(input => (input && isEditableShapeType(input.type) ? buildShapeEntity(input, { ...options, completeStyle: false }) : null))
   )
-  const pictures = shapes.filter(shape => shape.type === 'picture')
+  const pictures = shapes.filter((shape): shape is ShapeEntity<'picture'> => shape.type === 'picture')
   const loadings = await Promise.allSettled(pictures.map(picture => loadPicture(picture.img, picture.src, resolvePictureSrc)))
-  const failedPictures = new Set<ShapeEntity>()
+  const failedPictures: FailedPicture[] = []
   loadings.forEach((loading, index) => {
     if (loading.status === 'fulfilled') return
-    failedPictures.add(pictures[index]!)
-    console.warn(`react-paint: the picture ${pictures[index]!.id} is left out, it could not be loaded`, loading.reason)
+    const shape = pictures[index]!
+    failedPictures.push({ shape, error: loading.reason })
+    console.warn(`react-paint: the picture ${shape.id} is left out, it could not be loaded`, loading.reason)
   })
-  return failedPictures.size ? shapes.filter(shape => !failedPictures.has(shape)) : shapes
+  const failedShapes = new Set<ShapeEntity>(failedPictures.map(({ shape }) => shape))
+  return { shapes: shapes.filter(shape => !failedShapes.has(shape)), failedPictures }
 }

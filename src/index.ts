@@ -36,7 +36,9 @@ export {
   type ReactPaintEventName,
   type ReactPaintEvents,
   type Rect,
+  type ResolvedOptions,
   SELECTION_TOOL,
+  type SelectionHover,
   type SelectionUpdateMode,
   type ShapeData,
   type ShapeEntity,
@@ -62,6 +64,7 @@ export {
   usePaint,
   usePaintState,
   useReactPaint,
+  ZOOM_LEVELS,
   type ZoomAction
 } from './canvas/index'
 export { DEFAULT_EDITOR_OPTIONS, Editor, type EditorComponentProps, type EditorOptions } from './editor/index'

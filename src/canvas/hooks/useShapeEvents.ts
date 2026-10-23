@@ -1,22 +1,22 @@
 import type { PaintStore } from '@canvas/store/paintStore'
-import type { ShapePointerInfo } from '@canvas/types/editor'
+import type { ReactPaintEventName, ShapePointerInfo } from '@canvas/types/editor'
 import type { ShapeEntity } from '@canvas/types/Shapes'
-import { getCursorPositionInTransformedCanvas, hasPointerMoved } from '@canvas/utils/intersect'
+import { createClickTracker } from '@canvas/utils/click'
+import { getCursorPositionInTransformedCanvas } from '@canvas/utils/intersect'
 import { isCursorInsideMask } from '@canvas/utils/zoom'
 import { useEffect } from 'react'
 
-/** A press is a click when the pointer barely moves, during less than this duration */
-const CLICK_MAX_DURATION_MS = 500
+const CLICK_EVENTS: ReactPaintEventName[] = ['shapeClicked', 'canvasClicked', 'canvasDoubleClicked']
 
 /**
- * Emits shapeClicked and shapeHovered, in every mode: in viewer mode the shapes can still be clicked.
- * The listeners are independent of the gestures, and the shapes are only searched while these events are listened.
+ * Emits shapeClicked, canvasClicked, canvasDoubleClicked and shapeHovered, in every mode: in viewer mode the shapes can
+ * still be clicked. The listeners are independent of the gestures, and the shapes are only searched while these events are listened.
  */
 const useShapeEvents = (store: PaintStore, canvas: HTMLCanvasElement | null) => {
   useEffect(() => {
     if (!canvas) return
 
-    let press: { pointerId: number; clientX: number; clientY: number; timeStamp: number } | undefined
+    const clicks = createClickTracker()
     let hoveredShapeId: string | undefined
 
     const getInfo = (e: PointerEvent): ShapePointerInfo => ({
@@ -25,9 +25,11 @@ const useShapeEvents = (store: PaintStore, canvas: HTMLCanvasElement | null) => 
       originalEvent: e
     })
 
+    /** Outside of a fixed drawing smaller than the view, there is nothing to find nor to click */
+    const isInsideDrawing = (info: ShapePointerInfo) => isCursorInsideMask(info.canvasPosition, store.getSettings())
+
     /** The shape under the pointer, from the foreground */
-    const findShape = (info: ShapePointerInfo): ShapeEntity | undefined =>
-      isCursorInsideMask(info.canvasPosition, store.getSettings()) ? store.getShapeAt(info.canvasPosition) : undefined
+    const findShape = (info: ShapePointerInfo): ShapeEntity | undefined => (isInsideDrawing(info) ? store.getShapeAt(info.canvasPosition) : undefined)
 
     /** In viewer mode, the cursor shows that a shape can be clicked */
     const isClickableView = () => store.hasListeners('shapeClicked') && !store.selectors.selectFeatures(store.getState()).edition
@@ -44,17 +46,20 @@ const useShapeEvents = (store: PaintStore, canvas: HTMLCanvasElement | null) => 
     }
 
     const listeners: { [K in 'pointerdown' | 'pointerup' | 'pointermove' | 'pointerleave']: (e: PointerEvent) => void } = {
-      pointerdown: e => {
-        press = e.button === 0 ? { pointerId: e.pointerId, clientX: e.clientX, clientY: e.clientY, timeStamp: e.timeStamp } : undefined
-      },
+      pointerdown: clicks.press,
       pointerup: e => {
-        const start = press
-        press = undefined
-        if (!start || start.pointerId !== e.pointerId || !store.hasListeners('shapeClicked')) return
-        if (hasPointerMoved(e, start) || e.timeStamp - start.timeStamp >= CLICK_MAX_DURATION_MS) return
+        const click = clicks.release(e)
+        if (!click || !CLICK_EVENTS.some(event => store.hasListeners(event))) return
         const info = getInfo(e)
-        const shape = findShape(info)
+        // a click outside of the drawing is not emitted: it does not start a double click
+        if (!isInsideDrawing(info)) {
+          clicks.reset()
+          return
+        }
+        const shape = store.getShapeAt(info.canvasPosition)
         if (shape) store.emit('shapeClicked', shape, info)
+        store.emit('canvasClicked', shape, info)
+        if (click === 'doubleClick') store.emit('canvasDoubleClicked', shape, info)
       },
       pointermove: e => {
         const clickable = isClickableView()

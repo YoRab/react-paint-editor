@@ -15,26 +15,34 @@ export const getCursorPositionInElement = (e: MouseEvent, element: HTMLElement, 
   return [(clientX - canvasBoundingRect.left) / canvasSize.scaleRatio, (clientY - canvasBoundingRect.top) / canvasSize.scaleRatio]
 }
 
+/** Place of the canvas in the viewport */
+type CanvasRect = Pick<DOMRect, 'left' | 'top' | 'width' | 'height'>
+
+/** Point of the drawing at a position of the viewport, the canvas being displayed in the rect */
+export const clientToCanvasPosition = (
+  { clientX, clientY }: Pick<MouseEvent, 'clientX' | 'clientY'>,
+  { left, top, width, height }: CanvasRect,
+  { canvasSize, canvasOffset }: UtilsSettings
+): Point => [
+  ((clientX - left) * (canvasSize.width / width)) / canvasSize.scaleRatio - canvasOffset[0],
+  ((clientY - top) * (canvasSize.height / height)) / canvasSize.scaleRatio - canvasOffset[1]
+]
+
+/** Position in the viewport of a point of the drawing, the canvas being displayed in the rect: the reverse of clientToCanvasPosition */
+export const canvasToClientPosition = (
+  point: Point,
+  { left, top, width, height }: CanvasRect,
+  { canvasSize, canvasOffset }: UtilsSettings
+): { x: number; y: number } => ({
+  x: left + ((point[0] + canvasOffset[0]) * canvasSize.scaleRatio * width) / canvasSize.width,
+  y: top + ((point[1] + canvasOffset[1]) * canvasSize.scaleRatio * height) / canvasSize.height
+})
+
 export const getCursorPositionInTransformedCanvas = (
   e: Pick<MouseEvent, 'clientX' | 'clientY'>,
-  canvas: HTMLElement | null,
+  canvas: HTMLElement,
   settings: UtilsSettings
-): Point => {
-  const { clientX, clientY } = e
-
-  const canvasBoundingRect = canvas?.getBoundingClientRect() ?? {
-    left: 0,
-    top: 0,
-    width: settings.canvasSize.width,
-    height: settings.canvasSize.height
-  }
-  return [
-    ((clientX - canvasBoundingRect.left) * (settings.canvasSize.width / canvasBoundingRect.width)) / settings.canvasSize.scaleRatio -
-      settings.canvasOffset[0],
-    ((clientY - canvasBoundingRect.top) * (settings.canvasSize.height / canvasBoundingRect.height)) / settings.canvasSize.scaleRatio -
-      settings.canvasOffset[1]
-  ]
-}
+): Point => clientToCanvasPosition(e, canvas.getBoundingClientRect(), settings)
 
 export const isTouchGesture = (e: PointerEvent): boolean => {
   return e.pointerType === 'touch'
@@ -355,11 +363,11 @@ const POINTER_MOVE_THRESHOLD = 5
 
 type ClientPosition = Pick<MouseEvent, 'clientX' | 'clientY'>
 
-/** Whether the pointer has moved by more than a few pixels since the start of a press */
-export const hasPointerMoved = (e: ClientPosition, startPosition: ClientPosition): boolean => {
+/** Whether the pointer has moved by more than a few pixels, or the given distance, since the start of a press */
+export const hasPointerMoved = (e: ClientPosition, startPosition: ClientPosition, threshold = POINTER_MOVE_THRESHOLD): boolean => {
   const dx = e.clientX - startPosition.clientX
   const dy = e.clientY - startPosition.clientY
-  return dx * dx + dy * dy > POINTER_MOVE_THRESHOLD * POINTER_MOVE_THRESHOLD
+  return dx * dx + dy * dy > threshold * threshold
 }
 
 export const shouldCancelLongPress = (e: PointerEvent, startPosition: ClientPosition): boolean =>
