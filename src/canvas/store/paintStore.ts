@@ -90,6 +90,8 @@ const resolveConfig = (
 ) => {
   const mergedOptions = mergeWith(replaceArrays, options ?? {}, overrides) as OptionalOptions
   const { clearCallback, resolvePictureSrc, ...resolvedOptions } = withDefaults(DEFAULT_OPTIONS, mergedOptions)
+  // an infinite drawing can always be zoomed and scrolled
+  if (resolvedOptions.size === 'infinite') resolvedOptions.canZoom = 'always'
   const config: PaintConfig = { width, height, mode, disabled, options: resolvedOptions }
   return { config, clearCallback, resolvePictureSrc }
 }

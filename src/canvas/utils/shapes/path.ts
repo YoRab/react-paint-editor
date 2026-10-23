@@ -87,8 +87,9 @@ export const createBrushPath = (brush: DrawableShape<'brush'>, { brushAlgo }: Ut
       path.moveTo(...scale(points[0]!))
       switch (brushAlgo) {
         case 'quadratic': {
-          let scaledPoint = scale(points[0]!)
-          for (let i = 0; i < points.length - 3; i++) {
+          // each inner point controls a curve ending in the middle of the next segment, the last curve ends at the last point
+          let scaledPoint = scale(points[1]!)
+          for (let i = 1; i < points.length - 2; i++) {
             const scaledPoint2 = scale(points[i + 1]!)
             const xc = (scaledPoint[0] + scaledPoint2[0]) / 2
             const yc = (scaledPoint[1] + scaledPoint2[1]) / 2

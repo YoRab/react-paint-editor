@@ -24,6 +24,10 @@ export const getPaint = () => {
   return paintRef.current
 }
 
+export const getState = () => getPaint().getState()
+
+export const wait = (ms = 50) => new Promise(res => setTimeout(res, ms))
+
 /** Log of the selectionChanged / toolChanged events emitted by the last rendered wrapper */
 export const eventsLog: ({ name: 'selectionChanged'; ids: string[] } | { name: 'toolChanged'; toolId: string })[] = []
 

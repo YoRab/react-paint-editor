@@ -3,6 +3,8 @@ import { expect, userEvent, within } from 'storybook/test'
 import {
   assertNoInternalFields,
   getCurrentDataRef,
+  getPaint,
+  makeCoordConverters,
   openContextMenuAndClick,
   ReactPaintWrapper,
   selectTool,
@@ -109,5 +111,34 @@ export const DrawPolygon: Story = {
     assertNoInternalFields(data.shapes![0])
     // Point added then deleted → back to 3 points.
     expect((data.shapes![0] as { points: unknown[] }).points.length).toBe(3)
+  }
+}
+
+export const PreviewFollowsCursor: Story = {
+  args: {},
+  play: async ({ canvasElement }) => {
+    const view = within(canvasElement)
+    const drawCanvas = await view.findByTestId('draw-canvas')
+    const { toClientX, toClientY } = makeCoordConverters(drawCanvas.getBoundingClientRect())
+    const user = userEvent.setup()
+
+    // the point which follows the cursor while a polygon or a curve is drawn
+    const getTempPoint = () => (getPaint().getState().selectedShapes[0] as { tempPoint?: [number, number] } | undefined)?.tempPoint
+
+    for (const [toolId, y] of [
+      ['polygon', 200],
+      ['curve', 400]
+    ] as const) {
+      await selectTool(view, toolId)
+      await user.pointer({ target: drawCanvas, keys: '[MouseLeft]', coords: { x: toClientX(300), y: toClientY(y) } })
+      await new Promise(res => setTimeout(res, 50))
+      await user.pointer({ target: drawCanvas, keys: '[MouseLeft]', coords: { x: toClientX(400), y: toClientY(y) } })
+      await new Promise(res => setTimeout(res, 50))
+      await user.pointer({ target: drawCanvas, coords: { x: toClientX(450), y: toClientY(y + 80) } })
+      await new Promise(res => setTimeout(res, 50))
+      const [x, tempY] = getTempPoint() ?? [0, 0]
+      expect(x).toBeCloseTo(450, 0)
+      expect(tempY).toBeCloseTo(y + 80, 0)
+    }
   }
 }

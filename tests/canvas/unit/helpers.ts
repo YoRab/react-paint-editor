@@ -1,7 +1,9 @@
+import type { UtilsSettings } from '@canvas/constants/app'
 import { createPaintStore, type PaintStore } from '@canvas/store/paintStore'
 import type { UseReactPaintProps } from '@canvas/store/types'
-import type { ExportedDrawableShape, ShapeInput } from '@canvas/types/Shapes'
+import type { DrawableShape, ExportedDrawableShape, ShapeEntity, ShapeInput } from '@canvas/types/Shapes'
 import { getUnscaledCanvasSize } from '@canvas/utils/canvas'
+import { refreshShape } from '@canvas/utils/shapes'
 import { vi } from 'vitest'
 
 /** Images of the tests: they load once their source is set, as large as given by size, or fail when fails says so */
@@ -53,6 +55,16 @@ export const stubPath2D = () =>
       roundRect() {}
     }
   )
+
+/** Settings of the utils of the shapes, without the store: a selection padding of 5, without grid */
+export const UTILS_SETTINGS = { selectionPadding: 5, gridGap: 0 } as UtilsSettings
+
+/** A shape with its path and its borders, as the store holds it */
+export const createShape = <T extends ShapeEntity = ShapeEntity>(shape: ShapeInput, id = `${shape.type}_1`) =>
+  refreshShape({ id, ...shape } as DrawableShape & { id: string }, UTILS_SETTINGS) as T
+
+/** Measures 1 pixel per character at the font size 1: a text of 5 characters 50 wide has a font size of 10 */
+export const MEASURE_CONTEXT = { font: '', measureText: (text: string) => ({ width: text.length }) } as unknown as CanvasRenderingContext2D
 
 const STYLE = { fillColor: 'red', strokeColor: 'black', lineWidth: 1, opacity: 100, lineDash: 0, lineArrow: 0, closedPoints: 0 }
 

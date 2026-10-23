@@ -103,6 +103,16 @@ describe('actions', () => {
     expect(getIds(store)).toEqual([third, second, first])
   })
 
+  it('moves shapes forward, keeping the selected shapes together', async () => {
+    const store = await createLoadedStore()
+    const [first, second, third] = getIds(store)
+    store.actions.moveShapes([second!, third!], 'forward')
+    expect(getIds(store)).toEqual([second, third, first])
+    // the first one is already in the foreground, and the second one stays behind it
+    store.actions.moveShapes([second!, third!], 'forward')
+    expect(getIds(store)).toEqual([second, third, first])
+  })
+
   it('sets the visibility and the lock whatever their current value', async () => {
     const store = await createLoadedStore()
     const ids = getIds(store)
@@ -168,6 +178,17 @@ describe('actions', () => {
     store.setConfig({ options: { clearCallback: 'empty' } })
     store.actions.clearCanvas()
     expect(getIds(store)).toEqual([])
+  })
+
+  it('clears the canvas back to the shapes of the props, or empties it without them', async () => {
+    const store = await createLoadedStore({ shapes: [RECTS[0]!], options: { clearCallback: 'defaultShapes' } })
+    expect(getIds(store)).toHaveLength(3)
+    store.actions.clearCanvas()
+    await vi.waitFor(() => expect(getIds(store)).toHaveLength(1))
+
+    const withoutShapes = await createLoadedStore({ options: { clearCallback: 'defaultShapes' } })
+    withoutShapes.actions.clearCanvas()
+    expect(getIds(withoutShapes)).toEqual([])
   })
 
   it('zooms, moves and resets the view', () => {

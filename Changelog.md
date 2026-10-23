@@ -28,6 +28,14 @@ Breaking changes, see the [migration guide](./MIGRATION.md).
 - fix declaration files for node16 / nodenext module resolutions
 - fix unregisterEvent removing another listener when the given one is not registered
 - fix context menu not opening on the first right click after choosing the selection tool in the toolbar
+- fix the wheel and the pinch ignored by an infinite canvas without canZoom: an infinite size always enables the zoom
+- fix the strokes of the quadratic brush, which ignored their third to last point: each inner point now controls the curve
+- fix the resize with Shift and Alt, which grew the shape by twice the selection padding as soon as the anchor was pressed
+- fix the resize with Alt and a selection padding: the shape moved while its width or height was 0, jumped when the cursor went past its opposite side, and a brush or a group was mirrored only from there instead of from its center
+- fix the moves made with the arrows, which were not saved in the history nor emitted by dataChanged: like a drag of the mouse, a move is saved once, when the last held arrow is released or the focus leaves the canvas
+- fix the rotation by steps, with Shift or the grid, which turned a counterclockwise rotation one step late: a negative angle now goes to its closest step
+- fix the infinite font size of a text without characters, given with a width or resized: it gets the default font size, and an emptied text keeps the height of a line
+- fix availableTools throwing on a null entry: the entries which are not tools are left out
 - fix active tool not following the tools given in props: it is now derived from them by id, and only known tools can be selected
 - options of useReactPaint are compared by value: inline options, like availableTools, no longer reset the tool settings nor render in a loop
 - performance: the editor panels only render when their part of the state changes, and the canvas draws the gestures (hover, drag, selection frame, pan, brush) without rendering React components

@@ -43,6 +43,7 @@ export type AppOptions = {
    * width of the container within their bounds. 'extend' fills the container at the scale 1: the visible area follows it
    */
   resize: Resize
+  /** Always 'always' with an infinite size */
   canZoom: 'never' | 'always'
   debug: boolean
 }

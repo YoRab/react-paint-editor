@@ -3,6 +3,8 @@ import { expect, userEvent, within } from 'storybook/test'
 import {
   assertNoInternalFields,
   getCurrentDataRef,
+  getPaint,
+  makeCoordConverters,
   ReactPaintWrapper,
   selectTool,
   setColorSetting,
@@ -94,5 +96,37 @@ export const DrawBrushShape: Story = {
     const brush2 = data.shapes![0] as { points: [number, number][][] }
     expect(brush2.points).toHaveLength(1)
     expect(brush2.points[0]!.length).toBeGreaterThan(STEPS * 0.5)
+  }
+}
+
+export const DrawBrushInSeveralStrokes: Story = {
+  args: {
+    // the brush stays selected after a stroke: the next strokes are added to it
+    options: { isBrushShapeDoneOnMouseUp: false }
+  },
+  play: async ({ canvasElement }) => {
+    const view = within(canvasElement)
+    await selectTool(view, 'brush')
+    const drawCanvas = await view.findByTestId('draw-canvas')
+    const { toClientX, toClientY } = makeCoordConverters(drawCanvas.getBoundingClientRect())
+    const user = userEvent.setup()
+
+    for (const y of [250, 350]) {
+      await user.pointer({ target: drawCanvas, keys: '[MouseLeft>]', coords: { x: toClientX(300), y: toClientY(y) } })
+      await new Promise(res => setTimeout(res, 50))
+      await user.pointer({ target: drawCanvas, coords: { x: toClientX(400), y: toClientY(y) } })
+      await user.pointer({ target: drawCanvas, coords: { x: toClientX(500), y: toClientY(y) } })
+      await user.pointer({ target: drawCanvas, keys: '[/MouseLeft]', coords: { x: toClientX(500), y: toClientY(y) } })
+      await new Promise(res => setTimeout(res, 100))
+    }
+
+    const { shapes } = getPaint().getState()
+    expect(shapes).toHaveLength(1)
+    const strokes = (shapes[0] as { points: [number, number][][] }).points
+    expect(strokes).toHaveLength(2)
+    expect(strokes.map(stroke => stroke[0])).toEqual([
+      [300, 250],
+      [300, 350]
+    ])
   }
 }
