@@ -1,3 +1,4 @@
+import { ZOOM_LEVELS } from '@canvas/constants/zoom'
 import { createPaintStore } from '@canvas/store/paintStore'
 import { getUnscaledCanvasSize } from '@canvas/utils/canvas'
 import { getMaskRect, getNewOffset, hasMask, isCursorInsideMask, normalizeWheel, type ViewBounds } from '@canvas/utils/zoom'
@@ -74,6 +75,21 @@ describe('zoom steps', () => {
     store.actions.zoomTo(0.05)
     store.actions.setZoom('unzoom')
     expect(store.getEditorState().view.zoom).toBe(0.05)
+  })
+
+  it('zooms in level by level, and keeps every zoom between the first and the last levels', () => {
+    const store = createPaintStore({ options: { size: 'infinite' } })
+    store.actions.zoomTo(0)
+    expect(store.getEditorState().view.zoom).toBe(ZOOM_LEVELS[0])
+    for (const level of ZOOM_LEVELS.slice(1)) {
+      store.actions.setZoom('zoom')
+      expect(store.getEditorState().view.zoom).toBe(level)
+    }
+    store.actions.setZoom('zoom')
+    expect(store.getEditorState().view.zoom).toBe(8)
+
+    store.actions.zoomTo(100)
+    expect(store.getEditorState().view.zoom).toBe(8)
   })
 })
 

@@ -4,8 +4,13 @@ import { expect, userEvent, waitFor, within } from 'storybook/test'
 import { Canvas, type ShapeEntity, type UseReactPaintProps, useReactPaint } from '../../../src/index'
 import { getPaint, makeCoordConverters, paintRef } from './../helpers'
 
-/** Ids of the shapes given to shapeClicked / shapeHovered, by the last rendered harness */
-const shapeEvents: { name: 'clicked' | 'hovered'; id: string | undefined }[] = []
+const SHAPE_EVENTS = ['shapeClicked', 'shapeHovered', 'canvasClicked', 'canvasDoubleClicked'] as const
+
+/** Ids of the shapes given to the pointer events, by the last rendered harness */
+const shapeEvents: { name: (typeof SHAPE_EVENTS)[number]; id: string | undefined }[] = []
+
+/** Ids of the shapes given to one of the pointer events */
+const idsOf = (name: (typeof SHAPE_EVENTS)[number]) => shapeEvents.filter(event => event.name === name).map(event => event.id)
 
 /** Canvas alone, without Editor, listening to the shape events. withCanvas false keeps the Canvas unmounted */
 const ApiHarness = ({
@@ -18,13 +23,11 @@ const ApiHarness = ({
 
   useEffect(() => {
     shapeEvents.length = 0
-    const unregisterClick = paint.registerEvent('shapeClicked', (shape: ShapeEntity) => shapeEvents.push({ name: 'clicked', id: shape.id }))
-    const unregisterHover = paint.registerEvent('shapeHovered', (shape: ShapeEntity | undefined) =>
-      shapeEvents.push({ name: 'hovered', id: shape?.id })
+    const unregisters = SHAPE_EVENTS.map(name =>
+      paint.registerEvent(name, (shape: ShapeEntity | undefined) => shapeEvents.push({ name, id: shape?.id }))
     )
     return () => {
-      unregisterClick()
-      unregisterHover()
+      for (const unregister of unregisters) unregister()
     }
   }, [paint])
 
@@ -80,16 +83,35 @@ export const ShapeEventsInViewer: Story = {
 
     // hovering the shape, then the empty canvas
     await user.pointer({ target: drawCanvas, coords: { x: toClientX(150), y: toClientY(150) } })
-    await waitFor(() => expect(shapeEvents).toContainEqual({ name: 'hovered', id: rect }))
+    await waitFor(() => expect(idsOf('shapeHovered')).toContain(rect))
     expect(drawCanvas.style.cursor).toBe('pointer')
     await user.pointer({ target: drawCanvas, coords: { x: toClientX(500), y: toClientY(500) } })
-    await waitFor(() => expect(shapeEvents[shapeEvents.length - 1]).toEqual({ name: 'hovered', id: undefined }))
+    await waitFor(() => expect(shapeEvents[shapeEvents.length - 1]).toEqual({ name: 'shapeHovered', id: undefined }))
     expect(drawCanvas.style.cursor).toBe('')
 
     // a click on the shape, and on the empty canvas
     await user.pointer({ target: drawCanvas, keys: '[MouseLeft]', coords: { x: toClientX(150), y: toClientY(150) } })
     await user.pointer({ target: drawCanvas, keys: '[MouseLeft]', coords: { x: toClientX(500), y: toClientY(500) } })
-    expect(shapeEvents.filter(event => event.name === 'clicked')).toEqual([{ name: 'clicked', id: rect }])
+    expect(idsOf('shapeClicked')).toEqual([rect])
+    // canvasClicked gives both, far from each other: they are not a double click
+    expect(idsOf('canvasClicked')).toEqual([rect, undefined])
+    expect(idsOf('canvasDoubleClicked')).toEqual([])
+
+    // two clicks at the same place, on the shape and on the empty canvas
+    await user.pointer([
+      { target: drawCanvas, keys: '[MouseLeft]', coords: { x: toClientX(150), y: toClientY(150) } },
+      { target: drawCanvas, keys: '[MouseLeft]', coords: { x: toClientX(150), y: toClientY(150) } }
+    ])
+    await user.pointer([
+      { target: drawCanvas, keys: '[MouseLeft]', coords: { x: toClientX(500), y: toClientY(500) } },
+      { target: drawCanvas, keys: '[MouseLeft]', coords: { x: toClientX(500), y: toClientY(500) } }
+    ])
+    expect(idsOf('canvasDoubleClicked')).toEqual([rect, undefined])
+    // the double click comes after the second click
+    expect(shapeEvents.slice(-2)).toEqual([
+      { name: 'canvasClicked', id: undefined },
+      { name: 'canvasDoubleClicked', id: undefined }
+    ])
   }
 }
 
@@ -140,7 +162,7 @@ export const ActionsWithCanvas: Story = {
 export const ZoomToShapes: Story = {
   args: { options: { size: 'infinite' }, containerWidth: 500 },
   play: async ({ canvasElement }) => {
-    await within(canvasElement).findByTestId('draw-canvas')
+    const drawCanvas = await within(canvasElement).findByTestId('draw-canvas')
     const paint = getPaint()
     // the canvas of 1000 x 600 is displayed at half its size
     await waitFor(() => expect(paint.getState().view.scaleRatio).toBeCloseTo(0.5))
@@ -153,6 +175,15 @@ export const ZoomToShapes: Story = {
     const box = paint.getShape(id!)!.computed.boundingBox
     expect((box.x + offset[0]) * scaleRatio).toBeCloseTo(50, 0)
     expect(displayWidth - (box.x + box.width + offset[0]) * scaleRatio).toBeCloseTo(50, 0)
+
+    // the corner of the box is 50 pixels away from the left side of the canvas on the screen, and is found back there
+    const canvasRect = drawCanvas.getBoundingClientRect()
+    const corner = paint.toClientPosition([box.x, box.y])!
+    expect(corner.x).toBeCloseTo(canvasRect.left + 50, 0)
+    expect(corner.y).toBeCloseTo(canvasRect.top + (box.y + offset[1]) * scaleRatio, 0)
+    const [x, y] = paint.toCanvasPosition(corner)!
+    expect(x).toBeCloseTo(box.x)
+    expect(y).toBeCloseTo(box.y)
   }
 }
 
@@ -179,6 +210,9 @@ export const ActionsWithoutCanvas: Story = {
     expect(text?.style?.fontBold).toBe(true)
     expect(paint.getShapesAt([250, 250]).map(shape => shape.id)).toEqual([result.rect])
     expect(paint.getState().history.canUndo).toBe(true)
+    // the positions on the screen need the Canvas
+    expect(paint.toClientPosition([250, 250])).toBeUndefined()
+    expect(paint.toCanvasPosition({ x: 10, y: 10 })).toBeUndefined()
 
     paint.actions.undo()
     expect(paint.getState().shapes).toEqual([])

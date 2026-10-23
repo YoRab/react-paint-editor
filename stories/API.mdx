@@ -107,6 +107,8 @@ import LinkTo from '@storybook/addon-links/react';
   getShape: (id: string) => ShapeEntity | undefined
   getBounds: (ids: string[]) => ShapesBounds | undefined
   getShapesAt: (point: Point) => ShapeEntity[]
+  toCanvasPosition: (clientPosition: { x: number; y: number }) => Point | undefined
+  toClientPosition: (point: Point) => { x: number; y: number } | undefined
   resetCanvas: (shapes?: ShapeInput[], clearHistory?: boolean) => void
   getCurrentImage: (options?: ExportImageOptions) => string
   getCurrentData: () => StateData
@@ -116,7 +118,7 @@ import LinkTo from '@storybook/addon-links/react';
         <li><code>actions</code> - Commands to act on the canvas (see below). Their identity never changes</li>
         <li><code>getState()</code> - The current state (see below), without subscription: to read in event handlers. The same object is returned as long as nothing changes</li>
         <li><code>subscribe(listener)</code> - Calls the listener after each change of the state, and returns the function that unsubscribes it</li>
-        <li><code>registerEvent</code>, <code>unregisterEvent</code>, <code>batch</code>, <code>getShape</code>, <code>getBounds</code>, <code>getShapesAt</code>, <code>resetCanvas</code>, <code>getCurrentImage</code>, <code>getCurrentData</code> - See <a href="#Methods" target="_self">Methods</a></li>
+        <li><code>registerEvent</code>, <code>unregisterEvent</code>, <code>batch</code>, <code>getShape</code>, <code>getBounds</code>, <code>getShapesAt</code>, <code>toCanvasPosition</code>, <code>toClientPosition</code>, <code>resetCanvas</code>, <code>getCurrentImage</code>, <code>getCurrentData</code> - See <a href="#Methods" target="_self">Methods</a></li>
         <li><code>scopeRef</code> - Callback ref defining the area where keyboard shortcuts are active, the canvas by default. The pointer always works over the canvas. Set it on the root element of a custom editor so that the shortcuts also work while its toolbar is focused. The <code>Editor</code> component sets it</li>
       </ul>
 
@@ -127,7 +129,8 @@ import LinkTo from '@storybook/addon-links/react';
         <li><code>features</code> - <code>{'{ edition: boolean; zoom: boolean }'}</code></li>
         <li><code>width</code>, <code>height</code> - Logical size of the drawing</li>
         <li><code>layout</code> - <code>{"{ size: 'fixed' | 'infinite'; resize: 'scaleDown' | 'scale' | 'scaleUp' | 'none' | 'extend' }"}</code></li>
-        <li><code>view</code> - <code>{'{ zoom, offset, displayWidth, displayHeight, scaleRatio }'}</code></li>
+        <li><code>view</code> - <code>{'{ zoom, offset, displayWidth, displayHeight, scaleRatio, visibleArea }'}</code>. A point of the drawing is displayed at <code>(point + offset) × scaleRatio</code> pixels from the top left corner of the canvas. <code>visibleArea</code> is the part of the drawing displayed, as a <code>Rect</code> in its units: it goes beyond a fixed drawing smaller than the view</li>
+        <li><code>options</code> - Options in effect: the options of the hook with the overrides of <code>setOptions</code> and their defaults, without the functions (<code>clearCallback</code>, <code>resolvePictureSrc</code>). The grid and the default styles of the tools changed while editing are in <code>gridGap</code> and <code>tools</code></li>
         <li><code>gridGap</code> - Current grid gap</li>
         <li><code>shapes</code> - All shapes, from top to bottom</li>
         <li><code>selection</code> - Selected shape, or group of shapes when several are selected</li>
@@ -137,7 +140,15 @@ import LinkTo from '@storybook/addon-links/react';
         <li><code>history</code> - <code>{'{ canUndo: boolean; canRedo: boolean; canClear: boolean }'}</code></li>
         <li><code>clipboard</code> - <code>{'{ hasContent: boolean }'}</code></li>
         <li><code>withContextMenu</code> - Whether the context menu is enabled</li>
-        <li><code>interaction</code> - <code>{'{ mode, hoveredShape, selectionFrame, modifiers: { shift, alt, space }, isPanning, focus: { component, canvas } }'}</code>. It changes on each move of the pointer</li>
+        <li><code>withDropPicture</code> - Whether the image files dropped on the canvas are added: the <code>withDropPicture</code> option, the edition and the picture tool are needed</li>
+        <li>
+          <p><code>interaction</code> - <code>{'{ mode, hoveredShape, selectionHover, selectionFrame, modifiers: { shift, alt, space }, isPanning, focus: { component, canvas } }'}</code>. It changes on each move of the pointer</p>
+          <ul>
+            <li><code>mode</code> - The gesture running: <code>'translate'</code>, <code>'rotate'</code>, <code>'resize'</code>, <code>'selectionFrame'</code>, <code>'brush'</code>, <code>'preview'</code> (a polygon or a curve being drawn), <code>'textedition'</code>, <code>'contextMenu'</code>, or <code>'default'</code> between them</li>
+            <li><code>hoveredShape</code> - Shape under the mouse, searched between the gestures. The anchors of the selection outside of its shape are given by <code>selectionHover</code></li>
+            <li><code>selectionHover</code> - Part of the selection under the pointer, which tells the gesture a press starts: <code>{"{ mode: 'translate' }"}</code> inside it, <code>{"{ mode: 'rotate' }"}</code> on the anchor of the rotation, <code>{"{ mode: 'resize', anchor }"}</code> on an anchor of the resize. The <code>anchor</code> is the index of a point of a line, a polygon or a curve, or else its place on the borders of the selection before its rotation, from <code>[0, 0]</code> (top left) to <code>[1, 1]</code> (bottom right). <code>undefined</code> away from the selection and during the gestures</li>
+          </ul>
+        </li>
         <li><code>contextMenu</code> - <code>{'{ shapes, anchorIndex, canRemoveAnchor, canvasPosition, clientPosition }'}</code> when the context menu is open. <code>canRemoveAnchor</code> tells whether the point under the cursor can be removed with <code>removeShapePoint</code>, <code>undefined</code> otherwise</li>
       </ul>
 
@@ -160,7 +171,7 @@ import LinkTo from '@storybook/addon-links/react';
         <li><code>copy(ids?)</code>, <code>cut(ids?)</code>, <code>paste()</code> - Use the selection when no ids are given</li>
         <li><code>undo()</code>, <code>redo()</code>, <code>saveShapes()</code> - <code>saveShapes</code> adds the current state to the history, after updates made with <code>{'{ save: false }'}</code></li>
         <li><code>clearCanvas()</code>, <code>loadFile(file)</code>, <code>loadData(data)</code>, <code>exportPicture(options)</code>, <code>exportData(options)</code></li>
-        <li><code>setZoom('zoom' | 'unzoom' | 'default')</code>, <code>zoomTo(level, {'{ center? }'})</code>, <code>resetZoom()</code> - Zoom in, out, to a level, or back to 100%</li>
+        <li><code>setZoom('zoom' | 'unzoom' | 'default')</code>, <code>zoomTo(level, {'{ center? }'})</code>, <code>resetZoom()</code> - Zoom in, out (to the next of the <code>ZOOM_LEVELS</code>), to a level, or back to 100%. The zoom stays between the first and the last <code>ZOOM_LEVELS</code></li>
         <li><code>zoomToShapes(ids?, {'{ padding? }'})</code> - Zooms and scrolls so that the shapes fill the view, all the visible shapes by default. The padding is in pixels of the screen</li>
         <li><code>setOffset(offset)</code>, <code>panBy([dx, dy])</code> - Moves the view. The offset is kept inside the drawing when its size is fixed</li>
         <li><code>setGridGap(gap)</code> - See <code>GRID_PRESETS</code></li>
@@ -666,12 +677,37 @@ const annotationsStyle = useAnnotationsStyle(paint)
 })
 paint.registerEvent('shapeHovered', (shape: ShapeEntity | undefined) => setHighlighted(shape?.id))`} />
 
+      <h3>canvasClicked and canvasDoubleClicked</h3>
+      <p>
+        Fired when the drawing is clicked, on a visible shape (locked ones included) or on an empty area (<code>undefined</code>), in every mode: while editing, a click which draws a shape is also a <code>canvasClicked</code>.
+        A second click at the same place soon after the first one fires <code>canvasDoubleClicked</code>, after its <code>canvasClicked</code>. A click outside of a fixed drawing smaller than the view fires nothing.
+      </p>
+      <Source language='typescript' code={`paint.registerEvent('canvasClicked', (shape: ShapeEntity | undefined, info: ShapePointerInfo) => {
+  // in viewer mode, a click on an empty area adds a pin at this point of the drawing
+  if (!shape) addPin(info.canvasPosition)
+})
+paint.registerEvent('canvasDoubleClicked', (shape: ShapeEntity | undefined) => shape && openDetails(shape.id))`} />
+
       <h3>pictureDropFailed</h3>
       <p>
         Fired for each file dropped on the canvas which is not added as a picture (see the <code>withDropPicture</code> option): its type is not an accepted image, or the image cannot be loaded. The Editor shows an error message for it.
       </p>
       <Source language='typescript' code={`paint.registerEvent('pictureDropFailed', (file: File, error: unknown) => {
   console.warn('Cannot add', file.name, error)
+})`} />
+
+      <h3>pictureLoaded and pictureLoadFailed</h3>
+      <p>
+        <code>pictureLoaded</code> is fired when a picture added by <code>addShapes</code>, or whose source is changed by <code>updateShapes</code>, is loaded and drawn: the actions return before the image is loaded.
+        The pictures of loaded data (<code>loadData</code>, <code>loadFile</code>, <code>resetCanvas</code>, the <code>shapes</code> of the hook) are loaded before the drawing is shown.
+      </p>
+      <p>
+        <code>pictureLoadFailed</code> is fired when the image of a picture cannot be loaded, for instance when <code>resolvePictureSrc</code> refuses it. A picture of loaded data is left out of the drawing, and the event is fired once the other shapes are loaded.
+        A picture added by <code>addShapes</code> or <code>updateShapes</code> stays in the drawing, without being drawn: <code>paint.getShape(shape.id)</code> tells which. The Editor shows an error message for it.
+      </p>
+      <Source language='typescript' code={`paint.registerEvent('pictureLoaded', () => upload(paint.getCurrentImage()))
+paint.registerEvent('pictureLoadFailed', (shape: ShapeEntity<'picture'>, error: unknown) => {
+  console.warn('Cannot load', shape.src, error)
 })`} />
 
       <h2 id="Methods">Methods</h2>
@@ -707,6 +743,17 @@ paint.registerEvent('shapeHovered', (shape: ShapeEntity | undefined) => setHighl
       <Source language='typescript' code={`getShape(id: string): ShapeEntity | undefined
 getBounds(ids: string[]): (Rect & { rotation: number; center: Point }) | undefined
 getShapesAt(point: Point): ShapeEntity[]`} />
+
+      <h3>toCanvasPosition and toClientPosition</h3>
+      <p>
+        Convert a position of the viewport, like the <code>clientX</code> and <code>clientY</code> of a mouse event, into a point of the drawing, and a point of the drawing into a position of the viewport, to place an element over it.
+        They follow the zoom, the scroll of the view and the size of the canvas on the page. They return <code>undefined</code> while the <code>Canvas</code> is not mounted or not displayed.
+      </p>
+      <Source language='typescript' code={`toCanvasPosition(clientPosition: { x: number; y: number }): Point | undefined
+toClientPosition(point: Point): { x: number; y: number } | undefined`} />
+      <Source language='typescript' code={`// a popover with position: fixed, at the top right corner of a shape
+const box = paint.getBounds([id])
+const position = box && paint.toClientPosition([box.x + box.width, box.y])`} />
 
       <h3>resetCanvas</h3>
       <p>Reset the canvas with new shapes. The shapes keep their ids when they are free.</p>
@@ -1002,6 +1049,7 @@ const patch: ShapePatch = { id: 'rect_1', width: 200, style: { fillColor: 'red' 
         <li><code>getSelectedShapesTools(selection, tools)</code> - Returns the tool matching the selection. For several shapes, it returns a tool whose settings are the ones shared by all the shapes</li>
         <li><code>DEFAULT_TOOLS</code> - Default drawing tools</li>
         <li><code>SELECTION_TOOL</code>, <code>MOVE_TOOL</code> - Selection and move tools, to give to <code>actions.selectTool</code></li>
+        <li><code>ZOOM_LEVELS</code> - Levels of <code>actions.setZoom</code>, from <code>0.05</code> to <code>8</code>: every zoom stays between the first and the last one, to disable a button or to build a zoom menu</li>
         <li><code>shallowEqual(a, b)</code> - Equality function for <code>usePaintState</code> selectors building an object or an array</li>
       </ul>
 

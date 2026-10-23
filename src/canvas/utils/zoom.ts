@@ -1,11 +1,11 @@
 import type { UtilsSettings } from '@canvas/constants/app'
-import { IOS_TRACKPAD_PINCH_FACTOR, ZOOM_BG_COLOR, ZOOM_STEP_DEFAULT, ZOOM_STEPS } from '@canvas/constants/zoom'
+import { IOS_TRACKPAD_PINCH_FACTOR, ZOOM_BG_COLOR, ZOOM_LEVEL_DEFAULT, ZOOM_LEVELS } from '@canvas/constants/zoom'
 import type { CanvasSize, Size } from '@canvas/types/Canvas'
 import type { Point, Rect } from '@canvas/types/Shapes'
 import { clamp, isMacOs } from '@canvas/utils/util'
 
-/** Keeps a zoom level between the smallest and the largest zoom steps */
-export const clampZoom = (zoom: number): number => clamp(zoom, ZOOM_STEPS[0]!, ZOOM_STEPS[ZOOM_STEPS.length - 1]!)
+/** Keeps a zoom level between the smallest and the largest zoom levels */
+export const clampZoom = (zoom: number): number => clamp(zoom, ZOOM_LEVELS[0], ZOOM_LEVELS[ZOOM_LEVELS.length - 1]!)
 
 /** Bounds of the view: the visible area at zoom 1 and the size of the drawing, which limits the view when its size is fixed */
 export type ViewBounds = {
@@ -84,21 +84,21 @@ export const getNewZoomAndOffset = ({
 } => {
   const newZoom =
     action === 'default'
-      ? ZOOM_STEPS[ZOOM_STEP_DEFAULT]!
+      ? ZOOM_LEVELS[ZOOM_LEVEL_DEFAULT]
       : action === 'zoom'
-        ? ZOOM_STEPS[
+        ? ZOOM_LEVELS[
             clamp(
-              ZOOM_STEPS.length -
+              ZOOM_LEVELS.length -
                 1 -
-                ZOOM_STEPS.slice(0)
+                ZOOM_LEVELS.slice(0)
                   .reverse()
                   .findIndex(zoom => zoom <= currentZoom) +
                 1,
               0,
-              ZOOM_STEPS.length - 1
+              ZOOM_LEVELS.length - 1
             )
           ]!
-        : ZOOM_STEPS[clamp(ZOOM_STEPS.findIndex(zoom => zoom >= currentZoom) - 1, 0, ZOOM_STEPS.length - 1)]!
+        : ZOOM_LEVELS[clamp(ZOOM_LEVELS.findIndex(zoom => zoom >= currentZoom) - 1, 0, ZOOM_LEVELS.length - 1)]!
 
   const centerPoint: Point = [bounds.canvasSize.realWidth / 2, bounds.canvasSize.realHeight / 2]
 
@@ -167,9 +167,10 @@ export const getCurrentView = (settings: UtilsSettings): Rect => {
     canvasOffset
   } = settings
 
+  // 0 - offset is 0, not -0, at the origin
   return {
-    x: -canvasOffset[0],
-    y: -canvasOffset[1],
+    x: 0 - canvasOffset[0],
+    y: 0 - canvasOffset[1],
     width: width / canvasZoom / scaleRatioWithNoZoom,
     height: height / canvasZoom / scaleRatioWithNoZoom
   }

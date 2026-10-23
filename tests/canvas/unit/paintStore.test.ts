@@ -327,8 +327,9 @@ describe('consistency rules', () => {
     expect(store.getState().interaction.selectionMode).toEqual({ mode: 'default' })
   })
 
-  it('notifies a change of the hover mode only when its values change', () => {
-    const store = createPaintStore()
+  it('notifies a change of the hover mode only when its values change', async () => {
+    const store = await createLoadedStore()
+    store.actions.selectAllShapes()
     const listener = vi.fn()
     store.subscribe(listener)
 
@@ -465,9 +466,13 @@ describe('consistency rules', () => {
   })
 })
 
+/** Context whose paths contain every point, or none */
+const hitContext = (isHit: boolean) =>
+  ({ lineWidth: 1, isPointInPath: () => isHit, isPointInStroke: () => isHit }) as unknown as CanvasRenderingContext2D
+
 describe('selection frame', () => {
   // no point of the shapes is ever found: only the shapes inside the frame are selected
-  const ctx = { lineWidth: 1, isPointInPath: () => false, isPointInStroke: () => false } as unknown as CanvasRenderingContext2D
+  const ctx = hitContext(false)
 
   it('selects the shapes inside the frame, and keeps the selection while they stay the same', async () => {
     const store = await createLoadedStore()
@@ -489,5 +494,27 @@ describe('selection frame', () => {
 
     store.refreshSelectedShapes(ctx, [650, 260])
     expect(getSelectedIds(store)).toEqual(getIds(store))
+  })
+})
+
+describe('hovered shape', () => {
+  // every point inside the box of a shape is over it
+  const ctx = hitContext(true)
+  const getHoveredShape = (store: PaintStore) => store.getEditorState().interaction.hoveredShape
+
+  it('follows the changes of the hovered shape, and is gone with it', async () => {
+    const store = await createLoadedStore()
+    const [first] = getIds(store)
+    store.refreshHoveredShape(true, ctx, store.getShape(first!)!.computed.center, true)
+    expect(getHoveredShape(store)?.id).toBe(first)
+
+    store.actions.updateShapes([{ id: first!, style: { strokeColor: 'red' } }])
+    expect(getHoveredShape(store)).toBe(store.getShape(first!))
+
+    store.actions.removeShapes([first!])
+    expect(getHoveredShape(store)).toBeUndefined()
+    // the shape put back by undo is under the pointer again
+    store.actions.undo()
+    expect(getHoveredShape(store)?.id).toBe(first)
   })
 })

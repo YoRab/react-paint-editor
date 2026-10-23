@@ -2,13 +2,15 @@ import type { UtilsSettings } from '@canvas/constants/app'
 import { MOVE_TOOL, SELECTION_TOOL } from '@canvas/constants/tools'
 import type { InternalState } from '@canvas/store/types'
 import type { CanvasSize, Resize } from '@canvas/types/Canvas'
-import type { ContextMenuState, EditorState, InteractionState } from '@canvas/types/editor'
+import type { ContextMenuState, EditorState, InteractionState, SelectionHover } from '@canvas/types/editor'
 import type { SelectionModeData } from '@canvas/types/Mode'
-import type { Point, SelectionType, ShapeEntity } from '@canvas/types/Shapes'
+import type { Point, Rect, SelectionType, ShapeEntity } from '@canvas/types/Shapes'
 import type { CustomTool, ToolsType } from '@canvas/types/tools'
 import { shallowEqual } from '@canvas/utils/equality'
 import { getSelectedShapes } from '@canvas/utils/selectedShapes'
+import { isIdleSelectionMode } from '@canvas/utils/selection'
 import { canRemoveShapePoint } from '@canvas/utils/shapes'
+import { getCurrentView } from '@canvas/utils/zoom'
 
 /** The text being edited, shown in a text box over the canvas */
 type TextEdition = { shape: ShapeEntity<'text'>; defaultValue: string[]; settings: UtilsSettings }
@@ -134,6 +136,13 @@ export const createSelectors = () => {
   const keepSelectedShapeIds = keepIfSame<string[]>()
   const selectSelectedShapeIds = memoizeLast((selectedShapes: ShapeEntity[]) => keepSelectedShapeIds(selectedShapes.map(shape => shape.id)))
 
+  const buildHoveredShape = memoizeLast((shapes: ShapeEntity[], id: string | undefined) =>
+    id === undefined ? undefined : shapes.find(shape => shape.id === id)
+  )
+
+  /** The hovered shape in its current version, undefined once it is removed */
+  const selectHoveredShape = ({ document, interaction }: InternalState) => buildHoveredShape(document.shapes, interaction.hoveredShapeId)
+
   const selectWithContextMenu = ({ config }: InternalState) => config.options.withContextMenu && config.mode !== 'viewer' && !config.disabled
 
   /** Image files can be dropped on the canvas when it is edited, and a picture can be added to it */
@@ -141,6 +150,7 @@ export const createSelectors = () => {
     state.config.options.withDropPicture && selectFeatures(state).edition && state.tools.available.some(tool => tool.type === 'picture')
 
   const keepLayout = keepIfSame<EditorState['layout']>()
+  const keepVisibleArea = keepIfSame<Rect>()
   const keepView = keepIfSame<EditorState['view']>()
   const keepHistory = keepIfSame<EditorState['history']>()
   const keepClipboard = keepIfSame<EditorState['clipboard']>()
@@ -159,6 +169,10 @@ export const createSelectors = () => {
       clientPosition: selectionMode.clientPosition
     }
   })
+
+  /** During a gesture, the hover mode stays the one of the press: it gives the cursor and the hovered anchor */
+  const selectSelectionHover = ({ interaction }: InternalState): SelectionHover | undefined =>
+    interaction.hoverMode.mode === 'default' || !isIdleSelectionMode(interaction.selectionMode) ? undefined : interaction.hoverMode
 
   /** State exposed to the editors */
   const selectEditorState = memoizeLast((state: InternalState): EditorState => {
@@ -182,8 +196,10 @@ export const createSelectors = () => {
         offset,
         displayWidth: view.canvasSize.width,
         displayHeight: view.canvasSize.height,
-        scaleRatio: view.canvasSize.scaleRatio * zoom
+        scaleRatio: view.canvasSize.scaleRatio * zoom,
+        visibleArea: keepVisibleArea(getCurrentView(selectSettings(state)))
       }),
+      options: config.options,
       gridGap: view.gridGap,
       shapes: document.shapes,
       selection: document.selectedShape,
@@ -198,9 +214,11 @@ export const createSelectors = () => {
       }),
       clipboard: keepClipboard({ hasContent: state.clipboard !== undefined }),
       withContextMenu,
+      withDropPicture: selectWithDropPicture(state),
       interaction: keepInteraction({
         mode: interaction.selectionMode.mode,
-        hoveredShape: interaction.hoveredShape,
+        hoveredShape: selectHoveredShape(state),
+        selectionHover: selectSelectionHover(state),
         selectionFrame: interaction.selectionFrame?.frame,
         modifiers: interaction.modifiers,
         isPanning: interaction.panStart !== undefined,
@@ -254,6 +272,7 @@ export const createSelectors = () => {
     selectSettings,
     selectActiveTool,
     selectSelectedShapes,
+    selectHoveredShape,
     selectWithContextMenu,
     selectWithDropPicture,
     selectEditorState,

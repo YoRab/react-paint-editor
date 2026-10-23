@@ -1,4 +1,3 @@
-import { createPaintStore } from '@canvas/store/paintStore'
 import { memoizeLast } from '@canvas/store/selectors'
 import { describe, expect, it, vi } from 'vitest'
 import { createLoadedStore, stubPath2D } from './helpers'
@@ -95,11 +94,12 @@ describe('selectors', () => {
     expect(store.selectors.selectCanvasView(store.getState()).textEdition).toMatchObject({ shape: { type: 'text' }, defaultValue: ['hello'] })
   })
 
-  it('gives the cursor of the canvas', () => {
-    const store = createPaintStore()
+  it('gives the cursor of the canvas', async () => {
+    const store = await createLoadedStore()
     const getCursor = () => store.selectors.selectCursor(store.getState())
     expect(getCursor()).toBe('default')
 
+    store.actions.selectAllShapes()
     store.setHoverMode({ mode: 'translate' })
     expect(getCursor()).toBe('move')
     store.setHoverMode({ mode: 'resize', anchor: [1, 1] })
@@ -112,6 +112,41 @@ describe('selectors', () => {
     expect(getCursor()).toBe('crosshair')
     store.setPanStart({ start: [0, 0], originalOffset: [0, 0] })
     expect(getCursor()).toBe('grabbing')
+  })
+
+  it('gives the part of the selection under the pointer, between the gestures', async () => {
+    const store = await createLoadedStore()
+    const getSelectionHover = () => store.getEditorState().interaction.selectionHover
+
+    // there is no selection to hover
+    store.setHoverMode({ mode: 'translate' })
+    expect(getSelectionHover()).toBeUndefined()
+
+    store.actions.selectAllShapes()
+    store.setHoverMode({ mode: 'translate' })
+    expect(getSelectionHover()).toEqual({ mode: 'translate' })
+    // a change of the state out of the interaction keeps it
+    const { interaction } = store.getEditorState()
+    store.actions.setGridGap(20)
+    expect(store.getEditorState().interaction).toBe(interaction)
+
+    store.setHoverMode({ mode: 'resize', anchor: [1, 0.5] })
+    expect(getSelectionHover()).toEqual({ mode: 'resize', anchor: [1, 0.5] })
+    store.setHoverMode({ mode: 'resize', anchor: 2 })
+    expect(getSelectionHover()).toEqual({ mode: 'resize', anchor: 2 })
+    store.setHoverMode({ mode: 'rotate' })
+    expect(getSelectionHover()).toEqual({ mode: 'rotate' })
+
+    // the gesture started by a press is given by the mode
+    store.setSelectionMode({ mode: 'selectionFrame' })
+    expect(getSelectionHover()).toBeUndefined()
+    store.setSelectionMode({ mode: 'default' })
+    expect(getSelectionHover()).toEqual({ mode: 'rotate' })
+
+    // the hover of the selection goes with it, before any move: the cursor too
+    store.actions.clearSelection()
+    expect(getSelectionHover()).toBeUndefined()
+    expect(store.selectors.selectCursor(store.getState())).toBe('default')
   })
 
   it('keeps the settings while the view and the options are unchanged', async () => {

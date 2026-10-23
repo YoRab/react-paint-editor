@@ -94,6 +94,22 @@ export const ZoomAndPan: Story = {
     await user.click(view.getByRole('button', { name: '50%' }))
     expect(getView().zoom).toBe(1)
 
+    // the buttons are disabled at the first and the last zoom levels
+    for (const zoom of [2, 4, 8]) {
+      await user.click(view.getByRole('button', { name: 'Zoom in' }))
+      expect(getView().zoom).toBe(zoom)
+    }
+    expect(view.getByRole('button', { name: 'Zoom in' })).toBeDisabled()
+    expect(view.getByRole('button', { name: 'Zoom out' })).toBeEnabled()
+    for (const zoom of [4, 2, 1, 0.5, 0.25, 0.1, 0.05]) {
+      await user.click(view.getByRole('button', { name: 'Zoom out' }))
+      expect(getView().zoom).toBe(zoom)
+    }
+    expect(view.getByRole('button', { name: 'Zoom out' })).toBeDisabled()
+    expect(view.getByRole('button', { name: 'Zoom in' })).toBeEnabled()
+    await user.click(view.getByRole('button', { name: '5%' }))
+    expect(getView().zoom).toBe(1)
+
     // =====================================================================
     // Pinch: two fingers moving apart zoom in
     // =====================================================================

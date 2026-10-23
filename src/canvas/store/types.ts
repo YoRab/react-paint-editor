@@ -1,8 +1,9 @@
-import type { AppOptions, OptionalOptions } from '@canvas/constants/app'
+import type { OptionalOptions } from '@canvas/constants/app'
 import type { ShapesState } from '@canvas/store/shapesReducer'
 import type { CanvasSize } from '@canvas/types/Canvas'
+import type { ResolvedOptions } from '@canvas/types/editor'
 import type { HoverModeData, SelectionModeData } from '@canvas/types/Mode'
-import type { Point, SelectionType, ShapeEntity, ShapeInput } from '@canvas/types/Shapes'
+import type { Point, SelectionType, ShapeInput } from '@canvas/types/Shapes'
 import type { CustomTool } from '@canvas/types/tools'
 
 export type UseReactPaintProps = {
@@ -13,9 +14,6 @@ export type UseReactPaintProps = {
   disabled?: boolean | undefined
   options?: OptionalOptions | undefined
 }
-
-/** Options of the hook, with their defaults. The functions are kept out of the state, so that options can be compared by value */
-export type ResolvedOptions = Omit<AppOptions, 'clearCallback' | 'resolvePictureSrc'>
 
 export type PaintConfig = {
   width: number
@@ -45,7 +43,8 @@ export type InternalState = {
   view: { canvasSize: CanvasSize; transformation: CanvasTransformation; gridGap: number }
   interaction: {
     selectionMode: SelectionModeData<Point | number>
-    hoveredShape: ShapeEntity | undefined
+    /** The hovered shape is read from the drawing by its id: it follows the changes of its shape, and goes with it */
+    hoveredShapeId: string | undefined
     /** What the cursor would do on the selection: it gives the cursor of the canvas */
     hoverMode: HoverModeData
     selectionFrame: SelectionFrameState | undefined

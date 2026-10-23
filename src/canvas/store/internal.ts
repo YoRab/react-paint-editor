@@ -21,6 +21,8 @@ export const createReactPaint = (store: PaintStore): ReactPaint => {
     getShape: store.getShape,
     getBounds: store.getBounds,
     getShapesAt: store.getShapesAt,
+    toCanvasPosition: store.toCanvasPosition,
+    toClientPosition: store.toClientPosition,
     resetCanvas: (shapes, clearHistory) => void store.resetCanvas(shapes, clearHistory),
     getCurrentImage: store.getCurrentImage,
     getCurrentData: store.getCurrentData,

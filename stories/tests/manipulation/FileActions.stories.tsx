@@ -140,6 +140,14 @@ export const FileActions: Story = {
       await waitFor(() => expect(view.getAllByText('Le chargement a échoué')).toHaveLength(2))
       expect(getState().shapes).toHaveLength(2)
 
+      // the pictures of a project which cannot be loaded are left out, with a single message
+      const refusedPicture = (id: string) => ({ type: 'picture', id, x: 0, y: 0, width: 100, height: 100, src: 'javascript:void(0)' })
+      const withRefusedPictures = { shapes: [{ ...SQUARE, id: 'kept' }, refusedPicture('first-picture'), refusedPicture('second-picture')] }
+      await loadProject(new File([JSON.stringify(withRefusedPictures)], 'drawing.json', { type: 'application/json' }))
+      // findByText fails when several messages are shown
+      expect(await view.findByText("Certaines images n'ont pas pu être chargées")).toBeInTheDocument()
+      expect(getState().shapes.map(shape => shape.id)).toEqual(['kept'])
+
       // =====================================================================
       // The export of an empty drawing fails with a message
       // =====================================================================
@@ -149,7 +157,8 @@ export const FileActions: Story = {
       await exportView('Exporter le dessin entier')
       expect(downloads).toHaveLength(0)
       expect(await view.findByText("L'export a échoué : No image found to export")).toBeInTheDocument()
-      expect(warn).toHaveBeenCalledTimes(3)
+      // the 3 failures of the editor, and the canvas about each picture left out
+      expect(warn).toHaveBeenCalledTimes(5)
 
       // the messages go away after a few seconds
       await waitFor(() => expect(view.queryByText('Fichier chargé !')).toBeNull(), { timeout: 5000 })

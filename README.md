@@ -193,7 +193,9 @@ const zoom = usePaintState(paint, state => state.view.zoom)
 const { shapes, selectedShapes } = usePaintState(paint, state => ({ shapes: state.shapes, selectedShapes: state.selectedShapes }), shallowEqual)
 ```
 
-The handle also gives `actions` (the commands), `registerEvent` / `unregisterEvent`, `batch`, `getShape`, `getBounds`, `getShapesAt`, `resetCanvas`, `getCurrentImage` and `getCurrentData`. See [Driving the canvas from the code](#driving-the-canvas-from-the-code).
+The handle also gives `actions` (the commands), `registerEvent` / `unregisterEvent`, `batch`, `getShape`, `getBounds`, `getShapesAt`, `toCanvasPosition` / `toClientPosition`, `resetCanvas`, `getCurrentImage` and `getCurrentData`. See [Driving the canvas from the code](#driving-the-canvas-from-the-code).
+
+Besides the drawing, the state gives the options in effect (`state.options`), whether dropped images are added (`state.withDropPicture`) and the part of the drawing displayed (`state.view.visibleArea`). The zoom stays between the first and the last of the `ZOOM_LEVELS`, the levels of `actions.setZoom`.
 
 ### Custom Editor
 
@@ -269,6 +271,10 @@ paint.actions.rotateShapes([rectId, textId], Math.PI / 12)
 paint.actions.resizeShapes([textId], { x: 300, y: 300, width: 200, height: 80 })
 
 paint.registerEvent('shapeClicked', (shape, { canvasPosition }) => console.log(shape.id, shape.data, canvasPosition))
+
+// a popover placed at the top right corner of a shape, with position: fixed
+const box = paint.getBounds([rectId])
+const popoverPosition = box && paint.toClientPosition([box.x + box.width, box.y])
 ```
 
 | Operation | API |
@@ -287,13 +293,15 @@ paint.registerEvent('shapeClicked', (shape, { canvasPosition }) => console.log(s
 | Options and settings | `actions.setOptions(options)`, `actions.resetOptions()`, `actions.resetSettings()` |
 | Data and images | `actions.loadData(data)`, `actions.loadFile(file)`, `paint.getCurrentData()`, `paint.getCurrentImage({ view, format, quality, backgroundColor, backgroundImage })`, `actions.exportPicture`, `actions.exportData` |
 | Read the shapes | `paint.getShape(id)`, `paint.getBounds(ids)`, `paint.getShapesAt(point)`, `usePaintState(paint, state => state.shapes)` |
+| Positions on the screen | `paint.toClientPosition(point)`, `paint.toCanvasPosition({ x, y })`, `state.view.visibleArea` |
 
 - The actions changing shapes add a step to the history. Give `{ save: false }` for continuous changes, then call `actions.saveShapes()`, and `{ source: 'remote' }` to apply changes received from elsewhere: `dataChanged` gives this source.
 - `addShapes` and `updateShapes` check their input and throw an error, without changing anything, when a shape is invalid. The style of a new shape is completed with the default style of its tool.
 - The `data` field of a shape holds data of your application. It is not drawn, and is kept in the history, the copies and the exported data.
 - The exported data (`getCurrentData`, `dataChanged`, `exportData`) round the positions and the sizes to 3 decimals, and the angles and the factors (`rotation`, `scaleX`, `scaleY`, `ratio`) to 6, which changes nothing visible. The shapes keep their full precision while drawing, and `data` and `style` are exported as they are.
 - Coordinates are in the units of the drawing, angles are in radians, clockwise. The actions work in every mode: `viewer` and `disabled` only restrict the user.
-- `shapeClicked` and `shapeHovered` are also emitted in viewer mode, to make the shapes clickable.
+- `shapeClicked` and `shapeHovered` are also emitted in viewer mode, to make the shapes clickable. `canvasClicked` and `canvasDoubleClicked` are emitted for any click on the drawing, with the shape under the pointer or `undefined`, for instance to add a pin to an empty area.
+- `addShapes` returns before the pictures are loaded: `pictureLoaded` tells when one is drawn. `pictureLoadFailed` tells that the image of a picture cannot be loaded: a picture of loaded data is then left out.
 - `dataChanged(data, source, changes)` gives the shapes added, updated (with their previous version) and removed since the previous state, to send only what changed: `changes.added`, `changes.updated`, `changes.removed`, and `changes.reordered`. An undo gives the reverse changes.
 - `setOptions` overrides options of `useReactPaint` until `resetOptions`. `resetSettings` restores what was changed while editing: the default styles of the tools, the grid, the zoom and the active tool.
 
@@ -326,7 +334,7 @@ The other properties of the canvas elements are not set inline, or keep the canv
 
 - Select precise slices of the state: a component reading `state.history.canUndo` does not render while a shape is dragged, one reading `state.shapes` does.
 - When a selector builds an object or an array, give `shallowEqual` (or your own equality function) as third argument, otherwise the component renders on each change of the state.
-- Read `state.interaction` (hovered shape, selection frame, modifier keys) only when you need it: it changes on each move of the pointer.
+- Read `state.interaction` (gesture running, hovered shape and part of the selection, selection frame, modifier keys) only when you need it: it changes on each move of the pointer.
 - In event handlers, read the state with `paint.getState()` instead of subscribing to it.
 
 ### Upgrading from 0.x

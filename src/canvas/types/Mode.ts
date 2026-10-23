@@ -1,3 +1,4 @@
+import type { SelectionHover } from './editor'
 import type { Point, SelectionType } from './Shapes'
 
 export type SelectionModeDefault = {
@@ -64,27 +65,5 @@ export type SelectionModeData<AnchorType extends Point | number> =
   | SelectionModePreview
   | SelectionModeContextMenu<AnchorType>
 
-export type HoverModeData = { outOfView?: boolean } & (
-  | {
-      mode: 'default'
-    }
-  | {
-      mode: 'selectionFrame'
-    }
-  | {
-      mode: 'resize'
-      anchor: Point | number
-    }
-  | {
-      mode: 'brush'
-    }
-  | {
-      mode: 'rotate'
-    }
-  | {
-      mode: 'translate'
-    }
-  | {
-      mode: 'textedition'
-    }
-)
+/** The part of the selection under the pointer, or 'default' away from it */
+export type HoverModeData = { outOfView?: boolean } & ({ mode: 'default' } | SelectionHover)

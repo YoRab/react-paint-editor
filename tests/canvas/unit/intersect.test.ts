@@ -2,8 +2,10 @@ import type { UtilsSettings } from '@canvas/constants/app'
 import { SELECTION_RESIZE_ANCHOR_POSITIONS } from '@canvas/constants/shapes'
 import type { Point, ShapeEntity, StyleShape } from '@canvas/types/Shapes'
 import {
+  canvasToClientPosition,
   checkSelectionFrameCollision,
   checkSelectionIntersection,
+  clientToCanvasPosition,
   getCursorPositionInTransformedCanvas,
   hasPointerMoved,
   shouldCancelLongPress
@@ -181,17 +183,28 @@ describe('checkSelectionIntersection', () => {
   })
 })
 
-describe('getCursorPositionInTransformedCanvas', () => {
+describe('positions of the page and of the drawing', () => {
   const settings = { canvasSize: { width: 1000, height: 600, scaleRatio: 2 }, canvasOffset: [30, 40] } as unknown as UtilsSettings
+  // the canvas is displayed half as large as its size, from (10, 20) of the page
+  const rect = { left: 10, top: 20, width: 500, height: 300 }
 
   it('converts a position of the page into the drawing, through the size of the canvas on the page, the scale and the offset', () => {
-    // the canvas is displayed half as large as its size, from (10, 20) of the page
-    const canvas = { getBoundingClientRect: () => ({ left: 10, top: 20, width: 500, height: 300 }) } as HTMLElement
+    const canvas = { getBoundingClientRect: () => rect } as HTMLElement
     expect(getCursorPositionInTransformedCanvas({ clientX: 260, clientY: 170 }, canvas, settings)).toEqual([220, 110])
   })
 
-  it('places a canvas which is not mounted at the top left corner of the page, at its size', () => {
-    expect(getCursorPositionInTransformedCanvas({ clientX: 260, clientY: 170 }, null, settings)).toEqual([100, 45])
+  it('converts a point of the drawing into a position of the page, and back', () => {
+    expect(canvasToClientPosition([220, 110], rect, settings)).toEqual({ x: 260, y: 170 })
+    for (const point of [
+      [0, 0],
+      [-30, -40],
+      [123.5, 456.25]
+    ] as Point[]) {
+      const { x, y } = canvasToClientPosition(point, rect, settings)
+      const [canvasX, canvasY] = clientToCanvasPosition({ clientX: x, clientY: y }, rect, settings)
+      expect(canvasX).toBeCloseTo(point[0])
+      expect(canvasY).toBeCloseTo(point[1])
+    }
   })
 })
 

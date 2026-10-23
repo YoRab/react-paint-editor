@@ -4,6 +4,7 @@ import { SELECTION_TOOL } from '@canvas/constants/tools'
 import type { PaintStore } from '@canvas/store/paintStore'
 import type { Point } from '@canvas/types/Shapes'
 import type { CustomTool } from '@canvas/types/tools'
+import { createClickTracker } from '@canvas/utils/click'
 import {
   checkCurveLinesSelectionIntersection,
   checkPolygonLinesSelectionIntersection,
@@ -25,7 +26,6 @@ import { clamp } from '@canvas/utils/util'
 import { isCursorInsideMask } from '@canvas/utils/zoom'
 import { useEffect } from 'react'
 
-const DOUBLE_CLICK_DELAY_MS = 300
 const LONG_PRESS_DELAY_MS = 500
 
 /** Speed of the auto scroll on one axis, when the cursor of a selection frame is close to a border */
@@ -54,7 +54,8 @@ const useDrawableCanvas = (store: PaintStore, canvas: HTMLCanvasElement | null) 
     if (!canvas) return
 
     let longPressTimeout: { timeout: ReturnType<typeof setTimeout>; startPosition: { clientX: number; clientY: number } } | null = null
-    let lastClickTimestamp: number | undefined
+    // the double clicks edit a text and add a point to a polygon or a curve
+    const clicks = createClickTracker()
     // the pointers down on the canvas: more than one is a pinch, handled by useZoom
     const activePointers = new Set<number>()
     // the pointer which started the current gesture
@@ -245,10 +246,13 @@ const useDrawableCanvas = (store: PaintStore, canvas: HTMLCanvasElement | null) 
       activePointers.add(e.pointerId)
       if (activePointers.size > 1) {
         if (longPressTimeout) clearTimeout(longPressTimeout.timeout)
+        // a pinch is not a click, as for the click events
+        clicks.reset()
         return
       }
 
       gesturePointerId = e.pointerId
+      clicks.press(e)
       try {
         canvas.setPointerCapture(e.pointerId)
       } catch {
@@ -397,19 +401,17 @@ const useDrawableCanvas = (store: PaintStore, canvas: HTMLCanvasElement | null) 
 
     /**
      * Ends the gesture when its pointer is released, cancelled by the browser or loses its capture.
-     * A release over the canvas with the main button is a click, which detects the double clicks
+     * A release over the canvas may end a click or a double click
      */
     const handlePointerEnd = (e: PointerEvent) => {
       activePointers.delete(e.pointerId)
       if (e.pointerId !== gesturePointerId) return
       gesturePointerId = undefined
       // read before handleUp, whose renders would force a layout
-      const isClick = e.type === 'pointerup' && e.button === 0 && isOverElement(e, canvas)
+      const isReleasedOverCanvas = e.type === 'pointerup' && e.button === 0 && isOverElement(e, canvas)
       handleUp(e)
-      if (!isClick) return
-      const timestamp = Date.now()
-      if (lastClickTimestamp && timestamp < lastClickTimestamp + DOUBLE_CLICK_DELAY_MS) handleDoubleClick(e)
-      lastClickTimestamp = timestamp
+      if (!isReleasedOverCanvas) clicks.reset()
+      else if (clicks.release(e) === 'doubleClick') handleDoubleClick(e)
     }
 
     const handleLeave = () => {

@@ -42,11 +42,12 @@ const renderSelectionCanvas = (
   state: InternalState,
   settings: UtilsSettings,
   activeTool: ReturnType<PaintStore['selectors']['selectActiveTool']>,
+  hoveredShape: ShapeEntity | undefined,
   selectionWidth: number,
   selectionColor: string
 ) => {
   const { selectedShape } = state.document
-  const { selectionMode, hoveredShape, hoverMode, selectionFrame } = state.interaction
+  const { selectionMode, hoverMode, selectionFrame } = state.interaction
   selectionCtx.reset()
   clipMask(selectionCtx, settings)
 
@@ -151,7 +152,7 @@ const useCanvasRenderer = ({ store, drawCanvas, selectionCanvasRef, selectionCol
         state.document.selectedShape,
         store.getSettings(state),
         state.interaction.selectionMode,
-        state.interaction.hoveredShape,
+        store.selectors.selectHoveredShape(state),
         state.interaction.hoverMode,
         state.interaction.selectionFrame,
         store.selectors.selectActiveTool(state),
@@ -165,6 +166,7 @@ const useCanvasRenderer = ({ store, drawCanvas, selectionCanvasRef, selectionCol
             state,
             store.getSettings(state),
             store.selectors.selectActiveTool(state),
+            store.selectors.selectHoveredShape(state),
             selectionWidth,
             selectionColor
           )

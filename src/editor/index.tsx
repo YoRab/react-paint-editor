@@ -6,6 +6,7 @@ import SettingsBar from '@editor/components/settings/SettingsBar'
 import ZoomPanel from '@editor/components/settings/ZoomPanel'
 import Toolbar from '@editor/components/toolbox/Toolbar'
 import { DEFAULT_EDITOR_OPTIONS, type EditorOptions } from '@editor/constants/options'
+import useDebounce from '@editor/hooks/useDebounce'
 import useSnackbar from '@editor/hooks/useSnackbar'
 import { withDefaults } from '@editor/utils/util'
 import { type CSSProperties, type ReactNode, useCallback, useEffect, useRef, useState } from 'react'
@@ -144,6 +145,11 @@ const Editor = ({ paint, className, style, options, children }: EditorComponentP
     () => paint.registerEvent('pictureDropFailed', () => addSnackbar({ type: 'error', text: 'Le chargement a échoué' })),
     [paint, addSnackbar]
   )
+
+  const showPictureLoadFailed = useCallback(() => addSnackbar({ type: 'error', text: "Certaines images n'ont pas pu être chargées" }), [addSnackbar])
+  // the pictures left out of the same loaded data give a single message
+  const reportPictureLoadFailed = useDebounce(showPictureLoadFailed, 0)
+  useEffect(() => paint.registerEvent('pictureLoadFailed', reportPictureLoadFailed), [paint, reportPictureLoadFailed])
 
   // the upload of a picture also covers the drop of a file on the canvas: the option comes back to the props afterwards
   useEffect(() => {
