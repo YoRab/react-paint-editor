@@ -150,11 +150,13 @@ type BuildShapeOptions = {
 export const buildShapeEntity = (input: ShapeInput, { ctx, settings, tools, usedIds, completeStyle }: BuildShapeOptions): ShapeEntity => {
   const id = typeof input.id === 'string' && input.id && !usedIds.has(input.id) ? input.id : createShapeId(input.type)
   usedIds.add(id)
-  const style = completeStyle ? { ...getToolDefaultStyle(findShapeTool(tools, input)), ...input.style } : input.style
+  const tool = completeStyle ? findShapeTool(tools, input) : undefined
+  const style = tool ? { ...getToolDefaultStyle(tool), ...input.style } : input.style
   const shape = normalizeGeometry({ ...input, id, ...(style ? { style } : {}) })
   switch (shape.type) {
     case 'text':
-      return refreshShape(sizeText(ctx, shape), settings)
+      // a text given without its size takes the font size of its tool
+      return refreshShape(sizeText(ctx, shape, tool?.type === 'text' ? tool.settings.fontSize?.default : undefined), settings)
     case 'picture':
       return refreshShape({ ...shape, img: new Image() }, settings)
     default:

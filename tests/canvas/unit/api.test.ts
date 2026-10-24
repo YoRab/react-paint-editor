@@ -94,6 +94,17 @@ describe('addShapes', () => {
     expect(getShape<'text'>(store, byWidth!).fontSize).toBeCloseTo(20)
   })
 
+  it('gives the font size of its tool to a text without size', () => {
+    const store = createPaintStore()
+    store.actions.updateToolSettings('react-paint-text', 'fontSize', 50)
+    const [bySize, byFontSize] = store.actions.addShapes([
+      { type: 'text', x: 0, y: 0, value: ['Hello'] },
+      { type: 'text', x: 0, y: 0, value: ['Hello'], fontSize: 20 }
+    ])
+    expect(getShape<'text'>(store, bySize!)).toMatchObject({ fontSize: 50, width: 5 * 50 * 0.6, height: 50 })
+    expect(getShape<'text'>(store, byFontSize!).fontSize).toBe(20)
+  })
+
   it('gives the default font size to a text without characters, which cannot be fitted to its width', () => {
     const store = createPaintStore()
     const [empty] = store.actions.addShapes([{ type: 'text', x: 0, y: 0, value: [''], width: 100 }])

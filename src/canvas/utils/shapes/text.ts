@@ -78,14 +78,18 @@ export const fitTextFontSize = <T extends DrawableShape<'text'>>(ctx: CanvasRend
   return { ...text, fontSize, height, ratio: text.width / height }
 }
 
-/** Completes the size of a text which misses it: from its width, from its font size, or else with the default font size */
-export const sizeText = <T extends TextShapeInput>(ctx: CanvasRenderingContext2D, text: T): T & DrawableShape<'text'> => {
+/** Completes the size of a text which misses it: from its width, from its font size, or else with the given default font size */
+export const sizeText = <T extends TextShapeInput>(
+  ctx: CanvasRenderingContext2D,
+  text: T,
+  defaultFontSize = STYLE_FONT_SIZE_DEFAULT
+): T & DrawableShape<'text'> => {
   type SizedText = T & DrawableShape<'text'>
   if (text.width !== undefined && text.height !== undefined && text.fontSize !== undefined) return text as SizedText
   if (text.width !== undefined && text.fontSize === undefined) return fitTextFontSize(ctx, text as SizedText)
   const { fontBold = false, fontItalic = false, fontFamily } = text.style ?? {}
   const lines = getTextLineCount(text.value)
-  const fontSize = text.fontSize ?? (text.height !== undefined ? text.height / lines : STYLE_FONT_SIZE_DEFAULT)
+  const fontSize = text.fontSize ?? (text.height !== undefined ? text.height / lines : defaultFontSize)
   const width = text.width ?? calculateTextWidth(ctx, text.value, fontSize, fontBold, fontItalic, fontFamily)
   const height = text.height ?? fontSize * lines
   return { ...text, fontSize, width, height, ratio: width / height } as SizedText
