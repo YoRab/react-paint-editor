@@ -7,7 +7,7 @@ export default defineConfig({
     tsconfigPaths: true
   },
   build: {
-    target: 'es2020',
+    target: 'es2022',
     cssMinify: 'lightningcss',
     emptyOutDir: false,
     lib: {

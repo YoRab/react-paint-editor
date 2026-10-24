@@ -344,7 +344,7 @@ Version 1 replaces `editorProps` and `canvasProps` with a single handle and move
 ## Compatibility
 
 - **React**: 18 or 19, the only (peer) dependencies.
-- **Browsers**: Chrome and Edge 98+, Firefox 94+, Safari 15.4+, with a mouse, a pen or touch (pinch to zoom). The automated tests run in Chromium.
+- **Browsers**: Chrome and Edge 99+, Firefox 113+, Safari 17.2+, with a mouse, a pen or touch (pinch to zoom). The automated tests run in Chromium.
 - **Server-side rendering**: the components can be rendered on the server, the canvas draws once hydrated. The package has no `'use client'` directive: with the Next.js App Router, import it from a `'use client'` file.
 
 ## Documentation

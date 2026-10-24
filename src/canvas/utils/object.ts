@@ -48,10 +48,8 @@ export const mergeWith = (
   const merged: Record<string, unknown> = { ...target }
 
   for (const key in source) {
-    // biome-ignore lint/suspicious/noPrototypeBuiltins: be compliant with es2020
-    if (source.hasOwnProperty(key)) {
-      // biome-ignore lint/suspicious/noPrototypeBuiltins: be compliant with es2020
-      if (merged.hasOwnProperty(key)) {
+    if (Object.hasOwn(source, key)) {
+      if (Object.hasOwn(merged, key)) {
         merged[key] = customMergeFn(merged[key], source[key], key) ?? mergeWith(customMergeFn, merged[key], source[key])
       } else {
         merged[key] = source[key]
@@ -80,8 +78,7 @@ export const isEqual = (a: unknown, b: unknown): boolean => {
   const recordA = a as Record<string, unknown>
   const recordB = b as Record<string, unknown>
   for (const key of keysA) {
-    // biome-ignore lint/suspicious/noPrototypeBuiltins: be compliant with es2020
-    if (!Object.prototype.hasOwnProperty.call(recordB, key) || !isEqual(recordA[key], recordB[key])) {
+    if (!Object.hasOwn(recordB, key) || !isEqual(recordA[key], recordB[key])) {
       return false
     }
   }

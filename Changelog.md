@@ -84,6 +84,7 @@ Breaking changes, see the [migration guide](./MIGRATION.md).
 - security: pictures larger than 16384 pixels and data files larger than 100 MB are refused
 - fix the title of a group of tools being rendered as HTML when its tools have no icon
 - support React 19
+- target es2022 instead of es2020. The supported browsers are Chrome and Edge 99+, Firefox 113+ and Safari 17.2+, see the README
 
 ## V0.18.1
 - fix opacity problems with line and arrows
