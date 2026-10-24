@@ -21,7 +21,7 @@ import { createCurve, drawCurve, refreshCurve, resizeCurve } from './curve'
 import { createEllipse, drawEllipse, refreshEllipse, resizeEllipse, resizeEllipseInGroup } from './ellipse'
 import { buildGroupResizeContext, type GroupResizeContext, getGroupResizeContext } from './group'
 import { createLine, drawLine, refreshLine, resizeLine, resizeLinePolygonCurveInGroup } from './line'
-import { expandRect } from './path'
+import { expandRect, getStrokeMargin } from './path'
 import { drawPicture, refreshPicture, resizePicture, resizePictureInGroup } from './picture'
 import { createPolygon, drawPolygon, refreshPolygon, resizePolygon } from './polygon'
 import { createRectangle, drawRect, refreshRect, resizeRect, resizeRectInGroup } from './rectangle'
@@ -144,12 +144,13 @@ const getLayerContext = (width: number, height: number, canvas: HTMLCanvasElemen
 
 /**
  * Margin around the outer borders of a shape, in the units of the drawing: the arrows of a line and the glyphs of a text
- * go beyond them, and the outer borders of a curve leave out the half of its stroke
+ * go beyond them, and the outer borders of a curve leave out its stroke. The outer borders of the other shapes hold their stroke
  */
 const getLayerMargin = (shape: ShapeEntity) => {
   if (shape.type === 'text') return shape.fontSize / 4
   const lineWidth = shape.style?.lineWidth ?? SELECTION_DEFAULT_WIDTH
-  return shape.type === 'line' ? 10 + lineWidth * 2 : lineWidth / 2
+  if (shape.type === 'line') return 10 + lineWidth * 2
+  return shape.type === 'curve' ? getStrokeMargin(shape, lineWidth) : 0
 }
 
 /** Margin of the layers in pixels, for the antialiasing */

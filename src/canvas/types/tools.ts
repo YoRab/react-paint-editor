@@ -144,6 +144,22 @@ export type SettingsLineDash = {
   }
 }
 
+export type SettingsLineJoin = {
+  lineJoin: {
+    values: CanvasLineJoin[]
+    default: CanvasLineJoin
+    hidden?: boolean
+  }
+}
+
+export type SettingsLineCap = {
+  lineCap: {
+    values: CanvasLineCap[]
+    default: CanvasLineCap
+    hidden?: boolean
+  }
+}
+
 export type SettingsLineArrow = {
   lineArrow: {
     values: number[]
@@ -177,39 +193,62 @@ export type SettingsClosedPoints = {
   }
 }
 
-export type ToolsRectSettings = SettingsStrokeColor & SettingsFillColor & SettingsOpacity & SettingsLineWidth & SettingsLineDash
+export type ToolsRectSettings = SettingsStrokeColor &
+  SettingsFillColor &
+  SettingsOpacity &
+  SettingsLineWidth &
+  SettingsLineDash &
+  Partial<SettingsLineJoin>
 
-export type ToolsSquareSettings = SettingsStrokeColor & SettingsFillColor & SettingsOpacity & SettingsLineWidth & SettingsLineDash
-
-export type ToolsCircleSettings = SettingsStrokeColor & SettingsFillColor & SettingsOpacity & SettingsLineWidth & SettingsLineDash
+export type ToolsSquareSettings = ToolsRectSettings
 
 export type ToolsEllipseSettings = SettingsStrokeColor & SettingsFillColor & SettingsOpacity & SettingsLineWidth & SettingsLineDash
 
-export type ToolsTextSettings = SettingsOpacity & SettingsStrokeColor & SettingsFont
-export type ToolsLineSettings = SettingsOpacity & SettingsStrokeColor & SettingsLineWidth & SettingsLineDash & SettingsLineArrow
+export type ToolsCircleSettings = ToolsEllipseSettings
 
-export type ToolsBrushSettings = SettingsOpacity & SettingsStrokeColor & SettingsLineWidth & SettingsLineDash
+export type ToolsTextSettings = SettingsOpacity & SettingsStrokeColor & SettingsFont
+export type ToolsLineSettings = SettingsOpacity &
+  SettingsStrokeColor &
+  SettingsLineWidth &
+  SettingsLineDash &
+  SettingsLineArrow &
+  Partial<SettingsLineCap>
+
+export type ToolsBrushSettings = SettingsOpacity &
+  SettingsStrokeColor &
+  SettingsLineWidth &
+  SettingsLineDash &
+  Partial<SettingsLineJoin & SettingsLineCap>
 
 export type ToolsPolygonSettings = SettingsOpacity &
   SettingsStrokeColor &
   SettingsFillColor &
   SettingsLineWidth &
   SettingsLineDash &
-  SettingsClosedPoints
+  SettingsClosedPoints &
+  Partial<SettingsLineJoin & SettingsLineCap>
 
 export type ToolsCurveSettings = SettingsOpacity &
   SettingsStrokeColor &
   SettingsFillColor &
   SettingsLineWidth &
   SettingsLineDash &
-  SettingsClosedPoints
+  SettingsClosedPoints &
+  Partial<SettingsLineCap>
 
 export type ToolsTriangleSettings = SettingsStrokeColor & SettingsFillColor & SettingsOpacity & SettingsLineWidth & SettingsLineDash
 
 export type ToolsPictureSettings = SettingsOpacity
 
 export type ToolsGroupSettings = Partial<
-  SettingsOpacity & SettingsStrokeColor & SettingsFillColor & SettingsLineWidth & SettingsLineDash & SettingsLineArrow
+  SettingsOpacity &
+    SettingsStrokeColor &
+    SettingsFillColor &
+    SettingsLineWidth &
+    SettingsLineDash &
+    SettingsLineArrow &
+    SettingsLineJoin &
+    SettingsLineCap
 >
 
 export type ToolsSettingsType<T extends ShapeType> = T extends 'rect'

@@ -1,4 +1,5 @@
 import type { UtilsSettings } from '@canvas/constants/app'
+import { MITER_LIMIT } from '@canvas/constants/rendering'
 import type { Circle, DrawableShape, Line, Point, Rect, ShapeEntity } from '@canvas/types/Shapes'
 import { scalePoint } from '@canvas/utils/transform'
 import { type Bounds, getPointsBounds, getRectCorners, rotatePoint } from '@canvas/utils/trigo'
@@ -228,7 +229,8 @@ export const createPolygonPath = (polygon: DrawableShape<'polygon'> | DrawableSh
     path.lineTo(...point)
   }
 
-  if (points.length > 2 && polygon.style?.closedPoints === 1) path.lineTo(...points[0]!)
+  // joined to its first point like its other corners
+  if (points.length > 2 && polygon.style?.closedPoints === 1) path.closePath()
 
   return path
 }
@@ -251,14 +253,18 @@ export const expandRect = (rect: Rect, selectionPadding: number): Rect => {
   }
 }
 
-const getDefaultOuterBorder = (shape: DrawableShape, border: Rect) => {
-  return {
-    x: border.x - (shape.style?.lineWidth ?? 0) / 2,
-    y: border.y - (shape.style?.lineWidth ?? 0) / 2,
-    width: border.width + (shape.style?.lineWidth ?? 0),
-    height: border.height + (shape.style?.lineWidth ?? 0)
-  }
-}
+/**
+ * How far the stroke of a shape goes beyond its path: by the half of its width, further at the corners of its square caps.
+ * The miter joins of the right angles of a rectangle stay within it
+ */
+export const getStrokeMargin = (shape: Pick<DrawableShape, 'style'>, lineWidth = shape.style?.lineWidth ?? 0): number =>
+  (lineWidth / 2) * (shape.style?.lineCap === 'square' ? Math.SQRT2 : 1)
+
+const getDefaultOuterBorder = (shape: DrawableShape, border: Rect) => expandRect(border, getStrokeMargin(shape))
+
+/** Outer borders of a shape with sharp angles: its miter joins go as far as the miter limit */
+export const getSharpOuterBorder = (shape: DrawableShape, border: Rect) =>
+  shape.style?.lineJoin === 'miter' ? expandRect(border, ((shape.style.lineWidth ?? 0) / 2) * MITER_LIMIT) : getDefaultOuterBorder(shape, border)
 
 const getBoundingBox = (outerBorders: Rect, center: Point, rotation = 0) => {
   if (rotation === 0) return outerBorders

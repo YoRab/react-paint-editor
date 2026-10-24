@@ -25,6 +25,12 @@
   display: flex;
 }
 
+/* the panels of the other options are as wide as their content, not as the narrow panel holding them */
+.react-paint-editor-settings-more .react-paint-editor-panel {
+  width: max-content;
+  max-width: none;
+}
+
 .react-paint-editor-zoom-button {
   margin: 0;
 }

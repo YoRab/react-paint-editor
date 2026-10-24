@@ -17,7 +17,9 @@ import {
   boldIcon,
   fontIcon,
   italicIcon,
+  lineCapIcon,
   lineEndIcon,
+  lineJoinIcon,
   lineTypeIcon,
   lineWidthIcon,
   moreIcon,
@@ -34,6 +36,8 @@ import DeleteButton from './DeleteButton'
 import { FontFamilyOption } from './FontFamilyField'
 import LayoutButton from './LayoutButton'
 import { LineArrowOption } from './LineArrowField'
+import { LineCapOption } from './LineCapField'
+import { LineJoinOption } from './LineJoinField'
 import { LineTypeOption } from './LineTypeField'
 import RangeField from './RangeField'
 import SelectField from './SelectField'
@@ -50,8 +54,8 @@ type ToolSettings = Extract<CustomTool, { type: 'polygon' }>['settings'] &
 
 type SettingName = keyof ToolSettings
 
-/** Names of the settings of the given type */
-type SettingsOfType<T> = { [K in SettingName]: ToolSettings[K] extends T ? K : never }[SettingName]
+/** Names of the settings of the given type, optional or not */
+type SettingsOfType<T> = { [K in SettingName]-?: NonNullable<ToolSettings[K]> extends T ? K : never }[SettingName]
 
 /** A field of the settings, shown when the tool has a setting of its name which is not hidden */
 type SettingField = {
@@ -78,6 +82,8 @@ const SETTING_FIELDS: SettingField[] = [
   { field: 'fillColor', kind: 'color', title: 'Couleur de fond' },
   { field: 'lineWidth', kind: 'range', title: 'Epaisseur du trait', icon: lineWidthIcon, unity: 'px' },
   { field: 'lineDash', kind: 'select', title: 'Type de traits', icon: lineTypeIcon, option: LineTypeOption },
+  { field: 'lineJoin', kind: 'select', title: 'Angles du trait', icon: lineJoinIcon, option: LineJoinOption, advanced: true },
+  { field: 'lineCap', kind: 'select', title: 'Extrémités du trait', icon: lineCapIcon, option: LineCapOption, advanced: true },
   { field: 'lineArrow', kind: 'select', title: 'Flèches', icon: lineEndIcon, option: LineArrowOption },
   { field: 'closedPoints', kind: 'select', title: 'Fermer les points', icon: polygonIcon, option: ClosedPointsOption, values: [0, 1] },
   { field: 'fontFamily', kind: 'select', title: 'Police', icon: fontIcon, option: FontFamilyOption },

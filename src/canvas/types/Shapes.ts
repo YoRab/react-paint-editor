@@ -61,7 +61,10 @@ export type StyleShape = {
   lineWidth?: number
   lineDash?: number
   lineArrow?: number
+  /** Ends of the stroke of a line, a brush, an open polygon or an open curve, and of its dashes: 'round' by default */
   lineCap?: CanvasLineCap
+  /** Corners of the stroke of a rectangle, a square, a polygon or a brush: 'round' by default */
+  lineJoin?: CanvasLineJoin
   closedPoints?: number
   fontFamily?: string
   fontItalic?: boolean

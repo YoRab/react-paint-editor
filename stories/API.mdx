@@ -951,8 +951,12 @@ const box = paint.getBounds([rectId])`} />
   opacity?: number
   strokeColor?: string
   lineWidth?: number
-  lineDash?: number
+  lineDash?: number // 0 solid, 1 dots, 2 dashes, 3 long dashes, 4 dashes and dots
   lineArrow?: number
+  // ends of a line, a brush, an open polygon or an open curve, and of the dashes: 'round' by default
+  lineCap?: 'round' | 'butt' | 'square'
+  // corners of a rectangle, a square, a polygon or a brush: 'round' by default
+  lineJoin?: 'round' | 'bevel' | 'miter'
   closedPoints?: number
   fontFamily?: string
   fontItalic?: boolean
@@ -1008,14 +1012,14 @@ const patch: ShapePatch = { id: 'rect_1', width: 200, style: { fillColor: 'red' 
         Type-safe settings for each tool type. Settings vary by shape type:
       </p>
       <ul>
-        <li><code>ToolsRectSettings</code> - Rectangle settings</li>
-        <li><code>ToolsSquareSettings</code> - Square settings</li>
+        <li><code>ToolsRectSettings</code> - Rectangle settings (includes lineJoin)</li>
+        <li><code>ToolsSquareSettings</code> - Square settings (includes lineJoin)</li>
         <li><code>ToolsCircleSettings</code> - Circle settings</li>
         <li><code>ToolsEllipseSettings</code> - Ellipse settings</li>
-        <li><code>ToolsLineSettings</code> - Line settings (includes arrow options)</li>
-        <li><code>ToolsBrushSettings</code> - Brush settings</li>
-        <li><code>ToolsPolygonSettings</code> - Polygon settings (includes closedPoints)</li>
-        <li><code>ToolsCurveSettings</code> - Curve settings (includes closedPoints)</li>
+        <li><code>ToolsLineSettings</code> - Line settings (includes arrow options and lineCap)</li>
+        <li><code>ToolsBrushSettings</code> - Brush settings (includes lineJoin and lineCap)</li>
+        <li><code>ToolsPolygonSettings</code> - Polygon settings (includes closedPoints, lineJoin and lineCap)</li>
+        <li><code>ToolsCurveSettings</code> - Curve settings (includes closedPoints and lineCap)</li>
         <li><code>ToolsTextSettings</code> - Text settings (includes font options)</li>
         <li><code>ToolsPictureSettings</code> - Picture settings</li>
         <li><code>ToolsTriangleSettings</code> - Triangle settings</li>

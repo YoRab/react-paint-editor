@@ -1,3 +1,4 @@
+import { STYLE_FIELDS_SHAPE_TYPES } from '@canvas/constants/shapes'
 import { DEFAULT_TOOLS, SETTINGS_DEFAULT_RECT } from '@canvas/constants/tools'
 import type { CustomTool } from '@canvas/types/tools'
 import { buildAvailableTools, findShapeTool, getToolDefaultStyle } from '@canvas/utils/tools'
@@ -36,6 +37,15 @@ describe('buildAvailableTools', () => {
   })
 })
 
+describe('DEFAULT_TOOLS', () => {
+  it('gives the settings of the joins and of the caps to the tools of the shapes they apply to', () => {
+    for (const field of ['lineJoin', 'lineCap'] as const) {
+      const types = DEFAULT_TOOLS.filter(tool => field in tool.settings).map(tool => tool.type)
+      expect(types.sort()).toEqual([...STYLE_FIELDS_SHAPE_TYPES[field]!].sort())
+    }
+  })
+})
+
 describe('findShapeTool', () => {
   const tools = [
     { type: 'rect', id: 'outlined-rect' },
@@ -53,7 +63,14 @@ describe('findShapeTool', () => {
 describe('getToolDefaultStyle', () => {
   it('makes a style of the default values of the settings of a tool', () => {
     const rectTool = DEFAULT_TOOLS.find(tool => tool.type === 'rect') as CustomTool
-    expect(getToolDefaultStyle(rectTool)).toEqual({ strokeColor: 'black', fillColor: 'transparent', opacity: 100, lineWidth: 1, lineDash: 0 })
+    expect(getToolDefaultStyle(rectTool)).toEqual({
+      strokeColor: 'black',
+      fillColor: 'transparent',
+      opacity: 100,
+      lineWidth: 1,
+      lineDash: 0,
+      lineJoin: 'round'
+    })
   })
 
   it('makes an empty style without tool', () => {

@@ -51,7 +51,14 @@ describe('addShapes', () => {
     const store = createPaintStore()
     const ids = store.actions.addShapes([RECT, { type: 'circle', x: 0, y: 0, radius: 10, style: { strokeColor: 'red' } }])
     expect(getIds(store)).toEqual(ids)
-    expect(getShape(store, ids[0]!).style).toEqual({ strokeColor: 'black', fillColor: 'transparent', opacity: 100, lineWidth: 1, lineDash: 0 })
+    expect(getShape(store, ids[0]!).style).toEqual({
+      strokeColor: 'black',
+      fillColor: 'transparent',
+      opacity: 100,
+      lineWidth: 1,
+      lineDash: 0,
+      lineJoin: 'round'
+    })
     expect(getShape(store, ids[1]!).style?.strokeColor).toBe('red')
     expect(store.getEditorState().history.canUndo).toBe(true)
 

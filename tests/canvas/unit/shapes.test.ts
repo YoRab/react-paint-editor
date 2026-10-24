@@ -4,12 +4,12 @@ import type { CustomTool } from '@canvas/types/tools'
 import { canRemoveShapePoint, createShape, isStyleFieldOfShape } from '@canvas/utils/shapes'
 import { addNewPointGroupToShape, addNewPointToShape, getBrushBorder, refreshBrush } from '@canvas/utils/shapes/brush'
 import { refreshCurve } from '@canvas/utils/shapes/curve'
-import { catmullRomToBezier, createBrushPath, getCatmullRomPoints, getCubicBezierBounds } from '@canvas/utils/shapes/path'
+import { catmullRomToBezier, createBrushPath, createPolygonPath, getCatmullRomPoints, getCubicBezierBounds } from '@canvas/utils/shapes/path'
 import { drawPicture } from '@canvas/utils/shapes/picture'
 import { buildAvailableTools } from '@canvas/utils/tools'
 import { type Bounds, getPointsBounds } from '@canvas/utils/trigo'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { MEASURE_CONTEXT, stubPath2D, UTILS_SETTINGS } from './helpers'
+import { createShape as createEntity, MEASURE_CONTEXT, stubPath2D, UTILS_SETTINGS } from './helpers'
 
 stubPath2D()
 
@@ -28,16 +28,16 @@ describe('createShape', () => {
       fillColor: 'red',
       opacity: 100,
       lineWidth: 1,
-      lineDash: 0
+      lineDash: 0,
+      lineJoin: 'round'
     })
-    // the line is shortened under its arrows, which its butt ends join
     expect(createShape(MEASURE_CONTEXT, lineTool!, [10, 10], UTILS_SETTINGS)?.style).toEqual({
       strokeColor: 'black',
       opacity: 100,
       lineWidth: 1,
       lineDash: 0,
       lineArrow: 2,
-      lineCap: 'butt'
+      lineCap: 'round'
     })
     expect(createShape(MEASURE_CONTEXT, textTool!, [10, 10], UTILS_SETTINGS)?.style).toEqual({
       strokeColor: 'black',
@@ -56,6 +56,83 @@ describe('isStyleFieldOfShape', () => {
     expect(isStyleFieldOfShape('picture', 'fontItalic')).toBe(false)
     expect(isStyleFieldOfShape('line', 'strokeColor')).toBe(true)
     expect(isStyleFieldOfShape('text', 'opacity')).toBe(true)
+  })
+
+  it('applies the joins to the shapes with corners, and the caps to the shapes with ends', () => {
+    expect(isStyleFieldOfShape('rect', 'lineJoin')).toBe(true)
+    expect(isStyleFieldOfShape('brush', 'lineJoin')).toBe(true)
+    expect(isStyleFieldOfShape('circle', 'lineJoin')).toBe(false)
+    expect(isStyleFieldOfShape('line', 'lineJoin')).toBe(false)
+    expect(isStyleFieldOfShape('curve', 'lineCap')).toBe(true)
+    expect(isStyleFieldOfShape('rect', 'lineCap')).toBe(false)
+  })
+})
+
+describe('outer borders of the strokes', () => {
+  const triangle: Point[] = [
+    [0, 0],
+    [100, 0],
+    [50, 10]
+  ]
+
+  it('go beyond the path by the half of the stroke', () => {
+    // the borders of the points with the selection padding of 5, and the half of the stroke
+    const polygon = createEntity({ type: 'polygon', points: triangle, style: { lineWidth: 4 } })
+    expect(polygon.computed.outerBorders).toEqual({ x: -7, y: -7, width: 114, height: 24 })
+  })
+
+  it('go as far as the longest miter join of a polygon or of a brush', () => {
+    const style = { lineWidth: 4, lineJoin: 'miter' } as const
+    const polygon = createEntity({ type: 'polygon', points: triangle, style })
+    expect(polygon.computed.outerBorders).toEqual({ x: -13, y: -13, width: 126, height: 36 })
+    const brush = createEntity({ type: 'brush', points: [triangle], style })
+    expect(brush.computed.outerBorders).toEqual({ x: -13, y: -13, width: 126, height: 36 })
+  })
+
+  it('keep the miter joins of a rectangle within the half of its stroke, at its right angles', () => {
+    const rect = createEntity({ type: 'rect', x: 0, y: 0, width: 100, height: 50, style: { lineWidth: 4, lineJoin: 'miter' } })
+    expect(rect.computed.outerBorders).toEqual({ x: -7, y: -7, width: 114, height: 64 })
+  })
+
+  it('go as far as the corners of the square caps', () => {
+    const line = createEntity({ type: 'line', points: [triangle[0]!, triangle[1]!], style: { lineWidth: 4, lineCap: 'square' } })
+    const { x, width } = line.computed.outerBorders
+    expect(x).toBeCloseTo(-5 - 2 * Math.SQRT2)
+    expect(width).toBeCloseTo(110 + 4 * Math.SQRT2)
+  })
+})
+
+describe('caps of the lines', () => {
+  it('keeps the caps of a line with arrows, which cover its ends', () => {
+    const points: [Point, Point] = [
+      [0, 0],
+      [100, 0]
+    ]
+    const square = createEntity({ type: 'line', points, style: { lineArrow: 2, lineCap: 'square' } })
+    expect(square.style).toEqual({ lineArrow: 2, lineCap: 'square' })
+    const withoutCap = createEntity({ type: 'line', points, style: { lineArrow: 3 } })
+    expect(withoutCap.style).toEqual({ lineArrow: 3 })
+  })
+})
+
+describe('createPolygonPath', () => {
+  const points: Point[] = [
+    [0, 0],
+    [10, 0],
+    [0, 10]
+  ]
+
+  it('closes the path of a closed polygon, joined at its first point like at its other corners', () => {
+    const closePath = vi.spyOn(Path2D.prototype, 'closePath')
+    const lineTo = vi.spyOn(Path2D.prototype, 'lineTo')
+    createPolygonPath({ type: 'polygon', points, style: { closedPoints: 1 } })
+    expect(closePath).toHaveBeenCalledTimes(1)
+    expect(lineTo).toHaveBeenCalledTimes(2)
+
+    closePath.mockClear()
+    createPolygonPath({ type: 'polygon', points, style: { closedPoints: 0 } })
+    expect(closePath).not.toHaveBeenCalled()
+    vi.restoreAllMocks()
   })
 })
 

@@ -23,9 +23,11 @@ export const SHAPES_KEEPING_RATIO = ['square', 'circle', 'picture', 'text']
 export const FONT_STYLE_FIELDS: (keyof StyleShape)[] = ['fontFamily', 'fontBold', 'fontItalic']
 
 /** Style fields which only apply to some types of shapes, with these types. A field which is not listed applies to all of them */
-export const STYLE_FIELDS_SHAPE_TYPES: Partial<Record<keyof StyleShape, readonly ShapeType[]>> = Object.fromEntries(
-  FONT_STYLE_FIELDS.map((field): [keyof StyleShape, readonly ShapeType[]] => [field, ['text']])
-)
+export const STYLE_FIELDS_SHAPE_TYPES: Partial<Record<keyof StyleShape, readonly ShapeType[]>> = {
+  ...Object.fromEntries(FONT_STYLE_FIELDS.map((field): [keyof StyleShape, readonly ShapeType[]] => [field, ['text']])),
+  lineCap: ['line', 'brush', 'polygon', 'curve'],
+  lineJoin: ['rect', 'square', 'polygon', 'brush']
+}
 
 export const ShapeTypeArray = [
   'brush',

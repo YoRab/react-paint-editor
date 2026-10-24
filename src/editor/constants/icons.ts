@@ -75,6 +75,10 @@ export const lineEndIcon =
 export const settingsIcon =
   '<svg><path d="M2.5 15.833V14.083H7.667V15.833ZM2.5 5.917V4.167H10.771V5.917ZM9.208 17.5V12.438H10.958V14.083H17.5V15.833H10.958V17.5ZM5.917 12.542V10.875H2.5V9.125H5.917V7.479H7.667V12.542ZM9.208 10.875V9.125H17.5V10.875ZM12.333 7.562V2.5H14.083V4.167H17.5V5.917H14.083V7.562Z"/></svg>'
 
+export const lineJoinIcon = '<svg><path d="M3 17V7A4 4 0 0 1 7 3H17V7H7V17Z"/></svg>'
+
+export const lineCapIcon = '<svg><path d="M3 7H11A3 3 0 0 1 11 13H3ZM10.25 2.5H11.75V17.5H10.25Z"/></svg>'
+
 export const moreIcon =
   '<svg><path d="M5 11.75a1.75 1.75 0 1 1 0-3.5a1.75 1.75 0 0 1 0 3.5ZM10 11.75a1.75 1.75 0 1 1 0-3.5a1.75 1.75 0 0 1 0 3.5ZM15 11.75a1.75 1.75 0 1 1 0-3.5a1.75 1.75 0 0 1 0 3.5Z"/></svg>'
 

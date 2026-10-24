@@ -53,10 +53,6 @@ const buildPath = <T extends DrawableShape<'line'>>(line: T & { id: string }, se
     ...line,
     path,
     arrows,
-    style: {
-      ...line.style,
-      lineCap: line.style?.lineArrow ? 'butt' : 'round'
-    },
     computed
   }
 }

@@ -3,7 +3,15 @@ import type { SelectionModeResize } from '@canvas/types/Mode'
 import type { DrawableShape, Point, Rect, SelectionType, ShapeEntity } from '@canvas/types/Shapes'
 import type { ToolsSettingsType } from '@canvas/types/tools'
 import { resizeRectSelection } from '@canvas/utils/selection/rectSelection'
-import { addBrushPoint, createBrushPath, expandRect, extendBrushPath, getBrushPointsBounds, getComputedShapeInfos } from '@canvas/utils/shapes/path'
+import {
+  addBrushPoint,
+  createBrushPath,
+  expandRect,
+  extendBrushPath,
+  getBrushPointsBounds,
+  getComputedShapeInfos,
+  getSharpOuterBorder
+} from '@canvas/utils/shapes/path'
 import { getToolDefaultStyle } from '@canvas/utils/tools'
 import { roundValues, scalePoint } from '@canvas/utils/transform'
 import { createShapeId } from '@canvas/utils/util'
@@ -33,7 +41,7 @@ const buildPath = <T extends DrawableShape<'brush'>>(
   settings: UtilsSettings,
   path = createBrushPath(brush, settings)
 ): ShapeEntity<'brush'> => {
-  const computed = getComputedShapeInfos(brush, getBrushBorder, settings)
+  const computed = getComputedShapeInfos(brush, getBrushBorder, settings, getSharpOuterBorder)
   return {
     ...brush,
     path,

@@ -33,6 +33,10 @@ Breaking changes, see the [migration guide](./MIGRATION.md).
 - fix the drag of a selected shape behind a shape covering it: a press in its selection frame selected the shape in front and moved it, it now moves the selection. A click without moving still selects the shape in front, or toggles it in group mode
 - fix the pictures added by actions.addPicture, a drop or the Editor: they get the id and the default style of the picture tool, whose default opacity was ignored and whose id was replaced with the id of the default picture tool
 - the settings bar of the Editor goes into its menu according to the settings it shows: the hidden settings of a tool no longer count
+- add the joins of the strokes (style.lineJoin: 'round', 'bevel' or 'miter', with a miter limit of 4) to the rectangles, the squares, the polygons and the brushes, and their caps (style.lineCap: 'round', 'butt' or 'square') to the lines, the brushes, the polygons and the curves. Their default tools have both settings, 'round' by default, which the Editor shows in a new "Plus d'options" panel. setShapesStyle leaves them out for the other shapes
+- add the long dashes (lineDash 3) and the dashes and dots (lineDash 4) to the line styles, and to the default tools
+- the caps of a line are no longer replaced: they were 'butt' with arrows, and 'round' without. A line with arrows and without lineCap now has round caps, under its arrows
+- a closed polygon is joined at its first point like at its other corners, instead of having two caps there
 - the canvas needs no stylesheet anymore: its styles are inline, and react-paint.css only contains the styles of the editor. Its CSS variables can be set on any parent element to override its styles. Add the editor/editor.css stylesheet
 - rename react-paint-editor-toolbox-edittextbox class to react-paint-canvas-edittextbox
 - fix stale declaration files being published, and css imports in declaration files

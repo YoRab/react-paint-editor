@@ -5,7 +5,7 @@ import type { ToolsSettingsType } from '@canvas/types/tools'
 import { drawPathWithFillAndStroke } from '@canvas/utils/canvas'
 import { getPointPositionAfterCanvasTransformation } from '@canvas/utils/intersect'
 import { set } from '@canvas/utils/object'
-import { createPolygonPath, expandRect, getComputedShapeInfos } from '@canvas/utils/shapes/path'
+import { createPolygonPath, expandRect, getComputedShapeInfos, getSharpOuterBorder } from '@canvas/utils/shapes/path'
 import { getToolDefaultStyle } from '@canvas/utils/tools'
 import { roundForGrid } from '@canvas/utils/transform'
 import { getPointsBounds } from '@canvas/utils/trigo'
@@ -13,7 +13,7 @@ import { createShapeId } from '@canvas/utils/util'
 
 const buildPath = <T extends DrawableShape<'polygon'>>(shape: T & { id: string }, settings: UtilsSettings): ShapeEntity<'polygon'> => {
   const path = createPolygonPath(shape)
-  const computed = getComputedShapeInfos(shape, getPolygonBorder, settings)
+  const computed = getComputedShapeInfos(shape, getPolygonBorder, settings, getSharpOuterBorder)
   return {
     ...shape,
     path,
