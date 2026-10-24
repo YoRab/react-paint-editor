@@ -1,10 +1,12 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import { expect, userEvent, within } from 'storybook/test'
 import {
-  ReactPaintWrapper,
-  getCurrentDataRef,
-  selectTool,
   assertNoInternalFields,
+  getCurrentDataRef,
+  getPaint,
+  makeCoordConverters,
+  ReactPaintWrapper,
+  selectTool,
   setColorSetting,
   setRangeSetting,
   setSelectSetting,
@@ -94,5 +96,53 @@ export const DrawText: Story = {
     })
     assertNoInternalFields(data.shapes![0])
     expect((data.shapes![0] as { value: string[] }).value).toEqual(['World'])
+  }
+}
+
+/** Like the browser, dispatches a paste of plain text on the focused element */
+const pasteText = (target: HTMLElement, text: string) => {
+  const clipboardData = new DataTransfer()
+  if (text) clipboardData.setData('text/plain', text)
+  target.dispatchEvent(new ClipboardEvent('paste', { clipboardData, bubbles: true, cancelable: true }))
+}
+
+export const PasteInText: Story = {
+  args: {
+    // a text of 5 characters of 40 px, around canvas (500, 300)
+    shapes: [{ type: 'text', x: 400, y: 280, value: ['Hello'], fontSize: 40, style: { strokeColor: 'black' } }]
+  },
+  play: async ({ canvasElement }) => {
+    const view = within(canvasElement)
+    const drawCanvas = await view.findByTestId('draw-canvas')
+    const { toClientX, toClientY } = makeCoordConverters(drawCanvas.getBoundingClientRect())
+    const user = userEvent.setup()
+    const id = getPaint().getState().shapes[0]!.id
+    const { x, y, width, height } = getPaint().getShape(id) as { x: number; y: number; width: number; height: number }
+    const center = { x: toClientX(x + width / 2), y: toClientY(y + height / 2) }
+
+    // --- A double click edits the text ---
+    await user.pointer({ target: drawCanvas, keys: '[MouseLeft]', coords: center })
+    await new Promise(res => setTimeout(res, 50))
+    await user.pointer({ target: drawCanvas, keys: '[MouseLeft]', coords: center })
+    await new Promise(res => setTimeout(res, 100))
+    const textbox = await view.findByRole('textbox')
+
+    // --- The caret goes to the end of the row ---
+    const range = document.createRange()
+    range.selectNodeContents(textbox.lastElementChild!)
+    range.collapse(false)
+    window.getSelection()!.removeAllRanges()
+    window.getSelection()!.addRange(range)
+
+    // --- The plain text of the clipboard is inserted at the caret ---
+    pasteText(textbox, ' World')
+    await new Promise(res => setTimeout(res, 50))
+    expect(getPaint().getShape(id)).toMatchObject({ value: ['Hello World'] })
+
+    // --- An empty clipboard changes nothing, and the drawing keeps its shape ---
+    pasteText(textbox, '')
+    await new Promise(res => setTimeout(res, 50))
+    expect(getPaint().getShape(id)).toMatchObject({ value: ['Hello World'] })
+    expect(getPaint().getState().shapes).toHaveLength(1)
   }
 }

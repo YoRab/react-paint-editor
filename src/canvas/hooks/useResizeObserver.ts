@@ -1,12 +1,13 @@
-import { useEffect } from 'react'
+import { useLayoutEffect } from 'react'
 
 type UseResizeObserverType = {
   element: React.RefObject<HTMLElement | null>
   onResized: (width: number, height: number) => unknown
 }
 
+/** The element is observed before the first paint: its first size is given before it is shown */
 const useResizeObserver = ({ onResized, element }: UseResizeObserverType) => {
-  useEffect(() => {
+  useLayoutEffect(() => {
     const current = element.current
     if (!current) return
     const resizeObserver = new ResizeObserver(entries => {

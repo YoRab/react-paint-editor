@@ -1,10 +1,10 @@
 import type { UtilsSettings } from '@canvas/constants/app'
+import type { SelectionModeResize } from '@canvas/types/Mode'
+import type { Circle, DrawableShape, Point, Rect, SelectionType, ShapeEntity } from '@canvas/types/Shapes'
+import type { ToolsSettingsType } from '@canvas/types/tools'
 import { drawPathWithFillAndStroke } from '@canvas/utils/canvas'
-import { createRecSelectionPath, resizeRectSelection } from '@canvas/utils/selection/rectSelection'
-import type { SelectionModeResize } from '@common/types/Mode'
-import type { Circle, DrawableShape, Point, Rect, SelectionType, ShapeEntity } from '@common/types/Shapes'
-import type { ToolsSettingsType } from '@common/types/tools'
-import { uniqueId } from '@common/utils/util'
+import { resizeRectSelection } from '@canvas/utils/selection/rectSelection'
+import { createShapeId } from '@canvas/utils/util'
 import { type GroupResizeContext, getPositionWithoutGroupRotation, getShapePositionInNewBorder } from './group'
 import { createCirclePath, expandRect, getComputedShapeInfos } from './path'
 
@@ -24,7 +24,6 @@ const buildPath = <T extends DrawableShape<'circle'>>(shape: T & { id: string },
   return {
     ...shape,
     path,
-    selection: createRecSelectionPath(path, computed, settings),
     computed
   }
 }
@@ -44,7 +43,7 @@ export const createCircle = (
     {
       toolId: shape.id,
       type: shape.type,
-      id: uniqueId(`${shape.type}_`),
+      id: createShapeId(shape.type),
       x: cursorPosition[0],
       y: cursorPosition[1],
       radius: 0,

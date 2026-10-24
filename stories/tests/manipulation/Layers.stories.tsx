@@ -1,13 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import { expect, userEvent, within } from 'storybook/test'
 import type { DrawableShape } from '../../../src/index'
-import {
-  ReactPaintWrapper,
-  getCurrentDataRef,
-  makeCoordConverters,
-  selectTool,
-  assertNoInternalFields
-} from './../helpers'
+import { assertNoInternalFields, getCurrentDataRef, getPaint, makeCoordConverters, ReactPaintWrapper, selectTool } from './../helpers'
 
 const meta = {
   title: 'Tests/Manipulation',
@@ -186,5 +180,48 @@ export const Layers: Story = {
     expect(finalRect.type).toBe('rect')
     expect(finalRect.x).toBeCloseTo(150, 0) // unchanged (locked)
     expect(finalRect.y).toBeCloseTo(200, 0)
+  }
+}
+
+export const LayersPanelActions: Story = {
+  args: {
+    shapes: [
+      { type: 'square', x: 150, y: 200, width: 100, height: 100, style: { fillColor: '#4a90d9' } },
+      { type: 'square', x: 650, y: 200, width: 100, height: 100, style: { fillColor: '#e74c3c' } }
+    ]
+  },
+  play: async ({ canvasElement }) => {
+    const view = within(canvasElement)
+    await view.findByTestId('draw-canvas')
+    await userEvent.click(await view.findByRole('button', { name: 'Toggle layers panel' }))
+    await new Promise(res => setTimeout(res, 100))
+
+    const getLayers = () => [...canvasElement.querySelectorAll<HTMLElement>('.react-paint-editor-layout')]
+    // the layers show the ids of the shapes, from the foreground
+    const [frontId, backId] = getPaint()
+      .getState()
+      .shapes.map(shape => shape.id) as [string, string]
+    expect(getLayers().map(layer => layer.textContent)).toEqual([frontId, backId])
+
+    // --- A click on a layer selects its shape ---
+    await userEvent.click(getLayers()[1]!)
+    await new Promise(res => setTimeout(res, 50))
+    expect(getPaint().getState().selectedShapeIds).toEqual([backId])
+
+    // --- The remove button of a layer removes its shape only ---
+    await userEvent.click(within(getLayers()[0]!).getByRole('button', { name: 'Remove' }))
+    await new Promise(res => setTimeout(res, 50))
+    expect(
+      getPaint()
+        .getState()
+        .shapes.map(shape => shape.id)
+    ).toEqual([backId])
+    expect(getPaint().getState().selectedShapeIds).toEqual([backId])
+
+    // --- The grid can be removed again ---
+    await userEvent.click(view.getByRole('button', { name: 'L' }))
+    expect(getPaint().getState().gridGap).toBe(40)
+    await userEvent.click(view.getByRole('button', { name: 'No grid' }))
+    expect(getPaint().getState().gridGap).toBe(0)
   }
 }

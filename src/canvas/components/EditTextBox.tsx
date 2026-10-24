@@ -1,10 +1,23 @@
 import type { UtilsSettings } from '@canvas/constants/app'
 import { STYLE_FONT_DEFAULT } from '@canvas/constants/rendering'
+import type { ShapeEntity } from '@canvas/types/Shapes'
 import { radiansToDegrees, rotatePoint } from '@canvas/utils/trigo'
-import type { ShapeEntity } from '@common/types/Shapes'
+import { cssVar } from '@canvas/utils/util'
 import type React from 'react'
-import { useEffect, useMemo, useRef } from 'react'
-import './EditTextBox.css'
+import { type CSSProperties, useEffect, useMemo, useRef } from 'react'
+
+const EDIT_TEXT_BOX_STYLE: CSSProperties = {
+  position: 'absolute',
+  outline: 'none',
+  left: 0,
+  top: 0,
+  transformOrigin: 'left top',
+  boxSizing: 'border-box',
+  lineHeight: 1,
+  width: 'max-content',
+  // required to override injected prop in contenteditable span elements
+  background: 'none'
+}
 
 const getNodeValue = (node: ChildNode): string => {
   return node.childNodes.length
@@ -103,22 +116,23 @@ const EditTextBox = ({ disabled = false, shape, defaultValue, updateValue, saveS
   return (
     // biome-ignore lint/a11y/useSemanticElements: contentEditable div is used to allow bounding box to fit content
     <div
-      className='react-paint-editor-toolbox-edittextbox'
+      className='react-paint-canvas-edittextbox'
       ref={ref}
-      data-fontbold={shape.style?.fontBold ?? false}
-      data-fontitalic={shape.style?.fontItalic ?? false}
       aria-label='Text content'
       contentEditable={isEditable}
       role='textbox'
       tabIndex={isEditable ? 0 : undefined}
       onInput={updateContentEditable}
       style={{
-        '--react-paint-editor-toolbox-edittextbox-transform': transform,
-        '--react-paint-editor-toolbox-edittextbox-fontsize': `${shape.fontSize * settings.canvasSize.scaleRatio}px`,
-        '--react-paint-editor-toolbox-edittextbox-padding': `${settings.selectionPadding * settings.canvasSize.scaleRatio}px`,
-        '--react-paint-editor-toolbox-edittextbox-color': shape.style?.strokeColor ?? 'inherit',
-        '--react-paint-editor-toolbox-edittextbox-opacity': (shape.style?.opacity ?? 100) / 100,
-        '--react-paint-editor-toolbox-edittextbox-fontfamily': shape.style?.fontFamily ?? STYLE_FONT_DEFAULT
+        ...EDIT_TEXT_BOX_STYLE,
+        transform: cssVar('--react-paint-canvas-edittextbox-transform', transform),
+        fontSize: cssVar('--react-paint-canvas-edittextbox-fontsize', `${shape.fontSize * settings.canvasSize.scaleRatio}px`),
+        padding: cssVar('--react-paint-canvas-edittextbox-padding', `${settings.selectionPadding * settings.canvasSize.scaleRatio}px`),
+        color: cssVar('--react-paint-canvas-edittextbox-color', shape.style?.strokeColor),
+        opacity: cssVar('--react-paint-canvas-edittextbox-opacity', (shape.style?.opacity ?? 100) / 100),
+        fontFamily: cssVar('--react-paint-canvas-edittextbox-fontfamily', shape.style?.fontFamily ?? STYLE_FONT_DEFAULT),
+        fontWeight: shape.style?.fontBold ? 'bold' : undefined,
+        fontStyle: shape.style?.fontItalic ? 'italic' : undefined
       }}
     />
   )

@@ -1,13 +1,13 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
-import { Canvas, Editor, useReactPaint } from '../src/index'
+import { Canvas, Editor, type EditorOptions, type UseReactPaintProps, useReactPaint } from '../src/index'
 import { TREE_AND_CLOUDS } from './fixture'
 
-const ReactPaintWrapper = (args: Parameters<typeof useReactPaint>[0]) => {
-  const { editorProps, canvasProps } = useReactPaint(args)
+const ReactPaintWrapper = ({ editorOptions, ...args }: UseReactPaintProps & { editorOptions?: EditorOptions }) => {
+  const paint = useReactPaint(args)
 
   return (
-    <Editor editorProps={editorProps}>
-      <Canvas canvasProps={canvasProps} />
+    <Editor paint={paint} options={editorOptions}>
+      <Canvas paint={paint} />
     </Editor>
   )
 }
@@ -32,12 +32,47 @@ export const Default: Story = {
   parameters: {
     docs: {
       source: {
-        code: `const { editorProps, canvasProps } = useReactPaint()
+        code: `const paint = useReactPaint()
 
 return (
-  <Editor editorProps={editorProps}>
-    <Canvas canvasProps={canvasProps} />
+  <Editor paint={paint}>
+    <Canvas paint={paint} />
   </Editor>
+)`,
+        language: 'tsx'
+      }
+    }
+  }
+}
+
+/** A page of a fixed size in a resizable container: it is shown at the scale 1, centered when the container is larger */
+export const FixedPageInResizableContainer: Story = {
+  args: {
+    shapes: TREE_AND_CLOUDS,
+    options: {
+      size: 'fixed',
+      resize: 'extend',
+      canZoom: 'always'
+    }
+  },
+  decorators: [
+    Story => (
+      <div style={{ width: 700, height: 450, resize: 'both', overflow: 'hidden', border: '1px dashed gray' }}>
+        <Story />
+      </div>
+    )
+  ],
+  parameters: {
+    docs: {
+      source: {
+        code: `const paint = useReactPaint({ shapes: TREE_AND_CLOUDS, options: { size: 'fixed', resize: 'extend', canZoom: 'always' } })
+
+return (
+  <div style={{ width: 700, height: 450, resize: 'both', overflow: 'hidden' }}>
+    <Editor paint={paint}>
+      <Canvas paint={paint} />
+    </Editor>
+  </div>
 )`,
         language: 'tsx'
       }
@@ -56,11 +91,11 @@ export const LoadedFromJSON: Story = {
   parameters: {
     docs: {
       source: {
-        code: `const { editorProps, canvasProps } = useReactPaint({shapes: TREE_AND_CLOUDS, options : {clearCallback: 'defaultShapes',   canZoom: 'always'}})
+        code: `const paint = useReactPaint({shapes: TREE_AND_CLOUDS, options : {clearCallback: 'defaultShapes',   canZoom: 'always'}})
 
 return (
-  <Editor editorProps={editorProps}>
-    <Canvas canvasProps={canvasProps} />
+  <Editor paint={paint}>
+    <Canvas paint={paint} />
   </Editor>
 )`,
         language: 'tsx'
@@ -80,11 +115,11 @@ export const ViewerMode: Story = {
   parameters: {
     docs: {
       source: {
-        code: `const { editorProps, canvasProps } = useReactPaint({ shapes: TREE_AND_CLOUDS, mode: 'viewer'})
+        code: `const paint = useReactPaint({ shapes: TREE_AND_CLOUDS, mode: 'viewer'})
 
 return (
-  <Editor editorProps={editorProps}>
-    <Canvas canvasProps={canvasProps} />
+  <Editor paint={paint}>
+    <Canvas paint={paint} />
   </Editor>
 )`,
         language: 'tsx'
@@ -128,7 +163,9 @@ const CUSTOM_BRUSH_TOOLS = [
 export const CustomTool: Story = {
   args: {
     options: {
-      availableTools: CUSTOM_BRUSH_TOOLS,
+      availableTools: CUSTOM_BRUSH_TOOLS
+    },
+    editorOptions: {
       withUploadPicture: false,
       withUrlPicture: false
     }
@@ -172,11 +209,11 @@ export const CustomTool: Story = {
   }
 ]
 
-const { editorProps, canvasProps } = useReactPaint({ options: { availableTools: CUSTOM_BRUSH_TOOLS, withUploadPicture: false, withUrlPicture: false } })
+const paint = useReactPaint({ options: { availableTools: CUSTOM_BRUSH_TOOLS } })
 
 return (
-  <Editor editorProps={editorProps}>
-    <Canvas canvasProps={canvasProps} />
+  <Editor paint={paint} options={{ withUploadPicture: false, withUrlPicture: false }}>
+    <Canvas paint={paint} />
   </Editor>
 )`,
         language: 'tsx'
@@ -200,7 +237,7 @@ export const DebugMode: Story = {
           'With `options.debug: true`, shape selection and hit-testing are logged to the browser console. Open DevTools to see debug output when selecting or hovering shapes.'
       },
       source: {
-        code: `const { editorProps, canvasProps } = useReactPaint({
+        code: `const paint = useReactPaint({
   shapes: TREE_AND_CLOUDS,
   options: {
     canZoom: 'always',
@@ -209,8 +246,8 @@ export const DebugMode: Story = {
 })
 
 return (
-  <Editor editorProps={editorProps}>
-    <Canvas canvasProps={canvasProps} />
+  <Editor paint={paint}>
+    <Canvas paint={paint} />
   </Editor>
 )`,
         language: 'tsx'

@@ -2,6 +2,89 @@
 
 For more details and links to Pull requests, see [Releases](https://github.com/YoRab/react-paint-editor/releases)
 
+## V1.0.0-beta.1 (unreleased)
+Breaking changes, see the [migration guide](./MIGRATION.md).
+- split the library into two independent modules, canvas and editor, which only communicate through useReactPaint. The editor is now tree-shaken when unused, even when importing from the package root
+- useReactPaint returns a single handle, `paint`, given to Canvas and Editor instead of editorProps and canvasProps. Its identity never changes, and it is a public contract allowing to build a custom editor: actions take shape ids and replace raw setters and internal helpers
+- the state lives in an external store: the component calling useReactPaint no longer renders when the drawing changes. Read the state with usePaintState(paint, selector?, isEqual?) and shallowEqual during a render, or paint.getState() in a handler
+- add PaintProvider and usePaint to give the handle to deep components, Editor provides it to its children
+- the Canvas is the default area of the keyboard shortcuts: paint.scopeRef, formerly refs.setEditor, is only needed to widen it to a custom editor. The shortcuts are listened on this area instead of the document
+- the canvas handles the mouse, touch and pen with pointer events listened on the canvas only, instead of the document: the hover works without clicking the canvas first, and a page with many canvases only notifies the one under the pointer
+- expose interaction state (hovered shape, selection frame, modifier keys, panning, context menu) in the state
+- add canRemoveAnchor to the context menu state, and setShapesVisibility / setShapesLocked actions
+- add the drop of image files from the file explorer on the canvas: they are added as pictures, centered on the cursor. It is controlled by the withDropPicture option (true by default, needs the picture tool), and disabled by the withUploadPicture option of the Editor. Add the pictureDropFailed event, and the position option of actions.addPicture
+- replace annotationsProps with the useAnnotationsStyle hook
+- move resetZoom, setCanvasZoom and setCanvasOffset to actions.resetZoom, actions.setZoom and the new actions.setOffset
+- move editor UI options (layersManipulation, withExport, withLoadAndSave, withUploadPicture, withUrlPicture) from useReactPaint to Editor options
+- replace DEFAULT_SHAPE_TOOLS (editor) with DEFAULT_TOOLS (canvas), without icons nor labels. useReactPaint from the canvas entry now provides default tools
+- define SELECTION_TOOL and MOVE_TOOL once for both modules, without icon nor label: icon and label of ActionsTool become optional
+- reduce ActionsType to the tools handled by the canvas, selection and move: the buttons of the editor (undo, redo, clear, export, loadfile, savefile, uploadpicture, addurlpicture) are not part of the API anymore
+- named exports for Canvas and Editor in all entry points
+- add selectionChanged and toolChanged events, registerEvent and unregisterEvent are typed by event. registerEvent returns the function that unregisters the listener, and events are emitted right after the change of the state
+- export getSelectedShapes, getSelectedShapesTools, SELECTION_TOOL and MOVE_TOOL
+- add the canvasClicked and canvasDoubleClicked events, emitted for any click on the drawing with the shape under the pointer or undefined, also in viewer mode
+- fix the double clicks of the canvas, which edit a text and add a point to a polygon or a curve: the end of a drag or a long press is no longer taken for a click, so a drag soon after a click no longer adds a point, a third click starts a new double click, and the two clicks must be at the same place (a finger may move by 20 pixels). canvasDoubleClicked follows the same rule
+- add the pictureLoaded and pictureLoadFailed events: a picture added by addShapes or updateShapes is drawn, or the image of a picture cannot be loaded. A picture of loaded data which cannot be loaded is left out, and the Editor shows an error message
+- add paint.toCanvasPosition and paint.toClientPosition, to convert positions between the viewport and the drawing
+- expose the options in effect (state.options), whether dropped images are added (state.withDropPicture) and the part of the drawing displayed (state.view.visibleArea) in the state
+- export ZOOM_LEVELS, the levels of setZoom between which the zoom stays: the zoom buttons of the Editor are disabled at the first and the last one
+- add state.interaction.selectionHover, the part of the selection under the pointer: its inside, the anchor of the rotation, or an anchor of the resize
+- fix the hovered shape kept after its removal: its outline stayed drawn, and state.interaction.hoveredShape gave it, until the next move of the mouse. It also follows the changes of its shape
+- fix the drag of a selected shape behind a shape covering it: a press in its selection frame selected the shape in front and moved it, it now moves the selection. A click without moving still selects the shape in front, or toggles it in group mode
+- the canvas needs no stylesheet anymore: its styles are inline, and react-paint.css only contains the styles of the editor. Its CSS variables can be set on any parent element to override its styles. Add the editor/editor.css stylesheet
+- rename react-paint-editor-toolbox-edittextbox class to react-paint-canvas-edittextbox
+- fix stale declaration files being published, and css imports in declaration files
+- fix declaration files for node16 / nodenext module resolutions
+- fix unregisterEvent removing another listener when the given one is not registered
+- fix context menu not opening on the first right click after choosing the selection tool in the toolbar
+- fix the wheel and the pinch ignored by an infinite canvas without canZoom: an infinite size always enables the zoom
+- fix the strokes of the quadratic brush, which ignored their third to last point: each inner point now controls the curve
+- fix the resize with Shift and Alt, which grew the shape by twice the selection padding as soon as the anchor was pressed
+- fix the resize with Alt and a selection padding: the shape moved while its width or height was 0, jumped when the cursor went past its opposite side, and a brush or a group was mirrored only from there instead of from its center
+- fix the moves made with the arrows, which were not saved in the history nor emitted by dataChanged: like a drag of the mouse, a move is saved once, when the last held arrow is released or the focus leaves the canvas
+- fix the rotation by steps, with Shift or the grid, which turned a counterclockwise rotation one step late: a negative angle now goes to its closest step
+- fix the infinite font size of a text without characters, given with a width or resized: it gets the default font size, and an emptied text keeps the height of a line
+- fix availableTools throwing on a null entry: the entries which are not tools are left out
+- fix active tool not following the tools given in props: it is now derived from them by id, and only known tools can be selected
+- options of useReactPaint are compared by value: inline options, like availableTools, no longer reset the tool settings nor render in a loop
+- performance: the editor panels only render when their part of the state changes, and the canvas draws the gestures (hover, drag, selection frame, pan, brush) without rendering React components
+- performance: shapes are no longer recomputed when the view is moved or the grid changes, and the auto scroll of the selection frame follows the animation frames
+- add Custom editor, Canvas only and External toolbar stories
+- add a performance benchmark, run manually with pnpm bench
+- everything the editor and the canvas gestures do can be done from the code, without the Editor and even without a mounted Canvas:
+  - shapes keep their id in the exported data and when they are loaded again. New ids are random, so that they do not collide with saved ones
+  - add actions.addShapes and actions.updateShapes, to create shapes and to update any of their fields (geometry, points, text, style, data). The style of a new shape is completed with its tool, and the size of a text can be left out
+  - add actions.translateShapes, rotateShapes (any angle) and resizeShapes (to a box), and paint.getShape, getBounds and getShapesAt
+  - add dedicated actions: setShapesStyle (several fields, and the defaults of the tools), setToolStyle, setShapeIndex, reorderShapes, insertShapePoint, moveShapePoint, editText, zoomTo, panBy, openContextMenu, loadData, and selectShapes with an add or remove mode
+  - add paint.batch, which gives a single step of the history and a single dataChanged event for several actions
+  - the actions changing shapes take save and source options: changes received from elsewhere can be applied as remote changes
+  - add actions.setOptions, resetOptions and resetSettings: options overridden from the code are kept over the props until they are reset
+  - add a data field to the shapes, kept in the history, the copies and the exported data
+  - add shapeClicked and shapeHovered events, also emitted in viewer mode
+  - dataChanged gives the changes since the previous state as a third argument: the shapes added, updated (with their previous version) and removed, and whether their order changed
+  - add actions.zoomToShapes, which zooms and scrolls so that shapes fill the view
+  - getCurrentImage and exportPicture take options: format (png, jpeg, webp), quality, background color, and a background image like the annotated picture. Breaking: getCurrentImage(view) becomes getCurrentImage({ view })
+  - export GRID_PRESETS, the gaps of the grid offered by the editor
+- the grid follows a change of the grid option after the creation
+- updateToolSettings ignores a field the tool has not. Changing the style of a selection of several types of shapes in the editor now updates the tool of each shape
+- transformShapes no longer selects the transformed shapes
+- performance: the data given to dataChanged are only built while it is listened, and the pictures are encoded once
+- performance: zooming and resizing the canvas no longer recompute the shapes: the outline and the anchors of the selection are drawn at the scale of the view. Breaking: ShapeEntity has no selection field anymore
+- performance: each point of a brush stroke extends its path instead of building it again from all the points, and the quadratic brush no longer slows down more and more along a stroke
+- performance: a picture drawn much smaller than its image is drawn from a reduced copy of the image, made once: faster and less grainy in Firefox and Safari
+- performance: a picture added from a file keeps the content of the file as its source, a data URL instead of a revoked blob URL: it is exported as it is, instead of being encoded in PNG on its first export, which froze the page for a large photo, and the exported data are lighter for a photo
+- the exported data round the positions and the sizes to 3 decimals, and the angles and the factors to 6: about half the size, without visible change. The shapes keep their full precision while drawing
+- add the Programmatic API story
+- replace the canGrow and canShrink options with the resize option: 'scaleDown' (default), 'scale', 'scaleUp' or 'none', see the migration guide. The editor has the bounds of the canvas: it does not shrink anymore with its container when the canvas cannot be scaled down
+- add resize: 'extend': the canvas fills its container at the scale 1 and its visible area follows the container, without a ResizeObserver in the application. A page of a fixed size is centered in a larger container, with a mask around it, and the view is kept inside it in a smaller one. The Whiteboard story uses it
+- fix a blank frame each time the canvas is resized: it is drawn again before the frame showing its new size is painted
+- security: add the resolvePictureSrc option, to filter or proxy the URLs of the remote pictures, which may come from data drawn by someone else
+- security: remote pictures are fetched without the cookies nor the address of the page, protocol-relative and relative URLs included. Sources other than image data URLs, blob URLs, SVG markup and URLs of the web are refused. The sources are exported as they are: only blob URLs, which do not outlive the page, are encoded from their image
+- security: a picture which cannot be loaded is left out of the loaded data with a warning, instead of failing the whole load, and its loading times out after 4 seconds. An image which cannot be encoded no longer breaks the export of the data
+- security: pictures larger than 16384 pixels and data files larger than 100 MB are refused
+- fix the title of a group of tools being rendered as HTML when its tools have no icon
+- support React 19
+
 ## V0.18.1
 - fix opacity problems with line and arrows
 - fix picture style not set at shape creation

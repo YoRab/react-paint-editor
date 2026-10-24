@@ -1,13 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import { expect, userEvent, within } from 'storybook/test'
 import type { DrawableShape } from '../../../src/index'
-import {
-  ReactPaintWrapper,
-  getCurrentDataRef,
-  makeCoordConverters,
-  selectTool,
-  assertNoInternalFields
-} from './../helpers'
+import { assertNoInternalFields, getCurrentDataRef, makeCoordConverters, ReactPaintWrapper, selectTool } from './../helpers'
 
 const meta = {
   title: 'Tests/Manipulation',
@@ -359,27 +353,30 @@ export const SelectRotateResizeTranslate: Story = {
 
     // --- Polygon assertions (shapes[3]) ---
     // After step 13: points[0] moved to (130,440). After step 14: all points translated by -30 in x.
+    // The drags which follow a click are not double clicks: they add no point
     const polygon = data.shapes![3] as { type: string; points: number[][] }
     assertNoInternalFields(data.shapes![3])
     expect(polygon.type).toBe('polygon')
+    expect(polygon.points).toHaveLength(3)
     expect(polygon.points[0]![0]).toBeCloseTo(100, 0)
     expect(polygon.points[0]![1]).toBeCloseTo(440, 0)
-    expect(polygon.points[1]![0]).toBeCloseTo(100, 0)
-    expect(polygon.points[1]![1]).toBeCloseTo(440, 0)
-    expect(polygon.points[2]![0]).toBeCloseTo(220, 0)
-    expect(polygon.points[2]![1]).toBeCloseTo(420, 0)
+    expect(polygon.points[1]![0]).toBeCloseTo(220, 0)
+    expect(polygon.points[1]![1]).toBeCloseTo(420, 0)
+    expect(polygon.points[2]![0]).toBeCloseTo(170, 0)
+    expect(polygon.points[2]![1]).toBeCloseTo(330, 0)
 
     // --- Curve assertions (shapes[4]) ---
     // After step 16: points[0] moved to (730,390). After step 17: all points translated by -30 in x.
     const curve = data.shapes![4] as { type: string; points: number[][] }
     assertNoInternalFields(data.shapes![4])
     expect(curve.type).toBe('curve')
+    expect(curve.points).toHaveLength(3)
     expect(curve.points[0]![0]).toBeCloseTo(700, 0)
     expect(curve.points[0]![1]).toBeCloseTo(390, 0)
-    expect(curve.points[1]![0]).toBeCloseTo(760, 0)
-    expect(curve.points[1]![1]).toBeCloseTo(445, 0)
-    expect(curve.points[2]![0]).toBeCloseTo(820, 0)
-    expect(curve.points[2]![1]).toBeCloseTo(440, 0)
+    expect(curve.points[1]![0]).toBeCloseTo(820, 0)
+    expect(curve.points[1]![1]).toBeCloseTo(440, 0)
+    expect(curve.points[2]![0]).toBeCloseTo(770, 0)
+    expect(curve.points[2]![1]).toBeCloseTo(500, 0)
 
     // =====================================================================
     // Group: selection frame → resize ÷2 → rotate ~45° → translate (+100,+50)

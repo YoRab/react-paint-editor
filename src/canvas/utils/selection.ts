@@ -1,12 +1,16 @@
 import type { UtilsSettings } from '@canvas/constants/app'
-import { CANVAS_DEFAULT_RECT_SETTINGS } from '@canvas/constants/tools'
+import { SETTINGS_DEFAULT_RECT } from '@canvas/constants/tools'
+import type { HoverModeData, SelectionModeData } from '@canvas/types/Mode'
+import type { Point, Rect, SelectionType, ShapeEntity } from '@canvas/types/Shapes'
+import { getSelectedShapes } from '@canvas/utils/selectedShapes'
 import { createRectangle } from '@canvas/utils/shapes/rectangle'
 import { roundValues } from '@canvas/utils/transform'
-import { rotatePoint } from '@canvas/utils/trigo'
-import type { HoverModeData, SelectionModeData } from '@common/types/Mode'
-import type { Point, Rect, SelectionType, ShapeEntity } from '@common/types/Shapes'
-import { getSelectedShapes } from '@common/utils/selection'
+import { getPointsBounds, rotatePoint } from '@canvas/utils/trigo'
 import { checkPositionIntersection, checkSelectionIntersection } from './intersect'
+
+/** Whether no gesture is running: the hovered shape is only searched and shown then */
+export const isIdleSelectionMode = ({ mode }: SelectionModeData<Point | number>) =>
+  mode === 'default' || mode === 'contextMenu' || mode === 'textedition'
 
 export const getNewSelectionData = (
   hoverMode: HoverModeData,
@@ -54,33 +58,36 @@ export const selectShape = (
   selectedShape: SelectionType | undefined,
   isTouchGesture: boolean,
   withFrameSelection: boolean,
-  behavior: 'add' | 'remove' | 'replace' = 'replace'
+  behavior: 'add' | 'toggle' | 'replace' = 'replace',
+  preferSelection = true
 ): {
   mode: SelectionModeData<Point | number>
   shape: SelectionType | undefined
 } => {
+  const touchRadius = isTouchGesture ? 20 : undefined
   let selectedShapePositionIntersection: false | HoverModeData = false
   if (selectedShape) {
-    selectedShapePositionIntersection = checkSelectionIntersection(
-      ctx,
-      selectedShape,
-      cursorPosition,
-      settings,
-      true,
-      isTouchGesture ? 20 : undefined
-    )
+    selectedShapePositionIntersection = checkSelectionIntersection(ctx, selectedShape, cursorPosition, settings, true, touchRadius)
 
     const newSelectionMode = getNewSelectionData(selectedShapePositionIntersection || { mode: 'default' }, selectedShape, cursorPosition)
     if (newSelectionMode?.mode === 'resize' || newSelectionMode?.mode === 'rotate') {
       return { shape: selectedShape, mode: newSelectionMode }
     }
   }
+  const selectedIds = new Set(getSelectedShapes(selectedShape).map(shape => shape.id))
+  // a selected shape is under the cursor in its selection frame
+  const isUnderCursor = (shape: ShapeEntity) =>
+    selectedIds.has(shape.id)
+      ? selectedShapePositionIntersection && checkSelectionIntersection(ctx, shape, cursorPosition, settings, true, touchRadius)
+      : checkPositionIntersection(ctx, shape, cursorPosition, settings)
+  // the shapes are searched from the foreground. When the selection is preferred, as on a press, the selected shapes are
+  // searched first: a drag moves the selection, even behind the shapes which cover it
   const foundShape =
-    shapes.find(shape => {
-      return getSelectedShapes(selectedShape).find(selectedShape => shape.id === selectedShape?.id)
-        ? selectedShapePositionIntersection && checkSelectionIntersection(ctx, shape, cursorPosition, settings, true, isTouchGesture ? 20 : undefined)
-        : !!checkPositionIntersection(ctx, shape, cursorPosition, settings)
-    }) ?? (selectedShapePositionIntersection ? selectedShape : undefined)
+    (preferSelection && shapes.find(shape => selectedIds.has(shape.id) && isUnderCursor(shape))) ||
+    shapes.find(isUnderCursor) ||
+    (selectedShapePositionIntersection ? selectedShape : undefined)
+  // a toggle removes the shape under the cursor from the selection, or adds it when it is not selected
+  const action = behavior === 'toggle' ? (foundShape && selectedIds.has(foundShape.id) ? 'remove' : 'add') : behavior
 
   if (selectedShape && selectedShape?.id === foundShape?.id) {
     return {
@@ -96,7 +103,7 @@ export const selectShape = (
     }
   }
 
-  if (foundShape?.locked && behavior === 'add') {
+  if (foundShape?.locked && action === 'add') {
     return {
       shape: selectedShape,
       mode: {
@@ -105,7 +112,7 @@ export const selectShape = (
     }
   }
 
-  if (foundShape && behavior === 'add' && selectedShape?.locked) {
+  if (foundShape && action === 'add' && selectedShape?.locked) {
     const foundShapeGroup = buildShapesGroup([foundShape], settings)
     return {
       shape: foundShapeGroup,
@@ -121,7 +128,7 @@ export const selectShape = (
   }
 
   if (foundShape) {
-    if (behavior === 'add') {
+    if (action === 'add') {
       const foundShapeGroup = buildShapesGroup(addToSelectedShapes(selectedShape, [foundShape]), settings)
       return {
         shape: foundShapeGroup,
@@ -135,8 +142,8 @@ export const selectShape = (
         }
       }
     }
-    if (behavior === 'remove') {
-      const foundShapeGroup = buildShapesGroup(omitFromSelectedShapes(selectedShape, foundShape), settings)
+    if (action === 'remove') {
+      const foundShapeGroup = buildShapesGroup(omitFromSelectedShapes(selectedShape, [foundShape]), settings)
       return {
         shape: foundShapeGroup,
         mode: {
@@ -149,9 +156,7 @@ export const selectShape = (
         }
       }
     }
-    const foundShapeGroup = getSelectedShapes(selectedShape).find(shape => shape.id === foundShape?.id)
-      ? selectedShape
-      : buildShapesGroup([foundShape], settings)
+    const foundShapeGroup = selectedIds.has(foundShape.id) ? selectedShape : foundShape
     return {
       shape: foundShapeGroup,
       mode: {
@@ -200,10 +205,7 @@ const buildGroupBorders = (shapes: ShapeEntity[], rotation: number, settings: Ut
         return movedOnCanvasCenter
       }) as [Point, Point, Point, Point]
   )
-  const movedbordersXMin = Math.min(...movedBorders.flatMap(shape => [shape[0][0], shape[1][0], shape[2][0], shape[3][0]]))
-  const movedBordersYMin = Math.min(...movedBorders.flatMap(shape => [shape[0][1], shape[1][1], shape[2][1], shape[3][1]]))
-  const movedBordersXMax = Math.max(...movedBorders.flatMap(shape => [shape[0][0], shape[1][0], shape[2][0], shape[3][0]]))
-  const movedBordersYMax = Math.max(...movedBorders.flatMap(shape => [shape[0][1], shape[1][1], shape[2][1], shape[3][1]]))
+  const { minX: movedbordersXMin, minY: movedBordersYMin, maxX: movedBordersXMax, maxY: movedBordersYMax } = getPointsBounds(movedBorders)
 
   const movedCenter = [(movedbordersXMin + movedBordersXMax) / 2, (movedBordersYMin + movedBordersYMax) / 2] as Point
 
@@ -241,7 +243,7 @@ export const buildShapesGroup = (shapes: ShapeEntity[], settings: UtilsSettings)
     {
       id: 'group_selection',
       type: 'rect',
-      settings: CANVAS_DEFAULT_RECT_SETTINGS
+      settings: SETTINGS_DEFAULT_RECT
     },
     [borders.x, borders.y],
     settings,
@@ -271,7 +273,6 @@ export const buildShapesGroup = (shapes: ShapeEntity[], settings: UtilsSettings)
     rotation,
     visible: true,
     locked: false,
-    selection: groupRectangle.selection,
     x: groupRectangle.x,
     y: groupRectangle.y,
     width: groupRectangle.width,
@@ -295,6 +296,7 @@ export const addToSelectedShapes = (selection: SelectionType | undefined, shapes
   return [...new Set([...currentShapes, ...shapes])]
 }
 
-export const omitFromSelectedShapes = (selection: SelectionType | undefined, shape: ShapeEntity): ShapeEntity[] => {
-  return getSelectedShapes(selection).filter(selectedShape => selectedShape.id !== shape.id)
+export const omitFromSelectedShapes = (selection: SelectionType | undefined, shapes: ShapeEntity[]): ShapeEntity[] => {
+  const omittedIds = new Set(shapes.map(shape => shape.id))
+  return getSelectedShapes(selection).filter(selectedShape => !omittedIds.has(selectedShape.id))
 }

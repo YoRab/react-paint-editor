@@ -1,15 +1,14 @@
 import type { UtilsSettings } from '@canvas/constants/app'
+import type { SelectionModeResize } from '@canvas/types/Mode'
+import type { DrawableShape, Point, Rect, ShapeEntity } from '@canvas/types/Shapes'
+import type { ToolsSettingsType } from '@canvas/types/tools'
 import { drawPathWithFillAndStroke } from '@canvas/utils/canvas'
 import { getPointPositionAfterCanvasTransformation } from '@canvas/utils/intersect'
-import { createLineSelectionPath } from '@canvas/utils/selection/lineSelection'
+import { set } from '@canvas/utils/object'
 import { catmullRomToBezier, createCurvePath, getCatmullRomPoints, getComputedShapeInfos, getCubicBezierBounds } from '@canvas/utils/shapes/path'
 import { getRectBorder } from '@canvas/utils/shapes/rectangle'
 import { roundForGrid } from '@canvas/utils/transform'
-import type { SelectionModeResize } from '@common/types/Mode'
-import type { DrawableShape, Point, Rect, ShapeEntity } from '@common/types/Shapes'
-import type { ToolsSettingsType } from '@common/types/tools'
-import { set } from '@common/utils/object'
-import { uniqueId } from '@common/utils/util'
+import { createShapeId } from '@canvas/utils/util'
 import { getPolygonBorder } from './polygon'
 
 const getCurveOuterBorder = (curve: DrawableShape<'curve'>, _borders: Rect, settings: Pick<UtilsSettings, 'selectionPadding'>): Rect => {
@@ -53,7 +52,6 @@ const buildPath = <T extends DrawableShape<'curve'>>(shape: T & { id: string }, 
   return {
     ...shape,
     path,
-    selection: createLineSelectionPath(path, shape, computed, settings),
     computed
   }
 }
@@ -73,7 +71,7 @@ export const createCurve = (
     {
       toolId: shape.id,
       type: shape.type,
-      id: uniqueId(`${shape.type}_`),
+      id: createShapeId(shape.type),
       points: [cursorPosition],
       style: {
         opacity: shape.settings.opacity.default,

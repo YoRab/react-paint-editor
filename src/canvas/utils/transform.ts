@@ -1,31 +1,38 @@
 import type { UtilsSettings } from '@canvas/constants/app'
 import { GRID_ROTATION_STEPS } from '@canvas/constants/grid'
 import { PICTURE_DEFAULT_SIZE } from '@canvas/constants/picture'
-import { buildShapesGroup } from '@canvas/utils/selection'
-import type { SelectionModeData } from '@common/types/Mode'
-import type { DrawableShape, Line, Point, SelectionType, ShapeEntity } from '@common/types/Shapes'
-import { getSelectedShapes } from '@common/utils/selection'
+import type { SelectionModeData } from '@canvas/types/Mode'
+import type { DrawableShape, Line, Point, SelectionType, ShapeEntity } from '@canvas/types/Shapes'
+import { getSelectedShapes } from '@canvas/utils/selectedShapes'
 import { refreshShape, resizeShapes, rotateShape, translateShapes } from './shapes'
 import { addNewPointToShape } from './shapes/brush'
 import { getAngleFromVector, rotatePoint } from './trigo'
 
 export const roundValues = (prop: number, precision = 2): number => {
-  return Math.round(prop * 10 ** precision) / 10 ** precision
+  const factor = 10 ** precision
+  return Math.round(prop * factor) / factor
 }
 
 export const scalePoint = (point: Point, minX: number, minY: number, scaleX = 1, scaleY = 1): Point => {
   return [minX + (point[0] - minX) * scaleX, minY + (point[1] - minY) * scaleY]
 }
+/**
+ * The closest multiple of the gap. The remainder keeps the sign of the value: the step takes it too, so that a negative
+ * value goes to its closest step instead of the step closer to 0
+ */
+const roundToStep = (value: number, gap: number) => {
+  const step = value >= 0 ? gap : -gap
+  return value + step / 2 - ((value + step / 2) % step)
+}
+
 export const roundForGrid = (value: number, settings: UtilsSettings, gridOffset = 0) => {
   if (!settings.gridGap) return roundValues(value)
-  const valueWithOffset = value + gridOffset
-  const step = valueWithOffset >= 0 ? settings.gridGap : -settings.gridGap
-  return valueWithOffset + step / 2 - ((valueWithOffset + step / 2) % step) - gridOffset
+  return roundToStep(value + gridOffset, settings.gridGap) - gridOffset
 }
 
 export const roundRotationForGrid = (rotation: number, settings: UtilsSettings, isShiftPressed: boolean) => {
   if (!settings.gridGap && !isShiftPressed) return roundValues(rotation, 3)
-  return rotation + Math.PI / GRID_ROTATION_STEPS / 2 - ((rotation + Math.PI / GRID_ROTATION_STEPS / 2) % (Math.PI / GRID_ROTATION_STEPS))
+  return roundToStep(rotation, Math.PI / GRID_ROTATION_STEPS)
 }
 
 export const boundVectorToSingleAxis = (vector: Point, isShiftPressed: boolean): Point => {
@@ -35,7 +42,8 @@ export const boundVectorToSingleAxis = (vector: Point, isShiftPressed: boolean):
   return vector
 }
 
-export const transformShape = (
+/** The selected shapes, transformed by the gesture: the selection is built again from them when they are updated */
+export const transformSelectedShapes = (
   ctx: CanvasRenderingContext2D,
   selectedShape: SelectionType,
   cursorPosition: Point,
@@ -43,12 +51,9 @@ export const transformShape = (
   settings: UtilsSettings,
   isShiftPressed: boolean,
   isAltPressed: boolean
-): SelectionType => {
+): ShapeEntity[] => {
   if (selectionMode.mode === 'translate') {
-    return buildShapesGroup(
-      translateShapes(cursorPosition, selectionMode.originalShape, selectionMode.cursorStartPosition, settings, isShiftPressed),
-      settings
-    )!
+    return translateShapes(cursorPosition, selectionMode.originalShape, selectionMode.cursorStartPosition, settings, isShiftPressed)
   }
 
   if (selectionMode.mode === 'rotate') {
@@ -60,27 +65,18 @@ export const transformShape = (
       settings,
       isShiftPressed
     )
-    const shapesGroup = getSelectedShapes(originalShape).map(shape => refreshShape(rotateShape(shape, rotationToAdd, center), settings))
-    return buildShapesGroup(shapesGroup, settings)!
+    return getSelectedShapes(originalShape).map(shape => refreshShape(rotateShape(shape, rotationToAdd, center), settings))
   }
 
   if (selectionMode.mode === 'resize') {
-    return buildShapesGroup(
-      resizeShapes(ctx, cursorPosition, selectionMode.originalShape, selectionMode, settings, isShiftPressed, isAltPressed),
-      settings
-    )!
+    return resizeShapes(ctx, cursorPosition, selectionMode.originalShape, selectionMode, settings, isShiftPressed, isAltPressed)
   }
 
   if (selectionMode.mode === 'brush') {
-    return buildShapesGroup(
-      getSelectedShapes(selectedShape).map(shape => {
-        return addNewPointToShape(shape as ShapeEntity<'brush'>, cursorPosition, settings)
-      }),
-      settings
-    )!
+    return getSelectedShapes(selectedShape).map(shape => addNewPointToShape(shape as ShapeEntity<'brush'>, cursorPosition, settings))
   }
 
-  return selectedShape
+  return getSelectedShapes(selectedShape)
 }
 
 export const fitContentInsideContainer = (

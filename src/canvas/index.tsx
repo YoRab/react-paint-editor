@@ -1,210 +1,164 @@
-import Canvas from '@canvas/components/Canvas'
-import { DEFAULT_CANVAS_OPTIONS } from '@canvas/constants/app'
-import CanvasContext from '@canvas/context/CanvasContext'
+import CanvasElement from '@canvas/components/Canvas'
+import { type CanvasOptions, DEFAULT_CANVAS_OPTIONS } from '@canvas/constants/app'
+import useAutoScroll from '@canvas/hooks/useAutoScroll'
 import useKeyboard from '@canvas/hooks/useKeyboard'
-import type { UseReactPaintReturnType } from '@canvas/hooks/useReactPaint'
 import useResizeObserver from '@canvas/hooks/useResizeObserver'
-import { type CSSProperties, useCallback, useMemo, useRef } from 'react'
-import './index.css'
+import { getPaintStore } from '@canvas/store/internal'
+import type { ReactPaint } from '@canvas/types/editor'
+import { canScaleDown, canScaleUp, getScaledCanvasSize, getUnscaledCanvasSize } from '@canvas/utils/canvas'
+import { withDefaults } from '@canvas/utils/object'
+import { cssVar } from '@canvas/utils/util'
+import { type CSSProperties, useCallback, useEffect, useRef, useSyncExternalStore } from 'react'
 
-type AppProps = {
-  canvasProps: UseReactPaintReturnType['canvasProps']
-  className?: string
-  style?: CSSProperties
-  options?: {
-    canvasBackgroundColor?: string | undefined
-    canvasSelectionColor?: string | undefined
-    canvasSelectionWidth?: number | undefined
-  }
+// fills its parent, also as an item of a flex column, whatever the size of the canvas
+const EXTEND_ROOT_STYLE: CSSProperties = {
+  position: 'relative',
+  width: '100%',
+  height: '100%',
+  flex: '1 1 0',
+  minWidth: 0,
+  minHeight: 0,
+  overflow: 'hidden'
 }
-const App = ({ options, className, style, canvasProps }: AppProps) => {
-  const {
-    shapes,
-    selectedShape,
-    selectionFrame,
-    hoveredShape,
-    addShape,
-    setSelectedShape,
-    selectAllShapes,
-    setSelectionFrame,
-    refreshSelectedShapes,
-    refreshHoveredShape,
-    duplicateShapes,
-    removeShape,
-    updateShape,
-    backwardShape,
-    forwardShape,
-    saveShapes,
-    refs,
-    width,
-    height,
-    settings,
-    setCanvasSize,
-    setCanvasOffset,
-    pasteShapes,
-    activeTool,
-    setActiveTool,
-    isInsideComponent,
-    isInsideCanvas,
-    isEditMode,
-    canvas: { withSkeleton, withFrameSelection, withContextMenu, canGrow, canShrink },
-    canvasOffsetStartData,
-    setCanvasOffsetStartData,
-    selectionMode,
-    setSelectionMode,
-    setCanvasMoveAcceleration,
-    isShiftPressed,
-    isAltPressed,
-    isSpacePressed,
-    copiedShape,
-    setCopiedShape,
-    setShiftPressed,
-    setAltPressed,
-    setCanvasZoom,
-    resetZoom,
-    setIsSpacePressed
-  } = canvasProps
 
-  const { canvasBackgroundColor, canvasSelectionColor, canvasSelectionWidth } = {
-    ...DEFAULT_CANVAS_OPTIONS,
-    ...options
-  } as typeof DEFAULT_CANVAS_OPTIONS
+type CanvasComponentProps = {
+  /** Handle returned by useReactPaint */
+  paint: ReactPaint
+  className?: string | undefined
+  style?: CSSProperties | undefined
+  options?: CanvasOptions | undefined
+}
 
-  const containerRef = useRef<HTMLDivElement>(null)
+const Canvas = ({ paint, options, className, style }: CanvasComponentProps) => {
+  const store = getPaintStore(paint)
+  // only what changes the DOM: the gestures do not render this component
+  const getView = useCallback(() => store.selectors.selectCanvasView(store.getState()), [store])
+  const view = useSyncExternalStore(store.subscribe, getView, getView)
+  const { width, canvasSize, resize } = view
 
-  const onResized = useCallback(
-    (measuredWidth: number) => {
-      const measuredHeight = (height * measuredWidth) / width
-      const scaleRatio = measuredWidth / width
-      setCanvasSize({ realWidth: width, realHeight: height, width: measuredWidth, height: measuredHeight, scaleRatio })
+  const { canvasBackgroundColor, canvasSelectionColor, canvasSelectionWidth } = withDefaults(DEFAULT_CANVAS_OPTIONS, options)
+
+  const containerRef = useRef<HTMLDivElement | null>(null)
+  // the root of the Canvas is the default scope of the interactions
+  const setContainerRef = useCallback(
+    (element: HTMLDivElement | null) => {
+      containerRef.current = element
+      store.setCanvasRootElement(element)
     },
-    [width, height, setCanvasSize]
+    [store]
   )
 
-  useKeyboard({
-    isInsideComponent,
-    isInsideCanvas,
-    isEditingText: selectionMode.mode === 'textedition',
-    settings,
-    selectedShape,
-    copiedShape,
-    setCopiedShape,
-    selectAllShapes,
-    setSelectedShape,
-    removeShape,
-    pasteShapes,
-    updateShapes: updateShape,
-    backwardShape,
-    forwardShape,
-    setShiftPressed,
-    setAltPressed,
-    setActiveTool,
-    setSelectionMode,
-    setSelectionFrame,
-    setCanvasZoom,
-    resetZoom,
-    setIsSpacePressed
-  })
+  const resizeFrame = useRef(0)
+  useEffect(() => () => cancelAnimationFrame(resizeFrame.current), [])
+  const onResized = useCallback(
+    (measuredWidth: number, measuredHeight: number) => {
+      cancelAnimationFrame(resizeFrame.current)
+      if (resize === 'extend') {
+        // The visible area follows the container at the scale 1. It is applied at once, so that the canvas is redrawn before
+        // the next paint: the size of the root does not depend on the canvas, which cannot resize it again
+        const displayWidth = Math.round(measuredWidth)
+        const displayHeight = Math.round(measuredHeight)
+        if (displayWidth && displayHeight) store.setCanvasSize(getUnscaledCanvasSize(displayWidth, displayHeight))
+        return
+      }
+      // The size is applied in the next frame: the store renders the components synchronously, and a render inside
+      // the ResizeObserver callback would resize the observed element again during the same loop
+      resizeFrame.current = requestAnimationFrame(() => {
+        const { config } = store.getState()
+        store.setCanvasSize(getScaledCanvasSize(measuredWidth, config.width, config.height))
+      })
+    },
+    [resize, store]
+  )
+
+  useAutoScroll(store)
+  useKeyboard(store)
   useResizeObserver({ element: containerRef, onResized })
 
-  const contextValue = useMemo(
-    () => ({
-      shapes,
-      settings,
-      selectedShape,
-      hoveredShape,
-      selectionFrame,
-      selectionMode,
-      activeTool,
-      canvasOffsetStartData,
-      isInsideComponent,
-      isInsideCanvas,
-      isShiftPressed,
-      isAltPressed,
-      isSpacePressed,
-      selectionColor: canvasSelectionColor,
-      selectionWidth: canvasSelectionWidth,
-      isEditMode,
-      canGrow,
-      withFrameSelection,
-      withSkeleton,
-      withContextMenu,
-      setSelectedShape,
-      setSelectionFrame,
-      setSelectionMode,
-      setActiveTool,
-      setCanvasOffsetStartData,
-      setCanvasOffset,
-      setCanvasMoveAcceleration,
-      addShapes: addShape,
-      updateSingleShape: updateShape,
-      duplicateShapes,
-      saveShapes,
-      refreshHoveredShape,
-      refreshSelectedShapes
-    }),
-    [
-      shapes,
-      settings,
-      selectedShape,
-      hoveredShape,
-      selectionFrame,
-      selectionMode,
-      activeTool,
-      canvasOffsetStartData,
-      isInsideComponent,
-      isInsideCanvas,
-      isShiftPressed,
-      isAltPressed,
-      isSpacePressed,
-      canvasSelectionColor,
-      canvasSelectionWidth,
-      isEditMode,
-      canGrow,
-      withFrameSelection,
-      withSkeleton,
-      withContextMenu,
-      setSelectedShape,
-      setSelectionFrame,
-      setSelectionMode,
-      setActiveTool,
-      setCanvasOffsetStartData,
-      setCanvasOffset,
-      setCanvasMoveAcceleration,
-      addShape,
-      updateShape,
-      duplicateShapes,
-      saveShapes,
-      refreshHoveredShape,
-      refreshSelectedShapes
-    ]
-  )
+  // unitless, like the variable that overrides it
+  const canvasWidth = `calc(${cssVar('--react-paint-app-canvaswidth', width)} * 1px)`
+  const rootStyle: CSSProperties =
+    resize === 'extend'
+      ? EXTEND_ROOT_STYLE
+      : {
+          position: 'relative',
+          width: '100%',
+          maxWidth: canScaleUp(resize) ? '100%' : canvasWidth,
+          minWidth: canScaleDown(resize) ? undefined : canvasWidth,
+          aspectRatio: cssVar('--react-paint-app-row-aspectratio', `${canvasSize.width} / ${canvasSize.height}`)
+        }
 
   return (
-    <div
-      ref={containerRef}
-      className={`react-paint-app-row${className ? ` ${className}` : ''}`}
-      data-grow={canGrow}
-      data-shrink={canShrink}
-      style={{
-        '--react-paint-app-row-width': settings.canvasSize.width,
-        '--react-paint-app-canvaswidth': width,
-        '--react-paint-app-canvasheight': height,
-        '--react-paint-app-row-aspectratio': `calc(${settings.canvasSize.width} / ${settings.canvasSize.height})`,
-        '--react-paint-app-canvas-bg': canvasBackgroundColor,
-        ...style
-      }}
-    >
-      <CanvasContext.Provider value={contextValue}>
-        <Canvas ref={refs.canvas} />
-      </CanvasContext.Provider>
+    <div ref={setContainerRef} className={`react-paint-app-row${className ? ` ${className}` : ''}`} style={{ ...rootStyle, ...style }}>
+      <CanvasElement
+        store={store}
+        view={view}
+        backgroundColor={canvasBackgroundColor}
+        selectionColor={canvasSelectionColor}
+        selectionWidth={canvasSelectionWidth}
+      />
     </div>
   )
 }
 
-export default App
-
-export type { OptionalOptions } from '@canvas/constants/app'
-export { DEFAULT_OPTIONS } from '@canvas/constants/app'
-export { default as useReactPaint } from '@canvas/hooks/useReactPaint'
-export type { ExportedDrawableShape as DrawableShape, StateData } from '@common/types/Shapes'
+export {
+  type CanvasOptions,
+  DEFAULT_OPTIONS,
+  type OptionalOptions,
+  type OptionalOptions as UseReactPaintOptions,
+  type PictureSrcResolver
+} from '@canvas/constants/app'
+export { GRID_PRESETS } from '@canvas/constants/grid'
+export { DEFAULT_TOOLS, MOVE_TOOL, SELECTION_TOOL } from '@canvas/constants/tools'
+export { ZOOM_LEVELS } from '@canvas/constants/zoom'
+export { PaintProvider, usePaint } from '@canvas/context/PaintContext'
+export { default as useAnnotationsStyle } from '@canvas/hooks/useAnnotationsStyle'
+export { default as usePaintState } from '@canvas/hooks/usePaintState'
+export { default as useReactPaint, type UseReactPaintProps, type UseReactPaintReturnType } from '@canvas/hooks/useReactPaint'
+export type {
+  ChangeSource,
+  ContextMenuState,
+  DataChanges,
+  EditorActions,
+  EditorState,
+  ExportImageFormat,
+  ExportImageOptions,
+  ExportView,
+  InteractionMode,
+  InteractionState,
+  ReactPaint,
+  ReactPaintEventName,
+  ReactPaintEvents,
+  ResolvedOptions,
+  SelectionHover,
+  SelectionUpdateMode,
+  ShapePointerInfo,
+  ShapeStyleField,
+  ShapesActionOptions,
+  ShapesBounds,
+  ShapesOrderAction,
+  ShapesTransformAction,
+  ToolSettingValue,
+  ZoomAction
+} from '@canvas/types/editor'
+export type {
+  EditableShapeType,
+  ExportedDrawableShape as DrawableShape,
+  ExportedDrawableShape,
+  ExportedShape,
+  Point,
+  Rect,
+  ShapeData,
+  ShapeEntity,
+  ShapeInput,
+  ShapePatch,
+  ShapeType,
+  StateData,
+  StyleShape,
+  TextShapeInput
+} from '@canvas/types/Shapes'
+export type { ActionsTool, CustomTool, CustomToolInput, ToolsType } from '@canvas/types/tools'
+export { shallowEqual } from '@canvas/utils/equality'
+export { getSelectedShapes, getSelectedShapesTools } from '@canvas/utils/selectedShapes'
+export type { CanvasComponentProps }
+export { Canvas }

@@ -1,17 +1,55 @@
-import { expect, userEvent, within } from 'storybook/test'
-import { Canvas, Editor, type StateData, useReactPaint } from '../../src/index'
+import { useEffect } from 'react'
+import { expect, userEvent, type within } from 'storybook/test'
+import {
+  Canvas,
+  Editor,
+  type EditorOptions,
+  type ReactPaint,
+  type ShapeEntity,
+  type StateData,
+  type ToolsType,
+  type UseReactPaintProps,
+  useReactPaint
+} from '../../src/index'
 
 // ─── Component wrapper ─────────────────────────────────────────────────────────
 
 export const getCurrentDataRef = { current: null as null | (() => StateData) }
 
-export const ReactPaintWrapper = (args: Parameters<typeof useReactPaint>[0]) => {
-  const { editorProps, canvasProps, getCurrentData } = useReactPaint(args)
-  getCurrentDataRef.current = getCurrentData
+/** Handle of the last rendered harness, driven by the tests */
+export const paintRef = { current: null as ReactPaint | null }
+
+export const getPaint = () => {
+  if (!paintRef.current) throw new Error('The harness is not rendered')
+  return paintRef.current
+}
+
+export const getState = () => getPaint().getState()
+
+export const wait = (ms = 50) => new Promise(res => setTimeout(res, ms))
+
+/** Log of the selectionChanged / toolChanged events emitted by the last rendered wrapper */
+export const eventsLog: ({ name: 'selectionChanged'; ids: string[] } | { name: 'toolChanged'; toolId: string })[] = []
+
+export const ReactPaintWrapper = ({ editorOptions, ...args }: UseReactPaintProps & { editorOptions?: EditorOptions }) => {
+  const paint = useReactPaint(args)
+  paintRef.current = paint
+  getCurrentDataRef.current = paint.getCurrentData
+
+  useEffect(() => {
+    const unregisterSelection = paint.registerEvent('selectionChanged', (shapes: ShapeEntity[]) =>
+      eventsLog.push({ name: 'selectionChanged', ids: shapes.map(shape => shape.id) })
+    )
+    const unregisterTool = paint.registerEvent('toolChanged', (tool: ToolsType) => eventsLog.push({ name: 'toolChanged', toolId: tool.id }))
+    return () => {
+      unregisterSelection()
+      unregisterTool()
+    }
+  }, [paint])
 
   return (
-    <Editor editorProps={editorProps}>
-      <Canvas canvasProps={canvasProps} />
+    <Editor paint={paint} options={editorOptions}>
+      <Canvas paint={paint} />
     </Editor>
   )
 }
@@ -64,8 +102,9 @@ export async function selectTool(view: ReturnType<typeof within>, toolId: string
 
 // ─── Assertion helpers ─────────────────────────────────────────────────────────
 
+/** An exported shape keeps its id, but none of the data computed by the canvas */
 export function assertNoInternalFields(shape: unknown) {
-  expect(shape).not.toHaveProperty('id')
+  expect(shape).toHaveProperty('id', expect.any(String))
   expect(shape).not.toHaveProperty('path')
   expect(shape).not.toHaveProperty('computed')
   expect(shape).not.toHaveProperty('selection')
@@ -113,11 +152,7 @@ export async function setToggleSetting(view: ReturnType<typeof within>, title: s
 
 // ─── Context menu helper ────────────────────────────────────────────────────────
 
-/**
- * Right-clicks at (clientX, clientY) on the draw canvas to open the context menu,
- * retrying once if it did not appear (canvas may have lost focus after settings
- * interactions), then clicks the named menu item.
- */
+/** Right-clicks at (clientX, clientY) on the draw canvas to open the context menu, then clicks the named menu item. */
 export async function openContextMenuAndClick(
   user: ReturnType<typeof userEvent.setup>,
   drawCanvas: HTMLElement,
@@ -128,11 +163,6 @@ export async function openContextMenuAndClick(
 ) {
   await user.pointer({ target: drawCanvas, keys: '[MouseRight]', coords: { x: clientX, y: clientY } })
   await new Promise(res => setTimeout(res, 100))
-  if (!view.queryByRole('button', { name: itemName })) {
-    // isInsideCanvas may have been false (canvas lost focus during settings); retry once.
-    await user.pointer({ target: drawCanvas, keys: '[MouseRight]', coords: { x: clientX, y: clientY } })
-    await new Promise(res => setTimeout(res, 100))
-  }
   await userEvent.click(await view.findByRole('button', { name: itemName }))
   await new Promise(res => setTimeout(res, 100))
 }

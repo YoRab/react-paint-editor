@@ -1,0 +1,252 @@
+import type { ShapeType } from './Shapes'
+
+export type CustomToolInput = {
+  id: string
+  /** SVG markup, rendered as HTML by the editor: it must be trusted, never built from what a user typed or loaded */
+  icon?: string
+  label?: string
+} & (
+  | {
+      type: 'brush'
+      settings: ToolsSettingsType<'brush'>
+    }
+  | {
+      type: 'circle'
+      settings: ToolsSettingsType<'circle'>
+    }
+  | {
+      type: 'ellipse'
+      settings: ToolsSettingsType<'ellipse'>
+    }
+  | {
+      type: 'rect'
+      settings: ToolsSettingsType<'rect'>
+    }
+  | {
+      type: 'square'
+      settings: ToolsSettingsType<'square'>
+    }
+  | {
+      type: 'line'
+      settings: ToolsSettingsType<'line'>
+    }
+  | {
+      type: 'polygon'
+      settings: ToolsSettingsType<'polygon'>
+    }
+  | {
+      type: 'curve'
+      settings: ToolsSettingsType<'curve'>
+    }
+  | {
+      type: 'text'
+      settings: ToolsSettingsType<'text'>
+    }
+  | {
+      type: 'picture'
+      settings: ToolsSettingsType<'picture'>
+    }
+)
+
+export type CustomTool = {
+  id: string
+  /** SVG markup, rendered as HTML by the editor: it must be trusted, never built from what a user typed or loaded */
+  icon?: string
+  label?: string
+} & (
+  | {
+      type: 'brush'
+      settings: ToolsSettingsType<'brush'>
+    }
+  | {
+      type: 'circle'
+      settings: ToolsSettingsType<'circle'>
+    }
+  | {
+      type: 'ellipse'
+      settings: ToolsSettingsType<'ellipse'>
+    }
+  | {
+      type: 'rect'
+      settings: ToolsSettingsType<'rect'>
+    }
+  | {
+      type: 'square'
+      settings: ToolsSettingsType<'square'>
+    }
+  | {
+      type: 'line'
+      settings: ToolsSettingsType<'line'>
+    }
+  | {
+      type: 'polygon'
+      settings: ToolsSettingsType<'polygon'>
+    }
+  | {
+      type: 'curve'
+      settings: ToolsSettingsType<'curve'>
+    }
+  | {
+      type: 'text'
+      settings: ToolsSettingsType<'text'>
+    }
+  | {
+      type: 'picture'
+      settings: ToolsSettingsType<'picture'>
+    }
+  | {
+      type: 'group'
+      settings: ToolsSettingsType<'group'>
+    }
+)
+
+export type SettingsOpacity = {
+  opacity: {
+    min: number
+    max: number
+    step: number
+    default: number
+    hidden?: boolean
+  }
+}
+
+export type SettingsStrokeColor = {
+  strokeColor: {
+    values: string[]
+    default: string
+    hidden?: boolean
+  }
+}
+
+export type SettingsFillColor = {
+  fillColor: {
+    values: string[]
+    default: string
+    hidden?: boolean
+  }
+}
+
+export type SettingsLineWidth = {
+  lineWidth: {
+    min: number
+    max: number
+    step: number
+    default: number
+    hidden?: boolean
+  }
+}
+
+export type SettingsLineDash = {
+  lineDash: {
+    values: number[]
+    default: number
+    hidden?: boolean
+  }
+}
+
+export type SettingsLineArrow = {
+  lineArrow: {
+    values: number[]
+    default: number
+    hidden?: boolean
+  }
+}
+
+export type SettingsFont = {
+  fontFamily: {
+    values: string[]
+    default: string
+    hidden?: boolean
+  }
+  fontBold: {
+    values: boolean[]
+    default: boolean
+    hidden?: boolean
+  }
+  fontItalic: {
+    values: boolean[]
+    default: boolean
+    hidden?: boolean
+  }
+}
+
+export type SettingsClosedPoints = {
+  closedPoints: {
+    default: number
+    hidden?: boolean
+  }
+}
+
+export type ToolsRectSettings = SettingsStrokeColor & SettingsFillColor & SettingsOpacity & SettingsLineWidth & SettingsLineDash
+
+export type ToolsSquareSettings = SettingsStrokeColor & SettingsFillColor & SettingsOpacity & SettingsLineWidth & SettingsLineDash
+
+export type ToolsCircleSettings = SettingsStrokeColor & SettingsFillColor & SettingsOpacity & SettingsLineWidth & SettingsLineDash
+
+export type ToolsEllipseSettings = SettingsStrokeColor & SettingsFillColor & SettingsOpacity & SettingsLineWidth & SettingsLineDash
+
+export type ToolsTextSettings = SettingsOpacity & SettingsStrokeColor & SettingsFont
+export type ToolsLineSettings = SettingsOpacity & SettingsStrokeColor & SettingsLineWidth & SettingsLineDash & SettingsLineArrow
+
+export type ToolsBrushSettings = SettingsOpacity & SettingsStrokeColor & SettingsLineWidth & SettingsLineDash
+
+export type ToolsPolygonSettings = SettingsOpacity &
+  SettingsStrokeColor &
+  SettingsFillColor &
+  SettingsLineWidth &
+  SettingsLineDash &
+  SettingsClosedPoints
+
+export type ToolsCurveSettings = SettingsOpacity &
+  SettingsStrokeColor &
+  SettingsFillColor &
+  SettingsLineWidth &
+  SettingsLineDash &
+  SettingsClosedPoints
+
+export type ToolsTriangleSettings = SettingsStrokeColor & SettingsFillColor & SettingsOpacity & SettingsLineWidth & SettingsLineDash
+
+export type ToolsPictureSettings = SettingsOpacity
+
+export type ToolsGroupSettings = Partial<
+  SettingsOpacity & SettingsStrokeColor & SettingsFillColor & SettingsLineWidth & SettingsLineDash & SettingsLineArrow
+>
+
+export type ToolsSettingsType<T extends ShapeType> = T extends 'rect'
+  ? ToolsRectSettings
+  : T extends 'square'
+    ? ToolsSquareSettings
+    : T extends 'circle'
+      ? ToolsCircleSettings
+      : T extends 'ellipse'
+        ? ToolsEllipseSettings
+        : T extends 'text'
+          ? ToolsTextSettings
+          : T extends 'line'
+            ? ToolsLineSettings
+            : T extends 'brush'
+              ? ToolsBrushSettings
+              : T extends 'polygon'
+                ? ToolsPolygonSettings
+                : T extends 'curve'
+                  ? ToolsCurveSettings
+                  : T extends 'triangle'
+                    ? ToolsTriangleSettings
+                    : T extends 'picture'
+                      ? ToolsPictureSettings
+                      : T extends 'group'
+                        ? ToolsGroupSettings
+                        : never
+
+/** Tools handled by the canvas besides the drawing tools. The buttons of an editor (undo, export...) are not tools */
+export type ActionsType = 'selection' | 'move'
+
+export type ActionsTool = {
+  id: string
+  type: ActionsType
+  /** SVG markup, rendered as HTML by the editor: it must be trusted, never built from what a user typed or loaded */
+  icon?: string
+  label?: string
+}
+
+export type ToolsType = CustomTool | ActionsTool

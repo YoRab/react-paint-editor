@@ -1,8 +1,8 @@
-import type { CustomTool, ToolsType } from '@common/types/tools'
-import { isEventInsideNode } from '@common/utils/dom'
+import type { CustomTool, ToolsType } from '@canvas/index'
 import Button from '@editor/components/common/Button'
 import Panel from '@editor/components/common/Panel'
-import { useEffect, useRef, useState, useTransition } from 'react'
+import usePressOutside from '@editor/hooks/usePressOutside'
+import { useCallback, useRef, useState, useTransition } from 'react'
 import Tool from './Tool'
 import './ToolbarGroup.css'
 
@@ -30,22 +30,8 @@ const ToolbarGroup = ({ activeTool, group, disabled = false, setActiveToolFromId
     setActiveToolFromId(tool.id)
   }
 
-  useEffect(() => {
-    if (!isOpen) return
-
-    const closePanel = (event: MouseEvent | TouchEvent) => {
-      const isClickInsideToolbarGroup = isEventInsideNode(event, panelRef.current)
-      !isClickInsideToolbarGroup && setIsOpen(false)
-    }
-
-    document.addEventListener('mousedown', closePanel, { passive: false })
-    document.addEventListener('touchstart', closePanel, { passive: false })
-
-    return () => {
-      document.removeEventListener('mousedown', closePanel)
-      document.removeEventListener('touchstart', closePanel)
-    }
-  }, [isOpen])
+  const closePanel = useCallback(() => setIsOpen(false), [])
+  usePressOutside(panelRef, closePanel, isOpen)
 
   if ('type' in group) {
     return <Tool disabled={disabled} type={group} img={group.icon} isActive={activeTool.id === group.id} setActive={setActiveTool} />
@@ -66,7 +52,7 @@ const ToolbarGroup = ({ activeTool, group, disabled = false, setActiveToolFromId
 
   const isActive = group?.toolsType.find(tool => tool.type === activeTool.type) !== undefined
 
-  const groupIcon = (localActiveTool ? localActiveTool.icon : group.toolsType?.[0]?.icon) ?? group.title
+  const groupIcon = localActiveTool ? localActiveTool.icon : group.toolsType?.[0]?.icon
 
   const openPanel = () => {
     if (localActiveTool) setActiveToolFromId(localActiveTool.id)
@@ -78,7 +64,10 @@ const ToolbarGroup = ({ activeTool, group, disabled = false, setActiveToolFromId
 
   return (
     <div className='react-paint-editor-toolbargroup-relative'>
-      <Button selected={isActive} title={group.title} disabled={disabled} onClick={openPanel} icon={groupIcon} />
+      {/* the icon is rendered as HTML, the title as text */}
+      <Button selected={isActive} title={group.title} disabled={disabled} onClick={openPanel} icon={groupIcon}>
+        {groupIcon === undefined ? group.title : undefined}
+      </Button>
       {isOpen && (
         <Panel alignment='center' position='top'>
           <div className='react-paint-editor-toolbargroup-panel-content' data-vertical={+group.vertical} ref={panelRef}>

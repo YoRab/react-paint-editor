@@ -1,36 +1,15 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import { Canvas, Editor, useReactPaint } from '../src/index'
 import './whiteboard.css'
-import useResizeObserver from '@canvas/hooks/useResizeObserver'
-import useDebounce from '@common/hooks/useDebounce'
-import { useCallback, useRef, useState } from 'react'
 
-const ReactPaintWrapper = (args: Parameters<typeof useReactPaint>[0]) => {
-  const { editorProps, canvasProps } = useReactPaint(args)
-  return (
-    <Editor editorProps={editorProps}>
-      <Canvas canvasProps={canvasProps} />
-    </Editor>
-  )
-}
-
+// With resize 'extend', the canvas fills the container at a constant scale: its visible area follows the container
 const WhiteBoard = (args: Parameters<typeof useReactPaint>[0]) => {
-  const [canvasSize, setCanvasSize] = useState<[number, number] | undefined>()
-  const containerRef = useRef<HTMLDivElement>(null)
-  const debouncedSetCanvasSize = useDebounce(setCanvasSize)
-
-  const onResized = useCallback(
-    (measuredWidth: number, measuredHeight: number) => {
-      debouncedSetCanvasSize([measuredWidth, measuredHeight - 72])
-    },
-    [debouncedSetCanvasSize]
-  )
-
-  useResizeObserver({ element: containerRef, onResized })
-
+  const paint = useReactPaint(args)
   return (
-    <div className='container' ref={containerRef}>
-      {canvasSize && <ReactPaintWrapper {...args} width={canvasSize[0]} height={canvasSize[1]} />}
+    <div className='container'>
+      <Editor paint={paint}>
+        <Canvas paint={paint} />
+      </Editor>
     </div>
   )
 }
@@ -45,7 +24,7 @@ const meta = {
   tags: ['autodocs'],
   // More on argTypes: https://storybook.js.org/docs/react/api/argtypes
   argTypes: {}
-} satisfies Meta<typeof ReactPaintWrapper>
+} satisfies Meta<typeof WhiteBoard>
 
 export default meta
 type Story = StoryObj<typeof meta>
@@ -54,42 +33,31 @@ export const Default: Story = {
   args: {
     options: {
       size: 'infinite',
+      resize: 'extend',
       canZoom: 'always',
-      canShrink: false,
-      canGrow: false,
       grid: 20
     }
   },
   parameters: {
     docs: {
       source: {
-        code: `import { useCallback, useRef, useState } from 'react'
-import { Canvas, Editor, useReactPaint } from '../src/index'
-import useResizeObserver from '@canvas/hooks/useResizeObserver'
-import './whiteboard.css'
+        code: `import { Canvas, Editor, useReactPaint } from '@yorab/react-paint'
+import './whiteboard.css' // .container fills the page
 
-const ReactPaintWrapper = (args: Parameters<typeof useReactPaint>[0]) => {
-  const { editorProps, canvasProps } = useReactPaint(args)
+const WhiteBoard = () => {
+  const paint = useReactPaint({
+    options: {
+      size: 'infinite',
+      resize: 'extend', // the canvas fills the container, at a constant scale
+      canZoom: 'always',
+      grid: 20
+    }
+  })
   return (
-    <Editor editorProps={editorProps}>
-      <Canvas canvasProps={canvasProps} />
-    </Editor>
-  )
-}
-
-const WhiteBoard = (args: Parameters<typeof useReactPaint>[0]) => {
-  const [canvasSize, setCanvasSize] = useState<[number, number] | undefined>()
-  const containerRef = useRef<HTMLDivElement>(null)
-
-  const onResized = useCallback((measuredWidth: number, measuredHeight: number) => {
-    setCanvasSize([measuredWidth, measuredHeight - 72])
-  }, [])
-
-  useResizeObserver({ element: containerRef, onResized })
-
-  return (
-    <div className='container' ref={containerRef}>
-      {canvasSize && <ReactPaintWrapper {...args} width={canvasSize[0]} height={canvasSize[1]} />}
+    <div className='container'>
+      <Editor paint={paint}>
+        <Canvas paint={paint} />
+      </Editor>
     </div>
   )
 }`,

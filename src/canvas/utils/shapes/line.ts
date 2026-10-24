@@ -1,15 +1,14 @@
 import type { UtilsSettings } from '@canvas/constants/app'
+import type { SelectionModeResize } from '@canvas/types/Mode'
+import type { DrawableShape, Line, Point, Rect, SelectionType, ShapeEntity, StyleShape, Triangle } from '@canvas/types/Shapes'
+import type { ToolsSettingsType } from '@canvas/types/tools'
 import { drawPathWithFillAndStroke, updateCanvasContext } from '@canvas/utils/canvas'
 import { getPointPositionAfterCanvasTransformation } from '@canvas/utils/intersect'
-import { createLineSelectionPath } from '@canvas/utils/selection/lineSelection'
+import { set } from '@canvas/utils/object'
 import { createLinePath, getComputedShapeInfos } from '@canvas/utils/shapes/path'
 import { roundForGrid, shortenLine } from '@canvas/utils/transform'
 import { getAngleFromVector, rotatePoint } from '@canvas/utils/trigo'
-import type { SelectionModeResize } from '@common/types/Mode'
-import type { DrawableShape, Line, Point, Rect, SelectionType, ShapeEntity, StyleShape, Triangle } from '@common/types/Shapes'
-import type { ToolsSettingsType } from '@common/types/tools'
-import { set } from '@common/utils/object'
-import { uniqueId } from '@common/utils/util'
+import { createShapeId } from '@canvas/utils/util'
 import { refreshCurve } from './curve'
 import { type GroupResizeContext, getPositionWithoutGroupRotation, getShapePositionInNewBorder } from './group'
 import { refreshPolygon } from './polygon'
@@ -52,7 +51,6 @@ const buildPath = <T extends DrawableShape<'line'>>(line: T & { id: string }, se
   return {
     ...line,
     path,
-    selection: createLineSelectionPath(path, line, computed, settings),
     arrows,
     style: {
       ...line.style,
@@ -76,7 +74,7 @@ export const createLine = (
   const lineShape = {
     toolId: shape.id,
     type: shape.type,
-    id: uniqueId(`${shape.type}_`),
+    id: createShapeId(shape.type),
     points: [cursorPosition, cursorPosition] as const,
     style: {
       opacity: shape.settings.opacity.default,

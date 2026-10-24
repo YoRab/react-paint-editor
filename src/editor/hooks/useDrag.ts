@@ -1,13 +1,13 @@
-import type { ShapeEntity } from '@common/types/Shapes'
+import type { ShapeEntity } from '@canvas/index'
 import { type RefObject, useEffect, useState } from 'react'
 
 type useDragType = {
   disabled?: boolean
   ref: RefObject<HTMLDivElement | null>
-  shape: ShapeEntity
+  shape: Pick<ShapeEntity, 'id'>
   layoutDragging: string | undefined
   setLayoutDragging: (shapeId: string | undefined) => void
-  handleSelect: (shape: ShapeEntity[]) => void
+  handleSelect: (ids: string[]) => void
   onSwapShapes: (firstShapeId: string, lastShapeId: string) => void
 }
 
@@ -34,7 +34,7 @@ const useDrag = ({ disabled = false, ref, shape, layoutDragging, setLayoutDraggi
       return false
     }
     const handleDragStart = (e: DragEvent) => {
-      handleSelect([shape])
+      handleSelect([shape.id])
       if (!e.dataTransfer) return
       e.dataTransfer.effectAllowed = 'move'
       e.dataTransfer.setData('draggableShapeId', shape.id)

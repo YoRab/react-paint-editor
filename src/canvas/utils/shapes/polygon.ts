@@ -1,14 +1,14 @@
 import type { UtilsSettings } from '@canvas/constants/app'
+import type { SelectionModeResize } from '@canvas/types/Mode'
+import type { DrawableShape, Point, Polygon, Rect, ShapeEntity } from '@canvas/types/Shapes'
+import type { ToolsSettingsType } from '@canvas/types/tools'
 import { drawPathWithFillAndStroke } from '@canvas/utils/canvas'
 import { getPointPositionAfterCanvasTransformation } from '@canvas/utils/intersect'
-import { createLineSelectionPath } from '@canvas/utils/selection/lineSelection'
+import { set } from '@canvas/utils/object'
 import { createPolygonPath, expandRect, getComputedShapeInfos } from '@canvas/utils/shapes/path'
 import { roundForGrid } from '@canvas/utils/transform'
-import type { SelectionModeResize } from '@common/types/Mode'
-import type { DrawableShape, Point, Polygon, Rect, ShapeEntity } from '@common/types/Shapes'
-import type { ToolsSettingsType } from '@common/types/tools'
-import { set } from '@common/utils/object'
-import { uniqueId } from '@common/utils/util'
+import { getPointsBounds } from '@canvas/utils/trigo'
+import { createShapeId } from '@canvas/utils/util'
 
 const buildPath = <T extends DrawableShape<'polygon'>>(shape: T & { id: string }, settings: UtilsSettings): ShapeEntity<'polygon'> => {
   const path = createPolygonPath(shape)
@@ -16,7 +16,6 @@ const buildPath = <T extends DrawableShape<'polygon'>>(shape: T & { id: string }
   return {
     ...shape,
     path,
-    selection: createLineSelectionPath(path, shape, computed, settings),
     computed
   }
 }
@@ -36,7 +35,7 @@ export const createPolygon = (
     {
       toolId: shape.id,
       type: shape.type,
-      id: uniqueId(`${shape.type}_`),
+      id: createShapeId(shape.type),
       points: [cursorPosition],
       style: {
         opacity: shape.settings.opacity.default,
@@ -56,11 +55,7 @@ export const drawPolygon = (ctx: CanvasRenderingContext2D, polygon: ShapeEntity<
 }
 
 export const getPolygonBorder = (polygon: Polygon, settings: Pick<UtilsSettings, 'selectionPadding'>): Rect => {
-  const minX = Math.min(...polygon.points.map(point => point[0]))
-  const maxX = Math.max(...polygon.points.map(point => point[0]))
-
-  const minY = Math.min(...polygon.points.map(point => point[1]))
-  const maxY = Math.max(...polygon.points.map(point => point[1]))
+  const { minX, minY, maxX, maxY } = getPointsBounds([polygon.points])
 
   const baseRect: Rect = { x: minX, width: maxX - minX, y: minY, height: maxY - minY }
   return expandRect(baseRect, settings.selectionPadding)

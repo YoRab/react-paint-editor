@@ -1,11 +1,11 @@
 import type { UtilsSettings } from '@canvas/constants/app'
+import type { SelectionModeResize } from '@canvas/types/Mode'
+import type { DrawableShape, Point, Rect, SelectionType, ShapeEntity } from '@canvas/types/Shapes'
+import type { ToolsSettingsType } from '@canvas/types/tools'
 import { drawPathWithFillAndStroke } from '@canvas/utils/canvas'
 import { getPointPositionBeforeCanvasTransformation } from '@canvas/utils/intersect'
-import { createRecSelectionPath, resizeRectSelection } from '@canvas/utils/selection/rectSelection'
-import type { SelectionModeResize } from '@common/types/Mode'
-import type { DrawableShape, Point, Rect, SelectionType, ShapeEntity } from '@common/types/Shapes'
-import type { ToolsSettingsType } from '@common/types/tools'
-import { uniqueId } from '@common/utils/util'
+import { resizeRectSelection } from '@canvas/utils/selection/rectSelection'
+import { createShapeId } from '@canvas/utils/util'
 import { type GroupResizeContext, getPositionWithoutGroupRotation, getShapePositionInNewBorder } from './group'
 import { createRecPath, expandRect, getComputedShapeInfos } from './path'
 
@@ -17,8 +17,7 @@ const buildPath = <T extends rectish>(rect: DrawableShape<rectish> & { id: strin
   return {
     ...rect,
     path,
-    computed,
-    selection: createRecSelectionPath(path, computed, settings)
+    computed
   } as unknown as ShapeEntity<T>
 }
 
@@ -38,7 +37,7 @@ export const createRectangle = <T extends rectish>(
   const recShape = {
     toolId: shape.id,
     type: shape.type,
-    id: uniqueId(`${shape.type}_`),
+    id: createShapeId(shape.type),
     x: cursorPosition[0],
     y: cursorPosition[1],
     width,

@@ -1,4 +1,4 @@
-import type { Circle, Point, Rect } from '@common/types/Shapes'
+import type { Circle, Point, Rect } from '@canvas/types/Shapes'
 
 type Vector = [Point, Point]
 
@@ -8,6 +8,52 @@ export const radiansToDegrees = (radians: number) => (radians * 180) / Math.PI
 
 export const isPointInsideRect = (rect: Rect, point: Point) => {
   return point[0] >= rect.x && point[0] <= rect.x + rect.width && point[1] >= rect.y && point[1] <= rect.y + rect.height
+}
+
+export type Bounds = { minX: number; minY: number; maxX: number; maxY: number }
+
+/**
+ * Bounds of the points of several lists, in a single pass. Spreading the points into Math.min would allocate arrays,
+ * and fail beyond the maximum number of arguments of a call, which a long brush stroke reaches. Without points, the
+ * bounds are infinite, as Math.min() and Math.max()
+ */
+export const getPointsBounds = (pointLists: readonly (readonly Point[])[]): Bounds => {
+  let minX = Number.POSITIVE_INFINITY
+  let minY = Number.POSITIVE_INFINITY
+  let maxX = Number.NEGATIVE_INFINITY
+  let maxY = Number.NEGATIVE_INFINITY
+  for (const points of pointLists) {
+    for (const [x, y] of points) {
+      if (x < minX) minX = x
+      if (x > maxX) maxX = x
+      if (y < minY) minY = y
+      if (y > maxY) maxY = y
+    }
+  }
+  return { minX, minY, maxX, maxY }
+}
+
+/** The 4 corners of a rectangle, clockwise from its top left corner */
+export const getRectCorners = ({ x, y, width, height }: Rect): Point[] => [
+  [x, y],
+  [x + width, y],
+  [x + width, y + height],
+  [x, y + height]
+]
+
+/** Smallest rectangle containing the rectangles */
+export const getBoundingRect = (rects: Rect[]): Rect => {
+  let x = Number.POSITIVE_INFINITY
+  let y = Number.POSITIVE_INFINITY
+  let right = Number.NEGATIVE_INFINITY
+  let bottom = Number.NEGATIVE_INFINITY
+  for (const rect of rects) {
+    x = Math.min(x, rect.x)
+    y = Math.min(y, rect.y)
+    right = Math.max(right, rect.x + rect.width)
+    bottom = Math.max(bottom, rect.y + rect.height)
+  }
+  return { x, y, width: right - x, height: bottom - y }
 }
 
 export const isCircleIntersectRect = (rect: Rect, circle: Circle) => {

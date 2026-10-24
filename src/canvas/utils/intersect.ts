@@ -1,45 +1,51 @@
 import type { UtilsSettings } from '@canvas/constants/app'
-import { SELECTION_ANCHOR_SIZE, SELECTION_RESIZE_ANCHOR_POSITIONS, SELECTION_ROTATED_ANCHOR_POSITION } from '@canvas/constants/shapes'
-import { catmullRomToBezier, createLinePath, getCatmullRomPoints } from '@canvas/utils/shapes/path'
-import { scalePoint } from '@canvas/utils/transform'
-import type { CanvasSize } from '@common/types/Canvas'
-import type { HoverModeData } from '@common/types/Mode'
-import type { Point, Rect, SelectionType, ShapeEntity } from '@common/types/Shapes'
-import { getSelectedShapes } from '@common/utils/selection'
-import { isCircleIntersectRect, isPointInsideRect, rotatePoint } from './trigo'
+import { SELECTION_RESIZE_ANCHOR_POSITIONS } from '@canvas/constants/shapes'
+import type { CanvasSize } from '@canvas/types/Canvas'
+import type { HoverModeData } from '@canvas/types/Mode'
+import type { Point, Rect, SelectionType, ShapeEntity } from '@canvas/types/Shapes'
+import { getSelectedShapes } from '@canvas/utils/selectedShapes'
+import { getAnchorRadius, getResizeAnchorCenter, getRotationAnchorCenter, hasPointAnchors } from '@canvas/utils/selection/anchors'
+import { catmullRomToBezier, createLinePath, expandRect, getBrushPointScaler, getCatmullRomPoints } from '@canvas/utils/shapes/path'
+import { getRectCorners, isCircleIntersectRect, isPointInsideRect, rotatePoint } from './trigo'
 
-export const getCursorPosition = (e: MouseEvent | TouchEvent): { clientX: number; clientY: number } => {
-  const { clientX = 0, clientY = 0 } =
-    'touches' in e && e.touches[0] ? e.touches[0] : 'changedTouches' in e && e.changedTouches[0] ? e.changedTouches[0] : 'clientX' in e ? e : {}
-  return { clientX, clientY }
-}
-
-export const getCursorPositionInElement = (e: MouseEvent | TouchEvent, element: HTMLElement, canvasSize: CanvasSize): Point => {
-  const { clientX, clientY } = getCursorPosition(e)
+export const getCursorPositionInElement = (e: MouseEvent, element: HTMLElement, canvasSize: CanvasSize): Point => {
+  const { clientX, clientY } = e
 
   const canvasBoundingRect = element.getBoundingClientRect()
   return [(clientX - canvasBoundingRect.left) / canvasSize.scaleRatio, (clientY - canvasBoundingRect.top) / canvasSize.scaleRatio]
 }
 
-export const getCursorPositionInTransformedCanvas = (e: MouseEvent | TouchEvent, canvas: HTMLElement | null, settings: UtilsSettings): Point => {
-  const { clientX, clientY } = getCursorPosition(e)
+/** Place of the canvas in the viewport */
+type CanvasRect = Pick<DOMRect, 'left' | 'top' | 'width' | 'height'>
 
-  const canvasBoundingRect = canvas?.getBoundingClientRect() ?? {
-    left: 0,
-    top: 0,
-    width: settings.canvasSize.width,
-    height: settings.canvasSize.height
-  }
-  return [
-    ((clientX - canvasBoundingRect.left) * (settings.canvasSize.width / canvasBoundingRect.width)) / settings.canvasSize.scaleRatio -
-      settings.canvasOffset[0],
-    ((clientY - canvasBoundingRect.top) * (settings.canvasSize.height / canvasBoundingRect.height)) / settings.canvasSize.scaleRatio -
-      settings.canvasOffset[1]
-  ]
-}
+/** Point of the drawing at a position of the viewport, the canvas being displayed in the rect */
+export const clientToCanvasPosition = (
+  { clientX, clientY }: Pick<MouseEvent, 'clientX' | 'clientY'>,
+  { left, top, width, height }: CanvasRect,
+  { canvasSize, canvasOffset }: UtilsSettings
+): Point => [
+  ((clientX - left) * (canvasSize.width / width)) / canvasSize.scaleRatio - canvasOffset[0],
+  ((clientY - top) * (canvasSize.height / height)) / canvasSize.scaleRatio - canvasOffset[1]
+]
 
-export const isTouchGesture = (e: MouseEvent | TouchEvent): e is TouchEvent => {
-  return 'touches' in e
+/** Position in the viewport of a point of the drawing, the canvas being displayed in the rect: the reverse of clientToCanvasPosition */
+export const canvasToClientPosition = (
+  point: Point,
+  { left, top, width, height }: CanvasRect,
+  { canvasSize, canvasOffset }: UtilsSettings
+): { x: number; y: number } => ({
+  x: left + ((point[0] + canvasOffset[0]) * canvasSize.scaleRatio * width) / canvasSize.width,
+  y: top + ((point[1] + canvasOffset[1]) * canvasSize.scaleRatio * height) / canvasSize.height
+})
+
+export const getCursorPositionInTransformedCanvas = (
+  e: Pick<MouseEvent, 'clientX' | 'clientY'>,
+  canvas: HTMLElement,
+  settings: UtilsSettings
+): Point => clientToCanvasPosition(e, canvas.getBoundingClientRect(), settings)
+
+export const isTouchGesture = (e: PointerEvent): boolean => {
+  return e.pointerType === 'touch'
 }
 
 export const getPointPositionAfterCanvasTransformation = (point: Point, shapeRotation: number, [originX, originY]: Point): Point =>
@@ -60,62 +66,20 @@ const isPartOfRect = (rect: Rect, point: Point, radius: number) =>
   radius ? isCircleIntersectRect(rect, { x: point[0], y: point[1], radius }) : isPointInsideRect(rect, point)
 
 const checkAnchorsSelection = (shape: ShapeEntity, newPosition: Point, settings: UtilsSettings, radius = 0): false | HoverModeData => {
-  const {
-    canvasSize: { scaleRatio }
-  } = settings
-  const { borders } = shape.computed
+  const anchorRadius = getAnchorRadius(settings)
+  // an anchor is hovered in the square around it
+  const isOverAnchor = ([x, y]: Point) =>
+    isPartOfRect({ x: x - anchorRadius, y: y - anchorRadius, width: anchorRadius * 2, height: anchorRadius * 2 }, newPosition, radius)
 
-  if (shape.type === 'line' || shape.type === 'polygon' || shape.type === 'curve') {
-    for (let i = 0; i < shape.points.length; i++) {
-      if (
-        isPartOfRect(
-          {
-            x: shape.points[i]![0] - SELECTION_ANCHOR_SIZE / 2 / scaleRatio,
-            y: shape.points[i]![1] - SELECTION_ANCHOR_SIZE / 2 / scaleRatio,
-            width: SELECTION_ANCHOR_SIZE / scaleRatio,
-            height: SELECTION_ANCHOR_SIZE / scaleRatio
-          },
-          newPosition,
-          radius
-        )
-      ) {
-        return { mode: 'resize', anchor: i }
-      }
-    }
-  } else {
-    if (
-      isPartOfRect(
-        {
-          x: borders.x + borders.width / 2 - SELECTION_ANCHOR_SIZE / 2 / scaleRatio,
-          y: borders.y - SELECTION_ANCHOR_SIZE / scaleRatio - SELECTION_ROTATED_ANCHOR_POSITION / scaleRatio,
-          width: SELECTION_ANCHOR_SIZE / scaleRatio,
-          height: SELECTION_ANCHOR_SIZE / scaleRatio
-        },
-        newPosition,
-        radius
-      )
-    ) {
-      return { mode: 'rotate' }
-    }
-
-    for (const anchorPosition of SELECTION_RESIZE_ANCHOR_POSITIONS) {
-      if (
-        isPartOfRect(
-          {
-            x: borders.x + borders.width * anchorPosition[0] - SELECTION_ANCHOR_SIZE / 2 / scaleRatio,
-            y: borders.y + borders.height * anchorPosition[1] - SELECTION_ANCHOR_SIZE / 2 / scaleRatio,
-            width: SELECTION_ANCHOR_SIZE / scaleRatio,
-            height: SELECTION_ANCHOR_SIZE / scaleRatio
-          },
-          newPosition,
-          radius
-        )
-      ) {
-        return { mode: 'resize', anchor: anchorPosition }
-      }
-    }
+  if (hasPointAnchors(shape)) {
+    const index = shape.points.findIndex(point => isOverAnchor(point))
+    return index > -1 ? { mode: 'resize', anchor: index } : false
   }
-  return false
+
+  const { borders } = shape.computed
+  if (isOverAnchor(getRotationAnchorCenter(borders, settings))) return { mode: 'rotate' }
+  const anchor = SELECTION_RESIZE_ANCHOR_POSITIONS.find(position => isOverAnchor(getResizeAnchorCenter(borders, position)))
+  return anchor ? { mode: 'resize', anchor } : false
 }
 
 export const checkSelectionIntersection = (
@@ -136,7 +100,7 @@ export const checkSelectionIntersection = (
     if (anchorSelection) return anchorSelection
   }
 
-  if (shape.selection?.type === 'line') {
+  if (hasPointAnchors(shape)) {
     ctx.lineWidth = (shape.style?.lineWidth ?? 0) + 15 / settings.canvasZoom
     const isPointOverShape = shouldCheckFillShape(shape, true)
       ? ctx.isPointInPath(shape.path, newPosition[0], newPosition[1])
@@ -276,6 +240,45 @@ const rectSearch = ({
 
 const COLLISION_OFFSET = 10
 
+/** Margin kept from the outline of a stroke, which the browser approximates */
+const HOLE_MARGIN = 1
+
+/**
+ * Test of the points of the hole of a rectangle, a circle or an ellipse, farther than the margin from its outline, in the
+ * coordinates of the shape. Undefined for the other shapes, and for a hole thinner than the margin
+ */
+const getHoleTest = (shape: ShapeEntity, margin: number): ((point: Point) => boolean) | undefined => {
+  switch (shape.type) {
+    case 'rect':
+    case 'square': {
+      const hole = expandRect(shape, -margin)
+      return point => isPointInsideRect(hole, point)
+    }
+    case 'circle':
+    case 'ellipse': {
+      const radiusX = Math.abs(shape.type === 'circle' ? shape.radius : shape.radiusX)
+      const radiusY = Math.abs(shape.type === 'circle' ? shape.radius : shape.radiusY)
+      // a point at the ratio r of the radii, inside the ellipse, is at least (1 - r) × the smallest radius from its outline
+      const maxRatio = 1 - margin / Math.min(radiusX, radiusY)
+      if (maxRatio <= 0) return undefined
+      return ([x, y]) => ((x - shape.x) / radiusX) ** 2 + ((y - shape.y) / radiusY) ** 2 < maxRatio ** 2
+    }
+    default:
+      return undefined
+  }
+}
+
+/**
+ * Whether a rectangle of the drawing is inside the hole of a shape, farther than the distance from its outline: no point
+ * of it is then in the stroke. The rectangle and the hole are convex, so their 4 corners are enough
+ */
+const isRectInsideHole = (shape: ShapeEntity, rect: Rect, distance: number): boolean => {
+  const isInHole = getHoleTest(shape, distance + HOLE_MARGIN)
+  if (!isInHole) return false
+  const { center } = shape.computed
+  return getRectCorners(rect).every(corner => isInHole(getPointPositionAfterCanvasTransformation(corner, shape.rotation ?? 0, center)))
+}
+
 export const checkSelectionFrameCollision = (ctx: CanvasRenderingContext2D, shape: ShapeEntity, selectionFrame: [Point, Point]): boolean => {
   const { borders, center, boundingBox } = shape.computed
 
@@ -293,33 +296,29 @@ export const checkSelectionFrameCollision = (ctx: CanvasRenderingContext2D, shap
     return true
   }
 
-  ctx.lineWidth = (shape.style?.lineWidth ?? 0) + COLLISION_OFFSET
+  // a shape inside the frame is crossed by it, without searching its points
+  if (boundingBox.x >= minX && boundingBox.y >= minY && boundingBox.x + boundingBox.width <= maxX && boundingBox.y + boundingBox.height <= maxY) {
+    return true
+  }
+
+  const strokeWidth = (shape.style?.lineWidth ?? 0) + COLLISION_OFFSET
+  ctx.lineWidth = strokeWidth
 
   if (shape.type === 'brush') {
-    const brushPoints = shape.points.flat()
-    const brushMinX = Math.min(...brushPoints.map(point => point[0]))
-    const brushMinY = Math.min(...brushPoints.map(point => point[1]))
+    const scale = getBrushPointScaler(shape)
     for (const points of shape.points) {
       if (points.length < 1) {
         break
       }
       if (points.length < 2) {
-        const point = scalePoint(points[0]!, brushMinX, brushMinY, shape.scaleX, shape.scaleY)
+        const point = scale(points[0]!)
         if (isCircleIntersectRect(frameCollision, { x: point[0], y: point[1], radius: (shape.style?.lineWidth ?? 1) / 2 })) {
           return true
         }
       }
       for (let i = 0; i < points.length - 1; i++) {
-        const point1 = getPointPositionBeforeCanvasTransformation(
-          scalePoint(points[i]!, brushMinX, brushMinY, shape.scaleX, shape.scaleY),
-          shape.rotation ?? 0,
-          center
-        )
-        const point2 = getPointPositionBeforeCanvasTransformation(
-          scalePoint(points[i + 1]!, brushMinX, brushMinY, shape.scaleX, shape.scaleY),
-          shape.rotation ?? 0,
-          center
-        )
+        const point1 = getPointPositionBeforeCanvasTransformation(scale(points[i]!), shape.rotation ?? 0, center)
+        const point2 = getPointPositionBeforeCanvasTransformation(scale(points[i + 1]!), shape.rotation ?? 0, center)
         const pointMinX = Math.min(point1[0], point2[0])
         const pointMinY = Math.min(point1[1], point2[1])
 
@@ -354,16 +353,33 @@ export const checkSelectionFrameCollision = (ctx: CanvasRenderingContext2D, shap
   }
 
   const checkFill = shouldCheckFillShape(shape)
+  // a frame inside the hole of a shape which is not filled, like a large frame around a drawing, never crosses its stroke
+  if (!checkFill && isRectInsideHole(shape, frameCollision, strokeWidth / 2)) return false
 
   return rectSearch({ ctx, path: shape.path, rect: frameCollision, offset: COLLISION_OFFSET, center, rotation: shape.rotation ?? 0, checkFill })
 }
 
-const LONG_PRESS_MOVE_THRESHOLD = 5
+const POINTER_MOVE_THRESHOLD = 5
 
-export const shouldCancelLongPress = (e: MouseEvent | TouchEvent, startPosition: { clientX: number; clientY: number }): boolean => {
-  if (!isTouchGesture(e)) return true
-  const { clientX, clientY } = getCursorPosition(e)
-  const dx = clientX - startPosition.clientX
-  const dy = clientY - startPosition.clientY
-  return dx * dx + dy * dy > LONG_PRESS_MOVE_THRESHOLD * LONG_PRESS_MOVE_THRESHOLD
+type ClientPosition = Pick<MouseEvent, 'clientX' | 'clientY'>
+
+/** Whether the pointer has moved by more than a few pixels, or the given distance, since the start of a press */
+export const hasPointerMoved = (e: ClientPosition, startPosition: ClientPosition, threshold = POINTER_MOVE_THRESHOLD): boolean => {
+  const dx = e.clientX - startPosition.clientX
+  const dy = e.clientY - startPosition.clientY
+  return dx * dx + dy * dy > threshold * threshold
 }
+
+export const shouldCancelLongPress = (e: PointerEvent, startPosition: ClientPosition): boolean =>
+  !isTouchGesture(e) || hasPointerMoved(e, startPosition)
+
+const isShapeAt = (ctx: CanvasRenderingContext2D, shape: ShapeEntity, point: Point, settings: UtilsSettings) =>
+  shape.visible !== false && isPointInsideRect(shape.computed.boundingBox, point) && !!checkPositionIntersection(ctx, shape, point, settings)
+
+/** Visible shapes under a point, from the foreground. Locked shapes are found too */
+export const findShapesAt = (ctx: CanvasRenderingContext2D, shapes: ShapeEntity[], point: Point, settings: UtilsSettings): ShapeEntity[] =>
+  shapes.filter(shape => isShapeAt(ctx, shape, point, settings))
+
+/** The shape of the foreground under a point, as found by findShapesAt */
+export const findShapeAt = (ctx: CanvasRenderingContext2D, shapes: ShapeEntity[], point: Point, settings: UtilsSettings): ShapeEntity | undefined =>
+  shapes.find(shape => isShapeAt(ctx, shape, point, settings))

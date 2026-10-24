@@ -1,13 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import { expect, userEvent, within } from 'storybook/test'
 import type { DrawableShape } from '../../../src/index'
-import {
-  ReactPaintWrapper,
-  getCurrentDataRef,
-  makeCoordConverters,
-  selectTool,
-  assertNoInternalFields
-} from './../helpers'
+import { assertNoInternalFields, getCurrentDataRef, makeCoordConverters, ReactPaintWrapper, selectTool } from './../helpers'
 
 const meta = {
   title: 'Tests/Manipulation',

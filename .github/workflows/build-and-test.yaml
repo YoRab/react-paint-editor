@@ -5,6 +5,9 @@ on:
     branches:
       - main
 
+permissions:
+  contents: read
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -23,8 +26,20 @@ jobs:
       - name: Install dependencies
         run: pnpm install
 
+      - name: Run Biome
+        run: pnpm biome ci
+
       - name: Run build
         run: pnpm build
+
+      - name: Generate declaration files
+        run: pnpm declarationfiles
+
+      - name: Check editor tree-shaking
+        run: pnpm check-treeshake
+
+      - name: Check package exports and types
+        run: pnpm check-package
 
       - name: Run tsc check
         run: pnpm tsc --project tsconfig.json

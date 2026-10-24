@@ -1,0 +1,198 @@
+import type { ShapeTypeArray } from '@canvas/constants/shapes'
+
+export type ShapeType = (typeof ShapeTypeArray)[number]
+export type Point = [number, number]
+
+export type Rect = {
+  x: number
+  y: number
+  width: number
+  height: number
+}
+
+export type Picture = Rect & {
+  src: string
+}
+
+export type Text = Rect & {
+  value: string[]
+  fontSize: number
+}
+
+export type Line = {
+  points: readonly [Point, Point]
+}
+
+export type Triangle = {
+  points: [Point, Point, Point]
+}
+
+export type Polygon = {
+  points: Point[]
+  tempPoint?: Point | undefined
+}
+
+export type Curve = {
+  points: Point[]
+  tempPoint?: Point | undefined
+}
+
+export type Brush = {
+  points: Point[][]
+}
+
+export type Circle = {
+  x: number
+  y: number
+  radius: number
+}
+
+export type Ellipse = {
+  x: number
+  y: number
+  radiusX: number
+  radiusY: number
+}
+
+export type StyleShape = {
+  fillColor?: string
+  opacity?: number
+  strokeColor?: string
+  lineWidth?: number
+  lineDash?: number
+  lineArrow?: number
+  lineCap?: CanvasLineCap
+  closedPoints?: number
+  fontFamily?: string
+  fontItalic?: boolean
+  fontBold?: boolean
+}
+
+/** Data of the application attached to a shape: it is not drawn, and is kept in the history, the copies and the exported data */
+export type ShapeData = Record<string, unknown>
+
+type GenericDrawableShape = {
+  /** Kept when the shape is exported and loaded again. A new id is created when it is missing or already used */
+  id?: string
+  rotation?: number
+  toolId?: string
+  visible?: boolean
+  locked?: boolean
+  style?: StyleShape | undefined
+  /** Free data of the application, which must be serializable in JSON. A patch replaces it as a whole */
+  data?: ShapeData | undefined
+} & (
+  | (Line & {
+      type: 'line'
+    })
+  | (Picture & {
+      type: 'picture'
+      img: HTMLImageElement
+      flipX?: boolean
+      flipY?: boolean
+      ratio?: number
+    })
+  | (Text & {
+      type: 'text'
+      flipX?: boolean
+      flipY?: boolean
+      ratio?: number
+    })
+  | (Rect & {
+      type: 'rect'
+    })
+  | (Rect & {
+      type: 'square'
+    })
+  | (Circle & {
+      type: 'circle'
+    })
+  | (Ellipse & {
+      type: 'ellipse'
+    })
+  | (Triangle & {
+      type: 'triangle'
+    })
+  | (Polygon & {
+      type: 'polygon'
+    })
+  | (Curve & {
+      type: 'curve'
+    })
+  | (Brush & {
+      type: 'brush'
+      scaleX?: number
+      scaleY?: number
+    })
+  | (Rect & {
+      type: 'group'
+      shapes: ShapeEntity[]
+    })
+)
+
+export type DrawableShape<T extends ShapeType = ShapeType> = GenericDrawableShape & {
+  type: T
+}
+
+export type ExportedDrawableShape<T extends ShapeType = ShapeType> = T extends 'picture' ? Omit<DrawableShape<'picture'>, 'img'> : DrawableShape<T>
+
+export type TriangleEntity = DrawableShape<'triangle'> & {
+  path: Path2D
+  computed: {
+    borders: Rect
+    outerBorders: Rect
+    center: Point
+    boundingBox: Rect
+  }
+}
+
+export type ShapeEntity<T extends Exclude<ShapeType, 'triangle'> = Exclude<ShapeType, 'triangle'>> = {
+  id: string
+  computed: {
+    borders: Rect
+    outerBorders: Rect
+    center: Point
+    boundingBox: Rect
+  }
+  path: Path2D
+} & DrawableShape<T> &
+  (
+    | {
+        type: 'line'
+        arrows?: TriangleEntity[]
+      }
+    | {
+        type: Exclude<ShapeType, 'line' | 'triangle'>
+      }
+  )
+
+/** A shape as exported: without the computed data, and with its id */
+export type ExportedShape = ExportedDrawableShape & { id: string }
+
+/** Types of the shapes which can be created and edited: triangles and groups are only built by the canvas */
+export type EditableShapeType = Exclude<ShapeType, 'triangle' | 'group'>
+
+/** A text can be given without its size: it is computed from its font size, or from its width */
+export type TextShapeInput = Omit<ExportedDrawableShape<'text'>, 'width' | 'height' | 'fontSize'> &
+  Partial<Pick<DrawableShape<'text'>, 'width' | 'height' | 'fontSize'>>
+
+/**
+ * A shape given by the consumer, to create or to load it. Triangles and groups are refused by addShapes and left out
+ * when loading: they are accepted by the type so that data typed as DrawableShape can be given
+ */
+export type ShapeInput = ExportedDrawableShape | TextShapeInput
+
+type DistributivePatch<T> = T extends unknown ? { id: string } & Partial<Omit<T, 'id' | 'type' | 'img'>> : never
+
+/** Fields of a shape to update, found by its id. Its type cannot change, and its style is merged with the current one */
+export type ShapePatch = DistributivePatch<ExportedDrawableShape<EditableShapeType>>
+
+export type StateData = {
+  shapes?: ExportedShape[]
+  config?: {
+    width: number
+    height: number
+  }
+}
+
+export type SelectionType = ShapeEntity
