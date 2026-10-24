@@ -372,6 +372,20 @@ describe('dedicated actions', () => {
     expect(rectTool?.type === 'rect' && [rectTool.settings.strokeColor.default, rectTool.settings.lineWidth.default]).toEqual(['red', 4])
   })
 
+  it('updates shapes and the defaults of their tools, ignoring the fields they have not', () => {
+    const store = createPaintStore()
+    const [rect] = store.actions.addShapes([RECT])
+    store.actions.updateShapes([{ id: rect!, x: 40, style: { strokeColor: 'red' } }], { updateTool: true })
+    expect(getShape(store, rect!)).toMatchObject({ x: 40, style: { strokeColor: 'red' } })
+    const rectTool = store.getEditorState().tools.find(tool => tool.id === 'react-paint-rect')
+    expect(rectTool?.type === 'rect' && rectTool.settings.strokeColor.default).toBe('red')
+    expect(rectTool?.settings).not.toHaveProperty('x')
+
+    store.actions.updateShapes([{ id: rect!, style: { strokeColor: 'blue' } }])
+    const unchangedTool = store.getEditorState().tools.find(tool => tool.id === 'react-paint-rect')
+    expect(unchangedTool?.type === 'rect' && unchangedTool.settings.strokeColor.default).toBe('red')
+  })
+
   it('sets the default style of a tool, ignoring the fields it has not', () => {
     const store = createPaintStore()
     store.actions.setToolStyle('react-paint-rect', { fillColor: 'blue', fontBold: true })

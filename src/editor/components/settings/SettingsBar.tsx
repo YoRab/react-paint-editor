@@ -1,7 +1,9 @@
 import {
   type CustomTool,
   type EditorState,
+  getSelectedShapes,
   getSelectedShapesTools,
+  type ShapePatch,
   type ShapeStyleField,
   type StyleShape,
   shallowEqual,
@@ -17,6 +19,7 @@ import {
   boldIcon,
   cornerRadiusIcon,
   fontIcon,
+  fontSizeIcon,
   italicIcon,
   lineCapIcon,
   lineEndIcon,
@@ -26,7 +29,8 @@ import {
   moreIcon,
   opacityIcon,
   polygonIcon,
-  settingsIcon
+  settingsIcon,
+  textAlignIcon
 } from '@editor/constants/icons'
 import { uniqueId } from '@editor/utils/util'
 import type React from 'react'
@@ -40,9 +44,11 @@ import { LineArrowOption } from './LineArrowField'
 import { LineCapOption } from './LineCapField'
 import { LineJoinOption } from './LineJoinField'
 import { LineTypeOption } from './LineTypeField'
+import NumberField from './NumberField'
 import RangeField from './RangeField'
 import SelectField from './SelectField'
 import './SettingsBar.css'
+import { TextAlignOption } from './TextAlignField'
 import ToggleField from './ToggleField'
 import ZoomButton from './ZoomButton'
 
@@ -63,9 +69,12 @@ type SettingField = {
   title: string
   /** Shown in the panel of the other options instead of the settings bar */
   advanced?: boolean
+  /** A field of the selected shapes instead of their style, like the font size of a text */
+  ofShapes?: boolean
 } & (
   | { kind: 'color'; field: SettingsOfType<{ values: string[] }>; mode?: 'fill' | 'stroke' }
-  | { kind: 'range'; field: SettingsOfType<{ min: number }>; icon: string; unity: string }
+  /** A slider, or a number typed in a field for a setting which can have no upper limit */
+  | { kind: 'range' | 'number'; field: SettingsOfType<{ min: number }>; icon: string; unity: string }
   | { kind: 'toggle'; field: SettingsOfType<{ values: boolean[] }>; icon: string }
   | {
       kind: 'select'
@@ -89,16 +98,22 @@ const SETTING_FIELDS: SettingField[] = [
   { field: 'lineArrow', kind: 'select', title: 'Flèches', icon: lineEndIcon, option: LineArrowOption },
   { field: 'closedPoints', kind: 'select', title: 'Fermer les points', icon: polygonIcon, option: ClosedPointsOption, values: [0, 1] },
   { field: 'fontFamily', kind: 'select', title: 'Police', icon: fontIcon, option: FontFamilyOption },
+  { field: 'fontSize', kind: 'number', title: 'Taille du texte', icon: fontSizeIcon, unity: 'px', ofShapes: true },
   { field: 'fontBold', kind: 'toggle', title: 'Gras', icon: boldIcon },
   { field: 'fontItalic', kind: 'toggle', title: 'Italique', icon: italicIcon },
+  { field: 'textAlign', kind: 'select', title: 'Alignement du texte', icon: textAlignIcon, option: TextAlignOption },
   { field: 'opacity', kind: 'range', title: 'Opacité', icon: opacityIcon, unity: '%' }
 ]
+
+const SHAPES_FIELDS: string[] = SETTING_FIELDS.filter(({ ofShapes }) => ofShapes).map(({ field }) => field)
+
+/** Values of the fields: the style and the font size of the selection, or the default values of the settings of the active tool */
+type SettingValues = StyleShape & { fontSize?: number | undefined }
 
 type SettingsItemsType = {
   fields: SettingField[]
   settings: Partial<ToolSettings>
-  /** Values of the fields: the style of the selection, or the default style of the active tool */
-  style: StyleShape
+  style: SettingValues
   disabled: boolean
   selectedSettings: string | undefined
   setSelectedSettings: React.Dispatch<React.SetStateAction<string | undefined>>
@@ -119,10 +134,12 @@ const renderSettingField = (item: SettingField, { settings, style, saveShapes, .
           values={settings[item.field]?.values ?? []}
         />
       )
-    case 'range': {
+    case 'range':
+    case 'number': {
+      const NumberOrRangeField = item.kind === 'number' ? NumberField : RangeField
       const setting = settings[item.field]
       return (
-        <RangeField
+        <NumberOrRangeField
           {...props}
           saveShapes={saveShapes}
           title={item.title}
@@ -197,8 +214,17 @@ type SettingsBarState = {
   activeTool: ToolsType
   /** Only the style of the selection is shown: its geometry changes on each move of a drag */
   selectedStyle: StyleShape | undefined
+  selectedFontSize: number | undefined
   selectedShapeIds: string[]
   selectedShapeTool: CustomTool | undefined
+}
+
+/** Font size of the selected texts, when they all have the same */
+const getSelectedFontSize = (selection: EditorState['selection']) => {
+  const shapes = getSelectedShapes(selection)
+  const first = shapes[0]
+  if (first?.type !== 'text') return undefined
+  return shapes.every(shape => shape.type === 'text' && shape.fontSize === first.fontSize) ? first.fontSize : undefined
 }
 
 const createSettingsBarSelector = () => {
@@ -212,6 +238,7 @@ const createSettingsBarSelector = () => {
       width: state.view.displayWidth,
       activeTool: state.activeTool,
       selectedStyle: state.selection?.style,
+      selectedFontSize: getSelectedFontSize(state.selection),
       selectedShapeIds: state.selectedShapeIds,
       selectedShapeTool: lastTool.tool
     }
@@ -223,6 +250,7 @@ const isSameSettingsBarState = (a: SettingsBarState, b: SettingsBarState) =>
   a.activeTool === b.activeTool &&
   a.selectedShapeIds === b.selectedShapeIds &&
   a.selectedShapeTool === b.selectedShapeTool &&
+  a.selectedFontSize === b.selectedFontSize &&
   shallowEqual(a.selectedStyle, b.selectedStyle)
 
 type SettingsBarType = {
@@ -245,7 +273,7 @@ const SettingsBar = ({
   const paint = usePaint()
   const { actions } = paint
   const [selectSettingsBarState] = useState(createSettingsBarSelector)
-  const { width, activeTool, selectedStyle, selectedShapeIds, selectedShapeTool } = usePaintState(
+  const { width, activeTool, selectedStyle, selectedFontSize, selectedShapeIds, selectedShapeTool } = usePaintState(
     paint,
     selectSettingsBarState,
     isSameSettingsBarState
@@ -277,17 +305,26 @@ const SettingsBar = ({
   const settingsInMenu = width < settingsBreakpoint
 
   const handleShapeStyleChange = (field: string, value: ToolSettingValue, needHistorySave = true) => {
-    if (selectedShapeIds.length) {
+    if (!selectedShapeIds.length) {
+      actions.updateToolSettings(activeTool.id, field, value)
+    } else if (SHAPES_FIELDS.includes(field)) {
+      // the field is changed on the shapes which have it, and their tools keep the value for the next shapes
+      const shapes = getSelectedShapes(paint.getState().selection).filter(shape => field in shape)
+      actions.updateShapes(
+        shapes.map(shape => ({ id: shape.id, [field]: value }) as ShapePatch),
+        { save: needHistorySave, updateTool: true }
+      )
+    } else {
       // the tools of the shapes keep the value for the next shapes
       actions.setShapesStyle(selectedShapeIds, { [field as ShapeStyleField]: value }, { save: needHistorySave, updateTool: true })
-    } else {
-      actions.updateToolSettings(activeTool.id, field, value)
     }
   }
 
   const itemsProps = {
     settings,
-    style: hasSelection ? (selectedStyle ?? {}) : (Object.fromEntries(fields.map(({ field }) => [field, settings[field]?.default])) as StyleShape),
+    style: hasSelection
+      ? { ...selectedStyle, fontSize: selectedFontSize }
+      : (Object.fromEntries(fields.map(({ field }) => [field, settings[field]?.default])) as SettingValues),
     disabled,
     selectedSettings,
     setSelectedSettings,

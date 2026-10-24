@@ -27,8 +27,12 @@ export const STYLE_FIELDS_SHAPE_TYPES: Partial<Record<keyof StyleShape, readonly
   ...Object.fromEntries(FONT_STYLE_FIELDS.map((field): [keyof StyleShape, readonly ShapeType[]] => [field, ['text']])),
   lineCap: ['line', 'brush', 'polygon', 'curve'],
   lineJoin: ['rect', 'square', 'polygon', 'brush'],
-  cornerRadius: ['rect', 'square', 'picture', 'polygon']
+  cornerRadius: ['rect', 'square', 'picture', 'polygon'],
+  textAlign: ['text']
 }
+
+/** Settings of the tools which give a field of their new shapes instead of a style field */
+export const TOOL_SHAPE_FIELDS: readonly string[] = ['fontSize']
 
 export const ShapeTypeArray = [
   'brush',

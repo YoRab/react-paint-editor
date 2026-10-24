@@ -52,7 +52,8 @@ describe('createShape', () => {
       opacity: 100,
       fontFamily: 'serif',
       fontBold: true,
-      fontItalic: false
+      fontItalic: false,
+      textAlign: 'left'
     })
   })
 })

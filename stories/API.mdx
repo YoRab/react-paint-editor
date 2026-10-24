@@ -157,7 +157,7 @@ import LinkTo from '@storybook/addon-links/react';
         <li><code>selectTool(toolOrId)</code> - Selects the selection tool, the move tool or one of the tools, found by id. An unknown tool is ignored</li>
         <li><code>updateToolSettings(toolId, field, value)</code>, <code>setToolStyle(toolId, style)</code> - Default values of a tool, a field the tool has not is ignored</li>
         <li><code>selectShapes(ids, {"{ mode? }"})</code>, <code>selectAllShapes()</code>, <code>clearSelection()</code> - <code>mode</code> is <code>'replace'</code>, <code>'add'</code> or <code>'remove'</code></li>
-        <li><code>addShapes(shapes, {'{ select?, index?, save?, source? }'})</code>, <code>updateShapes(patches, {'{ save?, source? }'})</code> - See <a href="#Actions" target="_self">Driving the canvas from the code</a></li>
+        <li><code>addShapes(shapes, {'{ select?, index?, save?, source? }'})</code>, <code>updateShapes(patches, {'{ updateTool?, save?, source? }'})</code> - See <a href="#Actions" target="_self">Driving the canvas from the code</a></li>
         <li><code>removeShapes(ids)</code>, <code>duplicateShapes(ids, {'{ translate?, select? }'})</code></li>
         <li><code>translateShapes(ids, [dx, dy])</code>, <code>rotateShapes(ids, angle, {'{ center? }'})</code>, <code>resizeShapes(ids, box)</code></li>
         <li><code>moveShapes(ids, 'first' | 'last' | 'forward' | 'backward')</code>, <code>swapShapes(firstId, secondId)</code>, <code>setShapeIndex(id, index)</code>, <code>reorderShapes(ids)</code></li>
@@ -819,7 +819,7 @@ paint.actions.panBy([50, 0]) // scrolls the view, in the units of the drawing`} 
         <tbody>
           <tr>
             <td>Create, update, remove shapes</td>
-            <td><code>addShapes(shapes, {`{ select, index }`})</code>, <code>updateShapes(patches)</code>, <code>removeShapes(ids)</code></td>
+            <td><code>addShapes(shapes, {`{ select, index }`})</code>, <code>updateShapes(patches, {`{ updateTool }`})</code>, <code>removeShapes(ids)</code></td>
           </tr>
           <tr>
             <td>Move, turn, resize, flip</td>
@@ -960,9 +960,11 @@ const box = paint.getBounds([rectId])`} />
   lineJoin?: 'round' | 'bevel' | 'miter'
   // corners of a rectangle, a square, a picture or a polygon, in the units of the drawing: 0 by default, as large as
   // the sides allow. The ends of an open polygon stay sharp
-
   cornerRadius?: number
   closedPoints?: number
+  // lines of a text in its box: 'left' by default. When its content changes, the box keeps the side of its alignment,
+  // or its middle when centered
+  textAlign?: 'left' | 'center' | 'right'
   fontFamily?: string
   fontItalic?: boolean
   fontBold?: boolean
@@ -1025,7 +1027,7 @@ const patch: ShapePatch = { id: 'rect_1', width: 200, style: { fillColor: 'red' 
         <li><code>ToolsBrushSettings</code> - Brush settings (includes lineJoin and lineCap)</li>
         <li><code>ToolsPolygonSettings</code> - Polygon settings (includes closedPoints, lineJoin, lineCap and cornerRadius)</li>
         <li><code>ToolsCurveSettings</code> - Curve settings (includes closedPoints and lineCap)</li>
-        <li><code>ToolsTextSettings</code> - Text settings (includes font options)</li>
+        <li><code>ToolsTextSettings</code> - Text settings (includes font options, textAlign, and fontSize: the font size of the new texts, which are as wide as their content, or 150 wide without it. Its max is optional)</li>
         <li><code>ToolsPictureSettings</code> - Picture settings (opacity, and the border: strokeColor, lineWidth and cornerRadius)</li>
         <li><code>ToolsTriangleSettings</code> - Triangle settings</li>
         <li><code>ToolsGroupSettings</code> - Group settings</li>

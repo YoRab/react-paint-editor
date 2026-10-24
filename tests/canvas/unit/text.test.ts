@@ -1,9 +1,11 @@
 import { STYLE_FONT_SIZE_DEFAULT } from '@canvas/constants/rendering'
-import type { DrawableShape, Point, ShapeEntity, TextShapeInput } from '@canvas/types/Shapes'
+import { DEFAULT_TOOLS } from '@canvas/constants/tools'
+import type { DrawableShape, Point, ShapeEntity, StyleShape, TextAlign, TextShapeInput } from '@canvas/types/Shapes'
+import type { ToolsSettingsType } from '@canvas/types/tools'
 import { refreshShape } from '@canvas/utils/shapes'
-import { calculateTextFontSize, resizeTextShapeWithNewContent, sizeText } from '@canvas/utils/shapes/text'
+import { calculateTextFontSize, createText as createTextShape, drawText, resizeTextShapeWithNewContent, sizeText } from '@canvas/utils/shapes/text'
 import { rotatePoint } from '@canvas/utils/trigo'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { createShape, stubPath2D, UTILS_SETTINGS } from './helpers'
 
 stubPath2D()
@@ -106,6 +108,13 @@ describe('resizeTextShapeWithNewContent', () => {
     }
   })
 
+  it('keeps the right side of a text aligned on the right, and the middle of a centered text', () => {
+    const text = (textAlign: TextAlign) => createText({ x: 10, y: 20, width: 50, height: 10, fontSize: 10, value: ['abcde'], style: { textAlign } })
+    expect(update(text('right'), ['abcdefghij'])).toMatchObject({ x: -40, y: 20, width: 100 })
+    expect(update(text('center'), ['abcdefghij'])).toMatchObject({ x: -15, y: 20, width: 100 })
+    expect(update(text('left'), ['abcdefghij'])).toMatchObject({ x: 10, y: 20, width: 100 })
+  })
+
   it('keeps the top left corner of a turned text at the same place of the screen, its center moving', () => {
     // typing in a text turned by a quarter: it grows downwards on the screen
     const text = createText({ x: 0, y: 0, width: 50, height: 10, fontSize: 10, value: ['abcde'], rotation: Math.PI / 2 })
@@ -116,5 +125,71 @@ describe('resizeTextShapeWithNewContent', () => {
     expect(x).toBeCloseTo(expectedX)
     expect(y).toBeCloseTo(expectedY)
     expect(updated.computed.center).not.toEqual(text.computed.center)
+  })
+})
+
+describe('createText', () => {
+  const textTool = DEFAULT_TOOLS.find(tool => tool.type === 'text')!
+  const create = (settings: ToolsSettingsType<'text'>) =>
+    createTextShape(createContext(), { id: 'text-tool', type: 'text', settings }, [200, 100], UTILS_SETTINGS)
+
+  it('makes a new text as wide as its content at the font size of its tool, without the font size in its style', () => {
+    const settings = textTool.settings as ToolsSettingsType<'text'>
+    const text = create({ ...settings, fontSize: { min: 8, max: 200, step: 1, default: 20 } })
+    expect(text).toMatchObject({ value: ['Texte'], fontSize: 20, width: 100, height: 20, x: 100, y: 80 })
+    expect(text.style).not.toHaveProperty('fontSize')
+    expect(text.style).toMatchObject({ textAlign: 'left' })
+  })
+
+  it('makes a new text 150 wide without the font size setting', () => {
+    const { fontSize: _fontSize, ...settings } = textTool.settings as ToolsSettingsType<'text'>
+    expect(create(settings)).toMatchObject({ fontSize: 30, width: 150, height: 30 })
+  })
+})
+
+describe('drawText', () => {
+  const draw = (textAlign: StyleShape['textAlign'], flipX = false) => {
+    const ctx = { scale: vi.fn(), fillText: vi.fn(), font: '', textAlign: '', textBaseline: '', fillStyle: '', globalAlpha: 1 }
+    const text = createText({
+      x: 10,
+      y: 20,
+      width: 100,
+      height: 20,
+      fontSize: 10,
+      value: ['a', 'b'],
+      flipX,
+      style: { strokeColor: 'red', ...(textAlign ? { textAlign } : {}) }
+    })
+    drawText(ctx as unknown as CanvasRenderingContext2D, text)
+    return { textAlign: ctx.textAlign, lines: ctx.fillText.mock.calls.map(([, x, y]) => [x, y]) }
+  }
+
+  it('draws the lines from the side of their alignment, or from the middle of the box', () => {
+    expect(draw(undefined)).toEqual({
+      textAlign: 'left',
+      lines: [
+        [10, 20],
+        [10, 30]
+      ]
+    })
+    expect(draw('center')).toEqual({
+      textAlign: 'center',
+      lines: [
+        [60, 20],
+        [60, 30]
+      ]
+    })
+    expect(draw('right')).toEqual({
+      textAlign: 'right',
+      lines: [
+        [110, 20],
+        [110, 30]
+      ]
+    })
+  })
+
+  it('aligns the lines of a flipped text in the flipped space, where its box goes from -110 to -10', () => {
+    expect(draw('left', true).lines[0]).toEqual([-110, 20])
+    expect(draw('right', true).lines[0]).toEqual([-10, 20])
   })
 })

@@ -6,7 +6,7 @@ import type React from 'react'
 import { useState } from 'react'
 import './RangeField.css'
 
-type ShapeStyleColorType = {
+export type RangeFieldType = {
   selectedSettings: string | undefined
   setSelectedSettings: React.Dispatch<React.SetStateAction<string | undefined>>
   title?: string
@@ -36,7 +36,7 @@ const RangeField = ({
   unity = '',
   valueChanged,
   saveShapes
-}: ShapeStyleColorType) => {
+}: RangeFieldType) => {
   const indeterminate = value === undefined
   const displayedValue = indeterminate ? 'N/A' : `${Math.round(value)}${unity}`
   const [customKey] = useState(uniqueId('settings_'))

@@ -38,8 +38,8 @@ describe('buildAvailableTools', () => {
 })
 
 describe('DEFAULT_TOOLS', () => {
-  it('gives the settings of the joins, of the caps and of the corners to the tools of the shapes they apply to', () => {
-    for (const field of ['lineJoin', 'lineCap', 'cornerRadius'] as const) {
+  it('gives the settings of the joins, of the caps, of the corners and of the alignment to the tools of the shapes they apply to', () => {
+    for (const field of ['lineJoin', 'lineCap', 'cornerRadius', 'textAlign'] as const) {
       const types = DEFAULT_TOOLS.filter(tool => field in tool.settings).map(tool => tool.type)
       expect(types.sort()).toEqual([...STYLE_FIELDS_SHAPE_TYPES[field]!].sort())
     }
@@ -77,6 +77,19 @@ describe('getToolDefaultStyle', () => {
   it('gives no border to the pictures of the default picture tool', () => {
     const pictureTool = DEFAULT_TOOLS.find(tool => tool.type === 'picture') as CustomTool
     expect(getToolDefaultStyle(pictureTool)).toEqual({ opacity: 100, strokeColor: 'transparent', lineWidth: 1, cornerRadius: 0 })
+  })
+
+  it('leaves out the font size of the default text tool, which is a field of the texts', () => {
+    const textTool = DEFAULT_TOOLS.find(tool => tool.type === 'text') as CustomTool
+    expect(textTool.settings).toHaveProperty('fontSize.default', 36)
+    expect(getToolDefaultStyle(textTool)).toEqual({
+      strokeColor: 'black',
+      opacity: 100,
+      fontFamily: 'serif',
+      fontBold: false,
+      fontItalic: false,
+      textAlign: 'left'
+    })
   })
 
   it('makes an empty style without tool', () => {

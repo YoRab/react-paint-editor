@@ -2,7 +2,7 @@ import type { UtilsSettings } from '@canvas/constants/app'
 import { STYLE_FONT_DEFAULT, STYLE_FONT_SIZE_DEFAULT } from '@canvas/constants/rendering'
 import { FONT_STYLE_FIELDS } from '@canvas/constants/shapes'
 import type { SelectionModeResize } from '@canvas/types/Mode'
-import type { DrawableShape, Point, Rect, SelectionType, ShapeEntity, StyleShape, Text, TextShapeInput } from '@canvas/types/Shapes'
+import type { DrawableShape, Point, Rect, SelectionType, ShapeEntity, StyleShape, Text, TextAlign, TextShapeInput } from '@canvas/types/Shapes'
 import type { ToolsSettingsType } from '@canvas/types/tools'
 import { resizeRectSelection } from '@canvas/utils/selection/rectSelection'
 import { getToolDefaultStyle } from '@canvas/utils/tools'
@@ -13,6 +13,9 @@ import { getRectOppositeAnchorAbsolutePosition } from './rectangle'
 
 const DEFAULT_TEXT_VALUE: string[] = ['Texte']
 const DEFAULT_TEXT_WIDTH = 150
+
+/** Position of the lines in the box of a text, from its left side (0) to its right side (1), for each alignment */
+const TEXT_ALIGN_POSITIONS: Record<TextAlign, number> = { left: 0, center: 0.5, right: 1 }
 
 export const getComputedText = (text: DrawableShape<'text'>, settings: UtilsSettings) => {
   return getComputedShapeInfos(text, getTextBorder, settings)
@@ -99,17 +102,16 @@ export const createText = (
   settings: UtilsSettings
 ): ShapeEntity<'text'> => {
   const style = getToolDefaultStyle(shape)
-  const fontSize = calculateTextFontSize(
-    ctx,
-    DEFAULT_TEXT_VALUE,
-    DEFAULT_TEXT_WIDTH,
-    style.fontBold ?? false,
-    style.fontItalic ?? false,
-    style.fontFamily
-  )
-
-  const width = DEFAULT_TEXT_WIDTH
-  const height = fontSize * DEFAULT_TEXT_VALUE.length
+  // the text is as wide as its content at the font size of the tool, or else its font fills the default width
+  const toolFontSize = shape.settings.fontSize?.default
+  const { fontSize, width, height } = sizeText(ctx, {
+    type: 'text',
+    x: 0,
+    y: 0,
+    value: DEFAULT_TEXT_VALUE,
+    style,
+    ...(toolFontSize === undefined ? { width: DEFAULT_TEXT_WIDTH } : { fontSize: toolFontSize })
+  })
   return buildPath(
     {
       toolId: shape.id,
@@ -136,14 +138,13 @@ export const drawText = (ctx: CanvasRenderingContext2D, text: DrawableShape<'tex
     text.style?.fontFamily ?? STYLE_FONT_DEFAULT
   }`
   ctx.textBaseline = 'top'
+  const textAlign = text.style.textAlign ?? 'left'
+  ctx.textAlign = textAlign
   ctx.fillStyle = text.style.strokeColor
+  // a flipped text is drawn in the flipped space, where its box starts at -x - width
+  const x = (text.flipX ? -text.x - text.width : text.x) + text.width * TEXT_ALIGN_POSITIONS[textAlign]
   for (let i = 0; i < text.value.length; i++) {
-    ctx.fillText(
-      text.value[i]!,
-      text.flipX ? -text.x - text.width : text.x,
-      (text.flipY ? -text.y - text.height : text.y) + i * text.fontSize,
-      text.width
-    )
+    ctx.fillText(text.value[i]!, x, (text.flipY ? -text.y - text.height : text.y) + i * text.fontSize, text.width)
   }
 }
 
@@ -279,9 +280,11 @@ export const resizeTextShapeWithNewContent = (
 
   const { center: shapeWithNewDimensionsCenter } = getComputedText(resizedShape, settings)
 
-  const [oppTrueX, oppTrueY] = getRectOppositeAnchorAbsolutePosition([1, 1], shape.computed.center, shape)
+  // the text keeps the top of the side of its alignment, or the top of its middle, the anchor being the opposite one
+  const anchor: Point = [1 - TEXT_ALIGN_POSITIONS[shape.style?.textAlign ?? 'left'], 1]
+  const [oppTrueX, oppTrueY] = getRectOppositeAnchorAbsolutePosition(anchor, shape.computed.center, shape)
 
-  const [newOppTrueX, newOppTrueY] = getRectOppositeAnchorAbsolutePosition([1, 1], shapeWithNewDimensionsCenter, resizedShape, [false, false])
+  const [newOppTrueX, newOppTrueY] = getRectOppositeAnchorAbsolutePosition(anchor, shapeWithNewDimensionsCenter, resizedShape, [false, false])
 
   return {
     ...resizedShape,

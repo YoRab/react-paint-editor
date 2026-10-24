@@ -1,4 +1,4 @@
-import { STYLE_FONT_DEFAULT } from '@canvas/constants/rendering'
+import { STYLE_FONT_DEFAULT, STYLE_FONT_SIZE_DEFAULT } from '@canvas/constants/rendering'
 import type {
   ActionsTool,
   CustomToolInput,
@@ -127,6 +127,15 @@ const SETTINGS_DEFAULT_TEXT: ToolsTextSettings = {
   fontItalic: {
     values: [false, true],
     default: false
+  },
+  fontSize: {
+    min: 1,
+    step: 1,
+    default: STYLE_FONT_SIZE_DEFAULT
+  },
+  textAlign: {
+    values: ['left', 'center', 'right'],
+    default: 'left'
   }
 }
 

@@ -939,8 +939,19 @@ export const createPaintStore = (props: UseReactPaintProps = {}) => {
     return newShapes.map(shape => shape.id)
   }
 
+  /** The tools of the shapes keep the values of their settings for the next shapes */
+  const keepToolDefaults = (changes: [ShapeEntity, Record<string, unknown>][]) => {
+    const { available } = get().tools
+    update(state =>
+      changes.reduce((newState, [shape, values]) => {
+        const toolId = findShapeTool(available, shape)?.id
+        return toolId ? setToolDefaults(newState, toolId, values) : newState
+      }, state)
+    )
+  }
+
   /** Applies patches of the consumer to the shapes. They are all checked before any change */
-  const patchShapes = (patches: ShapePatch[], options?: ShapesActionOptions) => {
+  const patchShapes = (patches: ShapePatch[], { updateTool = false, ...options }: ShapesActionOptions & { updateTool?: boolean } = {}) => {
     const shapesById = getShapesById()
     assertValidPatches(patches, shapesById)
 
@@ -959,7 +970,16 @@ export const createPaintStore = (props: UseReactPaintProps = {}) => {
       }
       updatedShapes.set(patch.id, newShape)
     }
-    commitShapes([...updatedShapes.values()], options)
+    batch(() => {
+      commitShapes([...updatedShapes.values()], options)
+      if (!updateTool) return
+      keepToolDefaults(
+        patches.flatMap(({ id, style, ...fields }) => {
+          const shape = shapesById.get(id)
+          return shape ? [[shape, { ...style, ...fields }] as [ShapeEntity, Record<string, unknown>]] : []
+        })
+      )
+    })
     for (const shape of reloadedPictures) loadPictureOf(shape)
   }
 
@@ -1015,10 +1035,7 @@ export const createPaintStore = (props: UseReactPaintProps = {}) => {
       batch(() => {
         const ctx = getMeasureContext()
         changeShapes(ids, (shapes, settings) => shapes.map(shape => updateShapeStyle(ctx, shape, style, settings)), options)
-        if (!updateTool) return
-        const { available } = get().tools
-        const toolIds = new Set(compact(resolveShapes(ids).map(shape => findShapeTool(available, shape)?.id)))
-        update(state => [...toolIds].reduce((newState, toolId) => setToolDefaults(newState, toolId, style), state))
+        if (updateTool) keepToolDefaults(resolveShapes(ids).map(shape => [shape, style]))
       }),
     updateShapesStyle: (ids, field, value, { save = true } = {}) => actions.setShapesStyle(ids, { [field]: value } as StyleShape, { save }),
 

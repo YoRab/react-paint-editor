@@ -164,9 +164,10 @@ export type EditorActions = {
   /**
    * Updates fields of shapes, found by their ids: geometry, points, text, style (merged), data (replaced)...
    * The box of a text follows its new content or font size, its font size follows its new width or font. Throws an error, without
-   * changing anything, when a patch is invalid. Locked shapes are updated too
+   * changing anything, when a patch is invalid. Locked shapes are updated too. With updateTool, the tools of the shapes keep
+   * the new values of their settings, like the font size of a text
    */
-  updateShapes: (patches: ShapePatch[], options?: ShapesActionOptions) => void
+  updateShapes: (patches: ShapePatch[], options?: ShapesActionOptions & { updateTool?: boolean }) => void
   removeShapes: (ids: string[], options?: ShapesActionOptions) => void
   duplicateShapes: (ids: string[], options?: { translate?: boolean; select?: boolean }) => void
 

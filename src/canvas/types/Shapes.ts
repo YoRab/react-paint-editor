@@ -19,6 +19,8 @@ export type Text = Rect & {
   fontSize: number
 }
 
+export type TextAlign = 'left' | 'center' | 'right'
+
 export type Line = {
   points: readonly [Point, Point]
 }
@@ -72,6 +74,11 @@ export type StyleShape = {
    */
   cornerRadius?: number
   closedPoints?: number
+  /**
+   * Alignment of the lines of a text in its box: 'left' by default. When its content changes, the box keeps the side of
+   * its alignment, or its middle when centered
+   */
+  textAlign?: TextAlign
   fontFamily?: string
   fontItalic?: boolean
   fontBold?: boolean

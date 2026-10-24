@@ -82,6 +82,17 @@ export const cornerRadiusIcon =
 
 export const lineCapIcon = '<svg><path d="M3 7H11A3 3 0 0 1 11 13H3ZM10.25 2.5H11.75V17.5H10.25Z"/></svg>'
 
+export const fontSizeIcon = '<svg><path d="M5.5 16V6H2V4H11V6H7.5V16ZM13.625 16V10.75H11V9H18V10.75H15.375V16Z"/></svg>'
+
+/** Lines of a paragraph, for each value of the textAlign setting */
+export const TEXT_ALIGN_PATHS: Record<string, string> = {
+  left: 'M3 4H17V5.5H3ZM3 8H12V9.5H3ZM3 12H17V13.5H3ZM3 16H12V17.5H3Z',
+  center: 'M3 4H17V5.5H3ZM5.5 8H14.5V9.5H5.5ZM3 12H17V13.5H3ZM5.5 16H14.5V17.5H5.5Z',
+  right: 'M3 4H17V5.5H3ZM8 8H17V9.5H8ZM3 12H17V13.5H3ZM8 16H17V17.5H8Z'
+}
+
+export const textAlignIcon = `<svg><path d="${TEXT_ALIGN_PATHS.left}"/></svg>`
+
 export const moreIcon =
   '<svg><path d="M5 11.75a1.75 1.75 0 1 1 0-3.5a1.75 1.75 0 0 1 0 3.5ZM10 11.75a1.75 1.75 0 1 1 0-3.5a1.75 1.75 0 0 1 0 3.5ZM15 11.75a1.75 1.75 0 1 1 0-3.5a1.75 1.75 0 0 1 0 3.5Z"/></svg>'
 

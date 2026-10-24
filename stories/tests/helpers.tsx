@@ -138,6 +138,15 @@ export async function setRangeSetting(view: ReturnType<typeof within>, title: st
   await closeSettingPanel(view, title)
 }
 
+/** Types a number in a NumberField panel, the keys going to its field. */
+export async function setNumberSetting(view: ReturnType<typeof within>, title: string, value: number) {
+  await openSettingPanel(view, title)
+  const input = await view.findByRole('spinbutton', { name: title })
+  await userEvent.clear(input)
+  await userEvent.type(input, String(value))
+  await closeSettingPanel(view, title)
+}
+
 /** Selects an option in a SelectField panel (pass the option's accessible name). */
 export async function setSelectSetting(view: ReturnType<typeof within>, title: string, optionName: string) {
   await openSettingPanel(view, title)

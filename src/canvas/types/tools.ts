@@ -1,4 +1,4 @@
-import type { ShapeType } from './Shapes'
+import type { ShapeType, TextAlign } from './Shapes'
 
 export type CustomToolInput = {
   id: string
@@ -196,6 +196,26 @@ export type SettingsFont = {
   }
 }
 
+export type SettingsTextAlign = {
+  textAlign: {
+    values: TextAlign[]
+    default: TextAlign
+    hidden?: boolean
+  }
+}
+
+/** Font size of the new texts, which are as wide as their content. Without it, a new text is 150 wide */
+export type SettingsFontSize = {
+  fontSize: {
+    min: number
+    /** No limit by default: a text can be made as big as wanted */
+    max?: number
+    step: number
+    default: number
+    hidden?: boolean
+  }
+}
+
 export type SettingsClosedPoints = {
   closedPoints: {
     default: number
@@ -216,7 +236,7 @@ export type ToolsEllipseSettings = SettingsStrokeColor & SettingsFillColor & Set
 
 export type ToolsCircleSettings = ToolsEllipseSettings
 
-export type ToolsTextSettings = SettingsOpacity & SettingsStrokeColor & SettingsFont
+export type ToolsTextSettings = SettingsOpacity & SettingsStrokeColor & SettingsFont & Partial<SettingsFontSize & SettingsTextAlign>
 export type ToolsLineSettings = SettingsOpacity &
   SettingsStrokeColor &
   SettingsLineWidth &

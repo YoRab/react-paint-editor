@@ -132,7 +132,8 @@ const EditTextBox = ({ disabled = false, shape, defaultValue, updateValue, saveS
         opacity: cssVar('--react-paint-canvas-edittextbox-opacity', (shape.style?.opacity ?? 100) / 100),
         fontFamily: cssVar('--react-paint-canvas-edittextbox-fontfamily', shape.style?.fontFamily ?? STYLE_FONT_DEFAULT),
         fontWeight: shape.style?.fontBold ? 'bold' : undefined,
-        fontStyle: shape.style?.fontItalic ? 'italic' : undefined
+        fontStyle: shape.style?.fontItalic ? 'italic' : undefined,
+        textAlign: shape.style?.textAlign
       }}
     />
   )
