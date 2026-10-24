@@ -205,23 +205,23 @@ const useDrawableCanvas = (store: PaintStore, canvas: HTMLCanvasElement | null) 
         cursorPosition[1] === selectionMode.cursorStartPosition[1]
       ) {
         const isGroupMode = e.ctrlKey || e.shiftKey || e.metaKey
+        // the press kept the selection for a drag: a click selects the shape in front, even over a selected shape it covers,
+        // or toggles it in group mode
+        const { shape } = selectShape(
+          ctx,
+          state.document.shapes,
+          cursorPosition,
+          settings,
+          state.document.selectedShape,
+          isTouchGesture(e),
+          state.config.options.withFrameSelection,
+          isGroupMode ? 'toggle' : 'replace',
+          false
+        )
+        // in group mode, a shape added by the press stays selected
+        const isAddedByPress = isGroupMode && getSelectedShapes(shape).length === selectionMode.selectedShapesLengthAtMouseDown
         store.batch(() => {
-          if (isGroupMode) {
-            const { shape } = selectShape(
-              ctx,
-              state.document.shapes,
-              cursorPosition,
-              settings,
-              state.document.selectedShape,
-              isTouchGesture(e),
-              state.config.options.withFrameSelection,
-              'remove'
-            )
-            if (getSelectedShapes(shape).length !== selectionMode.selectedShapesLengthAtMouseDown) {
-              store.setSelectedShape(shape)
-            }
-          }
-
+          if (!isAddedByPress) store.setSelectedShape(shape)
           store.setSelectionMode({ mode: 'default' })
           store.setSelectionFrame(undefined)
           store.actions.saveShapes()

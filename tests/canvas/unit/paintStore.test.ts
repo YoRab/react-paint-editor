@@ -517,4 +517,13 @@ describe('hovered shape', () => {
     store.actions.undo()
     expect(getHoveredShape(store)?.id).toBe(first)
   })
+
+  it('is the shape in front, even in the selection frame of a selected shape it covers: a click selects it', async () => {
+    const store = await createLoadedStore({}, [{ type: 'rect', x: 50, y: 50, width: 200, height: 200 }, RECTS[0]!])
+    const [cover, covered] = getIds(store)
+    const center = store.getShape(covered!)!.computed.center
+    store.actions.selectShapes([covered!])
+    store.refreshHoveredShape(true, ctx, center, true)
+    expect(getHoveredShape(store)?.id).toBe(cover)
+  })
 })

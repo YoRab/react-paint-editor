@@ -58,33 +58,36 @@ export const selectShape = (
   selectedShape: SelectionType | undefined,
   isTouchGesture: boolean,
   withFrameSelection: boolean,
-  behavior: 'add' | 'remove' | 'replace' = 'replace'
+  behavior: 'add' | 'toggle' | 'replace' = 'replace',
+  preferSelection = true
 ): {
   mode: SelectionModeData<Point | number>
   shape: SelectionType | undefined
 } => {
+  const touchRadius = isTouchGesture ? 20 : undefined
   let selectedShapePositionIntersection: false | HoverModeData = false
   if (selectedShape) {
-    selectedShapePositionIntersection = checkSelectionIntersection(
-      ctx,
-      selectedShape,
-      cursorPosition,
-      settings,
-      true,
-      isTouchGesture ? 20 : undefined
-    )
+    selectedShapePositionIntersection = checkSelectionIntersection(ctx, selectedShape, cursorPosition, settings, true, touchRadius)
 
     const newSelectionMode = getNewSelectionData(selectedShapePositionIntersection || { mode: 'default' }, selectedShape, cursorPosition)
     if (newSelectionMode?.mode === 'resize' || newSelectionMode?.mode === 'rotate') {
       return { shape: selectedShape, mode: newSelectionMode }
     }
   }
+  const selectedIds = new Set(getSelectedShapes(selectedShape).map(shape => shape.id))
+  // a selected shape is under the cursor in its selection frame
+  const isUnderCursor = (shape: ShapeEntity) =>
+    selectedIds.has(shape.id)
+      ? selectedShapePositionIntersection && checkSelectionIntersection(ctx, shape, cursorPosition, settings, true, touchRadius)
+      : checkPositionIntersection(ctx, shape, cursorPosition, settings)
+  // the shapes are searched from the foreground. When the selection is preferred, as on a press, the selected shapes are
+  // searched first: a drag moves the selection, even behind the shapes which cover it
   const foundShape =
-    shapes.find(shape => {
-      return getSelectedShapes(selectedShape).find(selectedShape => shape.id === selectedShape?.id)
-        ? selectedShapePositionIntersection && checkSelectionIntersection(ctx, shape, cursorPosition, settings, true, isTouchGesture ? 20 : undefined)
-        : !!checkPositionIntersection(ctx, shape, cursorPosition, settings)
-    }) ?? (selectedShapePositionIntersection ? selectedShape : undefined)
+    (preferSelection && shapes.find(shape => selectedIds.has(shape.id) && isUnderCursor(shape))) ||
+    shapes.find(isUnderCursor) ||
+    (selectedShapePositionIntersection ? selectedShape : undefined)
+  // a toggle removes the shape under the cursor from the selection, or adds it when it is not selected
+  const action = behavior === 'toggle' ? (foundShape && selectedIds.has(foundShape.id) ? 'remove' : 'add') : behavior
 
   if (selectedShape && selectedShape?.id === foundShape?.id) {
     return {
@@ -100,7 +103,7 @@ export const selectShape = (
     }
   }
 
-  if (foundShape?.locked && behavior === 'add') {
+  if (foundShape?.locked && action === 'add') {
     return {
       shape: selectedShape,
       mode: {
@@ -109,7 +112,7 @@ export const selectShape = (
     }
   }
 
-  if (foundShape && behavior === 'add' && selectedShape?.locked) {
+  if (foundShape && action === 'add' && selectedShape?.locked) {
     const foundShapeGroup = buildShapesGroup([foundShape], settings)
     return {
       shape: foundShapeGroup,
@@ -125,7 +128,7 @@ export const selectShape = (
   }
 
   if (foundShape) {
-    if (behavior === 'add') {
+    if (action === 'add') {
       const foundShapeGroup = buildShapesGroup(addToSelectedShapes(selectedShape, [foundShape]), settings)
       return {
         shape: foundShapeGroup,
@@ -139,7 +142,7 @@ export const selectShape = (
         }
       }
     }
-    if (behavior === 'remove') {
+    if (action === 'remove') {
       const foundShapeGroup = buildShapesGroup(omitFromSelectedShapes(selectedShape, [foundShape]), settings)
       return {
         shape: foundShapeGroup,
@@ -153,9 +156,7 @@ export const selectShape = (
         }
       }
     }
-    const foundShapeGroup = getSelectedShapes(selectedShape).find(shape => shape.id === foundShape?.id)
-      ? selectedShape
-      : buildShapesGroup([foundShape], settings)
+    const foundShapeGroup = selectedIds.has(foundShape.id) ? selectedShape : foundShape
     return {
       shape: foundShapeGroup,
       mode: {

@@ -41,14 +41,21 @@ const [A, B, C] = RECTS.map((rect, index) => refreshShape({ ...rect, id: `rect_$
 const LOCKED_C = { ...C, locked: true }
 const SHAPES = [A, B, LOCKED_C]
 
-const CENTERS: Record<'A' | 'B' | 'C' | 'empty', Point> = { A: [150, 150], B: [350, 150], C: [550, 150], empty: [150, 400] }
+// cover is inside the shape covering A below, outside of the selection frame of A
+const CENTERS: Record<'A' | 'B' | 'C' | 'empty' | 'cover', Point> = {
+  A: [150, 150],
+  B: [350, 150],
+  C: [550, 150],
+  empty: [150, 400],
+  cover: [60, 60]
+}
 
 const select = (
   target: keyof typeof CENTERS,
   selection: SelectionType | undefined,
-  behavior?: 'add' | 'remove' | 'replace',
-  { withFrameSelection = false, shapes = SHAPES } = {}
-) => selectShape(ctx, shapes, CENTERS[target], settings, selection, false, withFrameSelection, behavior)
+  behavior?: 'add' | 'toggle' | 'replace',
+  { withFrameSelection = false, shapes = SHAPES, preferSelection = true } = {}
+) => selectShape(ctx, shapes, CENTERS[target], settings, selection, false, withFrameSelection, behavior, preferSelection)
 
 const getIds = (selection: SelectionType | undefined) => getSelectedShapes(selection).map(shape => shape.id)
 
@@ -76,10 +83,11 @@ describe('selectShape', () => {
     expect(mode).toMatchObject({ mode: 'translate', originalShape: shape, selectedShapesLengthAtMouseDown: 1 })
   })
 
-  it('removes the shape under the cursor from the selection', () => {
-    const { shape, mode } = select('B', buildShapesGroup([A, B], settings), 'remove')
+  it('toggles the shape under the cursor in the selection', () => {
+    const { shape, mode } = select('B', buildShapesGroup([A, B], settings), 'toggle')
     expect(shape).toBe(A)
     expect(mode).toMatchObject({ mode: 'translate', selectedShapesLengthAtMouseDown: 2 })
+    expect(getIds(select('B', A, 'toggle').shape)).toEqual([A.id, B.id])
   })
 
   it('keeps the selection when the cursor is outside of the shapes while adding', () => {
@@ -89,12 +97,44 @@ describe('selectShape', () => {
   it('does not add a locked shape to the selection', () => {
     expect(select('C', A, 'add')).toEqual({ shape: A, mode: { mode: 'default' } })
     expect(select('C', A, 'add', { withFrameSelection: true }).mode).toEqual({ mode: 'selectionFrame' })
+    expect(select('C', A, 'toggle')).toEqual({ shape: A, mode: { mode: 'default' } })
   })
 
   it('replaces a locked selection by the shape added to it', () => {
     const lockedA = { ...A, locked: true }
     const { shape } = select('B', lockedA, 'add', { shapes: [lockedA, B, LOCKED_C] })
     expect(shape).toBe(B)
+  })
+
+  describe('with a shape in front of A, covering it', () => {
+    // a filled 200×200 rect from x 50 and y 50, beyond the selection frame of A
+    const COVER = refreshShape({ ...RECTS[0], id: 'cover', x: 50, y: 50, width: 200, height: 200 } as DrawableShape & { id: string }, settings)
+    const shapes = [COVER, A, B]
+    const group = buildShapesGroup([A, B], settings)
+
+    it('selects the shape in front', () => {
+      expect(select('A', undefined, 'replace', { shapes }).shape).toBe(COVER)
+      expect(select('A', B, 'replace', { shapes }).shape).toBe(COVER)
+    })
+
+    it('keeps A selected in its selection frame, and starts translating it: a drag moves it', () => {
+      const { shape, mode } = select('A', A, 'replace', { shapes })
+      expect(shape).toBe(A)
+      expect(mode).toMatchObject({ mode: 'translate', originalShape: A })
+      expect(select('A', group, 'replace', { shapes }).shape).toBe(group)
+      // the press of a group mode keeps the selection too
+      expect(getIds(select('A', group, 'add', { shapes }).shape)).toEqual([A.id, B.id])
+    })
+
+    it('selects the shape in front outside of the selection frame of A', () => {
+      expect(select('cover', A, 'replace', { shapes }).shape).toBe(COVER)
+    })
+
+    it('selects or toggles the shape in front when the selection is not preferred, as on a click', () => {
+      expect(select('A', A, 'replace', { shapes, preferSelection: false }).shape).toBe(COVER)
+      expect(select('A', group, 'replace', { shapes, preferSelection: false }).shape).toBe(COVER)
+      expect(getIds(select('A', group, 'toggle', { shapes, preferSelection: false }).shape)).toEqual([A.id, B.id, COVER.id])
+    })
   })
 })
 
