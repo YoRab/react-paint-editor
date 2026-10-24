@@ -101,6 +101,7 @@
     "lint": "pnpm biome check --write",
     "prepublishOnly": "pnpm build && pnpm declarationfiles",
     "publishnpm": "pnpm publish --access public",
+    "publishbeta": "pnpm publish --access public --tag beta",
     "start": "storybook dev -p 6006",
     "test": "vitest --project=unit",
     "test-storybook": "vitest --project=storybook",

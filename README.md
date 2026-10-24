@@ -360,6 +360,8 @@ The Storybook includes:
 - Usage examples
 - Configuration options
 
+Looking for the documentation of version 0.x? It lives on the [`v0-stable` branch](https://github.com/YoRab/react-paint-editor/tree/v0-stable). To move to version 1, see the [migration guide](https://github.com/YoRab/react-paint-editor/blob/main/MIGRATION.md).
+
 ## Security
 
 A drawing loaded from a source you do not control is untrusted, filter its pictures with the `resolvePictureSrc` option. The `icon` of a tool is rendered as HTML and must be trusted. See the [security model](https://github.com/YoRab/react-paint-editor/blob/main/SECURITY.md#security-model), and the [security policy](https://github.com/YoRab/react-paint-editor/blob/main/SECURITY.md#reporting-a-vulnerability) to report a vulnerability.
