@@ -1,18 +1,63 @@
 import type { UtilsSettings } from '@canvas/constants/app'
 import type { Point, ShapeEntity } from '@canvas/types/Shapes'
-import { canRemoveShapePoint } from '@canvas/utils/shapes'
+import type { CustomTool } from '@canvas/types/tools'
+import { canRemoveShapePoint, createShape, isStyleFieldOfShape } from '@canvas/utils/shapes'
 import { addNewPointGroupToShape, addNewPointToShape, getBrushBorder, refreshBrush } from '@canvas/utils/shapes/brush'
 import { refreshCurve } from '@canvas/utils/shapes/curve'
 import { catmullRomToBezier, createBrushPath, getCatmullRomPoints, getCubicBezierBounds } from '@canvas/utils/shapes/path'
 import { drawPicture } from '@canvas/utils/shapes/picture'
+import { buildAvailableTools } from '@canvas/utils/tools'
 import { type Bounds, getPointsBounds } from '@canvas/utils/trigo'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { stubPath2D } from './helpers'
+import { MEASURE_CONTEXT, stubPath2D, UTILS_SETTINGS } from './helpers'
 
 stubPath2D()
 
 const withPoints = (type: 'polygon' | 'curve' | 'line', pointsCount: number) =>
   ({ id: `${type}_1`, type, points: Array.from({ length: pointsCount }, (_, index): Point => [index, index]) }) as unknown as ShapeEntity
+
+describe('createShape', () => {
+  it('gives a new shape the default values of all the settings of its tool', () => {
+    const [rectTool, lineTool, textTool] = buildAvailableTools([
+      { type: 'rect', settings: { fillColor: { default: 'red' } } },
+      { type: 'line', settings: { lineArrow: { default: 2 } } },
+      { type: 'text', settings: { fontBold: { default: true } } }
+    ]) as Exclude<CustomTool, { type: 'picture' }>[]
+    expect(createShape(MEASURE_CONTEXT, rectTool!, [10, 10], UTILS_SETTINGS)?.style).toEqual({
+      strokeColor: 'black',
+      fillColor: 'red',
+      opacity: 100,
+      lineWidth: 1,
+      lineDash: 0
+    })
+    // the line is shortened under its arrows, which its butt ends join
+    expect(createShape(MEASURE_CONTEXT, lineTool!, [10, 10], UTILS_SETTINGS)?.style).toEqual({
+      strokeColor: 'black',
+      opacity: 100,
+      lineWidth: 1,
+      lineDash: 0,
+      lineArrow: 2,
+      lineCap: 'butt'
+    })
+    expect(createShape(MEASURE_CONTEXT, textTool!, [10, 10], UTILS_SETTINGS)?.style).toEqual({
+      strokeColor: 'black',
+      opacity: 100,
+      fontFamily: 'serif',
+      fontBold: true,
+      fontItalic: false
+    })
+  })
+})
+
+describe('isStyleFieldOfShape', () => {
+  it('applies the font fields to the texts only, and the other fields to all the shapes', () => {
+    expect(isStyleFieldOfShape('text', 'fontBold')).toBe(true)
+    expect(isStyleFieldOfShape('rect', 'fontFamily')).toBe(false)
+    expect(isStyleFieldOfShape('picture', 'fontItalic')).toBe(false)
+    expect(isStyleFieldOfShape('line', 'strokeColor')).toBe(true)
+    expect(isStyleFieldOfShape('text', 'opacity')).toBe(true)
+  })
+})
 
 describe('canRemoveShapePoint', () => {
   it('allows removing a point of a polygon or a curve keeping at least 2 points', () => {

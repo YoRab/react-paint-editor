@@ -1,5 +1,5 @@
 import { DEFAULT_OPTIONS, type OptionalOptions, type UtilsSettings } from '@canvas/constants/app'
-import { SELECTION_TOOL } from '@canvas/constants/tools'
+import { PICTURE_TOOL_ID, SELECTION_TOOL } from '@canvas/constants/tools'
 import { createStore } from '@canvas/store/createStore'
 import { createEventEmitter } from '@canvas/store/eventEmitter'
 import { createSelectors, findSelectableTool, memoizeLast } from '@canvas/store/selectors'
@@ -1073,7 +1073,8 @@ export const createPaintStore = (props: UseReactPaintProps = {}) => {
       })
     },
     addPicture: async (fileOrUrl, { maxWidth = get().config.width, maxHeight = get().config.height, select = true, position } = {}) => {
-      const pictureShape = await createPicture(fileOrUrl, maxWidth, maxHeight, getSettings(), getPictureSrcResolver(), position)
+      const pictureTool = findShapeTool(get().tools.available, { type: 'picture', toolId: PICTURE_TOOL_ID })
+      const pictureShape = await createPicture(fileOrUrl, maxWidth, maxHeight, getSettings(), getPictureSrcResolver(), pictureTool, position)
       insertShapes([pictureShape], { select })
       return pictureShape
     },

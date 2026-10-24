@@ -1,7 +1,7 @@
 import type { UtilsSettings } from '@canvas/constants/app'
-import { SELECTION_DEFAULT_WIDTH, SHAPES_KEEPING_RATIO, SHAPES_WITH_ROTATION } from '@canvas/constants/shapes'
+import { SELECTION_DEFAULT_WIDTH, SHAPES_KEEPING_RATIO, SHAPES_WITH_ROTATION, STYLE_FIELDS_SHAPE_TYPES } from '@canvas/constants/shapes'
 import type { HoverModeData, SelectionModeData, SelectionModeResize } from '@canvas/types/Mode'
-import type { DrawableShape, Point, Rect, SelectionType, ShapeEntity, StyleShape } from '@canvas/types/Shapes'
+import type { DrawableShape, Point, Rect, SelectionType, ShapeEntity, ShapeType, StyleShape } from '@canvas/types/Shapes'
 import type { CustomTool } from '@canvas/types/tools'
 import { createDetachedContext, initCanvasContext, transformCanvas, updateCanvasContext } from '@canvas/utils/canvas'
 import { getRectIntersection } from '@canvas/utils/intersect'
@@ -521,12 +521,15 @@ export const canRemoveShapePoint = (
   pointIndex < shape.points.length &&
   shape.points.length > 2
 
+/** Whether a style field applies to a type of shape, like the font fields to the texts only */
+export const isStyleFieldOfShape = (type: ShapeType, field: keyof StyleShape): boolean => STYLE_FIELDS_SHAPE_TYPES[field]?.includes(type) ?? true
+
 /**
- * Returns the shape with the new style values. Font fields only apply to texts, whose font size is fitted
- * to their width: a shape is returned unchanged when no field applies to it.
+ * Returns the shape with the new style values which apply to its type. The font size of a text is fitted to its width
+ * when its font changes: a shape is returned unchanged when no field applies to it.
  */
 export const updateShapeStyle = (ctx: CanvasRenderingContext2D, shape: ShapeEntity, style: StyleShape, settings: UtilsSettings): ShapeEntity => {
-  const fields = (Object.keys(style) as (keyof StyleShape)[]).filter(field => shape.type === 'text' || !isFontStyleField(field))
+  const fields = (Object.keys(style) as (keyof StyleShape)[]).filter(field => isStyleFieldOfShape(shape.type, field))
   if (!fields.length) return shape
   const newShape = { ...shape, style: { ...shape.style, ...Object.fromEntries(fields.map(field => [field, style[field]])) } }
   if (newShape.type === 'text' && fields.some(isFontStyleField)) return refreshShape(fitTextFontSize(ctx, newShape), settings)

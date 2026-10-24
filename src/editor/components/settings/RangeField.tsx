@@ -13,9 +13,9 @@ type ShapeStyleColorType = {
   disabled?: boolean | undefined
   field: string
   icon: string
-  min?: number
-  max?: number
-  step?: number
+  min?: number | undefined
+  max?: number | undefined
+  step?: number | undefined
   unity?: string
   value?: number | undefined
   saveShapes: () => void

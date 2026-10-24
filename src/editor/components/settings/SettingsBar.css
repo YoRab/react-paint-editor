@@ -21,6 +21,10 @@
   width: 100%;
 }
 
+.react-paint-editor-settings-more {
+  display: flex;
+}
+
 .react-paint-editor-zoom-button {
   margin: 0;
 }

@@ -6,6 +6,7 @@ import { drawPathWithFillAndStroke } from '@canvas/utils/canvas'
 import { getPointPositionAfterCanvasTransformation } from '@canvas/utils/intersect'
 import { set } from '@canvas/utils/object'
 import { createPolygonPath, expandRect, getComputedShapeInfos } from '@canvas/utils/shapes/path'
+import { getToolDefaultStyle } from '@canvas/utils/tools'
 import { roundForGrid } from '@canvas/utils/transform'
 import { getPointsBounds } from '@canvas/utils/trigo'
 import { createShapeId } from '@canvas/utils/util'
@@ -37,14 +38,7 @@ export const createPolygon = (
       type: shape.type,
       id: createShapeId(shape.type),
       points: [cursorPosition],
-      style: {
-        opacity: shape.settings.opacity.default,
-        fillColor: shape.settings.fillColor.default,
-        strokeColor: shape.settings.strokeColor.default,
-        lineWidth: shape.settings.lineWidth.default,
-        lineDash: shape.settings.lineDash.default,
-        closedPoints: shape.settings.closedPoints.default
-      }
+      style: getToolDefaultStyle(shape)
     },
     settings
   )

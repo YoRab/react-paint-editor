@@ -5,6 +5,7 @@ import type { ToolsSettingsType } from '@canvas/types/tools'
 import { drawPathWithFillAndStroke } from '@canvas/utils/canvas'
 import { getPointPositionBeforeCanvasTransformation } from '@canvas/utils/intersect'
 import { resizeRectSelection } from '@canvas/utils/selection/rectSelection'
+import { getToolDefaultStyle } from '@canvas/utils/tools'
 import { createShapeId } from '@canvas/utils/util'
 import { type GroupResizeContext, getPositionWithoutGroupRotation, getShapePositionInNewBorder } from './group'
 import { createRecPath, expandRect, getComputedShapeInfos } from './path'
@@ -42,13 +43,7 @@ export const createRectangle = <T extends rectish>(
     y: cursorPosition[1],
     width,
     height,
-    style: {
-      opacity: shape.settings.opacity.default,
-      fillColor: shape.settings.fillColor.default,
-      strokeColor: shape.settings.strokeColor.default,
-      lineWidth: shape.settings.lineWidth.default,
-      lineDash: shape.settings.lineDash.default
-    }
+    style: getToolDefaultStyle(shape)
   } as DrawableShape<T> & { id: string }
   return buildPath(recShape, settings)
 }

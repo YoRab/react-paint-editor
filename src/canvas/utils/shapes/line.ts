@@ -6,6 +6,7 @@ import { drawPathWithFillAndStroke, updateCanvasContext } from '@canvas/utils/ca
 import { getPointPositionAfterCanvasTransformation } from '@canvas/utils/intersect'
 import { set } from '@canvas/utils/object'
 import { createLinePath, getComputedShapeInfos } from '@canvas/utils/shapes/path'
+import { getToolDefaultStyle } from '@canvas/utils/tools'
 import { roundForGrid, shortenLine } from '@canvas/utils/transform'
 import { getAngleFromVector, rotatePoint } from '@canvas/utils/trigo'
 import { createShapeId } from '@canvas/utils/util'
@@ -76,13 +77,7 @@ export const createLine = (
     type: shape.type,
     id: createShapeId(shape.type),
     points: [cursorPosition, cursorPosition] as const,
-    style: {
-      opacity: shape.settings.opacity.default,
-      strokeColor: shape.settings.strokeColor.default,
-      lineWidth: shape.settings.lineWidth.default,
-      lineDash: shape.settings.lineDash.default,
-      lineArrow: shape.settings.lineArrow.default
-    }
+    style: getToolDefaultStyle(shape)
   }
   return buildPath(lineShape, settings)
 }

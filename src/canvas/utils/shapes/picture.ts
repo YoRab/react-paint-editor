@@ -2,9 +2,11 @@ import type { PictureSrcResolver, UtilsSettings } from '@canvas/constants/app'
 import { PICTURE_TOOL_ID } from '@canvas/constants/tools'
 import type { SelectionModeResize } from '@canvas/types/Mode'
 import type { DrawableShape, Point, SelectionType, ShapeEntity } from '@canvas/types/Shapes'
+import type { CustomTool } from '@canvas/types/tools'
 import { createDetachedContext } from '@canvas/utils/canvas'
 import { addSizeAndConvertSvgToObjectUrl, isSvg, loadPicture, readFileAsDataUrl } from '@canvas/utils/file'
 import { resizeRectSelection } from '@canvas/utils/selection/rectSelection'
+import { getToolDefaultStyle } from '@canvas/utils/tools'
 import { fitContentInsideContainer } from '@canvas/utils/transform'
 import { createShapeId } from '@canvas/utils/util'
 import { type GroupResizeContext, getPositionWithoutGroupRotation, getShapePositionInNewBorder } from './group'
@@ -29,6 +31,7 @@ const createPictureShape = (
   maxPictureWidth: number,
   maxPictureHeight: number,
   settings: UtilsSettings,
+  tool: CustomTool | undefined,
   center: Point | undefined
 ): ShapeEntity<'picture'> => {
   const [width, height] = fitContentInsideContainer(img.width, img.height, maxPictureWidth, maxPictureHeight, true)
@@ -38,7 +41,7 @@ const createPictureShape = (
   ]
   return buildPath(
     {
-      toolId: PICTURE_TOOL_ID,
+      toolId: tool?.id ?? PICTURE_TOOL_ID,
       type: 'picture',
       id: createShapeId('picture'),
       x: centerX - width / 2,
@@ -48,9 +51,7 @@ const createPictureShape = (
       ratio: height === 0 ? 1 : width / height,
       src: storedSrc,
       img,
-      style: {
-        opacity: 100
-      }
+      style: getToolDefaultStyle(tool)
     },
     settings
   )
@@ -83,12 +84,14 @@ export const createPicture = async (
   maxPictureHeight: number,
   settings: UtilsSettings,
   resolvePictureSrc: PictureSrcResolver | undefined,
+  /** Picture tool, giving its default style to the picture */
+  tool: CustomTool | undefined,
   /** Center of the picture in the drawing, the center of the visible area by default */
   center?: Point
 ): Promise<ShapeEntity<'picture'>> => {
   const img = new Image()
   const storedSrc = await loadNewPicture(img, fileOrUrl, resolvePictureSrc)
-  return createPictureShape(img, storedSrc, maxPictureWidth, maxPictureHeight, settings, center)
+  return createPictureShape(img, storedSrc, maxPictureWidth, maxPictureHeight, settings, tool, center)
 }
 
 /**

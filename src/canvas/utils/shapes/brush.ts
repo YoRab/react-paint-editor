@@ -4,6 +4,7 @@ import type { DrawableShape, Point, Rect, SelectionType, ShapeEntity } from '@ca
 import type { ToolsSettingsType } from '@canvas/types/tools'
 import { resizeRectSelection } from '@canvas/utils/selection/rectSelection'
 import { addBrushPoint, createBrushPath, expandRect, extendBrushPath, getBrushPointsBounds, getComputedShapeInfos } from '@canvas/utils/shapes/path'
+import { getToolDefaultStyle } from '@canvas/utils/tools'
 import { roundValues, scalePoint } from '@canvas/utils/transform'
 import { createShapeId } from '@canvas/utils/util'
 import { type GroupResizeContext, getPositionWithoutGroupRotation, getShapePositionInNewBorder } from './group'
@@ -59,12 +60,7 @@ export const createBrush = (
       points: [[cursorPosition]],
       scaleX: 1,
       scaleY: 1,
-      style: {
-        opacity: shape.settings.opacity.default,
-        strokeColor: shape.settings.strokeColor.default,
-        lineWidth: shape.settings.lineWidth.default,
-        lineDash: shape.settings.lineDash.default
-      }
+      style: getToolDefaultStyle(shape)
     },
     settings
   )

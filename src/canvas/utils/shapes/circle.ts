@@ -4,6 +4,7 @@ import type { Circle, DrawableShape, Point, Rect, SelectionType, ShapeEntity } f
 import type { ToolsSettingsType } from '@canvas/types/tools'
 import { drawPathWithFillAndStroke } from '@canvas/utils/canvas'
 import { resizeRectSelection } from '@canvas/utils/selection/rectSelection'
+import { getToolDefaultStyle } from '@canvas/utils/tools'
 import { createShapeId } from '@canvas/utils/util'
 import { type GroupResizeContext, getPositionWithoutGroupRotation, getShapePositionInNewBorder } from './group'
 import { createCirclePath, expandRect, getComputedShapeInfos } from './path'
@@ -47,13 +48,7 @@ export const createCircle = (
       x: cursorPosition[0],
       y: cursorPosition[1],
       radius: 0,
-      style: {
-        opacity: shape.settings.opacity.default,
-        fillColor: shape.settings.fillColor.default,
-        strokeColor: shape.settings.strokeColor.default,
-        lineWidth: shape.settings.lineWidth.default,
-        lineDash: shape.settings.lineDash.default
-      }
+      style: getToolDefaultStyle(shape)
     },
     settings
   )

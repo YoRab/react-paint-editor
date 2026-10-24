@@ -1,9 +1,11 @@
 import type { UtilsSettings } from '@canvas/constants/app'
 import { STYLE_FONT_DEFAULT, STYLE_FONT_SIZE_DEFAULT } from '@canvas/constants/rendering'
+import { FONT_STYLE_FIELDS } from '@canvas/constants/shapes'
 import type { SelectionModeResize } from '@canvas/types/Mode'
 import type { DrawableShape, Point, Rect, SelectionType, ShapeEntity, StyleShape, Text, TextShapeInput } from '@canvas/types/Shapes'
 import type { ToolsSettingsType } from '@canvas/types/tools'
 import { resizeRectSelection } from '@canvas/utils/selection/rectSelection'
+import { getToolDefaultStyle } from '@canvas/utils/tools'
 import { createShapeId } from '@canvas/utils/util'
 import { type GroupResizeContext, getPositionWithoutGroupRotation, getShapePositionInNewBorder } from './group'
 import { createRecPath, expandRect, getComputedShapeInfos } from './path'
@@ -58,8 +60,6 @@ export const calculateTextFontSize = (
   return Number.isFinite(fontSize) && fontSize !== 0 ? fontSize : STYLE_FONT_SIZE_DEFAULT
 }
 
-const FONT_STYLE_FIELDS: (keyof StyleShape)[] = ['fontFamily', 'fontBold', 'fontItalic']
-
 export const isFontStyleField = (field: keyof StyleShape) => FONT_STYLE_FIELDS.includes(field)
 
 export const fitTextFontSize = <T extends DrawableShape<'text'>>(ctx: CanvasRenderingContext2D, text: T): T => {
@@ -98,13 +98,14 @@ export const createText = (
   cursorPosition: Point,
   settings: UtilsSettings
 ): ShapeEntity<'text'> => {
+  const style = getToolDefaultStyle(shape)
   const fontSize = calculateTextFontSize(
     ctx,
     DEFAULT_TEXT_VALUE,
     DEFAULT_TEXT_WIDTH,
-    shape.settings?.fontBold.default ?? false,
-    shape.settings?.fontItalic.default ?? false,
-    shape.settings.fontFamily.default
+    style.fontBold ?? false,
+    style.fontItalic ?? false,
+    style.fontFamily
   )
 
   const width = DEFAULT_TEXT_WIDTH
@@ -121,13 +122,7 @@ export const createText = (
       width,
       height,
       ratio: width / height,
-      style: {
-        opacity: shape.settings.opacity.default,
-        strokeColor: shape.settings.strokeColor.default,
-        fontFamily: shape.settings.fontFamily.default,
-        fontItalic: shape.settings.fontItalic.default,
-        fontBold: shape.settings.fontBold.default
-      }
+      style
     },
     settings
   )

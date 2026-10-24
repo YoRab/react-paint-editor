@@ -1,4 +1,4 @@
-import type { Point } from '@canvas/types/Shapes'
+import type { Point, ShapeType, StyleShape } from '@canvas/types/Shapes'
 
 export const SELECTION_DEFAULT_PADDING = 0
 export const SELECTION_DEFAULT_WIDTH = 2
@@ -18,6 +18,14 @@ export const SELECTION_RESIZE_ANCHOR_POSITIONS: Point[] = [
 
 export const SHAPES_WITH_ROTATION = ['rect', 'square', 'circle', 'ellipse', 'picture', 'text', 'triangle', 'brush', 'group']
 export const SHAPES_KEEPING_RATIO = ['square', 'circle', 'picture', 'text']
+
+/** Style fields of the font of a text: its font size is fitted to its width when they change */
+export const FONT_STYLE_FIELDS: (keyof StyleShape)[] = ['fontFamily', 'fontBold', 'fontItalic']
+
+/** Style fields which only apply to some types of shapes, with these types. A field which is not listed applies to all of them */
+export const STYLE_FIELDS_SHAPE_TYPES: Partial<Record<keyof StyleShape, readonly ShapeType[]>> = Object.fromEntries(
+  FONT_STYLE_FIELDS.map((field): [keyof StyleShape, readonly ShapeType[]] => [field, ['text']])
+)
 
 export const ShapeTypeArray = [
   'brush',

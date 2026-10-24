@@ -5,6 +5,7 @@ import type { ToolsSettingsType } from '@canvas/types/tools'
 import { drawPathWithFillAndStroke } from '@canvas/utils/canvas'
 import { resizeRectSelection } from '@canvas/utils/selection/rectSelection'
 import { createEllipsePath, expandRect, getComputedShapeInfos } from '@canvas/utils/shapes/path'
+import { getToolDefaultStyle } from '@canvas/utils/tools'
 import { createShapeId } from '@canvas/utils/util'
 import { type GroupResizeContext, getPositionWithoutGroupRotation, getShapePositionInNewBorder } from './group'
 
@@ -48,13 +49,7 @@ export const createEllipse = (
       y: cursorPosition[1],
       radiusX: 0,
       radiusY: 0,
-      style: {
-        opacity: shape.settings.opacity.default,
-        fillColor: shape.settings.fillColor.default,
-        strokeColor: shape.settings.strokeColor.default,
-        lineWidth: shape.settings.lineWidth.default,
-        lineDash: shape.settings.lineDash.default
-      }
+      style: getToolDefaultStyle(shape)
     },
     settings
   )

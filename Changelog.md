@@ -31,6 +31,8 @@ Breaking changes, see the [migration guide](./MIGRATION.md).
 - add state.interaction.selectionHover, the part of the selection under the pointer: its inside, the anchor of the rotation, or an anchor of the resize
 - fix the hovered shape kept after its removal: its outline stayed drawn, and state.interaction.hoveredShape gave it, until the next move of the mouse. It also follows the changes of its shape
 - fix the drag of a selected shape behind a shape covering it: a press in its selection frame selected the shape in front and moved it, it now moves the selection. A click without moving still selects the shape in front, or toggles it in group mode
+- fix the pictures added by actions.addPicture, a drop or the Editor: they get the id and the default style of the picture tool, whose default opacity was ignored and whose id was replaced with the id of the default picture tool
+- the settings bar of the Editor goes into its menu according to the settings it shows: the hidden settings of a tool no longer count
 - the canvas needs no stylesheet anymore: its styles are inline, and react-paint.css only contains the styles of the editor. Its CSS variables can be set on any parent element to override its styles. Add the editor/editor.css stylesheet
 - rename react-paint-editor-toolbox-edittextbox class to react-paint-canvas-edittextbox
 - fix stale declaration files being published, and css imports in declaration files

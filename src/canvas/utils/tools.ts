@@ -25,7 +25,7 @@ export const findShapeTool = (tools: CustomTool[], shape: Pick<DrawableShape, 't
   tools.find(tool => tool.id === shape.toolId) ?? tools.find(tool => tool.type === shape.type)
 
 /** Style made of the default values of the settings of a tool */
-export const getToolDefaultStyle = (tool: CustomTool | undefined): StyleShape => {
+export const getToolDefaultStyle = (tool: { settings?: object } | undefined): StyleShape => {
   const style: Record<string, unknown> = {}
   for (const [field, setting] of Object.entries(tool?.settings ?? {})) {
     if (isRecord(setting) && setting.default !== undefined) style[field] = setting.default
