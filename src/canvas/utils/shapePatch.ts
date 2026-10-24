@@ -1,7 +1,7 @@
 import type { UtilsSettings } from '@canvas/constants/app'
 import type { ShapeEntity, ShapePatch, StyleShape } from '@canvas/types/Shapes'
 import { isRecord } from '@canvas/utils/object'
-import { getCommonFieldsError, getGeometryError, getUnknownFieldError, isEditableShapeType } from '@canvas/utils/shapeInput'
+import { getCommonFieldsError, getGeometryError, getUnknownFieldError, isEditableShapeType, normalizeGeometry } from '@canvas/utils/shapeInput'
 import { refreshShape } from '@canvas/utils/shapes'
 import { fitTextFontSize, getComputedText, getTextLineCount, isFontStyleField, resizeTextShapeWithNewContent } from '@canvas/utils/shapes/text'
 
@@ -30,7 +30,7 @@ export const assertValidPatches = (patches: unknown[], shapesById: ReadonlyMap<s
 export const applyShapePatch = (ctx: CanvasRenderingContext2D, shape: ShapeEntity, patch: ShapePatch, settings: UtilsSettings): ShapeEntity => {
   const { id: _id, type: _type, ...fields } = patch as ShapePatch & { type?: unknown }
   const style = fields.style ? { ...shape.style, ...fields.style } : shape.style
-  const next = { ...shape, ...fields, style } as ShapeEntity
+  const next = normalizeGeometry({ ...shape, ...fields, style } as ShapeEntity)
 
   if (next.type === 'square' && ('width' in fields || 'height' in fields)) {
     const side = 'width' in fields ? next.width : next.height

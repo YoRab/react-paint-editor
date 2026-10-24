@@ -5,7 +5,7 @@ import type { HoverModeData } from '@canvas/types/Mode'
 import type { Point, Rect, SelectionType, ShapeEntity } from '@canvas/types/Shapes'
 import { getSelectedShapes } from '@canvas/utils/selectedShapes'
 import { getAnchorRadius, getResizeAnchorCenter, getRotationAnchorCenter, hasPointAnchors } from '@canvas/utils/selection/anchors'
-import { catmullRomToBezier, createLinePath, expandRect, getBrushPointScaler, getCatmullRomPoints } from '@canvas/utils/shapes/path'
+import { catmullRomToBezier, createLinePath, expandRect, getBrushPointScaler, getCatmullRomPoints, getCornerRadius } from '@canvas/utils/shapes/path'
 import { getRectCorners, isCircleIntersectRect, isPointInsideRect, rotatePoint } from './trigo'
 
 export const getCursorPositionInElement = (e: MouseEvent, element: HTMLElement, canvasSize: CanvasSize): Point => {
@@ -251,7 +251,8 @@ const getHoleTest = (shape: ShapeEntity, margin: number): ((point: Point) => boo
   switch (shape.type) {
     case 'rect':
     case 'square': {
-      const hole = expandRect(shape, -margin)
+      // the hole within the rounded corners
+      const hole = expandRect(shape, -margin - getCornerRadius(shape))
       return point => isPointInsideRect(hole, point)
     }
     case 'circle':

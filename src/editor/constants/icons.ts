@@ -77,6 +77,9 @@ export const settingsIcon =
 
 export const lineJoinIcon = '<svg><path d="M3 17V7A4 4 0 0 1 7 3H17V7H7V17Z"/></svg>'
 
+export const cornerRadiusIcon =
+  '<svg><path d="M3 8A5 5 0 0 1 8 3H12A5 5 0 0 1 17 8V12A5 5 0 0 1 12 17H8A5 5 0 0 1 3 12ZM5 8V12A3 3 0 0 0 8 15H12A3 3 0 0 0 15 12V8A3 3 0 0 0 12 5H8A3 3 0 0 0 5 8Z"/></svg>'
+
 export const lineCapIcon = '<svg><path d="M3 7H11A3 3 0 0 1 11 13H3ZM10.25 2.5H11.75V17.5H10.25Z"/></svg>'
 
 export const moreIcon =

@@ -160,6 +160,16 @@ export type SettingsLineCap = {
   }
 }
 
+export type SettingsCornerRadius = {
+  cornerRadius: {
+    min: number
+    max: number
+    step: number
+    default: number
+    hidden?: boolean
+  }
+}
+
 export type SettingsLineArrow = {
   lineArrow: {
     values: number[]
@@ -198,7 +208,7 @@ export type ToolsRectSettings = SettingsStrokeColor &
   SettingsOpacity &
   SettingsLineWidth &
   SettingsLineDash &
-  Partial<SettingsLineJoin>
+  Partial<SettingsLineJoin & SettingsCornerRadius>
 
 export type ToolsSquareSettings = ToolsRectSettings
 
@@ -226,7 +236,7 @@ export type ToolsPolygonSettings = SettingsOpacity &
   SettingsLineWidth &
   SettingsLineDash &
   SettingsClosedPoints &
-  Partial<SettingsLineJoin & SettingsLineCap>
+  Partial<SettingsLineJoin & SettingsLineCap & SettingsCornerRadius>
 
 export type ToolsCurveSettings = SettingsOpacity &
   SettingsStrokeColor &
@@ -238,7 +248,7 @@ export type ToolsCurveSettings = SettingsOpacity &
 
 export type ToolsTriangleSettings = SettingsStrokeColor & SettingsFillColor & SettingsOpacity & SettingsLineWidth & SettingsLineDash
 
-export type ToolsPictureSettings = SettingsOpacity
+export type ToolsPictureSettings = SettingsOpacity & Partial<SettingsStrokeColor & SettingsLineWidth & SettingsCornerRadius>
 
 export type ToolsGroupSettings = Partial<
   SettingsOpacity &
@@ -248,7 +258,8 @@ export type ToolsGroupSettings = Partial<
     SettingsLineDash &
     SettingsLineArrow &
     SettingsLineJoin &
-    SettingsLineCap
+    SettingsLineCap &
+    SettingsCornerRadius
 >
 
 export type ToolsSettingsType<T extends ShapeType> = T extends 'rect'

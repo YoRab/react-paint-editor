@@ -3,7 +3,7 @@ import { SELECTION_DEFAULT_WIDTH, SHAPES_KEEPING_RATIO, SHAPES_WITH_ROTATION, ST
 import type { HoverModeData, SelectionModeData, SelectionModeResize } from '@canvas/types/Mode'
 import type { DrawableShape, Point, Rect, SelectionType, ShapeEntity, ShapeType, StyleShape } from '@canvas/types/Shapes'
 import type { CustomTool } from '@canvas/types/tools'
-import { createDetachedContext, initCanvasContext, transformCanvas, updateCanvasContext } from '@canvas/utils/canvas'
+import { createDetachedContext, initCanvasContext, isVisibleColor, transformCanvas, updateCanvasContext } from '@canvas/utils/canvas'
 import { getRectIntersection } from '@canvas/utils/intersect'
 import { getSelectedShapes } from '@canvas/utils/selectedShapes'
 import { buildShapesGroup } from '@canvas/utils/selection'
@@ -22,7 +22,7 @@ import { createEllipse, drawEllipse, refreshEllipse, resizeEllipse, resizeEllips
 import { buildGroupResizeContext, type GroupResizeContext, getGroupResizeContext } from './group'
 import { createLine, drawLine, refreshLine, resizeLine, resizeLinePolygonCurveInGroup } from './line'
 import { expandRect, getStrokeMargin } from './path'
-import { drawPicture, refreshPicture, resizePicture, resizePictureInGroup } from './picture'
+import { drawPicture, hasPictureBorder, refreshPicture, resizePicture, resizePictureInGroup } from './picture'
 import { createPolygon, drawPolygon, refreshPolygon, resizePolygon } from './polygon'
 import { createRectangle, drawRect, refreshRect, resizeRect, resizeRectInGroup } from './rectangle'
 import { createText, drawText, fitTextFontSize, isFontStyleField, refreshText, resizeText, resizeTextInGroup } from './text'
@@ -90,16 +90,14 @@ const drawShapeByType = (ctx: CanvasRenderingContext2D, shape: ShapeEntity): voi
   }
 }
 
-const isVisibleColor = (color: string | undefined) => color !== undefined && color !== 'transparent'
-
 /**
  * Whether the opacity of the shape must be applied to its drawing as a whole, on a layer: drawn with the opacity, the
  * overlaps would be darker. It is the case of several operations which overlap, like a fill and a stroke, and of a stroke
- * thinner than a pixel, drawn segment by segment. A single operation (a stroke, even of several lines, a fill, an image)
- * is drawn directly
+ * thinner than a pixel, drawn segment by segment, or an image and its border. A single operation (a stroke, even of
+ * several lines, a fill, an image) is drawn directly
  */
 const needsLayer = (shape: ShapeEntity, scaleRatio: number): boolean => {
-  if (shape.type === 'picture') return false
+  if (shape.type === 'picture') return hasPictureBorder(shape)
   if (shape.type === 'text') return shape.value.length > 1
   // an undefined stroke color is drawn with the default color
   const hasStroke = shape.style?.strokeColor !== 'transparent'
@@ -188,7 +186,10 @@ const drawShapeOnLayer = (ctx: CanvasRenderingContext2D, shape: ShapeEntity): vo
   // the transformation of the canvas, moved to the corner of the layer
   layerCtx.setTransform(matrix.a, matrix.b, matrix.c, matrix.d, matrix.e - box.x, matrix.f - box.y)
   updateCanvasContext(layerCtx, { ...shape.style, opacity: 100 })
+  // the shared layer keeps no state of the shape, like a clip, for the next ones
+  layerCtx.save()
   drawShapeByType(layerCtx, shape)
+  layerCtx.restore()
 
   ctx.save()
   ctx.setTransform(1, 0, 0, 1, 0, 0)

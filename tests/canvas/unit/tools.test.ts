@@ -38,8 +38,8 @@ describe('buildAvailableTools', () => {
 })
 
 describe('DEFAULT_TOOLS', () => {
-  it('gives the settings of the joins and of the caps to the tools of the shapes they apply to', () => {
-    for (const field of ['lineJoin', 'lineCap'] as const) {
+  it('gives the settings of the joins, of the caps and of the corners to the tools of the shapes they apply to', () => {
+    for (const field of ['lineJoin', 'lineCap', 'cornerRadius'] as const) {
       const types = DEFAULT_TOOLS.filter(tool => field in tool.settings).map(tool => tool.type)
       expect(types.sort()).toEqual([...STYLE_FIELDS_SHAPE_TYPES[field]!].sort())
     }
@@ -69,8 +69,14 @@ describe('getToolDefaultStyle', () => {
       opacity: 100,
       lineWidth: 1,
       lineDash: 0,
-      lineJoin: 'round'
+      lineJoin: 'round',
+      cornerRadius: 0
     })
+  })
+
+  it('gives no border to the pictures of the default picture tool', () => {
+    const pictureTool = DEFAULT_TOOLS.find(tool => tool.type === 'picture') as CustomTool
+    expect(getToolDefaultStyle(pictureTool)).toEqual({ opacity: 100, strokeColor: 'transparent', lineWidth: 1, cornerRadius: 0 })
   })
 
   it('makes an empty style without tool', () => {

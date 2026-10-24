@@ -1,10 +1,17 @@
 import type { UtilsSettings } from '@canvas/constants/app'
-import type { Point, ShapeEntity } from '@canvas/types/Shapes'
+import type { Point, ShapeEntity, StyleShape } from '@canvas/types/Shapes'
 import type { CustomTool } from '@canvas/types/tools'
 import { canRemoveShapePoint, createShape, isStyleFieldOfShape } from '@canvas/utils/shapes'
 import { addNewPointGroupToShape, addNewPointToShape, getBrushBorder, refreshBrush } from '@canvas/utils/shapes/brush'
 import { refreshCurve } from '@canvas/utils/shapes/curve'
-import { catmullRomToBezier, createBrushPath, createPolygonPath, getCatmullRomPoints, getCubicBezierBounds } from '@canvas/utils/shapes/path'
+import {
+  catmullRomToBezier,
+  createBrushPath,
+  createPolygonPath,
+  getCatmullRomPoints,
+  getCornerRadius,
+  getCubicBezierBounds
+} from '@canvas/utils/shapes/path'
 import { drawPicture } from '@canvas/utils/shapes/picture'
 import { buildAvailableTools } from '@canvas/utils/tools'
 import { type Bounds, getPointsBounds } from '@canvas/utils/trigo'
@@ -29,7 +36,8 @@ describe('createShape', () => {
       opacity: 100,
       lineWidth: 1,
       lineDash: 0,
-      lineJoin: 'round'
+      lineJoin: 'round',
+      cornerRadius: 0
     })
     expect(createShape(MEASURE_CONTEXT, lineTool!, [10, 10], UTILS_SETTINGS)?.style).toEqual({
       strokeColor: 'black',
@@ -65,6 +73,36 @@ describe('isStyleFieldOfShape', () => {
     expect(isStyleFieldOfShape('line', 'lineJoin')).toBe(false)
     expect(isStyleFieldOfShape('curve', 'lineCap')).toBe(true)
     expect(isStyleFieldOfShape('rect', 'lineCap')).toBe(false)
+  })
+
+  it('applies the rounded corners to the rectangles, the squares, the pictures and the polygons', () => {
+    expect(isStyleFieldOfShape('square', 'cornerRadius')).toBe(true)
+    expect(isStyleFieldOfShape('picture', 'cornerRadius')).toBe(true)
+    expect(isStyleFieldOfShape('polygon', 'cornerRadius')).toBe(true)
+    expect(isStyleFieldOfShape('curve', 'cornerRadius')).toBe(false)
+  })
+})
+
+describe('rounded corners', () => {
+  it('are drawn at most half of the smallest side, even when the shape is drawn backwards', () => {
+    expect(getCornerRadius({ x: 0, y: 0, width: 100, height: 50, style: { cornerRadius: 10 } })).toBe(10)
+    expect(getCornerRadius({ x: 0, y: 0, width: -100, height: 50, style: { cornerRadius: 40 } })).toBe(25)
+    expect(getCornerRadius({ x: 0, y: 0, width: 100, height: 50, style: { cornerRadius: -5 } })).toBe(0)
+    expect(getCornerRadius({ x: 0, y: 0, width: 100, height: 50 })).toBe(0)
+  })
+
+  it('round the path of a rectangle and of a picture, without changing the path of a sharp rectangle', () => {
+    const roundRect = vi.spyOn(Path2D.prototype, 'roundRect')
+    const rect = vi.spyOn(Path2D.prototype, 'rect')
+    createEntity({ type: 'rect', x: 0, y: 0, width: 100, height: 50, style: { cornerRadius: 80 } })
+    expect(roundRect).toHaveBeenLastCalledWith(0, 0, 100, 50, 25)
+    createEntity({ type: 'picture', x: 0, y: 0, width: 100, height: 50, src: '', style: { cornerRadius: 8 } })
+    expect(roundRect).toHaveBeenLastCalledWith(0, 0, 100, 50, 8)
+    expect(rect).not.toHaveBeenCalled()
+    createEntity({ type: 'square', x: 0, y: 0, width: 50, height: 50, style: { cornerRadius: 0 } })
+    expect(rect).toHaveBeenCalledWith(0, 0, 50, 50)
+    expect(roundRect).toHaveBeenCalledTimes(2)
+    vi.restoreAllMocks()
   })
 })
 
@@ -133,6 +171,80 @@ describe('createPolygonPath', () => {
     createPolygonPath({ type: 'polygon', points, style: { closedPoints: 0 } })
     expect(closePath).not.toHaveBeenCalled()
     vi.restoreAllMocks()
+  })
+
+  describe('with rounded corners', () => {
+    const square: Point[] = [
+      [0, 0],
+      [10, 0],
+      [10, 10],
+      [0, 10]
+    ]
+    const spyPath = () => ({
+      moveTo: vi.spyOn(Path2D.prototype, 'moveTo'),
+      lineTo: vi.spyOn(Path2D.prototype, 'lineTo'),
+      arcTo: vi.spyOn(Path2D.prototype, 'arcTo'),
+      closePath: vi.spyOn(Path2D.prototype, 'closePath')
+    })
+
+    afterEach(() => vi.restoreAllMocks())
+
+    it('rounds all the corners of a closed polygon, from the middle of its last side, at most half of its sides', () => {
+      const path = spyPath()
+      createPolygonPath({ type: 'polygon', points: square, style: { closedPoints: 1, cornerRadius: 100 } })
+      expect(path.moveTo).toHaveBeenCalledWith(0, 5)
+      expect(path.arcTo.mock.calls).toEqual([
+        [0, 0, 10, 0, expect.closeTo(5)],
+        [10, 0, 10, 10, expect.closeTo(5)],
+        [10, 10, 0, 10, expect.closeTo(5)],
+        [0, 10, 0, 0, expect.closeTo(5)]
+      ])
+      expect(path.closePath).toHaveBeenCalledTimes(1)
+      expect(path.lineTo).not.toHaveBeenCalled()
+    })
+
+    it('keeps the ends of an open polygon sharp, their sides being all for the corners next to them', () => {
+      const path = spyPath()
+      createPolygonPath({ type: 'polygon', points: square, style: { closedPoints: 0, cornerRadius: 100 } })
+      expect(path.moveTo).toHaveBeenCalledWith(0, 0)
+      // the middle side is shared by the 2 corners
+      expect(path.arcTo.mock.calls).toEqual([
+        [10, 0, 10, 10, expect.closeTo(5)],
+        [10, 10, 0, 10, expect.closeTo(5)]
+      ])
+      expect(path.lineTo).toHaveBeenCalledWith(0, 10)
+      expect(path.closePath).not.toHaveBeenCalled()
+
+      path.arcTo.mockClear()
+      createPolygonPath({ type: 'polygon', points: square.slice(0, 3), style: { cornerRadius: 100 } })
+      expect(path.arcTo).toHaveBeenCalledWith(10, 0, 10, 10, expect.closeTo(10))
+    })
+
+    it('rounds a corner with the given radius when the sides allow it, and keeps the corners of no angle sharp', () => {
+      const path = spyPath()
+      createPolygonPath({ type: 'polygon', points: square, style: { closedPoints: 1, cornerRadius: 2 } })
+      expect(path.arcTo.mock.calls.map(call => call[4])).toEqual([2, 2, 2, 2])
+
+      path.arcTo.mockClear()
+      createPolygonPath({
+        type: 'polygon',
+        points: [
+          [0, 0],
+          [10, 0],
+          [10, 0],
+          [20, 0]
+        ],
+        style: { cornerRadius: 2 }
+      })
+      expect(path.arcTo.mock.calls.map(call => call[4])).toEqual([0, 0])
+    })
+
+    it('draws a polygon of 2 points as a line', () => {
+      const path = spyPath()
+      createPolygonPath({ type: 'polygon', points: square.slice(0, 2), style: { cornerRadius: 5 } })
+      expect(path.arcTo).not.toHaveBeenCalled()
+      expect(path.lineTo).toHaveBeenCalledWith(10, 0)
+    })
   })
 })
 
@@ -291,9 +403,10 @@ describe('drawPicture', () => {
     stubPath2D()
   })
 
-  /** The source drawn for a picture of 300 × 200 pixels of the drawing, scaled and rotated by the canvas */
-  const drawnSource = (img: HTMLImageElement, scale: number, rotation = 0) => {
-    const drawImage = vi.fn()
+  /** A context recording the operations of the drawing, scaled and rotated */
+  const createPictureContext = (scale = 1, rotation = 0) => {
+    const calls: string[] = []
+    const record = (name: string) => vi.fn((..._args: unknown[]) => calls.push(name))
     const ctx = {
       globalAlpha: 1,
       getTransform: () => ({
@@ -304,10 +417,20 @@ describe('drawPicture', () => {
       }),
       beginPath: () => {},
       scale: () => {},
-      drawImage
-    } as unknown as CanvasRenderingContext2D
-    drawPicture(ctx, { type: 'picture', img, x: 0, y: 0, width: 300, height: 200 } as ShapeEntity<'picture'>)
-    return drawImage.mock.calls[0]![0] as FakeCanvas | HTMLImageElement
+      save: record('save'),
+      restore: record('restore'),
+      clip: record('clip'),
+      stroke: record('stroke'),
+      drawImage: record('drawImage')
+    }
+    return { ctx, calls }
+  }
+
+  /** The source drawn for a picture of 300 × 200 pixels of the drawing, scaled and rotated by the canvas */
+  const drawnSource = (img: HTMLImageElement, scale: number, rotation = 0) => {
+    const { ctx } = createPictureContext(scale, rotation)
+    drawPicture(ctx as unknown as CanvasRenderingContext2D, { type: 'picture', img, x: 0, y: 0, width: 300, height: 200 } as ShapeEntity<'picture'>)
+    return ctx.drawImage.mock.calls[0]![0] as FakeCanvas | HTMLImageElement
   }
 
   const photo = (naturalWidth = 3000, naturalHeight = 2000) => ({ naturalWidth, naturalHeight }) as HTMLImageElement
@@ -332,6 +455,21 @@ describe('drawPicture', () => {
     const img = photo(0, 0)
     expect(drawnSource(img, 1)).toBe(img)
     expect(copies).toHaveLength(0)
+  })
+
+  it('cuts the image at its rounded corners, then draws its border over it, without the clip', () => {
+    const drawnCalls = (style: StyleShape, flipX = false) => {
+      const { ctx, calls } = createPictureContext()
+      const picture = createEntity<ShapeEntity<'picture'>>({ type: 'picture', x: 0, y: 0, width: 300, height: 200, src: '', style })
+      drawPicture(ctx as unknown as CanvasRenderingContext2D, { ...picture, img: photo(300, 200), flipX })
+      return calls
+    }
+    // without a border, the caller restores the context after the shape
+    expect(drawnCalls({})).toEqual(['drawImage'])
+    expect(drawnCalls({ cornerRadius: 20, strokeColor: 'transparent' })).toEqual(['clip', 'drawImage'])
+    expect(drawnCalls({ strokeColor: 'red' })).toEqual(['drawImage', 'stroke'])
+    expect(drawnCalls({ strokeColor: 'red' }, true)).toEqual(['save', 'drawImage', 'restore', 'stroke'])
+    expect(drawnCalls({ cornerRadius: 20, strokeColor: 'red' })).toEqual(['save', 'clip', 'drawImage', 'restore', 'stroke'])
   })
 })
 

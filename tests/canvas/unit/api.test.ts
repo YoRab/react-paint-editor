@@ -57,7 +57,8 @@ describe('addShapes', () => {
       opacity: 100,
       lineWidth: 1,
       lineDash: 0,
-      lineJoin: 'round'
+      lineJoin: 'round',
+      cornerRadius: 0
     })
     expect(getShape(store, ids[1]!).style?.strokeColor).toBe('red')
     expect(store.getEditorState().history.canUndo).toBe(true)
@@ -111,6 +112,26 @@ describe('addShapes', () => {
     expect(add({ type: 'triangle', points: [] })).toThrow('unknown shape type "triangle"')
     expect(add({ ...RECT, radius: 3 })).toThrow('unknown field "radius" for a rect')
     expect(getIds(store)).toEqual([])
+  })
+
+  it('makes the negative sizes positive, keeping the area the canvas draws', async () => {
+    const store = createPaintStore()
+    const [rect, circle, ellipse] = store.actions.addShapes([
+      { type: 'rect', x: 330, y: 20, width: -140, height: -10 },
+      { type: 'circle', x: 0, y: 0, radius: -30 },
+      { type: 'ellipse', x: 0, y: 0, radiusX: 20, radiusY: -40 }
+    ])
+    expect(getShape<'rect'>(store, rect!)).toMatchObject({ x: 190, y: 10, width: 140, height: 10 })
+    // drawn and found where it is: its box holds the half of the default stroke
+    expect(getShape(store, rect!).computed.boundingBox).toMatchObject({ x: 189.5, width: 141 })
+    expect(getShape<'circle'>(store, circle!).radius).toBe(30)
+    expect(getShape<'ellipse'>(store, ellipse!)).toMatchObject({ radiusX: 20, radiusY: 40 })
+
+    store.actions.updateShapes([{ id: rect!, width: -40 }])
+    expect(getShape<'rect'>(store, rect!)).toMatchObject({ x: 150, width: 40 })
+
+    await store.actions.loadData({ shapes: [{ type: 'square', x: 100, y: 100, width: -50, height: -50 }] })
+    expect(store.getState().document.shapes[0]).toMatchObject({ x: 50, y: 50, width: 50, height: 50 })
   })
 
   it('does not save a step when save is false, and gives the source of the change', () => {

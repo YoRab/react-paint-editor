@@ -55,6 +55,17 @@ describe('checkSelectionFrameCollision', () => {
     expect(ctx.isPointInStroke).toHaveBeenCalled()
   })
 
+  it('searches the stroke of a rounded rectangle when the frame is in one of its rounded corners', () => {
+    const ctx = createContext(true)
+    const rounded = createShape({ type: 'rect', x: 0, y: 0, width: 1000, height: 600, style: { ...OUTLINED, cornerRadius: 100 } })
+    // far from the sides, but crossed by the rounded corner
+    expect(checkSelectionFrameCollision(ctx, rounded, frame([25, 25], [40, 40]))).toBe(true)
+    expect(ctx.isPointInStroke).toHaveBeenCalled()
+    const sharpCtx = createContext(true)
+    expect(checkSelectionFrameCollision(sharpCtx, largeRect, frame([25, 25], [40, 40]))).toBe(false)
+    expect(sharpCtx.isPointInStroke).not.toHaveBeenCalled()
+  })
+
   it('searches the stroke of an ellipse when the frame is outside of its hole', () => {
     const ctx = createContext(false)
     const ellipse = createShape({ type: 'ellipse', x: 300, y: 300, radiusX: 300, radiusY: 100, style: OUTLINED })

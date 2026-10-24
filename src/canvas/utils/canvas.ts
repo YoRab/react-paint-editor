@@ -51,6 +51,8 @@ export const transformCanvas = (ctx: CanvasRenderingContext2D, settings: UtilsSe
   }
 }
 
+export const isVisibleColor = (color: string | undefined) => color !== undefined && color !== 'transparent'
+
 export const drawPathWithFillAndStroke = (
   ctx: CanvasRenderingContext2D,
   path: Path2D,

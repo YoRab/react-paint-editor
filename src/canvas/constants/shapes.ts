@@ -26,7 +26,8 @@ export const FONT_STYLE_FIELDS: (keyof StyleShape)[] = ['fontFamily', 'fontBold'
 export const STYLE_FIELDS_SHAPE_TYPES: Partial<Record<keyof StyleShape, readonly ShapeType[]>> = {
   ...Object.fromEntries(FONT_STYLE_FIELDS.map((field): [keyof StyleShape, readonly ShapeType[]] => [field, ['text']])),
   lineCap: ['line', 'brush', 'polygon', 'curve'],
-  lineJoin: ['rect', 'square', 'polygon', 'brush']
+  lineJoin: ['rect', 'square', 'polygon', 'brush'],
+  cornerRadius: ['rect', 'square', 'picture', 'polygon']
 }
 
 export const ShapeTypeArray = [

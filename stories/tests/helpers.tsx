@@ -145,9 +145,37 @@ export async function setSelectSetting(view: ReturnType<typeof within>, title: s
   await closeSettingPanel(view, title)
 }
 
+export const MORE_OPTIONS = "Plus d'options"
+
+/** Changes a range slider of the panel of the other options, opened then closed. */
+export async function setAdvancedRangeSetting(view: ReturnType<typeof within>, title: string, targetValue: number) {
+  await openSettingPanel(view, MORE_OPTIONS)
+  await setRangeSetting(view, title, targetValue)
+  await closeSettingPanel(view, MORE_OPTIONS)
+}
+
 /** Toggles a ToggleField button (e.g. fontBold / fontItalic). */
 export async function setToggleSetting(view: ReturnType<typeof within>, title: string) {
   await userEvent.click(await view.findByRole('button', { name: title }))
+}
+
+// ─── Picture helper ─────────────────────────────────────────────────────────────
+
+// A small inline SVG used as a data-URI for the URL picture tests.
+// An image data URL is loaded as it is, without a fetch. The URL is stored as
+// shape.src, and exported as it is.
+export const SVG_DATA_URI =
+  "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='100' height='100'><rect width='100' height='100' fill='blue'/></svg>"
+
+/** Adds a picture from its URL through the menu (needs the withUrlPicture option), then waits for it to be loaded and selected. */
+export async function addPictureFromUrl(view: ReturnType<typeof within>, src: string) {
+  await userEvent.click(await view.findByTitle('Menu'))
+  await userEvent.click(await view.findByRole('button', { name: 'Add picture from URL' }))
+  const urlInput = await view.findByRole('textbox')
+  await userEvent.clear(urlInput)
+  await userEvent.type(urlInput, src)
+  await userEvent.click(await view.findByRole('button', { name: 'Ajouter' }))
+  await new Promise(res => setTimeout(res, 500))
 }
 
 // ─── Context menu helper ────────────────────────────────────────────────────────

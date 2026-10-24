@@ -2,6 +2,7 @@ import { STYLE_FONT_DEFAULT } from '@canvas/constants/rendering'
 import type {
   ActionsTool,
   CustomToolInput,
+  SettingsCornerRadius,
   SettingsLineCap,
   SettingsLineJoin,
   ToolsBrushSettings,
@@ -51,6 +52,15 @@ const SETTING_LINE_CAP: SettingsLineCap = {
   }
 }
 
+const SETTING_CORNER_RADIUS: SettingsCornerRadius = {
+  cornerRadius: {
+    min: 0,
+    max: 50,
+    step: 1,
+    default: 0
+  }
+}
+
 const SETTINGS_DEFAULT_ELLIPSE: ToolsEllipseSettings = {
   strokeColor: {
     values: STYLE_COLORS,
@@ -78,7 +88,7 @@ const SETTINGS_DEFAULT_ELLIPSE: ToolsEllipseSettings = {
   }
 }
 
-export const SETTINGS_DEFAULT_RECT: ToolsRectSettings = { ...SETTINGS_DEFAULT_ELLIPSE, ...SETTING_LINE_JOIN }
+export const SETTINGS_DEFAULT_RECT: ToolsRectSettings = { ...SETTINGS_DEFAULT_ELLIPSE, ...SETTING_LINE_JOIN, ...SETTING_CORNER_RADIUS }
 
 const SETTINGS_DEFAULT_PICTURE: ToolsPictureSettings = {
   opacity: {
@@ -86,7 +96,13 @@ const SETTINGS_DEFAULT_PICTURE: ToolsPictureSettings = {
     max: 100,
     step: 1,
     default: 100
-  }
+  },
+  strokeColor: {
+    values: STYLE_COLORS,
+    default: 'transparent'
+  },
+  lineWidth: SETTINGS_DEFAULT_ELLIPSE.lineWidth,
+  ...SETTING_CORNER_RADIUS
 }
 
 const SETTINGS_DEFAULT_TEXT: ToolsTextSettings = {
@@ -198,7 +214,7 @@ const SETTINGS_DEFAULT_CURVE: ToolsCurveSettings = {
   ...SETTING_LINE_CAP
 }
 
-const SETTINGS_DEFAULT_POLYGON: ToolsPolygonSettings = { ...SETTINGS_DEFAULT_CURVE, ...SETTING_LINE_JOIN }
+const SETTINGS_DEFAULT_POLYGON: ToolsPolygonSettings = { ...SETTINGS_DEFAULT_CURVE, ...SETTING_LINE_JOIN, ...SETTING_CORNER_RADIUS }
 
 /**
  * Default drawing tools. They hold the logic needed by the canvas (type and settings) but no visual data:

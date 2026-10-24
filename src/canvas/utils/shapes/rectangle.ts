@@ -8,12 +8,12 @@ import { resizeRectSelection } from '@canvas/utils/selection/rectSelection'
 import { getToolDefaultStyle } from '@canvas/utils/tools'
 import { createShapeId } from '@canvas/utils/util'
 import { type GroupResizeContext, getPositionWithoutGroupRotation, getShapePositionInNewBorder } from './group'
-import { createRecPath, expandRect, getComputedShapeInfos } from './path'
+import { createRecPath, expandRect, getComputedShapeInfos, getCornerRadius } from './path'
 
 type rectish = 'rect' | 'square'
 
 const buildPath = <T extends rectish>(rect: DrawableShape<rectish> & { id: string }, settings: UtilsSettings): ShapeEntity<T> => {
-  const path = createRecPath(rect)
+  const path = createRecPath(rect, getCornerRadius(rect))
   const computed = getComputedShapeInfos(rect, getRectBorder, settings)
   return {
     ...rect,

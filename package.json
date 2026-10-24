@@ -1,6 +1,6 @@
 {
   "name": "@yorab/react-paint",
-  "version": "1.0.0-beta.1",
+  "version": "1.0.0-beta.2",
   "type": "module",
   "sideEffects": [
     "**/*.css"

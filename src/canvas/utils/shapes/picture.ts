@@ -3,19 +3,19 @@ import { PICTURE_TOOL_ID } from '@canvas/constants/tools'
 import type { SelectionModeResize } from '@canvas/types/Mode'
 import type { DrawableShape, Point, SelectionType, ShapeEntity } from '@canvas/types/Shapes'
 import type { CustomTool } from '@canvas/types/tools'
-import { createDetachedContext } from '@canvas/utils/canvas'
+import { createDetachedContext, isVisibleColor } from '@canvas/utils/canvas'
 import { addSizeAndConvertSvgToObjectUrl, isSvg, loadPicture, readFileAsDataUrl } from '@canvas/utils/file'
 import { resizeRectSelection } from '@canvas/utils/selection/rectSelection'
 import { getToolDefaultStyle } from '@canvas/utils/tools'
 import { fitContentInsideContainer } from '@canvas/utils/transform'
 import { createShapeId } from '@canvas/utils/util'
 import { type GroupResizeContext, getPositionWithoutGroupRotation, getShapePositionInNewBorder } from './group'
-import { createRecPath, getComputedShapeInfos } from './path'
+import { createRecPath, getComputedShapeInfos, getCornerRadius } from './path'
 import { getRectBorder } from './rectangle'
 
 const buildPath = <T extends DrawableShape<'picture'>>(shape: T & { id: string }, settings: UtilsSettings): ShapeEntity<'picture'> => {
   const computed = getComputedShapeInfos(shape, getRectBorder, settings)
-  const path = createRecPath(shape)
+  const path = createRecPath(shape, getCornerRadius(shape))
   return {
     ...shape,
     path,
@@ -131,9 +131,19 @@ const getReducedImage = (img: HTMLImageElement, level: number): CanvasImageSourc
   return reducedCtx.canvas
 }
 
+/** The border of a picture is drawn only with a stroke color: the pictures had no border before */
+export const hasPictureBorder = (picture: Pick<ShapeEntity<'picture'>, 'style'>) => isVisibleColor(picture.style?.strokeColor)
+
+/** Draws the image of a picture, cut at its rounded corners, then its border */
 export const drawPicture = (ctx: CanvasRenderingContext2D, picture: ShapeEntity<'picture'>): void => {
   if (ctx.globalAlpha === 0) return
   const image = getReducedImage(picture.img, getReductionLevel(ctx, picture))
+  const isRounded = getCornerRadius(picture) > 0
+  const hasBorder = hasPictureBorder(picture)
+  // the clip and the flip are undone before the border, the caller restores the context after the shape
+  const restoresBeforeBorder = hasBorder && (isRounded || !!picture.flipX || !!picture.flipY)
+  if (restoresBeforeBorder) ctx.save()
+  if (isRounded) ctx.clip(picture.path)
   ctx.beginPath()
   ctx.scale(picture.flipX ? -1 : 1, picture.flipY ? -1 : 1)
   ctx.drawImage(
@@ -143,6 +153,8 @@ export const drawPicture = (ctx: CanvasRenderingContext2D, picture: ShapeEntity<
     picture.width,
     picture.height
   )
+  if (restoresBeforeBorder) ctx.restore()
+  if (hasBorder) ctx.stroke(picture.path)
 }
 
 export const resizePicture = (

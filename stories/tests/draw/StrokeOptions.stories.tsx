@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import { expect, userEvent, within } from 'storybook/test'
-import { assertNoInternalFields, getCurrentDataRef, ReactPaintWrapper, selectTool, setSelectSetting, wait } from './../helpers'
+import { assertNoInternalFields, getCurrentDataRef, MORE_OPTIONS, ReactPaintWrapper, selectTool, setSelectSetting, wait } from './../helpers'
 
 const meta = {
   title: 'Tests/Draw',
@@ -12,8 +12,6 @@ const meta = {
 
 export default meta
 type Story = StoryObj<typeof meta>
-
-const MORE_OPTIONS = "Plus d'options"
 
 /** The joins and the caps of the strokes are set in the panel of the other options, which stays open while they are */
 export const StrokeOptions: Story = {

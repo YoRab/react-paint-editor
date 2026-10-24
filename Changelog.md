@@ -2,7 +2,19 @@
 
 For more details and links to Pull requests, see [Releases](https://github.com/YoRab/react-paint-editor/releases)
 
-## V1.0.0-beta.1 (unreleased)
+## V1.0.0-beta.2 (unreleased)
+- target es2022 instead of es2020. The supported browsers are Chrome and Edge 99+, Firefox 113+ and Safari 17.2+, see the README
+- fix the pictures added by actions.addPicture, a drop or the Editor: they get the id and the default style of the picture tool, whose default opacity was ignored and whose id was replaced with the id of the default picture tool
+- the settings bar of the Editor goes into its menu according to the settings it shows: the hidden settings of a tool no longer count
+- add the joins of the strokes (style.lineJoin: 'round', 'bevel' or 'miter', with a miter limit of 4) to the rectangles, the squares, the polygons and the brushes, and their caps (style.lineCap: 'round', 'butt' or 'square') to the lines, the brushes, the polygons and the curves. Their default tools have both settings, 'round' by default, which the Editor shows in a new "Plus d'options" panel. setShapesStyle leaves them out for the other shapes
+- add the long dashes (lineDash 3) and the dashes and dots (lineDash 4) to the line styles, and to the default tools
+- the caps of a line are no longer replaced: they were 'butt' with arrows, and 'round' without. A line with arrows and without lineCap now has round caps, under its arrows
+- a closed polygon is joined at its first point like at its other corners, instead of having two caps there
+- add the rounded corners (style.cornerRadius, in the units of the drawing, 0 by default) to the rectangles, the squares, the pictures and the polygons. A corner is drawn as large as its sides allow (at most half of the smallest side of a rectangle), and keeps its radius when the shape is resized. The ends of an open polygon stay sharp. Their default tools have the setting, which the Editor shows in the "Plus d'options" panel
+- fix the shapes given with negative sizes to addShapes, updateShapes or loadData: a box with a negative width or height was never drawn, and a circle or an ellipse with a negative radius made the action fail. Their sizes are made positive, keeping the area the canvas draws: a rect of width -100 at x 300 goes from x 200 to 300
+- add a border to the pictures (style.strokeColor and style.lineWidth), drawn over the image. The default picture tool has both settings, without border by default: a picture without strokeColor has no border
+
+## V1.0.0-beta.1
 Breaking changes, see the [migration guide](./MIGRATION.md).
 - split the library into two independent modules, canvas and editor, which only communicate through useReactPaint. The editor is now tree-shaken when unused, even when importing from the package root
 - useReactPaint returns a single handle, `paint`, given to Canvas and Editor instead of editorProps and canvasProps. Its identity never changes, and it is a public contract allowing to build a custom editor: actions take shape ids and replace raw setters and internal helpers
@@ -31,12 +43,6 @@ Breaking changes, see the [migration guide](./MIGRATION.md).
 - add state.interaction.selectionHover, the part of the selection under the pointer: its inside, the anchor of the rotation, or an anchor of the resize
 - fix the hovered shape kept after its removal: its outline stayed drawn, and state.interaction.hoveredShape gave it, until the next move of the mouse. It also follows the changes of its shape
 - fix the drag of a selected shape behind a shape covering it: a press in its selection frame selected the shape in front and moved it, it now moves the selection. A click without moving still selects the shape in front, or toggles it in group mode
-- fix the pictures added by actions.addPicture, a drop or the Editor: they get the id and the default style of the picture tool, whose default opacity was ignored and whose id was replaced with the id of the default picture tool
-- the settings bar of the Editor goes into its menu according to the settings it shows: the hidden settings of a tool no longer count
-- add the joins of the strokes (style.lineJoin: 'round', 'bevel' or 'miter', with a miter limit of 4) to the rectangles, the squares, the polygons and the brushes, and their caps (style.lineCap: 'round', 'butt' or 'square') to the lines, the brushes, the polygons and the curves. Their default tools have both settings, 'round' by default, which the Editor shows in a new "Plus d'options" panel. setShapesStyle leaves them out for the other shapes
-- add the long dashes (lineDash 3) and the dashes and dots (lineDash 4) to the line styles, and to the default tools
-- the caps of a line are no longer replaced: they were 'butt' with arrows, and 'round' without. A line with arrows and without lineCap now has round caps, under its arrows
-- a closed polygon is joined at its first point like at its other corners, instead of having two caps there
 - the canvas needs no stylesheet anymore: its styles are inline, and react-paint.css only contains the styles of the editor. Its CSS variables can be set on any parent element to override its styles. Add the editor/editor.css stylesheet
 - rename react-paint-editor-toolbox-edittextbox class to react-paint-canvas-edittextbox
 - fix stale declaration files being published, and css imports in declaration files
@@ -90,7 +96,6 @@ Breaking changes, see the [migration guide](./MIGRATION.md).
 - security: pictures larger than 16384 pixels and data files larger than 100 MB are refused
 - fix the title of a group of tools being rendered as HTML when its tools have no icon
 - support React 19
-- target es2022 instead of es2020. The supported browsers are Chrome and Edge 99+, Firefox 113+ and Safari 17.2+, see the README
 
 ## V0.18.1
 - fix opacity problems with line and arrows

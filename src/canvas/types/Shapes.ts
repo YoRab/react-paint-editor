@@ -65,6 +65,12 @@ export type StyleShape = {
   lineCap?: CanvasLineCap
   /** Corners of the stroke of a rectangle, a square, a polygon or a brush: 'round' by default */
   lineJoin?: CanvasLineJoin
+  /**
+   * Radius of the corners of a rectangle, a square, a picture or a polygon, in the units of the drawing: 0 by default. It
+   * is drawn as large as the sides allow, at most half of the smallest side of a rectangle, and stays the same when the
+   * shape is resized. The ends of an open polygon stay sharp
+   */
+  cornerRadius?: number
   closedPoints?: number
   fontFamily?: string
   fontItalic?: boolean

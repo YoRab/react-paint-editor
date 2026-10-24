@@ -875,6 +875,7 @@ paint.actions.panBy([50, 0]) // scrolls the view, in the units of the drawing`} 
         <li>The actions changing shapes add a step to the history and take <code>{`{ save, source }`}</code> options: <code>save: false</code> for continuous changes (then call <code>saveShapes</code>), <code>source: 'remote'</code> to apply changes received from elsewhere, given to <code>dataChanged</code></li>
         <li><code>addShapes</code> and <code>updateShapes</code> check their input and throw an error, without changing anything, when a shape or a patch is invalid</li>
         <li><code>addShapes</code> keeps a free id, completes the style with the default style of the tool, and computes the size of a text from its font size or its font size from its width. A picture is drawn once its source is loaded</li>
+        <li><code>addShapes</code>, <code>updateShapes</code> and <code>loadData</code> make the negative sizes positive, keeping the area the canvas draws: a rect of width -100 at x 300 goes from x 200 to 300, and a circle of radius -10 gets a radius of 10. The flips of a picture or a text are kept</li>
         <li><code>updateShapes</code> merges the style and replaces the <code>data</code>. The box of a text follows its new content, or its font size follows its new width. Locked shapes are updated, whereas the transformations leave them unchanged</li>
         <li><code>setOptions</code> overrides options of <code>useReactPaint</code> until <code>resetOptions</code>: objects are merged, arrays like <code>availableTools</code> are replaced. <code>resetSettings</code> restores the default styles of the tools, the grid, the zoom and the active tool</li>
         <li>
@@ -957,6 +958,10 @@ const box = paint.getBounds([rectId])`} />
   lineCap?: 'round' | 'butt' | 'square'
   // corners of a rectangle, a square, a polygon or a brush: 'round' by default
   lineJoin?: 'round' | 'bevel' | 'miter'
+  // corners of a rectangle, a square, a picture or a polygon, in the units of the drawing: 0 by default, as large as
+  // the sides allow. The ends of an open polygon stay sharp
+
+  cornerRadius?: number
   closedPoints?: number
   fontFamily?: string
   fontItalic?: boolean
@@ -1012,16 +1017,16 @@ const patch: ShapePatch = { id: 'rect_1', width: 200, style: { fillColor: 'red' 
         Type-safe settings for each tool type. Settings vary by shape type:
       </p>
       <ul>
-        <li><code>ToolsRectSettings</code> - Rectangle settings (includes lineJoin)</li>
-        <li><code>ToolsSquareSettings</code> - Square settings (includes lineJoin)</li>
+        <li><code>ToolsRectSettings</code> - Rectangle settings (includes lineJoin and cornerRadius)</li>
+        <li><code>ToolsSquareSettings</code> - Square settings (includes lineJoin and cornerRadius)</li>
         <li><code>ToolsCircleSettings</code> - Circle settings</li>
         <li><code>ToolsEllipseSettings</code> - Ellipse settings</li>
         <li><code>ToolsLineSettings</code> - Line settings (includes arrow options and lineCap)</li>
         <li><code>ToolsBrushSettings</code> - Brush settings (includes lineJoin and lineCap)</li>
-        <li><code>ToolsPolygonSettings</code> - Polygon settings (includes closedPoints, lineJoin and lineCap)</li>
+        <li><code>ToolsPolygonSettings</code> - Polygon settings (includes closedPoints, lineJoin, lineCap and cornerRadius)</li>
         <li><code>ToolsCurveSettings</code> - Curve settings (includes closedPoints and lineCap)</li>
         <li><code>ToolsTextSettings</code> - Text settings (includes font options)</li>
-        <li><code>ToolsPictureSettings</code> - Picture settings</li>
+        <li><code>ToolsPictureSettings</code> - Picture settings (opacity, and the border: strokeColor, lineWidth and cornerRadius)</li>
         <li><code>ToolsTriangleSettings</code> - Triangle settings</li>
         <li><code>ToolsGroupSettings</code> - Group settings</li>
       </ul>

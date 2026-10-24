@@ -2,13 +2,19 @@ import type { UtilsSettings } from '@canvas/constants/app'
 import { MITER_LIMIT } from '@canvas/constants/rendering'
 import type { Circle, DrawableShape, Line, Point, Rect, ShapeEntity } from '@canvas/types/Shapes'
 import { scalePoint } from '@canvas/utils/transform'
-import { type Bounds, getPointsBounds, getRectCorners, rotatePoint } from '@canvas/utils/trigo'
+import { type Bounds, getCenter, getDistanceBetweenPoints, getPointsBounds, getRectCorners, rotatePoint } from '@canvas/utils/trigo'
+import { clamp } from '@canvas/utils/util'
 
-export const createRecPath = (rect: Rect): Path2D => {
+export const createRecPath = (rect: Rect, radius = 0): Path2D => {
   const path = new Path2D()
-  path.rect(rect.x, rect.y, rect.width, rect.height)
+  if (radius > 0) path.roundRect(rect.x, rect.y, rect.width, rect.height, radius)
+  else path.rect(rect.x, rect.y, rect.width, rect.height)
   return path
 }
+
+/** Radius of the corners of a rectangle, a square or a picture as drawn: at most half of its smallest side */
+export const getCornerRadius = (shape: Rect & Pick<DrawableShape, 'style'>): number =>
+  clamp(shape.style?.cornerRadius ?? 0, 0, Math.min(Math.abs(shape.width), Math.abs(shape.height)) / 2)
 
 export const createCirclePath = (shape: Circle): Path2D => {
   const path = new Path2D()
@@ -224,15 +230,53 @@ export const createPolygonPath = (polygon: DrawableShape<'polygon'> | DrawableSh
 
   if (points.length < 2) return path
 
+  const isClosed = points.length > 2 && polygon.style?.closedPoints === 1
+  const radius = polygon.style?.cornerRadius ?? 0
+  if (radius > 0 && points.length > 2) {
+    addRoundedPolygon(path, points, radius, isClosed)
+    return path
+  }
+
   path.moveTo(...points[0]!)
   for (const point of points.slice(1)) {
     path.lineTo(...point)
   }
 
   // joined to its first point like its other corners
-  if (points.length > 2 && polygon.style?.closedPoints === 1) path.closePath()
+  if (isClosed) path.closePath()
 
   return path
+}
+
+/**
+ * Adds a polygon with rounded corners to the path. The arc of a corner, tangent to its two sides, takes at most half of a
+ * side shared with another rounded corner, and all of a side ending at an end of an open polygon, whose ends stay sharp
+ */
+const addRoundedPolygon = (path: Path2D, points: Point[], radius: number, isClosed: boolean) => {
+  const count = points.length
+  const at = (index: number) => points[(index + count) % count]!
+  // length of the side from the point to the next one available to the arc of one of its ends
+  const getRoom = (index: number) => {
+    const length = getDistanceBetweenPoints(at(index), at(index + 1))
+    return !isClosed && (index === 0 || index === count - 2) ? length : length / 2
+  }
+
+  path.moveTo(...(isClosed ? getCenter(at(-1), at(0)) : at(0)))
+  const [start, end] = isClosed ? [0, count] : [1, count - 1]
+  for (let index = start; index < end; index++) {
+    const [x, y] = at(index)
+    const [previousX, previousY] = at(index - 1)
+    const [nextX, nextY] = at(index + 1)
+    // angle between the two sides, 0 for a side of no length: the corner is then sharp
+    const angle = Math.abs(
+      Math.atan2((previousX - x) * (nextY - y) - (previousY - y) * (nextX - x), (previousX - x) * (nextX - x) + (previousY - y) * (nextY - y))
+    )
+    // the arc touches the sides at radius / tan(angle / 2) from the corner
+    const maxRadius = Math.min(getRoom(index - 1), getRoom(index)) * Math.tan(angle / 2)
+    path.arcTo(x, y, nextX, nextY, Math.min(radius, maxRadius))
+  }
+  if (isClosed) path.closePath()
+  else path.lineTo(...at(-1))
 }
 
 export const createTrianglePath = (triangle: DrawableShape<'triangle'>): Path2D => {
