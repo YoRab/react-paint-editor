@@ -18,6 +18,7 @@ An open-source canvas-based library for React used for image annotation or as a 
 - **Rich Drawing Tools** - Brush, shapes (rectangles, circles, ellipses, polygons, curves), lines, text, and picture support
 - **Interactive Canvas** - Full support for zoom, pan, pinch gestures, and infinite or fixed-size canvases, scaled to their container or filling it
 - **Shape Manipulation** - Select, move, resize, rotate, and transform shapes with intuitive controls
+- **Eraser & Laser Pointer** - Erase the shapes a stroke crosses, or point at things with a trail that fades out, both optional in the editor
 - **Customizable Styling** - Control colors, line widths, opacity, line styles (dashes, joins and caps), rounded corners, picture borders, arrowheads, fill patterns and gradients, fonts, font sizes, text alignment, line heights, text backgrounds, outlines, underlines and strikethroughs
 - **Layer Management** - Built-in layer manipulation panel for organizing your drawings
 - **Export & Import** - Export to PNG images or save/load your work as JSON data

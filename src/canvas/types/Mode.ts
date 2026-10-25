@@ -54,6 +54,17 @@ export type SelectionModeContextMenu<AnchorType extends Point | number = Point> 
   anchor: AnchorType | undefined
 }
 
+/** A stroke of the eraser: the shapes it has crossed are removed when it is released */
+export type SelectionModeEraser = {
+  mode: 'eraser'
+  erasedShapeIds: string[]
+}
+
+/** A stroke of the laser pointer, drawn over the shapes */
+export type SelectionModeLaser = {
+  mode: 'laser'
+}
+
 export type SelectionModeData<AnchorType extends Point | number> =
   | SelectionModeDefault
   | SelectionModeSelectionFrame
@@ -64,6 +75,8 @@ export type SelectionModeData<AnchorType extends Point | number> =
   | SelectionModeEditText
   | SelectionModePreview
   | SelectionModeContextMenu<AnchorType>
+  | SelectionModeEraser
+  | SelectionModeLaser
 
 /** The part of the selection under the pointer, or 'default' away from it */
 export type HoverModeData = { outOfView?: boolean } & ({ mode: 'default' } | SelectionHover)

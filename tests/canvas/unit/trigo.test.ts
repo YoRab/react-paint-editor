@@ -9,7 +9,8 @@ import {
   isCircleIntersectRect,
   isPointInsideRect,
   radiansToDegrees,
-  rotatePoint
+  rotatePoint,
+  sampleSegment
 } from '@canvas/utils/trigo'
 import { describe, expect, it } from 'vitest'
 
@@ -122,6 +123,21 @@ describe('measures', () => {
   it('gives the distance and the middle of two points', () => {
     expect(getDistanceBetweenPoints([0, 0], [3, 4])).toBe(5)
     expect(getCenter([0, 0], [10, 20])).toEqual([5, 10])
+  })
+
+  it('samples a segment at most a step apart, from the point after its start to its end', () => {
+    expect(sampleSegment([0, 0], [10, 0], 3)).toEqual([
+      [2.5, 0],
+      [5, 0],
+      [7.5, 0],
+      [10, 0]
+    ])
+    expect(sampleSegment([0, 0], [0, 8], 4)).toEqual([
+      [0, 4],
+      [0, 8]
+    ])
+    // a press without a move tests its point
+    expect(sampleSegment([5, 5], [5, 5], 4)).toEqual([[5, 5]])
   })
 
   it('converts the angles between degrees and radians', () => {

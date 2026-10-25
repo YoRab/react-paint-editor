@@ -15,6 +15,10 @@ type EditorOptionsType = {
   withLoadAndSave: boolean
   withUploadPicture: boolean
   withUrlPicture: boolean
+  /** Shows the eraser, which removes the shapes it crosses */
+  withEraser: boolean
+  /** Shows the laser pointer, whose trail fades out without changing the drawing */
+  withLaser: boolean
 }
 
 export type EditorOptions = {
@@ -37,5 +41,7 @@ export const DEFAULT_EDITOR_OPTIONS: EditorOptionsType = {
   withExport: true,
   withLoadAndSave: true,
   withUploadPicture: true,
-  withUrlPicture: false
+  withUrlPicture: false,
+  withEraser: false,
+  withLaser: false
 }

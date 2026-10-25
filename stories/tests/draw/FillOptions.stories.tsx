@@ -14,6 +14,7 @@ import {
   setColorSetting,
   setRangeSetting,
   setSelectSetting,
+  toClient,
   wait
 } from './../helpers'
 
@@ -38,7 +39,6 @@ export const FillOptions: Story = {
     const view = within(canvasElement)
     const user = userEvent.setup()
     const drawCanvas = (await view.findByTestId('draw-canvas')) as HTMLCanvasElement
-    const toClient = (point: Point) => getPaint().toClientPosition(point)!
     const drawRect = async (from: Point, to: Point) => {
       await user.pointer({ target: drawCanvas, keys: '[MouseLeft>]', coords: toClient(from) })
       await wait()

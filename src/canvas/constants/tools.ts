@@ -43,6 +43,18 @@ export const MOVE_TOOL: ActionsTool = {
   type: 'move'
 }
 
+/** Removes the shapes it crosses, once released: the locked shapes are kept */
+export const ERASER_TOOL: ActionsTool = {
+  id: `${TOOL_ID_PREFIX}eraser`,
+  type: 'eraser'
+}
+
+/** Draws a trail which fades out, outside of the drawing: to point at something without changing it */
+export const LASER_TOOL: ActionsTool = {
+  id: `${TOOL_ID_PREFIX}laser`,
+  type: 'laser'
+}
+
 export const PICTURE_TOOL_ID = `${TOOL_ID_PREFIX}picture`
 
 const STYLE_COLORS = ['transparent', 'black', 'white', 'red', 'green', 'blue', 'yellow']

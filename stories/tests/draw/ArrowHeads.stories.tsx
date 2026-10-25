@@ -4,13 +4,13 @@ import type { Point } from '../../../src/index'
 import {
   assertNoInternalFields,
   getCurrentDataRef,
-  getPaint,
   getPixel,
   ReactPaintWrapper,
   selectTool,
   setAdvancedRangeSetting,
   setRangeSetting,
   setSelectSetting,
+  toClient,
   wait
 } from './../helpers'
 
@@ -34,7 +34,6 @@ export const ArrowHeads: Story = {
     const view = within(canvasElement)
     const user = userEvent.setup()
     const drawCanvas = (await view.findByTestId('draw-canvas')) as HTMLCanvasElement
-    const toClient = (point: Point) => getPaint().toClientPosition(point)!
 
     await selectTool(view, 'line')
     await setSelectSetting(view, 'Flèche au début', 'circle')

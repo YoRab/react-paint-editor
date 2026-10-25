@@ -2,6 +2,7 @@ import { useEffect } from 'react'
 import { expect, userEvent, type within } from 'storybook/test'
 import {
   Canvas,
+  type CanvasOptions,
   Editor,
   type EditorOptions,
   type Point,
@@ -32,7 +33,11 @@ export const wait = (ms = 50) => new Promise(res => setTimeout(res, ms))
 /** Log of the selectionChanged / toolChanged events emitted by the last rendered wrapper */
 export const eventsLog: ({ name: 'selectionChanged'; ids: string[] } | { name: 'toolChanged'; toolId: string })[] = []
 
-export const ReactPaintWrapper = ({ editorOptions, ...args }: UseReactPaintProps & { editorOptions?: EditorOptions }) => {
+export const ReactPaintWrapper = ({
+  editorOptions,
+  canvasOptions,
+  ...args
+}: UseReactPaintProps & { editorOptions?: EditorOptions; canvasOptions?: CanvasOptions }) => {
   const paint = useReactPaint(args)
   paintRef.current = paint
   getCurrentDataRef.current = paint.getCurrentData
@@ -50,7 +55,7 @@ export const ReactPaintWrapper = ({ editorOptions, ...args }: UseReactPaintProps
 
   return (
     <Editor paint={paint} options={editorOptions}>
-      <Canvas paint={paint} />
+      <Canvas paint={paint} options={canvasOptions} />
     </Editor>
   )
 }
@@ -111,9 +116,22 @@ export function assertNoInternalFields(shape: unknown) {
   expect(shape).not.toHaveProperty('selection')
 }
 
+/** Position in the page of a point of the drawing */
+export const toClient = (point: Point) => getPaint().toClientPosition(point)!
+
+/**
+ * Dispatches an event of a finger at a position in the page. The fingers of a pinch are given as events: user-event
+ * releases only one of them
+ */
+export const dispatchTouch = (target: EventTarget, type: string, pointerId: number, { x, y }: { x: number; y: number }) => {
+  target.dispatchEvent(
+    new PointerEvent(type, { pointerId, pointerType: 'touch', isPrimary: pointerId === 1, clientX: x, clientY: y, bubbles: true, cancelable: true })
+  )
+}
+
 /** Color of the pixel of the draw canvas at a point of the drawing */
 export const getPixel = (drawCanvas: HTMLCanvasElement, point: Point) => {
-  const position = getPaint().toClientPosition(point)!
+  const position = toClient(point)
   const rect = drawCanvas.getBoundingClientRect()
   const x = Math.round(((position.x - rect.left) * drawCanvas.width) / rect.width)
   const y = Math.round(((position.y - rect.top) * drawCanvas.height) / rect.height)

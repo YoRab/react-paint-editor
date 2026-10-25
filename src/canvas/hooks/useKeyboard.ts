@@ -129,6 +129,12 @@ const useKeyboard = (store: PaintStore) => {
         return
       }
 
+      // a stroke of the eraser is cancelled: it removes nothing
+      if (e.key === KeyboardCode.Escape && store.getState().interaction.selectionMode.mode === 'eraser') {
+        store.setSelectionMode({ mode: 'default' })
+        return
+      }
+
       const { selectedShape } = store.getState().document
       if (!selectedShape || isInField) return
 

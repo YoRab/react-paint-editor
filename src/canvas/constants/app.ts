@@ -72,14 +72,22 @@ export type CanvasOptions = {
   canvasBackgroundColor?: string | undefined
   canvasSelectionColor?: string | undefined
   canvasSelectionWidth?: number | undefined
+  /** Color of the trail of the laser pointer */
+  canvasLaserColor?: string | undefined
+  /** Width of the trail of the laser pointer at its newest point, in pixels of the screen: it narrows as it fades out */
+  canvasLaserWidth?: number | undefined
 }
 
 export const DEFAULT_CANVAS_OPTIONS: {
   canvasBackgroundColor: string
   canvasSelectionColor: string
   canvasSelectionWidth: number
+  canvasLaserColor: string
+  canvasLaserWidth: number
 } = {
   canvasBackgroundColor: 'white',
   canvasSelectionColor: SELECTION_DEFAULT_COLOR,
-  canvasSelectionWidth: SELECTION_DEFAULT_WIDTH
+  canvasSelectionWidth: SELECTION_DEFAULT_WIDTH,
+  canvasLaserColor: '#ff2d2d',
+  canvasLaserWidth: 6
 }

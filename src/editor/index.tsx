@@ -50,7 +50,9 @@ const Editor = ({ paint, className, style, options, children }: EditorComponentP
     withExport,
     withLoadAndSave,
     withUploadPicture,
-    withUrlPicture
+    withUrlPicture,
+    withEraser,
+    withLaser
   } = withDefaults(DEFAULT_EDITOR_OPTIONS, options)
 
   const isEditMode = mode !== 'viewer'
@@ -187,6 +189,8 @@ const Editor = ({ paint, className, style, options, children }: EditorComponentP
           <Toolbar
             disabled={disabled}
             withMoveTool={withZoom}
+            withEraser={withEraser}
+            withLaser={withLaser}
             exportCanvasInFile={exportCanvasInFile}
             saveFile={saveFile}
             loadFile={onLoadFile}

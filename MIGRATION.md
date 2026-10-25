@@ -98,7 +98,7 @@ The `canGrow` and `canShrink` options are replaced by `resize`, which also adds 
 
 The same goes for the selection and move tools, exported as `SELECTION_TOOL` and `MOVE_TOOL`: `icon` and `label` of `ActionsTool` become optional. Select them by id, with `paint.actions.selectTool(SELECTION_TOOL.id)`.
 
-`ActionsType`, the type of `ActionsTool`, is reduced to the tools handled by the canvas: `'selection' | 'move'`. The buttons of the editor (`undo`, `redo`, `clear`, `export`, `loadfile`, `savefile`, `uploadpicture`, `addurlpicture`) are not part of the API anymore: a custom editor calls the matching actions (`paint.actions.undo()`, `paint.actions.exportPicture({ view })`...) from its own buttons.
+`ActionsType`, the type of `ActionsTool`, is reduced to the tools handled by the canvas: `'selection' | 'move' | 'eraser' | 'laser'`. The buttons of the editor (`undo`, `redo`, `clear`, `export`, `loadfile`, `savefile`, `uploadpicture`, `addurlpicture`) are not part of the API anymore: a custom editor calls the matching actions (`paint.actions.undo()`, `paint.actions.exportPicture({ view })`...) from its own buttons.
 
 `useReactPaint` from `@yorab/react-paint/canvas` now provides the default tools too, like the one from the package root.
 

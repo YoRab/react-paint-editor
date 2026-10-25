@@ -41,6 +41,7 @@ import {
   findShapeAt,
   findShapesAt
 } from '@canvas/utils/intersect'
+import { addLaserTrailPoint } from '@canvas/utils/laser'
 import { isEqual, isRecord, mergeWith, omitUndefined, replaceArrays, set, withDefaults } from '@canvas/utils/object'
 import { getSelectedShapes } from '@canvas/utils/selectedShapes'
 import { addToSelectedShapes, buildShapesGroup, omitFromSelectedShapes } from '@canvas/utils/selection'
@@ -115,7 +116,8 @@ const createInitialState = (config: PaintConfig): InternalState => ({
     modifiers: { shift: false, alt: false, space: false },
     panStart: undefined,
     moveAcceleration: [0, 0],
-    focus: { component: false, canvas: false }
+    focus: { component: false, canvas: false },
+    laserTrail: []
   }
 })
 
@@ -623,6 +625,10 @@ export const createPaintStore = (props: UseReactPaintProps = {}) => {
     update(state => withInteraction(state, { modifiers: patchObject(state.interaction.modifiers, patch) }))
 
   const setFocus = (patch: Partial<Focus>) => update(state => withInteraction(state, { focus: patchObject(state.interaction.focus, patch) }))
+
+  /** Starts a stroke of the laser pointer at a point of the drawing, or goes on with the current one */
+  const addLaserPoint = (point: Point, isNewStroke: boolean) =>
+    update(state => withInteraction(state, { laserTrail: addLaserTrailPoint(state.interaction.laserTrail, point, Date.now(), isNewStroke) }))
 
   // --- View ---
 
@@ -1249,6 +1255,7 @@ export const createPaintStore = (props: UseReactPaintProps = {}) => {
     setPanStart,
     setMoveAcceleration,
     setModifiers,
+    addLaserPoint,
     setCanvasSize,
     setTransformation,
     getViewBounds,

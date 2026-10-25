@@ -398,7 +398,7 @@ export type ToolsSettingsType<T extends ShapeType> = T extends 'rect'
                       : never
 
 /** Tools handled by the canvas besides the drawing tools. The buttons of an editor (undo, export...) are not tools */
-export type ActionsType = 'selection' | 'move'
+export type ActionsType = 'selection' | 'move' | 'eraser' | 'laser'
 
 export type ActionsTool = {
   id: string

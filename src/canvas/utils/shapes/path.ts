@@ -55,6 +55,32 @@ export const addBrushPoint = (points: Point[][], strokeIndex: number, point: Poi
   return newPoints
 }
 
+/**
+ * Smooths a stroke of at least 2 points with quadratic curves: each inner point controls a curve from the end of the
+ * previous one to the middle of the next segment, and the last curve ends at the last point. With 2 points, the curve is
+ * their segment, controlled by the first one
+ */
+export const forEachQuadraticCurve = <T>(
+  items: readonly T[],
+  toPoint: (item: T) => Point,
+  onCurve: (start: Point, control: Point, end: Point, controlIndex: number) => void
+) => {
+  const last = items.length - 1
+  let start = toPoint(items[0]!)
+  if (last === 1) {
+    onCurve(start, start, toPoint(items[1]!), 0)
+    return
+  }
+  let control = toPoint(items[1]!)
+  for (let i = 1; i < last; i++) {
+    const next = toPoint(items[i + 1]!)
+    const end = i < last - 1 ? getCenter(control, next) : next
+    onCurve(start, control, end, i)
+    start = end
+    control = next
+  }
+}
+
 /** Whether the points of the brush are drawn as they are: a new point of a stroke then only extends its path */
 const isUnscaledBrush = (brush: DrawableShape<'brush'>) => (brush.scaleX ?? 1) === 1 && (brush.scaleY ?? 1) === 1
 
@@ -93,19 +119,9 @@ export const createBrushPath = (brush: DrawableShape<'brush'>, { brushAlgo }: Ut
     } else {
       path.moveTo(...scale(points[0]!))
       switch (brushAlgo) {
-        case 'quadratic': {
-          // each inner point controls a curve ending in the middle of the next segment, the last curve ends at the last point
-          let scaledPoint = scale(points[1]!)
-          for (let i = 1; i < points.length - 2; i++) {
-            const scaledPoint2 = scale(points[i + 1]!)
-            const xc = (scaledPoint[0] + scaledPoint2[0]) / 2
-            const yc = (scaledPoint[1] + scaledPoint2[1]) / 2
-            path.quadraticCurveTo(...scaledPoint, xc, yc)
-            scaledPoint = scaledPoint2
-          }
-          path.quadraticCurveTo(...scale(points[points.length - 2]!), ...scale(points[points.length - 1]!))
+        case 'quadratic':
+          forEachQuadraticCurve(points, scale, (_start, control, end) => path.quadraticCurveTo(...control, ...end))
           break
-        }
         default:
           for (let i = 1; i < points.length; i++) {
             path.lineTo(...scale(points[i]!))

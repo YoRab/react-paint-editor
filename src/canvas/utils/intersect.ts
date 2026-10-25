@@ -376,6 +376,10 @@ const isShapeAt = (ctx: CanvasRenderingContext2D, shape: ShapeEntity, point: Poi
 export const findShapesAt = (ctx: CanvasRenderingContext2D, shapes: ShapeEntity[], point: Point, settings: UtilsSettings): ShapeEntity[] =>
   shapes.filter(shape => isShapeAt(ctx, shape, point, settings))
 
+/** Visible shapes under one of the points, from the foreground, as found by findShapesAt */
+export const findShapesAtPoints = (ctx: CanvasRenderingContext2D, shapes: ShapeEntity[], points: Point[], settings: UtilsSettings): ShapeEntity[] =>
+  shapes.filter(shape => points.some(point => isShapeAt(ctx, shape, point, settings)))
+
 /** The shape of the foreground under a point, as found by findShapesAt */
 export const findShapeAt = (ctx: CanvasRenderingContext2D, shapes: ShapeEntity[], point: Point, settings: UtilsSettings): ShapeEntity | undefined =>
   shapes.find(shape => isShapeAt(ctx, shape, point, settings))

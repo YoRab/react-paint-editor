@@ -1,3 +1,4 @@
+import { ERASER_TOOL, LASER_TOOL } from '@canvas/constants/tools'
 import { createPaintStore, type PaintStore } from '@canvas/store/paintStore'
 import { describe, expect, it, vi } from 'vitest'
 import { createLoadedStore, RECTS, stubPath2D } from './helpers'
@@ -153,6 +154,32 @@ describe('actions', () => {
 
     store.actions.selectTool('unknown-tool')
     expect(store.getEditorState().activeTool.id).toBe('react-paint-rect')
+  })
+
+  it('selects the eraser and the laser pointer, which are not in the tools of the drawing', () => {
+    const store = createPaintStore()
+    store.actions.selectTool(ERASER_TOOL.id)
+    expect(store.getEditorState().activeTool).toEqual(ERASER_TOOL)
+    store.actions.selectTool(LASER_TOOL)
+    expect(store.getEditorState().activeTool).toEqual(LASER_TOOL)
+    expect(store.getEditorState().tools.map(tool => tool.id)).not.toContain(LASER_TOOL.id)
+  })
+
+  it('keeps the trail of the laser pointer out of the drawing and of its history', () => {
+    const store = createPaintStore()
+    const { history } = store.getEditorState()
+    store.addLaserPoint([10, 10], true)
+    store.addLaserPoint([20, 10], false)
+    store.addLaserPoint([50, 50], true)
+    expect(store.getState().interaction.laserTrail.map(stroke => stroke.map(({ point }) => point))).toEqual([
+      [
+        [10, 10],
+        [20, 10]
+      ],
+      [[50, 50]]
+    ])
+    expect(store.getEditorState().shapes).toEqual([])
+    expect(store.getEditorState().history).toBe(history)
   })
 
   it('updates the settings of a tool', () => {
