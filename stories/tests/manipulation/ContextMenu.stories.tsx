@@ -22,7 +22,7 @@ const SQUARE: DrawableShape = {
   width: 100,
   height: 100,
   rotation: 0,
-  style: { fillColor: 'red', strokeColor: 'black', lineWidth: 1, opacity: 100, lineDash: 0, lineArrow: 0, closedPoints: 0 }
+  style: { fillColor: 'red', strokeColor: 'black', lineWidth: 1, opacity: 100, lineDash: 0, closedPoints: 0 }
 }
 
 export const ContextMenuAfterToolbarSelection: Story = {

@@ -7,7 +7,7 @@ export const CANVAS_HEIGHT = 600
 /** The shapes fill this area: the band below it stays empty, to start a selection frame */
 export const SHAPES_AREA = { width: 1000, height: 500 }
 
-const STYLE = { fillColor: '#4a90d9', strokeColor: '#000000', lineWidth: 1, opacity: 100, lineDash: 0, lineArrow: 0, closedPoints: 0 }
+const STYLE = { fillColor: '#4a90d9', strokeColor: '#000000', lineWidth: 1, opacity: 100, lineDash: 0, closedPoints: 0 }
 
 type Cell = { x: number; y: number; width: number; height: number }
 
@@ -52,7 +52,7 @@ const createMixedShape = ({ x, y, width, height }: Cell, index: number): ShapeIn
           [x, y],
           [x + width, y + height]
         ],
-        style: { ...style, lineWidth: 2, lineArrow: 3 }
+        style: { ...style, lineWidth: 2, arrowStart: 'triangle', arrowEnd: 'triangle' }
       }
     case 4:
       return {

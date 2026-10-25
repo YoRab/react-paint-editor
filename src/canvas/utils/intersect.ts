@@ -5,7 +5,7 @@ import type { HoverModeData } from '@canvas/types/Mode'
 import type { Point, Rect, SelectionType, ShapeEntity } from '@canvas/types/Shapes'
 import { getSelectedShapes } from '@canvas/utils/selectedShapes'
 import { getAnchorRadius, getResizeAnchorCenter, getRotationAnchorCenter, hasPointAnchors } from '@canvas/utils/selection/anchors'
-import { catmullRomToBezier, createLinePath, expandRect, getBrushPointScaler, getCatmullRomPoints, getCornerRadius } from '@canvas/utils/shapes/path'
+import { createLinePath, expandRect, getBrushPointScaler, getCornerRadius, getCurveSegments } from '@canvas/utils/shapes/path'
 import { getRectCorners, isCircleIntersectRect, isPointInsideRect, rotatePoint } from './trigo'
 
 export const getCursorPositionInElement = (e: MouseEvent, element: HTMLElement, canvasSize: CanvasSize): Point => {
@@ -149,19 +149,13 @@ export const checkCurveLinesSelectionIntersection = (
   const newPosition = getPointPositionAfterCanvasTransformation(position, shape.rotation ?? 0, center)
 
   ctx.lineWidth = (shape.style?.lineWidth ?? 0) + radius / settings.canvasZoom
-  const points = getCatmullRomPoints(shape, shape.points)
+  const segments = getCurveSegments(shape, shape.points)
   const path = new Path2D()
-  path.moveTo(...points[0]!)
-  for (let i = 1; i < points.length - 2; i++) {
-    const p0 = points[i - 1]!
-    const p1 = points[i]!
-    const p2 = points[i + 1]!
-    const p3 = points[i + 2]!
-    const { cp1, cp2 } = catmullRomToBezier(p0, p1, p2, p3)
-    path.bezierCurveTo(cp1[0], cp1[1], cp2[0], cp2[1], p2[0], p2[1])
-
+  path.moveTo(...shape.points[0]!)
+  for (const [index, [, cp1, cp2, end]] of segments.entries()) {
+    path.bezierCurveTo(...cp1, ...cp2, ...end)
     if (ctx.isPointInStroke(path, newPosition[0], newPosition[1])) {
-      return { lineIndex: i - 1 }
+      return { lineIndex: index }
     }
   }
   return false

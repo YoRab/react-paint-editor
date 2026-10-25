@@ -16,13 +16,15 @@ import Button from '@editor/components/common/Button'
 import Modal from '@editor/components/common/Modal'
 import Panel from '@editor/components/common/Panel'
 import {
+  arrowEndIcon,
+  arrowSizeIcon,
+  arrowStartIcon,
   boldIcon,
   cornerRadiusIcon,
   fontIcon,
   fontSizeIcon,
   italicIcon,
   lineCapIcon,
-  lineEndIcon,
   lineHeightIcon,
   lineJoinIcon,
   lineTypeIcon,
@@ -39,12 +41,12 @@ import {
 import { uniqueId } from '@editor/utils/util'
 import type React from 'react'
 import { Fragment, useState } from 'react'
+import { ArrowEndOption, ArrowStartOption } from './ArrowHeadField'
 import { ClosedPointsOption } from './ClosedPointsField'
 import ColorField from './ColorField'
 import DeleteButton from './DeleteButton'
 import { FontFamilyOption } from './FontFamilyField'
 import LayoutButton from './LayoutButton'
-import { LineArrowOption } from './LineArrowField'
 import { LineCapOption } from './LineCapField'
 import { LineJoinOption } from './LineJoinField'
 import { LineTypeOption } from './LineTypeField'
@@ -99,7 +101,9 @@ const SETTING_FIELDS: SettingField[] = [
   { field: 'lineJoin', kind: 'select', title: 'Angles du trait', icon: lineJoinIcon, option: LineJoinOption, advanced: true },
   { field: 'lineCap', kind: 'select', title: 'Extrémités du trait', icon: lineCapIcon, option: LineCapOption, advanced: true },
   { field: 'cornerRadius', kind: 'range', title: 'Arrondi des angles', icon: cornerRadiusIcon, unity: 'px', advanced: true },
-  { field: 'lineArrow', kind: 'select', title: 'Flèches', icon: lineEndIcon, option: LineArrowOption },
+  { field: 'arrowStart', kind: 'select', title: 'Flèche au début', icon: arrowStartIcon, option: ArrowStartOption },
+  { field: 'arrowEnd', kind: 'select', title: 'Flèche à la fin', icon: arrowEndIcon, option: ArrowEndOption },
+  { field: 'arrowSize', kind: 'range', title: 'Taille des flèches', icon: arrowSizeIcon, unity: '', advanced: true },
   { field: 'closedPoints', kind: 'select', title: 'Fermer les points', icon: polygonIcon, option: ClosedPointsOption, values: [0, 1] },
   { field: 'fontFamily', kind: 'select', title: 'Police', icon: fontIcon, option: FontFamilyOption },
   { field: 'fontSize', kind: 'number', title: 'Taille du texte', icon: fontSizeIcon, unity: 'px', ofShapes: true },

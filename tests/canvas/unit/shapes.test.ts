@@ -4,14 +4,7 @@ import type { CustomTool } from '@canvas/types/tools'
 import { canRemoveShapePoint, createShape, isStyleFieldOfShape } from '@canvas/utils/shapes'
 import { addNewPointGroupToShape, addNewPointToShape, getBrushBorder, refreshBrush } from '@canvas/utils/shapes/brush'
 import { refreshCurve } from '@canvas/utils/shapes/curve'
-import {
-  catmullRomToBezier,
-  createBrushPath,
-  createPolygonPath,
-  getCatmullRomPoints,
-  getCornerRadius,
-  getCubicBezierBounds
-} from '@canvas/utils/shapes/path'
+import { createBrushPath, createPolygonPath, getCornerRadius, getCubicBezierBounds, getCurveSegments } from '@canvas/utils/shapes/path'
 import { drawPicture } from '@canvas/utils/shapes/picture'
 import { buildAvailableTools } from '@canvas/utils/tools'
 import { type Bounds, getPointsBounds } from '@canvas/utils/trigo'
@@ -27,7 +20,7 @@ describe('createShape', () => {
   it('gives a new shape the default values of all the settings of its tool', () => {
     const [rectTool, lineTool, textTool] = buildAvailableTools([
       { type: 'rect', settings: { fillColor: { default: 'red' } } },
-      { type: 'line', settings: { lineArrow: { default: 2 } } },
+      { type: 'line', settings: { arrowEnd: { default: 'triangle' } } },
       { type: 'text', settings: { fontBold: { default: true } } }
     ]) as Exclude<CustomTool, { type: 'picture' }>[]
     expect(createShape(MEASURE_CONTEXT, rectTool!, [10, 10], UTILS_SETTINGS)?.style).toEqual({
@@ -44,7 +37,9 @@ describe('createShape', () => {
       opacity: 100,
       lineWidth: 1,
       lineDash: 0,
-      lineArrow: 2,
+      arrowStart: 'none',
+      arrowEnd: 'triangle',
+      arrowSize: 1,
       lineCap: 'round'
     })
     expect(createShape(MEASURE_CONTEXT, textTool!, [10, 10], UTILS_SETTINGS)?.style).toEqual({
@@ -147,6 +142,11 @@ describe('outer borders of the strokes', () => {
     expect(rect.computed.outerBorders).toEqual({ x: -7, y: -7, width: 114, height: 64 })
   })
 
+  it('hold the stroke of a curve, around the curve drawn beyond its points', () => {
+    const curve = createEntity({ type: 'curve', points: [triangle[0]!, triangle[1]!], style: { lineWidth: 4 } })
+    expect(curve.computed.outerBorders).toEqual({ x: -7, y: -7, width: 114, height: 14 })
+  })
+
   it('go as far as the corners of the square caps', () => {
     const line = createEntity({ type: 'line', points: [triangle[0]!, triangle[1]!], style: { lineWidth: 4, lineCap: 'square' } })
     const { x, width } = line.computed.outerBorders
@@ -161,10 +161,10 @@ describe('caps of the lines', () => {
       [0, 0],
       [100, 0]
     ]
-    const square = createEntity({ type: 'line', points, style: { lineArrow: 2, lineCap: 'square' } })
-    expect(square.style).toEqual({ lineArrow: 2, lineCap: 'square' })
-    const withoutCap = createEntity({ type: 'line', points, style: { lineArrow: 3 } })
-    expect(withoutCap.style).toEqual({ lineArrow: 3 })
+    const square = createEntity({ type: 'line', points, style: { arrowEnd: 'triangle', lineCap: 'square' } })
+    expect(square.style).toEqual({ arrowEnd: 'triangle', lineCap: 'square' })
+    const withoutCap = createEntity({ type: 'line', points, style: { arrowStart: 'open', arrowEnd: 'bar' } })
+    expect(withoutCap.style).toEqual({ arrowStart: 'open', arrowEnd: 'bar' })
   })
 })
 
@@ -540,14 +540,7 @@ describe('bounds of the curves', () => {
       },
       curveSettings
     )
-    const pts = getCatmullRomPoints(curve, curve.points)
-    const drawn = pts.slice(1, -2).flatMap((p1, index) => {
-      const p0 = pts[index]!
-      const p2 = pts[index + 2]!
-      const p3 = pts[index + 3]!
-      const { cp1, cp2 } = catmullRomToBezier(p0, p1, p2, p3)
-      return sampleBezier(p1, cp1, cp2, p2)
-    })
+    const drawn = getCurveSegments(curve, curve.points).flatMap(segment => sampleBezier(...segment))
     const sampled = getPointsBounds([drawn])
     expect(sampled.minY).toBeLessThan(0)
 

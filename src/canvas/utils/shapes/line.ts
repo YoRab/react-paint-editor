@@ -1,19 +1,18 @@
 import type { UtilsSettings } from '@canvas/constants/app'
 import type { SelectionModeResize } from '@canvas/types/Mode'
-import type { DrawableShape, Line, Point, Rect, SelectionType, ShapeEntity, StyleShape, Triangle } from '@canvas/types/Shapes'
+import type { DrawableShape, Line, Point, Rect, SelectionType, ShapeEntity } from '@canvas/types/Shapes'
 import type { ToolsSettingsType } from '@canvas/types/tools'
-import { drawPathWithFillAndStroke, updateCanvasContext } from '@canvas/utils/canvas'
+import { drawPathWithFillAndStroke } from '@canvas/utils/canvas'
 import { getPointPositionAfterCanvasTransformation } from '@canvas/utils/intersect'
 import { set } from '@canvas/utils/object'
-import { createLinePath, getComputedShapeInfos } from '@canvas/utils/shapes/path'
+import { addStraightArrowHeads, drawArrowHeads, withArrowHeadsOuterBorder } from '@canvas/utils/shapes/arrow'
+import { createLinePath, getComputedShapeInfos, getDefaultOuterBorder } from '@canvas/utils/shapes/path'
 import { getToolDefaultStyle } from '@canvas/utils/tools'
-import { roundForGrid, shortenLine } from '@canvas/utils/transform'
-import { getAngleFromVector, rotatePoint } from '@canvas/utils/trigo'
+import { roundForGrid } from '@canvas/utils/transform'
 import { createShapeId } from '@canvas/utils/util'
 import { refreshCurve } from './curve'
 import { type GroupResizeContext, getPositionWithoutGroupRotation, getShapePositionInNewBorder } from './group'
 import { refreshPolygon } from './polygon'
-import { createTriangle, drawTriangle } from './triangle'
 
 const getLineBorder = (line: Line, settings: Pick<UtilsSettings, 'selectionPadding'>): Rect => {
   const x = Math.min(line.points[0][0], line.points[1][0]) - settings.selectionPadding
@@ -24,36 +23,12 @@ const getLineBorder = (line: Line, settings: Pick<UtilsSettings, 'selectionPaddi
 }
 
 const buildPath = <T extends DrawableShape<'line'>>(line: T & { id: string }, settings: UtilsSettings): ShapeEntity<'line'> => {
-  const arrows = []
-  let path: Path2D
-
-  if (line.style?.lineArrow === 1 || line.style?.lineArrow === 2 || line.style?.lineArrow === 3) {
-    const rotation = Math.PI / 2 - getAngleFromVector({ targetVector: [line.points[0], line.points[1]] })
-
-    if (line.style?.lineArrow === 1 || line.style?.lineArrow === 3) {
-      arrows.push(createTriangle(buildTriangleOnLine(line.points[0], rotation, line.style), settings))
-    }
-    if (line.style?.lineArrow === 2 || line.style?.lineArrow === 3) {
-      arrows.push(createTriangle(buildTriangleOnLine(line.points[1], rotation + Math.PI, line.style), settings))
-    }
-
-    const arrowLength = 10 + (line.style?.lineWidth ?? 0) * 2
-    const newLine = shortenLine({
-      line,
-      size: arrowLength,
-      direction: line.style?.lineArrow === 1 ? 'start' : line.style?.lineArrow === 2 ? 'end' : 'both'
-    })
-    path = createLinePath(newLine)
-  } else {
-    path = createLinePath(line)
-  }
-
-  const computed = getComputedShapeInfos(line, getLineBorder, settings)
+  const { points, arrows, bounds } = addStraightArrowHeads(line.style, line.points)
   return {
     ...line,
-    path,
+    path: createLinePath({ points: [points[0]!, points[1]!] }),
     arrows,
-    computed
+    computed: getComputedShapeInfos(line, getLineBorder, settings, withArrowHeadsOuterBorder(getDefaultOuterBorder, bounds))
   }
 }
 
@@ -78,38 +53,9 @@ export const createLine = (
   return buildPath(lineShape, settings)
 }
 
-export const buildTriangleOnLine = (center: Point, rotation: number, lineStyle: StyleShape) => {
-  const trianglePoints = [
-    rotatePoint({ point: [0, 0], rotation }),
-    rotatePoint({
-      point: [-(5 + (lineStyle.lineWidth ?? 0)), 10 + (lineStyle.lineWidth ?? 0) * 2],
-      rotation
-    }),
-    rotatePoint({
-      point: [5 + (lineStyle.lineWidth ?? 0), 10 + (lineStyle.lineWidth ?? 0) * 2],
-      rotation
-    })
-  ]
-  return {
-    points: [
-      [center[0] + trianglePoints[0]![0], center[1] + trianglePoints[0]![1]],
-      [center[0] + trianglePoints[1]![0], center[1] + trianglePoints[1]![1]],
-      [center[0] + trianglePoints[2]![0], center[1] + trianglePoints[2]![1]]
-    ],
-    style: {
-      ...lineStyle,
-      fillColor: lineStyle.strokeColor,
-      strokeColor: 'transparent'
-    }
-  } as Triangle
-}
-
 export const drawLine = (ctx: CanvasRenderingContext2D, shape: ShapeEntity<'line'>): void => {
   drawPathWithFillAndStroke(ctx, shape.path, shape.style)
-  for (const arrow of shape.arrows ?? []) {
-    updateCanvasContext(ctx, { ...arrow.style, opacity: 100 })
-    drawTriangle(ctx, arrow)
-  }
+  drawArrowHeads(ctx, shape.arrows)
 }
 
 export const resizeLine = (

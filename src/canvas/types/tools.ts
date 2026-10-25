@@ -1,4 +1,4 @@
-import type { ShapeType, TextAlign } from './Shapes'
+import type { ArrowHead, ShapeType, TextAlign } from './Shapes'
 
 export type CustomToolInput = {
   id: string
@@ -170,9 +170,26 @@ export type SettingsCornerRadius = {
   }
 }
 
-export type SettingsLineArrow = {
-  lineArrow: {
-    values: number[]
+/** Heads of the first and the last point of a line, or of an open polygon or curve */
+export type SettingsArrowHeads = {
+  arrowStart: {
+    values: ArrowHead[]
+    default: ArrowHead
+    hidden?: boolean
+  }
+  arrowEnd: {
+    values: ArrowHead[]
+    default: ArrowHead
+    hidden?: boolean
+  }
+}
+
+/** Size of the heads, as a multiplier of their default size */
+export type SettingsArrowSize = {
+  arrowSize: {
+    min: number
+    max: number
+    step: number
     default: number
     hidden?: boolean
   }
@@ -284,8 +301,7 @@ export type ToolsLineSettings = SettingsOpacity &
   SettingsStrokeColor &
   SettingsLineWidth &
   SettingsLineDash &
-  SettingsLineArrow &
-  Partial<SettingsLineCap>
+  Partial<SettingsArrowHeads & SettingsArrowSize & SettingsLineCap>
 
 export type ToolsBrushSettings = SettingsOpacity &
   SettingsStrokeColor &
@@ -299,7 +315,7 @@ export type ToolsPolygonSettings = SettingsOpacity &
   SettingsLineWidth &
   SettingsLineDash &
   SettingsClosedPoints &
-  Partial<SettingsLineJoin & SettingsLineCap & SettingsCornerRadius>
+  Partial<SettingsLineJoin & SettingsLineCap & SettingsCornerRadius & SettingsArrowHeads & SettingsArrowSize>
 
 export type ToolsCurveSettings = SettingsOpacity &
   SettingsStrokeColor &
@@ -307,9 +323,7 @@ export type ToolsCurveSettings = SettingsOpacity &
   SettingsLineWidth &
   SettingsLineDash &
   SettingsClosedPoints &
-  Partial<SettingsLineCap>
-
-export type ToolsTriangleSettings = SettingsStrokeColor & SettingsFillColor & SettingsOpacity & SettingsLineWidth & SettingsLineDash
+  Partial<SettingsLineCap & SettingsArrowHeads & SettingsArrowSize>
 
 export type ToolsPictureSettings = SettingsOpacity & Partial<SettingsStrokeColor & SettingsLineWidth & SettingsCornerRadius>
 
@@ -319,7 +333,8 @@ export type ToolsGroupSettings = Partial<
     SettingsFillColor &
     SettingsLineWidth &
     SettingsLineDash &
-    SettingsLineArrow &
+    SettingsArrowHeads &
+    SettingsArrowSize &
     SettingsLineJoin &
     SettingsLineCap &
     SettingsCornerRadius
@@ -343,13 +358,11 @@ export type ToolsSettingsType<T extends ShapeType> = T extends 'rect'
                 ? ToolsPolygonSettings
                 : T extends 'curve'
                   ? ToolsCurveSettings
-                  : T extends 'triangle'
-                    ? ToolsTriangleSettings
-                    : T extends 'picture'
-                      ? ToolsPictureSettings
-                      : T extends 'group'
-                        ? ToolsGroupSettings
-                        : never
+                  : T extends 'picture'
+                    ? ToolsPictureSettings
+                    : T extends 'group'
+                      ? ToolsGroupSettings
+                      : never
 
 /** Tools handled by the canvas besides the drawing tools. The buttons of an editor (undo, export...) are not tools */
 export type ActionsType = 'selection' | 'move'

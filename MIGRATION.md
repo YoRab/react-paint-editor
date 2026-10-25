@@ -196,6 +196,8 @@ The options also give a `backgroundColor`, and a `backgroundImage` drawn under t
 - `updateToolSettings` ignores a field the tool has not, instead of adding it.
 - `transformShapes` no longer selects the transformed shapes.
 - The grid follows a change of the `grid` option after the creation.
+- `style.lineArrow` (0 to 3) is replaced by `style.arrowStart` and `style.arrowEnd`, which take a head (`'none'`, `'triangle'`, `'open'`, `'circle'`...), and `style.arrowSize`: `lineArrow: 1` becomes `arrowStart: 'triangle'`, `lineArrow: 2` becomes `arrowEnd: 'triangle'`, and `lineArrow: 3` both. `lineArrow` is no longer read: a shape loaded with it has no arrows. The `lineArrow` setting of the tools is replaced the same way.
+- The `'triangle'` shape type is removed: it was only built by the canvas for the arrows of the lines.
 - `ShapeEntity` has no `selection` field anymore: the outline and the anchors of a selection are drawn from the shape (`path`, `computed.borders`) at the scale of the view.
 
 Everything the editor does can now be done from the code: see [Driving the canvas from the code](./README.md#driving-the-canvas-from-the-code).

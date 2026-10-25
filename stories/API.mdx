@@ -937,7 +937,6 @@ const box = paint.getBounds([rectId])`} />
         <li><code>'brush'</code> - Brush stroke</li>
         <li><code>'text'</code> - Text</li>
         <li><code>'picture'</code> - Picture/image</li>
-        <li><code>'triangle'</code> - Triangle</li>
         <li><code>'group'</code> - Group of shapes</li>
       </ul>
 
@@ -954,7 +953,12 @@ const box = paint.getBounds([rectId])`} />
   strokeColor?: string
   lineWidth?: number
   lineDash?: number // 0 solid, 1 dots, 2 dashes, 3 long dashes, 4 dashes and dots
-  lineArrow?: number
+  // heads at the first and the last point of a line, or of an open polygon or curve, of the color of the stroke: 'none'
+  // by default. The circles and the bar are centered on the end, the other heads point to it
+  arrowStart?: ArrowHead
+  arrowEnd?: ArrowHead
+  // size of the heads, as a multiplier of their default size, which grows with the width of the stroke: 1 by default
+  arrowSize?: number
   // ends of a line, a brush, an open polygon or an open curve, and of the dashes: 'round' by default
   lineCap?: 'round' | 'butt' | 'square'
   // corners of a rectangle, a square, a polygon or a brush: 'round' by default
@@ -978,7 +982,9 @@ const box = paint.getBounds([rectId])`} />
   // outline around the letters of a text, none by default, and its thickness around them in the units of the drawing: 2 by default
   outlineColor?: string
   outlineWidth?: number
-}`} />
+}
+
+type ArrowHead = 'none' | 'triangle' | 'triangleOutline' | 'open' | 'circle' | 'circleOutline' | 'diamond' | 'diamondOutline' | 'bar'`} />
 
       <h3>StateData</h3>
       <p>Complete canvas state data structure.</p>
@@ -1033,13 +1039,12 @@ const patch: ShapePatch = { id: 'rect_1', width: 200, style: { fillColor: 'red' 
         <li><code>ToolsSquareSettings</code> - Square settings (includes lineJoin and cornerRadius)</li>
         <li><code>ToolsCircleSettings</code> - Circle settings</li>
         <li><code>ToolsEllipseSettings</code> - Ellipse settings</li>
-        <li><code>ToolsLineSettings</code> - Line settings (includes arrow options and lineCap)</li>
+        <li><code>ToolsLineSettings</code> - Line settings (includes arrowStart, arrowEnd, arrowSize and lineCap)</li>
         <li><code>ToolsBrushSettings</code> - Brush settings (includes lineJoin and lineCap)</li>
-        <li><code>ToolsPolygonSettings</code> - Polygon settings (includes closedPoints, lineJoin, lineCap and cornerRadius)</li>
-        <li><code>ToolsCurveSettings</code> - Curve settings (includes closedPoints and lineCap)</li>
+        <li><code>ToolsPolygonSettings</code> - Polygon settings (includes closedPoints, lineJoin, lineCap, cornerRadius, arrowStart, arrowEnd and arrowSize)</li>
+        <li><code>ToolsCurveSettings</code> - Curve settings (includes closedPoints, lineCap, arrowStart, arrowEnd and arrowSize)</li>
         <li><code>ToolsTextSettings</code> - Text settings (includes font options, textAlign, lineHeight, fillColor for the background, fontUnderline, fontStrikethrough, outlineColor, outlineWidth, and fontSize: the font size of the new texts, which are as wide as their content, or 150 wide without it. Its max is optional)</li>
         <li><code>ToolsPictureSettings</code> - Picture settings (opacity, and the border: strokeColor, lineWidth and cornerRadius)</li>
-        <li><code>ToolsTriangleSettings</code> - Triangle settings</li>
         <li><code>ToolsGroupSettings</code> - Group settings</li>
       </ul>
 
@@ -1102,11 +1107,6 @@ const patch: ShapePatch = { id: 'rect_1', width: 200, style: { fillColor: 'red' 
       <h3>Line</h3>
       <Source language='typescript' code={`type Line = {
   points: readonly [Point, Point]
-}`} />
-
-      <h3>Triangle</h3>
-      <Source language='typescript' code={`type Triangle = {
-  points: [Point, Point, Point]
 }`} />
 
       <h3>Polygon</h3>

@@ -21,7 +21,7 @@ import { createCurve, drawCurve, refreshCurve, resizeCurve } from './curve'
 import { createEllipse, drawEllipse, refreshEllipse, resizeEllipse, resizeEllipseInGroup } from './ellipse'
 import { buildGroupResizeContext, type GroupResizeContext, getGroupResizeContext } from './group'
 import { createLine, drawLine, refreshLine, resizeLine, resizeLinePolygonCurveInGroup } from './line'
-import { expandRect, getStrokeMargin } from './path'
+import { expandRect } from './path'
 import { drawPicture, hasPictureBorder, refreshPicture, resizePicture, resizePictureInGroup } from './picture'
 import { createPolygon, drawPolygon, refreshPolygon, resizePolygon } from './polygon'
 import { createRectangle, drawRect, refreshRect, resizeRect, resizeRectInGroup } from './rectangle'
@@ -93,8 +93,9 @@ const drawShapeByType = (ctx: CanvasRenderingContext2D, shape: ShapeEntity): voi
 /**
  * Whether the opacity of the shape must be applied to its drawing as a whole, on a layer: drawn with the opacity, the
  * overlaps would be darker. It is the case of several operations which overlap, like a fill and a stroke, and of a stroke
- * thinner than a pixel, drawn segment by segment, an image and its border, or the lines of a text and its background, its
- * outline or its decorations. A single operation (a stroke, even of several lines, a fill, an image) is drawn directly
+ * thinner than a pixel, drawn segment by segment, a stroke and its heads, an image and its border, or the lines of a text
+ * and its background, its outline or its decorations. A single operation (a stroke, even of several lines, a fill, an
+ * image) is drawn directly
  */
 const needsLayer = (shape: ShapeEntity, scaleRatio: number): boolean => {
   if (shape.type === 'picture') return hasPictureBorder(shape)
@@ -102,8 +103,8 @@ const needsLayer = (shape: ShapeEntity, scaleRatio: number): boolean => {
   // an undefined stroke color is drawn with the default color
   const hasStroke = shape.style?.strokeColor !== 'transparent'
   if (hasStroke && (shape.style?.lineWidth ?? SELECTION_DEFAULT_WIDTH) * scaleRatio <= 1) return true
-  if (shape.type === 'line') return !!shape.arrows?.length
-  if (shape.type === 'brush') return false
+  if (hasStroke && 'arrows' in shape && shape.arrows?.length) return true
+  if (shape.type === 'line' || shape.type === 'brush') return false
   return hasStroke && isVisibleColor(shape.style?.fillColor)
 }
 
@@ -141,16 +142,11 @@ const getLayerContext = (width: number, height: number, canvas: HTMLCanvasElemen
 }
 
 /**
- * Margin around the outer borders of a shape, in the units of the drawing: the arrows of a line and the glyphs of a text
- * go beyond them, and the outer borders of a curve leave out its stroke. The outer borders of the other shapes hold their
- * stroke, and the ones of a text the outline of its letters and the letters of its lines lower than its font size
+ * Margin around the outer borders of a shape, in the units of the drawing: the glyphs of a text go beyond them. The outer
+ * borders of the other shapes hold their stroke and its heads, and the ones of a text the outline of its letters and the
+ * letters of its lines lower than its font size
  */
-const getLayerMargin = (shape: ShapeEntity) => {
-  if (shape.type === 'text') return shape.fontSize / 4
-  const lineWidth = shape.style?.lineWidth ?? SELECTION_DEFAULT_WIDTH
-  if (shape.type === 'line') return 10 + lineWidth * 2
-  return shape.type === 'curve' ? getStrokeMargin(shape, lineWidth) : 0
-}
+const getLayerMargin = (shape: ShapeEntity) => (shape.type === 'text' ? shape.fontSize / 4 : 0)
 
 /** Margin of the layers in pixels, for the antialiasing */
 const LAYER_PIXEL_MARGIN = 2

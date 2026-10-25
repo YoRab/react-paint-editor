@@ -1,7 +1,16 @@
-import { STYLE_FONT_DEFAULT, STYLE_FONT_SIZE_DEFAULT, STYLE_LINE_HEIGHT_DEFAULT, STYLE_OUTLINE_WIDTH_DEFAULT } from '@canvas/constants/rendering'
+import {
+  STYLE_ARROW_SIZE_DEFAULT,
+  STYLE_FONT_DEFAULT,
+  STYLE_FONT_SIZE_DEFAULT,
+  STYLE_LINE_HEIGHT_DEFAULT,
+  STYLE_OUTLINE_WIDTH_DEFAULT
+} from '@canvas/constants/rendering'
+import type { ArrowHead } from '@canvas/types/Shapes'
 import type {
   ActionsTool,
   CustomToolInput,
+  SettingsArrowHeads,
+  SettingsArrowSize,
   SettingsCornerRadius,
   SettingsLineCap,
   SettingsLineJoin,
@@ -35,7 +44,7 @@ export const PICTURE_TOOL_ID = `${TOOL_ID_PREFIX}picture`
 
 const STYLE_COLORS = ['transparent', 'black', 'white', 'red', 'green', 'blue', 'yellow']
 const STYLE_LINE_DASH = [0, 1, 2, 3, 4]
-const STYLE_LINE_WITH_ARROW = [0, 1, 2, 3]
+const STYLE_ARROW_HEADS: ArrowHead[] = ['none', 'triangle', 'triangleOutline', 'open', 'circle', 'circleOutline', 'diamond', 'diamondOutline', 'bar']
 const STYLE_FONTS = ['arial', 'serif', 'monospace']
 
 const SETTING_LINE_JOIN: SettingsLineJoin = {
@@ -58,6 +67,23 @@ const SETTING_CORNER_RADIUS: SettingsCornerRadius = {
     max: 50,
     step: 1,
     default: 0
+  }
+}
+
+const SETTING_ARROWS: SettingsArrowHeads & SettingsArrowSize = {
+  arrowStart: {
+    values: STYLE_ARROW_HEADS,
+    default: 'none'
+  },
+  arrowEnd: {
+    values: STYLE_ARROW_HEADS,
+    default: 'none'
+  },
+  arrowSize: {
+    min: 0.5,
+    max: 3,
+    step: 0.1,
+    default: STYLE_ARROW_SIZE_DEFAULT
   }
 }
 
@@ -210,10 +236,7 @@ const SETTINGS_DEFAULT_LINE: ToolsLineSettings = {
     values: STYLE_LINE_DASH,
     default: 0
   },
-  lineArrow: {
-    values: STYLE_LINE_WITH_ARROW,
-    default: 0
-  },
+  ...SETTING_ARROWS,
   ...SETTING_LINE_CAP
 }
 
@@ -245,6 +268,7 @@ const SETTINGS_DEFAULT_CURVE: ToolsCurveSettings = {
   closedPoints: {
     default: 0
   },
+  ...SETTING_ARROWS,
   ...SETTING_LINE_CAP
 }
 

@@ -12,7 +12,7 @@ import {
 } from '../../../src/index'
 import { selectTool } from './../helpers'
 
-const SQUARE_STYLE = { fillColor: 'red', strokeColor: 'black', lineWidth: 1, opacity: 100, lineDash: 0, lineArrow: 0, closedPoints: 0 }
+const SQUARE_STYLE = { fillColor: 'red', strokeColor: 'black', lineWidth: 1, opacity: 100, lineDash: 0, closedPoints: 0 }
 
 const SQUARES: DrawableShape[] = [
   { type: 'square', x: 200, y: 250, width: 100, height: 100, rotation: 0, style: SQUARE_STYLE },

@@ -13,7 +13,6 @@ export const TOOL_LABELS: Record<ShapeType, string> = {
   ellipse: 'Ellipse',
   picture: 'Image',
   text: 'Texte',
-  triangle: 'Triangle',
   group: 'Groupe'
 }
 

@@ -25,10 +25,6 @@ export type Line = {
   points: readonly [Point, Point]
 }
 
-export type Triangle = {
-  points: [Point, Point, Point]
-}
-
 export type Polygon = {
   points: Point[]
   tempPoint?: Point | undefined
@@ -56,6 +52,18 @@ export type Ellipse = {
   radiusY: number
 }
 
+/**
+ * Head at an end of a line, or of an open polygon or curve, of the color of its stroke: filled, outlined, or a stroke
+ * like an open arrow or a bar across the end. The circles and the bar are centered on the end, the other heads point to it
+ */
+export type ArrowHead = 'none' | 'triangle' | 'triangleOutline' | 'open' | 'circle' | 'circleOutline' | 'diamond' | 'diamondOutline' | 'bar'
+
+/** A head of a shape as drawn: filled with the color of its stroke, or stroked like it without its dashes */
+export type ArrowHeadEntity = {
+  path: Path2D
+  filled: boolean
+}
+
 export type StyleShape = {
   /** Fill of a shape, and background of a text, which fills its selection frame: its box with the selection padding */
   fillColor?: string
@@ -63,7 +71,14 @@ export type StyleShape = {
   strokeColor?: string
   lineWidth?: number
   lineDash?: number
-  lineArrow?: number
+  /** Heads at the first and the last point of a line, or of an open polygon or curve: none by default */
+  arrowStart?: ArrowHead
+  arrowEnd?: ArrowHead
+  /**
+   * Size of the heads, as a multiplier of their default size, which grows with the width of the stroke: 1 by default.
+   * A value which is not positive gives the default one
+   */
+  arrowSize?: number
   /** Ends of the stroke of a line, a brush, an open polygon or an open curve, and of its dashes: 'round' by default */
   lineCap?: CanvasLineCap
   /** Corners of the stroke of a rectangle, a square, a polygon or a brush: 'round' by default */
@@ -139,9 +154,6 @@ type GenericDrawableShape = {
   | (Ellipse & {
       type: 'ellipse'
     })
-  | (Triangle & {
-      type: 'triangle'
-    })
   | (Polygon & {
       type: 'polygon'
     })
@@ -165,17 +177,7 @@ export type DrawableShape<T extends ShapeType = ShapeType> = GenericDrawableShap
 
 export type ExportedDrawableShape<T extends ShapeType = ShapeType> = T extends 'picture' ? Omit<DrawableShape<'picture'>, 'img'> : DrawableShape<T>
 
-export type TriangleEntity = DrawableShape<'triangle'> & {
-  path: Path2D
-  computed: {
-    borders: Rect
-    outerBorders: Rect
-    center: Point
-    boundingBox: Rect
-  }
-}
-
-export type ShapeEntity<T extends Exclude<ShapeType, 'triangle'> = Exclude<ShapeType, 'triangle'>> = {
+export type ShapeEntity<T extends ShapeType = ShapeType> = {
   id: string
   computed: {
     borders: Rect
@@ -187,27 +189,28 @@ export type ShapeEntity<T extends Exclude<ShapeType, 'triangle'> = Exclude<Shape
 } & DrawableShape<T> &
   (
     | {
-        type: 'line'
-        arrows?: TriangleEntity[]
+        type: 'line' | 'polygon' | 'curve'
+        /** Heads of the ends of the stroke, which is drawn shorter under them */
+        arrows?: ArrowHeadEntity[]
       }
     | {
-        type: Exclude<ShapeType, 'line' | 'triangle'>
+        type: Exclude<ShapeType, 'line' | 'polygon' | 'curve'>
       }
   )
 
 /** A shape as exported: without the computed data, and with its id */
 export type ExportedShape = ExportedDrawableShape & { id: string }
 
-/** Types of the shapes which can be created and edited: triangles and groups are only built by the canvas */
-export type EditableShapeType = Exclude<ShapeType, 'triangle' | 'group'>
+/** Types of the shapes which can be created and edited: groups are only built by the canvas */
+export type EditableShapeType = Exclude<ShapeType, 'group'>
 
 /** A text can be given without its size: it is computed from its font size, or from its width */
 export type TextShapeInput = Omit<ExportedDrawableShape<'text'>, 'width' | 'height' | 'fontSize'> &
   Partial<Pick<DrawableShape<'text'>, 'width' | 'height' | 'fontSize'>>
 
 /**
- * A shape given by the consumer, to create or to load it. Triangles and groups are refused by addShapes and left out
- * when loading: they are accepted by the type so that data typed as DrawableShape can be given
+ * A shape given by the consumer, to create or to load it. Groups are refused by addShapes and left out when loading:
+ * they are accepted by the type so that data typed as DrawableShape can be given
  */
 export type ShapeInput = ExportedDrawableShape | TextShapeInput
 

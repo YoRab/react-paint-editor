@@ -118,10 +118,23 @@ export const createBrushPath = (brush: DrawableShape<'brush'>, { brushAlgo }: Ut
   return path
 }
 
-/** Bounding box of a cubic Bezier segment B(t) = (1-t)³P0 + 3(1-t)²t P1 + 3(1-t)t² P2 + t³ P3 */
+/** A cubic Bezier segment: its start, its two control points and its end */
+export type BezierSegment = [Point, Point, Point, Point]
+
+/** Point of a cubic Bezier segment B(t) = (1-t)³P0 + 3(1-t)²t P1 + 3(1-t)t² P2 + t³ P3 */
+export const getPointOfSegment = ([p0, p1, p2, p3]: BezierSegment, t: number): Point => {
+  const u = 1 - t
+  const a = u * u * u
+  const b = 3 * u * u * t
+  const c = 3 * u * t * t
+  const d = t * t * t
+  return [a * p0[0] + b * p1[0] + c * p2[0] + d * p3[0], a * p0[1] + b * p1[1] + c * p2[1] + d * p3[1]]
+}
+
+/** Bounding box of a cubic Bezier segment */
 export const getCubicBezierBounds = (p0: Point, p1: Point, p2: Point, p3: Point): Bounds => {
-  const evalX = (t: number) => (1 - t) ** 3 * p0[0] + 3 * (1 - t) ** 2 * t * p1[0] + 3 * (1 - t) * t ** 2 * p2[0] + t ** 3 * p3[0]
-  const evalY = (t: number) => (1 - t) ** 3 * p0[1] + 3 * (1 - t) ** 2 * t * p1[1] + 3 * (1 - t) * t ** 2 * p2[1] + t ** 3 * p3[1]
+  const evalX = (t: number) => getPointOfSegment([p0, p1, p2, p3], t)[0]
+  const evalY = (t: number) => getPointOfSegment([p0, p1, p2, p3], t)[1]
 
   const roots = (a: number, b: number, c: number): number[] => {
     const A = a - 2 * b + c
@@ -171,7 +184,7 @@ export const getCubicBezierBounds = (p0: Point, p1: Point, p2: Point, p3: Point)
   return { minX, maxX, minY, maxY }
 }
 
-export const getCatmullRomPoints = (curve: DrawableShape<'curve'>, points: Point[]) => {
+const getCatmullRomPoints = (curve: DrawableShape<'curve'>, points: Point[]) => {
   const mustClosePath = curve.style?.closedPoints === 1 && points.length > 2
   // Pour une courbe fermée, on doit "boucler" les points pour la continuité
   // On ajoute les points de début et de fin pour le calcul Catmull-Rom
@@ -186,7 +199,7 @@ export const getCatmullRomPoints = (curve: DrawableShape<'curve'>, points: Point
   return pts
 }
 
-export const catmullRomToBezier = (p0: Point, p1: Point, p2: Point, p3: Point): { cp1: Point; cp2: Point } => {
+const catmullRomToBezier = (p0: Point, p1: Point, p2: Point, p3: Point): { cp1: Point; cp2: Point } => {
   // Conversion Catmull-Rom -> Bezier
   const cp1: Point = [p1[0] + (p2[0] - p0[0]) / 6, p1[1] + (p2[1] - p0[1]) / 6]
   const cp2: Point = [p2[0] - (p3[0] - p1[0]) / 6, p2[1] - (p3[1] - p1[1]) / 6]
@@ -194,43 +207,44 @@ export const catmullRomToBezier = (p0: Point, p1: Point, p2: Point, p3: Point): 
   return { cp1, cp2 }
 }
 
-export const createCurvePath = (curve: DrawableShape<'curve'>): Path2D => {
-  const path = new Path2D()
+/** Points of a polygon or a curve as drawn: with the point following the cursor while it is drawn */
+export const getDrawnPoints = (shape: DrawableShape<'polygon' | 'curve'>): Point[] =>
+  shape.tempPoint ? [...shape.points, shape.tempPoint] : shape.points
 
-  const points = curve.tempPoint ? [...curve.points, curve.tempPoint] : curve.points
-  if (points.length < 2) return path
-  if (points.length < 3) return createPolygonPath(curve)
-  const mustClosePath = curve.style?.closedPoints === 1 && points.length > 2
+/** Whether a polygon or a curve with these points is drawn closed: it needs 3 points */
+export const isClosedPath = (shape: DrawableShape<'polygon' | 'curve'>, points: readonly Point[]) =>
+  points.length > 2 && shape.style?.closedPoints === 1
 
-  path.moveTo(...points[0]!)
-
-  // Catmull-Rom to Bezier
+/** Segments of a curve from the Catmull-Rom spline through its points: none for a single point, a straight one for two */
+export const getCurveSegments = (curve: DrawableShape<'curve'>, points: Point[]): BezierSegment[] => {
   const pts = getCatmullRomPoints(curve, points)
+  const segments: BezierSegment[] = []
   for (let i = 1; i < pts.length - 2; i++) {
-    const p0 = pts[i - 1]!
     const p1 = pts[i]!
     const p2 = pts[i + 1]!
-    const p3 = pts[i + 2]!
-
-    const { cp1, cp2 } = catmullRomToBezier(p0, p1, p2, p3)
-
-    path.bezierCurveTo(cp1[0], cp1[1], cp2[0], cp2[1], p2[0], p2[1])
+    const { cp1, cp2 } = catmullRomToBezier(pts[i - 1]!, p1, p2, pts[i + 2]!)
+    segments.push([p1, cp1, cp2, p2])
   }
+  return segments
+}
 
-  if (mustClosePath) {
-    path.closePath()
+export const createCurvePath = (segments: BezierSegment[], isClosed: boolean): Path2D => {
+  const path = new Path2D()
+  if (!segments.length) return path
+  path.moveTo(...segments[0]![0])
+  for (const [, cp1, cp2, end] of segments) {
+    path.bezierCurveTo(cp1[0], cp1[1], cp2[0], cp2[1], end[0], end[1])
   }
-
+  if (isClosed) path.closePath()
   return path
 }
 
-export const createPolygonPath = (polygon: DrawableShape<'polygon'> | DrawableShape<'curve'>): Path2D => {
+export const createPolygonPath = (polygon: DrawableShape<'polygon'>, points: readonly Point[] = getDrawnPoints(polygon)): Path2D => {
   const path = new Path2D()
-  const points = polygon.tempPoint ? [...polygon.points, polygon.tempPoint] : polygon.points
 
   if (points.length < 2) return path
 
-  const isClosed = points.length > 2 && polygon.style?.closedPoints === 1
+  const isClosed = isClosedPath(polygon, points)
   const radius = polygon.style?.cornerRadius ?? 0
   if (radius > 0 && points.length > 2) {
     addRoundedPolygon(path, points, radius, isClosed)
@@ -252,7 +266,7 @@ export const createPolygonPath = (polygon: DrawableShape<'polygon'> | DrawableSh
  * Adds a polygon with rounded corners to the path. The arc of a corner, tangent to its two sides, takes at most half of a
  * side shared with another rounded corner, and all of a side ending at an end of an open polygon, whose ends stay sharp
  */
-const addRoundedPolygon = (path: Path2D, points: Point[], radius: number, isClosed: boolean) => {
+const addRoundedPolygon = (path: Path2D, points: readonly Point[], radius: number, isClosed: boolean) => {
   const count = points.length
   const at = (index: number) => points[(index + count) % count]!
   // length of the side from the point to the next one available to the arc of one of its ends
@@ -279,15 +293,6 @@ const addRoundedPolygon = (path: Path2D, points: Point[], radius: number, isClos
   else path.lineTo(...at(-1))
 }
 
-export const createTrianglePath = (triangle: DrawableShape<'triangle'>): Path2D => {
-  const path = new Path2D()
-  path.moveTo(...triangle.points[0])
-  path.lineTo(...triangle.points[1])
-  path.lineTo(...triangle.points[2])
-  path.lineTo(...triangle.points[0])
-  return path
-}
-
 /** Grows a rect by a margin on each side, the vertical one being the horizontal one by default */
 export const expandRect = (rect: Rect, margin: number, marginY = margin): Rect => {
   return {
@@ -305,7 +310,7 @@ export const expandRect = (rect: Rect, margin: number, marginY = margin): Rect =
 export const getStrokeMargin = (shape: Pick<DrawableShape, 'style'>, lineWidth = shape.style?.lineWidth ?? 0): number =>
   (lineWidth / 2) * (shape.style?.lineCap === 'square' ? Math.SQRT2 : 1)
 
-const getDefaultOuterBorder = (shape: DrawableShape, border: Rect) => expandRect(border, getStrokeMargin(shape))
+export const getDefaultOuterBorder = (shape: DrawableShape, border: Rect) => expandRect(border, getStrokeMargin(shape))
 
 /** Outer borders of a shape with sharp angles: its miter joins go as far as the miter limit */
 export const getSharpOuterBorder = (shape: DrawableShape, border: Rect) =>

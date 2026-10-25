@@ -359,7 +359,8 @@ const useDrawableCanvas = (store: PaintStore, canvas: HTMLCanvasElement | null) 
                 mode: 'resize',
                 cursorStartPosition: [cursorPosition[0] + settings.selectionPadding, cursorPosition[1] + settings.selectionPadding],
                 originalShape: newSelectedShapes,
-                anchor: newShape.type === 'line' ? 0 : [1, 1],
+                // a new line is drawn from its first point to its last one, which has the end head
+                anchor: newShape.type === 'line' ? 1 : [1, 1],
                 selectedShapesLengthAtMouseDown: getSelectedShapes(newSelectedShapes).length
               })
             }

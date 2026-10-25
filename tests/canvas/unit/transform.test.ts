@@ -1,7 +1,6 @@
 import type { UtilsSettings } from '@canvas/constants/app'
 import { PICTURE_DEFAULT_SIZE } from '@canvas/constants/picture'
-import type { DrawableShape, Point } from '@canvas/types/Shapes'
-import { boundVectorToSingleAxis, fitContentInsideContainer, roundForGrid, roundRotationForGrid, shortenLine } from '@canvas/utils/transform'
+import { boundVectorToSingleAxis, fitContentInsideContainer, roundForGrid, roundRotationForGrid } from '@canvas/utils/transform'
 import { degreesToRadians, radiansToDegrees } from '@canvas/utils/trigo'
 import { describe, expect, it } from 'vitest'
 
@@ -59,53 +58,6 @@ describe('roundForGrid', () => {
     expect(roundForGrid(13, grid, 5)).toBe(15)
     expect(roundForGrid(24, grid, 5)).toBe(15)
     expect(roundForGrid(26, grid, 5)).toBe(35)
-  })
-})
-
-describe('shortenLine', () => {
-  // 50 long: 10 along the line is (6, 8)
-  const line = {
-    type: 'line',
-    points: [
-      [0, 0],
-      [30, 40]
-    ]
-  } as DrawableShape<'line'>
-
-  const expectPoints = (points: readonly Point[], expected: Point[]) => {
-    points.forEach((point, index) => {
-      expect(point[0]).toBeCloseTo(expected[index]![0])
-      expect(point[1]).toBeCloseTo(expected[index]![1])
-    })
-  }
-
-  it('moves the end with an arrow along the line, by the size of the arrow', () => {
-    expectPoints(shortenLine({ line, size: 10, direction: 'start' }).points, [
-      [6, 8],
-      [30, 40]
-    ])
-    expectPoints(shortenLine({ line, size: 10, direction: 'end' }).points, [
-      [0, 0],
-      [24, 32]
-    ])
-    expectPoints(shortenLine({ line, size: 10, direction: 'both' }).points, [
-      [6, 8],
-      [24, 32]
-    ])
-  })
-
-  it('keeps each end of a line shorter than its arrows at the base of its arrow, under the other one', () => {
-    const shortLine = {
-      type: 'line',
-      points: [
-        [0, 0],
-        [5, 0]
-      ]
-    } as DrawableShape<'line'>
-    expectPoints(shortenLine({ line: shortLine, size: 14, direction: 'both' }).points, [
-      [14, 0],
-      [-9, 0]
-    ])
   })
 })
 

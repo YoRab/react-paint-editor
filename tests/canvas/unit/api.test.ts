@@ -13,7 +13,7 @@ stubPath2D()
 
 const getIds = (store: PaintStore) => store.getState().document.shapes.map(shape => shape.id)
 
-const getShape = <T extends ShapeEntity['type']>(store: PaintStore, id: string) => store.getShape(id) as ShapeEntity<Exclude<T, 'triangle'>>
+const getShape = <T extends ShapeEntity['type']>(store: PaintStore, id: string) => store.getShape(id) as ShapeEntity<T>
 
 const getHistoryLength = (store: PaintStore) => store.getState().document.history.states.length
 
