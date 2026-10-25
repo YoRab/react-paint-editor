@@ -3,7 +3,8 @@ import { SELECTION_DEFAULT_WIDTH, SHAPES_KEEPING_RATIO, SHAPES_WITH_ROTATION, ST
 import type { HoverModeData, SelectionModeData, SelectionModeResize } from '@canvas/types/Mode'
 import type { DrawableShape, Point, Rect, SelectionType, ShapeEntity, ShapeType, StyleShape } from '@canvas/types/Shapes'
 import type { CustomTool } from '@canvas/types/tools'
-import { createDetachedContext, initCanvasContext, isVisibleColor, transformCanvas, updateCanvasContext } from '@canvas/utils/canvas'
+import { createDetachedContext, initCanvasContext, transformCanvas, updateCanvasContext } from '@canvas/utils/canvas'
+import { hasVisibleFill, isFillMasked } from '@canvas/utils/fill'
 import { getRectIntersection } from '@canvas/utils/intersect'
 import { getSelectedShapes } from '@canvas/utils/selectedShapes'
 import { buildShapesGroup } from '@canvas/utils/selection'
@@ -91,13 +92,16 @@ const drawShapeByType = (ctx: CanvasRenderingContext2D, shape: ShapeEntity): voi
 }
 
 /**
- * Whether the opacity of the shape must be applied to its drawing as a whole, on a layer: drawn with the opacity, the
- * overlaps would be darker. It is the case of several operations which overlap, like a fill and a stroke, and of a stroke
- * thinner than a pixel, drawn segment by segment, a stroke and its heads, an image and its border, or the lines of a text
- * and its background, its outline or its decorations. A single operation (a stroke, even of several lines, a fill, an
- * image) is drawn directly
+ * Whether the shape must be drawn alone on a layer, then copied with its opacity:
+ * - a gradient masked by dots composites over what is under it, which must be empty
+ * - drawn with an opacity, the overlaps of several operations would be darker: a fill and a stroke, a stroke thinner
+ *   than a pixel, drawn segment by segment, a stroke and its heads, an image and its border, or the lines of a text and
+ *   its background, its outline or its decorations. A single operation (a stroke, even of several lines like a hatch, a
+ *   fill, an image) is drawn directly
  */
-const needsLayer = (shape: ShapeEntity, scaleRatio: number): boolean => {
+const needsLayer = (shape: ShapeEntity, opacity: number, scaleRatio: number): boolean => {
+  if (isFillMasked(shape.style)) return true
+  if (opacity === 1) return false
   if (shape.type === 'picture') return hasPictureBorder(shape)
   if (shape.type === 'text') return isTextPaintedSeveralTimes(shape)
   // an undefined stroke color is drawn with the default color
@@ -105,7 +109,7 @@ const needsLayer = (shape: ShapeEntity, scaleRatio: number): boolean => {
   if (hasStroke && (shape.style?.lineWidth ?? SELECTION_DEFAULT_WIDTH) * scaleRatio <= 1) return true
   if (hasStroke && 'arrows' in shape && shape.arrows?.length) return true
   if (shape.type === 'line' || shape.type === 'brush') return false
-  return hasStroke && isVisibleColor(shape.style?.fillColor)
+  return hasStroke && hasVisibleFill(shape.style)
 }
 
 /**
@@ -206,10 +210,9 @@ export const drawShape = (ctx: CanvasRenderingContext2D, shape: ShapeEntity, set
   transformCanvas(ctx, settings, shape.rotation, shape.computed.center)
   updateCanvasContext(ctx, shape.style)
 
-  if (ctx.globalAlpha < 1 && needsLayer(shape, settings.canvasSize.scaleRatio)) {
-    drawShapeOnLayer(ctx, shape)
-  } else if (ctx.globalAlpha > 0) {
-    drawShapeByType(ctx, shape)
+  if (ctx.globalAlpha > 0) {
+    if (needsLayer(shape, ctx.globalAlpha, settings.canvasSize.scaleRatio)) drawShapeOnLayer(ctx, shape)
+    else drawShapeByType(ctx, shape)
   }
 
   ctx.restore()

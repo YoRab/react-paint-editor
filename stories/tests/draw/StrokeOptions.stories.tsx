@@ -1,6 +1,15 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import { expect, userEvent, within } from 'storybook/test'
-import { assertNoInternalFields, getCurrentDataRef, MORE_OPTIONS, ReactPaintWrapper, selectTool, setSelectSetting, wait } from './../helpers'
+import {
+  assertNoInternalFields,
+  getCurrentDataRef,
+  inMoreOptions,
+  MORE_OPTIONS,
+  ReactPaintWrapper,
+  selectTool,
+  setSelectSetting,
+  wait
+} from './../helpers'
 
 const meta = {
   title: 'Tests/Draw',
@@ -50,12 +59,15 @@ export const StrokeOptions: Story = {
     // the selected polygon, clicked on its stroke, takes the new join
     await user.pointer({ target: drawCanvas, keys: '[MouseLeft]', coords: { x: cx, y: cy + 40 } })
     await wait(100)
-    await userEvent.click(await view.findByRole('button', { name: MORE_OPTIONS }))
-    await setSelectSetting(view, 'Angles du trait', 'bevel')
+    await inMoreOptions(view, () => setSelectSetting(view, 'Angles du trait', 'bevel'))
     expect(getCurrentDataRef.current!().shapes![0]).toMatchObject({ style: { lineJoin: 'bevel', lineCap: 'butt' } })
 
-    // a circle has neither corners nor ends: no other option
+    // a circle has neither corners nor ends: only the gradient of its fill in the other options
     await selectTool(view, 'circle')
-    expect(view.queryByRole('button', { name: MORE_OPTIONS })).toBeNull()
+    await inMoreOptions(view, async () => {
+      expect(view.getByRole('button', { name: 'Dégradé du fond' })).toBeInTheDocument()
+      expect(view.queryByRole('button', { name: 'Angles du trait' })).toBeNull()
+      expect(view.queryByRole('button', { name: 'Extrémités du trait' })).toBeNull()
+    })
   }
 }

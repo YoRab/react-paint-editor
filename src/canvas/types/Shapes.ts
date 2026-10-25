@@ -64,9 +64,32 @@ export type ArrowHeadEntity = {
   filled: boolean
 }
 
+/**
+ * Fill of a shape: a solid fill, or lines drawn inside the shape, of its fill color: lines at 45°, lines across them, or
+ * dots. Their thickness and their gap grow with the width of the stroke
+ */
+export type FillPattern = 'solid' | 'hatch' | 'crossHatch' | 'dots'
+
+/**
+ * Gradient of the fill of a shape, from its fill color to its second fill color, in its box: along the angle of the
+ * gradient, from the center to the farthest side, or around the center from the angle
+ */
+export type FillGradient = 'none' | 'linear' | 'radial' | 'conic'
+
 export type StyleShape = {
   /** Fill of a shape, and background of a text, which fills its selection frame: its box with the selection padding */
   fillColor?: string
+  /** Pattern of the fill of a rectangle, a square, a circle, an ellipse, a polygon or a curve: 'solid' by default */
+  fillPattern?: FillPattern
+  /** Gradient of the fill of a rectangle, a square, a circle, an ellipse, a polygon or a curve, or of its pattern: none by default */
+  fillGradient?: FillGradient
+  /** Color of the end of the gradient of the fill: white by default. It fades out when it is transparent */
+  fillColor2?: string
+  /**
+   * Angle of a linear gradient, and start angle of a conic one, in degrees, clockwise: 0 by default, from the left to
+   * the right
+   */
+  fillGradientAngle?: number
   opacity?: number
   strokeColor?: string
   lineWidth?: number

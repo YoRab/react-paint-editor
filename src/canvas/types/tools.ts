@@ -1,4 +1,4 @@
-import type { ArrowHead, ShapeType, TextAlign } from './Shapes'
+import type { ArrowHead, FillGradient, FillPattern, ShapeType, TextAlign } from './Shapes'
 
 export type CustomToolInput = {
   id: string
@@ -122,6 +122,33 @@ export type SettingsFillColor = {
   fillColor: {
     values: string[]
     default: string
+    hidden?: boolean
+  }
+}
+
+/** Pattern and gradient of the fill of a shape, inside its path */
+export type SettingsFill = {
+  fillPattern: {
+    values: FillPattern[]
+    default: FillPattern
+    hidden?: boolean
+  }
+  fillGradient: {
+    values: FillGradient[]
+    default: FillGradient
+    hidden?: boolean
+  }
+  fillColor2: {
+    values: string[]
+    default: string
+    hidden?: boolean
+  }
+  /** In degrees */
+  fillGradientAngle: {
+    min: number
+    max: number
+    step: number
+    default: number
     hidden?: boolean
   }
 }
@@ -285,11 +312,16 @@ export type ToolsRectSettings = SettingsStrokeColor &
   SettingsOpacity &
   SettingsLineWidth &
   SettingsLineDash &
-  Partial<SettingsLineJoin & SettingsCornerRadius>
+  Partial<SettingsLineJoin & SettingsCornerRadius & SettingsFill>
 
 export type ToolsSquareSettings = ToolsRectSettings
 
-export type ToolsEllipseSettings = SettingsStrokeColor & SettingsFillColor & SettingsOpacity & SettingsLineWidth & SettingsLineDash
+export type ToolsEllipseSettings = SettingsStrokeColor &
+  SettingsFillColor &
+  SettingsOpacity &
+  SettingsLineWidth &
+  SettingsLineDash &
+  Partial<SettingsFill>
 
 export type ToolsCircleSettings = ToolsEllipseSettings
 
@@ -315,7 +347,7 @@ export type ToolsPolygonSettings = SettingsOpacity &
   SettingsLineWidth &
   SettingsLineDash &
   SettingsClosedPoints &
-  Partial<SettingsLineJoin & SettingsLineCap & SettingsCornerRadius & SettingsArrowHeads & SettingsArrowSize>
+  Partial<SettingsLineJoin & SettingsLineCap & SettingsCornerRadius & SettingsArrowHeads & SettingsArrowSize & SettingsFill>
 
 export type ToolsCurveSettings = SettingsOpacity &
   SettingsStrokeColor &
@@ -323,7 +355,7 @@ export type ToolsCurveSettings = SettingsOpacity &
   SettingsLineWidth &
   SettingsLineDash &
   SettingsClosedPoints &
-  Partial<SettingsLineCap & SettingsArrowHeads & SettingsArrowSize>
+  Partial<SettingsLineCap & SettingsArrowHeads & SettingsArrowSize & SettingsFill>
 
 export type ToolsPictureSettings = SettingsOpacity & Partial<SettingsStrokeColor & SettingsLineWidth & SettingsCornerRadius>
 
@@ -337,7 +369,8 @@ export type ToolsGroupSettings = Partial<
     SettingsArrowSize &
     SettingsLineJoin &
     SettingsLineCap &
-    SettingsCornerRadius
+    SettingsCornerRadius &
+    SettingsFill
 >
 
 export type ToolsSettingsType<T extends ShapeType> = T extends 'rect'

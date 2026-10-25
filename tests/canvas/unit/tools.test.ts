@@ -70,7 +70,11 @@ describe('getToolDefaultStyle', () => {
       lineWidth: 1,
       lineDash: 0,
       lineJoin: 'round',
-      cornerRadius: 0
+      cornerRadius: 0,
+      fillPattern: 'solid',
+      fillGradient: 'none',
+      fillColor2: 'white',
+      fillGradientAngle: 0
     })
   })
 

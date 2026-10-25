@@ -30,7 +30,11 @@ describe('createShape', () => {
       lineWidth: 1,
       lineDash: 0,
       lineJoin: 'round',
-      cornerRadius: 0
+      cornerRadius: 0,
+      fillPattern: 'solid',
+      fillGradient: 'none',
+      fillColor2: 'white',
+      fillGradientAngle: 0
     })
     expect(createShape(MEASURE_CONTEXT, lineTool!, [10, 10], UTILS_SETTINGS)?.style).toEqual({
       strokeColor: 'black',

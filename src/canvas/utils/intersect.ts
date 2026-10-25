@@ -3,6 +3,7 @@ import { SELECTION_RESIZE_ANCHOR_POSITIONS } from '@canvas/constants/shapes'
 import type { CanvasSize } from '@canvas/types/Canvas'
 import type { HoverModeData } from '@canvas/types/Mode'
 import type { Point, Rect, SelectionType, ShapeEntity } from '@canvas/types/Shapes'
+import { hasVisibleFill } from '@canvas/utils/fill'
 import { getSelectedShapes } from '@canvas/utils/selectedShapes'
 import { getAnchorRadius, getResizeAnchorCenter, getRotationAnchorCenter, hasPointAnchors } from '@canvas/utils/selection/anchors'
 import { createLinePath, expandRect, getBrushPointScaler, getCornerRadius, getCurveSegments } from '@canvas/utils/shapes/path'
@@ -163,7 +164,7 @@ export const checkCurveLinesSelectionIntersection = (
 
 const shouldCheckFillShape = (shape: ShapeEntity, isSelected = false) => {
   if (isSelected && ['curve', 'polygon'].includes(shape.type)) return true
-  return (shape.style?.fillColor && shape.style?.fillColor !== 'transparent') || ['picture', 'text'].includes(shape.type)
+  return hasVisibleFill(shape.style) || ['picture', 'text'].includes(shape.type)
 }
 
 export const checkPositionIntersection = (

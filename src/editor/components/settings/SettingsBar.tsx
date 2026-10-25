@@ -21,6 +21,9 @@ import {
   arrowStartIcon,
   boldIcon,
   cornerRadiusIcon,
+  fillGradientAngleIcon,
+  fillGradientIcon,
+  fillPatternIcon,
   fontIcon,
   fontSizeIcon,
   italicIcon,
@@ -45,6 +48,7 @@ import { ArrowEndOption, ArrowStartOption } from './ArrowHeadField'
 import { ClosedPointsOption } from './ClosedPointsField'
 import ColorField from './ColorField'
 import DeleteButton from './DeleteButton'
+import { FillGradientOption, FillPatternOption } from './FillField'
 import { FontFamilyOption } from './FontFamilyField'
 import LayoutButton from './LayoutButton'
 import { LineCapOption } from './LineCapField'
@@ -77,6 +81,8 @@ type SettingField = {
   advanced?: boolean
   /** A field of the selected shapes instead of their style, like the font size of a text */
   ofShapes?: boolean
+  /** Shown only for these values of the fields, like the angle of a gradient */
+  visibleIf?: (style: SettingValues) => boolean
 } & (
   | { kind: 'color'; field: SettingsOfType<{ values: string[] }>; mode?: 'fill' | 'stroke' }
   /** A slider, or a number typed in a field for a setting which can have no upper limit */
@@ -96,6 +102,24 @@ type SettingField = {
 const SETTING_FIELDS: SettingField[] = [
   { field: 'strokeColor', kind: 'color', title: 'Couleur du trait', mode: 'stroke' },
   { field: 'fillColor', kind: 'color', title: 'Couleur de fond' },
+  { field: 'fillPattern', kind: 'select', title: 'Motif du fond', icon: fillPatternIcon, option: FillPatternOption },
+  { field: 'fillGradient', kind: 'select', title: 'Dégradé du fond', icon: fillGradientIcon, option: FillGradientOption, advanced: true },
+  {
+    field: 'fillColor2',
+    kind: 'color',
+    title: 'Deuxième couleur du dégradé',
+    advanced: true,
+    visibleIf: ({ fillGradient }) => fillGradient !== undefined && fillGradient !== 'none'
+  },
+  {
+    field: 'fillGradientAngle',
+    kind: 'range',
+    title: 'Angle du dégradé',
+    icon: fillGradientAngleIcon,
+    unity: '°',
+    advanced: true,
+    visibleIf: ({ fillGradient }) => fillGradient === 'linear' || fillGradient === 'conic'
+  },
   { field: 'lineWidth', kind: 'range', title: 'Epaisseur du trait', icon: lineWidthIcon, unity: 'px' },
   { field: 'lineDash', kind: 'select', title: 'Type de traits', icon: lineTypeIcon, option: LineTypeOption },
   { field: 'lineJoin', kind: 'select', title: 'Angles du trait', icon: lineJoinIcon, option: LineJoinOption, advanced: true },
@@ -306,7 +330,11 @@ const SettingsBar = ({
 
   // the settings of the tool of the selection, or of the active tool without selection
   const settings: Partial<ToolSettings> = hasSelection ? (selectedShapeTool?.settings ?? {}) : 'settings' in activeTool ? activeTool.settings : {}
-  const fields = SETTING_FIELDS.filter(({ field }) => settings[field] && !settings[field].hidden)
+  const toolFields = SETTING_FIELDS.filter(({ field }) => settings[field] && !settings[field].hidden)
+  const style: SettingValues = hasSelection
+    ? { ...selectedStyle, fontSize: selectedFontSize }
+    : (Object.fromEntries(toolFields.map(({ field }) => [field, settings[field]?.default])) as SettingValues)
+  const fields = toolFields.filter(({ visibleIf }) => visibleIf?.(style) ?? true)
   const barFields = fields.filter(({ advanced }) => !advanced)
   const advancedFields = fields.filter(({ advanced }) => advanced)
 
@@ -335,9 +363,7 @@ const SettingsBar = ({
 
   const itemsProps = {
     settings,
-    style: hasSelection
-      ? { ...selectedStyle, fontSize: selectedFontSize }
-      : (Object.fromEntries(fields.map(({ field }) => [field, settings[field]?.default])) as SettingValues),
+    style,
     disabled,
     selectedSettings,
     setSelectedSettings,

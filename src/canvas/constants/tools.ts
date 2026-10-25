@@ -1,5 +1,7 @@
 import {
   STYLE_ARROW_SIZE_DEFAULT,
+  STYLE_FILL_COLOR2_DEFAULT,
+  STYLE_FILL_GRADIENT_ANGLE_DEFAULT,
   STYLE_FONT_DEFAULT,
   STYLE_FONT_SIZE_DEFAULT,
   STYLE_LINE_HEIGHT_DEFAULT,
@@ -12,6 +14,7 @@ import type {
   SettingsArrowHeads,
   SettingsArrowSize,
   SettingsCornerRadius,
+  SettingsFill,
   SettingsLineCap,
   SettingsLineJoin,
   ToolsBrushSettings,
@@ -87,6 +90,27 @@ const SETTING_ARROWS: SettingsArrowHeads & SettingsArrowSize = {
   }
 }
 
+const SETTING_FILL: SettingsFill = {
+  fillPattern: {
+    values: ['solid', 'hatch', 'crossHatch', 'dots'],
+    default: 'solid'
+  },
+  fillGradient: {
+    values: ['none', 'linear', 'radial', 'conic'],
+    default: 'none'
+  },
+  fillColor2: {
+    values: STYLE_COLORS,
+    default: STYLE_FILL_COLOR2_DEFAULT
+  },
+  fillGradientAngle: {
+    min: 0,
+    max: 360,
+    step: 5,
+    default: STYLE_FILL_GRADIENT_ANGLE_DEFAULT
+  }
+}
+
 const SETTINGS_DEFAULT_ELLIPSE: ToolsEllipseSettings = {
   strokeColor: {
     values: STYLE_COLORS,
@@ -111,7 +135,8 @@ const SETTINGS_DEFAULT_ELLIPSE: ToolsEllipseSettings = {
   lineDash: {
     values: STYLE_LINE_DASH,
     default: 0
-  }
+  },
+  ...SETTING_FILL
 }
 
 export const SETTINGS_DEFAULT_RECT: ToolsRectSettings = { ...SETTINGS_DEFAULT_ELLIPSE, ...SETTING_LINE_JOIN, ...SETTING_CORNER_RADIUS }
@@ -269,7 +294,8 @@ const SETTINGS_DEFAULT_CURVE: ToolsCurveSettings = {
     default: 0
   },
   ...SETTING_ARROWS,
-  ...SETTING_LINE_CAP
+  ...SETTING_LINE_CAP,
+  ...SETTING_FILL
 }
 
 const SETTINGS_DEFAULT_POLYGON: ToolsPolygonSettings = { ...SETTINGS_DEFAULT_CURVE, ...SETTING_LINE_JOIN, ...SETTING_CORNER_RADIUS }

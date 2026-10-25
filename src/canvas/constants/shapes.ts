@@ -33,9 +33,18 @@ const TEXT_STYLE_FIELDS: (keyof StyleShape)[] = [
   'outlineWidth'
 ]
 
+/** Style fields of the fills drawn inside the path of a shape: the background of a text stays a solid color */
+const FILL_STYLE_FIELDS: (keyof StyleShape)[] = ['fillPattern', 'fillGradient', 'fillColor2', 'fillGradientAngle']
+
+const FILLED_SHAPE_TYPES: readonly ShapeType[] = ['rect', 'square', 'circle', 'ellipse', 'polygon', 'curve']
+
+const withShapeTypes = (fields: (keyof StyleShape)[], types: readonly ShapeType[]) =>
+  Object.fromEntries(fields.map((field): [keyof StyleShape, readonly ShapeType[]] => [field, types]))
+
 /** Style fields which only apply to some types of shapes, with these types. A field which is not listed applies to all of them */
 export const STYLE_FIELDS_SHAPE_TYPES: Partial<Record<keyof StyleShape, readonly ShapeType[]>> = {
-  ...Object.fromEntries(TEXT_STYLE_FIELDS.map((field): [keyof StyleShape, readonly ShapeType[]] => [field, ['text']])),
+  ...withShapeTypes(TEXT_STYLE_FIELDS, ['text']),
+  ...withShapeTypes(FILL_STYLE_FIELDS, FILLED_SHAPE_TYPES),
   lineCap: ['line', 'brush', 'polygon', 'curve'],
   lineJoin: ['rect', 'square', 'polygon', 'brush'],
   cornerRadius: ['rect', 'square', 'picture', 'polygon'],

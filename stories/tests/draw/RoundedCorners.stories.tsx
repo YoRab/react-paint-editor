@@ -6,7 +6,7 @@ import {
   assertNoInternalFields,
   getCurrentDataRef,
   getPixel,
-  MORE_OPTIONS,
+  inMoreOptions,
   ReactPaintWrapper,
   SVG_DATA_URI,
   selectTool,
@@ -98,8 +98,10 @@ export const RoundedCorners: Story = {
     expect(getPixel(drawCanvas, [box.x + 1, box.y + box.height / 2])).toEqual([255, 0, 0, 255])
     expect(getPixel(drawCanvas, [box.x + box.width / 2, box.y + box.height / 2])).toEqual([0, 0, 255, 255])
 
-    // a circle has no corners: no other option
+    // a circle has no corners: no radius in its other options
     await selectTool(view, 'circle')
-    expect(view.queryByRole('button', { name: MORE_OPTIONS })).toBeNull()
+    await inMoreOptions(view, async () => {
+      expect(view.queryByRole('button', { name: 'Arrondi des angles' })).toBeNull()
+    })
   }
 }

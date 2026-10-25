@@ -58,7 +58,11 @@ describe('addShapes', () => {
       lineWidth: 1,
       lineDash: 0,
       lineJoin: 'round',
-      cornerRadius: 0
+      cornerRadius: 0,
+      fillPattern: 'solid',
+      fillGradient: 'none',
+      fillColor2: 'white',
+      fillGradientAngle: 0
     })
     expect(getShape(store, ids[1]!).style?.strokeColor).toBe('red')
     expect(store.getEditorState().history.canUndo).toBe(true)

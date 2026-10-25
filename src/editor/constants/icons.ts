@@ -74,6 +74,20 @@ export const arrowStartIcon = '<svg><path d="M18 9.25H9V10.75H18ZM2 10 10 5.5V14
 export const arrowEndIcon = '<svg><path d="M2 9.25H11V10.75H2ZM18 10 10 5.5V14.5Z"/></svg>'
 export const arrowSizeIcon = '<svg><path d="M2 10 7 7V13ZM18 10 9 4.5V15.5Z"/></svg>'
 
+/** A square, and lines at 45° across it, shared by the icons and the options of the fills */
+export const FILL_SQUARE_PATH = 'M3 3H17V17H3Z'
+export const HATCH_PATH = 'M3 10 10 3M3 17 17 3M10 17 17 10'
+
+/** Opacities of the bands of a gradient, from its first color to its second one, and the bands across a square */
+export const GRADIENT_OPACITIES = [1, 0.7, 0.45, 0.2]
+export const GRADIENT_BANDS = GRADIENT_OPACITIES.map((opacity, index) => ({ opacity, path: `M${3 + index * 3.5} 3h3.5V17h-3.5Z` }))
+
+/** A hatched square, a square fading from left to right, and an angle */
+export const fillPatternIcon = `<svg><path fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" d="${FILL_SQUARE_PATH}${HATCH_PATH}"/></svg>`
+export const fillGradientIcon = `<svg>${GRADIENT_BANDS.map(({ opacity, path }) => `<path opacity="${opacity}" d="${path}"/>`).join('')}</svg>`
+export const fillGradientAngleIcon =
+  '<svg><path fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" d="M3 16H17M3 16 13 4M9 16A6 6 0 0 0 6.84 11.39"/></svg>'
+
 export const settingsIcon =
   '<svg><path d="M2.5 15.833V14.083H7.667V15.833ZM2.5 5.917V4.167H10.771V5.917ZM9.208 17.5V12.438H10.958V14.083H17.5V15.833H10.958V17.5ZM5.917 12.542V10.875H2.5V9.125H5.917V7.479H7.667V12.542ZM9.208 10.875V9.125H17.5V10.875ZM12.333 7.562V2.5H14.083V4.167H17.5V5.917H14.083V7.562Z"/></svg>'
 

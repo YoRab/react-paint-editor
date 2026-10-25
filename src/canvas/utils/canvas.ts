@@ -53,21 +53,6 @@ export const transformCanvas = (ctx: CanvasRenderingContext2D, settings: UtilsSe
 
 export const isVisibleColor = (color: string | undefined) => color !== undefined && color !== 'transparent'
 
-export const drawPathWithFillAndStroke = (
-  ctx: CanvasRenderingContext2D,
-  path: Path2D,
-  style?: Pick<StyleShape, 'fillColor' | 'strokeColor'>
-): void => {
-  if (ctx.globalAlpha === 0) return
-
-  if (style?.fillColor !== 'transparent') {
-    ctx.fill(path)
-  }
-  if (style?.strokeColor !== 'transparent') {
-    ctx.stroke(path)
-  }
-}
-
 /** Size of a canvas showing the whole drawing, scaled to the width it is displayed at */
 export const getScaledCanvasSize = (displayWidth: number, width: number, height: number): CanvasSize => ({
   realWidth: width,

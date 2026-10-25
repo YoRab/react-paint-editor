@@ -949,6 +949,16 @@ const box = paint.getBounds([rectId])`} />
       <Source language='typescript' code={`type StyleShape = {
   // fill of a shape, and background of a text, which fills its selection frame (its box with the selection padding)
   fillColor?: string
+  // fill of a rectangle, a square, a circle, an ellipse, a polygon or a curve: 'solid' by default, or lines drawn inside
+  // the shape, of its fill color: lines at 45°, lines across them, or dots. They grow with the width of the stroke
+  fillPattern?: 'solid' | 'hatch' | 'crossHatch' | 'dots'
+  // gradient of the fill, or of its pattern, from the fill color to fillColor2, in the box of the shape: 'none' by
+  // default, along fillGradientAngle, from the center to the farthest side, or around the center from fillGradientAngle
+  fillGradient?: 'none' | 'linear' | 'radial' | 'conic'
+  // color of the end of the gradient: white by default. A transparent color fades out the other one
+  fillColor2?: string
+  // in degrees, clockwise: 0 by default, from the left to the right
+  fillGradientAngle?: number
   opacity?: number
   strokeColor?: string
   lineWidth?: number
@@ -1035,14 +1045,14 @@ const patch: ShapePatch = { id: 'rect_1', width: 200, style: { fillColor: 'red' 
         Type-safe settings for each tool type. Settings vary by shape type:
       </p>
       <ul>
-        <li><code>ToolsRectSettings</code> - Rectangle settings (includes lineJoin and cornerRadius)</li>
-        <li><code>ToolsSquareSettings</code> - Square settings (includes lineJoin and cornerRadius)</li>
-        <li><code>ToolsCircleSettings</code> - Circle settings</li>
-        <li><code>ToolsEllipseSettings</code> - Ellipse settings</li>
+        <li><code>ToolsRectSettings</code> - Rectangle settings (includes lineJoin, cornerRadius and the fill: fillPattern, fillGradient, fillColor2 and fillGradientAngle)</li>
+        <li><code>ToolsSquareSettings</code> - Square settings (includes lineJoin, cornerRadius and the fill)</li>
+        <li><code>ToolsCircleSettings</code> - Circle settings (includes the fill)</li>
+        <li><code>ToolsEllipseSettings</code> - Ellipse settings (includes the fill)</li>
         <li><code>ToolsLineSettings</code> - Line settings (includes arrowStart, arrowEnd, arrowSize and lineCap)</li>
         <li><code>ToolsBrushSettings</code> - Brush settings (includes lineJoin and lineCap)</li>
-        <li><code>ToolsPolygonSettings</code> - Polygon settings (includes closedPoints, lineJoin, lineCap, cornerRadius, arrowStart, arrowEnd and arrowSize)</li>
-        <li><code>ToolsCurveSettings</code> - Curve settings (includes closedPoints, lineCap, arrowStart, arrowEnd and arrowSize)</li>
+        <li><code>ToolsPolygonSettings</code> - Polygon settings (includes closedPoints, lineJoin, lineCap, cornerRadius, arrowStart, arrowEnd, arrowSize and the fill)</li>
+        <li><code>ToolsCurveSettings</code> - Curve settings (includes closedPoints, lineCap, arrowStart, arrowEnd, arrowSize and the fill)</li>
         <li><code>ToolsTextSettings</code> - Text settings (includes font options, textAlign, lineHeight, fillColor for the background, fontUnderline, fontStrikethrough, outlineColor, outlineWidth, and fontSize: the font size of the new texts, which are as wide as their content, or 150 wide without it. Its max is optional)</li>
         <li><code>ToolsPictureSettings</code> - Picture settings (opacity, and the border: strokeColor, lineWidth and cornerRadius)</li>
         <li><code>ToolsGroupSettings</code> - Group settings</li>

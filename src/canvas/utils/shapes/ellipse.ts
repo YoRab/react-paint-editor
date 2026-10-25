@@ -2,7 +2,7 @@ import type { UtilsSettings } from '@canvas/constants/app'
 import type { SelectionModeResize } from '@canvas/types/Mode'
 import type { DrawableShape, Ellipse, Point, Rect, SelectionType, ShapeEntity } from '@canvas/types/Shapes'
 import type { ToolsSettingsType } from '@canvas/types/tools'
-import { drawPathWithFillAndStroke } from '@canvas/utils/canvas'
+import { drawPathWithFillAndStroke } from '@canvas/utils/fill'
 import { resizeRectSelection } from '@canvas/utils/selection/rectSelection'
 import { createEllipsePath, expandRect, getComputedShapeInfos } from '@canvas/utils/shapes/path'
 import { getToolDefaultStyle } from '@canvas/utils/tools'
@@ -56,7 +56,7 @@ export const createEllipse = (
 }
 
 export const drawEllipse = (ctx: CanvasRenderingContext2D, ellipse: ShapeEntity<'ellipse'>): void => {
-  drawPathWithFillAndStroke(ctx, ellipse.path, ellipse.style)
+  drawPathWithFillAndStroke(ctx, ellipse)
 }
 
 export const resizeEllipse = (

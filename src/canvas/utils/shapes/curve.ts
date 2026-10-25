@@ -2,7 +2,7 @@ import type { UtilsSettings } from '@canvas/constants/app'
 import type { SelectionModeResize } from '@canvas/types/Mode'
 import type { DrawableShape, Point, Rect, ShapeEntity } from '@canvas/types/Shapes'
 import type { ToolsSettingsType } from '@canvas/types/tools'
-import { drawPathWithFillAndStroke } from '@canvas/utils/canvas'
+import { drawPathWithFillAndStroke } from '@canvas/utils/fill'
 import { getPointPositionAfterCanvasTransformation } from '@canvas/utils/intersect'
 import { set } from '@canvas/utils/object'
 import { addCurveArrowHeads, drawArrowHeads, withArrowHeadsOuterBorder } from '@canvas/utils/shapes/arrow'
@@ -105,7 +105,7 @@ export const resizeCurve = (
 }
 
 export const drawCurve = (ctx: CanvasRenderingContext2D, curve: ShapeEntity<'curve'>): void => {
-  drawPathWithFillAndStroke(ctx, curve.path, curve.style)
+  drawPathWithFillAndStroke(ctx, curve)
   drawArrowHeads(ctx, curve.arrows)
 }
 
