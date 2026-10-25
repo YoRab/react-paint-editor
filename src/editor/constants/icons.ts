@@ -84,6 +84,15 @@ export const lineCapIcon = '<svg><path d="M3 7H11A3 3 0 0 1 11 13H3ZM10.25 2.5H1
 
 export const fontSizeIcon = '<svg><path d="M5.5 16V6H2V4H11V6H7.5V16ZM13.625 16V10.75H11V9H18V10.75H15.375V16Z"/></svg>'
 
+export const underlineIcon =
+  '<svg><path d="M4.5 17.5V16H15.5V17.5ZM10 14.5Q7.833 14.5 6.667 13.208Q5.5 11.917 5.5 9.75V3H7.5V9.833Q7.5 11.188 8.135 11.969Q8.771 12.75 10 12.75Q11.229 12.75 11.865 11.969Q12.5 11.188 12.5 9.833V3H14.5V9.75Q14.5 11.917 13.333 13.208Q12.167 14.5 10 14.5Z"/></svg>'
+
+export const strikethroughIcon = '<svg><path d="M8.75 17V12.25H11.25V17ZM2.5 11V9.5H17.5V11ZM8.75 8.25V5.5H4.5V3H15.5V5.5H11.25V8.25Z"/></svg>'
+
+/** A letter drawn by its outline */
+export const textOutlineIcon =
+  '<svg><path fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" d="M3.5 16.5 8.5 3.5H11.5L16.5 16.5H13.5L12.5 13.75H7.5L6.5 16.5ZM8.4 11.25H11.6L10 6.75Z"/></svg>'
+
 /** Lines of a paragraph, for each value of the textAlign setting */
 export const TEXT_ALIGN_PATHS: Record<string, string> = {
   left: 'M3 4H17V5.5H3ZM3 8H12V9.5H3ZM3 12H17V13.5H3ZM3 16H12V17.5H3Z',

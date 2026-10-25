@@ -57,6 +57,7 @@ export type Ellipse = {
 }
 
 export type StyleShape = {
+  /** Fill of a shape, and background of a text, which fills its selection frame: its box with the selection padding */
   fillColor?: string
   opacity?: number
   strokeColor?: string
@@ -82,6 +83,13 @@ export type StyleShape = {
   fontFamily?: string
   fontItalic?: boolean
   fontBold?: boolean
+  /** Lines under and through the lines of a text, of its color */
+  fontUnderline?: boolean
+  fontStrikethrough?: boolean
+  /** Outline around the letters of a text, none by default */
+  outlineColor?: string
+  /** Thickness of the outline of a text around its letters, in the units of the drawing: 2 by default */
+  outlineWidth?: number
 }
 
 /** Data of the application attached to a shape: it is not drawn, and is kept in the history, the copies and the exported data */

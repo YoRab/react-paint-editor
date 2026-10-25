@@ -1,4 +1,4 @@
-import { STYLE_FONT_DEFAULT, STYLE_FONT_SIZE_DEFAULT } from '@canvas/constants/rendering'
+import { STYLE_FONT_DEFAULT, STYLE_FONT_SIZE_DEFAULT, STYLE_OUTLINE_WIDTH_DEFAULT } from '@canvas/constants/rendering'
 import type {
   ActionsTool,
   CustomToolInput,
@@ -136,6 +136,25 @@ const SETTINGS_DEFAULT_TEXT: ToolsTextSettings = {
   textAlign: {
     values: ['left', 'center', 'right'],
     default: 'left'
+  },
+  fillColor: SETTINGS_DEFAULT_ELLIPSE.fillColor,
+  fontUnderline: {
+    values: [false, true],
+    default: false
+  },
+  fontStrikethrough: {
+    values: [false, true],
+    default: false
+  },
+  outlineColor: {
+    values: STYLE_COLORS,
+    default: 'transparent'
+  },
+  outlineWidth: {
+    min: 1,
+    max: 10,
+    step: 1,
+    default: STYLE_OUTLINE_WIDTH_DEFAULT
   }
 }
 

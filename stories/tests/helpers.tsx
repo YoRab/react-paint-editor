@@ -4,6 +4,7 @@ import {
   Canvas,
   Editor,
   type EditorOptions,
+  type Point,
   type ReactPaint,
   type ShapeEntity,
   type StateData,
@@ -110,6 +111,15 @@ export function assertNoInternalFields(shape: unknown) {
   expect(shape).not.toHaveProperty('selection')
 }
 
+/** Color of the pixel of the draw canvas at a point of the drawing */
+export const getPixel = (drawCanvas: HTMLCanvasElement, point: Point) => {
+  const position = getPaint().toClientPosition(point)!
+  const rect = drawCanvas.getBoundingClientRect()
+  const x = Math.round(((position.x - rect.left) * drawCanvas.width) / rect.width)
+  const y = Math.round(((position.y - rect.top) * drawCanvas.height) / rect.height)
+  return [...drawCanvas.getContext('2d')!.getImageData(x, y, 1, 1).data]
+}
+
 // ─── Settings panel helpers ────────────────────────────────────────────────────
 
 async function openSettingPanel(view: ReturnType<typeof within>, title: string) {
@@ -156,11 +166,16 @@ export async function setSelectSetting(view: ReturnType<typeof within>, title: s
 
 export const MORE_OPTIONS = "Plus d'options"
 
+/** Changes settings of the panel of the other options, opened then closed. */
+export async function inMoreOptions(view: ReturnType<typeof within>, change: () => Promise<void>) {
+  await openSettingPanel(view, MORE_OPTIONS)
+  await change()
+  await closeSettingPanel(view, MORE_OPTIONS)
+}
+
 /** Changes a range slider of the panel of the other options, opened then closed. */
 export async function setAdvancedRangeSetting(view: ReturnType<typeof within>, title: string, targetValue: number) {
-  await openSettingPanel(view, MORE_OPTIONS)
-  await setRangeSetting(view, title, targetValue)
-  await closeSettingPanel(view, MORE_OPTIONS)
+  await inMoreOptions(view, () => setRangeSetting(view, title, targetValue))
 }
 
 /** Toggles a ToggleField button (e.g. fontBold / fontItalic). */
@@ -185,6 +200,23 @@ export async function addPictureFromUrl(view: ReturnType<typeof within>, src: st
   await userEvent.type(urlInput, src)
   await userEvent.click(await view.findByRole('button', { name: 'Ajouter' }))
   await new Promise(res => setTimeout(res, 500))
+}
+
+// ─── Text helper ────────────────────────────────────────────────────────────────
+
+/** Creates a text with the text tool at a client position of the draw canvas, and returns its edition box, opened by a second click */
+export async function openNewTextBox(
+  view: ReturnType<typeof within>,
+  user: ReturnType<typeof userEvent.setup>,
+  drawCanvas: HTMLElement,
+  x: number,
+  y: number
+) {
+  await user.pointer({ target: drawCanvas, keys: '[MouseLeft]', coords: { x, y } })
+  await wait()
+  await user.pointer({ target: drawCanvas, keys: '[MouseLeft]', coords: { x, y } })
+  await wait(100)
+  return view.findByRole('textbox')
 }
 
 // ─── Context menu helper ────────────────────────────────────────────────────────

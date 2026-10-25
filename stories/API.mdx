@@ -948,6 +948,7 @@ const box = paint.getBounds([rectId])`} />
       <h3>StyleShape</h3>
       <p>Styling properties for shapes.</p>
       <Source language='typescript' code={`type StyleShape = {
+  // fill of a shape, and background of a text, which fills its selection frame (its box with the selection padding)
   fillColor?: string
   opacity?: number
   strokeColor?: string
@@ -968,6 +969,12 @@ const box = paint.getBounds([rectId])`} />
   fontFamily?: string
   fontItalic?: boolean
   fontBold?: boolean
+  // lines under and through the lines of a text, of its color
+  fontUnderline?: boolean
+  fontStrikethrough?: boolean
+  // outline around the letters of a text, none by default, and its thickness around them in the units of the drawing: 2 by default
+  outlineColor?: string
+  outlineWidth?: number
 }`} />
 
       <h3>StateData</h3>
@@ -1027,7 +1034,7 @@ const patch: ShapePatch = { id: 'rect_1', width: 200, style: { fillColor: 'red' 
         <li><code>ToolsBrushSettings</code> - Brush settings (includes lineJoin and lineCap)</li>
         <li><code>ToolsPolygonSettings</code> - Polygon settings (includes closedPoints, lineJoin, lineCap and cornerRadius)</li>
         <li><code>ToolsCurveSettings</code> - Curve settings (includes closedPoints and lineCap)</li>
-        <li><code>ToolsTextSettings</code> - Text settings (includes font options, textAlign, and fontSize: the font size of the new texts, which are as wide as their content, or 150 wide without it. Its max is optional)</li>
+        <li><code>ToolsTextSettings</code> - Text settings (includes font options, textAlign, fillColor for the background, fontUnderline, fontStrikethrough, outlineColor, outlineWidth, and fontSize: the font size of the new texts, which are as wide as their content, or 150 wide without it. Its max is optional)</li>
         <li><code>ToolsPictureSettings</code> - Picture settings (opacity, and the border: strokeColor, lineWidth and cornerRadius)</li>
         <li><code>ToolsTriangleSettings</code> - Triangle settings</li>
         <li><code>ToolsGroupSettings</code> - Group settings</li>

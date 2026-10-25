@@ -196,6 +196,35 @@ export type SettingsFont = {
   }
 }
 
+export type SettingsTextDecoration = {
+  fontUnderline: {
+    values: boolean[]
+    default: boolean
+    hidden?: boolean
+  }
+  fontStrikethrough: {
+    values: boolean[]
+    default: boolean
+    hidden?: boolean
+  }
+}
+
+/** Outline around the letters of a text */
+export type SettingsTextOutline = {
+  outlineColor: {
+    values: string[]
+    default: string
+    hidden?: boolean
+  }
+  outlineWidth: {
+    min: number
+    max: number
+    step: number
+    default: number
+    hidden?: boolean
+  }
+}
+
 export type SettingsTextAlign = {
   textAlign: {
     values: TextAlign[]
@@ -236,7 +265,10 @@ export type ToolsEllipseSettings = SettingsStrokeColor & SettingsFillColor & Set
 
 export type ToolsCircleSettings = ToolsEllipseSettings
 
-export type ToolsTextSettings = SettingsOpacity & SettingsStrokeColor & SettingsFont & Partial<SettingsFontSize & SettingsTextAlign>
+export type ToolsTextSettings = SettingsOpacity &
+  SettingsStrokeColor &
+  SettingsFont &
+  Partial<SettingsFontSize & SettingsTextAlign & SettingsFillColor & SettingsTextDecoration & SettingsTextOutline>
 export type ToolsLineSettings = SettingsOpacity &
   SettingsStrokeColor &
   SettingsLineWidth &

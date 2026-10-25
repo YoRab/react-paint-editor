@@ -69,10 +69,11 @@ export const Responsive: Story = {
 
     // =====================================================================
     // Step 3: Default viewport — settings bar
-    // 7 settings (strokeColor, fontFamily, fontSize, fontBold, fontItalic, textAlign, opacity) + 1 delete = 8
+    // 9 settings (strokeColor, fillColor, fontFamily, fontSize, fontBold, fontItalic, fontUnderline, textAlign, opacity)
+    // + "Plus d'options" (fontStrikethrough, outlineColor, outlineWidth) + 1 delete = 11
     // =====================================================================
     const defaultSettingsButtons = canvasElement.querySelectorAll('.react-paint-editor-settings-shrinkable button')
-    expect(defaultSettingsButtons.length).toBe(8)
+    expect(defaultSettingsButtons.length).toBe(11)
 
     // =====================================================================
     // Step 4: Shrink the wrapper to 260px — triggers ResizeObserver
@@ -115,15 +116,16 @@ export const Responsive: Story = {
     expect(narrowSettingsButtons.length).toBe(2)
 
     // =====================================================================
-    // Step 9: Open settings modal — assert 7 settings buttons
-    // (strokeColor, fontFamily, fontSize, fontBold, fontItalic, textAlign, opacity)
+    // Step 9: Open settings modal — assert 12 settings buttons, the other options included
+    // (strokeColor, fillColor, fontFamily, fontSize, fontBold, fontItalic, fontUnderline, fontStrikethrough, textAlign,
+    // outlineColor, outlineWidth, opacity)
     // =====================================================================
     await userEvent.click(await view.findByRole('button', { name: 'Toggle settings' }))
     await new Promise(res => setTimeout(res, 100))
 
     const settingsModal = canvasElement.querySelector('.react-paint-editor-settings-modal')
     expect(settingsModal).not.toBeNull()
-    expect(settingsModal!.querySelectorAll('button').length).toBe(7)
+    expect(settingsModal!.querySelectorAll('button').length).toBe(12)
 
     // =====================================================================
     // Step 10: Close settings modal by clicking the mask

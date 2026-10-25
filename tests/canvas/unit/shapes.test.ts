@@ -53,7 +53,12 @@ describe('createShape', () => {
       fontFamily: 'serif',
       fontBold: true,
       fontItalic: false,
-      textAlign: 'left'
+      textAlign: 'left',
+      fillColor: 'transparent',
+      fontUnderline: false,
+      fontStrikethrough: false,
+      outlineColor: 'transparent',
+      outlineWidth: 2
     })
   })
 })
@@ -65,6 +70,14 @@ describe('isStyleFieldOfShape', () => {
     expect(isStyleFieldOfShape('picture', 'fontItalic')).toBe(false)
     expect(isStyleFieldOfShape('line', 'strokeColor')).toBe(true)
     expect(isStyleFieldOfShape('text', 'opacity')).toBe(true)
+  })
+
+  it('applies the decorations and the outline to the texts only, and the background of a text is its fill', () => {
+    expect(isStyleFieldOfShape('text', 'fontUnderline')).toBe(true)
+    expect(isStyleFieldOfShape('rect', 'fontStrikethrough')).toBe(false)
+    expect(isStyleFieldOfShape('line', 'outlineColor')).toBe(false)
+    expect(isStyleFieldOfShape('text', 'outlineWidth')).toBe(true)
+    expect(isStyleFieldOfShape('text', 'fillColor')).toBe(true)
   })
 
   it('applies the joins to the shapes with corners, and the caps to the shapes with ends', () => {

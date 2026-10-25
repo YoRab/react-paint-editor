@@ -4,6 +4,7 @@ import {
   assertNoInternalFields,
   getCurrentDataRef,
   getPaint,
+  openNewTextBox,
   ReactPaintWrapper,
   selectTool,
   setNumberSetting,
@@ -36,13 +37,9 @@ export const TextOptions: Story = {
     const rect = drawCanvas.getBoundingClientRect()
     const cx = rect.left + rect.width / 2
     const cy = rect.top + rect.height / 2
-    await user.pointer({ target: drawCanvas, keys: '[MouseLeft]', coords: { x: cx, y: cy } })
-    await wait()
-    await user.pointer({ target: drawCanvas, keys: '[MouseLeft]', coords: { x: cx, y: cy } })
-    await wait(100)
 
     // the edition box aligns its lines like the canvas
-    const textbox = await view.findByRole('textbox')
+    const textbox = await openNewTextBox(view, user, drawCanvas, cx, cy)
     expect(textbox.style.textAlign).toBe('center')
     await userEvent.clear(textbox)
     await userEvent.type(textbox, 'Hello')

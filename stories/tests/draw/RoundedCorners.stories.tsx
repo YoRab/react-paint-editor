@@ -5,7 +5,7 @@ import {
   addPictureFromUrl,
   assertNoInternalFields,
   getCurrentDataRef,
-  getPaint,
+  getPixel,
   MORE_OPTIONS,
   ReactPaintWrapper,
   SVG_DATA_URI,
@@ -27,15 +27,6 @@ const meta = {
 
 export default meta
 type Story = StoryObj<typeof meta>
-
-/** Color of the pixel of the draw canvas at a point of the drawing */
-const getPixel = (drawCanvas: HTMLCanvasElement, point: Point) => {
-  const position = getPaint().toClientPosition(point)!
-  const rect = drawCanvas.getBoundingClientRect()
-  const x = Math.round(((position.x - rect.left) * drawCanvas.width) / rect.width)
-  const y = Math.round(((position.y - rect.top) * drawCanvas.height) / rect.height)
-  return [...drawCanvas.getContext('2d')!.getImageData(x, y, 1, 1).data]
-}
 
 /**
  * The corners of the rectangles, of the polygons and of the pictures are rounded in the panel of the other options, and a

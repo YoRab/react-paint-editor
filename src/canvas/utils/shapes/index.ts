@@ -25,7 +25,16 @@ import { expandRect, getStrokeMargin } from './path'
 import { drawPicture, hasPictureBorder, refreshPicture, resizePicture, resizePictureInGroup } from './picture'
 import { createPolygon, drawPolygon, refreshPolygon, resizePolygon } from './polygon'
 import { createRectangle, drawRect, refreshRect, resizeRect, resizeRectInGroup } from './rectangle'
-import { createText, drawText, fitTextFontSize, isFontStyleField, refreshText, resizeText, resizeTextInGroup } from './text'
+import {
+  createText,
+  drawText,
+  fitTextFontSize,
+  isFontStyleField,
+  isTextPaintedSeveralTimes,
+  refreshText,
+  resizeText,
+  resizeTextInGroup
+} from './text'
 
 export const createShape = (
   ctx: CanvasRenderingContext2D,
@@ -93,12 +102,12 @@ const drawShapeByType = (ctx: CanvasRenderingContext2D, shape: ShapeEntity): voi
 /**
  * Whether the opacity of the shape must be applied to its drawing as a whole, on a layer: drawn with the opacity, the
  * overlaps would be darker. It is the case of several operations which overlap, like a fill and a stroke, and of a stroke
- * thinner than a pixel, drawn segment by segment, or an image and its border. A single operation (a stroke, even of
- * several lines, a fill, an image) is drawn directly
+ * thinner than a pixel, drawn segment by segment, an image and its border, or the lines of a text and its background, its
+ * outline or its decorations. A single operation (a stroke, even of several lines, a fill, an image) is drawn directly
  */
 const needsLayer = (shape: ShapeEntity, scaleRatio: number): boolean => {
   if (shape.type === 'picture') return hasPictureBorder(shape)
-  if (shape.type === 'text') return shape.value.length > 1
+  if (shape.type === 'text') return isTextPaintedSeveralTimes(shape)
   // an undefined stroke color is drawn with the default color
   const hasStroke = shape.style?.strokeColor !== 'transparent'
   if (hasStroke && (shape.style?.lineWidth ?? SELECTION_DEFAULT_WIDTH) * scaleRatio <= 1) return true
@@ -142,7 +151,8 @@ const getLayerContext = (width: number, height: number, canvas: HTMLCanvasElemen
 
 /**
  * Margin around the outer borders of a shape, in the units of the drawing: the arrows of a line and the glyphs of a text
- * go beyond them, and the outer borders of a curve leave out its stroke. The outer borders of the other shapes hold their stroke
+ * go beyond them, and the outer borders of a curve leave out its stroke. The outer borders of the other shapes hold their
+ * stroke, and the ones of a text the outline of its letters
  */
 const getLayerMargin = (shape: ShapeEntity) => {
   if (shape.type === 'text') return shape.fontSize / 4

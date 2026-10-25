@@ -88,7 +88,12 @@ describe('getToolDefaultStyle', () => {
       fontFamily: 'serif',
       fontBold: false,
       fontItalic: false,
-      textAlign: 'left'
+      textAlign: 'left',
+      fillColor: 'transparent',
+      fontUnderline: false,
+      fontStrikethrough: false,
+      outlineColor: 'transparent',
+      outlineWidth: 2
     })
   })
 

@@ -30,7 +30,10 @@ import {
   opacityIcon,
   polygonIcon,
   settingsIcon,
-  textAlignIcon
+  strikethroughIcon,
+  textAlignIcon,
+  textOutlineIcon,
+  underlineIcon
 } from '@editor/constants/icons'
 import { uniqueId } from '@editor/utils/util'
 import type React from 'react'
@@ -101,7 +104,11 @@ const SETTING_FIELDS: SettingField[] = [
   { field: 'fontSize', kind: 'number', title: 'Taille du texte', icon: fontSizeIcon, unity: 'px', ofShapes: true },
   { field: 'fontBold', kind: 'toggle', title: 'Gras', icon: boldIcon },
   { field: 'fontItalic', kind: 'toggle', title: 'Italique', icon: italicIcon },
+  { field: 'fontUnderline', kind: 'toggle', title: 'Souligné', icon: underlineIcon },
+  { field: 'fontStrikethrough', kind: 'toggle', title: 'Barré', icon: strikethroughIcon, advanced: true },
   { field: 'textAlign', kind: 'select', title: 'Alignement du texte', icon: textAlignIcon, option: TextAlignOption },
+  { field: 'outlineColor', kind: 'color', title: 'Couleur du contour', mode: 'stroke', advanced: true },
+  { field: 'outlineWidth', kind: 'range', title: 'Epaisseur du contour', icon: textOutlineIcon, unity: 'px', advanced: true },
   { field: 'opacity', kind: 'range', title: 'Opacité', icon: opacityIcon, unity: '%' }
 ]
 

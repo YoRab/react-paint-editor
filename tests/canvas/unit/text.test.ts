@@ -3,7 +3,14 @@ import { DEFAULT_TOOLS } from '@canvas/constants/tools'
 import type { DrawableShape, Point, ShapeEntity, StyleShape, TextAlign, TextShapeInput } from '@canvas/types/Shapes'
 import type { ToolsSettingsType } from '@canvas/types/tools'
 import { refreshShape } from '@canvas/utils/shapes'
-import { calculateTextFontSize, createText as createTextShape, drawText, resizeTextShapeWithNewContent, sizeText } from '@canvas/utils/shapes/text'
+import {
+  calculateTextFontSize,
+  createText as createTextShape,
+  drawText,
+  isTextPaintedSeveralTimes,
+  resizeTextShapeWithNewContent,
+  sizeText
+} from '@canvas/utils/shapes/text'
 import { rotatePoint } from '@canvas/utils/trigo'
 import { describe, expect, it, vi } from 'vitest'
 import { createShape, stubPath2D, UTILS_SETTINGS } from './helpers'
@@ -148,48 +155,135 @@ describe('createText', () => {
 })
 
 describe('drawText', () => {
-  const draw = (textAlign: StyleShape['textAlign'], flipX = false) => {
-    const ctx = { scale: vi.fn(), fillText: vi.fn(), font: '', textAlign: '', textBaseline: '', fillStyle: '', globalAlpha: 1 }
-    const text = createText({
-      x: 10,
-      y: 20,
-      width: 100,
-      height: 20,
-      fontSize: 10,
-      value: ['a', 'b'],
-      flipX,
-      style: { strokeColor: 'red', ...(textAlign ? { textAlign } : {}) }
+  /**
+   * Operations of the drawing of a text 100 × 30 at (10, 20), with lines of 10, on a context measuring 1 em per character.
+   * Its fill style is the fill color of its style, as set before the shape is drawn
+   */
+  const drawCalls = (style: StyleShape, value = ['ab', '', 'abcd'], flips: { flipX?: boolean; flipY?: boolean } = {}) => {
+    const calls: unknown[][] = []
+    const ctx = Object.assign(createContext(), {
+      globalAlpha: 1,
+      textAlign: '',
+      textBaseline: '',
+      lineWidth: 0,
+      lineJoin: '',
+      fillStyle: style.fillColor ?? '',
+      strokeStyle: '',
+      scale: () => {},
+      setLineDash: () => {},
+      fill: () => calls.push(['fill', ctx.fillStyle]),
+      fillRect: (...args: number[]) => calls.push(['fillRect', ctx.fillStyle, ...args]),
+      strokeText: (text: string, x: number, y: number) => calls.push(['strokeText', ctx.strokeStyle, ctx.lineWidth, text, x, y]),
+      fillText: (text: string, x: number, y: number) => calls.push(['fillText', ctx.fillStyle, ctx.textAlign, text, x, y])
     })
+    const text = createText({ x: 10, y: 20, width: 100, height: 30, fontSize: 10, value, style, ...flips })
     drawText(ctx as unknown as CanvasRenderingContext2D, text)
-    return { textAlign: ctx.textAlign, lines: ctx.fillText.mock.calls.map(([, x, y]) => [x, y]) }
+    return calls
   }
 
+  /** Alignment and position of the lines */
+  const drawnLines = (style: StyleShape, flips?: { flipX?: boolean }) =>
+    drawCalls({ strokeColor: 'red', ...style }, ['a', 'b'], flips).map(([, , textAlign, , x, y]) => [textAlign, x, y])
+
   it('draws the lines from the side of their alignment, or from the middle of the box', () => {
-    expect(draw(undefined)).toEqual({
-      textAlign: 'left',
-      lines: [
-        [10, 20],
-        [10, 30]
-      ]
-    })
-    expect(draw('center')).toEqual({
-      textAlign: 'center',
-      lines: [
-        [60, 20],
-        [60, 30]
-      ]
-    })
-    expect(draw('right')).toEqual({
-      textAlign: 'right',
-      lines: [
-        [110, 20],
-        [110, 30]
-      ]
-    })
+    expect(drawnLines({})).toEqual([
+      ['left', 10, 20],
+      ['left', 10, 30]
+    ])
+    expect(drawnLines({ textAlign: 'center' })).toEqual([
+      ['center', 60, 20],
+      ['center', 60, 30]
+    ])
+    expect(drawnLines({ textAlign: 'right' })).toEqual([
+      ['right', 110, 20],
+      ['right', 110, 30]
+    ])
   })
 
   it('aligns the lines of a flipped text in the flipped space, where its box goes from -110 to -10', () => {
-    expect(draw('left', true).lines[0]).toEqual([-110, 20])
-    expect(draw('right', true).lines[0]).toEqual([-10, 20])
+    expect(drawnLines({ textAlign: 'left' }, { flipX: true })[0]).toEqual(['left', -110, 20])
+    expect(drawnLines({ textAlign: 'right' }, { flipX: true })[0]).toEqual(['right', -10, 20])
+  })
+
+  it('fills its background under the letters, even without their color', () => {
+    expect(drawCalls({ strokeColor: 'red', fillColor: 'yellow' }, ['ab'])).toEqual([
+      ['fill', 'yellow'],
+      ['fillText', 'red', 'left', 'ab', 10, 20]
+    ])
+    expect(drawCalls({ strokeColor: 'transparent', fillColor: 'yellow' }, ['ab'])).toEqual([['fill', 'yellow']])
+    expect(drawCalls({ strokeColor: 'red', fillColor: 'transparent' }, ['ab'])).toEqual([['fillText', 'red', 'left', 'ab', 10, 20]])
+  })
+
+  it('strokes the outline of all the lines under their letters, twice as thick: their letters cover its inner half', () => {
+    expect(drawCalls({ strokeColor: 'red', outlineColor: 'white', outlineWidth: 3 }, ['ab', 'c'])).toEqual([
+      ['strokeText', 'white', 6, 'ab', 10, 20],
+      ['strokeText', 'white', 6, 'c', 10, 30],
+      ['fillText', 'red', 'left', 'ab', 10, 20],
+      ['fillText', 'red', 'left', 'c', 10, 30]
+    ])
+    // the outline is 2 thick by default, and draws hollow letters without their color
+    expect(drawCalls({ strokeColor: 'transparent', outlineColor: 'white' }, ['ab'])).toEqual([['strokeText', 'white', 4, 'ab', 10, 20]])
+    expect(drawCalls({ strokeColor: 'red', outlineColor: 'white', outlineWidth: 0 }, ['ab'])).toEqual([['fillText', 'red', 'left', 'ab', 10, 20]])
+  })
+
+  it('draws the lines under and through the letters of the lines which have some, as wide as them on the side of their alignment', () => {
+    const decorations = (style: StyleShape) => drawCalls({ strokeColor: 'red', ...style }).filter(([name]) => name === 'fillRect')
+    const thickness = 10 / 15
+    expect(decorations({ fontUnderline: true })).toEqual([
+      ['fillRect', 'red', 10, 29 - thickness / 2, 20, thickness],
+      ['fillRect', 'red', 10, 49 - thickness / 2, 40, thickness]
+    ])
+    expect(decorations({ fontStrikethrough: true, textAlign: 'right' })).toEqual([
+      ['fillRect', 'red', 90, 25.5 - thickness / 2, 20, thickness],
+      ['fillRect', 'red', 70, 45.5 - thickness / 2, 40, thickness]
+    ])
+    expect(decorations({ fontUnderline: true, fontStrikethrough: true, textAlign: 'center' })).toHaveLength(4)
+    // they have the color of the letters
+    expect(decorations({ strokeColor: 'transparent', fontUnderline: true })).toEqual([])
+  })
+
+  it('narrows the decorations of a line wider than the box, like its letters, and keeps them under the letters of a flipped text', () => {
+    const [underline] = drawCalls({ strokeColor: 'red', fontUnderline: true }, ['abcdefghijklmnop']).filter(([name]) => name === 'fillRect')
+    expect(underline![4]).toBe(100)
+    // the box of the flipped text goes from -50 to -20 in the flipped space
+    const [flippedUnderline] = drawCalls({ strokeColor: 'red', fontUnderline: true }, ['ab'], { flipY: true }).filter(([name]) => name === 'fillRect')
+    expect(flippedUnderline![3]).toBeCloseTo(-50 + 9 - 1 / 3)
+  })
+})
+
+describe('background, outline and decorations of a text', () => {
+  it('makes the text painted several times with several paints, or with several lines of letters', () => {
+    const isPaintedSeveralTimes = (style: StyleShape, value = ['ab']) =>
+      isTextPaintedSeveralTimes(createText({ x: 0, y: 0, width: 100, height: 10, fontSize: 10, value, style }))
+    expect(isPaintedSeveralTimes({ strokeColor: 'red' })).toBe(false)
+    expect(isPaintedSeveralTimes({ strokeColor: 'red', fillColor: 'transparent', outlineColor: 'transparent' })).toBe(false)
+    expect(isPaintedSeveralTimes({ strokeColor: 'red' }, ['a', 'b'])).toBe(true)
+    expect(isPaintedSeveralTimes({ strokeColor: 'red', fillColor: 'yellow' })).toBe(true)
+    expect(isPaintedSeveralTimes({ strokeColor: 'red', outlineColor: 'white' })).toBe(true)
+    expect(isPaintedSeveralTimes({ strokeColor: 'red', fontUnderline: true })).toBe(true)
+    expect(isPaintedSeveralTimes({ strokeColor: 'transparent', fillColor: 'yellow', outlineColor: 'white' })).toBe(true)
+    // a single paint: a background, or the outline of a single line, or lines without letters
+    expect(isPaintedSeveralTimes({ strokeColor: 'transparent', fillColor: 'yellow' }, ['a', 'b'])).toBe(false)
+    expect(isPaintedSeveralTimes({ strokeColor: 'transparent', outlineColor: 'white' })).toBe(false)
+    expect(isPaintedSeveralTimes({ strokeColor: 'transparent', fontStrikethrough: true })).toBe(false)
+  })
+
+  it('fills the selection frame with the background, on which the text is clicked', () => {
+    const rect = vi.spyOn(Path2D.prototype, 'rect')
+    // the selection padding of 5 is in the borders, which the background does not go beyond
+    const text = createText({ x: 0, y: 0, width: 100, height: 50, fontSize: 50, value: ['ab'], style: { fillColor: 'yellow' } })
+    expect(text.computed.borders).toEqual({ x: -5, y: -5, width: 110, height: 60 })
+    expect(rect).toHaveBeenLastCalledWith(-5, -5, 110, 60)
+    expect(text.computed.outerBorders).toEqual(text.computed.borders)
+    createText({ x: 0, y: 0, width: 100, height: 50, fontSize: 50, value: ['ab'], style: {} })
+    expect(rect).toHaveBeenLastCalledWith(0, 0, 100, 50)
+    vi.restoreAllMocks()
+  })
+
+  it('holds the outline of the letters in the outer borders, beyond the selection padding', () => {
+    const outlined = (outlineWidth: number) =>
+      createText({ x: 0, y: 0, width: 100, height: 50, fontSize: 50, value: ['ab'], style: { outlineColor: 'red', outlineWidth } })
+    expect(outlined(8).computed.outerBorders).toEqual({ x: -8, y: -8, width: 116, height: 66 })
+    expect(outlined(3).computed.outerBorders).toEqual(outlined(3).computed.borders)
   })
 })

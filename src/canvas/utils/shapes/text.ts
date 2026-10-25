@@ -1,9 +1,10 @@
 import type { UtilsSettings } from '@canvas/constants/app'
-import { STYLE_FONT_DEFAULT, STYLE_FONT_SIZE_DEFAULT } from '@canvas/constants/rendering'
+import { STYLE_FONT_DEFAULT, STYLE_FONT_SIZE_DEFAULT, STYLE_OUTLINE_WIDTH_DEFAULT } from '@canvas/constants/rendering'
 import { FONT_STYLE_FIELDS } from '@canvas/constants/shapes'
 import type { SelectionModeResize } from '@canvas/types/Mode'
 import type { DrawableShape, Point, Rect, SelectionType, ShapeEntity, StyleShape, Text, TextAlign, TextShapeInput } from '@canvas/types/Shapes'
 import type { ToolsSettingsType } from '@canvas/types/tools'
+import { isVisibleColor } from '@canvas/utils/canvas'
 import { resizeRectSelection } from '@canvas/utils/selection/rectSelection'
 import { getToolDefaultStyle } from '@canvas/utils/tools'
 import { createShapeId } from '@canvas/utils/util'
@@ -17,13 +18,53 @@ const DEFAULT_TEXT_WIDTH = 150
 /** Position of the lines in the box of a text, from its left side (0) to its right side (1), for each alignment */
 const TEXT_ALIGN_POSITIONS: Record<TextAlign, number> = { left: 0, center: 0.5, right: 1 }
 
+/** Positions of the middle of the underline and of the strikethrough from the top of a line, and their thickness, in em */
+const TEXT_UNDERLINE_POSITION = 0.9
+const TEXT_STRIKETHROUGH_POSITION = 0.55
+export const TEXT_DECORATION_THICKNESS = 1 / 15
+
+/** The background of a text fills its selection frame: its box with the selection padding */
+const hasTextBackground = (text: DrawableShape<'text'>) => isVisibleColor(text.style?.fillColor)
+
+/** How far the outline of a text goes around its letters, 0 without outline */
+const getTextOutlineWidth = (text: DrawableShape<'text'>) =>
+  isVisibleColor(text.style?.outlineColor) ? Math.max(0, text.style?.outlineWidth ?? STYLE_OUTLINE_WIDTH_DEFAULT) : 0
+
+/**
+ * What is painted for a text, on the canvas and in its edition box, in this order: its background, the outline of its
+ * letters, its letters, then the lines under and through them. The strokeColor of a text is the color of its letters, and
+ * of these lines
+ */
+export const getTextPaints = (text: DrawableShape<'text'>) => {
+  const letters = isVisibleColor(text.style?.strokeColor)
+  return {
+    background: hasTextBackground(text),
+    outlineWidth: getTextOutlineWidth(text),
+    letters,
+    underline: letters && !!text.style?.fontUnderline,
+    strikethrough: letters && !!text.style?.fontStrikethrough
+  }
+}
+
+/** Whether a text is painted several times: several of its paints, or several lines of letters, which can overlap */
+export const isTextPaintedSeveralTimes = (text: DrawableShape<'text'>) => {
+  const { background, outlineWidth, letters, underline, strikethrough } = getTextPaints(text)
+  const hasGlyphs = letters || outlineWidth > 0
+  return [background, outlineWidth > 0, letters, underline || strikethrough].filter(Boolean).length > 1 || (hasGlyphs && text.value.length > 1)
+}
+
+/** The outer borders of a text hold the outline of its letters, which goes beyond its box */
+const getTextOuterBorder = (text: DrawableShape<'text'>, borders: Rect, settings: Pick<UtilsSettings, 'selectionPadding'>) =>
+  expandRect(borders, Math.max(0, getTextOutlineWidth(text) - settings.selectionPadding))
+
 export const getComputedText = (text: DrawableShape<'text'>, settings: UtilsSettings) => {
-  return getComputedShapeInfos(text, getTextBorder, settings)
+  return getComputedShapeInfos(text, getTextBorder, settings, getTextOuterBorder)
 }
 
 const buildPath = <T extends DrawableShape<'text'>>(shape: T & { id: string }, settings: UtilsSettings): ShapeEntity<'text'> => {
   const computed = getComputedText(shape, settings)
-  const path = createRecPath(shape)
+  // a text is clicked on its box, or on its background
+  const path = createRecPath(hasTextBackground(shape) ? computed.borders : shape)
 
   return {
     ...shape,
@@ -37,6 +78,10 @@ export const refreshText = buildPath
 /** A text without lines, emptied in the edition box, keeps the height of one */
 export const getTextLineCount = (value: string[]) => value.length || 1
 
+/** Font of the canvas for a text */
+const getTextFont = (fontSize: number, fontBold: boolean | undefined, fontItalic: boolean | undefined, fontFamily = STYLE_FONT_DEFAULT) =>
+  `${fontItalic ? 'italic' : ''} ${fontBold ? 'bold' : ''} ${fontSize}px ${fontFamily}`
+
 /** Width of the widest line at the font size, 0 for a text without characters */
 const measureWidestLine = (
   ctx: CanvasRenderingContext2D,
@@ -44,9 +89,9 @@ const measureWidestLine = (
   fontSize: number,
   fontBold: boolean,
   fontItalic: boolean,
-  fontFamily: string | undefined = STYLE_FONT_DEFAULT
+  fontFamily: string | undefined
 ) => {
-  ctx.font = `${fontItalic ? 'italic' : ''} ${fontBold ? 'bold' : ''} ${fontSize}px ${fontFamily}`
+  ctx.font = getTextFont(fontSize, fontBold, fontItalic, fontFamily)
   return Math.max(0, ...text.map((value: string) => ctx.measureText(value).width))
 }
 
@@ -134,21 +179,52 @@ export const createText = (
   )
 }
 
-export const drawText = (ctx: CanvasRenderingContext2D, text: DrawableShape<'text'>): void => {
-  if (ctx.globalAlpha === 0 || !text.style?.strokeColor || text.style.strokeColor === 'transparent') return
-  ctx.scale(text.flipX ? -1 : 1, text.flipY ? -1 : 1)
+/** Draws the paints of a text: its background, the outline of its letters, its letters, then the lines under and through them */
+export const drawText = (ctx: CanvasRenderingContext2D, text: ShapeEntity<'text'>): void => {
+  if (ctx.globalAlpha === 0) return
+  const { style = {} } = text
+  const { background, outlineWidth, letters, underline, strikethrough } = getTextPaints(text)
+  // the path of a text with a background is the background, filled with the fill color of the style of the shape
+  if (background) ctx.fill(text.path)
+  if (!letters && outlineWidth === 0) return
 
-  ctx.font = `${text.style?.fontItalic ? 'italic' : ''} ${text.style?.fontBold ? 'bold' : ''} ${text.fontSize}px ${
-    text.style?.fontFamily ?? STYLE_FONT_DEFAULT
-  }`
-  ctx.textBaseline = 'top'
-  const textAlign = text.style.textAlign ?? 'left'
-  ctx.textAlign = textAlign
-  ctx.fillStyle = text.style.strokeColor
+  ctx.scale(text.flipX ? -1 : 1, text.flipY ? -1 : 1)
   // a flipped text is drawn in the flipped space, where its box starts at -x - width
-  const x = (text.flipX ? -text.x - text.width : text.x) + text.width * TEXT_ALIGN_POSITIONS[textAlign]
+  const boxLeft = text.flipX ? -text.x - text.width : text.x
+  const boxTop = text.flipY ? -text.y - text.height : text.y
+  ctx.font = getTextFont(text.fontSize, style.fontBold, style.fontItalic, style.fontFamily)
+  ctx.textBaseline = 'top'
+  const textAlign = style.textAlign ?? 'left'
+  const alignPosition = TEXT_ALIGN_POSITIONS[textAlign]
+  ctx.textAlign = textAlign
+  const x = boxLeft + text.width * alignPosition
+  const getLineTop = (index: number) => boxTop + index * text.fontSize
+
+  if (outlineWidth > 0) {
+    // the half of the stroke inside the letters is covered by them
+    ctx.strokeStyle = style.outlineColor!
+    ctx.lineWidth = outlineWidth * 2
+    ctx.lineJoin = 'round'
+    ctx.setLineDash([])
+    for (let i = 0; i < text.value.length; i++) ctx.strokeText(text.value[i]!, x, getLineTop(i), text.width)
+  }
+  if (!letters) return
+
+  ctx.fillStyle = style.strokeColor!
+  const decorationPositions: number[] = []
+  if (underline) decorationPositions.push(TEXT_UNDERLINE_POSITION)
+  if (strikethrough) decorationPositions.push(TEXT_STRIKETHROUGH_POSITION)
+  const thickness = text.fontSize * TEXT_DECORATION_THICKNESS
   for (let i = 0; i < text.value.length; i++) {
-    ctx.fillText(text.value[i]!, x, (text.flipY ? -text.y - text.height : text.y) + i * text.fontSize, text.width)
+    const line = text.value[i]!
+    const top = getLineTop(i)
+    ctx.fillText(line, x, top, text.width)
+    if (!decorationPositions.length) continue
+    // the lines are as wide as the letters, which are narrowed to the box when they are wider
+    const width = Math.min(ctx.measureText(line).width, text.width)
+    if (width <= 0) continue
+    const left = boxLeft + (text.width - width) * alignPosition
+    for (const position of decorationPositions) ctx.fillRect(left, top + text.fontSize * position - thickness / 2, width, thickness)
   }
 }
 
