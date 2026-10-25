@@ -151,6 +151,7 @@ const useDrawableCanvas = (store: PaintStore, canvas: HTMLCanvasElement | null) 
         store.addLaserPoint(cursorPosition, false)
         return
       }
+      if (selectionMode.mode === 'eyedropper') return
       if (selectionMode.mode === 'selectionFrame') {
         store.batch(() => {
           store.refreshSelectedShapes(ctx, cursorPosition)
@@ -322,6 +323,12 @@ const useDrawableCanvas = (store: PaintStore, canvas: HTMLCanvasElement | null) 
 
       if (isWheelPressed || state.interaction.modifiers.space || (activeTool.type === 'move' && !isRightClick)) {
         store.setPanStart({ start: cursorPosition, originalOffset: settings.canvasOffset })
+        return
+      }
+
+      // the press only picks a color. A right click cancels the pick, with the context menu
+      if (selectionMode.mode === 'eyedropper') {
+        if (!isRightClick) store.pickColorAt(cursorPosition)
         return
       }
 

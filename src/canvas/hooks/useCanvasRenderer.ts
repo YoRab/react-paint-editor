@@ -10,8 +10,8 @@ import { drawGrid } from '@canvas/utils/grid'
 import { drawLaserTrail, type LaserStyle } from '@canvas/utils/laser'
 import { getSelectedShapes } from '@canvas/utils/selectedShapes'
 import { isIdleSelectionMode } from '@canvas/utils/selection'
-import { drawSelectionFrame, drawShape, drawShapeSelection } from '@canvas/utils/shapes'
-import { clipMask, drawMask, getCurrentView } from '@canvas/utils/zoom'
+import { drawSelectionFrame, drawShapeSelection, drawShapes } from '@canvas/utils/shapes'
+import { clipMask, drawMask } from '@canvas/utils/zoom'
 import type React from 'react'
 import { useEffect, useLayoutEffect, useRef } from 'react'
 
@@ -52,10 +52,7 @@ const renderDrawCanvas = (drawCtx: CanvasRenderingContext2D, shapes: ShapeEntity
   initCanvasContext(drawCtx)
   drawMask(drawCtx, settings)
   drawGrid(drawCtx, settings)
-  const currentView = getCurrentView(settings)
-  for (let i = shapes.length - 1; i >= 0; i--) {
-    drawShape(drawCtx, shapes[i]!, settings, currentView)
-  }
+  drawShapes(drawCtx, shapes, settings)
 }
 
 const renderSelectionCanvas = (

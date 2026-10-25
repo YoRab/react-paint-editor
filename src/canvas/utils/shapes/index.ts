@@ -218,6 +218,12 @@ export const drawShape = (ctx: CanvasRenderingContext2D, shape: ShapeEntity, set
   ctx.restore()
 }
 
+/** Draws the shapes from the background, the first of the list in front, the ones out of the view left out */
+export const drawShapes = (ctx: CanvasRenderingContext2D, shapes: ShapeEntity[], settings: UtilsSettings): void => {
+  const currentView = getCurrentView(settings)
+  for (let i = shapes.length - 1; i >= 0; i--) drawShape(ctx, shapes[i]!, settings, currentView)
+}
+
 export const rotateShape = <T extends ShapeEntity>(shape: T, rotationToApply: number, selectionCenter: Point): T => {
   if (shape.locked) return shape
 

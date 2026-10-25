@@ -182,6 +182,40 @@ describe('actions', () => {
     expect(store.getEditorState().history).toBe(history)
   })
 
+  it('picks a color with the next press, or gives undefined when the pick is cancelled', async () => {
+    const store = createPaintStore()
+    const getMode = () => store.getState().interaction.selectionMode.mode
+
+    // outside of a browser, nothing is drawn
+    const picked = store.actions.pickColor()
+    expect(getMode()).toBe('eyedropper')
+    store.pickColorAt([10, 10])
+    await expect(picked).resolves.toBe('transparent')
+    expect(getMode()).toBe('default')
+
+    // another pick replaces it
+    const replaced = store.actions.pickColor()
+    const next = store.actions.pickColor()
+    await expect(replaced).resolves.toBeUndefined()
+    expect(getMode()).toBe('eyedropper')
+
+    // so does a change of tool, which ends the pick
+    store.actions.selectTool('react-paint-rect')
+    await expect(next).resolves.toBeUndefined()
+    expect(getMode()).toBe('default')
+
+    // and another interaction
+    const cancelled = store.actions.pickColor()
+    store.setSelectionMode({ mode: 'default' })
+    await expect(cancelled).resolves.toBeUndefined()
+  })
+
+  it('picks no color in a canvas which is not interactive', async () => {
+    const store = createPaintStore({ mode: 'viewer' })
+    await expect(store.actions.pickColor()).resolves.toBeUndefined()
+    expect(store.getState().interaction.selectionMode.mode).toBe('default')
+  })
+
   it('updates the settings of a tool', () => {
     const store = createPaintStore()
     store.actions.updateToolSettings('react-paint-rect', 'strokeColor', 'blue')

@@ -250,6 +250,13 @@ export type EditorActions = {
   closeContextMenu: () => void
 
   /**
+   * Picks a color of the drawing with the next press on the canvas, which does nothing else: the promise gives it as
+   * '#rrggbb', as it is drawn there, without the grid nor the transparency, or 'transparent' where no shape is drawn.
+   * It gives undefined when the pick is cancelled: by Escape, a right click, a change of tool, another interaction or pick
+   */
+  pickColor: () => Promise<string | undefined>
+
+  /**
    * Overrides options of useReactPaint. The overrides are kept over the props until resetOptions: objects are merged,
    * arrays (like availableTools) are replaced
    */

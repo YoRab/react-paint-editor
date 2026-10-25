@@ -155,12 +155,16 @@ export async function setColorSetting(view: ReturnType<typeof within>, title: st
   await closeSettingPanel(view, title)
 }
 
+/** Sets the value of an input with the native setter, which React sees on the next 'input' or 'change' event */
+export const setInputValue = (input: HTMLInputElement, value: string) => {
+  Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value')!.set!.call(input, value)
+}
+
 /** Changes a range slider value via native setter (Playwright-safe). */
 export async function setRangeSetting(view: ReturnType<typeof within>, title: string, targetValue: number) {
   await openSettingPanel(view, title)
   const slider = (await view.findByRole('slider')) as HTMLInputElement
-  const nativeSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value')!.set!
-  nativeSetter.call(slider, String(targetValue))
+  setInputValue(slider, String(targetValue))
   slider.dispatchEvent(new Event('input', { bubbles: true }))
   await new Promise(res => setTimeout(res, 0))
   await closeSettingPanel(view, title)

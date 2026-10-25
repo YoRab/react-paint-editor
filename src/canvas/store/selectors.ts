@@ -258,6 +258,7 @@ export const createSelectors = () => {
     const { panStart, hoverMode, modifiers } = state.interaction
     const activeTool = selectActiveTool(state)
     if (panStart) return 'grabbing'
+    if (state.interaction.selectionMode.mode === 'eyedropper') return 'crosshair'
     if (hoverMode.outOfView) return 'default'
     if (hoverMode.mode === 'resize') return 'pointer'
     if (activeTool.type !== 'selection' && activeTool.type !== 'move') return 'crosshair'

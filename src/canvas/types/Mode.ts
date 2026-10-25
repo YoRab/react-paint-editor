@@ -65,6 +65,11 @@ export type SelectionModeLaser = {
   mode: 'laser'
 }
 
+/** A color is picked from the drawing by the next press, for pickColor */
+export type SelectionModeEyedropper = {
+  mode: 'eyedropper'
+}
+
 export type SelectionModeData<AnchorType extends Point | number> =
   | SelectionModeDefault
   | SelectionModeSelectionFrame
@@ -77,6 +82,7 @@ export type SelectionModeData<AnchorType extends Point | number> =
   | SelectionModeContextMenu<AnchorType>
   | SelectionModeEraser
   | SelectionModeLaser
+  | SelectionModeEyedropper
 
 /** The part of the selection under the pointer, or 'default' away from it */
 export type HoverModeData = { outOfView?: boolean } & ({ mode: 'default' } | SelectionHover)

@@ -156,14 +156,16 @@ type SettingsItemsType = {
   setSelectedSettings: React.Dispatch<React.SetStateAction<string | undefined>>
   saveShapes: () => void
   valueChanged: (field: string, value: ToolSettingValue, needHistorySave?: boolean) => void
+  colors: Pick<React.ComponentProps<typeof ColorField>, 'recentColors' | 'addRecentColor' | 'pickColor' | 'isPicking'>
 }
 
-const renderSettingField = (item: SettingField, { settings, style, saveShapes, ...props }: Omit<SettingsItemsType, 'fields'>) => {
+const renderSettingField = (item: SettingField, { settings, style, saveShapes, colors, ...props }: Omit<SettingsItemsType, 'fields'>) => {
   switch (item.kind) {
     case 'color':
       return (
         <ColorField
           {...props}
+          {...colors}
           title={item.title}
           mode={item.mode ?? 'fill'}
           field={item.field}
@@ -254,6 +256,7 @@ type SettingsBarState = {
   selectedFontSize: number | undefined
   selectedShapeIds: string[]
   selectedShapeTool: CustomTool | undefined
+  isPickingColor: boolean
 }
 
 /** Font size of the selected texts, when they all have the same */
@@ -277,7 +280,8 @@ const createSettingsBarSelector = () => {
       selectedStyle: state.selection?.style,
       selectedFontSize: getSelectedFontSize(state.selection),
       selectedShapeIds: state.selectedShapeIds,
-      selectedShapeTool: lastTool.tool
+      selectedShapeTool: lastTool.tool,
+      isPickingColor: state.interaction.mode === 'eyedropper'
     }
   }
 }
@@ -288,6 +292,7 @@ const isSameSettingsBarState = (a: SettingsBarState, b: SettingsBarState) =>
   a.selectedShapeIds === b.selectedShapeIds &&
   a.selectedShapeTool === b.selectedShapeTool &&
   a.selectedFontSize === b.selectedFontSize &&
+  a.isPickingColor === b.isPickingColor &&
   shallowEqual(a.selectedStyle, b.selectedStyle)
 
 type SettingsBarType = {
@@ -297,6 +302,8 @@ type SettingsBarType = {
   toggleLayoutPanel: () => void
   isZoomPanelShown: boolean
   setIsZoomPanelShown: React.Dispatch<React.SetStateAction<boolean>>
+  recentColors: string[]
+  addRecentColor: (color: string) => void
 }
 
 const SettingsBar = ({
@@ -305,12 +312,14 @@ const SettingsBar = ({
   layersManipulation = false,
   toggleLayoutPanel,
   isZoomPanelShown,
-  setIsZoomPanelShown
+  setIsZoomPanelShown,
+  recentColors,
+  addRecentColor
 }: SettingsBarType) => {
   const paint = usePaint()
   const { actions } = paint
   const [selectSettingsBarState] = useState(createSettingsBarSelector)
-  const { width, activeTool, selectedStyle, selectedFontSize, selectedShapeIds, selectedShapeTool } = usePaintState(
+  const { width, activeTool, selectedStyle, selectedFontSize, selectedShapeIds, selectedShapeTool, isPickingColor } = usePaintState(
     paint,
     selectSettingsBarState,
     isSameSettingsBarState
@@ -368,7 +377,8 @@ const SettingsBar = ({
     selectedSettings,
     setSelectedSettings,
     saveShapes: actions.saveShapes,
-    valueChanged: handleShapeStyleChange
+    valueChanged: handleShapeStyleChange,
+    colors: { recentColors, addRecentColor, pickColor: actions.pickColor, isPicking: isPickingColor }
   }
 
   return (

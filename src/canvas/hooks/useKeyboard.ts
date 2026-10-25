@@ -129,8 +129,9 @@ const useKeyboard = (store: PaintStore) => {
         return
       }
 
-      // a stroke of the eraser is cancelled: it removes nothing
-      if (e.key === KeyboardCode.Escape && store.getState().interaction.selectionMode.mode === 'eraser') {
+      // a stroke of the eraser is cancelled: it removes nothing. So is a pick of a color
+      const { mode } = store.getState().interaction.selectionMode
+      if (e.key === KeyboardCode.Escape && (mode === 'eraser' || mode === 'eyedropper')) {
         store.setSelectionMode({ mode: 'default' })
         return
       }

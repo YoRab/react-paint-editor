@@ -29,6 +29,7 @@ import type { Point, SelectionType, ShapeEntity, ShapeInput, ShapePatch, StateDa
 import type { ToolsType } from '@canvas/types/tools'
 import { compact, insertAt, moveItemPosition } from '@canvas/utils/array'
 import { createApproximateTextContext, createDetachedContext, getScaledCanvasSize, getUnscaledCanvasSize } from '@canvas/utils/canvas'
+import { getDrawingColorAt } from '@canvas/utils/colorPicker'
 import { buildDataToExport, getDataChanges } from '@canvas/utils/data'
 import { shallowEqual } from '@canvas/utils/equality'
 import { decodeJson, downloadFile, encodeShapesInString, getCanvasImage, loadPicture } from '@canvas/utils/file'
@@ -265,6 +266,11 @@ export const createPaintStore = (props: UseReactPaintProps = {}) => {
       state = withInteraction(state, { selectionMode: { mode: 'default' } })
     }
 
+    // A pick of a color is cancelled by a change of tool
+    if (mode === 'eyedropper' && previous.tools.activeToolId !== state.tools.activeToolId) {
+      state = withInteraction(state, { selectionMode: { mode: 'default' } })
+    }
+
     // The auto scroll stops with the selection frame
     if (previousMode === 'selectionFrame' && mode !== 'selectionFrame' && !isSamePoint(state.interaction.moveAcceleration, [0, 0])) {
       state = withInteraction(state, { moveAcceleration: [0, 0] })
@@ -349,6 +355,23 @@ export const createPaintStore = (props: UseReactPaintProps = {}) => {
     selectors.selectActiveTool,
     activeTool => emit('toolChanged', activeTool),
     (a, b) => a.id === b.id
+  )
+
+  // --- Color pick ---
+
+  let resolveColorPick: ((color: string | undefined) => void) | undefined
+
+  const endColorPick = (color: string | undefined) => {
+    resolveColorPick?.(color)
+    resolveColorPick = undefined
+  }
+
+  // the pick ends with its mode: without a color when it is left by anything else than a press
+  store.watch(
+    state => state.interaction.selectionMode.mode === 'eyedropper',
+    isPicking => {
+      if (!isPicking) endColorPick(undefined)
+    }
   )
 
   // --- Config ---
@@ -629,6 +652,22 @@ export const createPaintStore = (props: UseReactPaintProps = {}) => {
   /** Starts a stroke of the laser pointer at a point of the drawing, or goes on with the current one */
   const addLaserPoint = (point: Point, isNewStroke: boolean) =>
     update(state => withInteraction(state, { laserTrail: addLaserTrailPoint(state.interaction.laserTrail, point, Date.now(), isNewStroke) }))
+
+  const pickColor = () => {
+    // a pick going on is replaced
+    endColorPick(undefined)
+    if (!selectors.selectIsInteractive(get())) return Promise.resolve(undefined)
+    return new Promise<string | undefined>(resolve => {
+      resolveColorPick = resolve
+      setSelectionMode({ mode: 'eyedropper' })
+    })
+  }
+
+  /** Ends the pick with the color of the drawing at the point */
+  const pickColorAt = (point: Point) => {
+    endColorPick(getDrawingColorAt(get().document.shapes, point, getSettings()))
+    setSelectionMode({ mode: 'default' })
+  }
 
   // --- View ---
 
@@ -1172,6 +1211,7 @@ export const createPaintStore = (props: UseReactPaintProps = {}) => {
       setSelectionMode({ mode: 'default' })
       canvasElement?.focus()
     },
+    pickColor,
 
     setOptions: options => {
       // an option set to undefined is no longer overridden: it comes back to the props
@@ -1256,6 +1296,7 @@ export const createPaintStore = (props: UseReactPaintProps = {}) => {
     setMoveAcceleration,
     setModifiers,
     addLaserPoint,
+    pickColorAt,
     setCanvasSize,
     setTransformation,
     getViewBounds,
