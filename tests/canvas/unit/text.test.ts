@@ -101,7 +101,7 @@ describe('sizeText', () => {
 
 describe('resizeTextShapeWithNewContent', () => {
   const update = (text: ShapeEntity<'text'>, value: string[]) =>
-    refreshShape(resizeTextShapeWithNewContent(createContext(), text, value, UTILS_SETTINGS), UTILS_SETTINGS) as ShapeEntity<'text'>
+    refreshShape(resizeTextShapeWithNewContent(createContext(), text, value), UTILS_SETTINGS) as ShapeEntity<'text'>
 
   it('fits the box of a text to its new content, keeping its top left corner', () => {
     const text = createText({ x: 10, y: 20, width: 50, height: 10, fontSize: 10, value: ['abcde'] })
@@ -249,6 +249,16 @@ describe('drawText', () => {
     const [flippedUnderline] = drawCalls({ strokeColor: 'red', fontUnderline: true }, ['ab'], { flipY: true }).filter(([name]) => name === 'fillRect')
     expect(flippedUnderline![3]).toBeCloseTo(-50 + 9 - 1 / 3)
   })
+
+  it('draws the letters in the middle of their lines, like CSS, and their decorations under them', () => {
+    // lines of 20 for a font size of 10: the letters are 5 below the top of their line
+    expect(drawnLines({ lineHeight: 2 })).toEqual([
+      ['left', 10, 25],
+      ['left', 10, 45]
+    ])
+    const [, underline] = drawCalls({ strokeColor: 'red', fontUnderline: true, lineHeight: 2 }, ['ab'])
+    expect(underline![3]).toBeCloseTo(25 + 9 - 1 / 3)
+  })
 })
 
 describe('background, outline and decorations of a text', () => {
@@ -285,5 +295,48 @@ describe('background, outline and decorations of a text', () => {
       createText({ x: 0, y: 0, width: 100, height: 50, fontSize: 50, value: ['ab'], style: { outlineColor: 'red', outlineWidth } })
     expect(outlined(8).computed.outerBorders).toEqual({ x: -8, y: -8, width: 116, height: 66 })
     expect(outlined(3).computed.outerBorders).toEqual(outlined(3).computed.borders)
+  })
+})
+
+describe('line height of a text', () => {
+  it('makes the box as high as the lines, from its font size, or its font size from its height or its width', () => {
+    const size = (text: Partial<TextShapeInput>) => {
+      const sized = sizeText(createContext(), {
+        type: 'text',
+        x: 0,
+        y: 0,
+        value: ['abc', 'abcde'],
+        style: { lineHeight: 1.5 },
+        ...text
+      } as TextShapeInput)
+      return [sized.fontSize, sized.width, sized.height]
+    }
+    expect(size({ fontSize: 20 })).toEqual([20, 100, 60])
+    expect(size({ height: 60 })).toEqual([20, 100, 60])
+    expect(size({ width: 100 })).toEqual([20, 100, 60])
+    // a line height which is not positive is the default one
+    expect(size({ fontSize: 20, style: { lineHeight: 0 } })).toEqual([20, 100, 40])
+  })
+
+  it('fits the box to new content with the height of the lines', () => {
+    const text = createText({ x: 10, y: 20, width: 50, height: 20, fontSize: 10, value: ['abcde'], style: { lineHeight: 2 } })
+    const updated = resizeTextShapeWithNewContent(createContext(), text, ['abc', 'b'])
+    expect(updated).toMatchObject({ x: 10, y: 20, width: 30, height: 40 })
+  })
+
+  it('holds the letters of the lines lower than the font size in the outer borders', () => {
+    // lines of 25 for a font size of 50: the letters go 12.5 beyond the top and the bottom of the box, padded by 5
+    const text = createText({ x: 0, y: 0, width: 100, height: 25, fontSize: 50, value: ['ab'], style: { lineHeight: 0.5 } })
+    expect(text.computed.outerBorders).toEqual({ x: -5, y: -12.5, width: 110, height: 50 })
+    const outlined = createText({
+      x: 0,
+      y: 0,
+      width: 100,
+      height: 25,
+      fontSize: 50,
+      value: ['ab'],
+      style: { lineHeight: 0.5, outlineColor: 'red', outlineWidth: 8 }
+    })
+    expect(outlined.computed.outerBorders).toEqual({ x: -8, y: -20.5, width: 116, height: 66 })
   })
 })

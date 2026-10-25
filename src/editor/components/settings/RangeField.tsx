@@ -38,7 +38,9 @@ const RangeField = ({
   saveShapes
 }: RangeFieldType) => {
   const indeterminate = value === undefined
-  const displayedValue = indeterminate ? 'N/A' : `${Math.round(value)}${unity}`
+  // the value is shown with the decimals of the step
+  const decimals = String(step).split('.')[1]?.length ?? 0
+  const displayedValue = indeterminate ? 'N/A' : `${+value.toFixed(decimals)}${unity}`
   const [customKey] = useState(uniqueId('settings_'))
   const debouncedSaveChanged = useDebounce(saveShapes)
 

@@ -25,16 +25,7 @@ import { expandRect, getStrokeMargin } from './path'
 import { drawPicture, hasPictureBorder, refreshPicture, resizePicture, resizePictureInGroup } from './picture'
 import { createPolygon, drawPolygon, refreshPolygon, resizePolygon } from './polygon'
 import { createRectangle, drawRect, refreshRect, resizeRect, resizeRectInGroup } from './rectangle'
-import {
-  createText,
-  drawText,
-  fitTextFontSize,
-  isFontStyleField,
-  isTextPaintedSeveralTimes,
-  refreshText,
-  resizeText,
-  resizeTextInGroup
-} from './text'
+import { createText, drawText, fitTextToStyle, isTextPaintedSeveralTimes, refreshText, resizeText, resizeTextInGroup } from './text'
 
 export const createShape = (
   ctx: CanvasRenderingContext2D,
@@ -152,7 +143,7 @@ const getLayerContext = (width: number, height: number, canvas: HTMLCanvasElemen
 /**
  * Margin around the outer borders of a shape, in the units of the drawing: the arrows of a line and the glyphs of a text
  * go beyond them, and the outer borders of a curve leave out its stroke. The outer borders of the other shapes hold their
- * stroke, and the ones of a text the outline of its letters
+ * stroke, and the ones of a text the outline of its letters and the letters of its lines lower than its font size
  */
 const getLayerMargin = (shape: ShapeEntity) => {
   if (shape.type === 'text') return shape.fontSize / 4
@@ -538,14 +529,14 @@ export const isStyleFieldOfShape = (type: ShapeType, field: keyof StyleShape): b
 
 /**
  * Returns the shape with the new style values which apply to its type. The font size of a text is fitted to its width
- * when its font changes: a shape is returned unchanged when no field applies to it.
+ * when its font changes, and its height to its lines when its line height changes: a shape is returned unchanged when no
+ * field applies to it.
  */
 export const updateShapeStyle = (ctx: CanvasRenderingContext2D, shape: ShapeEntity, style: StyleShape, settings: UtilsSettings): ShapeEntity => {
   const fields = (Object.keys(style) as (keyof StyleShape)[]).filter(field => isStyleFieldOfShape(shape.type, field))
   if (!fields.length) return shape
   const newShape = { ...shape, style: { ...shape.style, ...Object.fromEntries(fields.map(field => [field, style[field]])) } }
-  if (newShape.type === 'text' && fields.some(isFontStyleField)) return refreshShape(fitTextFontSize(ctx, newShape), settings)
-  return refreshShape(newShape, settings)
+  return refreshShape(newShape.type === 'text' ? fitTextToStyle(ctx, newShape, fields) : newShape, settings)
 }
 
 export const drawShapeSelection = ({

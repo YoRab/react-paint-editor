@@ -189,6 +189,20 @@ describe('updateShapes', () => {
     expect(getShape<'text'>(store, text!)).toMatchObject({ width: 60, style: { fontBold: true } })
   })
 
+  it('keeps the font size, the width and the top left corner of a text whose line height changes', () => {
+    const store = createPaintStore()
+    const [text] = store.actions.addShapes([{ type: 'text', x: 10, y: 20, value: ['Hi', 'you'], fontSize: 10, style: { lineHeight: 1.5 } }])
+    const { width } = getShape<'text'>(store, text!)
+    expect(getShape<'text'>(store, text!)).toMatchObject({ fontSize: 10, height: 30 })
+    store.actions.updateShapes([{ id: text!, style: { lineHeight: 2 } }])
+    expect(getShape<'text'>(store, text!)).toMatchObject({ x: 10, y: 20, width, fontSize: 10, height: 40 })
+    store.actions.setShapesStyle([text!], { lineHeight: 1 })
+    expect(getShape<'text'>(store, text!)).toMatchObject({ x: 10, y: 20, width, fontSize: 10, height: 20 })
+    // a new height is shared by the lines
+    store.actions.updateShapes([{ id: text!, height: 80, style: { lineHeight: 2 } }])
+    expect(getShape<'text'>(store, text!)).toMatchObject({ fontSize: 20, height: 80 })
+  })
+
   it('updates locked shapes, and ignores unknown ids', async () => {
     const store = await createLoadedStore()
     const [first] = getIds(store)

@@ -89,6 +89,7 @@ describe('getToolDefaultStyle', () => {
       fontBold: false,
       fontItalic: false,
       textAlign: 'left',
+      lineHeight: 1,
       fillColor: 'transparent',
       fontUnderline: false,
       fontStrikethrough: false,

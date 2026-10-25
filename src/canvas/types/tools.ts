@@ -233,6 +233,17 @@ export type SettingsTextAlign = {
   }
 }
 
+/** Height of the lines of a text, in font sizes */
+export type SettingsLineHeight = {
+  lineHeight: {
+    min: number
+    max: number
+    step: number
+    default: number
+    hidden?: boolean
+  }
+}
+
 /** Font size of the new texts, which are as wide as their content. Without it, a new text is 150 wide */
 export type SettingsFontSize = {
   fontSize: {
@@ -268,7 +279,7 @@ export type ToolsCircleSettings = ToolsEllipseSettings
 export type ToolsTextSettings = SettingsOpacity &
   SettingsStrokeColor &
   SettingsFont &
-  Partial<SettingsFontSize & SettingsTextAlign & SettingsFillColor & SettingsTextDecoration & SettingsTextOutline>
+  Partial<SettingsFontSize & SettingsTextAlign & SettingsLineHeight & SettingsFillColor & SettingsTextDecoration & SettingsTextOutline>
 export type ToolsLineSettings = SettingsOpacity &
   SettingsStrokeColor &
   SettingsLineWidth &

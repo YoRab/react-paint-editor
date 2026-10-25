@@ -26,6 +26,7 @@ export const FONT_STYLE_FIELDS: (keyof StyleShape)[] = ['fontFamily', 'fontBold'
 const TEXT_STYLE_FIELDS: (keyof StyleShape)[] = [
   ...FONT_STYLE_FIELDS,
   'textAlign',
+  'lineHeight',
   'fontUnderline',
   'fontStrikethrough',
   'outlineColor',

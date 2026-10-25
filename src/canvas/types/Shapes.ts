@@ -80,6 +80,11 @@ export type StyleShape = {
    * its alignment, or its middle when centered
    */
   textAlign?: TextAlign
+  /**
+   * Height of the lines of a text, in font sizes: 1 by default. Like in CSS, the letters are in the middle of their line,
+   * and the box of the text is as high as its lines. A value which is not positive gives the default one
+   */
+  lineHeight?: number
   fontFamily?: string
   fontItalic?: boolean
   fontBold?: boolean

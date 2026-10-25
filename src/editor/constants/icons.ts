@@ -102,6 +102,10 @@ export const TEXT_ALIGN_PATHS: Record<string, string> = {
 
 export const textAlignIcon = `<svg><path d="${TEXT_ALIGN_PATHS.left}"/></svg>`
 
+/** Lines with an arrow across their height */
+export const lineHeightIcon =
+  '<svg><path d="M2 6.5 4.75 3 7.5 6.5H5.5V13.5H7.5L4.75 17 2 13.5H4V6.5ZM9 4H18V5.5H9ZM9 9.25H18V10.75H9ZM9 14.5H18V16H9Z"/></svg>'
+
 export const moreIcon =
   '<svg><path d="M5 11.75a1.75 1.75 0 1 1 0-3.5a1.75 1.75 0 0 1 0 3.5ZM10 11.75a1.75 1.75 0 1 1 0-3.5a1.75 1.75 0 0 1 0 3.5ZM15 11.75a1.75 1.75 0 1 1 0-3.5a1.75 1.75 0 0 1 0 3.5Z"/></svg>'
 

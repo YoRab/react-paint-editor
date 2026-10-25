@@ -966,6 +966,9 @@ const box = paint.getBounds([rectId])`} />
   // lines of a text in its box: 'left' by default. When its content changes, the box keeps the side of its alignment,
   // or its middle when centered
   textAlign?: 'left' | 'center' | 'right'
+  // height of the lines of a text, in font sizes: 1 by default. Like in CSS, the letters are in the middle of their line,
+  // and the box of the text is as high as its lines
+  lineHeight?: number
   fontFamily?: string
   fontItalic?: boolean
   fontBold?: boolean
@@ -1034,7 +1037,7 @@ const patch: ShapePatch = { id: 'rect_1', width: 200, style: { fillColor: 'red' 
         <li><code>ToolsBrushSettings</code> - Brush settings (includes lineJoin and lineCap)</li>
         <li><code>ToolsPolygonSettings</code> - Polygon settings (includes closedPoints, lineJoin, lineCap and cornerRadius)</li>
         <li><code>ToolsCurveSettings</code> - Curve settings (includes closedPoints and lineCap)</li>
-        <li><code>ToolsTextSettings</code> - Text settings (includes font options, textAlign, fillColor for the background, fontUnderline, fontStrikethrough, outlineColor, outlineWidth, and fontSize: the font size of the new texts, which are as wide as their content, or 150 wide without it. Its max is optional)</li>
+        <li><code>ToolsTextSettings</code> - Text settings (includes font options, textAlign, lineHeight, fillColor for the background, fontUnderline, fontStrikethrough, outlineColor, outlineWidth, and fontSize: the font size of the new texts, which are as wide as their content, or 150 wide without it. Its max is optional)</li>
         <li><code>ToolsPictureSettings</code> - Picture settings (opacity, and the border: strokeColor, lineWidth and cornerRadius)</li>
         <li><code>ToolsTriangleSettings</code> - Triangle settings</li>
         <li><code>ToolsGroupSettings</code> - Group settings</li>

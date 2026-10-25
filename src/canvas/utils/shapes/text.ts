@@ -1,5 +1,5 @@
 import type { UtilsSettings } from '@canvas/constants/app'
-import { STYLE_FONT_DEFAULT, STYLE_FONT_SIZE_DEFAULT, STYLE_OUTLINE_WIDTH_DEFAULT } from '@canvas/constants/rendering'
+import { STYLE_FONT_DEFAULT, STYLE_FONT_SIZE_DEFAULT, STYLE_LINE_HEIGHT_DEFAULT, STYLE_OUTLINE_WIDTH_DEFAULT } from '@canvas/constants/rendering'
 import { FONT_STYLE_FIELDS } from '@canvas/constants/shapes'
 import type { SelectionModeResize } from '@canvas/types/Mode'
 import type { DrawableShape, Point, Rect, SelectionType, ShapeEntity, StyleShape, Text, TextAlign, TextShapeInput } from '@canvas/types/Shapes'
@@ -53,9 +53,38 @@ export const isTextPaintedSeveralTimes = (text: DrawableShape<'text'>) => {
   return [background, outlineWidth > 0, letters, underline || strikethrough].filter(Boolean).length > 1 || (hasGlyphs && text.value.length > 1)
 }
 
-/** The outer borders of a text hold the outline of its letters, which goes beyond its box */
-const getTextOuterBorder = (text: DrawableShape<'text'>, borders: Rect, settings: Pick<UtilsSettings, 'selectionPadding'>) =>
-  expandRect(borders, Math.max(0, getTextOutlineWidth(text) - settings.selectionPadding))
+/** Height of the lines of a text, in font sizes */
+export const getTextLineHeight = (style: StyleShape | undefined) => {
+  const lineHeight = style?.lineHeight
+  return lineHeight !== undefined && lineHeight > 0 ? lineHeight : STYLE_LINE_HEIGHT_DEFAULT
+}
+
+/** Height of a text in font sizes: a text without lines, emptied in the edition box, keeps the height of one */
+export const getTextHeightInFontSizes = (text: { value: string[]; style?: StyleShape | undefined }) =>
+  (text.value.length || 1) * getTextLineHeight(text.style)
+
+/** Distance from the top of a line of a text to the top of its letters, which are in its middle like in CSS: negative under 1 */
+const getTextLettersOffset = (text: DrawableShape<'text'>) => (text.fontSize * (getTextLineHeight(text.style) - 1)) / 2
+
+/**
+ * The outer borders of a text hold the outline of its letters, which goes beyond its box, and the letters of its first and
+ * last lines, which go beyond it with a line height under 1
+ */
+const getTextOuterBorder = (text: DrawableShape<'text'>, borders: Rect, settings: Pick<UtilsSettings, 'selectionPadding'>): Rect => {
+  const outlineWidth = getTextOutlineWidth(text)
+  const lettersOverflow = Math.max(0, -getTextLettersOffset(text))
+  return expandRect(
+    borders,
+    Math.max(0, outlineWidth - settings.selectionPadding),
+    Math.max(0, outlineWidth + lettersOverflow - settings.selectionPadding)
+  )
+}
+
+/** A text with a box as high as its lines at the font size, its own by default */
+const fitTextBoxToLines = <T extends DrawableShape<'text'>>(text: T, fontSize = text.fontSize): T => {
+  const height = fontSize * getTextHeightInFontSizes(text)
+  return { ...text, fontSize, height, ratio: text.width / height }
+}
 
 export const getComputedText = (text: DrawableShape<'text'>, settings: UtilsSettings) => {
   return getComputedShapeInfos(text, getTextBorder, settings, getTextOuterBorder)
@@ -74,9 +103,6 @@ const buildPath = <T extends DrawableShape<'text'>>(shape: T & { id: string }, s
 }
 
 export const refreshText = buildPath
-
-/** A text without lines, emptied in the edition box, keeps the height of one */
-export const getTextLineCount = (value: string[]) => value.length || 1
 
 /** Font of the canvas for a text */
 const getTextFont = (fontSize: number, fontBold: boolean | undefined, fontItalic: boolean | undefined, fontFamily = STYLE_FONT_DEFAULT) =>
@@ -108,7 +134,7 @@ export const calculateTextFontSize = (
   return Number.isFinite(fontSize) && fontSize !== 0 ? fontSize : STYLE_FONT_SIZE_DEFAULT
 }
 
-export const isFontStyleField = (field: keyof StyleShape) => FONT_STYLE_FIELDS.includes(field)
+const isFontStyleField = (field: keyof StyleShape) => FONT_STYLE_FIELDS.includes(field)
 
 export const fitTextFontSize = <T extends DrawableShape<'text'>>(ctx: CanvasRenderingContext2D, text: T): T => {
   const fontSize = calculateTextFontSize(
@@ -119,8 +145,14 @@ export const fitTextFontSize = <T extends DrawableShape<'text'>>(ctx: CanvasRend
     text.style?.fontItalic ?? false,
     text.style?.fontFamily
   )
-  const height = fontSize * getTextLineCount(text.value)
-  return { ...text, fontSize, height, ratio: text.width / height }
+  return fitTextBoxToLines(text, fontSize)
+}
+
+/** Fits the box of a text to the style fields which changed: its font size to its width for a new font, its height to its lines for a new line height */
+export const fitTextToStyle = <T extends DrawableShape<'text'>>(ctx: CanvasRenderingContext2D, text: T, fields: (keyof StyleShape)[]): T => {
+  if (fields.some(isFontStyleField)) return fitTextFontSize(ctx, text)
+  if (fields.includes('lineHeight')) return fitTextHeight(text)
+  return text
 }
 
 /** Completes the size of a text which misses it: from its width, from its font size, or else with the given default font size */
@@ -133,10 +165,10 @@ export const sizeText = <T extends TextShapeInput>(
   if (text.width !== undefined && text.height !== undefined && text.fontSize !== undefined) return text as SizedText
   if (text.width !== undefined && text.fontSize === undefined) return fitTextFontSize(ctx, text as SizedText)
   const { fontBold = false, fontItalic = false, fontFamily } = text.style ?? {}
-  const lines = getTextLineCount(text.value)
-  const fontSize = text.fontSize ?? (text.height !== undefined ? text.height / lines : defaultFontSize)
+  const heightInFontSizes = getTextHeightInFontSizes(text)
+  const fontSize = text.fontSize ?? (text.height !== undefined ? text.height / heightInFontSizes : defaultFontSize)
   const width = text.width ?? calculateTextWidth(ctx, text.value, fontSize, fontBold, fontItalic, fontFamily)
-  const height = text.height ?? fontSize * lines
+  const height = text.height ?? fontSize * heightInFontSizes
   return { ...text, fontSize, width, height, ratio: width / height } as SizedText
 }
 
@@ -198,7 +230,9 @@ export const drawText = (ctx: CanvasRenderingContext2D, text: ShapeEntity<'text'
   const alignPosition = TEXT_ALIGN_POSITIONS[textAlign]
   ctx.textAlign = textAlign
   const x = boxLeft + text.width * alignPosition
-  const getLineTop = (index: number) => boxTop + index * text.fontSize
+  const lineSpacing = text.fontSize * getTextLineHeight(style)
+  const lettersTop = boxTop + getTextLettersOffset(text)
+  const getLineTop = (index: number) => lettersTop + index * lineSpacing
 
   if (outlineWidth > 0) {
     // the half of the stroke inside the letters is covered by them
@@ -332,12 +366,25 @@ const calculateTextWidth = (
   fontFamily?: string
 ) => measureWidestLine(ctx, text, fontSize, fontBold, fontItalic, fontFamily) || 20
 
-export const resizeTextShapeWithNewContent = (
-  ctx: CanvasRenderingContext2D,
-  shape: ShapeEntity<'text'>,
-  newValue: string[],
-  settings: UtilsSettings
-): ShapeEntity<'text'> => {
+/** Center of the box of a text, around which it is turned: its selection frame has the same one */
+const getTextCenter = (text: Rect): Point => [text.x + text.width / 2, text.y + text.height / 2]
+
+/** Moves a text whose box changed so that it keeps the top of the side of its alignment, or the top of its middle */
+const keepTextAnchor = <T extends DrawableShape<'text'>>(shape: DrawableShape<'text'>, resizedShape: T): T => {
+  // the anchor is the opposite one
+  const anchor: Point = [1 - TEXT_ALIGN_POSITIONS[shape.style?.textAlign ?? 'left'], 1]
+  const [oppTrueX, oppTrueY] = getRectOppositeAnchorAbsolutePosition(anchor, getTextCenter(shape), shape)
+  const [newOppTrueX, newOppTrueY] = getRectOppositeAnchorAbsolutePosition(anchor, getTextCenter(resizedShape), resizedShape)
+
+  return {
+    ...resizedShape,
+    x: resizedShape.x - (newOppTrueX - oppTrueX),
+    y: resizedShape.y - (newOppTrueY - oppTrueY)
+  }
+}
+
+/** A text whose content changes keeps its font size and the top of its box, which fits its content */
+export const resizeTextShapeWithNewContent = <T extends DrawableShape<'text'>>(ctx: CanvasRenderingContext2D, shape: T, newValue: string[]): T => {
   const newShape = { ...shape, value: newValue }
   const newWidth = calculateTextWidth(
     ctx,
@@ -347,28 +394,8 @@ export const resizeTextShapeWithNewContent = (
     newShape.style?.fontItalic ?? false,
     newShape.style?.fontFamily
   )
-  const newHeight = newShape.fontSize * getTextLineCount(newShape.value)
-
-  const ratio = newWidth / newHeight
-
-  const resizedShape = {
-    ...newShape,
-    width: newWidth,
-    height: newHeight,
-    ratio
-  }
-
-  const { center: shapeWithNewDimensionsCenter } = getComputedText(resizedShape, settings)
-
-  // the text keeps the top of the side of its alignment, or the top of its middle, the anchor being the opposite one
-  const anchor: Point = [1 - TEXT_ALIGN_POSITIONS[shape.style?.textAlign ?? 'left'], 1]
-  const [oppTrueX, oppTrueY] = getRectOppositeAnchorAbsolutePosition(anchor, shape.computed.center, shape)
-
-  const [newOppTrueX, newOppTrueY] = getRectOppositeAnchorAbsolutePosition(anchor, shapeWithNewDimensionsCenter, resizedShape, [false, false])
-
-  return {
-    ...resizedShape,
-    x: resizedShape.x - (newOppTrueX - oppTrueX),
-    y: resizedShape.y - (newOppTrueY - oppTrueY)
-  }
+  return keepTextAnchor(shape, fitTextBoxToLines({ ...newShape, width: newWidth }))
 }
+
+/** A text whose line height changes keeps its font size, its width and the top of its box: its height follows its lines */
+const fitTextHeight = <T extends DrawableShape<'text'>>(shape: T): T => keepTextAnchor(shape, fitTextBoxToLines(shape))

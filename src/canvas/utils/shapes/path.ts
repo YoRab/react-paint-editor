@@ -288,12 +288,13 @@ export const createTrianglePath = (triangle: DrawableShape<'triangle'>): Path2D 
   return path
 }
 
-export const expandRect = (rect: Rect, selectionPadding: number): Rect => {
+/** Grows a rect by a margin on each side, the vertical one being the horizontal one by default */
+export const expandRect = (rect: Rect, margin: number, marginY = margin): Rect => {
   return {
-    x: rect.x - selectionPadding,
-    y: rect.y - selectionPadding,
-    width: rect.width + selectionPadding * 2,
-    height: rect.height + selectionPadding * 2
+    x: rect.x - margin,
+    y: rect.y - marginY,
+    width: rect.width + margin * 2,
+    height: rect.height + marginY * 2
   }
 }
 

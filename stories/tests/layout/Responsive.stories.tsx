@@ -116,16 +116,16 @@ export const Responsive: Story = {
     expect(narrowSettingsButtons.length).toBe(2)
 
     // =====================================================================
-    // Step 9: Open settings modal — assert 12 settings buttons, the other options included
+    // Step 9: Open settings modal — assert 13 settings buttons, the other options included
     // (strokeColor, fillColor, fontFamily, fontSize, fontBold, fontItalic, fontUnderline, fontStrikethrough, textAlign,
-    // outlineColor, outlineWidth, opacity)
+    // lineHeight, outlineColor, outlineWidth, opacity)
     // =====================================================================
     await userEvent.click(await view.findByRole('button', { name: 'Toggle settings' }))
     await new Promise(res => setTimeout(res, 100))
 
     const settingsModal = canvasElement.querySelector('.react-paint-editor-settings-modal')
     expect(settingsModal).not.toBeNull()
-    expect(settingsModal!.querySelectorAll('button').length).toBe(12)
+    expect(settingsModal!.querySelectorAll('button').length).toBe(13)
 
     // =====================================================================
     // Step 10: Close settings modal by clicking the mask

@@ -54,6 +54,7 @@ describe('createShape', () => {
       fontBold: true,
       fontItalic: false,
       textAlign: 'left',
+      lineHeight: 1,
       fillColor: 'transparent',
       fontUnderline: false,
       fontStrikethrough: false,

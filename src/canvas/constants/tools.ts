@@ -1,4 +1,4 @@
-import { STYLE_FONT_DEFAULT, STYLE_FONT_SIZE_DEFAULT, STYLE_OUTLINE_WIDTH_DEFAULT } from '@canvas/constants/rendering'
+import { STYLE_FONT_DEFAULT, STYLE_FONT_SIZE_DEFAULT, STYLE_LINE_HEIGHT_DEFAULT, STYLE_OUTLINE_WIDTH_DEFAULT } from '@canvas/constants/rendering'
 import type {
   ActionsTool,
   CustomToolInput,
@@ -136,6 +136,12 @@ const SETTINGS_DEFAULT_TEXT: ToolsTextSettings = {
   textAlign: {
     values: ['left', 'center', 'right'],
     default: 'left'
+  },
+  lineHeight: {
+    min: 0.5,
+    max: 3,
+    step: 0.1,
+    default: STYLE_LINE_HEIGHT_DEFAULT
   },
   fillColor: SETTINGS_DEFAULT_ELLIPSE.fillColor,
   fontUnderline: {

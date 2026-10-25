@@ -7,3 +7,4 @@ export const MITER_LIMIT = 4
 export const STYLE_FONT_DEFAULT = 'serif'
 export const STYLE_FONT_SIZE_DEFAULT = 36
 export const STYLE_OUTLINE_WIDTH_DEFAULT = 2
+export const STYLE_LINE_HEIGHT_DEFAULT = 1

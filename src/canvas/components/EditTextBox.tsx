@@ -1,7 +1,7 @@
 import type { UtilsSettings } from '@canvas/constants/app'
 import { STYLE_FONT_DEFAULT } from '@canvas/constants/rendering'
 import type { ShapeEntity } from '@canvas/types/Shapes'
-import { getTextPaints, TEXT_DECORATION_THICKNESS } from '@canvas/utils/shapes/text'
+import { getTextLineHeight, getTextPaints, TEXT_DECORATION_THICKNESS } from '@canvas/utils/shapes/text'
 import { radiansToDegrees, rotatePoint } from '@canvas/utils/trigo'
 import { cssVar } from '@canvas/utils/util'
 import type React from 'react'
@@ -14,7 +14,6 @@ const EDIT_TEXT_BOX_STYLE: CSSProperties = {
   top: 0,
   transformOrigin: 'left top',
   boxSizing: 'border-box',
-  lineHeight: 1,
   width: 'max-content',
   // the outline of the letters is painted under them, like on the canvas. The lines under and through them are as thick as
   // on the canvas, at the positions given by the font, and they cross the letters like on the canvas
@@ -141,6 +140,8 @@ const EditTextBox = ({ disabled = false, shape, defaultValue, updateValue, saveS
         fontWeight: shape.style?.fontBold ? 'bold' : undefined,
         fontStyle: shape.style?.fontItalic ? 'italic' : undefined,
         textAlign: shape.style?.textAlign,
+        // the canvas places the letters in their lines like CSS
+        lineHeight: getTextLineHeight(shape.style),
         // the background fills the box with its padding, like the selection frame on the canvas. A background is required to
         // override the one injected in the contenteditable span elements
         background: background ? shape.style?.fillColor : 'none',

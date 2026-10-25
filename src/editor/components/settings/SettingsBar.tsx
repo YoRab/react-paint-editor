@@ -23,6 +23,7 @@ import {
   italicIcon,
   lineCapIcon,
   lineEndIcon,
+  lineHeightIcon,
   lineJoinIcon,
   lineTypeIcon,
   lineWidthIcon,
@@ -107,6 +108,7 @@ const SETTING_FIELDS: SettingField[] = [
   { field: 'fontUnderline', kind: 'toggle', title: 'Souligné', icon: underlineIcon },
   { field: 'fontStrikethrough', kind: 'toggle', title: 'Barré', icon: strikethroughIcon, advanced: true },
   { field: 'textAlign', kind: 'select', title: 'Alignement du texte', icon: textAlignIcon, option: TextAlignOption },
+  { field: 'lineHeight', kind: 'range', title: 'Interligne', icon: lineHeightIcon, unity: '', advanced: true },
   { field: 'outlineColor', kind: 'color', title: 'Couleur du contour', mode: 'stroke', advanced: true },
   { field: 'outlineWidth', kind: 'range', title: 'Epaisseur du contour', icon: textOutlineIcon, unity: 'px', advanced: true },
   { field: 'opacity', kind: 'range', title: 'Opacité', icon: opacityIcon, unity: '%' }
