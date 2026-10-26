@@ -15,6 +15,5 @@ export const shallowEqual = <T>(a: T, b: T): boolean => {
 
   const keysA = Object.keys(a) as (keyof T)[]
   if (keysA.length !== Object.keys(b).length) return false
-  // biome-ignore lint/suspicious/noPrototypeBuiltins: be compliant with es2020
-  return keysA.every(key => Object.prototype.hasOwnProperty.call(b, key) && Object.is(a[key], b[key]))
+  return keysA.every(key => Object.hasOwn(b, key) && Object.is(a[key], b[key]))
 }

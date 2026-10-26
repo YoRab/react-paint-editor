@@ -2,8 +2,9 @@ import type { UtilsSettings } from '@canvas/constants/app'
 import type { SelectionModeResize } from '@canvas/types/Mode'
 import type { Circle, DrawableShape, Point, Rect, SelectionType, ShapeEntity } from '@canvas/types/Shapes'
 import type { ToolsSettingsType } from '@canvas/types/tools'
-import { drawPathWithFillAndStroke } from '@canvas/utils/canvas'
+import { drawPathWithFillAndStroke } from '@canvas/utils/fill'
 import { resizeRectSelection } from '@canvas/utils/selection/rectSelection'
+import { getToolDefaultStyle } from '@canvas/utils/tools'
 import { createShapeId } from '@canvas/utils/util'
 import { type GroupResizeContext, getPositionWithoutGroupRotation, getShapePositionInNewBorder } from './group'
 import { createCirclePath, expandRect, getComputedShapeInfos } from './path'
@@ -47,20 +48,14 @@ export const createCircle = (
       x: cursorPosition[0],
       y: cursorPosition[1],
       radius: 0,
-      style: {
-        opacity: shape.settings.opacity.default,
-        fillColor: shape.settings.fillColor.default,
-        strokeColor: shape.settings.strokeColor.default,
-        lineWidth: shape.settings.lineWidth.default,
-        lineDash: shape.settings.lineDash.default
-      }
+      style: getToolDefaultStyle(shape)
     },
     settings
   )
 }
 
 export const drawCircle = (ctx: CanvasRenderingContext2D, circle: ShapeEntity<'circle'>): void => {
-  drawPathWithFillAndStroke(ctx, circle.path, circle.style)
+  drawPathWithFillAndStroke(ctx, circle)
 }
 
 export const resizeCircle = (

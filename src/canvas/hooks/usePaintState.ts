@@ -3,8 +3,6 @@ import { useEffect, useMemo, useRef, useSyncExternalStore } from 'react'
 
 const selectAll = (state: EditorState) => state
 
-const isDevelopment = () => typeof process !== 'undefined' && process.env.NODE_ENV !== 'production'
-
 /**
  * Reads the state of a canvas during the render, and renders again only when the selected value changes.
  * Without selector, returns the whole state. A selector building an object or an array needs an equality
@@ -27,7 +25,8 @@ function usePaintState<T>(paint: ReactPaint, selector?: (state: EditorState) => 
       if (memoized && Object.is(memoized.state, state)) return memoized.selection
 
       const selection = select(state)
-      if (isDevelopment() && !hasCheckedSelector.current) {
+      // import.meta.env.DEV is replaced by false at build time: the check is removed from the published bundles.
+      if (import.meta.env.DEV && !hasCheckedSelector.current) {
         hasCheckedSelector.current = true
         if (!isEqual(selection, select(state))) {
           console.warn(

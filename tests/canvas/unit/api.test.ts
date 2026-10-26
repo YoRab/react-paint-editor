@@ -13,7 +13,7 @@ stubPath2D()
 
 const getIds = (store: PaintStore) => store.getState().document.shapes.map(shape => shape.id)
 
-const getShape = <T extends ShapeEntity['type']>(store: PaintStore, id: string) => store.getShape(id) as ShapeEntity<Exclude<T, 'triangle'>>
+const getShape = <T extends ShapeEntity['type']>(store: PaintStore, id: string) => store.getShape(id) as ShapeEntity<T>
 
 const getHistoryLength = (store: PaintStore) => store.getState().document.history.states.length
 
@@ -51,7 +51,19 @@ describe('addShapes', () => {
     const store = createPaintStore()
     const ids = store.actions.addShapes([RECT, { type: 'circle', x: 0, y: 0, radius: 10, style: { strokeColor: 'red' } }])
     expect(getIds(store)).toEqual(ids)
-    expect(getShape(store, ids[0]!).style).toEqual({ strokeColor: 'black', fillColor: 'transparent', opacity: 100, lineWidth: 1, lineDash: 0 })
+    expect(getShape(store, ids[0]!).style).toEqual({
+      strokeColor: 'black',
+      fillColor: 'transparent',
+      opacity: 100,
+      lineWidth: 1,
+      lineDash: 0,
+      lineJoin: 'round',
+      cornerRadius: 0,
+      fillPattern: 'solid',
+      fillGradient: 'none',
+      fillColor2: 'white',
+      fillGradientAngle: 0
+    })
     expect(getShape(store, ids[1]!).style?.strokeColor).toBe('red')
     expect(store.getEditorState().history.canUndo).toBe(true)
 
@@ -86,6 +98,17 @@ describe('addShapes', () => {
     expect(getShape<'text'>(store, byWidth!).fontSize).toBeCloseTo(20)
   })
 
+  it('gives the font size of its tool to a text without size', () => {
+    const store = createPaintStore()
+    store.actions.updateToolSettings('react-paint-text', 'fontSize', 50)
+    const [bySize, byFontSize] = store.actions.addShapes([
+      { type: 'text', x: 0, y: 0, value: ['Hello'] },
+      { type: 'text', x: 0, y: 0, value: ['Hello'], fontSize: 20 }
+    ])
+    expect(getShape<'text'>(store, bySize!)).toMatchObject({ fontSize: 50, width: 5 * 50 * 0.6, height: 50 })
+    expect(getShape<'text'>(store, byFontSize!).fontSize).toBe(20)
+  })
+
   it('gives the default font size to a text without characters, which cannot be fitted to its width', () => {
     const store = createPaintStore()
     const [empty] = store.actions.addShapes([{ type: 'text', x: 0, y: 0, value: [''], width: 100 }])
@@ -104,6 +127,26 @@ describe('addShapes', () => {
     expect(add({ type: 'triangle', points: [] })).toThrow('unknown shape type "triangle"')
     expect(add({ ...RECT, radius: 3 })).toThrow('unknown field "radius" for a rect')
     expect(getIds(store)).toEqual([])
+  })
+
+  it('makes the negative sizes positive, keeping the area the canvas draws', async () => {
+    const store = createPaintStore()
+    const [rect, circle, ellipse] = store.actions.addShapes([
+      { type: 'rect', x: 330, y: 20, width: -140, height: -10 },
+      { type: 'circle', x: 0, y: 0, radius: -30 },
+      { type: 'ellipse', x: 0, y: 0, radiusX: 20, radiusY: -40 }
+    ])
+    expect(getShape<'rect'>(store, rect!)).toMatchObject({ x: 190, y: 10, width: 140, height: 10 })
+    // drawn and found where it is: its box holds the half of the default stroke
+    expect(getShape(store, rect!).computed.boundingBox).toMatchObject({ x: 189.5, width: 141 })
+    expect(getShape<'circle'>(store, circle!).radius).toBe(30)
+    expect(getShape<'ellipse'>(store, ellipse!)).toMatchObject({ radiusX: 20, radiusY: 40 })
+
+    store.actions.updateShapes([{ id: rect!, width: -40 }])
+    expect(getShape<'rect'>(store, rect!)).toMatchObject({ x: 150, width: 40 })
+
+    await store.actions.loadData({ shapes: [{ type: 'square', x: 100, y: 100, width: -50, height: -50 }] })
+    expect(store.getState().document.shapes[0]).toMatchObject({ x: 50, y: 50, width: 50, height: 50 })
   })
 
   it('does not save a step when save is false, and gives the source of the change', () => {
@@ -148,6 +191,20 @@ describe('updateShapes', () => {
     // like in the editor, a new font keeps the width of the text
     store.actions.updateShapes([{ id: text!, style: { fontBold: true } }])
     expect(getShape<'text'>(store, text!)).toMatchObject({ width: 60, style: { fontBold: true } })
+  })
+
+  it('keeps the font size, the width and the top left corner of a text whose line height changes', () => {
+    const store = createPaintStore()
+    const [text] = store.actions.addShapes([{ type: 'text', x: 10, y: 20, value: ['Hi', 'you'], fontSize: 10, style: { lineHeight: 1.5 } }])
+    const { width } = getShape<'text'>(store, text!)
+    expect(getShape<'text'>(store, text!)).toMatchObject({ fontSize: 10, height: 30 })
+    store.actions.updateShapes([{ id: text!, style: { lineHeight: 2 } }])
+    expect(getShape<'text'>(store, text!)).toMatchObject({ x: 10, y: 20, width, fontSize: 10, height: 40 })
+    store.actions.setShapesStyle([text!], { lineHeight: 1 })
+    expect(getShape<'text'>(store, text!)).toMatchObject({ x: 10, y: 20, width, fontSize: 10, height: 20 })
+    // a new height is shared by the lines
+    store.actions.updateShapes([{ id: text!, height: 80, style: { lineHeight: 2 } }])
+    expect(getShape<'text'>(store, text!)).toMatchObject({ fontSize: 20, height: 80 })
   })
 
   it('updates locked shapes, and ignores unknown ids', async () => {
@@ -342,6 +399,20 @@ describe('dedicated actions', () => {
     expect(getShape(store, rect!).style?.fontBold).toBeUndefined()
     const rectTool = store.getEditorState().tools.find(tool => tool.id === 'react-paint-rect')
     expect(rectTool?.type === 'rect' && [rectTool.settings.strokeColor.default, rectTool.settings.lineWidth.default]).toEqual(['red', 4])
+  })
+
+  it('updates shapes and the defaults of their tools, ignoring the fields they have not', () => {
+    const store = createPaintStore()
+    const [rect] = store.actions.addShapes([RECT])
+    store.actions.updateShapes([{ id: rect!, x: 40, style: { strokeColor: 'red' } }], { updateTool: true })
+    expect(getShape(store, rect!)).toMatchObject({ x: 40, style: { strokeColor: 'red' } })
+    const rectTool = store.getEditorState().tools.find(tool => tool.id === 'react-paint-rect')
+    expect(rectTool?.type === 'rect' && rectTool.settings.strokeColor.default).toBe('red')
+    expect(rectTool?.settings).not.toHaveProperty('x')
+
+    store.actions.updateShapes([{ id: rect!, style: { strokeColor: 'blue' } }])
+    const unchangedTool = store.getEditorState().tools.find(tool => tool.id === 'react-paint-rect')
+    expect(unchangedTool?.type === 'rect' && unchangedTool.settings.strokeColor.default).toBe('red')
   })
 
   it('sets the default style of a tool, ignoring the fields it has not', () => {

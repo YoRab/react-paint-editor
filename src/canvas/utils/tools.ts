@@ -1,3 +1,4 @@
+import { TOOL_SHAPE_FIELDS } from '@canvas/constants/shapes'
 import { DEFAULT_TOOLS } from '@canvas/constants/tools'
 import type { DrawableShape, StyleShape } from '@canvas/types/Shapes'
 import type { CustomTool, CustomToolInput } from '@canvas/types/tools'
@@ -24,11 +25,11 @@ export const buildAvailableTools = (tools: RecursivePartial<CustomToolInput>[] |
 export const findShapeTool = (tools: CustomTool[], shape: Pick<DrawableShape, 'toolId' | 'type'>): CustomTool | undefined =>
   tools.find(tool => tool.id === shape.toolId) ?? tools.find(tool => tool.type === shape.type)
 
-/** Style made of the default values of the settings of a tool */
-export const getToolDefaultStyle = (tool: CustomTool | undefined): StyleShape => {
+/** Style made of the default values of the settings of a tool, without the ones giving a field of the shapes */
+export const getToolDefaultStyle = (tool: { settings?: object } | undefined): StyleShape => {
   const style: Record<string, unknown> = {}
   for (const [field, setting] of Object.entries(tool?.settings ?? {})) {
-    if (isRecord(setting) && setting.default !== undefined) style[field] = setting.default
+    if (isRecord(setting) && setting.default !== undefined && !TOOL_SHAPE_FIELDS.includes(field)) style[field] = setting.default
   }
   return style as StyleShape
 }

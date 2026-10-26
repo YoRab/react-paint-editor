@@ -19,12 +19,10 @@ export type Text = Rect & {
   fontSize: number
 }
 
+export type TextAlign = 'left' | 'center' | 'right'
+
 export type Line = {
   points: readonly [Point, Point]
-}
-
-export type Triangle = {
-  points: [Point, Point, Point]
 }
 
 export type Polygon = {
@@ -54,18 +52,87 @@ export type Ellipse = {
   radiusY: number
 }
 
+/**
+ * Head at an end of a line, or of an open polygon or curve, of the color of its stroke: filled, outlined, or a stroke
+ * like an open arrow or a bar across the end. The circles and the bar are centered on the end, the other heads point to it
+ */
+export type ArrowHead = 'none' | 'triangle' | 'triangleOutline' | 'open' | 'circle' | 'circleOutline' | 'diamond' | 'diamondOutline' | 'bar'
+
+/** A head of a shape as drawn: filled with the color of its stroke, or stroked like it without its dashes */
+export type ArrowHeadEntity = {
+  path: Path2D
+  filled: boolean
+}
+
+/**
+ * Fill of a shape: a solid fill, or lines drawn inside the shape, of its fill color: lines at 45°, lines across them, or
+ * dots. Their thickness and their gap grow with the width of the stroke
+ */
+export type FillPattern = 'solid' | 'hatch' | 'crossHatch' | 'dots'
+
+/**
+ * Gradient of the fill of a shape, from its fill color to its second fill color, in its box: along the angle of the
+ * gradient, from the center to the farthest side, or around the center from the angle
+ */
+export type FillGradient = 'none' | 'linear' | 'radial' | 'conic'
+
 export type StyleShape = {
+  /** Fill of a shape, and background of a text, which fills its selection frame: its box with the selection padding */
   fillColor?: string
+  /** Pattern of the fill of a rectangle, a square, a circle, an ellipse, a polygon or a curve: 'solid' by default */
+  fillPattern?: FillPattern
+  /** Gradient of the fill of a rectangle, a square, a circle, an ellipse, a polygon or a curve, or of its pattern: none by default */
+  fillGradient?: FillGradient
+  /** Color of the end of the gradient of the fill: white by default. It fades out when it is transparent */
+  fillColor2?: string
+  /**
+   * Angle of a linear gradient, and start angle of a conic one, in degrees, clockwise: 0 by default, from the left to
+   * the right
+   */
+  fillGradientAngle?: number
   opacity?: number
   strokeColor?: string
   lineWidth?: number
   lineDash?: number
-  lineArrow?: number
+  /** Heads at the first and the last point of a line, or of an open polygon or curve: none by default */
+  arrowStart?: ArrowHead
+  arrowEnd?: ArrowHead
+  /**
+   * Size of the heads, as a multiplier of their default size, which grows with the width of the stroke: 1 by default.
+   * A value which is not positive gives the default one
+   */
+  arrowSize?: number
+  /** Ends of the stroke of a line, a brush, an open polygon or an open curve, and of its dashes: 'round' by default */
   lineCap?: CanvasLineCap
+  /** Corners of the stroke of a rectangle, a square, a polygon or a brush: 'round' by default */
+  lineJoin?: CanvasLineJoin
+  /**
+   * Radius of the corners of a rectangle, a square, a picture or a polygon, in the units of the drawing: 0 by default. It
+   * is drawn as large as the sides allow, at most half of the smallest side of a rectangle, and stays the same when the
+   * shape is resized. The ends of an open polygon stay sharp
+   */
+  cornerRadius?: number
   closedPoints?: number
+  /**
+   * Alignment of the lines of a text in its box: 'left' by default. When its content changes, the box keeps the side of
+   * its alignment, or its middle when centered
+   */
+  textAlign?: TextAlign
+  /**
+   * Height of the lines of a text, in font sizes: 1 by default. Like in CSS, the letters are in the middle of their line,
+   * and the box of the text is as high as its lines. A value which is not positive gives the default one
+   */
+  lineHeight?: number
   fontFamily?: string
   fontItalic?: boolean
   fontBold?: boolean
+  /** Lines under and through the lines of a text, of its color */
+  fontUnderline?: boolean
+  fontStrikethrough?: boolean
+  /** Outline around the letters of a text, none by default */
+  outlineColor?: string
+  /** Thickness of the outline of a text around its letters, in the units of the drawing: 2 by default */
+  outlineWidth?: number
 }
 
 /** Data of the application attached to a shape: it is not drawn, and is kept in the history, the copies and the exported data */
@@ -110,9 +177,6 @@ type GenericDrawableShape = {
   | (Ellipse & {
       type: 'ellipse'
     })
-  | (Triangle & {
-      type: 'triangle'
-    })
   | (Polygon & {
       type: 'polygon'
     })
@@ -136,17 +200,7 @@ export type DrawableShape<T extends ShapeType = ShapeType> = GenericDrawableShap
 
 export type ExportedDrawableShape<T extends ShapeType = ShapeType> = T extends 'picture' ? Omit<DrawableShape<'picture'>, 'img'> : DrawableShape<T>
 
-export type TriangleEntity = DrawableShape<'triangle'> & {
-  path: Path2D
-  computed: {
-    borders: Rect
-    outerBorders: Rect
-    center: Point
-    boundingBox: Rect
-  }
-}
-
-export type ShapeEntity<T extends Exclude<ShapeType, 'triangle'> = Exclude<ShapeType, 'triangle'>> = {
+export type ShapeEntity<T extends ShapeType = ShapeType> = {
   id: string
   computed: {
     borders: Rect
@@ -158,27 +212,28 @@ export type ShapeEntity<T extends Exclude<ShapeType, 'triangle'> = Exclude<Shape
 } & DrawableShape<T> &
   (
     | {
-        type: 'line'
-        arrows?: TriangleEntity[]
+        type: 'line' | 'polygon' | 'curve'
+        /** Heads of the ends of the stroke, which is drawn shorter under them */
+        arrows?: ArrowHeadEntity[]
       }
     | {
-        type: Exclude<ShapeType, 'line' | 'triangle'>
+        type: Exclude<ShapeType, 'line' | 'polygon' | 'curve'>
       }
   )
 
 /** A shape as exported: without the computed data, and with its id */
 export type ExportedShape = ExportedDrawableShape & { id: string }
 
-/** Types of the shapes which can be created and edited: triangles and groups are only built by the canvas */
-export type EditableShapeType = Exclude<ShapeType, 'triangle' | 'group'>
+/** Types of the shapes which can be created and edited: groups are only built by the canvas */
+export type EditableShapeType = Exclude<ShapeType, 'group'>
 
 /** A text can be given without its size: it is computed from its font size, or from its width */
 export type TextShapeInput = Omit<ExportedDrawableShape<'text'>, 'width' | 'height' | 'fontSize'> &
   Partial<Pick<DrawableShape<'text'>, 'width' | 'height' | 'fontSize'>>
 
 /**
- * A shape given by the consumer, to create or to load it. Triangles and groups are refused by addShapes and left out
- * when loading: they are accepted by the type so that data typed as DrawableShape can be given
+ * A shape given by the consumer, to create or to load it. Groups are refused by addShapes and left out when loading:
+ * they are accepted by the type so that data typed as DrawableShape can be given
  */
 export type ShapeInput = ExportedDrawableShape | TextShapeInput
 

@@ -6,16 +6,16 @@ import type React from 'react'
 import { useState } from 'react'
 import './RangeField.css'
 
-type ShapeStyleColorType = {
+export type RangeFieldType = {
   selectedSettings: string | undefined
   setSelectedSettings: React.Dispatch<React.SetStateAction<string | undefined>>
   title?: string
   disabled?: boolean | undefined
   field: string
   icon: string
-  min?: number
-  max?: number
-  step?: number
+  min?: number | undefined
+  max?: number | undefined
+  step?: number | undefined
   unity?: string
   value?: number | undefined
   saveShapes: () => void
@@ -36,9 +36,11 @@ const RangeField = ({
   unity = '',
   valueChanged,
   saveShapes
-}: ShapeStyleColorType) => {
+}: RangeFieldType) => {
   const indeterminate = value === undefined
-  const displayedValue = indeterminate ? 'N/A' : `${Math.round(value)}${unity}`
+  // the value is shown with the decimals of the step
+  const decimals = String(step).split('.')[1]?.length ?? 0
+  const displayedValue = indeterminate ? 'N/A' : `${+value.toFixed(decimals)}${unity}`
   const [customKey] = useState(uniqueId('settings_'))
   const debouncedSaveChanged = useDebounce(saveShapes)
 

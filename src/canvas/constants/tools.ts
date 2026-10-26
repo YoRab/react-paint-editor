@@ -1,8 +1,25 @@
-import { STYLE_FONT_DEFAULT } from '@canvas/constants/rendering'
+import {
+  STYLE_ARROW_SIZE_DEFAULT,
+  STYLE_FILL_COLOR2_DEFAULT,
+  STYLE_FILL_GRADIENT_ANGLE_DEFAULT,
+  STYLE_FONT_DEFAULT,
+  STYLE_FONT_SIZE_DEFAULT,
+  STYLE_LINE_HEIGHT_DEFAULT,
+  STYLE_OUTLINE_WIDTH_DEFAULT
+} from '@canvas/constants/rendering'
+import type { ArrowHead } from '@canvas/types/Shapes'
 import type {
   ActionsTool,
   CustomToolInput,
+  SettingsArrowHeads,
+  SettingsArrowSize,
+  SettingsCornerRadius,
+  SettingsFill,
+  SettingsLineCap,
+  SettingsLineJoin,
   ToolsBrushSettings,
+  ToolsCurveSettings,
+  ToolsEllipseSettings,
   ToolsLineSettings,
   ToolsPictureSettings,
   ToolsPolygonSettings,
@@ -26,14 +43,87 @@ export const MOVE_TOOL: ActionsTool = {
   type: 'move'
 }
 
+/** Removes the shapes it crosses, once released: the locked shapes are kept */
+export const ERASER_TOOL: ActionsTool = {
+  id: `${TOOL_ID_PREFIX}eraser`,
+  type: 'eraser'
+}
+
+/** Draws a trail which fades out, outside of the drawing: to point at something without changing it */
+export const LASER_TOOL: ActionsTool = {
+  id: `${TOOL_ID_PREFIX}laser`,
+  type: 'laser'
+}
+
 export const PICTURE_TOOL_ID = `${TOOL_ID_PREFIX}picture`
 
 const STYLE_COLORS = ['transparent', 'black', 'white', 'red', 'green', 'blue', 'yellow']
-const STYLE_LINE_DASH = [0, 1, 2]
-const STYLE_LINE_WITH_ARROW = [0, 1, 2, 3]
+const STYLE_LINE_DASH = [0, 1, 2, 3, 4]
+const STYLE_ARROW_HEADS: ArrowHead[] = ['none', 'triangle', 'triangleOutline', 'open', 'circle', 'circleOutline', 'diamond', 'diamondOutline', 'bar']
 const STYLE_FONTS = ['arial', 'serif', 'monospace']
 
-export const SETTINGS_DEFAULT_RECT: ToolsRectSettings = {
+const SETTING_LINE_JOIN: SettingsLineJoin = {
+  lineJoin: {
+    values: ['round', 'bevel', 'miter'],
+    default: 'round'
+  }
+}
+
+const SETTING_LINE_CAP: SettingsLineCap = {
+  lineCap: {
+    values: ['round', 'butt', 'square'],
+    default: 'round'
+  }
+}
+
+const SETTING_CORNER_RADIUS: SettingsCornerRadius = {
+  cornerRadius: {
+    min: 0,
+    max: 50,
+    step: 1,
+    default: 0
+  }
+}
+
+const SETTING_ARROWS: SettingsArrowHeads & SettingsArrowSize = {
+  arrowStart: {
+    values: STYLE_ARROW_HEADS,
+    default: 'none'
+  },
+  arrowEnd: {
+    values: STYLE_ARROW_HEADS,
+    default: 'none'
+  },
+  arrowSize: {
+    min: 0.5,
+    max: 3,
+    step: 0.1,
+    default: STYLE_ARROW_SIZE_DEFAULT
+  }
+}
+
+const SETTING_FILL: SettingsFill = {
+  fillPattern: {
+    values: ['solid', 'hatch', 'crossHatch', 'dots'],
+    default: 'solid'
+  },
+  fillGradient: {
+    values: ['none', 'linear', 'radial', 'conic'],
+    default: 'none'
+  },
+  fillColor2: {
+    values: STYLE_COLORS,
+    default: STYLE_FILL_COLOR2_DEFAULT
+  },
+  fillGradientAngle: {
+    min: 0,
+    max: 360,
+    step: 5,
+    default: STYLE_FILL_GRADIENT_ANGLE_DEFAULT
+  }
+}
+
+const SETTINGS_DEFAULT_ELLIPSE: ToolsEllipseSettings = {
   strokeColor: {
     values: STYLE_COLORS,
     default: 'black'
@@ -57,8 +147,11 @@ export const SETTINGS_DEFAULT_RECT: ToolsRectSettings = {
   lineDash: {
     values: STYLE_LINE_DASH,
     default: 0
-  }
+  },
+  ...SETTING_FILL
 }
+
+export const SETTINGS_DEFAULT_RECT: ToolsRectSettings = { ...SETTINGS_DEFAULT_ELLIPSE, ...SETTING_LINE_JOIN, ...SETTING_CORNER_RADIUS }
 
 const SETTINGS_DEFAULT_PICTURE: ToolsPictureSettings = {
   opacity: {
@@ -66,7 +159,13 @@ const SETTINGS_DEFAULT_PICTURE: ToolsPictureSettings = {
     max: 100,
     step: 1,
     default: 100
-  }
+  },
+  strokeColor: {
+    values: STYLE_COLORS,
+    default: 'transparent'
+  },
+  lineWidth: SETTINGS_DEFAULT_ELLIPSE.lineWidth,
+  ...SETTING_CORNER_RADIUS
 }
 
 const SETTINGS_DEFAULT_TEXT: ToolsTextSettings = {
@@ -91,6 +190,40 @@ const SETTINGS_DEFAULT_TEXT: ToolsTextSettings = {
   fontItalic: {
     values: [false, true],
     default: false
+  },
+  fontSize: {
+    min: 1,
+    step: 1,
+    default: STYLE_FONT_SIZE_DEFAULT
+  },
+  textAlign: {
+    values: ['left', 'center', 'right'],
+    default: 'left'
+  },
+  lineHeight: {
+    min: 0.5,
+    max: 3,
+    step: 0.1,
+    default: STYLE_LINE_HEIGHT_DEFAULT
+  },
+  fillColor: SETTINGS_DEFAULT_ELLIPSE.fillColor,
+  fontUnderline: {
+    values: [false, true],
+    default: false
+  },
+  fontStrikethrough: {
+    values: [false, true],
+    default: false
+  },
+  outlineColor: {
+    values: STYLE_COLORS,
+    default: 'transparent'
+  },
+  outlineWidth: {
+    min: 1,
+    max: 10,
+    step: 1,
+    default: STYLE_OUTLINE_WIDTH_DEFAULT
   }
 }
 
@@ -114,7 +247,9 @@ const SETTINGS_DEFAULT_BRUSH: ToolsBrushSettings = {
   lineDash: {
     values: STYLE_LINE_DASH,
     default: 0
-  }
+  },
+  ...SETTING_LINE_JOIN,
+  ...SETTING_LINE_CAP
 }
 
 const SETTINGS_DEFAULT_LINE: ToolsLineSettings = {
@@ -138,13 +273,11 @@ const SETTINGS_DEFAULT_LINE: ToolsLineSettings = {
     values: STYLE_LINE_DASH,
     default: 0
   },
-  lineArrow: {
-    values: STYLE_LINE_WITH_ARROW,
-    default: 0
-  }
+  ...SETTING_ARROWS,
+  ...SETTING_LINE_CAP
 }
 
-const SETTINGS_DEFAULT_POLYGON: ToolsPolygonSettings = {
+const SETTINGS_DEFAULT_CURVE: ToolsCurveSettings = {
   strokeColor: {
     values: STYLE_COLORS,
     default: 'black'
@@ -171,8 +304,13 @@ const SETTINGS_DEFAULT_POLYGON: ToolsPolygonSettings = {
   },
   closedPoints: {
     default: 0
-  }
+  },
+  ...SETTING_ARROWS,
+  ...SETTING_LINE_CAP,
+  ...SETTING_FILL
 }
+
+const SETTINGS_DEFAULT_POLYGON: ToolsPolygonSettings = { ...SETTINGS_DEFAULT_CURVE, ...SETTING_LINE_JOIN, ...SETTING_CORNER_RADIUS }
 
 /**
  * Default drawing tools. They hold the logic needed by the canvas (type and settings) but no visual data:
@@ -182,11 +320,11 @@ export const DEFAULT_TOOLS: CustomToolInput[] = [
   { type: 'brush', id: `${TOOL_ID_PREFIX}brush`, settings: SETTINGS_DEFAULT_BRUSH },
   { type: 'line', id: `${TOOL_ID_PREFIX}line`, settings: SETTINGS_DEFAULT_LINE },
   { type: 'polygon', id: `${TOOL_ID_PREFIX}polygon`, settings: SETTINGS_DEFAULT_POLYGON },
-  { type: 'curve', id: `${TOOL_ID_PREFIX}curve`, settings: SETTINGS_DEFAULT_POLYGON },
+  { type: 'curve', id: `${TOOL_ID_PREFIX}curve`, settings: SETTINGS_DEFAULT_CURVE },
   { type: 'rect', id: `${TOOL_ID_PREFIX}rect`, settings: SETTINGS_DEFAULT_RECT },
   { type: 'square', id: `${TOOL_ID_PREFIX}square`, settings: SETTINGS_DEFAULT_RECT },
-  { type: 'circle', id: `${TOOL_ID_PREFIX}circle`, settings: SETTINGS_DEFAULT_RECT },
-  { type: 'ellipse', id: `${TOOL_ID_PREFIX}ellipse`, settings: SETTINGS_DEFAULT_RECT },
+  { type: 'circle', id: `${TOOL_ID_PREFIX}circle`, settings: SETTINGS_DEFAULT_ELLIPSE },
+  { type: 'ellipse', id: `${TOOL_ID_PREFIX}ellipse`, settings: SETTINGS_DEFAULT_ELLIPSE },
   { type: 'picture', id: PICTURE_TOOL_ID, settings: SETTINGS_DEFAULT_PICTURE },
   { type: 'text', id: `${TOOL_ID_PREFIX}text`, settings: SETTINGS_DEFAULT_TEXT }
 ]

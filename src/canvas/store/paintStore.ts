@@ -1,5 +1,5 @@
 import { DEFAULT_OPTIONS, type OptionalOptions, type UtilsSettings } from '@canvas/constants/app'
-import { SELECTION_TOOL } from '@canvas/constants/tools'
+import { PICTURE_TOOL_ID, SELECTION_TOOL } from '@canvas/constants/tools'
 import { createStore } from '@canvas/store/createStore'
 import { createEventEmitter } from '@canvas/store/eventEmitter'
 import { createSelectors, findSelectableTool, memoizeLast } from '@canvas/store/selectors'
@@ -29,6 +29,7 @@ import type { Point, SelectionType, ShapeEntity, ShapeInput, ShapePatch, StateDa
 import type { ToolsType } from '@canvas/types/tools'
 import { compact, insertAt, moveItemPosition } from '@canvas/utils/array'
 import { createApproximateTextContext, createDetachedContext, getScaledCanvasSize, getUnscaledCanvasSize } from '@canvas/utils/canvas'
+import { getDrawingColorAt } from '@canvas/utils/colorPicker'
 import { buildDataToExport, getDataChanges } from '@canvas/utils/data'
 import { shallowEqual } from '@canvas/utils/equality'
 import { decodeJson, downloadFile, encodeShapesInString, getCanvasImage, loadPicture } from '@canvas/utils/file'
@@ -41,6 +42,7 @@ import {
   findShapeAt,
   findShapesAt
 } from '@canvas/utils/intersect'
+import { addLaserTrailPoint } from '@canvas/utils/laser'
 import { isEqual, isRecord, mergeWith, omitUndefined, replaceArrays, set, withDefaults } from '@canvas/utils/object'
 import { getSelectedShapes } from '@canvas/utils/selectedShapes'
 import { addToSelectedShapes, buildShapesGroup, omitFromSelectedShapes } from '@canvas/utils/selection'
@@ -115,7 +117,8 @@ const createInitialState = (config: PaintConfig): InternalState => ({
     modifiers: { shift: false, alt: false, space: false },
     panStart: undefined,
     moveAcceleration: [0, 0],
-    focus: { component: false, canvas: false }
+    focus: { component: false, canvas: false },
+    laserTrail: []
   }
 })
 
@@ -263,6 +266,11 @@ export const createPaintStore = (props: UseReactPaintProps = {}) => {
       state = withInteraction(state, { selectionMode: { mode: 'default' } })
     }
 
+    // A pick of a color is cancelled by a change of tool
+    if (mode === 'eyedropper' && previous.tools.activeToolId !== state.tools.activeToolId) {
+      state = withInteraction(state, { selectionMode: { mode: 'default' } })
+    }
+
     // The auto scroll stops with the selection frame
     if (previousMode === 'selectionFrame' && mode !== 'selectionFrame' && !isSamePoint(state.interaction.moveAcceleration, [0, 0])) {
       state = withInteraction(state, { moveAcceleration: [0, 0] })
@@ -347,6 +355,23 @@ export const createPaintStore = (props: UseReactPaintProps = {}) => {
     selectors.selectActiveTool,
     activeTool => emit('toolChanged', activeTool),
     (a, b) => a.id === b.id
+  )
+
+  // --- Color pick ---
+
+  let resolveColorPick: ((color: string | undefined) => void) | undefined
+
+  const endColorPick = (color: string | undefined) => {
+    resolveColorPick?.(color)
+    resolveColorPick = undefined
+  }
+
+  // the pick ends with its mode: without a color when it is left by anything else than a press
+  store.watch(
+    state => state.interaction.selectionMode.mode === 'eyedropper',
+    isPicking => {
+      if (!isPicking) endColorPick(undefined)
+    }
   )
 
   // --- Config ---
@@ -623,6 +648,26 @@ export const createPaintStore = (props: UseReactPaintProps = {}) => {
     update(state => withInteraction(state, { modifiers: patchObject(state.interaction.modifiers, patch) }))
 
   const setFocus = (patch: Partial<Focus>) => update(state => withInteraction(state, { focus: patchObject(state.interaction.focus, patch) }))
+
+  /** Starts a stroke of the laser pointer at a point of the drawing, or goes on with the current one */
+  const addLaserPoint = (point: Point, isNewStroke: boolean) =>
+    update(state => withInteraction(state, { laserTrail: addLaserTrailPoint(state.interaction.laserTrail, point, Date.now(), isNewStroke) }))
+
+  const pickColor = () => {
+    // a pick going on is replaced
+    endColorPick(undefined)
+    if (!selectors.selectIsInteractive(get())) return Promise.resolve(undefined)
+    return new Promise<string | undefined>(resolve => {
+      resolveColorPick = resolve
+      setSelectionMode({ mode: 'eyedropper' })
+    })
+  }
+
+  /** Ends the pick with the color of the drawing at the point */
+  const pickColorAt = (point: Point) => {
+    endColorPick(getDrawingColorAt(get().document.shapes, point, getSettings()))
+    setSelectionMode({ mode: 'default' })
+  }
 
   // --- View ---
 
@@ -939,8 +984,19 @@ export const createPaintStore = (props: UseReactPaintProps = {}) => {
     return newShapes.map(shape => shape.id)
   }
 
+  /** The tools of the shapes keep the values of their settings for the next shapes */
+  const keepToolDefaults = (changes: [ShapeEntity, Record<string, unknown>][]) => {
+    const { available } = get().tools
+    update(state =>
+      changes.reduce((newState, [shape, values]) => {
+        const toolId = findShapeTool(available, shape)?.id
+        return toolId ? setToolDefaults(newState, toolId, values) : newState
+      }, state)
+    )
+  }
+
   /** Applies patches of the consumer to the shapes. They are all checked before any change */
-  const patchShapes = (patches: ShapePatch[], options?: ShapesActionOptions) => {
+  const patchShapes = (patches: ShapePatch[], { updateTool = false, ...options }: ShapesActionOptions & { updateTool?: boolean } = {}) => {
     const shapesById = getShapesById()
     assertValidPatches(patches, shapesById)
 
@@ -959,7 +1015,16 @@ export const createPaintStore = (props: UseReactPaintProps = {}) => {
       }
       updatedShapes.set(patch.id, newShape)
     }
-    commitShapes([...updatedShapes.values()], options)
+    batch(() => {
+      commitShapes([...updatedShapes.values()], options)
+      if (!updateTool) return
+      keepToolDefaults(
+        patches.flatMap(({ id, style, ...fields }) => {
+          const shape = shapesById.get(id)
+          return shape ? [[shape, { ...style, ...fields }] as [ShapeEntity, Record<string, unknown>]] : []
+        })
+      )
+    })
     for (const shape of reloadedPictures) loadPictureOf(shape)
   }
 
@@ -1015,10 +1080,7 @@ export const createPaintStore = (props: UseReactPaintProps = {}) => {
       batch(() => {
         const ctx = getMeasureContext()
         changeShapes(ids, (shapes, settings) => shapes.map(shape => updateShapeStyle(ctx, shape, style, settings)), options)
-        if (!updateTool) return
-        const { available } = get().tools
-        const toolIds = new Set(compact(resolveShapes(ids).map(shape => findShapeTool(available, shape)?.id)))
-        update(state => [...toolIds].reduce((newState, toolId) => setToolDefaults(newState, toolId, style), state))
+        if (updateTool) keepToolDefaults(resolveShapes(ids).map(shape => [shape, style]))
       }),
     updateShapesStyle: (ids, field, value, { save = true } = {}) => actions.setShapesStyle(ids, { [field]: value } as StyleShape, { save }),
 
@@ -1073,7 +1135,8 @@ export const createPaintStore = (props: UseReactPaintProps = {}) => {
       })
     },
     addPicture: async (fileOrUrl, { maxWidth = get().config.width, maxHeight = get().config.height, select = true, position } = {}) => {
-      const pictureShape = await createPicture(fileOrUrl, maxWidth, maxHeight, getSettings(), getPictureSrcResolver(), position)
+      const pictureTool = findShapeTool(get().tools.available, { type: 'picture', toolId: PICTURE_TOOL_ID })
+      const pictureShape = await createPicture(fileOrUrl, maxWidth, maxHeight, getSettings(), getPictureSrcResolver(), pictureTool, position)
       insertShapes([pictureShape], { select })
       return pictureShape
     },
@@ -1148,6 +1211,7 @@ export const createPaintStore = (props: UseReactPaintProps = {}) => {
       setSelectionMode({ mode: 'default' })
       canvasElement?.focus()
     },
+    pickColor,
 
     setOptions: options => {
       // an option set to undefined is no longer overridden: it comes back to the props
@@ -1231,6 +1295,8 @@ export const createPaintStore = (props: UseReactPaintProps = {}) => {
     setPanStart,
     setMoveAcceleration,
     setModifiers,
+    addLaserPoint,
+    pickColorAt,
     setCanvasSize,
     setTransformation,
     getViewBounds,

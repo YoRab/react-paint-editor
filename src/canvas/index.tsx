@@ -36,7 +36,10 @@ const Canvas = ({ paint, options, className, style }: CanvasComponentProps) => {
   const view = useSyncExternalStore(store.subscribe, getView, getView)
   const { width, canvasSize, resize } = view
 
-  const { canvasBackgroundColor, canvasSelectionColor, canvasSelectionWidth } = withDefaults(DEFAULT_CANVAS_OPTIONS, options)
+  const { canvasBackgroundColor, canvasSelectionColor, canvasSelectionWidth, canvasLaserColor, canvasLaserWidth } = withDefaults(
+    DEFAULT_CANVAS_OPTIONS,
+    options
+  )
 
   const containerRef = useRef<HTMLDivElement | null>(null)
   // the root of the Canvas is the default scope of the interactions
@@ -96,6 +99,8 @@ const Canvas = ({ paint, options, className, style }: CanvasComponentProps) => {
         backgroundColor={canvasBackgroundColor}
         selectionColor={canvasSelectionColor}
         selectionWidth={canvasSelectionWidth}
+        laserColor={canvasLaserColor}
+        laserWidth={canvasLaserWidth}
       />
     </div>
   )
@@ -109,7 +114,7 @@ export {
   type PictureSrcResolver
 } from '@canvas/constants/app'
 export { GRID_PRESETS } from '@canvas/constants/grid'
-export { DEFAULT_TOOLS, MOVE_TOOL, SELECTION_TOOL } from '@canvas/constants/tools'
+export { DEFAULT_TOOLS, ERASER_TOOL, LASER_TOOL, MOVE_TOOL, SELECTION_TOOL } from '@canvas/constants/tools'
 export { ZOOM_LEVELS } from '@canvas/constants/zoom'
 export { PaintProvider, usePaint } from '@canvas/context/PaintContext'
 export { default as useAnnotationsStyle } from '@canvas/hooks/useAnnotationsStyle'

@@ -2,11 +2,10 @@ import type { UtilsSettings } from '@canvas/constants/app'
 import { GRID_ROTATION_STEPS } from '@canvas/constants/grid'
 import { PICTURE_DEFAULT_SIZE } from '@canvas/constants/picture'
 import type { SelectionModeData } from '@canvas/types/Mode'
-import type { DrawableShape, Line, Point, SelectionType, ShapeEntity } from '@canvas/types/Shapes'
+import type { Point, SelectionType, ShapeEntity } from '@canvas/types/Shapes'
 import { getSelectedShapes } from '@canvas/utils/selectedShapes'
 import { refreshShape, resizeShapes, rotateShape, translateShapes } from './shapes'
 import { addNewPointToShape } from './shapes/brush'
-import { getAngleFromVector, rotatePoint } from './trigo'
 
 export const roundValues = (prop: number, precision = 2): number => {
   const factor = 10 ** precision
@@ -95,33 +94,4 @@ export const fitContentInsideContainer = (
   }
   const newHeight = shouldFillContainer ? containerHeight : Math.min(contentHeight, containerHeight)
   return [newHeight * contentRatio, newHeight]
-}
-
-export const shortenLine = ({ line, size, direction }: { line: DrawableShape<'line'>; size: number; direction: 'start' | 'end' | 'both' }): Line => {
-  const rotation = Math.PI / 2 - getAngleFromVector({ targetVector: [line.points[0], line.points[1]] })
-
-  const origin: Point = [
-    line.points[0][0] + (line.points[1][0] - line.points[0][0]) / 2,
-    line.points[0][1] + (line.points[1][1] - line.points[0][1]) / 2
-  ]
-
-  let firstPoint: Point
-  if (['start', 'both'].includes(direction)) {
-    const rotatedPoint = rotatePoint({ point: line.points[0], origin, rotation: -rotation })
-    firstPoint = rotatePoint({ point: [rotatedPoint[0], rotatedPoint[1] + size], origin, rotation: rotation })
-  } else {
-    firstPoint = [...line.points[0]]
-  }
-
-  let lastPoint: Point
-  if (['end', 'both'].includes(direction)) {
-    const rotatedPoint = rotatePoint({ point: line.points[1], origin, rotation: -rotation })
-    lastPoint = rotatePoint({ point: [rotatedPoint[0], rotatedPoint[1] - size], origin, rotation: rotation })
-  } else {
-    lastPoint = [...line.points[1]]
-  }
-
-  return {
-    points: [firstPoint, lastPoint]
-  }
 }

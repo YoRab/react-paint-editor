@@ -4,7 +4,7 @@ import type { ExportImageFormat, ExportImageOptions } from '@canvas/types/editor
 import type { Point, ShapeEntity } from '@canvas/types/Shapes'
 import { createDetachedContext, getUnscaledCanvasSize, initCanvasContext, transformCanvas } from '@canvas/utils/canvas'
 import { buildDataToExport } from '@canvas/utils/data'
-import { drawShape } from '@canvas/utils/shapes'
+import { drawShapes } from '@canvas/utils/shapes'
 import { getBoundingRect } from '@canvas/utils/trigo'
 
 export const addSizeAndConvertSvgToObjectUrl = (svgFileContent: string): string => {
@@ -209,9 +209,7 @@ const getShapesDataUrl = ({
     ctx.drawImage(options.backgroundImage, 0, 0, settings.drawingSize.width, settings.drawingSize.height)
     ctx.restore()
   }
-  for (let i = shapes.length - 1; i >= 0; i--) {
-    drawShape(ctx, shapes[i]!, settings)
-  }
+  drawShapes(ctx, shapes, settings)
   return newCanvas.toDataURL(MIME_TYPES[format], options.quality)
 }
 

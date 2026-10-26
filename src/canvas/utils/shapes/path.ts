@@ -1,13 +1,20 @@
 import type { UtilsSettings } from '@canvas/constants/app'
+import { MITER_LIMIT } from '@canvas/constants/rendering'
 import type { Circle, DrawableShape, Line, Point, Rect, ShapeEntity } from '@canvas/types/Shapes'
 import { scalePoint } from '@canvas/utils/transform'
-import { type Bounds, getPointsBounds, getRectCorners, rotatePoint } from '@canvas/utils/trigo'
+import { type Bounds, getCenter, getDistanceBetweenPoints, getPointsBounds, getRectCorners, rotatePoint } from '@canvas/utils/trigo'
+import { clamp } from '@canvas/utils/util'
 
-export const createRecPath = (rect: Rect): Path2D => {
+export const createRecPath = (rect: Rect, radius = 0): Path2D => {
   const path = new Path2D()
-  path.rect(rect.x, rect.y, rect.width, rect.height)
+  if (radius > 0) path.roundRect(rect.x, rect.y, rect.width, rect.height, radius)
+  else path.rect(rect.x, rect.y, rect.width, rect.height)
   return path
 }
+
+/** Radius of the corners of a rectangle, a square or a picture as drawn: at most half of its smallest side */
+export const getCornerRadius = (shape: Rect & Pick<DrawableShape, 'style'>): number =>
+  clamp(shape.style?.cornerRadius ?? 0, 0, Math.min(Math.abs(shape.width), Math.abs(shape.height)) / 2)
 
 export const createCirclePath = (shape: Circle): Path2D => {
   const path = new Path2D()
@@ -48,6 +55,32 @@ export const addBrushPoint = (points: Point[][], strokeIndex: number, point: Poi
   return newPoints
 }
 
+/**
+ * Smooths a stroke of at least 2 points with quadratic curves: each inner point controls a curve from the end of the
+ * previous one to the middle of the next segment, and the last curve ends at the last point. With 2 points, the curve is
+ * their segment, controlled by the first one
+ */
+export const forEachQuadraticCurve = <T>(
+  items: readonly T[],
+  toPoint: (item: T) => Point,
+  onCurve: (start: Point, control: Point, end: Point, controlIndex: number) => void
+) => {
+  const last = items.length - 1
+  let start = toPoint(items[0]!)
+  if (last === 1) {
+    onCurve(start, start, toPoint(items[1]!), 0)
+    return
+  }
+  let control = toPoint(items[1]!)
+  for (let i = 1; i < last; i++) {
+    const next = toPoint(items[i + 1]!)
+    const end = i < last - 1 ? getCenter(control, next) : next
+    onCurve(start, control, end, i)
+    start = end
+    control = next
+  }
+}
+
 /** Whether the points of the brush are drawn as they are: a new point of a stroke then only extends its path */
 const isUnscaledBrush = (brush: DrawableShape<'brush'>) => (brush.scaleX ?? 1) === 1 && (brush.scaleY ?? 1) === 1
 
@@ -86,19 +119,9 @@ export const createBrushPath = (brush: DrawableShape<'brush'>, { brushAlgo }: Ut
     } else {
       path.moveTo(...scale(points[0]!))
       switch (brushAlgo) {
-        case 'quadratic': {
-          // each inner point controls a curve ending in the middle of the next segment, the last curve ends at the last point
-          let scaledPoint = scale(points[1]!)
-          for (let i = 1; i < points.length - 2; i++) {
-            const scaledPoint2 = scale(points[i + 1]!)
-            const xc = (scaledPoint[0] + scaledPoint2[0]) / 2
-            const yc = (scaledPoint[1] + scaledPoint2[1]) / 2
-            path.quadraticCurveTo(...scaledPoint, xc, yc)
-            scaledPoint = scaledPoint2
-          }
-          path.quadraticCurveTo(...scale(points[points.length - 2]!), ...scale(points[points.length - 1]!))
+        case 'quadratic':
+          forEachQuadraticCurve(points, scale, (_start, control, end) => path.quadraticCurveTo(...control, ...end))
           break
-        }
         default:
           for (let i = 1; i < points.length; i++) {
             path.lineTo(...scale(points[i]!))
@@ -111,10 +134,23 @@ export const createBrushPath = (brush: DrawableShape<'brush'>, { brushAlgo }: Ut
   return path
 }
 
-/** Bounding box of a cubic Bezier segment B(t) = (1-t)³P0 + 3(1-t)²t P1 + 3(1-t)t² P2 + t³ P3 */
+/** A cubic Bezier segment: its start, its two control points and its end */
+export type BezierSegment = [Point, Point, Point, Point]
+
+/** Point of a cubic Bezier segment B(t) = (1-t)³P0 + 3(1-t)²t P1 + 3(1-t)t² P2 + t³ P3 */
+export const getPointOfSegment = ([p0, p1, p2, p3]: BezierSegment, t: number): Point => {
+  const u = 1 - t
+  const a = u * u * u
+  const b = 3 * u * u * t
+  const c = 3 * u * t * t
+  const d = t * t * t
+  return [a * p0[0] + b * p1[0] + c * p2[0] + d * p3[0], a * p0[1] + b * p1[1] + c * p2[1] + d * p3[1]]
+}
+
+/** Bounding box of a cubic Bezier segment */
 export const getCubicBezierBounds = (p0: Point, p1: Point, p2: Point, p3: Point): Bounds => {
-  const evalX = (t: number) => (1 - t) ** 3 * p0[0] + 3 * (1 - t) ** 2 * t * p1[0] + 3 * (1 - t) * t ** 2 * p2[0] + t ** 3 * p3[0]
-  const evalY = (t: number) => (1 - t) ** 3 * p0[1] + 3 * (1 - t) ** 2 * t * p1[1] + 3 * (1 - t) * t ** 2 * p2[1] + t ** 3 * p3[1]
+  const evalX = (t: number) => getPointOfSegment([p0, p1, p2, p3], t)[0]
+  const evalY = (t: number) => getPointOfSegment([p0, p1, p2, p3], t)[1]
 
   const roots = (a: number, b: number, c: number): number[] => {
     const A = a - 2 * b + c
@@ -164,7 +200,7 @@ export const getCubicBezierBounds = (p0: Point, p1: Point, p2: Point, p3: Point)
   return { minX, maxX, minY, maxY }
 }
 
-export const getCatmullRomPoints = (curve: DrawableShape<'curve'>, points: Point[]) => {
+const getCatmullRomPoints = (curve: DrawableShape<'curve'>, points: Point[]) => {
   const mustClosePath = curve.style?.closedPoints === 1 && points.length > 2
   // Pour une courbe fermée, on doit "boucler" les points pour la continuité
   // On ajoute les points de début et de fin pour le calcul Catmull-Rom
@@ -179,7 +215,7 @@ export const getCatmullRomPoints = (curve: DrawableShape<'curve'>, points: Point
   return pts
 }
 
-export const catmullRomToBezier = (p0: Point, p1: Point, p2: Point, p3: Point): { cp1: Point; cp2: Point } => {
+const catmullRomToBezier = (p0: Point, p1: Point, p2: Point, p3: Point): { cp1: Point; cp2: Point } => {
   // Conversion Catmull-Rom -> Bezier
   const cp1: Point = [p1[0] + (p2[0] - p0[0]) / 6, p1[1] + (p2[1] - p0[1]) / 6]
   const cp2: Point = [p2[0] - (p3[0] - p1[0]) / 6, p2[1] - (p3[1] - p1[1]) / 6]
@@ -187,78 +223,114 @@ export const catmullRomToBezier = (p0: Point, p1: Point, p2: Point, p3: Point): 
   return { cp1, cp2 }
 }
 
-export const createCurvePath = (curve: DrawableShape<'curve'>): Path2D => {
-  const path = new Path2D()
+/** Points of a polygon or a curve as drawn: with the point following the cursor while it is drawn */
+export const getDrawnPoints = (shape: DrawableShape<'polygon' | 'curve'>): Point[] =>
+  shape.tempPoint ? [...shape.points, shape.tempPoint] : shape.points
 
-  const points = curve.tempPoint ? [...curve.points, curve.tempPoint] : curve.points
-  if (points.length < 2) return path
-  if (points.length < 3) return createPolygonPath(curve)
-  const mustClosePath = curve.style?.closedPoints === 1 && points.length > 2
+/** Whether a polygon or a curve with these points is drawn closed: it needs 3 points */
+export const isClosedPath = (shape: DrawableShape<'polygon' | 'curve'>, points: readonly Point[]) =>
+  points.length > 2 && shape.style?.closedPoints === 1
 
-  path.moveTo(...points[0]!)
-
-  // Catmull-Rom to Bezier
+/** Segments of a curve from the Catmull-Rom spline through its points: none for a single point, a straight one for two */
+export const getCurveSegments = (curve: DrawableShape<'curve'>, points: Point[]): BezierSegment[] => {
   const pts = getCatmullRomPoints(curve, points)
+  const segments: BezierSegment[] = []
   for (let i = 1; i < pts.length - 2; i++) {
-    const p0 = pts[i - 1]!
     const p1 = pts[i]!
     const p2 = pts[i + 1]!
-    const p3 = pts[i + 2]!
-
-    const { cp1, cp2 } = catmullRomToBezier(p0, p1, p2, p3)
-
-    path.bezierCurveTo(cp1[0], cp1[1], cp2[0], cp2[1], p2[0], p2[1])
+    const { cp1, cp2 } = catmullRomToBezier(pts[i - 1]!, p1, p2, pts[i + 2]!)
+    segments.push([p1, cp1, cp2, p2])
   }
+  return segments
+}
 
-  if (mustClosePath) {
-    path.closePath()
+export const createCurvePath = (segments: BezierSegment[], isClosed: boolean): Path2D => {
+  const path = new Path2D()
+  if (!segments.length) return path
+  path.moveTo(...segments[0]![0])
+  for (const [, cp1, cp2, end] of segments) {
+    path.bezierCurveTo(cp1[0], cp1[1], cp2[0], cp2[1], end[0], end[1])
   }
-
+  if (isClosed) path.closePath()
   return path
 }
 
-export const createPolygonPath = (polygon: DrawableShape<'polygon'> | DrawableShape<'curve'>): Path2D => {
+export const createPolygonPath = (polygon: DrawableShape<'polygon'>, points: readonly Point[] = getDrawnPoints(polygon)): Path2D => {
   const path = new Path2D()
-  const points = polygon.tempPoint ? [...polygon.points, polygon.tempPoint] : polygon.points
 
   if (points.length < 2) return path
+
+  const isClosed = isClosedPath(polygon, points)
+  const radius = polygon.style?.cornerRadius ?? 0
+  if (radius > 0 && points.length > 2) {
+    addRoundedPolygon(path, points, radius, isClosed)
+    return path
+  }
 
   path.moveTo(...points[0]!)
   for (const point of points.slice(1)) {
     path.lineTo(...point)
   }
 
-  if (points.length > 2 && polygon.style?.closedPoints === 1) path.lineTo(...points[0]!)
+  // joined to its first point like its other corners
+  if (isClosed) path.closePath()
 
   return path
 }
 
-export const createTrianglePath = (triangle: DrawableShape<'triangle'>): Path2D => {
-  const path = new Path2D()
-  path.moveTo(...triangle.points[0])
-  path.lineTo(...triangle.points[1])
-  path.lineTo(...triangle.points[2])
-  path.lineTo(...triangle.points[0])
-  return path
+/**
+ * Adds a polygon with rounded corners to the path. The arc of a corner, tangent to its two sides, takes at most half of a
+ * side shared with another rounded corner, and all of a side ending at an end of an open polygon, whose ends stay sharp
+ */
+const addRoundedPolygon = (path: Path2D, points: readonly Point[], radius: number, isClosed: boolean) => {
+  const count = points.length
+  const at = (index: number) => points[(index + count) % count]!
+  // length of the side from the point to the next one available to the arc of one of its ends
+  const getRoom = (index: number) => {
+    const length = getDistanceBetweenPoints(at(index), at(index + 1))
+    return !isClosed && (index === 0 || index === count - 2) ? length : length / 2
+  }
+
+  path.moveTo(...(isClosed ? getCenter(at(-1), at(0)) : at(0)))
+  const [start, end] = isClosed ? [0, count] : [1, count - 1]
+  for (let index = start; index < end; index++) {
+    const [x, y] = at(index)
+    const [previousX, previousY] = at(index - 1)
+    const [nextX, nextY] = at(index + 1)
+    // angle between the two sides, 0 for a side of no length: the corner is then sharp
+    const angle = Math.abs(
+      Math.atan2((previousX - x) * (nextY - y) - (previousY - y) * (nextX - x), (previousX - x) * (nextX - x) + (previousY - y) * (nextY - y))
+    )
+    // the arc touches the sides at radius / tan(angle / 2) from the corner
+    const maxRadius = Math.min(getRoom(index - 1), getRoom(index)) * Math.tan(angle / 2)
+    path.arcTo(x, y, nextX, nextY, Math.min(radius, maxRadius))
+  }
+  if (isClosed) path.closePath()
+  else path.lineTo(...at(-1))
 }
 
-export const expandRect = (rect: Rect, selectionPadding: number): Rect => {
+/** Grows a rect by a margin on each side, the vertical one being the horizontal one by default */
+export const expandRect = (rect: Rect, margin: number, marginY = margin): Rect => {
   return {
-    x: rect.x - selectionPadding,
-    y: rect.y - selectionPadding,
-    width: rect.width + selectionPadding * 2,
-    height: rect.height + selectionPadding * 2
+    x: rect.x - margin,
+    y: rect.y - marginY,
+    width: rect.width + margin * 2,
+    height: rect.height + marginY * 2
   }
 }
 
-const getDefaultOuterBorder = (shape: DrawableShape, border: Rect) => {
-  return {
-    x: border.x - (shape.style?.lineWidth ?? 0) / 2,
-    y: border.y - (shape.style?.lineWidth ?? 0) / 2,
-    width: border.width + (shape.style?.lineWidth ?? 0),
-    height: border.height + (shape.style?.lineWidth ?? 0)
-  }
-}
+/**
+ * How far the stroke of a shape goes beyond its path: by the half of its width, further at the corners of its square caps.
+ * The miter joins of the right angles of a rectangle stay within it
+ */
+export const getStrokeMargin = (shape: Pick<DrawableShape, 'style'>, lineWidth = shape.style?.lineWidth ?? 0): number =>
+  (lineWidth / 2) * (shape.style?.lineCap === 'square' ? Math.SQRT2 : 1)
+
+export const getDefaultOuterBorder = (shape: DrawableShape, border: Rect) => expandRect(border, getStrokeMargin(shape))
+
+/** Outer borders of a shape with sharp angles: its miter joins go as far as the miter limit */
+export const getSharpOuterBorder = (shape: DrawableShape, border: Rect) =>
+  shape.style?.lineJoin === 'miter' ? expandRect(border, ((shape.style.lineWidth ?? 0) / 2) * MITER_LIMIT) : getDefaultOuterBorder(shape, border)
 
 const getBoundingBox = (outerBorders: Rect, center: Point, rotation = 0) => {
   if (rotation === 0) return outerBorders

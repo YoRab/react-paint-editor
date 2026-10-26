@@ -1,3 +1,4 @@
+import { ERASER_TOOL, LASER_TOOL } from '@canvas/constants/tools'
 import { createPaintStore, type PaintStore } from '@canvas/store/paintStore'
 import { describe, expect, it, vi } from 'vitest'
 import { createLoadedStore, RECTS, stubPath2D } from './helpers'
@@ -153,6 +154,66 @@ describe('actions', () => {
 
     store.actions.selectTool('unknown-tool')
     expect(store.getEditorState().activeTool.id).toBe('react-paint-rect')
+  })
+
+  it('selects the eraser and the laser pointer, which are not in the tools of the drawing', () => {
+    const store = createPaintStore()
+    store.actions.selectTool(ERASER_TOOL.id)
+    expect(store.getEditorState().activeTool).toEqual(ERASER_TOOL)
+    store.actions.selectTool(LASER_TOOL)
+    expect(store.getEditorState().activeTool).toEqual(LASER_TOOL)
+    expect(store.getEditorState().tools.map(tool => tool.id)).not.toContain(LASER_TOOL.id)
+  })
+
+  it('keeps the trail of the laser pointer out of the drawing and of its history', () => {
+    const store = createPaintStore()
+    const { history } = store.getEditorState()
+    store.addLaserPoint([10, 10], true)
+    store.addLaserPoint([20, 10], false)
+    store.addLaserPoint([50, 50], true)
+    expect(store.getState().interaction.laserTrail.map(stroke => stroke.map(({ point }) => point))).toEqual([
+      [
+        [10, 10],
+        [20, 10]
+      ],
+      [[50, 50]]
+    ])
+    expect(store.getEditorState().shapes).toEqual([])
+    expect(store.getEditorState().history).toBe(history)
+  })
+
+  it('picks a color with the next press, or gives undefined when the pick is cancelled', async () => {
+    const store = createPaintStore()
+    const getMode = () => store.getState().interaction.selectionMode.mode
+
+    // outside of a browser, nothing is drawn
+    const picked = store.actions.pickColor()
+    expect(getMode()).toBe('eyedropper')
+    store.pickColorAt([10, 10])
+    await expect(picked).resolves.toBe('transparent')
+    expect(getMode()).toBe('default')
+
+    // another pick replaces it
+    const replaced = store.actions.pickColor()
+    const next = store.actions.pickColor()
+    await expect(replaced).resolves.toBeUndefined()
+    expect(getMode()).toBe('eyedropper')
+
+    // so does a change of tool, which ends the pick
+    store.actions.selectTool('react-paint-rect')
+    await expect(next).resolves.toBeUndefined()
+    expect(getMode()).toBe('default')
+
+    // and another interaction
+    const cancelled = store.actions.pickColor()
+    store.setSelectionMode({ mode: 'default' })
+    await expect(cancelled).resolves.toBeUndefined()
+  })
+
+  it('picks no color in a canvas which is not interactive', async () => {
+    const store = createPaintStore({ mode: 'viewer' })
+    await expect(store.actions.pickColor()).resolves.toBeUndefined()
+    expect(store.getState().interaction.selectionMode.mode).toBe('default')
   })
 
   it('updates the settings of a tool', () => {

@@ -2,7 +2,15 @@ import { type EditorState, type ExportView, type ShapeType, shallowEqual, type T
 import Button from '@editor/components/common/Button'
 import Modal from '@editor/components/common/Modal'
 import { shapesIcon } from '@editor/constants/icons'
-import { CLEAR_TOOL, MOVE_TOOL_DISPLAY, REDO_TOOL, SELECTION_TOOL_DISPLAY, UNDO_TOOL } from '@editor/constants/tools'
+import {
+  CLEAR_TOOL,
+  ERASER_TOOL_DISPLAY,
+  LASER_TOOL_DISPLAY,
+  MOVE_TOOL_DISPLAY,
+  REDO_TOOL,
+  SELECTION_TOOL_DISPLAY,
+  UNDO_TOOL
+} from '@editor/constants/tools'
 import { getDisplayTool } from '@editor/utils/style'
 import { getCurrentStructure } from '@editor/utils/toolbar'
 import { useMemo, useState } from 'react'
@@ -52,6 +60,8 @@ const selectToolbarState = (state: EditorState) => ({
 type ToolboxType = {
   disabled: boolean
   withMoveTool: boolean
+  withEraser: boolean
+  withLaser: boolean
   loadFile: (file: File) => void
   addPicture: (file: File | string) => Promise<void>
   saveFile: () => void
@@ -65,6 +75,8 @@ type ToolboxType = {
 const Toolbar = ({
   disabled,
   withMoveTool,
+  withEraser,
+  withLaser,
   withLoadAndSave,
   withExport,
   addPicture,
@@ -83,10 +95,20 @@ const Toolbar = ({
 
   const currentStructure = getCurrentStructure(availableTools, TOOLBAR_STRUCTURE)
 
-  const fullToolbarSize = (6 + currentStructure.length) * TOOL_WIDTH
+  // the selection tool and the action tools shown by the options, before the drawing tools
+  const actionTools = [
+    SELECTION_TOOL_DISPLAY,
+    ...(withMoveTool ? [MOVE_TOOL_DISPLAY] : []),
+    ...(withEraser ? [ERASER_TOOL_DISPLAY] : []),
+    ...(withLaser ? [LASER_TOOL_DISPLAY] : [])
+  ]
+  // the sizes below already count the selection and the move tools
+  const extraToolsCount = Number(withEraser) + Number(withLaser)
+
+  const fullToolbarSize = (6 + extraToolsCount + currentStructure.length) * TOOL_WIDTH
   const actionsInMenu = width < fullToolbarSize
 
-  const withMenuToolbarSize = (3 + currentStructure.length) * TOOL_WIDTH
+  const withMenuToolbarSize = (3 + extraToolsCount + currentStructure.length) * TOOL_WIDTH
   const toolsInMenu = width < withMenuToolbarSize
   const minWidth = 4 * TOOL_WIDTH
 
@@ -126,22 +148,16 @@ const Toolbar = ({
         }}
       >
         <div className='react-paint-editor-toolbar-shrinkable'>
-          <Tool
-            type={SELECTION_TOOL_DISPLAY}
-            disabled={disabled}
-            img={SELECTION_TOOL_DISPLAY.icon}
-            isActive={activeTool.id === SELECTION_TOOL_DISPLAY.id}
-            setActive={() => setActiveTool(SELECTION_TOOL_DISPLAY.id)}
-          />
-          {withMoveTool && (
+          {actionTools.map(tool => (
             <Tool
-              type={MOVE_TOOL_DISPLAY}
+              key={tool.id}
+              type={tool}
               disabled={disabled}
-              img={MOVE_TOOL_DISPLAY.icon}
-              isActive={activeTool.id === MOVE_TOOL_DISPLAY.id}
-              setActive={() => setActiveTool(MOVE_TOOL_DISPLAY.id)}
+              img={tool.icon}
+              isActive={activeTool.id === tool.id}
+              setActive={() => setActiveTool(tool.id)}
             />
-          )}
+          ))}
           {toolsInMenu ? (
             <Button disabled={disabled} onClick={toggleTools} title='Toggle tools' icon={shapesIcon} selected={isAnyToolSelected} />
           ) : (

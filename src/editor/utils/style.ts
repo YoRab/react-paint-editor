@@ -26,8 +26,6 @@ export const getShapePicture = (shape: ShapeType) => {
       return pictureIcon
     case 'group':
       return groupIcon
-    case 'triangle':
-      return ''
   }
 }
 

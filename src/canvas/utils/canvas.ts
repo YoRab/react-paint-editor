@@ -1,5 +1,5 @@
 import type { UtilsSettings } from '@canvas/constants/app'
-import { LINE_DASH_DATA } from '@canvas/constants/rendering'
+import { LINE_DASH_DATA, MITER_LIMIT } from '@canvas/constants/rendering'
 import { SELECTION_DEFAULT_COLOR, SELECTION_DEFAULT_WIDTH } from '@canvas/constants/shapes'
 import type { CanvasSize, Resize } from '@canvas/types/Canvas'
 import type { Point, StyleShape } from '@canvas/types/Shapes'
@@ -8,23 +8,19 @@ export const initCanvasContext = (ctx: CanvasRenderingContext2D) => {
   ctx.reset()
   ctx.lineCap = 'round'
   ctx.lineJoin = 'round'
+  ctx.miterLimit = MITER_LIMIT
 }
 
 export const updateCanvasContext = (
   ctx: CanvasRenderingContext2D,
-  style: {
-    fillColor?: string
-    opacity?: number
-    strokeColor?: string
-    lineWidth?: number
-    lineDash?: number
-    lineCap?: CanvasLineCap
+  style: Pick<StyleShape, 'fillColor' | 'opacity' | 'strokeColor' | 'lineWidth' | 'lineDash' | 'lineCap' | 'lineJoin'> & {
     shadowColor?: string
     shadowBlur?: number
   } = {}
 ) => {
   const {
     lineCap = 'round',
+    lineJoin = 'round',
     fillColor = 'transparent',
     opacity = 100,
     strokeColor = SELECTION_DEFAULT_COLOR,
@@ -34,11 +30,12 @@ export const updateCanvasContext = (
     shadowBlur = 0
   } = style
   ctx.lineCap = lineCap
+  ctx.lineJoin = lineJoin
   ctx.globalAlpha = opacity / 100
   ctx.fillStyle = fillColor
   ctx.strokeStyle = strokeColor
   ctx.lineWidth = lineWidth
-  ctx.setLineDash(lineDash === 0 ? [] : [LINE_DASH_DATA[lineDash]![0]! * lineWidth, LINE_DASH_DATA[lineDash]![1]! * lineWidth])
+  ctx.setLineDash(LINE_DASH_DATA[lineDash]?.map(length => length * lineWidth) ?? [])
   ctx.shadowColor = shadowColor
   ctx.shadowBlur = shadowBlur
 }
@@ -54,20 +51,7 @@ export const transformCanvas = (ctx: CanvasRenderingContext2D, settings: UtilsSe
   }
 }
 
-export const drawPathWithFillAndStroke = (
-  ctx: CanvasRenderingContext2D,
-  path: Path2D,
-  style?: Pick<StyleShape, 'fillColor' | 'strokeColor'>
-): void => {
-  if (ctx.globalAlpha === 0) return
-
-  if (style?.fillColor !== 'transparent') {
-    ctx.fill(path)
-  }
-  if (style?.strokeColor !== 'transparent') {
-    ctx.stroke(path)
-  }
-}
+export const isVisibleColor = (color: string | undefined) => color !== undefined && color !== 'transparent'
 
 /** Size of a canvas showing the whole drawing, scaled to the width it is displayed at */
 export const getScaledCanvasSize = (displayWidth: number, width: number, height: number): CanvasSize => ({

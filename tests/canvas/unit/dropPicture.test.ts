@@ -73,6 +73,21 @@ describe('addPicture position', () => {
     const shape = await adding
     expect(centerOf(shape as ShapeEntity<'picture'>)).toEqual([400, 250])
   })
+
+  it('gives the picture the picture tool and its default style', async () => {
+    const tools = [{ type: 'picture' as const, id: 'my-picture', settings: { opacity: { default: 40 } } }]
+    const store = await createLoadedStore({ options: { availableTools: tools } }, [])
+    const adding = store.actions.addPicture(png())
+    await vi.advanceTimersByTimeAsync(100)
+    expect(await adding).toMatchObject({ toolId: 'my-picture', style: { opacity: 40 } })
+  })
+
+  it('keeps the default picture tool id and an empty style without picture tool', async () => {
+    const store = await createLoadedStore({ options: { availableTools: [{ type: 'rect' }] } }, [])
+    const adding = store.actions.addPicture(png())
+    await vi.advanceTimersByTimeAsync(100)
+    expect(await adding).toMatchObject({ toolId: 'react-paint-picture', style: {} })
+  })
 })
 
 describe('selectWithDropPicture', () => {

@@ -18,7 +18,9 @@ An open-source canvas-based library for React used for image annotation or as a 
 - **Rich Drawing Tools** - Brush, shapes (rectangles, circles, ellipses, polygons, curves), lines, text, and picture support
 - **Interactive Canvas** - Full support for zoom, pan, pinch gestures, and infinite or fixed-size canvases, scaled to their container or filling it
 - **Shape Manipulation** - Select, move, resize, rotate, and transform shapes with intuitive controls
-- **Customizable Styling** - Control colors, line widths, opacity, line styles, arrows, and fonts
+- **Eraser & Laser Pointer** - Erase the shapes a stroke crosses, or point at things with a trail that fades out, both optional in the editor
+- **Eyedropper & Recent Colors** - Pick a color of the drawing, and find the custom colors used last in every color field of the editor
+- **Customizable Styling** - Control colors, line widths, opacity, line styles (dashes, joins and caps), rounded corners, picture borders, arrowheads, fill patterns and gradients, fonts, font sizes, text alignment, line heights, text backgrounds, outlines, underlines and strikethroughs
 - **Layer Management** - Built-in layer manipulation panel for organizing your drawings
 - **Export & Import** - Export to PNG images or save/load your work as JSON data
 - **Event System** - Listen to data changes and integrate with your application state
@@ -107,7 +109,6 @@ const SHAPES_INIT: DrawableShape[] = [
       opacity: 100,
       lineWidth: 1,
       lineDash: 0,
-      lineArrow: 0,
       closedPoints: 1,
       fontFamily: 'serif'
     }
@@ -286,7 +287,7 @@ const popoverPosition = box && paint.toClientPosition([box.x + box.width, box.y]
 | Points of lines, polygons and curves | `actions.insertShapePoint`, `actions.moveShapePoint`, `actions.removeShapePoint` |
 | Visibility, lock | `actions.setShapesVisibility(ids, visible)`, `actions.setShapesLocked(ids, locked)` |
 | Selection | `actions.selectShapes(ids, { mode: 'replace' \| 'add' \| 'remove' })`, `actions.selectAllShapes()`, `actions.clearSelection()` |
-| Text edition, context menu | `actions.editText(id)`, `actions.openContextMenu({ clientPosition, ids })`, `actions.closeContextMenu()` |
+| Text edition, context menu, color pick | `actions.editText(id)`, `actions.openContextMenu({ clientPosition, ids })`, `actions.closeContextMenu()`, `await actions.pickColor()` |
 | Duplicate, copy, cut, paste | `actions.duplicateShapes`, `actions.copy`, `actions.cut`, `actions.paste` |
 | History | `actions.undo()`, `actions.redo()`, `paint.batch(fn)` |
 | View and grid | `actions.zoomTo(level, { center })`, `actions.zoomToShapes(ids, { padding })`, `actions.setZoom`, `actions.resetZoom`, `actions.panBy([dx, dy])`, `actions.setOffset`, `actions.setGridGap(GRID_PRESETS.medium)` |
@@ -344,7 +345,7 @@ Version 1 replaces `editorProps` and `canvasProps` with a single handle and move
 ## Compatibility
 
 - **React**: 18 or 19, the only (peer) dependencies.
-- **Browsers**: Chrome and Edge 98+, Firefox 94+, Safari 15.4+, with a mouse, a pen or touch (pinch to zoom). The automated tests run in Chromium.
+- **Browsers**: Chrome and Edge 99+, Firefox 113+, Safari 17.2+, with a mouse, a pen or touch (pinch to zoom). The automated tests run in Chromium.
 - **Server-side rendering**: the components can be rendered on the server, the canvas draws once hydrated. The package has no `'use client'` directive: with the Next.js App Router, import it from a `'use client'` file.
 
 ## Documentation

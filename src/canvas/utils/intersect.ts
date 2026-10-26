@@ -3,9 +3,10 @@ import { SELECTION_RESIZE_ANCHOR_POSITIONS } from '@canvas/constants/shapes'
 import type { CanvasSize } from '@canvas/types/Canvas'
 import type { HoverModeData } from '@canvas/types/Mode'
 import type { Point, Rect, SelectionType, ShapeEntity } from '@canvas/types/Shapes'
+import { hasVisibleFill } from '@canvas/utils/fill'
 import { getSelectedShapes } from '@canvas/utils/selectedShapes'
 import { getAnchorRadius, getResizeAnchorCenter, getRotationAnchorCenter, hasPointAnchors } from '@canvas/utils/selection/anchors'
-import { catmullRomToBezier, createLinePath, expandRect, getBrushPointScaler, getCatmullRomPoints } from '@canvas/utils/shapes/path'
+import { createLinePath, expandRect, getBrushPointScaler, getCornerRadius, getCurveSegments } from '@canvas/utils/shapes/path'
 import { getRectCorners, isCircleIntersectRect, isPointInsideRect, rotatePoint } from './trigo'
 
 export const getCursorPositionInElement = (e: MouseEvent, element: HTMLElement, canvasSize: CanvasSize): Point => {
@@ -149,19 +150,13 @@ export const checkCurveLinesSelectionIntersection = (
   const newPosition = getPointPositionAfterCanvasTransformation(position, shape.rotation ?? 0, center)
 
   ctx.lineWidth = (shape.style?.lineWidth ?? 0) + radius / settings.canvasZoom
-  const points = getCatmullRomPoints(shape, shape.points)
+  const segments = getCurveSegments(shape, shape.points)
   const path = new Path2D()
-  path.moveTo(...points[0]!)
-  for (let i = 1; i < points.length - 2; i++) {
-    const p0 = points[i - 1]!
-    const p1 = points[i]!
-    const p2 = points[i + 1]!
-    const p3 = points[i + 2]!
-    const { cp1, cp2 } = catmullRomToBezier(p0, p1, p2, p3)
-    path.bezierCurveTo(cp1[0], cp1[1], cp2[0], cp2[1], p2[0], p2[1])
-
+  path.moveTo(...shape.points[0]!)
+  for (const [index, [, cp1, cp2, end]] of segments.entries()) {
+    path.bezierCurveTo(...cp1, ...cp2, ...end)
     if (ctx.isPointInStroke(path, newPosition[0], newPosition[1])) {
-      return { lineIndex: i - 1 }
+      return { lineIndex: index }
     }
   }
   return false
@@ -169,7 +164,7 @@ export const checkCurveLinesSelectionIntersection = (
 
 const shouldCheckFillShape = (shape: ShapeEntity, isSelected = false) => {
   if (isSelected && ['curve', 'polygon'].includes(shape.type)) return true
-  return (shape.style?.fillColor && shape.style?.fillColor !== 'transparent') || ['picture', 'text'].includes(shape.type)
+  return hasVisibleFill(shape.style) || ['picture', 'text'].includes(shape.type)
 }
 
 export const checkPositionIntersection = (
@@ -251,7 +246,8 @@ const getHoleTest = (shape: ShapeEntity, margin: number): ((point: Point) => boo
   switch (shape.type) {
     case 'rect':
     case 'square': {
-      const hole = expandRect(shape, -margin)
+      // the hole within the rounded corners
+      const hole = expandRect(shape, -margin - getCornerRadius(shape))
       return point => isPointInsideRect(hole, point)
     }
     case 'circle':
@@ -379,6 +375,10 @@ const isShapeAt = (ctx: CanvasRenderingContext2D, shape: ShapeEntity, point: Poi
 /** Visible shapes under a point, from the foreground. Locked shapes are found too */
 export const findShapesAt = (ctx: CanvasRenderingContext2D, shapes: ShapeEntity[], point: Point, settings: UtilsSettings): ShapeEntity[] =>
   shapes.filter(shape => isShapeAt(ctx, shape, point, settings))
+
+/** Visible shapes under one of the points, from the foreground, as found by findShapesAt */
+export const findShapesAtPoints = (ctx: CanvasRenderingContext2D, shapes: ShapeEntity[], points: Point[], settings: UtilsSettings): ShapeEntity[] =>
+  shapes.filter(shape => points.some(point => isShapeAt(ctx, shape, point, settings)))
 
 /** The shape of the foreground under a point, as found by findShapesAt */
 export const findShapeAt = (ctx: CanvasRenderingContext2D, shapes: ShapeEntity[], point: Point, settings: UtilsSettings): ShapeEntity | undefined =>

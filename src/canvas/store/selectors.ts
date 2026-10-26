@@ -1,5 +1,5 @@
 import type { UtilsSettings } from '@canvas/constants/app'
-import { MOVE_TOOL, SELECTION_TOOL } from '@canvas/constants/tools'
+import { ERASER_TOOL, LASER_TOOL, MOVE_TOOL, SELECTION_TOOL } from '@canvas/constants/tools'
 import type { InternalState } from '@canvas/store/types'
 import type { CanvasSize, Resize } from '@canvas/types/Canvas'
 import type { ContextMenuState, EditorState, InteractionState, SelectionHover } from '@canvas/types/editor'
@@ -46,9 +46,9 @@ export const keepIfSame = <T extends object>() => {
   }
 }
 
-/** One of the selection tool, the move tool or the available tools, found by id */
+/** One of the action tools (selection, move, eraser, laser) or of the available tools, found by id */
 export const findSelectableTool = (available: CustomTool[], id: string): ToolsType | undefined =>
-  [SELECTION_TOOL, MOVE_TOOL, ...available].find(tool => tool.id === id)
+  [SELECTION_TOOL, MOVE_TOOL, ERASER_TOOL, LASER_TOOL, ...available].find(tool => tool.id === id)
 
 /**
  * Selectors of a store. Each slice keeps its identity while its values are unchanged:
@@ -258,6 +258,7 @@ export const createSelectors = () => {
     const { panStart, hoverMode, modifiers } = state.interaction
     const activeTool = selectActiveTool(state)
     if (panStart) return 'grabbing'
+    if (state.interaction.selectionMode.mode === 'eyedropper') return 'crosshair'
     if (hoverMode.outOfView) return 'default'
     if (hoverMode.mode === 'resize') return 'pointer'
     if (activeTool.type !== 'selection' && activeTool.type !== 'move') return 'crosshair'

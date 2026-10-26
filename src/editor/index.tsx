@@ -7,6 +7,7 @@ import ZoomPanel from '@editor/components/settings/ZoomPanel'
 import Toolbar from '@editor/components/toolbox/Toolbar'
 import { DEFAULT_EDITOR_OPTIONS, type EditorOptions } from '@editor/constants/options'
 import useDebounce from '@editor/hooks/useDebounce'
+import useRecentColors from '@editor/hooks/useRecentColors'
 import useSnackbar from '@editor/hooks/useSnackbar'
 import { withDefaults } from '@editor/utils/util'
 import { type CSSProperties, type ReactNode, useCallback, useEffect, useRef, useState } from 'react'
@@ -50,7 +51,9 @@ const Editor = ({ paint, className, style, options, children }: EditorComponentP
     withExport,
     withLoadAndSave,
     withUploadPicture,
-    withUrlPicture
+    withUrlPicture,
+    withEraser,
+    withLaser
   } = withDefaults(DEFAULT_EDITOR_OPTIONS, options)
 
   const isEditMode = mode !== 'viewer'
@@ -71,6 +74,8 @@ const Editor = ({ paint, className, style, options, children }: EditorComponentP
   const [isZoomPanelOpen, setIsZoomPanelShown] = useState(withZoom)
 
   const isZoomPanelShown = withZoom && isZoomPanelOpen
+  // kept when the settings bar is hidden, in the viewer mode
+  const { recentColors, addRecentColor } = useRecentColors()
 
   const { snackbarList, addSnackbar } = useSnackbar()
 
@@ -187,6 +192,8 @@ const Editor = ({ paint, className, style, options, children }: EditorComponentP
           <Toolbar
             disabled={disabled}
             withMoveTool={withZoom}
+            withEraser={withEraser}
+            withLaser={withLaser}
             exportCanvasInFile={exportCanvasInFile}
             saveFile={saveFile}
             loadFile={onLoadFile}
@@ -211,6 +218,8 @@ const Editor = ({ paint, className, style, options, children }: EditorComponentP
               }}
               isZoomPanelShown={isZoomPanelShown}
               setIsZoomPanelShown={setIsZoomPanelShown}
+              recentColors={recentColors}
+              addRecentColor={addRecentColor}
             />
             <Loading isLoading={isLoading} />
             <SnackbarContainer snackbarList={snackbarList} />

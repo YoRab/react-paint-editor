@@ -2,8 +2,10 @@ import { useEffect } from 'react'
 import { expect, userEvent, type within } from 'storybook/test'
 import {
   Canvas,
+  type CanvasOptions,
   Editor,
   type EditorOptions,
+  type Point,
   type ReactPaint,
   type ShapeEntity,
   type StateData,
@@ -31,7 +33,11 @@ export const wait = (ms = 50) => new Promise(res => setTimeout(res, ms))
 /** Log of the selectionChanged / toolChanged events emitted by the last rendered wrapper */
 export const eventsLog: ({ name: 'selectionChanged'; ids: string[] } | { name: 'toolChanged'; toolId: string })[] = []
 
-export const ReactPaintWrapper = ({ editorOptions, ...args }: UseReactPaintProps & { editorOptions?: EditorOptions }) => {
+export const ReactPaintWrapper = ({
+  editorOptions,
+  canvasOptions,
+  ...args
+}: UseReactPaintProps & { editorOptions?: EditorOptions; canvasOptions?: CanvasOptions }) => {
   const paint = useReactPaint(args)
   paintRef.current = paint
   getCurrentDataRef.current = paint.getCurrentData
@@ -49,7 +55,7 @@ export const ReactPaintWrapper = ({ editorOptions, ...args }: UseReactPaintProps
 
   return (
     <Editor paint={paint} options={editorOptions}>
-      <Canvas paint={paint} />
+      <Canvas paint={paint} options={canvasOptions} />
     </Editor>
   )
 }
@@ -110,6 +116,28 @@ export function assertNoInternalFields(shape: unknown) {
   expect(shape).not.toHaveProperty('selection')
 }
 
+/** Position in the page of a point of the drawing */
+export const toClient = (point: Point) => getPaint().toClientPosition(point)!
+
+/**
+ * Dispatches an event of a finger at a position in the page. The fingers of a pinch are given as events: user-event
+ * releases only one of them
+ */
+export const dispatchTouch = (target: EventTarget, type: string, pointerId: number, { x, y }: { x: number; y: number }) => {
+  target.dispatchEvent(
+    new PointerEvent(type, { pointerId, pointerType: 'touch', isPrimary: pointerId === 1, clientX: x, clientY: y, bubbles: true, cancelable: true })
+  )
+}
+
+/** Color of the pixel of the draw canvas at a point of the drawing */
+export const getPixel = (drawCanvas: HTMLCanvasElement, point: Point) => {
+  const position = toClient(point)
+  const rect = drawCanvas.getBoundingClientRect()
+  const x = Math.round(((position.x - rect.left) * drawCanvas.width) / rect.width)
+  const y = Math.round(((position.y - rect.top) * drawCanvas.height) / rect.height)
+  return [...drawCanvas.getContext('2d')!.getImageData(x, y, 1, 1).data]
+}
+
 // ─── Settings panel helpers ────────────────────────────────────────────────────
 
 async function openSettingPanel(view: ReturnType<typeof within>, title: string) {
@@ -127,14 +155,27 @@ export async function setColorSetting(view: ReturnType<typeof within>, title: st
   await closeSettingPanel(view, title)
 }
 
+/** Sets the value of an input with the native setter, which React sees on the next 'input' or 'change' event */
+export const setInputValue = (input: HTMLInputElement, value: string) => {
+  Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value')!.set!.call(input, value)
+}
+
 /** Changes a range slider value via native setter (Playwright-safe). */
 export async function setRangeSetting(view: ReturnType<typeof within>, title: string, targetValue: number) {
   await openSettingPanel(view, title)
   const slider = (await view.findByRole('slider')) as HTMLInputElement
-  const nativeSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value')!.set!
-  nativeSetter.call(slider, String(targetValue))
+  setInputValue(slider, String(targetValue))
   slider.dispatchEvent(new Event('input', { bubbles: true }))
   await new Promise(res => setTimeout(res, 0))
+  await closeSettingPanel(view, title)
+}
+
+/** Types a number in a NumberField panel, the keys going to its field. */
+export async function setNumberSetting(view: ReturnType<typeof within>, title: string, value: number) {
+  await openSettingPanel(view, title)
+  const input = await view.findByRole('spinbutton', { name: title })
+  await userEvent.clear(input)
+  await userEvent.type(input, String(value))
   await closeSettingPanel(view, title)
 }
 
@@ -145,9 +186,59 @@ export async function setSelectSetting(view: ReturnType<typeof within>, title: s
   await closeSettingPanel(view, title)
 }
 
+export const MORE_OPTIONS = "Plus d'options"
+
+/** Changes settings of the panel of the other options, opened then closed. */
+export async function inMoreOptions(view: ReturnType<typeof within>, change: () => Promise<void>) {
+  await openSettingPanel(view, MORE_OPTIONS)
+  await change()
+  await closeSettingPanel(view, MORE_OPTIONS)
+}
+
+/** Changes a range slider of the panel of the other options, opened then closed. */
+export async function setAdvancedRangeSetting(view: ReturnType<typeof within>, title: string, targetValue: number) {
+  await inMoreOptions(view, () => setRangeSetting(view, title, targetValue))
+}
+
 /** Toggles a ToggleField button (e.g. fontBold / fontItalic). */
 export async function setToggleSetting(view: ReturnType<typeof within>, title: string) {
   await userEvent.click(await view.findByRole('button', { name: title }))
+}
+
+// ─── Picture helper ─────────────────────────────────────────────────────────────
+
+// A small inline SVG used as a data-URI for the URL picture tests.
+// An image data URL is loaded as it is, without a fetch. The URL is stored as
+// shape.src, and exported as it is.
+export const SVG_DATA_URI =
+  "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='100' height='100'><rect width='100' height='100' fill='blue'/></svg>"
+
+/** Adds a picture from its URL through the menu (needs the withUrlPicture option), then waits for it to be loaded and selected. */
+export async function addPictureFromUrl(view: ReturnType<typeof within>, src: string) {
+  await userEvent.click(await view.findByTitle('Menu'))
+  await userEvent.click(await view.findByRole('button', { name: 'Add picture from URL' }))
+  const urlInput = await view.findByRole('textbox')
+  await userEvent.clear(urlInput)
+  await userEvent.type(urlInput, src)
+  await userEvent.click(await view.findByRole('button', { name: 'Ajouter' }))
+  await new Promise(res => setTimeout(res, 500))
+}
+
+// ─── Text helper ────────────────────────────────────────────────────────────────
+
+/** Creates a text with the text tool at a client position of the draw canvas, and returns its edition box, opened by a second click */
+export async function openNewTextBox(
+  view: ReturnType<typeof within>,
+  user: ReturnType<typeof userEvent.setup>,
+  drawCanvas: HTMLElement,
+  x: number,
+  y: number
+) {
+  await user.pointer({ target: drawCanvas, keys: '[MouseLeft]', coords: { x, y } })
+  await wait()
+  await user.pointer({ target: drawCanvas, keys: '[MouseLeft]', coords: { x, y } })
+  await wait(100)
+  return view.findByRole('textbox')
 }
 
 // ─── Context menu helper ────────────────────────────────────────────────────────

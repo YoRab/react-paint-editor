@@ -25,8 +25,7 @@ export const createEventEmitter = (): EventEmitter => {
   }
 
   const unregisterEvent: EventEmitter['unregisterEvent'] = (event, fn) => {
-    // biome-ignore lint/suspicious/noPrototypeBuiltins: be compliant with es2020
-    if (!listeners.hasOwnProperty(event)) return
+    if (!Object.hasOwn(listeners, event)) return
     if (fn) {
       const currentFnIndex = listeners[event].indexOf(fn)
       if (currentFnIndex !== -1) listeners[event].splice(currentFnIndex, 1)
@@ -36,8 +35,7 @@ export const createEventEmitter = (): EventEmitter => {
   }
 
   const registerEvent: EventEmitter['registerEvent'] = (event, fn) => {
-    // biome-ignore lint/suspicious/noPrototypeBuiltins: be compliant with es2020
-    if (listeners.hasOwnProperty(event)) listeners[event].push(fn)
+    if (Object.hasOwn(listeners, event)) listeners[event].push(fn)
     return () => unregisterEvent(event, fn)
   }
 

@@ -33,6 +33,9 @@ export type Modifiers = { shift: boolean; alt: boolean; space: boolean }
 
 export type Focus = { component: boolean; canvas: boolean }
 
+/** A point of a stroke of the laser pointer, with the time it was reached */
+export type LaserPoint = { point: Point; time: number }
+
 export type InternalState = {
   /** Props of the hook */
   config: PaintConfig
@@ -53,5 +56,7 @@ export type InternalState = {
     /** Speed of the auto scroll, while a selection frame is drawn close to the borders */
     moveAcceleration: Point
     focus: Focus
+    /** Strokes of the laser pointer, which fade out: they are not part of the drawing */
+    laserTrail: LaserPoint[][]
   }
 }

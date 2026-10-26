@@ -1,6 +1,18 @@
-import { type ActionsTool, MOVE_TOOL, SELECTION_TOOL, type ShapeType } from '@canvas/index'
+import { type ActionsTool, ERASER_TOOL, LASER_TOOL, MOVE_TOOL, SELECTION_TOOL, type ShapeType } from '@canvas/index'
 import type { EditorActionTool } from '@editor/types/tools'
-import { clearIcon, cursorIcon, exportFileIcon, moveIcon, openFileIcon, pictureIcon, redoIcon, saveIcon, undoIcon } from './icons'
+import {
+  clearIcon,
+  cursorIcon,
+  eraserIcon,
+  exportFileIcon,
+  laserIcon,
+  moveIcon,
+  openFileIcon,
+  pictureIcon,
+  redoIcon,
+  saveIcon,
+  undoIcon
+} from './icons'
 
 export const TOOL_LABELS: Record<ShapeType, string> = {
   brush: 'Brosse',
@@ -13,7 +25,6 @@ export const TOOL_LABELS: Record<ShapeType, string> = {
   ellipse: 'Ellipse',
   picture: 'Image',
   text: 'Texte',
-  triangle: 'Triangle',
   group: 'Groupe'
 }
 
@@ -28,6 +39,18 @@ export const MOVE_TOOL_DISPLAY: ActionsTool = {
   ...MOVE_TOOL,
   icon: moveIcon,
   label: 'Move'
+}
+
+export const ERASER_TOOL_DISPLAY: ActionsTool = {
+  ...ERASER_TOOL,
+  icon: eraserIcon,
+  label: 'Gomme'
+}
+
+export const LASER_TOOL_DISPLAY: ActionsTool = {
+  ...LASER_TOOL,
+  icon: laserIcon,
+  label: 'Pointeur laser'
 }
 
 export const UNDO_TOOL: EditorActionTool = {

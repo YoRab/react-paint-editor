@@ -2,22 +2,30 @@ import type { UtilsSettings } from '@canvas/constants/app'
 import type { SelectionModeResize } from '@canvas/types/Mode'
 import type { DrawableShape, Point, Polygon, Rect, ShapeEntity } from '@canvas/types/Shapes'
 import type { ToolsSettingsType } from '@canvas/types/tools'
-import { drawPathWithFillAndStroke } from '@canvas/utils/canvas'
+import { drawPathWithFillAndStroke } from '@canvas/utils/fill'
 import { getPointPositionAfterCanvasTransformation } from '@canvas/utils/intersect'
 import { set } from '@canvas/utils/object'
-import { createPolygonPath, expandRect, getComputedShapeInfos } from '@canvas/utils/shapes/path'
+import { addStraightArrowHeads, drawArrowHeads, withArrowHeadsOuterBorder } from '@canvas/utils/shapes/arrow'
+import { createPolygonPath, expandRect, getComputedShapeInfos, getDrawnPoints, getSharpOuterBorder, isClosedPath } from '@canvas/utils/shapes/path'
+import { getToolDefaultStyle } from '@canvas/utils/tools'
 import { roundForGrid } from '@canvas/utils/transform'
 import { getPointsBounds } from '@canvas/utils/trigo'
 import { createShapeId } from '@canvas/utils/util'
 
 const buildPath = <T extends DrawableShape<'polygon'>>(shape: T & { id: string }, settings: UtilsSettings): ShapeEntity<'polygon'> => {
-  const path = createPolygonPath(shape)
-  const computed = getComputedShapeInfos(shape, getPolygonBorder, settings)
+  const drawnPoints = getDrawnPoints(shape)
+  const { points, arrows, bounds } = addStraightArrowHeads(shape.style, drawnPoints, isClosedPath(shape, drawnPoints))
   return {
     ...shape,
-    path,
-    computed
+    path: createPolygonPath(shape, points),
+    arrows,
+    computed: getComputedShapeInfos(shape, getPolygonBorder, settings, withArrowHeadsOuterBorder(getSharpOuterBorder, bounds))
   }
+}
+
+export const drawPolygon = (ctx: CanvasRenderingContext2D, polygon: ShapeEntity<'polygon'>): void => {
+  drawPathWithFillAndStroke(ctx, polygon)
+  drawArrowHeads(ctx, polygon.arrows)
 }
 
 export const refreshPolygon = buildPath
@@ -37,21 +45,10 @@ export const createPolygon = (
       type: shape.type,
       id: createShapeId(shape.type),
       points: [cursorPosition],
-      style: {
-        opacity: shape.settings.opacity.default,
-        fillColor: shape.settings.fillColor.default,
-        strokeColor: shape.settings.strokeColor.default,
-        lineWidth: shape.settings.lineWidth.default,
-        lineDash: shape.settings.lineDash.default,
-        closedPoints: shape.settings.closedPoints.default
-      }
+      style: getToolDefaultStyle(shape)
     },
     settings
   )
-}
-
-export const drawPolygon = (ctx: CanvasRenderingContext2D, polygon: ShapeEntity<'polygon'>): void => {
-  drawPathWithFillAndStroke(ctx, polygon.path, polygon.style)
 }
 
 export const getPolygonBorder = (polygon: Polygon, settings: Pick<UtilsSettings, 'selectionPadding'>): Rect => {

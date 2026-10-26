@@ -164,9 +164,10 @@ export type EditorActions = {
   /**
    * Updates fields of shapes, found by their ids: geometry, points, text, style (merged), data (replaced)...
    * The box of a text follows its new content or font size, its font size follows its new width or font. Throws an error, without
-   * changing anything, when a patch is invalid. Locked shapes are updated too
+   * changing anything, when a patch is invalid. Locked shapes are updated too. With updateTool, the tools of the shapes keep
+   * the new values of their settings, like the font size of a text
    */
-  updateShapes: (patches: ShapePatch[], options?: ShapesActionOptions) => void
+  updateShapes: (patches: ShapePatch[], options?: ShapesActionOptions & { updateTool?: boolean }) => void
   removeShapes: (ids: string[], options?: ShapesActionOptions) => void
   duplicateShapes: (ids: string[], options?: { translate?: boolean; select?: boolean }) => void
 
@@ -247,6 +248,13 @@ export type EditorActions = {
   openContextMenu: (options: { clientPosition: { x: number; y: number }; canvasPosition?: Point; ids?: string[] }) => void
   /** Closes the context menu and gives the focus back to the canvas. Does nothing when the menu is not open */
   closeContextMenu: () => void
+
+  /**
+   * Picks a color of the drawing with the next press on the canvas, which does nothing else: the promise gives it as
+   * '#rrggbb', as it is drawn there, without the grid nor the transparency, or 'transparent' where no shape is drawn.
+   * It gives undefined when the pick is cancelled: by Escape, a right click, a change of tool, another interaction or pick
+   */
+  pickColor: () => Promise<string | undefined>
 
   /**
    * Overrides options of useReactPaint. The overrides are kept over the props until resetOptions: objects are merged,

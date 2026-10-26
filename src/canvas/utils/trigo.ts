@@ -102,3 +102,12 @@ export const getDistanceBetweenPoints = (p1: Point, p2: Point) => {
 export const getCenter = (e1: Point, e2: Point): Point => {
   return [(e1[0] + e2[0]) / 2, (e1[1] + e2[1]) / 2]
 }
+
+/** Points of a segment, at most `step` apart, from the one after its start to its end: the end alone when they are the same */
+export const sampleSegment = (from: Point, to: Point, step: number): Point[] => {
+  const count = Math.max(1, Math.ceil(getDistanceBetweenPoints(from, to) / step))
+  return Array.from({ length: count }, (_, index): Point => {
+    const ratio = (index + 1) / count
+    return [from[0] + (to[0] - from[0]) * ratio, from[1] + (to[1] - from[1]) * ratio]
+  })
+}

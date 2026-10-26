@@ -66,7 +66,7 @@ export const createShape = <T extends ShapeEntity = ShapeEntity>(shape: ShapeInp
 /** Measures 1 pixel per character at the font size 1: a text of 5 characters 50 wide has a font size of 10 */
 export const MEASURE_CONTEXT = { font: '', measureText: (text: string) => ({ width: text.length }) } as unknown as CanvasRenderingContext2D
 
-const STYLE = { fillColor: 'red', strokeColor: 'black', lineWidth: 1, opacity: 100, lineDash: 0, lineArrow: 0, closedPoints: 0 }
+const STYLE = { fillColor: 'red', strokeColor: 'black', lineWidth: 1, opacity: 100, lineDash: 0, closedPoints: 0 }
 
 export const RECTS: ExportedDrawableShape[] = [
   { type: 'rect', x: 100, y: 100, width: 100, height: 100, rotation: 0, style: STYLE },

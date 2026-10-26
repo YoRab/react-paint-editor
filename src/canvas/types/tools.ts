@@ -1,4 +1,4 @@
-import type { ShapeType } from './Shapes'
+import type { ArrowHead, FillGradient, FillPattern, ShapeType, TextAlign } from './Shapes'
 
 export type CustomToolInput = {
   id: string
@@ -126,6 +126,33 @@ export type SettingsFillColor = {
   }
 }
 
+/** Pattern and gradient of the fill of a shape, inside its path */
+export type SettingsFill = {
+  fillPattern: {
+    values: FillPattern[]
+    default: FillPattern
+    hidden?: boolean
+  }
+  fillGradient: {
+    values: FillGradient[]
+    default: FillGradient
+    hidden?: boolean
+  }
+  fillColor2: {
+    values: string[]
+    default: string
+    hidden?: boolean
+  }
+  /** In degrees */
+  fillGradientAngle: {
+    min: number
+    max: number
+    step: number
+    default: number
+    hidden?: boolean
+  }
+}
+
 export type SettingsLineWidth = {
   lineWidth: {
     min: number
@@ -144,9 +171,52 @@ export type SettingsLineDash = {
   }
 }
 
-export type SettingsLineArrow = {
-  lineArrow: {
-    values: number[]
+export type SettingsLineJoin = {
+  lineJoin: {
+    values: CanvasLineJoin[]
+    default: CanvasLineJoin
+    hidden?: boolean
+  }
+}
+
+export type SettingsLineCap = {
+  lineCap: {
+    values: CanvasLineCap[]
+    default: CanvasLineCap
+    hidden?: boolean
+  }
+}
+
+export type SettingsCornerRadius = {
+  cornerRadius: {
+    min: number
+    max: number
+    step: number
+    default: number
+    hidden?: boolean
+  }
+}
+
+/** Heads of the first and the last point of a line, or of an open polygon or curve */
+export type SettingsArrowHeads = {
+  arrowStart: {
+    values: ArrowHead[]
+    default: ArrowHead
+    hidden?: boolean
+  }
+  arrowEnd: {
+    values: ArrowHead[]
+    default: ArrowHead
+    hidden?: boolean
+  }
+}
+
+/** Size of the heads, as a multiplier of their default size */
+export type SettingsArrowSize = {
+  arrowSize: {
+    min: number
+    max: number
+    step: number
     default: number
     hidden?: boolean
   }
@@ -170,6 +240,66 @@ export type SettingsFont = {
   }
 }
 
+export type SettingsTextDecoration = {
+  fontUnderline: {
+    values: boolean[]
+    default: boolean
+    hidden?: boolean
+  }
+  fontStrikethrough: {
+    values: boolean[]
+    default: boolean
+    hidden?: boolean
+  }
+}
+
+/** Outline around the letters of a text */
+export type SettingsTextOutline = {
+  outlineColor: {
+    values: string[]
+    default: string
+    hidden?: boolean
+  }
+  outlineWidth: {
+    min: number
+    max: number
+    step: number
+    default: number
+    hidden?: boolean
+  }
+}
+
+export type SettingsTextAlign = {
+  textAlign: {
+    values: TextAlign[]
+    default: TextAlign
+    hidden?: boolean
+  }
+}
+
+/** Height of the lines of a text, in font sizes */
+export type SettingsLineHeight = {
+  lineHeight: {
+    min: number
+    max: number
+    step: number
+    default: number
+    hidden?: boolean
+  }
+}
+
+/** Font size of the new texts, which are as wide as their content. Without it, a new text is 150 wide */
+export type SettingsFontSize = {
+  fontSize: {
+    min: number
+    /** No limit by default: a text can be made as big as wanted */
+    max?: number
+    step: number
+    default: number
+    hidden?: boolean
+  }
+}
+
 export type SettingsClosedPoints = {
   closedPoints: {
     default: number
@@ -177,39 +307,70 @@ export type SettingsClosedPoints = {
   }
 }
 
-export type ToolsRectSettings = SettingsStrokeColor & SettingsFillColor & SettingsOpacity & SettingsLineWidth & SettingsLineDash
+export type ToolsRectSettings = SettingsStrokeColor &
+  SettingsFillColor &
+  SettingsOpacity &
+  SettingsLineWidth &
+  SettingsLineDash &
+  Partial<SettingsLineJoin & SettingsCornerRadius & SettingsFill>
 
-export type ToolsSquareSettings = SettingsStrokeColor & SettingsFillColor & SettingsOpacity & SettingsLineWidth & SettingsLineDash
+export type ToolsSquareSettings = ToolsRectSettings
 
-export type ToolsCircleSettings = SettingsStrokeColor & SettingsFillColor & SettingsOpacity & SettingsLineWidth & SettingsLineDash
+export type ToolsEllipseSettings = SettingsStrokeColor &
+  SettingsFillColor &
+  SettingsOpacity &
+  SettingsLineWidth &
+  SettingsLineDash &
+  Partial<SettingsFill>
 
-export type ToolsEllipseSettings = SettingsStrokeColor & SettingsFillColor & SettingsOpacity & SettingsLineWidth & SettingsLineDash
+export type ToolsCircleSettings = ToolsEllipseSettings
 
-export type ToolsTextSettings = SettingsOpacity & SettingsStrokeColor & SettingsFont
-export type ToolsLineSettings = SettingsOpacity & SettingsStrokeColor & SettingsLineWidth & SettingsLineDash & SettingsLineArrow
+export type ToolsTextSettings = SettingsOpacity &
+  SettingsStrokeColor &
+  SettingsFont &
+  Partial<SettingsFontSize & SettingsTextAlign & SettingsLineHeight & SettingsFillColor & SettingsTextDecoration & SettingsTextOutline>
+export type ToolsLineSettings = SettingsOpacity &
+  SettingsStrokeColor &
+  SettingsLineWidth &
+  SettingsLineDash &
+  Partial<SettingsArrowHeads & SettingsArrowSize & SettingsLineCap>
 
-export type ToolsBrushSettings = SettingsOpacity & SettingsStrokeColor & SettingsLineWidth & SettingsLineDash
+export type ToolsBrushSettings = SettingsOpacity &
+  SettingsStrokeColor &
+  SettingsLineWidth &
+  SettingsLineDash &
+  Partial<SettingsLineJoin & SettingsLineCap>
 
 export type ToolsPolygonSettings = SettingsOpacity &
   SettingsStrokeColor &
   SettingsFillColor &
   SettingsLineWidth &
   SettingsLineDash &
-  SettingsClosedPoints
+  SettingsClosedPoints &
+  Partial<SettingsLineJoin & SettingsLineCap & SettingsCornerRadius & SettingsArrowHeads & SettingsArrowSize & SettingsFill>
 
 export type ToolsCurveSettings = SettingsOpacity &
   SettingsStrokeColor &
   SettingsFillColor &
   SettingsLineWidth &
   SettingsLineDash &
-  SettingsClosedPoints
+  SettingsClosedPoints &
+  Partial<SettingsLineCap & SettingsArrowHeads & SettingsArrowSize & SettingsFill>
 
-export type ToolsTriangleSettings = SettingsStrokeColor & SettingsFillColor & SettingsOpacity & SettingsLineWidth & SettingsLineDash
-
-export type ToolsPictureSettings = SettingsOpacity
+export type ToolsPictureSettings = SettingsOpacity & Partial<SettingsStrokeColor & SettingsLineWidth & SettingsCornerRadius>
 
 export type ToolsGroupSettings = Partial<
-  SettingsOpacity & SettingsStrokeColor & SettingsFillColor & SettingsLineWidth & SettingsLineDash & SettingsLineArrow
+  SettingsOpacity &
+    SettingsStrokeColor &
+    SettingsFillColor &
+    SettingsLineWidth &
+    SettingsLineDash &
+    SettingsArrowHeads &
+    SettingsArrowSize &
+    SettingsLineJoin &
+    SettingsLineCap &
+    SettingsCornerRadius &
+    SettingsFill
 >
 
 export type ToolsSettingsType<T extends ShapeType> = T extends 'rect'
@@ -230,16 +391,14 @@ export type ToolsSettingsType<T extends ShapeType> = T extends 'rect'
                 ? ToolsPolygonSettings
                 : T extends 'curve'
                   ? ToolsCurveSettings
-                  : T extends 'triangle'
-                    ? ToolsTriangleSettings
-                    : T extends 'picture'
-                      ? ToolsPictureSettings
-                      : T extends 'group'
-                        ? ToolsGroupSettings
-                        : never
+                  : T extends 'picture'
+                    ? ToolsPictureSettings
+                    : T extends 'group'
+                      ? ToolsGroupSettings
+                      : never
 
 /** Tools handled by the canvas besides the drawing tools. The buttons of an editor (undo, export...) are not tools */
-export type ActionsType = 'selection' | 'move'
+export type ActionsType = 'selection' | 'move' | 'eraser' | 'laser'
 
 export type ActionsTool = {
   id: string

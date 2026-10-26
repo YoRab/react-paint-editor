@@ -111,6 +111,31 @@ export const assertValidShapes = (shapes: unknown[], action: string) => {
   })
 }
 
+/**
+ * Geometry of a shape with its negative sizes made positive, as the canvas draws them: a box keeps the area between x and
+ * x + width, a circle or an ellipse its radii. The flips of a picture or a text are kept. A negative box was never drawn,
+ * and a negative radius could not be drawn
+ */
+export const normalizeGeometry = <T extends { type: string }>(shape: T): T => {
+  const input = shape as unknown as ShapeInput
+  switch (input.type) {
+    case 'rect':
+    case 'square':
+    case 'picture':
+    case 'text': {
+      const { x, y, width = 0, height = 0 } = input
+      if (width >= 0 && height >= 0) return shape
+      return { ...shape, ...(width < 0 ? { x: x + width, width: -width } : {}), ...(height < 0 ? { y: y + height, height: -height } : {}) }
+    }
+    case 'circle':
+      return input.radius < 0 ? { ...shape, radius: -input.radius } : shape
+    case 'ellipse':
+      return input.radiusX < 0 || input.radiusY < 0 ? { ...shape, radiusX: Math.abs(input.radiusX), radiusY: Math.abs(input.radiusY) } : shape
+    default:
+      return shape
+  }
+}
+
 type BuildShapeOptions = {
   ctx: CanvasRenderingContext2D
   settings: UtilsSettings
@@ -125,11 +150,13 @@ type BuildShapeOptions = {
 export const buildShapeEntity = (input: ShapeInput, { ctx, settings, tools, usedIds, completeStyle }: BuildShapeOptions): ShapeEntity => {
   const id = typeof input.id === 'string' && input.id && !usedIds.has(input.id) ? input.id : createShapeId(input.type)
   usedIds.add(id)
-  const style = completeStyle ? { ...getToolDefaultStyle(findShapeTool(tools, input)), ...input.style } : input.style
-  const shape = { ...input, id, ...(style ? { style } : {}) }
+  const tool = completeStyle ? findShapeTool(tools, input) : undefined
+  const style = tool ? { ...getToolDefaultStyle(tool), ...input.style } : input.style
+  const shape = normalizeGeometry({ ...input, id, ...(style ? { style } : {}) })
   switch (shape.type) {
     case 'text':
-      return refreshShape(sizeText(ctx, shape), settings)
+      // a text given without its size takes the font size of its tool
+      return refreshShape(sizeText(ctx, shape, tool?.type === 'text' ? tool.settings.fontSize?.default : undefined), settings)
     case 'picture':
       return refreshShape({ ...shape, img: new Image() }, settings)
     default:

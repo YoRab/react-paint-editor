@@ -7,7 +7,7 @@
   flex-wrap: wrap;
 }
 
-h3 {
+.dynamic-title {
   display: inline-block;
   padding: 12px 0;
 }

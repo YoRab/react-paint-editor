@@ -36,7 +36,7 @@ const Dynamic = () => {
   return (
     <>
       <div>
-        <h3>Choose a preset to reset the canvas</h3>
+        <h3 className='dynamic-title'>Choose a preset to reset the canvas</h3>
         <div className='dynamic-buttons'>
           <button type='button' className={`dynamic-button ${preset === 0 ? 'active' : ''}`} onClick={() => choosePreset(0)}>
             Preset 1

@@ -33,7 +33,7 @@ export const DrawLine: Story = {
     await setColorSetting(view, 'Couleur du trait', 'red')
     await setRangeSetting(view, 'Epaisseur du trait', 5)
     await setSelectSetting(view, 'Type de traits', '1')
-    await setSelectSetting(view, 'Flèches', '1')
+    await setSelectSetting(view, 'Flèche au début', 'triangle')
     await setRangeSetting(view, 'Opacité', 50)
 
     const drawCanvas = await view.findByTestId('draw-canvas')
@@ -64,7 +64,7 @@ export const DrawLine: Story = {
     await setColorSetting(view, 'Couleur du trait', 'green')
     await setRangeSetting(view, 'Epaisseur du trait', 10)
     await setSelectSetting(view, 'Type de traits', '2')
-    await setSelectSetting(view, 'Flèches', '2')
+    await setSelectSetting(view, 'Flèche à la fin', 'circle')
     await setRangeSetting(view, 'Opacité', 75)
 
     // --- Assertions ---
@@ -73,11 +73,17 @@ export const DrawLine: Story = {
 
     expect(data.shapes).toHaveLength(2)
 
-    expect(data.shapes![1]).toMatchObject({ type: 'line', style: { strokeColor: 'red', opacity: 50, lineWidth: 5, lineDash: 1, lineArrow: 1 } })
+    expect(data.shapes![1]).toMatchObject({
+      type: 'line',
+      style: { strokeColor: 'red', opacity: 50, lineWidth: 5, lineDash: 1, arrowStart: 'triangle', arrowEnd: 'none' }
+    })
     assertNoInternalFields(data.shapes![1])
     expect((data.shapes![1] as { points: unknown[] }).points).toHaveLength(2)
 
-    expect(data.shapes![0]).toMatchObject({ type: 'line', style: { strokeColor: 'green', opacity: 75, lineWidth: 10, lineDash: 2, lineArrow: 2 } })
+    expect(data.shapes![0]).toMatchObject({
+      type: 'line',
+      style: { strokeColor: 'green', opacity: 75, lineWidth: 10, lineDash: 2, arrowStart: 'triangle', arrowEnd: 'circle' }
+    })
     assertNoInternalFields(data.shapes![0])
     expect((data.shapes![0] as { points: unknown[] }).points).toHaveLength(2)
   }

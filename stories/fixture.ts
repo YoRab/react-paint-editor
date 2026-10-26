@@ -2065,7 +2065,6 @@ export const TREE_AND_CLOUDS: DrawableShape[] = [
       opacity: 100,
       lineWidth: 10,
       lineDash: 2,
-      lineArrow: 0,
       closedPoints: 1,
       fontFamily: 'serif'
     }
@@ -2090,7 +2089,6 @@ export const TREE_AND_CLOUDS: DrawableShape[] = [
       opacity: 60,
       lineWidth: 1,
       lineDash: 0,
-      lineArrow: 0,
       closedPoints: 1,
       fontFamily: 'serif'
     }
@@ -2115,7 +2113,6 @@ export const TREE_AND_CLOUDS: DrawableShape[] = [
       opacity: 60,
       lineWidth: 1,
       lineDash: 0,
-      lineArrow: 0,
       closedPoints: 1,
       fontFamily: 'serif'
     }
@@ -2140,7 +2137,6 @@ export const TREE_AND_CLOUDS: DrawableShape[] = [
       opacity: 60,
       lineWidth: 1,
       lineDash: 0,
-      lineArrow: 0,
       closedPoints: 1,
       fontFamily: 'serif'
     }
@@ -2157,7 +2153,6 @@ export const TREE_AND_CLOUDS: DrawableShape[] = [
       opacity: 100,
       lineWidth: 1,
       lineDash: 0,
-      lineArrow: 0,
       closedPoints: 1,
       fontFamily: 'serif'
     }
@@ -2179,7 +2174,6 @@ export const TREE_AND_CLOUDS: DrawableShape[] = [
       opacity: 100,
       lineWidth: 10,
       lineDash: 0,
-      lineArrow: 0,
       closedPoints: 1,
       fontFamily: 'serif'
     }
@@ -2197,7 +2191,6 @@ export const TREE_AND_CLOUDS: DrawableShape[] = [
       opacity: 100,
       lineWidth: 1,
       lineDash: 0,
-      lineArrow: 0,
       closedPoints: 1,
       fontFamily: 'serif'
     }
@@ -2215,7 +2208,6 @@ export const TREE_AND_CLOUDS: DrawableShape[] = [
       opacity: 100,
       lineWidth: 1,
       lineDash: 0,
-      lineArrow: 0,
       closedPoints: 1,
       fontFamily: 'serif'
     }

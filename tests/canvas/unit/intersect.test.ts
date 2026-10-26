@@ -6,6 +6,7 @@ import {
   checkSelectionFrameCollision,
   checkSelectionIntersection,
   clientToCanvasPosition,
+  findShapesAtPoints,
   getCursorPositionInTransformedCanvas,
   hasPointerMoved,
   shouldCancelLongPress
@@ -53,6 +54,17 @@ describe('checkSelectionFrameCollision', () => {
     // 6 from the outline: within half of the width searched, the stroke and the margin of the collisions
     expect(checkSelectionFrameCollision(ctx, largeRect, frame([400, 250], [994, 350]))).toBe(true)
     expect(ctx.isPointInStroke).toHaveBeenCalled()
+  })
+
+  it('searches the stroke of a rounded rectangle when the frame is in one of its rounded corners', () => {
+    const ctx = createContext(true)
+    const rounded = createShape({ type: 'rect', x: 0, y: 0, width: 1000, height: 600, style: { ...OUTLINED, cornerRadius: 100 } })
+    // far from the sides, but crossed by the rounded corner
+    expect(checkSelectionFrameCollision(ctx, rounded, frame([25, 25], [40, 40]))).toBe(true)
+    expect(ctx.isPointInStroke).toHaveBeenCalled()
+    const sharpCtx = createContext(true)
+    expect(checkSelectionFrameCollision(sharpCtx, largeRect, frame([25, 25], [40, 40]))).toBe(false)
+    expect(sharpCtx.isPointInStroke).not.toHaveBeenCalled()
   })
 
   it('searches the stroke of an ellipse when the frame is outside of its hole', () => {
@@ -180,6 +192,37 @@ describe('checkSelectionIntersection', () => {
     // between the points, the stroke of the shape is searched
     expect(check(line, [50, 50])).toBe(false)
     expect(ctx.isPointInStroke).toHaveBeenCalled()
+  })
+})
+
+describe('findShapesAtPoints', () => {
+  const settings = { selectionPadding: 0, canvasSize: { scaleRatio: 1 }, canvasZoom: 1 } as UtilsSettings
+  const left = createShape({ type: 'rect', x: 0, y: 0, width: 100, height: 100, style: OUTLINED })
+  const right = createShape({ type: 'rect', x: 200, y: 0, width: 100, height: 100, style: OUTLINED })
+  const hidden = { ...createShape({ type: 'rect', x: 0, y: 0, width: 300, height: 100, style: OUTLINED }), visible: false }
+
+  it('finds the visible shapes under one of the points, in their order, by their bounding boxes first', () => {
+    const ctx = createContext(true)
+    expect(findShapesAtPoints(ctx, [right, hidden, left], [[50, 50]], settings)).toEqual([left])
+    expect(
+      findShapesAtPoints(
+        ctx,
+        [right, hidden, left],
+        [
+          [50, 50],
+          [250, 50]
+        ],
+        settings
+      )
+    ).toEqual([right, left])
+    expect(findShapesAtPoints(ctx, [right, left], [[150, 50]], settings)).toEqual([])
+    expect(findShapesAtPoints(ctx, [right, left], [], settings)).toEqual([])
+  })
+
+  it('tests the paths of the shapes whose boxes hold a point', () => {
+    const ctx = createContext(false)
+    expect(findShapesAtPoints(ctx, [right, left], [[50, 50]], settings)).toEqual([])
+    expect(ctx.isPointInStroke).toHaveBeenCalledTimes(1)
   })
 })
 

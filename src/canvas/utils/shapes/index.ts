@@ -1,9 +1,10 @@
 import type { UtilsSettings } from '@canvas/constants/app'
-import { SELECTION_DEFAULT_WIDTH, SHAPES_KEEPING_RATIO, SHAPES_WITH_ROTATION } from '@canvas/constants/shapes'
+import { SELECTION_DEFAULT_WIDTH, SHAPES_KEEPING_RATIO, SHAPES_WITH_ROTATION, STYLE_FIELDS_SHAPE_TYPES } from '@canvas/constants/shapes'
 import type { HoverModeData, SelectionModeData, SelectionModeResize } from '@canvas/types/Mode'
-import type { DrawableShape, Point, Rect, SelectionType, ShapeEntity, StyleShape } from '@canvas/types/Shapes'
+import type { DrawableShape, Point, Rect, SelectionType, ShapeEntity, ShapeType, StyleShape } from '@canvas/types/Shapes'
 import type { CustomTool } from '@canvas/types/tools'
 import { createDetachedContext, initCanvasContext, transformCanvas, updateCanvasContext } from '@canvas/utils/canvas'
+import { hasVisibleFill, isFillMasked } from '@canvas/utils/fill'
 import { getRectIntersection } from '@canvas/utils/intersect'
 import { getSelectedShapes } from '@canvas/utils/selectedShapes'
 import { buildShapesGroup } from '@canvas/utils/selection'
@@ -22,10 +23,10 @@ import { createEllipse, drawEllipse, refreshEllipse, resizeEllipse, resizeEllips
 import { buildGroupResizeContext, type GroupResizeContext, getGroupResizeContext } from './group'
 import { createLine, drawLine, refreshLine, resizeLine, resizeLinePolygonCurveInGroup } from './line'
 import { expandRect } from './path'
-import { drawPicture, refreshPicture, resizePicture, resizePictureInGroup } from './picture'
+import { drawPicture, hasPictureBorder, refreshPicture, resizePicture, resizePictureInGroup } from './picture'
 import { createPolygon, drawPolygon, refreshPolygon, resizePolygon } from './polygon'
 import { createRectangle, drawRect, refreshRect, resizeRect, resizeRectInGroup } from './rectangle'
-import { createText, drawText, fitTextFontSize, isFontStyleField, refreshText, resizeText, resizeTextInGroup } from './text'
+import { createText, drawText, fitTextToStyle, isTextPaintedSeveralTimes, refreshText, resizeText, resizeTextInGroup } from './text'
 
 export const createShape = (
   ctx: CanvasRenderingContext2D,
@@ -90,23 +91,25 @@ const drawShapeByType = (ctx: CanvasRenderingContext2D, shape: ShapeEntity): voi
   }
 }
 
-const isVisibleColor = (color: string | undefined) => color !== undefined && color !== 'transparent'
-
 /**
- * Whether the opacity of the shape must be applied to its drawing as a whole, on a layer: drawn with the opacity, the
- * overlaps would be darker. It is the case of several operations which overlap, like a fill and a stroke, and of a stroke
- * thinner than a pixel, drawn segment by segment. A single operation (a stroke, even of several lines, a fill, an image)
- * is drawn directly
+ * Whether the shape must be drawn alone on a layer, then copied with its opacity:
+ * - a gradient masked by dots composites over what is under it, which must be empty
+ * - drawn with an opacity, the overlaps of several operations would be darker: a fill and a stroke, a stroke thinner
+ *   than a pixel, drawn segment by segment, a stroke and its heads, an image and its border, or the lines of a text and
+ *   its background, its outline or its decorations. A single operation (a stroke, even of several lines like a hatch, a
+ *   fill, an image) is drawn directly
  */
-const needsLayer = (shape: ShapeEntity, scaleRatio: number): boolean => {
-  if (shape.type === 'picture') return false
-  if (shape.type === 'text') return shape.value.length > 1
+const needsLayer = (shape: ShapeEntity, opacity: number, scaleRatio: number): boolean => {
+  if (isFillMasked(shape.style)) return true
+  if (opacity === 1) return false
+  if (shape.type === 'picture') return hasPictureBorder(shape)
+  if (shape.type === 'text') return isTextPaintedSeveralTimes(shape)
   // an undefined stroke color is drawn with the default color
   const hasStroke = shape.style?.strokeColor !== 'transparent'
   if (hasStroke && (shape.style?.lineWidth ?? SELECTION_DEFAULT_WIDTH) * scaleRatio <= 1) return true
-  if (shape.type === 'line') return !!shape.arrows?.length
-  if (shape.type === 'brush') return false
-  return hasStroke && isVisibleColor(shape.style?.fillColor)
+  if (hasStroke && 'arrows' in shape && shape.arrows?.length) return true
+  if (shape.type === 'line' || shape.type === 'brush') return false
+  return hasStroke && hasVisibleFill(shape.style)
 }
 
 /**
@@ -143,14 +146,11 @@ const getLayerContext = (width: number, height: number, canvas: HTMLCanvasElemen
 }
 
 /**
- * Margin around the outer borders of a shape, in the units of the drawing: the arrows of a line and the glyphs of a text
- * go beyond them, and the outer borders of a curve leave out the half of its stroke
+ * Margin around the outer borders of a shape, in the units of the drawing: the glyphs of a text go beyond them. The outer
+ * borders of the other shapes hold their stroke and its heads, and the ones of a text the outline of its letters and the
+ * letters of its lines lower than its font size
  */
-const getLayerMargin = (shape: ShapeEntity) => {
-  if (shape.type === 'text') return shape.fontSize / 4
-  const lineWidth = shape.style?.lineWidth ?? SELECTION_DEFAULT_WIDTH
-  return shape.type === 'line' ? 10 + lineWidth * 2 : lineWidth / 2
-}
+const getLayerMargin = (shape: ShapeEntity) => (shape.type === 'text' ? shape.fontSize / 4 : 0)
 
 /** Margin of the layers in pixels, for the antialiasing */
 const LAYER_PIXEL_MARGIN = 2
@@ -187,7 +187,10 @@ const drawShapeOnLayer = (ctx: CanvasRenderingContext2D, shape: ShapeEntity): vo
   // the transformation of the canvas, moved to the corner of the layer
   layerCtx.setTransform(matrix.a, matrix.b, matrix.c, matrix.d, matrix.e - box.x, matrix.f - box.y)
   updateCanvasContext(layerCtx, { ...shape.style, opacity: 100 })
+  // the shared layer keeps no state of the shape, like a clip, for the next ones
+  layerCtx.save()
   drawShapeByType(layerCtx, shape)
+  layerCtx.restore()
 
   ctx.save()
   ctx.setTransform(1, 0, 0, 1, 0, 0)
@@ -207,13 +210,18 @@ export const drawShape = (ctx: CanvasRenderingContext2D, shape: ShapeEntity, set
   transformCanvas(ctx, settings, shape.rotation, shape.computed.center)
   updateCanvasContext(ctx, shape.style)
 
-  if (ctx.globalAlpha < 1 && needsLayer(shape, settings.canvasSize.scaleRatio)) {
-    drawShapeOnLayer(ctx, shape)
-  } else if (ctx.globalAlpha > 0) {
-    drawShapeByType(ctx, shape)
+  if (ctx.globalAlpha > 0) {
+    if (needsLayer(shape, ctx.globalAlpha, settings.canvasSize.scaleRatio)) drawShapeOnLayer(ctx, shape)
+    else drawShapeByType(ctx, shape)
   }
 
   ctx.restore()
+}
+
+/** Draws the shapes from the background, the first of the list in front, the ones out of the view left out */
+export const drawShapes = (ctx: CanvasRenderingContext2D, shapes: ShapeEntity[], settings: UtilsSettings): void => {
+  const currentView = getCurrentView(settings)
+  for (let i = shapes.length - 1; i >= 0; i--) drawShape(ctx, shapes[i]!, settings, currentView)
 }
 
 export const rotateShape = <T extends ShapeEntity>(shape: T, rotationToApply: number, selectionCenter: Point): T => {
@@ -521,16 +529,19 @@ export const canRemoveShapePoint = (
   pointIndex < shape.points.length &&
   shape.points.length > 2
 
+/** Whether a style field applies to a type of shape, like the font fields to the texts only */
+export const isStyleFieldOfShape = (type: ShapeType, field: keyof StyleShape): boolean => STYLE_FIELDS_SHAPE_TYPES[field]?.includes(type) ?? true
+
 /**
- * Returns the shape with the new style values. Font fields only apply to texts, whose font size is fitted
- * to their width: a shape is returned unchanged when no field applies to it.
+ * Returns the shape with the new style values which apply to its type. The font size of a text is fitted to its width
+ * when its font changes, and its height to its lines when its line height changes: a shape is returned unchanged when no
+ * field applies to it.
  */
 export const updateShapeStyle = (ctx: CanvasRenderingContext2D, shape: ShapeEntity, style: StyleShape, settings: UtilsSettings): ShapeEntity => {
-  const fields = (Object.keys(style) as (keyof StyleShape)[]).filter(field => shape.type === 'text' || !isFontStyleField(field))
+  const fields = (Object.keys(style) as (keyof StyleShape)[]).filter(field => isStyleFieldOfShape(shape.type, field))
   if (!fields.length) return shape
   const newShape = { ...shape, style: { ...shape.style, ...Object.fromEntries(fields.map(field => [field, style[field]])) } }
-  if (newShape.type === 'text' && fields.some(isFontStyleField)) return refreshShape(fitTextFontSize(ctx, newShape), settings)
-  return refreshShape(newShape, settings)
+  return refreshShape(newShape.type === 'text' ? fitTextToStyle(ctx, newShape, fields) : newShape, settings)
 }
 
 export const drawShapeSelection = ({

@@ -7,6 +7,10 @@ import { translateShapes } from '@canvas/utils/shapes'
 import { isMacOs } from '@canvas/utils/util'
 import { useEffect } from 'react'
 
+/** A field of a form, like one of the editor: the shortcuts leave it its keys and its clipboard */
+const isFormField = (target: EventTarget | null) =>
+  target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement || target instanceof HTMLSelectElement
+
 /**
  * Keyboard shortcuts and modifiers. The listeners are set once on the scope (the Canvas, or the area set by scopeRef),
  * which only receives the events while the focus is inside it, and read the state when an event happens.
@@ -21,19 +25,19 @@ const useKeyboard = (store: PaintStore) => {
     const pressedArrows = new Set<string>()
 
     const handleCopy = (e: ClipboardEvent) => {
-      if (!isInteractive() || !hasSelection() || isEditingText()) return
+      if (!isInteractive() || !hasSelection() || isEditingText() || isFormField(e.target)) return
       e.preventDefault()
       store.actions.copy()
     }
 
     const handleCut = (e: ClipboardEvent) => {
-      if (!isInteractive() || !hasSelection() || isEditingText()) return
+      if (!isInteractive() || !hasSelection() || isEditingText() || isFormField(e.target)) return
       e.preventDefault()
       store.actions.cut()
     }
 
     const handlePaste = (e: ClipboardEvent) => {
-      if (!isInteractive() || store.getState().clipboard === undefined || isEditingText()) return
+      if (!isInteractive() || store.getState().clipboard === undefined || isEditingText() || isFormField(e.target)) return
       e.preventDefault()
       store.actions.paste()
     }
@@ -58,7 +62,9 @@ const useKeyboard = (store: PaintStore) => {
 
     const handleKeyDown = (e: KeyboardEvent) => {
       if (!isInteractive()) return
-      if (e.metaKey || e.ctrlKey) {
+      // only the modifiers are followed in a field
+      const isInField = isFormField(e.target)
+      if ((e.metaKey || e.ctrlKey) && !isInField) {
         if (e.key === KeyboardCode.Z || e.key === KeyboardCode.z) {
           e.preventDefault()
           e.stopPropagation()
@@ -123,8 +129,15 @@ const useKeyboard = (store: PaintStore) => {
         return
       }
 
+      // a stroke of the eraser is cancelled: it removes nothing. So is a pick of a color
+      const { mode } = store.getState().interaction.selectionMode
+      if (e.key === KeyboardCode.Escape && (mode === 'eraser' || mode === 'eyedropper')) {
+        store.setSelectionMode({ mode: 'default' })
+        return
+      }
+
       const { selectedShape } = store.getState().document
-      if (!selectedShape) return
+      if (!selectedShape || isInField) return
 
       if (e.key === KeyboardCode.Escape) {
         store.batch(() => {

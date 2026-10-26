@@ -1,6 +1,7 @@
 import type { UtilsSettings } from '@canvas/constants/app'
 import { STYLE_FONT_DEFAULT } from '@canvas/constants/rendering'
 import type { ShapeEntity } from '@canvas/types/Shapes'
+import { getTextLineHeight, getTextPaints, TEXT_DECORATION_THICKNESS } from '@canvas/utils/shapes/text'
 import { radiansToDegrees, rotatePoint } from '@canvas/utils/trigo'
 import { cssVar } from '@canvas/utils/util'
 import type React from 'react'
@@ -13,10 +14,12 @@ const EDIT_TEXT_BOX_STYLE: CSSProperties = {
   top: 0,
   transformOrigin: 'left top',
   boxSizing: 'border-box',
-  lineHeight: 1,
   width: 'max-content',
-  // required to override injected prop in contenteditable span elements
-  background: 'none'
+  // the outline of the letters is painted under them, like on the canvas. The lines under and through them are as thick as
+  // on the canvas, at the positions given by the font, and they cross the letters like on the canvas
+  paintOrder: 'stroke fill',
+  textDecorationSkipInk: 'none',
+  textDecorationThickness: `${TEXT_DECORATION_THICKNESS}em`
 }
 
 const getNodeValue = (node: ChildNode): string => {
@@ -100,10 +103,9 @@ const EditTextBox = ({ disabled = false, shape, defaultValue, updateValue, saveS
     })
   }, [shape])
 
+  const { scaleRatio } = settings.canvasSize
   const transform = [
-    `translate3D(${(position[0] + settings.canvasOffset[0]) * settings.canvasSize.scaleRatio}px, ${
-      (position[1] + settings.canvasOffset[1]) * settings.canvasSize.scaleRatio
-    }px, 0)`,
+    `translate3D(${(position[0] + settings.canvasOffset[0]) * scaleRatio}px, ${(position[1] + settings.canvasOffset[1]) * scaleRatio}px, 0)`,
     `rotate(${radiansToDegrees(shape.rotation ?? 0)}deg)`,
     shape.flipX || shape.flipY ? `scale(${shape.flipX ? -1 : 1}, ${shape.flipY ? -1 : 1})` : undefined,
     shape.flipX || shape.flipY ? `translate3D(${shape.flipX ? -100 : 0}%,${shape.flipY ? -100 : 0}%,0)` : undefined
@@ -112,6 +114,10 @@ const EditTextBox = ({ disabled = false, shape, defaultValue, updateValue, saveS
     .join(' ')
 
   const isEditable = !disabled
+  const color = cssVar('--react-paint-canvas-edittextbox-color', shape.style?.strokeColor)
+  // the same paints as on the canvas
+  const { background, outlineWidth, underline, strikethrough } = getTextPaints(shape)
+  const textDecorationLine = [underline && 'underline', strikethrough && 'line-through'].filter(Boolean).join(' ')
 
   return (
     // biome-ignore lint/a11y/useSemanticElements: contentEditable div is used to allow bounding box to fit content
@@ -126,13 +132,23 @@ const EditTextBox = ({ disabled = false, shape, defaultValue, updateValue, saveS
       style={{
         ...EDIT_TEXT_BOX_STYLE,
         transform: cssVar('--react-paint-canvas-edittextbox-transform', transform),
-        fontSize: cssVar('--react-paint-canvas-edittextbox-fontsize', `${shape.fontSize * settings.canvasSize.scaleRatio}px`),
-        padding: cssVar('--react-paint-canvas-edittextbox-padding', `${settings.selectionPadding * settings.canvasSize.scaleRatio}px`),
-        color: cssVar('--react-paint-canvas-edittextbox-color', shape.style?.strokeColor),
+        fontSize: cssVar('--react-paint-canvas-edittextbox-fontsize', `${shape.fontSize * scaleRatio}px`),
+        padding: cssVar('--react-paint-canvas-edittextbox-padding', `${settings.selectionPadding * scaleRatio}px`),
+        color,
         opacity: cssVar('--react-paint-canvas-edittextbox-opacity', (shape.style?.opacity ?? 100) / 100),
         fontFamily: cssVar('--react-paint-canvas-edittextbox-fontfamily', shape.style?.fontFamily ?? STYLE_FONT_DEFAULT),
         fontWeight: shape.style?.fontBold ? 'bold' : undefined,
-        fontStyle: shape.style?.fontItalic ? 'italic' : undefined
+        fontStyle: shape.style?.fontItalic ? 'italic' : undefined,
+        textAlign: shape.style?.textAlign,
+        // the canvas places the letters in their lines like CSS
+        lineHeight: getTextLineHeight(shape.style),
+        // the background fills the box with its padding, like the selection frame on the canvas. A background is required to
+        // override the one injected in the contenteditable span elements
+        background: background ? shape.style?.fillColor : 'none',
+        WebkitTextStroke: outlineWidth > 0 ? `${outlineWidth * 2 * scaleRatio}px ${shape.style?.outlineColor}` : undefined,
+        textDecorationLine: textDecorationLine || undefined,
+        // without it, the lines would take the color of the outline of the letters
+        textDecorationColor: color
       }}
     />
   )

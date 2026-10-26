@@ -5,6 +5,7 @@ import {
   getCurrentDataRef,
   getPaint,
   makeCoordConverters,
+  openNewTextBox,
   ReactPaintWrapper,
   selectTool,
   setColorSetting,
@@ -47,11 +48,7 @@ export const DrawText: Story = {
     const user = userEvent.setup()
 
     // --- Draw shape 1 (at cx - OFFSET) ---
-    await user.pointer({ target: drawCanvas, keys: '[MouseLeft]', coords: { x: cx - OFFSET, y: cy } })
-    await new Promise(res => setTimeout(res, 50))
-    await user.pointer({ target: drawCanvas, keys: '[MouseLeft]', coords: { x: cx - OFFSET, y: cy } })
-    await new Promise(res => setTimeout(res, 100))
-    const textbox1 = await view.findByRole('textbox')
+    const textbox1 = await openNewTextBox(view, user, drawCanvas, cx - OFFSET, cy)
     await userEvent.clear(textbox1)
     await userEvent.type(textbox1, 'Hello')
     await new Promise(res => setTimeout(res, 50))
@@ -61,11 +58,7 @@ export const DrawText: Story = {
 
     // --- Draw shape 2 (at cx + OFFSET, with shape 1's settings) ---
     await selectTool(view, 'text')
-    await user.pointer({ target: drawCanvas, keys: '[MouseLeft]', coords: { x: cx + OFFSET, y: cy } })
-    await new Promise(res => setTimeout(res, 50))
-    await user.pointer({ target: drawCanvas, keys: '[MouseLeft]', coords: { x: cx + OFFSET, y: cy } })
-    await new Promise(res => setTimeout(res, 100))
-    const textbox2 = await view.findByRole('textbox')
+    const textbox2 = await openNewTextBox(view, user, drawCanvas, cx + OFFSET, cy)
     await userEvent.clear(textbox2)
     await userEvent.type(textbox2, 'World')
     await new Promise(res => setTimeout(res, 50))

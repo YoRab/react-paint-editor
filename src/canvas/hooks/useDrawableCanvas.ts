@@ -2,13 +2,14 @@ import type { UtilsSettings } from '@canvas/constants/app'
 import { ShapeTypeArray } from '@canvas/constants/shapes'
 import { SELECTION_TOOL } from '@canvas/constants/tools'
 import type { PaintStore } from '@canvas/store/paintStore'
-import type { Point } from '@canvas/types/Shapes'
+import type { Point, ShapeEntity } from '@canvas/types/Shapes'
 import type { CustomTool } from '@canvas/types/tools'
 import { createClickTracker } from '@canvas/utils/click'
 import {
   checkCurveLinesSelectionIntersection,
   checkPolygonLinesSelectionIntersection,
   checkSelectionIntersection,
+  findShapesAtPoints,
   getCursorPositionInElement,
   getCursorPositionInTransformedCanvas,
   isTouchGesture,
@@ -21,12 +22,34 @@ import { addNewPointGroupToShape } from '@canvas/utils/shapes/brush'
 import { addCurveLine, addCurvePoint } from '@canvas/utils/shapes/curve'
 import { addPolygonLine, addPolygonPoint } from '@canvas/utils/shapes/polygon'
 import { transformSelectedShapes } from '@canvas/utils/transform'
-import { isPointInsideRect } from '@canvas/utils/trigo'
+import { isPointInsideRect, sampleSegment } from '@canvas/utils/trigo'
 import { clamp } from '@canvas/utils/util'
 import { isCursorInsideMask } from '@canvas/utils/zoom'
 import { useEffect } from 'react'
 
 const LONG_PRESS_DELAY_MS = 500
+
+/** Distance between the points tested along a stroke of the eraser, in pixels of the screen */
+const ERASER_STEP = 4
+
+/**
+ * Ids of the shapes erased by a stroke, with the ones it crosses from a point to the next one, inside the view.
+ * The locked shapes are kept
+ */
+const getErasedShapeIds = (
+  ctx: CanvasRenderingContext2D,
+  shapes: ShapeEntity[],
+  erasedShapeIds: string[],
+  from: Point,
+  to: Point,
+  settings: UtilsSettings
+): string[] => {
+  const points = sampleSegment(from, to, ERASER_STEP / settings.canvasSize.scaleRatio).filter(point => isCursorInsideMask(point, settings))
+  const erased = new Set(erasedShapeIds)
+  const candidates = shapes.filter(shape => !shape.locked && !erased.has(shape.id))
+  const found = findShapesAtPoints(ctx, candidates, points, settings)
+  return found.length ? [...erasedShapeIds, ...found.map(shape => shape.id)] : erasedShapeIds
+}
 
 /** Speed of the auto scroll on one axis, when the cursor of a selection frame is close to a border */
 const getAxisAcceleration = (position: number, size: number, settings: UtilsSettings) => {
@@ -60,6 +83,8 @@ const useDrawableCanvas = (store: PaintStore, canvas: HTMLCanvasElement | null) 
     const activePointers = new Set<number>()
     // the pointer which started the current gesture
     let gesturePointerId: number | undefined
+    // the last position of a stroke of the eraser, from which it goes on
+    let eraserPosition: Point = [0, 0]
 
     const read = () => {
       const state = store.getState()
@@ -115,6 +140,18 @@ const useDrawableCanvas = (store: PaintStore, canvas: HTMLCanvasElement | null) 
       const { selectedShape } = state.document
       const cursorPosition = getCursorPositionInTransformedCanvas(e, canvas, settings)
 
+      if (selectionMode.mode === 'eraser') {
+        const erasedShapeIds = getErasedShapeIds(ctx, state.document.shapes, selectionMode.erasedShapeIds, eraserPosition, cursorPosition, settings)
+        eraserPosition = cursorPosition
+        // the mode changes only when a shape is crossed
+        if (erasedShapeIds !== selectionMode.erasedShapeIds) store.setSelectionMode({ mode: 'eraser', erasedShapeIds })
+        return
+      }
+      if (selectionMode.mode === 'laser') {
+        store.addLaserPoint(cursorPosition, false)
+        return
+      }
+      if (selectionMode.mode === 'eyedropper') return
       if (selectionMode.mode === 'selectionFrame') {
         store.batch(() => {
           store.refreshSelectedShapes(ctx, cursorPosition)
@@ -195,6 +232,19 @@ const useDrawableCanvas = (store: PaintStore, canvas: HTMLCanvasElement | null) 
       if (selectionMode.mode === 'contextMenu') return
       if (selectionMode.mode === 'textedition') return
       if (selectionMode.mode === 'preview') return
+      if (selectionMode.mode === 'laser') {
+        store.setSelectionMode({ mode: 'default' })
+        return
+      }
+      if (selectionMode.mode === 'eraser') {
+        const { erasedShapeIds } = selectionMode
+        store.batch(() => {
+          // a stroke cancelled by the browser removes nothing
+          if (e.type !== 'pointercancel' && erasedShapeIds.length) store.actions.removeShapes(erasedShapeIds)
+          store.setSelectionMode({ mode: 'default' })
+        })
+        return
+      }
 
       const cursorPosition = getCursorPositionInTransformedCanvas(e, canvas, settings)
 
@@ -248,6 +298,9 @@ const useDrawableCanvas = (store: PaintStore, canvas: HTMLCanvasElement | null) 
         if (longPressTimeout) clearTimeout(longPressTimeout.timeout)
         // a pinch is not a click, as for the click events
         clicks.reset()
+        // and it cancels a stroke of the eraser or of the laser
+        const { mode } = state.interaction.selectionMode
+        if (mode === 'eraser' || mode === 'laser') store.setSelectionMode({ mode: 'default' })
         return
       }
 
@@ -273,6 +326,12 @@ const useDrawableCanvas = (store: PaintStore, canvas: HTMLCanvasElement | null) 
         return
       }
 
+      // the press only picks a color. A right click cancels the pick, with the context menu
+      if (selectionMode.mode === 'eyedropper') {
+        if (!isRightClick) store.pickColorAt(cursorPosition)
+        return
+      }
+
       // the canvas can only be zoomed
       if (!features.edition) return
 
@@ -292,6 +351,20 @@ const useDrawableCanvas = (store: PaintStore, canvas: HTMLCanvasElement | null) 
             store.setSelectionMode({ mode: 'default' })
           })
         }
+        return
+      }
+
+      // the eraser and the laser have no context menu on a long press
+      if (activeTool.type === 'eraser') {
+        eraserPosition = cursorPosition
+        store.setSelectionMode({ mode: 'eraser', erasedShapeIds: getErasedShapeIds(ctx, shapes, [], cursorPosition, cursorPosition, settings) })
+        return
+      }
+      if (activeTool.type === 'laser') {
+        store.batch(() => {
+          store.setSelectionMode({ mode: 'laser' })
+          store.addLaserPoint(cursorPosition, true)
+        })
         return
       }
 
@@ -359,7 +432,8 @@ const useDrawableCanvas = (store: PaintStore, canvas: HTMLCanvasElement | null) 
                 mode: 'resize',
                 cursorStartPosition: [cursorPosition[0] + settings.selectionPadding, cursorPosition[1] + settings.selectionPadding],
                 originalShape: newSelectedShapes,
-                anchor: newShape.type === 'line' ? 0 : [1, 1],
+                // a new line is drawn from its first point to its last one, which has the end head
+                anchor: newShape.type === 'line' ? 1 : [1, 1],
                 selectedShapesLengthAtMouseDown: getSelectedShapes(newSelectedShapes).length
               })
             }

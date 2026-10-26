@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import { expect, userEvent, waitFor, within } from 'storybook/test'
 import type { DrawableShape, Point } from '../../../src/index'
-import { getPaint, getState, makeCoordConverters, ReactPaintWrapper, wait } from './../helpers'
+import { dispatchTouch, getPaint, getState, makeCoordConverters, ReactPaintWrapper, wait } from './../helpers'
 
 const meta = {
   title: 'Tests/Manipulation',
@@ -47,19 +47,8 @@ export const ZoomAndPan: Story = {
     }
 
     /** Dispatches an event of a finger at a point of the canvas */
-    const touch = (type: string, pointerId: number, [x, y]: Point, target: EventTarget = drawCanvas) => {
-      target.dispatchEvent(
-        new PointerEvent(type, {
-          pointerId,
-          pointerType: 'touch',
-          isPrimary: pointerId === 1,
-          clientX: toClientX(x),
-          clientY: toClientY(y),
-          bubbles: true,
-          cancelable: true
-        })
-      )
-    }
+    const touch = (type: string, pointerId: number, [x, y]: Point, target: EventTarget = drawCanvas) =>
+      dispatchTouch(target, type, pointerId, { x: toClientX(x), y: toClientY(y) })
 
     const resetView = () => getPaint().actions.resetZoom()
 

@@ -1,9 +1,12 @@
 import type { UtilsSettings } from '@canvas/constants/app'
-import { STYLE_FONT_DEFAULT, STYLE_FONT_SIZE_DEFAULT } from '@canvas/constants/rendering'
+import { STYLE_FONT_DEFAULT, STYLE_FONT_SIZE_DEFAULT, STYLE_LINE_HEIGHT_DEFAULT, STYLE_OUTLINE_WIDTH_DEFAULT } from '@canvas/constants/rendering'
+import { FONT_STYLE_FIELDS } from '@canvas/constants/shapes'
 import type { SelectionModeResize } from '@canvas/types/Mode'
-import type { DrawableShape, Point, Rect, SelectionType, ShapeEntity, StyleShape, Text, TextShapeInput } from '@canvas/types/Shapes'
+import type { DrawableShape, Point, Rect, SelectionType, ShapeEntity, StyleShape, Text, TextAlign, TextShapeInput } from '@canvas/types/Shapes'
 import type { ToolsSettingsType } from '@canvas/types/tools'
+import { isVisibleColor } from '@canvas/utils/canvas'
 import { resizeRectSelection } from '@canvas/utils/selection/rectSelection'
+import { getToolDefaultStyle } from '@canvas/utils/tools'
 import { createShapeId } from '@canvas/utils/util'
 import { type GroupResizeContext, getPositionWithoutGroupRotation, getShapePositionInNewBorder } from './group'
 import { createRecPath, expandRect, getComputedShapeInfos } from './path'
@@ -12,13 +15,85 @@ import { getRectOppositeAnchorAbsolutePosition } from './rectangle'
 const DEFAULT_TEXT_VALUE: string[] = ['Texte']
 const DEFAULT_TEXT_WIDTH = 150
 
+/** Position of the lines in the box of a text, from its left side (0) to its right side (1), for each alignment */
+const TEXT_ALIGN_POSITIONS: Record<TextAlign, number> = { left: 0, center: 0.5, right: 1 }
+
+/** Positions of the middle of the underline and of the strikethrough from the top of a line, and their thickness, in em */
+const TEXT_UNDERLINE_POSITION = 0.9
+const TEXT_STRIKETHROUGH_POSITION = 0.55
+export const TEXT_DECORATION_THICKNESS = 1 / 15
+
+/** The background of a text fills its selection frame: its box with the selection padding */
+const hasTextBackground = (text: DrawableShape<'text'>) => isVisibleColor(text.style?.fillColor)
+
+/** How far the outline of a text goes around its letters, 0 without outline */
+const getTextOutlineWidth = (text: DrawableShape<'text'>) =>
+  isVisibleColor(text.style?.outlineColor) ? Math.max(0, text.style?.outlineWidth ?? STYLE_OUTLINE_WIDTH_DEFAULT) : 0
+
+/**
+ * What is painted for a text, on the canvas and in its edition box, in this order: its background, the outline of its
+ * letters, its letters, then the lines under and through them. The strokeColor of a text is the color of its letters, and
+ * of these lines
+ */
+export const getTextPaints = (text: DrawableShape<'text'>) => {
+  const letters = isVisibleColor(text.style?.strokeColor)
+  return {
+    background: hasTextBackground(text),
+    outlineWidth: getTextOutlineWidth(text),
+    letters,
+    underline: letters && !!text.style?.fontUnderline,
+    strikethrough: letters && !!text.style?.fontStrikethrough
+  }
+}
+
+/** Whether a text is painted several times: several of its paints, or several lines of letters, which can overlap */
+export const isTextPaintedSeveralTimes = (text: DrawableShape<'text'>) => {
+  const { background, outlineWidth, letters, underline, strikethrough } = getTextPaints(text)
+  const hasGlyphs = letters || outlineWidth > 0
+  return [background, outlineWidth > 0, letters, underline || strikethrough].filter(Boolean).length > 1 || (hasGlyphs && text.value.length > 1)
+}
+
+/** Height of the lines of a text, in font sizes */
+export const getTextLineHeight = (style: StyleShape | undefined) => {
+  const lineHeight = style?.lineHeight
+  return lineHeight !== undefined && lineHeight > 0 ? lineHeight : STYLE_LINE_HEIGHT_DEFAULT
+}
+
+/** Height of a text in font sizes: a text without lines, emptied in the edition box, keeps the height of one */
+export const getTextHeightInFontSizes = (text: { value: string[]; style?: StyleShape | undefined }) =>
+  (text.value.length || 1) * getTextLineHeight(text.style)
+
+/** Distance from the top of a line of a text to the top of its letters, which are in its middle like in CSS: negative under 1 */
+const getTextLettersOffset = (text: DrawableShape<'text'>) => (text.fontSize * (getTextLineHeight(text.style) - 1)) / 2
+
+/**
+ * The outer borders of a text hold the outline of its letters, which goes beyond its box, and the letters of its first and
+ * last lines, which go beyond it with a line height under 1
+ */
+const getTextOuterBorder = (text: DrawableShape<'text'>, borders: Rect, settings: Pick<UtilsSettings, 'selectionPadding'>): Rect => {
+  const outlineWidth = getTextOutlineWidth(text)
+  const lettersOverflow = Math.max(0, -getTextLettersOffset(text))
+  return expandRect(
+    borders,
+    Math.max(0, outlineWidth - settings.selectionPadding),
+    Math.max(0, outlineWidth + lettersOverflow - settings.selectionPadding)
+  )
+}
+
+/** A text with a box as high as its lines at the font size, its own by default */
+const fitTextBoxToLines = <T extends DrawableShape<'text'>>(text: T, fontSize = text.fontSize): T => {
+  const height = fontSize * getTextHeightInFontSizes(text)
+  return { ...text, fontSize, height, ratio: text.width / height }
+}
+
 export const getComputedText = (text: DrawableShape<'text'>, settings: UtilsSettings) => {
-  return getComputedShapeInfos(text, getTextBorder, settings)
+  return getComputedShapeInfos(text, getTextBorder, settings, getTextOuterBorder)
 }
 
 const buildPath = <T extends DrawableShape<'text'>>(shape: T & { id: string }, settings: UtilsSettings): ShapeEntity<'text'> => {
   const computed = getComputedText(shape, settings)
-  const path = createRecPath(shape)
+  // a text is clicked on its box, or on its background
+  const path = createRecPath(hasTextBackground(shape) ? computed.borders : shape)
 
   return {
     ...shape,
@@ -29,8 +104,9 @@ const buildPath = <T extends DrawableShape<'text'>>(shape: T & { id: string }, s
 
 export const refreshText = buildPath
 
-/** A text without lines, emptied in the edition box, keeps the height of one */
-export const getTextLineCount = (value: string[]) => value.length || 1
+/** Font of the canvas for a text */
+const getTextFont = (fontSize: number, fontBold: boolean | undefined, fontItalic: boolean | undefined, fontFamily = STYLE_FONT_DEFAULT) =>
+  `${fontItalic ? 'italic' : ''} ${fontBold ? 'bold' : ''} ${fontSize}px ${fontFamily}`
 
 /** Width of the widest line at the font size, 0 for a text without characters */
 const measureWidestLine = (
@@ -39,9 +115,9 @@ const measureWidestLine = (
   fontSize: number,
   fontBold: boolean,
   fontItalic: boolean,
-  fontFamily: string | undefined = STYLE_FONT_DEFAULT
+  fontFamily: string | undefined
 ) => {
-  ctx.font = `${fontItalic ? 'italic' : ''} ${fontBold ? 'bold' : ''} ${fontSize}px ${fontFamily}`
+  ctx.font = getTextFont(fontSize, fontBold, fontItalic, fontFamily)
   return Math.max(0, ...text.map((value: string) => ctx.measureText(value).width))
 }
 
@@ -58,9 +134,7 @@ export const calculateTextFontSize = (
   return Number.isFinite(fontSize) && fontSize !== 0 ? fontSize : STYLE_FONT_SIZE_DEFAULT
 }
 
-const FONT_STYLE_FIELDS: (keyof StyleShape)[] = ['fontFamily', 'fontBold', 'fontItalic']
-
-export const isFontStyleField = (field: keyof StyleShape) => FONT_STYLE_FIELDS.includes(field)
+const isFontStyleField = (field: keyof StyleShape) => FONT_STYLE_FIELDS.includes(field)
 
 export const fitTextFontSize = <T extends DrawableShape<'text'>>(ctx: CanvasRenderingContext2D, text: T): T => {
   const fontSize = calculateTextFontSize(
@@ -71,20 +145,30 @@ export const fitTextFontSize = <T extends DrawableShape<'text'>>(ctx: CanvasRend
     text.style?.fontItalic ?? false,
     text.style?.fontFamily
   )
-  const height = fontSize * getTextLineCount(text.value)
-  return { ...text, fontSize, height, ratio: text.width / height }
+  return fitTextBoxToLines(text, fontSize)
 }
 
-/** Completes the size of a text which misses it: from its width, from its font size, or else with the default font size */
-export const sizeText = <T extends TextShapeInput>(ctx: CanvasRenderingContext2D, text: T): T & DrawableShape<'text'> => {
+/** Fits the box of a text to the style fields which changed: its font size to its width for a new font, its height to its lines for a new line height */
+export const fitTextToStyle = <T extends DrawableShape<'text'>>(ctx: CanvasRenderingContext2D, text: T, fields: (keyof StyleShape)[]): T => {
+  if (fields.some(isFontStyleField)) return fitTextFontSize(ctx, text)
+  if (fields.includes('lineHeight')) return fitTextHeight(text)
+  return text
+}
+
+/** Completes the size of a text which misses it: from its width, from its font size, or else with the given default font size */
+export const sizeText = <T extends TextShapeInput>(
+  ctx: CanvasRenderingContext2D,
+  text: T,
+  defaultFontSize = STYLE_FONT_SIZE_DEFAULT
+): T & DrawableShape<'text'> => {
   type SizedText = T & DrawableShape<'text'>
   if (text.width !== undefined && text.height !== undefined && text.fontSize !== undefined) return text as SizedText
   if (text.width !== undefined && text.fontSize === undefined) return fitTextFontSize(ctx, text as SizedText)
   const { fontBold = false, fontItalic = false, fontFamily } = text.style ?? {}
-  const lines = getTextLineCount(text.value)
-  const fontSize = text.fontSize ?? (text.height !== undefined ? text.height / lines : STYLE_FONT_SIZE_DEFAULT)
+  const heightInFontSizes = getTextHeightInFontSizes(text)
+  const fontSize = text.fontSize ?? (text.height !== undefined ? text.height / heightInFontSizes : defaultFontSize)
   const width = text.width ?? calculateTextWidth(ctx, text.value, fontSize, fontBold, fontItalic, fontFamily)
-  const height = text.height ?? fontSize * lines
+  const height = text.height ?? fontSize * heightInFontSizes
   return { ...text, fontSize, width, height, ratio: width / height } as SizedText
 }
 
@@ -98,17 +182,17 @@ export const createText = (
   cursorPosition: Point,
   settings: UtilsSettings
 ): ShapeEntity<'text'> => {
-  const fontSize = calculateTextFontSize(
-    ctx,
-    DEFAULT_TEXT_VALUE,
-    DEFAULT_TEXT_WIDTH,
-    shape.settings?.fontBold.default ?? false,
-    shape.settings?.fontItalic.default ?? false,
-    shape.settings.fontFamily.default
-  )
-
-  const width = DEFAULT_TEXT_WIDTH
-  const height = fontSize * DEFAULT_TEXT_VALUE.length
+  const style = getToolDefaultStyle(shape)
+  // the text is as wide as its content at the font size of the tool, or else its font fills the default width
+  const toolFontSize = shape.settings.fontSize?.default
+  const { fontSize, width, height } = sizeText(ctx, {
+    type: 'text',
+    x: 0,
+    y: 0,
+    value: DEFAULT_TEXT_VALUE,
+    style,
+    ...(toolFontSize === undefined ? { width: DEFAULT_TEXT_WIDTH } : { fontSize: toolFontSize })
+  })
   return buildPath(
     {
       toolId: shape.id,
@@ -121,34 +205,60 @@ export const createText = (
       width,
       height,
       ratio: width / height,
-      style: {
-        opacity: shape.settings.opacity.default,
-        strokeColor: shape.settings.strokeColor.default,
-        fontFamily: shape.settings.fontFamily.default,
-        fontItalic: shape.settings.fontItalic.default,
-        fontBold: shape.settings.fontBold.default
-      }
+      style
     },
     settings
   )
 }
 
-export const drawText = (ctx: CanvasRenderingContext2D, text: DrawableShape<'text'>): void => {
-  if (ctx.globalAlpha === 0 || !text.style?.strokeColor || text.style.strokeColor === 'transparent') return
-  ctx.scale(text.flipX ? -1 : 1, text.flipY ? -1 : 1)
+/** Draws the paints of a text: its background, the outline of its letters, its letters, then the lines under and through them */
+export const drawText = (ctx: CanvasRenderingContext2D, text: ShapeEntity<'text'>): void => {
+  if (ctx.globalAlpha === 0) return
+  const { style = {} } = text
+  const { background, outlineWidth, letters, underline, strikethrough } = getTextPaints(text)
+  // the path of a text with a background is the background, filled with the fill color of the style of the shape
+  if (background) ctx.fill(text.path)
+  if (!letters && outlineWidth === 0) return
 
-  ctx.font = `${text.style?.fontItalic ? 'italic' : ''} ${text.style?.fontBold ? 'bold' : ''} ${text.fontSize}px ${
-    text.style?.fontFamily ?? STYLE_FONT_DEFAULT
-  }`
+  ctx.scale(text.flipX ? -1 : 1, text.flipY ? -1 : 1)
+  // a flipped text is drawn in the flipped space, where its box starts at -x - width
+  const boxLeft = text.flipX ? -text.x - text.width : text.x
+  const boxTop = text.flipY ? -text.y - text.height : text.y
+  ctx.font = getTextFont(text.fontSize, style.fontBold, style.fontItalic, style.fontFamily)
   ctx.textBaseline = 'top'
-  ctx.fillStyle = text.style.strokeColor
+  const textAlign = style.textAlign ?? 'left'
+  const alignPosition = TEXT_ALIGN_POSITIONS[textAlign]
+  ctx.textAlign = textAlign
+  const x = boxLeft + text.width * alignPosition
+  const lineSpacing = text.fontSize * getTextLineHeight(style)
+  const lettersTop = boxTop + getTextLettersOffset(text)
+  const getLineTop = (index: number) => lettersTop + index * lineSpacing
+
+  if (outlineWidth > 0) {
+    // the half of the stroke inside the letters is covered by them
+    ctx.strokeStyle = style.outlineColor!
+    ctx.lineWidth = outlineWidth * 2
+    ctx.lineJoin = 'round'
+    ctx.setLineDash([])
+    for (let i = 0; i < text.value.length; i++) ctx.strokeText(text.value[i]!, x, getLineTop(i), text.width)
+  }
+  if (!letters) return
+
+  ctx.fillStyle = style.strokeColor!
+  const decorationPositions: number[] = []
+  if (underline) decorationPositions.push(TEXT_UNDERLINE_POSITION)
+  if (strikethrough) decorationPositions.push(TEXT_STRIKETHROUGH_POSITION)
+  const thickness = text.fontSize * TEXT_DECORATION_THICKNESS
   for (let i = 0; i < text.value.length; i++) {
-    ctx.fillText(
-      text.value[i]!,
-      text.flipX ? -text.x - text.width : text.x,
-      (text.flipY ? -text.y - text.height : text.y) + i * text.fontSize,
-      text.width
-    )
+    const line = text.value[i]!
+    const top = getLineTop(i)
+    ctx.fillText(line, x, top, text.width)
+    if (!decorationPositions.length) continue
+    // the lines are as wide as the letters, which are narrowed to the box when they are wider
+    const width = Math.min(ctx.measureText(line).width, text.width)
+    if (width <= 0) continue
+    const left = boxLeft + (text.width - width) * alignPosition
+    for (const position of decorationPositions) ctx.fillRect(left, top + text.fontSize * position - thickness / 2, width, thickness)
   }
 }
 
@@ -256,12 +366,25 @@ const calculateTextWidth = (
   fontFamily?: string
 ) => measureWidestLine(ctx, text, fontSize, fontBold, fontItalic, fontFamily) || 20
 
-export const resizeTextShapeWithNewContent = (
-  ctx: CanvasRenderingContext2D,
-  shape: ShapeEntity<'text'>,
-  newValue: string[],
-  settings: UtilsSettings
-): ShapeEntity<'text'> => {
+/** Center of the box of a text, around which it is turned: its selection frame has the same one */
+const getTextCenter = (text: Rect): Point => [text.x + text.width / 2, text.y + text.height / 2]
+
+/** Moves a text whose box changed so that it keeps the top of the side of its alignment, or the top of its middle */
+const keepTextAnchor = <T extends DrawableShape<'text'>>(shape: DrawableShape<'text'>, resizedShape: T): T => {
+  // the anchor is the opposite one
+  const anchor: Point = [1 - TEXT_ALIGN_POSITIONS[shape.style?.textAlign ?? 'left'], 1]
+  const [oppTrueX, oppTrueY] = getRectOppositeAnchorAbsolutePosition(anchor, getTextCenter(shape), shape)
+  const [newOppTrueX, newOppTrueY] = getRectOppositeAnchorAbsolutePosition(anchor, getTextCenter(resizedShape), resizedShape)
+
+  return {
+    ...resizedShape,
+    x: resizedShape.x - (newOppTrueX - oppTrueX),
+    y: resizedShape.y - (newOppTrueY - oppTrueY)
+  }
+}
+
+/** A text whose content changes keeps its font size and the top of its box, which fits its content */
+export const resizeTextShapeWithNewContent = <T extends DrawableShape<'text'>>(ctx: CanvasRenderingContext2D, shape: T, newValue: string[]): T => {
   const newShape = { ...shape, value: newValue }
   const newWidth = calculateTextWidth(
     ctx,
@@ -271,26 +394,8 @@ export const resizeTextShapeWithNewContent = (
     newShape.style?.fontItalic ?? false,
     newShape.style?.fontFamily
   )
-  const newHeight = newShape.fontSize * getTextLineCount(newShape.value)
-
-  const ratio = newWidth / newHeight
-
-  const resizedShape = {
-    ...newShape,
-    width: newWidth,
-    height: newHeight,
-    ratio
-  }
-
-  const { center: shapeWithNewDimensionsCenter } = getComputedText(resizedShape, settings)
-
-  const [oppTrueX, oppTrueY] = getRectOppositeAnchorAbsolutePosition([1, 1], shape.computed.center, shape)
-
-  const [newOppTrueX, newOppTrueY] = getRectOppositeAnchorAbsolutePosition([1, 1], shapeWithNewDimensionsCenter, resizedShape, [false, false])
-
-  return {
-    ...resizedShape,
-    x: resizedShape.x - (newOppTrueX - oppTrueX),
-    y: resizedShape.y - (newOppTrueY - oppTrueY)
-  }
+  return keepTextAnchor(shape, fitTextBoxToLines({ ...newShape, width: newWidth }))
 }
+
+/** A text whose line height changes keeps its font size, its width and the top of its box: its height follows its lines */
+const fitTextHeight = <T extends DrawableShape<'text'>>(shape: T): T => keepTextAnchor(shape, fitTextBoxToLines(shape))
