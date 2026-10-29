@@ -7,26 +7,27 @@ import { createDetachedContext, initCanvasContext, transformCanvas, updateCanvas
 import { hasVisibleFill, isFillMasked } from '@canvas/utils/fill'
 import { getRectIntersection } from '@canvas/utils/intersect'
 import { getSelectedShapes } from '@canvas/utils/selectedShapes'
-import { buildShapesGroup } from '@canvas/utils/selection'
+import { buildShapesSelection } from '@canvas/utils/selection'
 import { drawSelectionGroup } from '@canvas/utils/selection/groupSelection'
 import { drawLineSelection } from '@canvas/utils/selection/lineSelection'
 import { drawBoundingBox, drawSelectionRect } from '@canvas/utils/selection/rectSelection'
 import { drawFrame } from '@canvas/utils/selection/selectionFrame'
 import { boundVectorToSingleAxis, roundForGrid } from '@canvas/utils/transform'
-import { getPointsBounds, getRectCorners, rotatePoint } from '@canvas/utils/trigo'
+import { getBoundingRect, getPointsBounds, getRectCorners, rotatePoint } from '@canvas/utils/trigo'
 import { createShapeId } from '@canvas/utils/util'
 import { getCurrentView } from '@canvas/utils/zoom'
 import { createBrush, drawBrush, refreshBrush, resizeBrush, resizeBrushInGroup } from './brush'
 import { createCircle, drawCircle, refreshCircle, resizeCircle, resizeCircleInGroup } from './circle'
 import { createCurve, drawCurve, refreshCurve, resizeCurve } from './curve'
 import { createEllipse, drawEllipse, refreshEllipse, resizeEllipse, resizeEllipseInGroup } from './ellipse'
-import { buildGroupResizeContext, type GroupResizeContext, getGroupResizeContext } from './group'
+import { buildGroupResizeContext, type GroupResizeContext, getGroupResizeContext, getMirroredRotation } from './group'
 import { createLine, drawLine, refreshLine, resizeLine, resizeLinePolygonCurveInGroup } from './line'
 import { expandRect } from './path'
 import { drawPicture, hasPictureBorder, refreshPicture, resizePicture, resizePictureInGroup } from './picture'
 import { createPolygon, drawPolygon, refreshPolygon, resizePolygon } from './polygon'
 import { createRectangle, drawRect, refreshRect, resizeRect, resizeRectInGroup } from './rectangle'
 import { createText, drawText, fitTextToStyle, isTextPaintedSeveralTimes, refreshText, resizeText, resizeTextInGroup } from './text'
+import { getShapeLeaves, mapGroupShapes, refreshGroup } from './tree'
 
 export const createShape = (
   ctx: CanvasRenderingContext2D,
@@ -172,43 +173,128 @@ const getPixelBox = (canvas: HTMLCanvasElement, matrix: DOMMatrix, rect: Rect): 
 }
 
 /**
- * Draws a shape painted several times, with its opacity: it is painted opaque on a shared layer, at the resolution of the
- * canvas, then the layer is copied with the opacity
+ * Paints on the shared layer of the canvas, at its resolution, in the transformation given, then copies the box of the
+ * layer on the canvas, with the opacity of the canvas or the one given
  */
-const drawShapeOnLayer = (ctx: CanvasRenderingContext2D, shape: ShapeEntity): void => {
-  const matrix = ctx.getTransform()
-  const box = getPixelBox(ctx.canvas, matrix, expandRect(shape.computed.outerBorders, getLayerMargin(shape)))
+const paintOnLayer = (
+  ctx: CanvasRenderingContext2D,
+  matrix: DOMMatrix,
+  box: Rect,
+  paint: (layerCtx: CanvasRenderingContext2D) => void,
+  opacity?: number
+): void => {
   if (box.width <= 0 || box.height <= 0) return
   const layerCtx = getLayerContext(box.width, box.height, ctx.canvas)
   if (!layerCtx) return
 
   layerCtx.setTransform(1, 0, 0, 1, 0, 0)
   layerCtx.clearRect(0, 0, box.width, box.height)
-  // the transformation of the canvas, moved to the corner of the layer
+  // the transformation, moved to the corner of the layer
   layerCtx.setTransform(matrix.a, matrix.b, matrix.c, matrix.d, matrix.e - box.x, matrix.f - box.y)
-  updateCanvasContext(layerCtx, { ...shape.style, opacity: 100 })
-  // the shared layer keeps no state of the shape, like a clip, for the next ones
-  layerCtx.save()
-  drawShapeByType(layerCtx, shape)
-  layerCtx.restore()
+  paint(layerCtx)
 
   ctx.save()
   ctx.setTransform(1, 0, 0, 1, 0, 0)
+  if (opacity !== undefined) ctx.globalAlpha = opacity
   ctx.drawImage(layerCtx.canvas, 0, 0, box.width, box.height, box.x, box.y, box.width, box.height)
   ctx.restore()
 }
 
-const isInView = (shape: ShapeEntity, settings: UtilsSettings, currentView?: Rect): boolean => {
-  return !!getRectIntersection(shape.computed.boundingBox, currentView ?? getCurrentView(settings))
+/**
+ * Draws a shape painted several times, with its opacity: it is painted opaque on a shared layer, at the resolution of the
+ * canvas, then the layer is copied with the opacity
+ */
+const drawShapeOnLayer = (ctx: CanvasRenderingContext2D, shape: ShapeEntity): void => {
+  const matrix = ctx.getTransform()
+  const box = getPixelBox(ctx.canvas, matrix, expandRect(shape.computed.outerBorders, getLayerMargin(shape)))
+  paintOnLayer(ctx, matrix, box, layerCtx => {
+    updateCanvasContext(layerCtx, { ...shape.style, opacity: 100 })
+    // the shared layer keeps no state of the shape, like a clip, for the next ones
+    layerCtx.save()
+    drawShapeByType(layerCtx, shape)
+    layerCtx.restore()
+  })
 }
 
-export const drawShape = (ctx: CanvasRenderingContext2D, shape: ShapeEntity, settings: UtilsSettings, currentView?: Rect): void => {
-  if (shape.visible === false) return
-  const shouldDraw = isInView(shape, settings, currentView)
-  if (!shouldDraw) return
+/** What changes the drawing of the shapes, besides their own fields */
+export type DrawShapesOptions = {
+  /** A shape left out, at any depth, like the text being edited */
+  hiddenId?: string | undefined
+  /** Shapes drawn with a part of their opacity, like the shapes crossed by the eraser */
+  fadedIds?: ReadonlySet<string> | undefined
+}
+
+/** Part of their opacity kept by the faded shapes */
+const FADED_OPACITY_RATIO = 0.3
+
+/** Draws shapes from the background, the first of the list in front */
+const drawShapeList = (
+  ctx: CanvasRenderingContext2D,
+  shapes: readonly ShapeEntity[],
+  settings: UtilsSettings,
+  currentView: Rect,
+  options: DrawShapesOptions
+): void => {
+  for (let i = shapes.length - 1; i >= 0; i--) drawShape(ctx, shapes[i]!, settings, currentView, options)
+}
+
+/**
+ * Draws the shapes of a group with its opacity: they are drawn together on a shared layer, at the resolution of the
+ * canvas, then the layer is copied with the opacity, so that the shapes seen through each other are not darker. The layer
+ * of a group in a group is the one of its canvas, the layer of the outer group
+ */
+const drawGroupOnLayer = (
+  ctx: CanvasRenderingContext2D,
+  group: ShapeEntity<'group'>,
+  opacity: number,
+  settings: UtilsSettings,
+  currentView: Rect,
+  options: DrawShapesOptions
+) => {
+  const matrix = ctx.getTransform()
+  transformCanvas(ctx, settings)
+  const leaves = getShapeLeaves(group.shapes)
+  const box = getPixelBox(
+    ctx.canvas,
+    ctx.getTransform(),
+    getBoundingRect(leaves.map(leaf => expandRect(leaf.computed.boundingBox, getLayerMargin(leaf))))
+  )
+  ctx.restore()
+  // the transformation of the canvas: the shapes add the one of the view
+  paintOnLayer(ctx, matrix, box, layerCtx => drawShapeList(layerCtx, group.shapes, settings, currentView, options), opacity)
+}
+
+/** The shapes of a group, drawn with the opacity of the group */
+const drawGroup = (
+  ctx: CanvasRenderingContext2D,
+  group: ShapeEntity<'group'>,
+  settings: UtilsSettings,
+  currentView: Rect,
+  options: DrawShapesOptions
+): void => {
+  const opacity = (group.style?.opacity ?? 100) / 100
+  if (opacity <= 0) return
+  if (opacity >= 1) drawShapeList(ctx, group.shapes, settings, currentView, options)
+  else drawGroupOnLayer(ctx, group, opacity, settings, currentView, options)
+}
+
+const drawShape = (
+  ctx: CanvasRenderingContext2D,
+  shape: ShapeEntity,
+  settings: UtilsSettings,
+  currentView: Rect,
+  options: DrawShapesOptions
+): void => {
+  if (shape.visible === false || shape.id === options.hiddenId) return
+  if (!getRectIntersection(shape.computed.boundingBox, currentView)) return
+  if (shape.type === 'group') {
+    drawGroup(ctx, shape, settings, currentView, options)
+    return
+  }
 
   transformCanvas(ctx, settings, shape.rotation, shape.computed.center)
   updateCanvasContext(ctx, shape.style)
+  if (options.fadedIds?.has(shape.id)) ctx.globalAlpha *= FADED_OPACITY_RATIO
 
   if (ctx.globalAlpha > 0) {
     if (needsLayer(shape, ctx.globalAlpha, settings.canvasSize.scaleRatio)) drawShapeOnLayer(ctx, shape)
@@ -219,13 +305,23 @@ export const drawShape = (ctx: CanvasRenderingContext2D, shape: ShapeEntity, set
 }
 
 /** Draws the shapes from the background, the first of the list in front, the ones out of the view left out */
-export const drawShapes = (ctx: CanvasRenderingContext2D, shapes: ShapeEntity[], settings: UtilsSettings): void => {
-  const currentView = getCurrentView(settings)
-  for (let i = shapes.length - 1; i >= 0; i--) drawShape(ctx, shapes[i]!, settings, currentView)
-}
+export const drawShapes = (ctx: CanvasRenderingContext2D, shapes: ShapeEntity[], settings: UtilsSettings, options: DrawShapesOptions = {}): void =>
+  drawShapeList(ctx, shapes, settings, getCurrentView(settings), options)
 
-export const rotateShape = <T extends ShapeEntity>(shape: T, rotationToApply: number, selectionCenter: Point): T => {
+/** Turns a shape around a point, a group with its shapes and its frame */
+export const rotateShape = <T extends ShapeEntity>(shape: T, rotationToApply: number, selectionCenter: Point, settings: UtilsSettings): T => {
   if (shape.locked) return shape
+
+  if (shape.type === 'group') {
+    return refreshGroup(
+      {
+        ...shape,
+        rotation: (shape.rotation ?? 0) + rotationToApply,
+        shapes: shape.shapes.map(child => rotateShape(child, rotationToApply, selectionCenter, settings))
+      },
+      settings
+    ) as T
+  }
 
   const rotatedCenter = rotatePoint({ origin: selectionCenter, point: shape.computed.center, rotation: -rotationToApply })
 
@@ -234,25 +330,21 @@ export const rotateShape = <T extends ShapeEntity>(shape: T, rotationToApply: nu
       const points: Point[][] = shape.points.map(pointGroup =>
         pointGroup.map(point => [point[0] + rotatedCenter[0] - shape.computed.center[0], point[1] + rotatedCenter[1] - shape.computed.center[1]])
       )
-      return {
-        ...shape,
-        points,
-        rotation: (shape.rotation ?? 0) + rotationToApply
-      }
+      return refreshShape({ ...shape, points, rotation: (shape.rotation ?? 0) + rotationToApply }, settings) as T
     }
     const points = shape.points.map(point => rotatePoint({ origin: selectionCenter, point: point, rotation: -rotationToApply }))
-    return {
-      ...shape,
-      points
-    }
+    return refreshShape({ ...shape, points } as DrawableShape & { id: string }, settings) as T
   }
 
-  return {
-    ...shape,
-    x: shape.x + rotatedCenter[0] - shape.computed.center[0],
-    y: shape.y + rotatedCenter[1] - shape.computed.center[1],
-    rotation: (shape.rotation ?? 0) + rotationToApply
-  }
+  return refreshShape(
+    {
+      ...shape,
+      x: shape.x + rotatedCenter[0] - shape.computed.center[0],
+      y: shape.y + rotatedCenter[1] - shape.computed.center[1],
+      rotation: (shape.rotation ?? 0) + rotationToApply
+    },
+    settings
+  ) as T
 }
 
 export const resizeShape = <T extends ShapeEntity>(
@@ -293,53 +385,59 @@ export const resizeShape = <T extends ShapeEntity>(
       return resizeText(ctx, cursorPosition, originalShape, selectionMode as SelectionModeResize, settings, isAltPressed) as T
     case 'picture':
       return resizePicture(cursorPosition, originalShape, selectionMode as SelectionModeResize, settings, isAltPressed) as T
-    default:
-      return originalShape
+    case 'group': {
+      // the shapes of the group are resized in its frame
+      const keepRatio = isShiftPressed || mustKeepRatio(originalShape.shapes, originalShape.rotation)
+      const groupCtx = getGroupResizeContext(cursorPosition, originalShape, selectionMode as SelectionModeResize, settings, keepRatio, isAltPressed)
+      return resizeShapeInGroup(ctx, originalShape, groupCtx) as T
+    }
   }
 }
 
 /**
- * Whether shapes resized together keep their proportions: a group with a shape keeping its ratio, or with shapes
- * turned differently, cannot be stretched
+ * Whether shapes resized together, in a frame turned by the rotation, keep their proportions: a shape keeping its ratio,
+ * or a turned shape which is not turned like the frame, cannot be stretched. The points of the lines, the polygons and
+ * the curves are stretched along the sides of the frame, whatever its rotation. The shapes of the groups are the ones
+ * resized
  */
-export const mustKeepRatio = (shapes: ShapeEntity[]): boolean => {
-  const shapesWithRotation = shapes.filter(s => SHAPES_WITH_ROTATION.includes(s.type))
-  const sameRotation = !shapesWithRotation.some(s => (s.rotation ?? 0) !== (shapesWithRotation[0]?.rotation ?? 0))
-  const hasRotationButWithShapesWithoutRotation = (shapesWithRotation[0]?.rotation ?? 0) !== 0 && shapesWithRotation.length !== shapes.length
-  const hasShapesWithRatio = shapes.some(s => SHAPES_KEEPING_RATIO.includes(s.type))
-  return !sameRotation || hasShapesWithRatio || hasRotationButWithShapesWithoutRotation
-}
+export const mustKeepRatio = (shapes: ShapeEntity[], frameRotation = 0): boolean =>
+  getShapeLeaves(shapes).some(
+    shape => SHAPES_KEEPING_RATIO.includes(shape.type) || (SHAPES_WITH_ROTATION.includes(shape.type) && (shape.rotation ?? 0) !== frameRotation)
+  )
 
-/** Resizes a shape of a group (or a single shape) to the new borders of the group described by the context */
-export const resizeShapeInGroup = (
-  ctx: CanvasRenderingContext2D,
-  shape: ShapeEntity,
-  group: SelectionType,
-  groupCtx: GroupResizeContext
-): ShapeEntity => {
+/**
+ * Resizes a shape of a group (or a single shape) to the new borders of the group described by the context. A group in the
+ * group resizes its shapes in the same frame, and is turned the other way when they are mirrored
+ */
+export const resizeShapeInGroup = (ctx: CanvasRenderingContext2D, shape: ShapeEntity, groupCtx: GroupResizeContext): ShapeEntity => {
   if (shape.locked) return shape
-  // a single shape is resized as a group of one shape
-  const asGroup = group as SelectionType & { type: 'group' }
   switch (shape.type) {
+    case 'group':
+      return refreshGroup(
+        {
+          ...shape,
+          ...(groupCtx.isXinverted !== groupCtx.isYinverted ? { rotation: getMirroredRotation(shape.rotation, groupCtx) } : {}),
+          shapes: shape.shapes.map(child => resizeShapeInGroup(ctx, child, groupCtx))
+        },
+        groupCtx.settings
+      )
     case 'rect':
     case 'square':
-      return resizeRectInGroup(shape, asGroup, groupCtx)
+      return resizeRectInGroup(shape, groupCtx)
     case 'picture':
-      return resizePictureInGroup(shape, asGroup, groupCtx)
+      return resizePictureInGroup(shape, groupCtx)
     case 'text':
-      return resizeTextInGroup(ctx, shape, asGroup, groupCtx)
+      return resizeTextInGroup(ctx, shape, groupCtx)
     case 'ellipse':
-      return resizeEllipseInGroup(shape, asGroup, groupCtx)
+      return resizeEllipseInGroup(shape, groupCtx)
     case 'circle':
-      return resizeCircleInGroup(shape, asGroup, groupCtx)
+      return resizeCircleInGroup(shape, groupCtx)
     case 'brush':
-      return resizeBrushInGroup(shape, asGroup, groupCtx)
+      return resizeBrushInGroup(shape, groupCtx)
     case 'line':
     case 'polygon':
     case 'curve':
-      return resizeLinePolygonCurveInGroup(shape, asGroup, groupCtx)
-    default:
-      return shape
+      return resizeLinePolygonCurveInGroup(shape, groupCtx)
   }
 }
 
@@ -352,23 +450,16 @@ export const resizeShapes = (
   isShiftPressed: boolean,
   isAltPressed: boolean
 ): ShapeEntity[] => {
-  if (originalShape.type !== 'group') {
-    return getSelectedShapes(originalShape).map(shape =>
-      resizeShape(ctx, cursorPosition, shape, selectionMode, settings, isShiftPressed, isAltPressed)
-    )
+  if (originalShape.type !== 'multiSelection') {
+    return [resizeShape(ctx, cursorPosition, originalShape, selectionMode, settings, isShiftPressed, isAltPressed)]
   }
 
-  const group = originalShape
-  const groupShapes = getSelectedShapes(group)
-  const keepRatio = isShiftPressed || mustKeepRatio(groupShapes)
+  const selectedShapes = originalShape.shapes
+  const keepRatio = isShiftPressed || mustKeepRatio(selectedShapes, originalShape.rotation)
 
-  const groupCtx = getGroupResizeContext(cursorPosition, group, selectionMode as SelectionModeResize, settings, keepRatio, isAltPressed)
+  const groupCtx = getGroupResizeContext(cursorPosition, originalShape, selectionMode as SelectionModeResize, settings, keepRatio, isAltPressed)
 
-  return groupShapes.map(shape =>
-    shape.type === 'group'
-      ? resizeShape(ctx, cursorPosition, shape, selectionMode, settings, isShiftPressed, isAltPressed) // should not happen
-      : resizeShapeInGroup(ctx, shape, group, groupCtx)
-  )
+  return selectedShapes.map(shape => resizeShapeInGroup(ctx, shape, groupCtx))
 }
 
 /** Content box of a selection: its borders without the padding of the selection */
@@ -383,11 +474,11 @@ export const getSelectionBounds = (selection: SelectionType, settings: UtilsSett
  * proportions, the box is reduced to keep them, from its top left corner
  */
 export const resizeShapesToBounds = (ctx: CanvasRenderingContext2D, shapes: ShapeEntity[], bounds: Rect, settings: UtilsSettings): ShapeEntity[] => {
-  const selection = buildShapesGroup(shapes, settings)
+  const selection = buildShapesSelection(shapes, settings)
   if (!selection) return shapes
   const current = getSelectionBounds(selection, settings)
   let { width, height } = bounds
-  if (mustKeepRatio(shapes) && current.width > 0 && current.height > 0) {
+  if (mustKeepRatio(shapes, selection.rotation) && current.width > 0 && current.height > 0) {
     const scale = Math.min(width / current.width, height / current.height)
     width = current.width * scale
     height = current.height * scale
@@ -398,31 +489,32 @@ export const resizeShapesToBounds = (ctx: CanvasRenderingContext2D, shapes: Shap
     { x: bounds.x - padding, y: bounds.y - padding, width: width + 2 * padding, height: height + 2 * padding },
     settings
   )
-  return shapes.map(shape => resizeShapeInGroup(ctx, shape, selection, groupCtx))
+  return shapes.map(shape => resizeShapeInGroup(ctx, shape, groupCtx))
 }
 
-/** Flips shapes around the center of their group */
+/** Flips shapes around the center of their group, along the axes of the drawing, even when the group is turned */
 export const flipShapes = (
   ctx: CanvasRenderingContext2D,
   shapes: ShapeEntity[],
   action: 'flipHorizontally' | 'flipVertically',
   settings: UtilsSettings
 ): ShapeEntity[] => {
-  const group = buildShapesGroup(shapes, settings)
+  const group = buildShapesSelection(shapes, settings)
   if (!group) return []
 
   const groupCtx = {
     ...buildGroupResizeContext(group, group.computed.borders, settings, {
       isXinverted: action === 'flipHorizontally',
       isYinverted: action === 'flipVertically',
-      rotation: 0 // group rotation is 0 to force flipping single shapes with rotation
+      // the shapes are mirrored along the axes of the drawing: a turned shape is turned the other way
+      rotation: 0
     }),
     widthMultiplier: 1,
     heightMultiplier: 1,
     groupCenter: group.computed.center
   }
 
-  return shapes.map(shape => resizeShapeInGroup(ctx, shape, group, groupCtx))
+  return shapes.map(shape => resizeShapeInGroup(ctx, shape, groupCtx))
 }
 
 export const translateShape = (shape: ShapeEntity, translationX: number, translationY: number, settings: UtilsSettings): ShapeEntity => {
@@ -461,8 +553,9 @@ export const translateShape = (shape: ShapeEntity, translationX: number, transla
         },
         settings
       )
-    default:
-      return shape
+    case 'group':
+      // a locked shape of the group, or a locked group in it, stays in place
+      return mapGroupShapes(shape, child => translateShape(child, translationX, translationY, settings), settings)
   }
 }
 
@@ -513,10 +606,15 @@ export const refreshShape = (shape: DrawableShape & { id: string }, settings: Ut
       return refreshCurve(shape, settings)
     case 'brush':
       return refreshBrush(shape, settings)
-    default:
-      return shape as never
+    case 'group':
+      // its shapes are already built: only its frame is built again
+      return refreshGroup(shape, settings)
   }
 }
+
+/** Builds a shape again, a group with all its shapes, like when a setting of the shapes changes */
+export const refreshShapeTree = (shape: ShapeEntity, settings: UtilsSettings): ShapeEntity =>
+  shape.type === 'group' ? mapGroupShapes(shape, child => refreshShapeTree(child, settings), settings) : refreshShape(shape, settings)
 
 /** A point can only be removed from a polygon or a curve keeping at least 2 points */
 export const canRemoveShapePoint = (
@@ -538,10 +636,22 @@ export const isStyleFieldOfShape = (type: ShapeType, field: keyof StyleShape): b
  * field applies to it.
  */
 export const updateShapeStyle = (ctx: CanvasRenderingContext2D, shape: ShapeEntity, style: StyleShape, settings: UtilsSettings): ShapeEntity => {
+  if (shape.type === 'group') return updateGroupStyle(ctx, shape, style, settings)
   const fields = (Object.keys(style) as (keyof StyleShape)[]).filter(field => isStyleFieldOfShape(shape.type, field))
   if (!fields.length) return shape
   const newShape = { ...shape, style: { ...shape.style, ...Object.fromEntries(fields.map(field => [field, style[field]])) } }
   return refreshShape(newShape.type === 'text' ? fitTextToStyle(ctx, newShape, fields) : newShape, settings)
+}
+
+/**
+ * The opacity of a group is its own: its shapes are drawn together with it. The other fields go to the shapes drawn by
+ * the group, the shapes of its groups included
+ */
+const updateGroupStyle = (ctx: CanvasRenderingContext2D, group: ShapeEntity<'group'>, style: StyleShape, settings: UtilsSettings): ShapeEntity => {
+  const { opacity, ...shapesStyle } = style
+  const withOpacity = opacity === undefined || opacity === group.style?.opacity ? group : { ...group, style: { ...group.style, opacity } }
+  if (!Object.keys(shapesStyle).length) return withOpacity
+  return mapGroupShapes(withOpacity, child => updateShapeStyle(ctx, child, shapesStyle, settings), settings)
 }
 
 export const drawShapeSelection = ({
@@ -575,6 +685,7 @@ export const drawShapeSelection = ({
     case 'brush':
       drawSelectionRect(ctx, shape, selectionColor, selectionWidth, settings, withAnchors)
       break
+    case 'multiSelection':
     case 'group':
       drawSelectionGroup(ctx, shape, selectionColor, selectionWidth, selectionMode, settings, withAnchors)
       break
@@ -610,11 +721,15 @@ export const drawSelectionFrame = ({
   ctx.restore()
 }
 
-/** Copy of a shape with a new id. The copy does not share the data of the application with the original */
+/**
+ * Copy of a shape with a new id, a group with copies of its shapes. The copy does not share the data of the application
+ * with the original
+ */
 export const cloneShape = <T extends ShapeEntity>(shape: T): T => ({
   ...shape,
   id: createShapeId(shape.type),
-  ...(shape.data ? { data: structuredClone(shape.data) } : {})
+  ...(shape.data ? { data: structuredClone(shape.data) } : {}),
+  ...(shape.type === 'group' ? { shapes: shape.shapes.map(cloneShape) } : {})
 })
 
 export const copyShapes = (groupShape: SelectionType, settings: UtilsSettings): ShapeEntity[] =>

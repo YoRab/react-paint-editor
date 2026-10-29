@@ -4,7 +4,7 @@ import { PICTURE_DEFAULT_SIZE } from '@canvas/constants/picture'
 import type { SelectionModeData } from '@canvas/types/Mode'
 import type { Point, SelectionType, ShapeEntity } from '@canvas/types/Shapes'
 import { getSelectedShapes } from '@canvas/utils/selectedShapes'
-import { refreshShape, resizeShapes, rotateShape, translateShapes } from './shapes'
+import { resizeShapes, rotateShape, translateShapes } from './shapes'
 import { addNewPointToShape } from './shapes/brush'
 
 export const roundValues = (prop: number, precision = 2): number => {
@@ -64,7 +64,7 @@ export const transformSelectedShapes = (
       settings,
       isShiftPressed
     )
-    return getSelectedShapes(originalShape).map(shape => refreshShape(rotateShape(shape, rotationToAdd, center), settings))
+    return getSelectedShapes(originalShape).map(shape => rotateShape(shape, rotationToAdd, center, settings))
   }
 
   if (selectionMode.mode === 'resize') {

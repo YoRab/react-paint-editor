@@ -16,7 +16,8 @@
 
 .react-paint-editor-layout {
   border: 3px solid transparent;
-  padding: 4px 0px;
+  /* the shapes of a group are indented below it */
+  padding: 4px 0px 4px calc(var(--react-paint-editor-layout-depth, 0) * 16px);
   position: relative;
   background: var(--react-paint-editor-app-toolbar-bg);
   box-sizing: border-box;
@@ -78,6 +79,49 @@
   height: 20px;
   padding: 0 4px;
   transform: scale(0.75);
+}
+
+.react-paint-editor-layout-chevron.react-paint-editor-layout-chevron {
+  min-width: 20px;
+  width: 20px;
+  height: 20px;
+  margin: 0;
+}
+
+.react-paint-editor-layout-chevron .react-paint-editor-button-content {
+  justify-content: center;
+  padding: 0;
+}
+
+.react-paint-editor-layout-chevron.react-paint-editor-layout-chevron svg {
+  width: 16px;
+  height: 16px;
+}
+
+.react-paint-editor-layout-chevron[aria-expanded='true'] svg {
+  transform: rotate(90deg);
+}
+
+/* the shapes which are not groups are aligned with the groups, when the drawing has groups */
+.react-paint-editor-layout-chevron-space {
+  width: 20px;
+  flex-shrink: 0;
+}
+
+.react-paint-editor-layouts[data-with-groups='0'] .react-paint-editor-layout-chevron-space {
+  display: none;
+}
+
+.react-paint-editor-layout-name {
+  flex: 1;
+  min-width: 0;
+  height: 20px;
+  box-sizing: border-box;
+  font: inherit;
+  color: var(--react-paint-editor-app-font-color);
+  border: 1px solid var(--react-paint-editor-app-font-color);
+  background: var(--react-paint-editor-app-toolbar-bg);
+  outline: none;
 }
 
 .react-paint-editor-layouts-visible-button.react-paint-editor-layouts-visible-button {

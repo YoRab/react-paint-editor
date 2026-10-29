@@ -10,6 +10,7 @@ import { shallowEqual } from '@canvas/utils/equality'
 import { getSelectedShapes } from '@canvas/utils/selectedShapes'
 import { isIdleSelectionMode } from '@canvas/utils/selection'
 import { canRemoveShapePoint } from '@canvas/utils/shapes'
+import { canGroupShapes, indexShapeTree, isGroup } from '@canvas/utils/shapes/tree'
 import { getCurrentView } from '@canvas/utils/zoom'
 
 /** The text being edited, shown in a text box over the canvas */
@@ -137,7 +138,7 @@ export const createSelectors = () => {
   const selectSelectedShapeIds = memoizeLast((selectedShapes: ShapeEntity[]) => keepSelectedShapeIds(selectedShapes.map(shape => shape.id)))
 
   const buildHoveredShape = memoizeLast((shapes: ShapeEntity[], id: string | undefined) =>
-    id === undefined ? undefined : shapes.find(shape => shape.id === id)
+    id === undefined ? undefined : indexShapeTree(shapes).byId.get(id)
   )
 
   /** The hovered shape in its current version, undefined once it is removed */
@@ -157,18 +158,22 @@ export const createSelectors = () => {
   const keepInteraction = keepIfSame<InteractionState>()
   const keepEditorState = keepIfSame<EditorState>()
 
-  const buildContextMenu = memoizeLast((withContextMenu: boolean, selectionMode: SelectionModeData<Point | number>): ContextMenuState | undefined => {
-    if (!withContextMenu || selectionMode.mode !== 'contextMenu') return undefined
-    const contextMenuShapes = getSelectedShapes(selectionMode.originalShape)
-    const anchorIndex = typeof selectionMode.anchor === 'number' ? selectionMode.anchor : undefined
-    return {
-      shapes: contextMenuShapes,
-      anchorIndex,
-      canRemoveAnchor: contextMenuShapes.length === 1 && canRemoveShapePoint(contextMenuShapes[0], anchorIndex),
-      canvasPosition: selectionMode.cursorStartPosition,
-      clientPosition: selectionMode.clientPosition
+  const buildContextMenu = memoizeLast(
+    (withContextMenu: boolean, selectionMode: SelectionModeData<Point | number>, shapes: ShapeEntity[]): ContextMenuState | undefined => {
+      if (!withContextMenu || selectionMode.mode !== 'contextMenu') return undefined
+      const contextMenuShapes = getSelectedShapes(selectionMode.originalShape)
+      const anchorIndex = typeof selectionMode.anchor === 'number' ? selectionMode.anchor : undefined
+      return {
+        shapes: contextMenuShapes,
+        anchorIndex,
+        canRemoveAnchor: contextMenuShapes.length === 1 && canRemoveShapePoint(contextMenuShapes[0], anchorIndex),
+        canGroup: canGroupShapes(shapes, contextMenuShapes),
+        canUngroup: contextMenuShapes.some(isGroup),
+        canvasPosition: selectionMode.cursorStartPosition,
+        clientPosition: selectionMode.clientPosition
+      }
     }
-  })
+  )
 
   /** During a gesture, the hover mode stays the one of the press: it gives the cursor and the hovered anchor */
   const selectSelectionHover = ({ interaction }: InternalState): SelectionHover | undefined =>
@@ -224,7 +229,7 @@ export const createSelectors = () => {
         isPanning: interaction.panStart !== undefined,
         focus: interaction.focus
       }),
-      contextMenu: buildContextMenu(withContextMenu, interaction.selectionMode)
+      contextMenu: buildContextMenu(withContextMenu, interaction.selectionMode, document.shapes)
     })
   })
 
@@ -273,6 +278,7 @@ export const createSelectors = () => {
     selectSettings,
     selectActiveTool,
     selectSelectedShapes,
+    selectSelectedShapeIds,
     selectHoveredShape,
     selectWithContextMenu,
     selectWithDropPicture,

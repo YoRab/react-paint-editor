@@ -281,6 +281,15 @@ describe('picture load events', () => {
     expect(failed).not.toHaveBeenCalled()
   })
 
+  it('loads the pictures of a group added by addShapes, and draws them in the group', async () => {
+    const store = createPaintStore()
+    const { loaded } = listen(store)
+    const [groupId] = store.actions.addShapes([{ type: 'group', shapes: [{ ...picture(PNG_DATA_URL), id: 'p' }, RECTS[0]!] }])
+    await vi.waitFor(() => expect(loaded).toHaveBeenCalledTimes(1))
+    expect(loaded.mock.lastCall?.[0]).toBe(store.getShape('p'))
+    expect((store.getShape(groupId!) as ShapeEntity<'group'>).shapes[0]).toBe(store.getShape('p'))
+  })
+
   it('emits pictureLoadFailed for a picture added by addShapes which cannot be loaded, and keeps the picture', async () => {
     FakeImage.fails = () => true
     const store = createPaintStore()

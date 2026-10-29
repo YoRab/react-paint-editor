@@ -3,8 +3,10 @@ import type { SelectionModeResize } from '@canvas/types/Mode'
 import type { Point, ShapeEntity } from '@canvas/types/Shapes'
 import { getResizeAnchorCenter } from '@canvas/utils/selection/anchors'
 import { drawBoundingBox, drawSelectionRect } from '@canvas/utils/selection/rectSelection'
-import { resizeShape } from '@canvas/utils/shapes'
+import { resizeShape, resizeShapeInGroup } from '@canvas/utils/shapes'
+import { buildGroupResizeContext, getMirroredRotation } from '@canvas/utils/shapes/group'
 import { getBrushPointScaler } from '@canvas/utils/shapes/path'
+import { rotatePoint } from '@canvas/utils/trigo'
 import { describe, expect, it, vi } from 'vitest'
 import { createShape, MEASURE_CONTEXT, stubPath2D, UTILS_SETTINGS } from './helpers'
 
@@ -157,6 +159,79 @@ describe('resizeShape of the shapes keeping their ratio', () => {
     const ellipse = createShape<ShapeEntity<'ellipse'>>({ type: 'ellipse', x: 50, y: 50, radiusX: 50, radiusY: 25 })
     expect(resize(ellipse, [1, 1], [205, 80], { shift: true })).toMatchObject({ x: 100, y: 75, radiusX: 100, radiusY: 50 })
     expect(resize(ellipse, [1, 0.5], [155, 50], { alt: true })).toMatchObject({ x: 50, y: 50, radiusX: 100, radiusY: 25 })
+  })
+})
+
+describe('resizeShapeInGroup in a turned frame', () => {
+  const ROTATION = Math.PI / 6
+  // the frame of the group: a box 100×50 at the origin, turned around its center (50, 25)
+  const FRAME = createShape<ShapeEntity<'rect'>>({ type: 'rect', x: 0, y: 0, width: 100, height: 50, rotation: ROTATION }, 'frame')
+  const { center } = FRAME.computed
+  // twice as wide: borders from (-5, -5) to (205, 55), turned around their center (100, 25)
+  const NEW_BORDERS = { x: -5, y: -5, width: 210, height: 60 }
+  const NEW_CENTER: Point = [100, 25]
+
+  /** A point of the drawing at a position in the frame, turned with it */
+  const inFrame = (point: Point, origin = center): Point => rotatePoint({ origin, point, rotation: -ROTATION })
+  /** The position in the frame of a point of the drawing */
+  const inFrameOf = (point: Point, origin: Point): Point => rotatePoint({ origin, point, rotation: ROTATION })
+
+  const resizeInFrame = <T extends ShapeEntity>(shape: T, isXinverted = false) =>
+    resizeShapeInGroup(MEASURE_CONTEXT, shape, buildGroupResizeContext(FRAME, NEW_BORDERS, UTILS_SETTINGS, { isXinverted })) as T
+
+  const expectPointsInFrame = (points: Point[], expected: Point[]) => {
+    points.forEach((point, index) => {
+      const [x, y] = inFrameOf(point, NEW_CENTER)
+      expect(x).toBeCloseTo(expected[index]![0])
+      expect(y).toBeCloseTo(expected[index]![1])
+    })
+  }
+
+  it('stretches a line, a polygon and a curve along the sides of the frame', () => {
+    const corners: Point[] = [inFrame([0, 0]), inFrame([100, 50])]
+    const line = createShape<ShapeEntity<'line'>>({ type: 'line', points: corners as [Point, Point] })
+    const polygon = createShape<ShapeEntity<'polygon'>>({ type: 'polygon', points: [...corners, inFrame([100, 0])] })
+    const curve = createShape<ShapeEntity<'curve'>>({ type: 'curve', points: [...corners, inFrame([50, 25])] })
+
+    expectPointsInFrame(
+      [...resizeInFrame(line).points],
+      [
+        [0, 0],
+        [200, 50]
+      ]
+    )
+    expectPointsInFrame(resizeInFrame(polygon).points, [
+      [0, 0],
+      [200, 50],
+      [200, 0]
+    ])
+    expectPointsInFrame(resizeInFrame(curve).points, [
+      [0, 0],
+      [200, 50],
+      [100, 25]
+    ])
+  })
+
+  it('mirrors the points along the side of the frame which goes past the other one', () => {
+    const line = createShape<ShapeEntity<'line'>>({ type: 'line', points: [inFrame([0, 0]), inFrame([100, 50])] })
+    expectPointsInFrame(
+      [...resizeInFrame(line, true).points],
+      [
+        [200, 0],
+        [0, 50]
+      ]
+    )
+  })
+
+  it('turns a mirrored shape by twice the rotation of the frame, less its own', () => {
+    const rect = createShape<ShapeEntity<'rect'>>({ type: 'rect', x: 0, y: 0, width: 100, height: 50, rotation: 0.2 })
+    const ctx = buildGroupResizeContext(FRAME, FRAME.computed.borders, UTILS_SETTINGS, { isXinverted: true })
+    expect(getMirroredRotation(0.2, ctx)).toBeCloseTo(2 * ROTATION - 0.2)
+    expect(resizeShapeInGroup(MEASURE_CONTEXT, rect, ctx).rotation).toBeCloseTo(2 * ROTATION - 0.2)
+    // mirrored along both sides, the shape is only turned by half a turn: it keeps its rotation
+    expect(getMirroredRotation(0.2, { ...ctx, isYinverted: true })).toBe(0.2)
+    // a shape turned like the frame keeps its rotation
+    expect(getMirroredRotation(ROTATION, ctx)).toBe(ROTATION)
   })
 })
 

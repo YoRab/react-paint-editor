@@ -1,13 +1,13 @@
 import type { UtilsSettings } from '@canvas/constants/app'
 import type { SelectionModeResize } from '@canvas/types/Mode'
-import type { DrawableShape, Point, Rect, SelectionType, ShapeEntity } from '@canvas/types/Shapes'
+import type { DrawableShape, Point, Rect, ShapeEntity } from '@canvas/types/Shapes'
 import type { ToolsSettingsType } from '@canvas/types/tools'
 import { drawPathWithFillAndStroke } from '@canvas/utils/fill'
 import { getPointPositionBeforeCanvasTransformation } from '@canvas/utils/intersect'
 import { resizeRectSelection } from '@canvas/utils/selection/rectSelection'
 import { getToolDefaultStyle } from '@canvas/utils/tools'
 import { createShapeId } from '@canvas/utils/util'
-import { type GroupResizeContext, getPositionWithoutGroupRotation, getShapePositionInNewBorder } from './group'
+import { type GroupResizeContext, getMirroredRotation, getPositionWithoutGroupRotation, getShapePositionInNewBorder } from './group'
 import { createRecPath, expandRect, getComputedShapeInfos, getCornerRadius } from './path'
 
 type rectish = 'rect' | 'square'
@@ -98,15 +98,9 @@ export const resizeRect = <T extends rectish>(
   ) as ShapeEntity<T>
 }
 
-export const resizeRectInGroup = (
-  shape: ShapeEntity<rectish>,
-  group: SelectionType & { type: 'group' },
-  groupCtx: GroupResizeContext
-): ShapeEntity<rectish> => {
-  const { isXinverted, isYinverted, settings, widthMultiplier, heightMultiplier } = groupCtx
-  const shouldFlipRotation =
-    (isXinverted || isYinverted) && !(isXinverted && isYinverted) && (shape.rotation ?? 0) !== 0 && groupCtx.rotation !== shape.rotation
-  const pos = getShapePositionInNewBorder(shape, group, groupCtx)
+export const resizeRectInGroup = (shape: ShapeEntity<rectish>, groupCtx: GroupResizeContext): ShapeEntity<rectish> => {
+  const { settings, widthMultiplier, heightMultiplier } = groupCtx
+  const pos = getShapePositionInNewBorder(shape, groupCtx)
   const newWidth = (shape.width || 1) * widthMultiplier
   const newHeight = (shape.height || 1) * heightMultiplier
   const newCenter = getPositionWithoutGroupRotation(groupCtx, pos.x, pos.y, newWidth, newHeight)
@@ -117,7 +111,7 @@ export const resizeRectInGroup = (
       height: newHeight,
       x: newCenter[0] - newWidth / 2,
       y: newCenter[1] - newHeight / 2,
-      rotation: shouldFlipRotation ? -(shape.rotation ?? 0) : (shape.rotation ?? 0)
+      rotation: getMirroredRotation(shape.rotation, groupCtx)
     },
     settings
   ) as ShapeEntity<rectish>

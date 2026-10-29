@@ -71,10 +71,12 @@ export const FillOptions: Story = {
 
     // the lines across the first ones: x - y = 171.72, 115.15, 58.58, 2.01…
     await setSelectSetting(view, 'Motif du fond', 'crossHatch')
+    await wait(100)
     expect(getPixel(drawCanvas, [128.28, 128.28])).toEqual([0, 0, 255, 255])
 
     // half transparent, the crossing of two lines is not darker than a single line
     await setRangeSetting(view, 'Opacité', 50)
+    await wait(100)
     const crossing = getPixel(drawCanvas, [171.72, 169.71])
     const single = getPixel(drawCanvas, [185.86, 155.57])
     expect(single[3]).toBeGreaterThan(100)

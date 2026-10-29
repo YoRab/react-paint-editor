@@ -1,13 +1,13 @@
 import type { UtilsSettings } from '@canvas/constants/app'
 import { SELECTION_ANCHOR_SIZE, SELECTION_RESIZE_ANCHOR_POSITIONS, SELECTION_ROTATED_ANCHOR_POSITION } from '@canvas/constants/shapes'
-import type { Point, Rect, ShapeEntity } from '@canvas/types/Shapes'
+import type { Point, Rect, SelectionType, ShapeEntity } from '@canvas/types/Shapes'
 import { updateCanvasContext } from '@canvas/utils/canvas'
 
 // The anchors keep the same size on the screen whatever the zoom: they are not part of the shapes, and are placed at the
 // scale of the view, to be drawn as to be hovered
 
 /** Whether the anchors of a shape are its points, a line, a polygon or a curve, instead of its borders */
-export const hasPointAnchors = (shape: ShapeEntity): shape is ShapeEntity<'line' | 'polygon' | 'curve'> =>
+export const hasPointAnchors = (shape: SelectionType): shape is ShapeEntity<'line' | 'polygon' | 'curve'> =>
   shape.type === 'line' || shape.type === 'polygon' || shape.type === 'curve'
 
 export const getAnchorRadius = (settings: UtilsSettings) => SELECTION_ANCHOR_SIZE / 2 / settings.canvasSize.scaleRatio

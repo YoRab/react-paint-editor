@@ -4,6 +4,7 @@ import type { PaintStore } from '@canvas/store/paintStore'
 import type { Point } from '@canvas/types/Shapes'
 import { getSelectedShapes } from '@canvas/utils/selectedShapes'
 import { translateShapes } from '@canvas/utils/shapes'
+import { getCommonGroup } from '@canvas/utils/shapes/tree'
 import { isMacOs } from '@canvas/utils/util'
 import { useEffect } from 'react'
 
@@ -89,6 +90,19 @@ const useKeyboard = (store: PaintStore) => {
           return
         }
 
+        // Ctrl+G is also the next result of a search of the browser, which is prevented
+        if ((e.key === KeyboardCode.G || e.key === KeyboardCode.g) && !isEditingText()) {
+          e.preventDefault()
+          e.stopPropagation()
+          const ids = getSelectedShapes(store.getState().document.selectedShape).map(shape => shape.id)
+          if (e.shiftKey) {
+            store.actions.ungroupShapes(ids)
+          } else {
+            store.actions.groupShapes(ids)
+          }
+          return
+        }
+
         if (e.key === KeyboardCode.Plus) {
           e.preventDefault()
           e.stopPropagation()
@@ -140,12 +154,18 @@ const useKeyboard = (store: PaintStore) => {
       if (!selectedShape || isInField) return
 
       if (e.key === KeyboardCode.Escape) {
+        // the selection goes up to the group holding the selected shapes, a text being edited included, or is cleared
+        const { shapes } = store.getState().document
+        const group = getCommonGroup(shapes, getSelectedShapes(selectedShape))
+        const wasEditingText = isEditingText()
         store.batch(() => {
-          store.setSelectedShape(undefined)
+          store.setSelectedShape(group)
           store.setActiveTool(SELECTION_TOOL)
           store.setSelectionMode({ mode: 'default' })
           store.setSelectionFrame(undefined)
         })
+        // the text box closes with the focus: the canvas takes it, for the next shortcuts
+        if (wasEditingText) store.focusCanvas()
         return
       }
       if (isEditingText()) return

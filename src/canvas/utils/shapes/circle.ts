@@ -1,6 +1,6 @@
 import type { UtilsSettings } from '@canvas/constants/app'
 import type { SelectionModeResize } from '@canvas/types/Mode'
-import type { Circle, DrawableShape, Point, Rect, SelectionType, ShapeEntity } from '@canvas/types/Shapes'
+import type { Circle, DrawableShape, Point, Rect, ShapeEntity } from '@canvas/types/Shapes'
 import type { ToolsSettingsType } from '@canvas/types/tools'
 import { drawPathWithFillAndStroke } from '@canvas/utils/fill'
 import { resizeRectSelection } from '@canvas/utils/selection/rectSelection'
@@ -85,12 +85,8 @@ export const resizeCircle = (
   )
 }
 
-export const resizeCircleInGroup = (
-  shape: ShapeEntity<'circle'>,
-  group: SelectionType & { type: 'group' },
-  groupCtx: GroupResizeContext
-): ShapeEntity<'circle'> => {
-  const pos = getShapePositionInNewBorder(shape, group, groupCtx)
+export const resizeCircleInGroup = (shape: ShapeEntity<'circle'>, groupCtx: GroupResizeContext): ShapeEntity<'circle'> => {
+  const pos = getShapePositionInNewBorder(shape, groupCtx)
   const newRadius = (shape.radius || 0.5) * groupCtx.widthMultiplier
   const newCenter = getPositionWithoutGroupRotation(groupCtx, pos.x, pos.y, newRadius * 2, newRadius * 2)
   return buildPath({ ...shape, radius: newRadius, x: newCenter[0], y: newCenter[1] }, groupCtx.settings)

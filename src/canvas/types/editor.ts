@@ -1,7 +1,7 @@
 import type { AppOptions, OptionalOptions } from '@canvas/constants/app'
 import type { Resize, Size } from '@canvas/types/Canvas'
 import type { SelectionModeData } from '@canvas/types/Mode'
-import type { ExportedShape, Point, Rect, ShapeEntity, ShapeInput, ShapePatch, StateData, StyleShape } from '@canvas/types/Shapes'
+import type { ExportedShape, Point, Rect, SelectionType, ShapeEntity, ShapeInput, ShapePatch, StateData, StyleShape } from '@canvas/types/Shapes'
 import type { CustomTool, ToolsType } from '@canvas/types/tools'
 
 /*
@@ -36,6 +36,10 @@ export type ContextMenuState = {
   anchorIndex: number | undefined
   /** Whether this point can be removed with actions.removeShapePoint: a polygon or a curve keeps at least 2 points */
   canRemoveAnchor: boolean
+  /** Whether the shapes can be grouped with actions.groupShapes: at least 2 of them, which are not all the shapes of a group */
+  canGroup: boolean
+  /** Whether one of the shapes is a group, which actions.ungroupShapes ungroups */
+  canUngroup: boolean
   /** Cursor position in canvas logical coordinates */
   canvasPosition: Point
   /** Cursor position in viewport coordinates, convenient for a position: fixed menu */
@@ -78,9 +82,10 @@ export type EditorState = {
   /** Options in effect. The grid and the default styles of the tools changed while editing are in gridGap and tools */
   options: ResolvedOptions
   gridGap: number
+  /** The shapes of the drawing, from the foreground: a group holds its shapes, see flattenShapes */
   shapes: ShapeEntity[]
-  /** Selected shape, or group of shapes when several are selected */
-  selection: ShapeEntity | undefined
+  /** Selected shape, or the frame of the shapes selected together ('multiSelection') when several are selected */
+  selection: SelectionType | undefined
   selectedShapes: ShapeEntity[]
   /** Ids of the selected shapes, to give to the actions. The array keeps its identity while the same shapes are selected */
   selectedShapeIds: string[]
@@ -99,7 +104,10 @@ export type EditorState = {
 /** Origin of a change of the drawing, given to dataChanged: changes received from elsewhere can be applied as 'remote' */
 export type ChangeSource = 'user' | 'remote'
 
-/** Changes of the shapes given to dataChanged, from the previous state of the drawing: an undo gives the reverse changes */
+/**
+ * Changes of the shapes given to dataChanged, from the previous state of the drawing: an undo gives the reverse changes.
+ * The shapes of the groups are listed too: a group is updated when its own fields change, or the ids of its shapes
+ */
 export type DataChanges = {
   /** Shapes created, as exported */
   added: ExportedShape[]
@@ -107,7 +115,7 @@ export type DataChanges = {
   updated: { shape: ExportedShape; previous: ExportedShape }[]
   /** Shapes deleted, in their last version */
   removed: ExportedShape[]
-  /** Whether the shapes still there are in another order */
+  /** Whether the shapes still there are in another order, or in another group: the drawing is then built again from data.shapes */
   reordered: boolean
 }
 
@@ -150,7 +158,10 @@ export type EditorActions = {
   /** Sets several default values of a tool, used by the next shapes drawn with it. The fields the tool has not are ignored */
   setToolStyle: (toolId: string, style: StyleShape) => void
 
-  /** Selects the shapes, adds them to the selection or removes them from it ('replace' by default) */
+  /**
+   * Selects the shapes, adds them to the selection or removes them from it ('replace' by default). A shape of a group
+   * selected too is left out, and a shape of a locked group is replaced by the group
+   */
   selectShapes: (ids: string[], options?: { mode?: SelectionUpdateMode }) => void
   selectAllShapes: () => void
   clearSelection: () => void
@@ -168,10 +179,31 @@ export type EditorActions = {
    * the new values of their settings, like the font size of a text
    */
   updateShapes: (patches: ShapePatch[], options?: ShapesActionOptions & { updateTool?: boolean }) => void
+  /**
+   * Removes the shapes, a group with its shapes. A group left with a single shape is dissolved: the shape takes its place,
+   * hidden, locked and faded with it
+   */
   removeShapes: (ids: string[], options?: ShapesActionOptions) => void
+  /** Copies the shapes, a group with its shapes: each copy is inserted in front of its shape, in its group */
   duplicateShapes: (ids: string[], options?: { translate?: boolean; select?: boolean }) => void
+  /**
+   * Groups the shapes in a new group, and returns its id. The group takes the place of the shape in front, in its group,
+   * and the shapes keep their order. A shape of a group which is given with it, or of a locked group, is grouped with the
+   * group. Returns undefined, without changing anything, for less than 2 shapes, or for all the shapes of a group. A
+   * group left with a single shape is dissolved. The selection of the shapes becomes the new group
+   */
+  groupShapes: (ids: string[], options?: ShapesActionOptions) => string | undefined
+  /**
+   * Ungroups the groups among the shapes: their shapes take their places, hidden, locked and faded with them, the name,
+   * the rotation and the data of the groups being lost. Returns the ids of the shapes freed. The selection of a group
+   * becomes its shapes
+   */
+  ungroupShapes: (ids: string[], options?: ShapesActionOptions) => string[]
 
-  /** Moves the shapes by a vector, in the units of the drawing. Locked shapes do not move */
+  /**
+   * Moves the shapes by a vector, in the units of the drawing. Locked shapes do not move, nor the shapes of a locked group.
+   * Like the other transformations, the shapes are taken as they are selected: a shape of a group given with it is left out
+   */
   translateShapes: (ids: string[], vector: Point, options?: ShapesActionOptions) => void
   /** Turns the shapes by an angle in radians, clockwise, around their center or the given point. Locked shapes do not turn */
   rotateShapes: (ids: string[], angle: number, options?: ShapesActionOptions & { center?: Point }) => void
@@ -187,11 +219,16 @@ export type EditorActions = {
   /** Sets one field of the style. With save false, the change is not added to the history, like while a slider moves */
   updateShapesStyle: (ids: string[], field: ShapeStyleField, value: ToolSettingValue, options?: { save?: boolean }) => void
 
+  /** Moves the shapes in the order of their group, or of the drawing: a shape never leaves its group */
   moveShapes: (ids: string[], action: ShapesOrderAction) => void
+  /** Swaps two shapes of the same group, or of the drawing */
   swapShapes: (firstId: string, secondId: string) => void
-  /** Moves a shape at an index of the shapes, 0 being the foreground */
+  /** Moves a shape at an index of the shapes of its group, or of the drawing, 0 being the foreground */
   setShapeIndex: (id: string, index: number) => void
-  /** Orders the shapes from the foreground. The shapes left out stay behind, in their current order */
+  /**
+   * Orders the shapes from the foreground, each one among the shapes of its group, or of the drawing. The shapes left out
+   * stay behind, in their current order
+   */
   reorderShapes: (orderedIds: string[]) => void
 
   toggleShapesVisibility: (ids: string[]) => void
@@ -285,9 +322,9 @@ export type ReactPaintEventArgs = {
   dataChanged: [data: StateData, source: ChangeSource, changes: DataChanges]
   selectionChanged: [selectedShapes: ShapeEntity[]]
   toolChanged: [tool: ToolsType]
-  /** A visible shape is clicked, also in viewer mode. Locked shapes are clicked too */
+  /** A visible shape is clicked, also in viewer mode: a shape of a group, not the group. Locked shapes are clicked too */
   shapeClicked: [shape: ShapeEntity, info: ShapePointerInfo]
-  /** The pointer enters a visible shape, or leaves it (undefined). Only computed while a listener is registered */
+  /** The pointer enters a visible shape, a shape of a group, or leaves it (undefined). Only computed while a listener is registered */
   shapeHovered: [shape: ShapeEntity | undefined, info: ShapePointerInfo]
   /**
    * The drawing is clicked, on a visible shape or on an empty area (undefined), in every mode. A click outside of a fixed
@@ -330,11 +367,11 @@ export type ReactPaint = {
    * render. The changes made before an error are kept
    */
   batch: <R>(fn: () => R) => R
-  /** A shape found by its id */
+  /** A shape found by its id, a shape of a group too */
   getShape: (id: string) => ShapeEntity | undefined
   /** Box of the shapes, without the padding of the selection */
   getBounds: (ids: string[]) => ShapesBounds | undefined
-  /** Visible shapes under a point of the drawing, from the foreground. Needs a browser */
+  /** Visible shapes under a point of the drawing, from the foreground: the shapes of the groups, not the groups. Needs a browser */
   getShapesAt: (point: Point) => ShapeEntity[]
   /** Point of the drawing at a position of the viewport. Undefined while the Canvas is not mounted or not displayed */
   toCanvasPosition: (clientPosition: { x: number; y: number }) => Point | undefined

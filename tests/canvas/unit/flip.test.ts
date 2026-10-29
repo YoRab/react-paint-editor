@@ -131,6 +131,18 @@ describe('flipShapes', () => {
     expect(getBox(flipped)).toEqual(getBox(turned))
   })
 
+  it('mirrors shapes turned the same way around the center of their turned group, along the axes of the drawing', () => {
+    // turned by a quarter around their centers (50, 25) and (250, 25): their group is turned too
+    const left = createShape<ShapeEntity<'rect'>>({ type: 'rect', x: 0, y: 0, width: 100, height: 50, rotation: Math.PI / 2 }, 'left')
+    const right = createShape<ShapeEntity<'rect'>>({ type: 'rect', x: 200, y: 0, width: 100, height: 50, rotation: Math.PI / 2 }, 'right')
+    const [flippedLeft, flippedRight] = flip([left, right], 'flipHorizontally') as [ShapeEntity<'rect'>, ShapeEntity<'rect'>]
+    expect(flippedLeft.computed.center[0]).toBeCloseTo(250)
+    expect(flippedLeft.computed.center[1]).toBeCloseTo(25)
+    expect(flippedRight.computed.center[0]).toBeCloseTo(50)
+    expect(flippedRight.computed.center[1]).toBeCloseTo(25)
+    expect(flippedLeft.rotation).toBeCloseTo(-Math.PI / 2)
+  })
+
   it('keeps a locked shape', () => {
     const locked = createShape<ShapeEntity<'rect'>>({ type: 'rect', x: 300, y: 0, width: 100, height: 50, locked: true }, 'rect_2')
     const [rect, kept] = flip([RECT, locked], 'flipHorizontally') as [ShapeEntity<'rect'>, ShapeEntity<'rect'>]

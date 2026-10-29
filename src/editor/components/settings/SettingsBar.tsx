@@ -1,8 +1,10 @@
 import {
   type CustomTool,
   type EditorState,
-  getSelectedShapes,
+  getSelectedLeaves,
   getSelectedShapesTools,
+  getSelectionStyle,
+  type ShapeEntity,
   type ShapePatch,
   type ShapeStyleField,
   type StyleShape,
@@ -259,26 +261,28 @@ type SettingsBarState = {
   isPickingColor: boolean
 }
 
-/** Font size of the selected texts, when they all have the same */
-const getSelectedFontSize = (selection: EditorState['selection']) => {
-  const shapes = getSelectedShapes(selection)
-  const first = shapes[0]
+/** Font size of the selected texts, the texts of the selected groups too, when they all have the same */
+const getSelectedFontSize = (leaves: ShapeEntity[]) => {
+  const first = leaves[0]
   if (first?.type !== 'text') return undefined
-  return shapes.every(shape => shape.type === 'text' && shape.fontSize === first.fontSize) ? first.fontSize : undefined
+  return leaves.every(shape => shape.type === 'text' && shape.fontSize === first.fontSize) ? first.fontSize : undefined
 }
 
 const createSettingsBarSelector = () => {
-  // the tool of the selection only depends on the selected ids and on the tools: a shape keeps its type and its tool
-  let lastTool: { ids: string[]; tools: CustomTool[]; tool: CustomTool | undefined } | undefined
+  // the tool of the selection only depends on the shapes it draws and on the tools: a shape keeps its type and its tool
+  let lastTool: { leafIds: string[]; tools: CustomTool[]; tool: CustomTool | undefined } | undefined
   return (state: EditorState): SettingsBarState => {
-    if (lastTool?.ids !== state.selectedShapeIds || lastTool.tools !== state.tools) {
-      lastTool = { ids: state.selectedShapeIds, tools: state.tools, tool: getSelectedShapesTools(state.selection, state.tools) }
+    const leaves = getSelectedLeaves(state.selection)
+    const leafIds = leaves.map(shape => shape.id)
+    if (!lastTool || lastTool.tools !== state.tools || !shallowEqual(lastTool.leafIds, leafIds)) {
+      lastTool = { leafIds, tools: state.tools, tool: getSelectedShapesTools(state.selection, state.tools) }
     }
     return {
       width: state.view.displayWidth,
       activeTool: state.activeTool,
-      selectedStyle: state.selection?.style,
-      selectedFontSize: getSelectedFontSize(state.selection),
+      // the style of the shapes of the selected groups, and the opacity of the groups
+      selectedStyle: getSelectionStyle(state.selection),
+      selectedFontSize: getSelectedFontSize(leaves),
       selectedShapeIds: state.selectedShapeIds,
       selectedShapeTool: lastTool.tool,
       isPickingColor: state.interaction.mode === 'eyedropper'
@@ -358,8 +362,8 @@ const SettingsBar = ({
     if (!selectedShapeIds.length) {
       actions.updateToolSettings(activeTool.id, field, value)
     } else if (SHAPES_FIELDS.includes(field)) {
-      // the field is changed on the shapes which have it, and their tools keep the value for the next shapes
-      const shapes = getSelectedShapes(paint.getState().selection).filter(shape => field in shape)
+      // the field is changed on the shapes which have it, the shapes of the groups too, and their tools keep the value for the next shapes
+      const shapes = getSelectedLeaves(paint.getState().selection).filter(shape => field in shape)
       actions.updateShapes(
         shapes.map(shape => ({ id: shape.id, [field]: value }) as ShapePatch),
         { save: needHistorySave, updateTool: true }

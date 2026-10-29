@@ -188,17 +188,33 @@ type GenericDrawableShape = {
       scaleX?: number
       scaleY?: number
     })
-  | (Rect & {
+  | {
+      /**
+       * A group of shapes, moved, turned and resized together. Its rotation is the one of its frame, its style only has an
+       * opacity, the one of its shapes drawn together. Hidden or locked, its shapes are hidden or locked with it
+       */
       type: 'group'
+      /** Its shapes, from the foreground: they keep their own positions and rotations in the drawing */
       shapes: ShapeEntity[]
-    })
+      /** Name of the group, shown in the layers instead of its id */
+      name?: string
+    }
 )
 
 export type DrawableShape<T extends ShapeType = ShapeType> = GenericDrawableShape & {
   type: T
 }
 
-export type ExportedDrawableShape<T extends ShapeType = ShapeType> = T extends 'picture' ? Omit<DrawableShape<'picture'>, 'img'> : DrawableShape<T>
+/** A group as exported, with its shapes as exported */
+export interface ExportedGroup extends Omit<DrawableShape<'group'>, 'shapes'> {
+  shapes: ExportedShape[]
+}
+
+export type ExportedDrawableShape<T extends ShapeType = ShapeType> = T extends 'picture'
+  ? Omit<DrawableShape<'picture'>, 'img'>
+  : T extends 'group'
+    ? ExportedGroup
+    : DrawableShape<T>
 
 export type ShapeEntity<T extends ShapeType = ShapeType> = {
   id: string
@@ -224,23 +240,33 @@ export type ShapeEntity<T extends ShapeType = ShapeType> = {
 /** A shape as exported: without the computed data, and with its id */
 export type ExportedShape = ExportedDrawableShape & { id: string }
 
-/** Types of the shapes which can be created and edited: groups are only built by the canvas */
+/** Types of the shapes which are drawn: the groups hold them */
 export type EditableShapeType = Exclude<ShapeType, 'group'>
 
 /** A text can be given without its size: it is computed from its font size, or from its width */
 export type TextShapeInput = Omit<ExportedDrawableShape<'text'>, 'width' | 'height' | 'fontSize'> &
   Partial<Pick<DrawableShape<'text'>, 'width' | 'height' | 'fontSize'>>
 
-/**
- * A shape given by the consumer, to create or to load it. Groups are refused by addShapes and left out when loading:
- * they are accepted by the type so that data typed as DrawableShape can be given
- */
-export type ShapeInput = ExportedDrawableShape | TextShapeInput
+/** A group given with its shapes, at least 2 of them. Without rotation, it is turned like its shapes when they are all turned the same way */
+export type GroupShapeInput = Omit<DrawableShape<'group'>, 'shapes'> & { shapes: ShapeInput[] }
+
+/** A shape given by the consumer, to create or to load it */
+export type ShapeInput = ExportedDrawableShape | TextShapeInput | GroupShapeInput
 
 type DistributivePatch<T> = T extends unknown ? { id: string } & Partial<Omit<T, 'id' | 'type' | 'img'>> : never
 
+/**
+ * Fields of a group to update: its flags, its data, its name and its opacity. Its shapes change with groupShapes and
+ * ungroupShapes, its rotation with rotateShapes
+ */
+export type GroupPatch = { id: string } & Partial<Pick<DrawableShape<'group'>, 'visible' | 'locked' | 'data'>> & {
+    /** A name set to undefined is removed */
+    name?: string | undefined
+    style?: Pick<StyleShape, 'opacity'>
+  }
+
 /** Fields of a shape to update, found by its id. Its type cannot change, and its style is merged with the current one */
-export type ShapePatch = DistributivePatch<ExportedDrawableShape<EditableShapeType>>
+export type ShapePatch = DistributivePatch<ExportedDrawableShape<EditableShapeType>> | GroupPatch
 
 export type StateData = {
   shapes?: ExportedShape[]
@@ -250,4 +276,26 @@ export type StateData = {
   }
 }
 
-export type SelectionType = ShapeEntity
+/**
+ * Shapes selected together, framed by the canvas: the selection is not part of the drawing. Its frame is turned like its
+ * shapes when they are all turned the same way
+ */
+export type MultiSelection = {
+  /** The ids of its shapes, joined */
+  id: string
+  type: 'multiSelection'
+  shapes: ShapeEntity[]
+  rotation: number
+  visible: true
+  locked: false
+  /** The style fields shared by all its shapes */
+  style: StyleShape
+  computed: ShapeEntity['computed']
+  path: Path2D
+}
+
+/** The selected shape, or the shapes selected together */
+export type SelectionType = ShapeEntity | MultiSelection
+
+/** Frame of shapes resized or flipped together: their selection, or a shape alone */
+export type ShapesFrame = Pick<SelectionType, 'rotation' | 'computed'>

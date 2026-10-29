@@ -1,15 +1,20 @@
 import type { SelectionType, ShapeEntity } from '@canvas/types/Shapes'
 import type { CustomTool, ToolsGroupSettings } from '@canvas/types/tools'
 import { compact } from '@canvas/utils/array'
+import { getShapeLeaves } from '@canvas/utils/shapes/tree'
 import { findShapeTool } from '@canvas/utils/tools'
 
 export const getSelectedShapes = (selection: SelectionType | undefined): ShapeEntity[] => {
   if (!selection) return []
-  return selection.type === 'group' ? selection.shapes : [selection]
+  return selection.type === 'multiSelection' ? selection.shapes : [selection]
 }
 
+/**
+ * The tool of the shapes drawn by the selection, the shapes of its groups, or a tool of the settings they share when they
+ * have several tools. Each tool is read once: the shapes of a large group share a few tools
+ */
 export const getSelectedShapesTools = (selection: SelectionType | undefined, availableTools: CustomTool[]): CustomTool | undefined => {
-  const tools = compact(getSelectedShapes(selection).map(shape => findShapeTool(availableTools, shape)))
+  const tools = [...new Set(compact(getShapeLeaves(getSelectedShapes(selection)).map(shape => findShapeTool(availableTools, shape))))]
   if (!tools.length) return undefined
   if (tools.length === 1) return tools[0]
 

@@ -25,7 +25,7 @@ PERF_LABEL=slow-cpu PERF_CPU=4 pnpm bench
 
 The results are ignored by git. When `results/baseline.json` exists, the report shows the gap of each metric to it, in %: compare only reports made with the same `PERF_CPU` and `PERF_EVENTS`.
 
-A full run takes about 17 minutes: 20 scenarios, 2 sizes, 1 warm-up run and 5 measured runs each, on a new mount every time. The median of the measured runs is kept.
+A full run takes about 20 minutes: 23 scenarios, 2 sizes, 1 warm-up run and 5 measured runs each, on a new mount every time. The median of the measured runs is kept.
 
 ## Scenarios
 
@@ -55,6 +55,9 @@ The drawing is a grid of opaque rectangles, unless another one is given (`shapes
 | `translate-long-brush` | rectangles under a brush of 4 strokes of 1000 points | drag of the brush, 300 moves |
 | `add-picture` | rectangles | 3 photos of 3000×2000 pixels added from the menu of the toolbar, as files chosen by the user |
 | `add-picture-autosave` | as `add-picture`, with a listener of `dataChanged` | as `add-picture`: each photo is exported once added |
+| `hover-groups` | rectangles in groups of 5, themselves in groups of 5 | as `hover`: a move over a rectangle hovers its outer group |
+| `translate-group` | the groups of `hover-groups` in a single group | drag of the group, 300 moves: compare it to `translate-all`, which moves the same rectangles |
+| `undo-groups-autosave` | as `hover-groups`, with a listener of `dataChanged` | as `undo`, after the removal of a group of 25 rectangles: each click exports the groups |
 
 `fixture.tsx` mounts the measured app: a host calling `useReactPaint`, a heavy sibling standing for the UI of the consumer, the editor, the canvas, and a probe subscribed to `state.history`. It is the only file that depends on the public API.
 
@@ -75,6 +78,6 @@ The counts are deterministic: they are the acceptance criteria. The times depend
 
 Each scenario gives its own maximums (`criteria` in `scenarios.ts`). The test fails when a count goes over one:
 
-- no render of the host nor of the sibling during all the gestures but `undo` and `undo-autosave`;
-- no commit of the probe during `hover`, `frame`, `frame-inside`, `pan`, `zoom` and `zoom-mixed`, and at most 1 (the save of the history on release) during `translate`, `translate-all`, `translate-long-brush`, `opacity`, `mixed`, `pictures` and `brush`, at most 1 per stroke during `long-brush`, at most 1 (the first step to undo) during `layers`, `layers-autosave`, `add-picture` and `add-picture-autosave`;
-- no commit of the canvas during all the scenarios but `pan`, `undo`, `undo-autosave`, `zoom` and `zoom-mixed`.
+- no render of the host nor of the sibling during all the gestures but `undo`, `undo-autosave` and `undo-groups-autosave`;
+- no commit of the probe during `hover`, `hover-groups`, `frame`, `frame-inside`, `pan`, `zoom` and `zoom-mixed`, and at most 1 (the save of the history on release) during `translate`, `translate-all`, `translate-group`, `translate-long-brush`, `opacity`, `mixed`, `pictures` and `brush`, at most 1 per stroke during `long-brush`, at most 1 (the first step to undo) during `layers`, `layers-autosave`, `add-picture` and `add-picture-autosave`;
+- no commit of the canvas during all the scenarios but `pan`, `undo`, `undo-autosave`, `undo-groups-autosave`, `zoom` and `zoom-mixed`.

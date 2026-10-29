@@ -33,19 +33,11 @@ import { getDrawingColorAt } from '@canvas/utils/colorPicker'
 import { buildDataToExport, getDataChanges } from '@canvas/utils/data'
 import { shallowEqual } from '@canvas/utils/equality'
 import { decodeJson, downloadFile, encodeShapesInString, getCanvasImage, loadPicture } from '@canvas/utils/file'
-import {
-  canvasToClientPosition,
-  checkPositionIntersection,
-  checkSelectionFrameCollision,
-  checkSelectionIntersection,
-  clientToCanvasPosition,
-  findShapeAt,
-  findShapesAt
-} from '@canvas/utils/intersect'
+import { canvasToClientPosition, checkSelectionFrameCollision, clientToCanvasPosition, findShapeAt, findShapesAt } from '@canvas/utils/intersect'
 import { addLaserTrailPoint } from '@canvas/utils/laser'
 import { isEqual, isRecord, mergeWith, omitUndefined, replaceArrays, set, withDefaults } from '@canvas/utils/object'
 import { getSelectedShapes } from '@canvas/utils/selectedShapes'
-import { addToSelectedShapes, buildShapesGroup, omitFromSelectedShapes } from '@canvas/utils/selection'
+import { addToSelectedShapes, buildShapesSelection, findHoveredShape, omitFromSelectedShapes, reselect } from '@canvas/utils/selection'
 import { assertValidShapes, buildShapeEntity, decodeImportedData } from '@canvas/utils/shapeInput'
 import { applyShapePatch, assertValidPatches } from '@canvas/utils/shapePatch'
 import {
@@ -54,7 +46,7 @@ import {
   copyShapes,
   flipShapes,
   getSelectionBounds,
-  refreshShape,
+  refreshShapeTree,
   resizeShapesToBounds,
   rotateShape,
   translateShape,
@@ -63,8 +55,22 @@ import {
 import { removeCurvePoint } from '@canvas/utils/shapes/curve'
 import { createPicture } from '@canvas/utils/shapes/picture'
 import { removePolygonPoint } from '@canvas/utils/shapes/polygon'
+import {
+  flattenShapes,
+  getParentGroup,
+  getShapeLeaves,
+  groupShapesInTree,
+  indexShapeTree,
+  insertShapesBefore,
+  isGroup,
+  normalizeShapeNodes,
+  removeShapesFromTree,
+  replaceShapesInTree,
+  setShapeLists,
+  ungroupShapesInTree
+} from '@canvas/utils/shapes/tree'
 import { buildAvailableTools, findShapeTool } from '@canvas/utils/tools'
-import { getBoundingRect, isPointInsideRect } from '@canvas/utils/trigo'
+import { getBoundingRect } from '@canvas/utils/trigo'
 import { clamp } from '@canvas/utils/util'
 import {
   calculateNewZoomAndOffset,
@@ -179,13 +185,70 @@ const getPictureFileName = (format: ExportImageOptions['format'] = 'png') => `dr
 
 /** Turns shapes around a point, the center of their group by default */
 const rotateShapesAround = (shapes: ShapeEntity[], angle: number, center: Point | undefined, settings: UtilsSettings): ShapeEntity[] => {
-  const rotationCenter = center ?? buildShapesGroup(shapes, settings)?.computed.center
-  return rotationCenter ? shapes.map(shape => refreshShape(rotateShape(shape, angle, rotationCenter), settings)) : []
+  const rotationCenter = center ?? buildShapesSelection(shapes, settings)?.computed.center
+  return rotationCenter ? shapes.map(shape => rotateShape(shape, angle, rotationCenter, settings)) : []
 }
 
-// index of the shapes by id: the selected version of a shape, the one being changed, takes precedence
-const indexShapes = (shapes: ShapeEntity[], selectedShape: SelectionType | undefined) =>
-  new Map([...shapes, ...getSelectedShapes(selectedShape)].map(shape => [shape.id, shape] as const))
+// index of the shapes of the tree by id: the selected version of a shape, the one being changed, takes precedence
+const indexShapes = (shapes: ShapeEntity[], selectedShape: SelectionType | undefined): ReadonlyMap<string, ShapeEntity> => {
+  const { byId } = indexShapeTree(shapes)
+  const copies = flattenShapes(getSelectedShapes(selectedShape)).filter(shape => byId.get(shape.id) !== shape)
+  return copies.length ? new Map([...byId, ...copies.map(shape => [shape.id, shape] as const)]) : byId
+}
+
+/** New shapes of the drawing, built by the store */
+type ShapesChange = {
+  shapes: ShapeEntity[]
+  /** Adds a step to the history */
+  save: boolean
+  source?: ChangeSource | undefined
+  /** Shapes replaced by others, which the selection follows: see reselect */
+  replacedIds?: ReadonlyMap<string, readonly string[]> | undefined
+}
+
+/** The shapes of the group holding a shape of the tree, or of the tree itself */
+const getSiblingList = (shapes: ShapeEntity[], id: string) => {
+  const parent = getParentGroup(shapes, id)
+  return { parentId: parent?.id, list: parent?.shapes ?? shapes }
+}
+
+/**
+ * Shapes of the tree, found by their ids, by the id of their group, undefined for the tree itself, in the order given,
+ * with the shapes of the group
+ */
+const groupByParent = (shapes: ShapeEntity[], ids: Iterable<string>): Map<string | undefined, { list: ShapeEntity[]; siblings: ShapeEntity[] }> => {
+  const { byId } = indexShapeTree(shapes)
+  const byParent = new Map<string | undefined, { list: ShapeEntity[]; siblings: ShapeEntity[] }>()
+  for (const id of ids) {
+    const shape = byId.get(id)
+    if (!shape) continue
+    const { parentId, list } = getSiblingList(shapes, id)
+    const group = byParent.get(parentId)
+    if (group) group.siblings.push(shape)
+    else byParent.set(parentId, { list, siblings: [shape] })
+  }
+  return byParent
+}
+
+/** Moves shapes of a list, found by their ids, to an end or by one place: they keep their order, and do not pass each other */
+const moveInList = (shapes: ShapeEntity[], ids: ReadonlySet<string>, action: ShapesOrderAction): ShapeEntity[] => {
+  if (action === 'first' || action === 'last') {
+    const moved = shapes.filter(shape => ids.has(shape.id))
+    const rest = shapes.filter(shape => !ids.has(shape.id))
+    return action === 'first' ? [...moved, ...rest] : [...rest, ...moved]
+  }
+  const step = action === 'backward' ? 1 : -1
+  // the shape nearest to the end moves first, and leaves its place to the next one
+  const movedIds = shapes.filter(shape => ids.has(shape.id)).map(shape => shape.id)
+  if (action === 'backward') movedIds.reverse()
+  let newShapes = shapes
+  for (const id of movedIds) {
+    const from = newShapes.findIndex(shape => shape.id === id)
+    const to = from + step
+    if (to >= 0 && to < newShapes.length && !ids.has(newShapes[to]!.id)) newShapes = moveItemPosition(newShapes, from, to)
+  }
+  return newShapes
+}
 
 /**
  * Store of a react-paint instance: state of the canvas, of the selection and of the history,
@@ -240,18 +303,20 @@ export const createPaintStore = (props: UseReactPaintProps = {}) => {
   // --- Updates ---
 
   const refreshAllShapes = (state: InternalState, settings: UtilsSettings): InternalState => {
-    const shapes = state.document.shapes.map(shape => refreshShape(shape, settings))
-    const refreshed = new Map(state.document.shapes.map((shape, index) => [shape, shapes[index]!]))
+    const shapes = state.document.shapes.map(shape => refreshShapeTree(shape, settings))
+    // the new tree has the same shapes in the same order
+    const refreshedList = flattenShapes(shapes)
+    const refreshed = new Map(flattenShapes(state.document.shapes).map((shape, index) => [shape, refreshedList[index]!]))
     const previousSelection = state.document.selectedShape
-    // a selected shape which is the one of the list stays the same: only the copies which differ are refreshed apart
+    // a selected shape which is the one of the tree stays the same: only the copies which differ are refreshed apart
     const newSelectedShape =
       previousSelection === undefined
         ? undefined
-        : buildShapesGroup(
-            getSelectedShapes(previousSelection).map(shape => refreshed.get(shape) ?? refreshShape(shape, settings)),
+        : buildShapesSelection(
+            getSelectedShapes(previousSelection).map(shape => refreshed.get(shape) ?? refreshShapeTree(shape, settings)),
             settings
           )
-    return { ...state, document: shapesReducer(state.document, { type: 'REFRESH_ALL', shapes, newSelectedShape }) }
+    return { ...state, document: shapesReducer(state.document, { type: 'SET_SHAPES', shapes, newSelectedShape, save: false }) }
   }
 
   /** Rules keeping the state consistent, applied after each update */
@@ -303,11 +368,22 @@ export const createPaintStore = (props: UseReactPaintProps = {}) => {
 
   const update = (updater: (state: InternalState) => InternalState) => store.setState(state => reconcile(state, updater(state)))
 
-  const dispatch = (action: ShapesAction | ((state: InternalState) => ShapesAction)) =>
+  /** Applies an action to the document. An action computed from the state may be undefined: nothing changes */
+  const dispatch = (action: ShapesAction | ((state: InternalState) => ShapesAction | undefined)) =>
     update(state => {
-      const document = shapesReducer(state.document, typeof action === 'function' ? action(state) : action)
+      const resolvedAction = typeof action === 'function' ? action(state) : action
+      const document = resolvedAction ? shapesReducer(state.document, resolvedAction) : state.document
       return document === state.document ? state : { ...state, document }
     })
+
+  /** The action setting new shapes of the drawing: the selection follows them, see reselect */
+  const setShapesAction = (state: InternalState, { shapes, save, source, replacedIds }: ShapesChange): ShapesAction => ({
+    type: 'SET_SHAPES',
+    shapes,
+    newSelectedShape: reselect(state.document.selectedShape, state.document.shapes, shapes, getSettings(state), replacedIds),
+    save,
+    source
+  })
 
   const setInteractionField = <K extends keyof Interaction>(key: K, value: Interaction[K]) =>
     update(state => withInteraction(state, { [key]: value } as Partial<Interaction>))
@@ -345,10 +421,12 @@ export const createPaintStore = (props: UseReactPaintProps = {}) => {
     shallowEqual
   )
 
-  // a group id is made of the ids of its shapes
+  // the ids of the selected shapes are compared: the id of a selection of several shapes is made of theirs, which a group
+  // may have too
   store.watch(
-    state => state.document.selectedShape?.id,
-    () => emit('selectionChanged', selectors.selectSelectedShapes(get().document.selectedShape))
+    state => selectors.selectSelectedShapeIds(selectors.selectSelectedShapes(state.document.selectedShape)),
+    () => emit('selectionChanged', selectors.selectSelectedShapes(get().document.selectedShape)),
+    shallowEqual
   )
 
   store.watch(
@@ -425,7 +503,9 @@ export const createPaintStore = (props: UseReactPaintProps = {}) => {
       return { ...state, document: shapesReducer(state.document, { type: 'SET_SELECTION', newSelectedShape }) }
     })
 
-  const addShapes = (newShapes: ShapeEntity[], index?: number) => dispatch({ type: 'ADD', newShapes, index })
+  /** Adds shapes to the drawing, at an index of its shapes, the foreground by default, without a step of the history */
+  const addShapes = (newShapes: ShapeEntity[], index = 0) =>
+    dispatch(state => setShapesAction(state, { shapes: insertAt(state.document.shapes, index, ...newShapes), save: false }))
 
   const saveShapes = (source?: ChangeSource) => dispatch({ type: 'SAVE', source })
 
@@ -436,21 +516,26 @@ export const createPaintStore = (props: UseReactPaintProps = {}) => {
   const clearShapes = (shapesToInit: ShapeEntity[], { clearHistory, source }: ResetOptions) =>
     dispatch({ type: 'CLEAR', shapes: shapesToInit, clearHistory, source })
 
+  /**
+   * Copies shapes, with new ids for them and the shapes of their groups: each copy is inserted in front of its shape, in its
+   * group. The shapes are normalized like a selection (see normalizeShapeNodes), and copied as they are given
+   */
   const duplicateShapes = (shapesToDuplicate: ShapeEntity[], translate = false, selectNewOnes = false) =>
     dispatch(state => {
       const settings = getSettings(state)
-      const newShapesMap = new Map<string, ShapeEntity>()
-      const newShapesList: ShapeEntity[] = []
-      for (const marker of state.document.shapes) {
-        const originalShape = shapesToDuplicate.find(shape => shape.id === marker.id)
-        if (originalShape) {
-          const newShape = cloneShape(translate ? translateShape(originalShape, 20, 20, settings) : originalShape)
-          newShapesMap.set(marker.id, newShape)
-          newShapesList.push(newShape)
-        }
+      const { shapes } = state.document
+      const { byId } = indexShapeTree(shapes)
+      const copiesById = new Map<string, ShapeEntity>()
+      for (const originalShape of normalizeShapeNodes(shapes, shapesToDuplicate)) {
+        if (!byId.has(originalShape.id)) continue
+        copiesById.set(originalShape.id, cloneShape(translate ? translateShape(originalShape, 20, 20, settings) : originalShape))
       }
-      const newSelectedShape = selectNewOnes ? buildShapesGroup(newShapesList, settings) : state.document.selectedShape
-      return { type: 'DUPLICATE', newShapesMap, newSelectedShape }
+      if (!copiesById.size) return undefined
+      const newShapes = insertShapesBefore(shapes, copiesById, settings)
+      if (!selectNewOnes) return setShapesAction(state, { shapes: newShapes, save: false })
+      // the copies are selected in the order of the drawing
+      const copies = flattenShapes(shapes).flatMap(shape => copiesById.get(shape.id) ?? [])
+      return { type: 'SET_SHAPES', shapes: newShapes, newSelectedShape: buildShapesSelection(copies, settings), save: false }
     })
 
   const refreshHoveredShape = (isOverCanvas: boolean, ctx: CanvasRenderingContext2D, cursorPosition: Point, isInsideMask: boolean) => {
@@ -459,15 +544,8 @@ export const createPaintStore = (props: UseReactPaintProps = {}) => {
       return
     }
 
-    const state = get()
-    const settings = getSettings(state)
-    const selectedIds = getSelectedShapes(state.document.selectedShape).map(shape => shape.id)
-    const candidates = state.document.shapes.filter(shape => !shape.locked && isPointInsideRect(shape.computed.boundingBox, cursorPosition))
-    const foundShape = candidates.find(shape =>
-      selectedIds.includes(shape.id)
-        ? !!checkSelectionIntersection(ctx, shape, cursorPosition, settings)
-        : !!checkPositionIntersection(ctx, shape, cursorPosition, settings)
-    )
+    const { document } = get()
+    const foundShape = findHoveredShape(ctx, document.shapes, cursorPosition, getSettings(), document.selectedShape)
     setInteractionField('hoveredShapeId', foundShape?.id)
   }
 
@@ -478,17 +556,12 @@ export const createPaintStore = (props: UseReactPaintProps = {}) => {
       setHoverMode({ mode: 'default' })
     })
 
+  /** Replaces shapes of the drawing, at any depth, by new versions: the frames of their groups are built again */
   const updateShapes = (updatedShapes: ShapeEntity[], withSave = false, source?: ChangeSource) =>
     dispatch(state => {
       const updatedById = new Map(updatedShapes.map(shape => [shape.id, shape]))
-      const previousSelection = state.document.selectedShape
-      const newSelectedShape = previousSelection
-        ? buildShapesGroup(
-            getSelectedShapes(previousSelection).map(shape => updatedById.get(shape.id) ?? shape),
-            getSettings(state)
-          )
-        : previousSelection
-      return { type: 'UPDATE', updatedShapes, newSelectedShape, save: withSave, source }
+      const shapes = replaceShapesInTree(state.document.shapes, updatedById, getSettings(state))
+      return setShapesAction(state, { shapes, save: withSave, source })
     })
 
   /** Updates shapes for an action of the API: a step is saved unless save is false */
@@ -496,100 +569,59 @@ export const createPaintStore = (props: UseReactPaintProps = {}) => {
     if (updatedShapes.length) updateShapes(updatedShapes, save, source)
   }
 
-  // newSelectedShape defaults to the current selection when not provided (preserves it for swapShapes/moveShapes)
-  const resetShapes = (newShapes: ShapeEntity[], newSelectedShape: SelectionType | undefined | 'current' = 'current') =>
-    dispatch(state => ({
-      type: 'RESET_AND_SAVE',
-      shapes: newShapes,
-      newSelectedShape: newSelectedShape === 'current' ? state.document.selectedShape : newSelectedShape
-    }))
+  /** Sets new shapes of the drawing with a step of the history: the selection follows them */
+  const resetShapes = (newShapes: ShapeEntity[]) => dispatch(state => setShapesAction(state, { shapes: newShapes, save: true }))
 
+  /**
+   * Removes shapes of the drawing, at any depth, and their shapes with the groups: a group left with a single shape is
+   * dissolved, the selection goes to the shape left
+   */
   const removeShapes = (shapesToRemove: ShapeEntity[], source?: ChangeSource) =>
     dispatch(state => {
-      const ids = new Set(shapesToRemove.map(item => item.id))
-      const previousSelection = state.document.selectedShape
-      const previousIds = getSelectedShapes(previousSelection).map(item => item.id)
-      const newSelectedShape = previousIds.find(value => ids.has(value)) ? undefined : previousSelection
-      return { type: 'REMOVE', ids, newSelectedShape, source }
+      const replacedIds = new Map<string, string[]>()
+      const ids = new Set(shapesToRemove.map(shape => shape.id))
+      const shapes = removeShapesFromTree(state.document.shapes, ids, getSettings(state), replacedIds)
+      return setShapesAction(state, { shapes, save: true, source, replacedIds })
     })
 
-  const swapShapes = (startPositionShapeId: string, endPositionShapeId: string) => {
+  /** Sets new lists of shapes of the drawing, see setShapeLists: a step of the history is added when they change */
+  const setLists = (lists: ReadonlyMap<string | undefined, ShapeEntity[]>) => {
     const { shapes } = get().document
-    const startPositionShapeIndex = shapes.findIndex(shape => shape.id === startPositionShapeId)
-    const endPositionShapeIndex = shapes.findIndex(shape => shape.id === endPositionShapeId)
-    resetShapes(moveItemPosition(shapes, startPositionShapeIndex, endPositionShapeIndex))
+    const newShapes = setShapeLists(shapes, lists, getSettings())
+    if (newShapes !== shapes) resetShapes(newShapes)
   }
 
-  const moveShapes = (selectedShapes: ShapeEntity[], action: ShapesOrderAction) => {
-    const shapes = [...get().document.shapes]
-    const selectedIds = new Set(selectedShapes.map(s => s.id))
-    const selectedIndices = shapes.map((s, i) => (selectedIds.has(s.id) ? i : -1)).filter(i => i >= 0)
-
-    if (selectedIndices.length === 0) return
-
-    switch (action) {
-      case 'first':
-      case 'last': {
-        const selected = selectedIndices.map(i => shapes[i]!).filter(Boolean)
-        const rest = shapes.filter((_, i) => !selectedIndices.includes(i))
-        resetShapes(action === 'first' ? [...selected, ...rest] : [...rest, ...selected])
-        break
-      }
-
-      case 'backward': {
-        let newShapes = [...shapes]
-        const idsByOriginalIndex = selectedIndices.sort((a, b) => b - a).map(i => shapes[i]!.id)
-        for (const id of idsByOriginalIndex) {
-          const from = newShapes.findIndex(s => s.id === id)
-          if (from < newShapes.length - 1) {
-            const to = from + 1
-            if (!selectedIds.has(newShapes[to]!.id)) {
-              newShapes = moveItemPosition(newShapes, from, to)
-            }
-          }
-        }
-        resetShapes(newShapes)
-        break
-      }
-      case 'forward': {
-        let newShapes = [...shapes]
-        const idsByOriginalIndex = selectedIndices.sort((a, b) => a - b).map(i => shapes[i]!.id)
-        for (const id of idsByOriginalIndex) {
-          const from = newShapes.findIndex(s => s.id === id)
-          if (from > 0) {
-            const to = from - 1
-            if (!selectedIds.has(newShapes[to]!.id)) {
-              newShapes = moveItemPosition(newShapes, from, to)
-            }
-          }
-        }
-        resetShapes(newShapes)
-        break
-      }
-    }
+  /** Swaps two shapes of the same group, or of the drawing itself */
+  const swapShapes = (firstId: string, secondId: string) => {
+    const { shapes } = get().document
+    const { parentId, list } = getSiblingList(shapes, firstId)
+    if (getParentGroup(shapes, secondId)?.id !== parentId) return
+    const from = list.findIndex(shape => shape.id === firstId)
+    const to = list.findIndex(shape => shape.id === secondId)
+    if (from !== -1 && to !== -1) setLists(new Map([[parentId, moveItemPosition(list, from, to)]]))
   }
 
-  /** Sets the order of the shapes when it changes */
-  const reorder = (newShapes: ShapeEntity[]) => {
-    if (!shallowEqual(newShapes, get().document.shapes)) resetShapes(newShapes)
+  /** Moves shapes in the order of their group: the shapes of each group are moved among their sibling shapes */
+  const moveShapes = (shapesToMove: ShapeEntity[], action: ShapesOrderAction) => {
+    const byParent = groupByParent(
+      get().document.shapes,
+      shapesToMove.map(shape => shape.id)
+    )
+    setLists(
+      new Map([...byParent].map(([parentId, { list, siblings }]) => [parentId, moveInList(list, new Set(siblings.map(shape => shape.id)), action)]))
+    )
   }
 
   const toggleShapesField = (shapesToToggle: ShapeEntity[], field: 'visible' | 'locked') => {
-    const settings = getSettings()
-    const { shapes, selectedShape } = get().document
-    const shapeIds = new Set(shapesToToggle.map(item => item.id))
-    const newShapes = shapes.map(shape => {
-      if (!shapeIds.has(shape.id)) return shape
-      return field === 'visible' ? set('visible', shape.visible === false, shape) : set('locked', !shape.locked, shape)
-    })
-
-    const selectedIds = getSelectedShapes(selectedShape).map(oldShape => oldShape.id)
-    const newSelectedShape = buildShapesGroup(
-      newShapes.filter(shape => selectedIds.includes(shape.id)),
-      settings
-    )
-
-    resetShapes(newShapes, newSelectedShape)
+    const { shapes } = get().document
+    const { byId } = indexShapeTree(shapes)
+    const toggled = new Map<string, ShapeEntity>()
+    for (const { id } of shapesToToggle) {
+      const shape = byId.get(id)
+      if (shape) toggled.set(id, field === 'visible' ? set('visible', shape.visible === false, shape) : set('locked', !shape.locked, shape))
+    }
+    // the selection follows: a shape of a group which is locked is replaced by the group
+    resetShapes(replaceShapesInTree(shapes, toggled, getSettings()))
   }
 
   const toggleShapesVisibility = (shapesToToggle: ShapeEntity[]) => toggleShapesField(shapesToToggle, 'visible')
@@ -607,7 +639,9 @@ export const createPaintStore = (props: UseReactPaintProps = {}) => {
         return checkSelectionFrameCollision(ctx, shape, frame)
       })
 
-      const shapesToSelect = state.interaction.modifiers.shift ? addToSelectedShapes(previousFrame?.oldSelection, foundShapes) : foundShapes
+      const shapesToSelect = state.interaction.modifiers.shift
+        ? normalizeShapeNodes(state.document.shapes, addToSelectedShapes(previousFrame?.oldSelection, foundShapes))
+        : foundShapes
       // the same shapes keep the same selection: neither the drawing nor the editor are refreshed
       const { selectedShape } = state.document
       const isSameSelection = shallowEqual(shapesToSelect, getSelectedShapes(selectedShape))
@@ -615,7 +649,7 @@ export const createPaintStore = (props: UseReactPaintProps = {}) => {
         ...withInteraction(state, { selectionFrame: { oldSelection: previousFrame?.oldSelection, frame } }),
         document: isSameSelection
           ? state.document
-          : shapesReducer(state.document, { type: 'SET_SELECTION', newSelectedShape: buildShapesGroup(shapesToSelect, getSettings(state)) })
+          : shapesReducer(state.document, { type: 'SET_SELECTION', newSelectedShape: buildShapesSelection(shapesToSelect, getSettings(state)) })
       }
     })
 
@@ -753,10 +787,15 @@ export const createPaintStore = (props: UseReactPaintProps = {}) => {
 
   // --- Selection ---
 
+  /** Selects shapes of the drawing, normalized (see normalizeShapeNodes): the selection tool is then active */
   const selectShapes = (shapesToSelect: ShapeEntity[]) =>
     update(state => {
-      const newSelectedShape = buildShapesGroup(shapesToSelect, getSettings(state))
-      const isNewSelection = state.document.selectedShape?.id !== shapesToSelect.map(shape => shape.id).join('-')
+      const selectedShapes = normalizeShapeNodes(state.document.shapes, shapesToSelect)
+      const newSelectedShape = buildShapesSelection(selectedShapes, getSettings(state))
+      const isNewSelection = !shallowEqual(
+        getSelectedShapes(state.document.selectedShape).map(shape => shape.id),
+        selectedShapes.map(shape => shape.id)
+      )
       return {
         ...state,
         document: shapesReducer(state.document, { type: 'SET_SELECTION', newSelectedShape }),
@@ -887,6 +926,9 @@ export const createPaintStore = (props: UseReactPaintProps = {}) => {
     canvasElement = element
   }
 
+  /** Gives the focus back to the draw canvas, like when an element over it closes: the shortcuts stay active */
+  const focusCanvas = () => canvasElement?.focus()
+
   /** Place of the draw canvas in the viewport, while it is displayed: the positions of the viewport are measured on it */
   const getCanvasRect = () => {
     const rect = canvasElement?.getBoundingClientRect()
@@ -915,14 +957,21 @@ export const createPaintStore = (props: UseReactPaintProps = {}) => {
     return memoizedIndexShapes(shapes, selectedShape)
   }
 
+  /** The shapes of the drawing found by the ids, at any depth, each one once */
   const resolveShapes = (ids: string[]): ShapeEntity[] => {
     const shapesById = getShapesById()
-    return compact(ids.map(id => shapesById.get(id)))
+    return [...new Set(compact(ids.map(id => shapesById.get(id))))]
   }
 
-  /** Changes shapes for an action of the API, from the shapes found among the ids */
-  const changeShapes = (ids: string[], change: (shapes: ShapeEntity[], settings: UtilsSettings) => ShapeEntity[], options?: ShapesActionOptions) => {
-    const shapes = resolveShapes(ids)
+  /** The shapes found by the ids, acted on together as they are selected: see normalizeShapeNodes */
+  const resolveUnits = (ids: string[]): ShapeEntity[] => normalizeShapeNodes(get().document.shapes, resolveShapes(ids))
+
+  /** Changes shapes for an action of the API */
+  const changeShapes = (
+    shapes: ShapeEntity[],
+    change: (shapes: ShapeEntity[], settings: UtilsSettings) => ShapeEntity[],
+    options?: ShapesActionOptions
+  ) => {
     if (shapes.length) commitShapes(change(shapes, getSettings()), options)
   }
 
@@ -936,9 +985,9 @@ export const createPaintStore = (props: UseReactPaintProps = {}) => {
     })
 
   const copyToClipboard = (ids: string[] | undefined) => {
-    const shapesToCopy = ids ? resolveShapes(ids) : getSelectedShapes(get().document.selectedShape)
+    const shapesToCopy = ids ? resolveUnits(ids) : getSelectedShapes(get().document.selectedShape)
     if (shapesToCopy.length) {
-      const clipboard = buildShapesGroup(shapesToCopy, getSettings())
+      const clipboard = buildShapesSelection(shapesToCopy, getSettings())
       update(state => ({ ...state, clipboard }))
     }
     return shapesToCopy
@@ -951,7 +1000,7 @@ export const createPaintStore = (props: UseReactPaintProps = {}) => {
   const loadPictureOf = (shape: ShapeEntity) => {
     if (shape.type !== 'picture') return
     const findCurrent = () => {
-      const current = get().document.shapes.find(item => item.id === shape.id)
+      const current = indexShapeTree(get().document.shapes).byId.get(shape.id)
       return current?.type === 'picture' && current.img === shape.img ? (current as ShapeEntity<'picture'>) : undefined
     }
     // a listener throwing is not taken for a failure of the load
@@ -975,20 +1024,29 @@ export const createPaintStore = (props: UseReactPaintProps = {}) => {
   const addShapesFromInputs = (inputs: ShapeInput[], options?: InsertOptions): string[] => {
     assertValidShapes(inputs, 'addShapes')
     const state = get()
-    const usedIds = new Set(state.document.shapes.map(shape => shape.id))
+    // the ids of the shapes of the groups are free too
+    const usedIds = new Set(indexShapeTree(state.document.shapes).byId.keys())
     const buildOptions = { ctx: getMeasureContext(), settings: getSettings(state), tools: state.tools.available, usedIds, completeStyle: true }
     const newShapes = inputs.map(input => buildShapeEntity(input, buildOptions))
     if (!newShapes.length) return []
     insertShapes(newShapes, options)
-    for (const shape of newShapes) loadPictureOf(shape)
+    for (const shape of getShapeLeaves(newShapes)) loadPictureOf(shape)
     return newShapes.map(shape => shape.id)
   }
 
-  /** The tools of the shapes keep the values of their settings for the next shapes */
+  /**
+   * The tools of the shapes keep the values of their settings for the next shapes. A group has no tool: the tools of the
+   * shapes it draws keep the values, but its opacity, which is its own
+   */
   const keepToolDefaults = (changes: [ShapeEntity, Record<string, unknown>][]) => {
     const { available } = get().tools
+    const leafChanges = changes.flatMap(([shape, values]): [ShapeEntity, Record<string, unknown>][] => {
+      if (!isGroup(shape)) return [[shape, values]]
+      const { opacity: _, ...leafValues } = values
+      return getShapeLeaves([shape]).map(leaf => [leaf, leafValues])
+    })
     update(state =>
-      changes.reduce((newState, [shape, values]) => {
+      leafChanges.reduce((newState, [shape, values]) => {
         const toolId = findShapeTool(available, shape)?.id
         return toolId ? setToolDefaults(newState, toolId, values) : newState
       }, state)
@@ -1036,6 +1094,37 @@ export const createPaintStore = (props: UseReactPaintProps = {}) => {
       : undefined
   }
 
+  /** Groups shapes, see groupShapesInTree: the selection of these shapes becomes the new group. Returns its id */
+  const groupShapes = (ids: string[], { save = true, source }: ShapesActionOptions = {}): string | undefined => {
+    const state = get()
+    const replacedIds = new Map<string, string[]>()
+    const grouped = groupShapesInTree(state.document.shapes, resolveUnits(ids), getSettings(state), replacedIds)
+    if (!grouped) return undefined
+    dispatch(setShapesAction(state, { shapes: grouped.shapes, save, source, replacedIds }))
+    return grouped.group.id
+  }
+
+  /**
+   * Ungroups the groups among the shapes, see ungroupShapesInTree: the selection of a group becomes its shapes. Returns the
+   * ids of the shapes freed, in the order of the drawing
+   */
+  const ungroupShapes = (ids: string[], { save = true, source }: ShapesActionOptions = {}): string[] => {
+    const state = get()
+    const groupIds = new Set(
+      resolveShapes(ids)
+        .filter(isGroup)
+        .map(group => group.id)
+    )
+    if (!groupIds.size) return []
+    const replacedIds = new Map<string, string[]>()
+    const shapes = ungroupShapesInTree(state.document.shapes, groupIds, getSettings(state), replacedIds)
+    dispatch(setShapesAction(state, { shapes, save, source, replacedIds }))
+    const freedIds = new Set([...replacedIds.values()].flat())
+    return flattenShapes(shapes)
+      .map(shape => shape.id)
+      .filter(id => freedIds.has(id))
+  }
+
   const actions: EditorActions = {
     selectTool: toolOrId => {
       const tool = findSelectableTool(get().tools.available, typeof toolOrId === 'string' ? toolOrId : toolOrId.id)
@@ -1062,15 +1151,17 @@ export const createPaintStore = (props: UseReactPaintProps = {}) => {
     updateShapes: patchShapes,
     removeShapes: (ids, { source } = {}) => removeShapes(resolveShapes(ids), source),
     duplicateShapes: (ids, { translate = false, select = false } = {}) => duplicateShapes(resolveShapes(ids), translate, select),
+    groupShapes,
+    ungroupShapes,
 
     translateShapes: (ids, [x, y], options) =>
-      changeShapes(ids, (shapes, settings) => shapes.map(shape => translateShape(shape, x, y, settings)), options),
+      changeShapes(resolveUnits(ids), (shapes, settings) => shapes.map(shape => translateShape(shape, x, y, settings)), options),
     rotateShapes: (ids, angle, { center, ...options } = {}) =>
-      changeShapes(ids, (shapes, settings) => rotateShapesAround(shapes, angle, center, settings), options),
+      changeShapes(resolveUnits(ids), (shapes, settings) => rotateShapesAround(shapes, angle, center, settings), options),
     resizeShapes: (ids, bounds, options) =>
-      changeShapes(ids, (shapes, settings) => resizeShapesToBounds(getMeasureContext(), shapes, bounds, settings), options),
+      changeShapes(resolveUnits(ids), (shapes, settings) => resizeShapesToBounds(getMeasureContext(), shapes, bounds, settings), options),
     transformShapes: (ids, action) =>
-      changeShapes(ids, (shapes, settings) =>
+      changeShapes(resolveUnits(ids), (shapes, settings) =>
         action === 'rotateClockwise' || action === 'rotateCounterclockwise'
           ? rotateShapesAround(shapes, action === 'rotateClockwise' ? Math.PI / 2 : -Math.PI / 2, undefined, settings)
           : flipShapes(getMeasureContext(), shapes, action, settings)
@@ -1079,25 +1170,31 @@ export const createPaintStore = (props: UseReactPaintProps = {}) => {
     setShapesStyle: (ids, style, { updateTool = false, ...options } = {}) =>
       batch(() => {
         const ctx = getMeasureContext()
-        changeShapes(ids, (shapes, settings) => shapes.map(shape => updateShapeStyle(ctx, shape, style, settings)), options)
-        if (updateTool) keepToolDefaults(resolveShapes(ids).map(shape => [shape, style]))
+        const shapes = resolveShapes(ids)
+        changeShapes(shapes, (shapesToChange, settings) => shapesToChange.map(shape => updateShapeStyle(ctx, shape, style, settings)), options)
+        if (updateTool) keepToolDefaults(shapes.map(shape => [shape, style]))
       }),
     updateShapesStyle: (ids, field, value, { save = true } = {}) => actions.setShapesStyle(ids, { [field]: value } as StyleShape, { save }),
 
     moveShapes: (ids, action) => moveShapes(resolveShapes(ids), action),
     swapShapes,
     setShapeIndex: (id, index) => {
-      const { shapes } = get().document
-      const from = shapes.findIndex(shape => shape.id === id)
+      const { parentId, list } = getSiblingList(get().document.shapes, id)
+      const from = list.findIndex(shape => shape.id === id)
       if (from === -1) return
-      reorder(moveItemPosition(shapes, from, clamp(Math.round(index), 0, shapes.length - 1)))
+      setLists(new Map([[parentId, moveItemPosition(list, from, clamp(Math.round(index), 0, list.length - 1))]]))
     },
     reorderShapes: orderedIds => {
-      const { shapes } = get().document
-      const shapesById = new Map(shapes.map(shape => [shape.id, shape]))
-      const ordered = compact([...new Set(orderedIds)].map(id => shapesById.get(id)))
-      const orderedSet = new Set(ordered)
-      reorder([...ordered, ...shapes.filter(shape => !orderedSet.has(shape))])
+      // the shapes of each group are ordered among their sibling shapes
+      const byParent = groupByParent(get().document.shapes, new Set(orderedIds))
+      setLists(
+        new Map(
+          [...byParent].map(([parentId, { list, siblings }]) => {
+            const orderedSet = new Set(siblings)
+            return [parentId, [...siblings, ...list.filter(shape => !orderedSet.has(shape))]]
+          })
+        )
+      )
     },
 
     toggleShapesVisibility: ids => toggleShapesVisibility(resolveShapes(ids)),
@@ -1127,7 +1224,8 @@ export const createPaintStore = (props: UseReactPaintProps = {}) => {
       updateShapes([shape.type === 'curve' ? removeCurvePoint(shape, pointIndex, settings) : removePolygonPoint(shape, pointIndex, settings)], true)
     },
     editText: id => {
-      const shape = resolveShapes([id])[0]
+      // a text of a locked group is not edited: the group is selected in its place
+      const shape = resolveUnits([id])[0]
       if (shape?.type !== 'text' || !canvasElement) return
       batch(() => {
         selectShapes([shape])
@@ -1201,7 +1299,7 @@ export const createPaintStore = (props: UseReactPaintProps = {}) => {
       showContextMenu({
         cursorStartPosition: canvasPosition ?? toCanvasPosition(clientPosition) ?? [0, 0],
         clientPosition,
-        originalShape: buildShapesGroup(ids ? resolveShapes(ids) : getSelectedShapes(state.document.selectedShape), settings),
+        originalShape: buildShapesSelection(ids ? resolveUnits(ids) : getSelectedShapes(state.document.selectedShape), settings),
         anchor: undefined
       })
     },
@@ -1209,7 +1307,7 @@ export const createPaintStore = (props: UseReactPaintProps = {}) => {
       // nothing to close: a gesture started since then keeps its mode
       if (get().interaction.selectionMode.mode !== 'contextMenu') return
       setSelectionMode({ mode: 'default' })
-      canvasElement?.focus()
+      focusCanvas()
     },
     pickColor,
 
@@ -1231,7 +1329,7 @@ export const createPaintStore = (props: UseReactPaintProps = {}) => {
 
   const getBounds = (ids: string[]): ShapesBounds | undefined => {
     const settings = getSettings()
-    const selection = buildShapesGroup(resolveShapes(ids), settings)
+    const selection = buildShapesSelection(resolveShapes(ids), settings)
     if (!selection) return undefined
     return { ...getSelectionBounds(selection, settings), rotation: selection.rotation ?? 0, center: selection.computed.center }
   }
@@ -1277,6 +1375,7 @@ export const createPaintStore = (props: UseReactPaintProps = {}) => {
     setScopeElement,
     setCanvasRootElement,
     setCanvasElement,
+    focusCanvas,
     listenScope,
     // engine used by the canvas
     setSelectedShape,

@@ -108,3 +108,42 @@ export const EraserAndLaser: Story = {
     expect(getState().activeTool.id).toBe('react-paint-laser')
   }
 }
+
+/**
+ * The eraser removes the shapes of the groups it crosses, and a group left with a single shape is dissolved. The shapes of
+ * a locked group are kept
+ */
+export const EraserInGroups: Story = {
+  args: { editorOptions: { withEraser: true } },
+  play: async ({ canvasElement }) => {
+    const view = within(canvasElement)
+    const user = userEvent.setup()
+    const drawCanvas = (await view.findByTestId('draw-canvas')) as HTMLCanvasElement
+    const { actions } = getPaint()
+    const rect = (id: string, x: number, y: number, fillColor: string) =>
+      ({ type: 'rect', id, x, y, width: 150, height: 100, style: { fillColor, strokeColor: 'transparent' } }) as const
+    actions.addShapes([
+      { type: 'group', id: 'pair', shapes: [rect('red', 100, 100, 'red'), rect('green', 400, 100, 'green')] },
+      { type: 'group', id: 'locked', locked: true, shapes: [rect('blue', 100, 300, 'blue'), rect('black', 400, 300, 'black')] }
+    ])
+    await wait(100)
+
+    // the stroke crosses the red rect, then the blue one of the locked group: only the red one is faded
+    await selectTool(view, 'eraser')
+    await user.pointer({ target: drawCanvas, keys: '[MouseLeft>]', coords: toClient([50, 150]) })
+    await user.pointer({ target: drawCanvas, coords: toClient([300, 150]) })
+    await user.pointer({ target: drawCanvas, coords: toClient([175, 350]) })
+    await wait(100)
+    expect(getPixel(drawCanvas, [175, 120])[3]).toBeLessThan(95)
+    expect(getPixel(drawCanvas, [475, 120])[3]).toBe(255)
+    expect(getPixel(drawCanvas, [175, 320])[3]).toBe(255)
+
+    await user.pointer({ target: drawCanvas, keys: '[/MouseLeft]', coords: toClient([175, 350]) })
+    await wait(100)
+    // the green rect takes the place of its group
+    expect(getState().shapes.map(shape => shape.id)).toEqual(['green', 'locked'])
+    expect(getPixel(drawCanvas, [175, 120])[3]).toBe(0)
+    actions.undo()
+    expect(getState().shapes.map(shape => shape.id)).toEqual(['pair', 'locked'])
+  }
+}

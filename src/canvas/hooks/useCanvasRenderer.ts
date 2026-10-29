@@ -10,49 +10,29 @@ import { drawGrid } from '@canvas/utils/grid'
 import { drawLaserTrail, type LaserStyle } from '@canvas/utils/laser'
 import { getSelectedShapes } from '@canvas/utils/selectedShapes'
 import { isIdleSelectionMode } from '@canvas/utils/selection'
-import { drawSelectionFrame, drawShapeSelection, drawShapes } from '@canvas/utils/shapes'
+import { type DrawShapesOptions, drawSelectionFrame, drawShapeSelection, drawShapes } from '@canvas/utils/shapes'
 import { clipMask, drawMask } from '@canvas/utils/zoom'
 import type React from 'react'
 import { useEffect, useLayoutEffect, useRef } from 'react'
 
-/** Part of their opacity kept by the shapes crossed by the eraser, until it is released */
-const ERASED_OPACITY_RATIO = 0.3
-
 const NO_ERASED_SHAPES: string[] = []
 
-const fadeShape = (shape: ShapeEntity): ShapeEntity => ({
-  ...shape,
-  style: { ...shape.style, opacity: (shape.style?.opacity ?? 100) * ERASED_OPACITY_RATIO }
-})
-
 /**
- * The shapes as they are drawn, in the order of the list: the selected copy of a shape in place of the shape, without the
- * text being edited, the shapes crossed by the eraser faded
+ * The shapes of the drawing as they are drawn: the selected copy of a shape in place of the shape, like a polygon being
+ * drawn with its temporary point, which is not in a group
  */
-const getDrawnShapes = (
-  shapes: ShapeEntity[],
-  selectedShape: SelectionType | undefined,
-  isTextEdition: boolean,
-  erasedShapeIds: string[]
-): ShapeEntity[] => {
+const getDrawnShapes = (shapes: ShapeEntity[], selectedShape: SelectionType | undefined): ShapeEntity[] => {
   const selectedShapes = getSelectedShapes(selectedShape)
-  if (!selectedShapes.length && !erasedShapeIds.length) return shapes
+  if (!selectedShapes.length) return shapes
   const selectedById = new Map(selectedShapes.map(shape => [shape.id, shape]))
-  const erasedIds = new Set(erasedShapeIds)
-  const drawnShapes: ShapeEntity[] = []
-  for (const shape of shapes) {
-    if (isTextEdition && shape === selectedShape) continue
-    const drawnShape = selectedById.get(shape.id) ?? shape
-    drawnShapes.push(erasedIds.has(shape.id) ? fadeShape(drawnShape) : drawnShape)
-  }
-  return drawnShapes
+  return shapes.map(shape => selectedById.get(shape.id) ?? shape)
 }
 
-const renderDrawCanvas = (drawCtx: CanvasRenderingContext2D, shapes: ShapeEntity[], settings: UtilsSettings) => {
+const renderDrawCanvas = (drawCtx: CanvasRenderingContext2D, shapes: ShapeEntity[], settings: UtilsSettings, options: DrawShapesOptions) => {
   initCanvasContext(drawCtx)
   drawMask(drawCtx, settings)
   drawGrid(drawCtx, settings)
-  drawShapes(drawCtx, shapes, settings)
+  drawShapes(drawCtx, shapes, settings, options)
 }
 
 const renderSelectionCanvas = (
@@ -169,23 +149,25 @@ const useCanvasRenderer = ({
     // the drawn shapes keep their identity while they are the same: a new selection of the same shapes does not change
     // the drawing, only a selected copy which differs from its shape does, like a polygon being drawn
     const keepDrawnShapes = keepIfSame<ShapeEntity[]>()
-    const computeDrawnShapes = memoizeLast(
-      (shapes: ShapeEntity[], selectedShape: SelectionType | undefined, isTextEdition: boolean, erasedShapeIds: string[]) =>
-        keepDrawnShapes(getDrawnShapes(shapes, selectedShape, isTextEdition, erasedShapeIds))
+    const computeDrawnShapes = memoizeLast((shapes: ShapeEntity[], selectedShape: SelectionType | undefined) =>
+      keepDrawnShapes(getDrawnShapes(shapes, selectedShape))
     )
-    const selectDrawnShapes = ({ document, interaction: { selectionMode } }: InternalState) =>
-      computeDrawnShapes(
-        document.shapes,
-        document.selectedShape,
-        selectionMode.mode === 'textedition',
+    const selectDrawnShapes = ({ document }: InternalState) => computeDrawnShapes(document.shapes, document.selectedShape)
+    // the text being edited is hidden under its text box, and the shapes crossed by the eraser are faded until it is released
+    const buildDrawOptions = memoizeLast(
+      (hiddenId: string | undefined, erasedShapeIds: string[]): DrawShapesOptions => ({ hiddenId, fadedIds: new Set(erasedShapeIds) })
+    )
+    const selectDrawOptions = ({ document, interaction: { selectionMode } }: InternalState) =>
+      buildDrawOptions(
+        selectionMode.mode === 'textedition' ? document.selectedShape?.id : undefined,
         selectionMode.mode === 'eraser' ? selectionMode.erasedShapeIds : NO_ERASED_SHAPES
       )
 
     const drawLayer = watchLayer(
-      state => [selectDrawnShapes(state), store.getSettings(state)],
+      state => [selectDrawnShapes(state), store.getSettings(state), selectDrawOptions(state)],
       state => {
         const drawCtx = drawCanvas?.getContext('2d')
-        if (drawCtx) renderDrawCanvas(drawCtx, selectDrawnShapes(state), store.getSettings(state))
+        if (drawCtx) renderDrawCanvas(drawCtx, selectDrawnShapes(state), store.getSettings(state), selectDrawOptions(state))
       }
     )
 

@@ -1,13 +1,13 @@
 import type { UtilsSettings } from '@canvas/constants/app'
 import type { SelectionModeResize } from '@canvas/types/Mode'
-import type { DrawableShape, Ellipse, Point, Rect, SelectionType, ShapeEntity } from '@canvas/types/Shapes'
+import type { DrawableShape, Ellipse, Point, Rect, ShapeEntity } from '@canvas/types/Shapes'
 import type { ToolsSettingsType } from '@canvas/types/tools'
 import { drawPathWithFillAndStroke } from '@canvas/utils/fill'
 import { resizeRectSelection } from '@canvas/utils/selection/rectSelection'
 import { createEllipsePath, expandRect, getComputedShapeInfos } from '@canvas/utils/shapes/path'
 import { getToolDefaultStyle } from '@canvas/utils/tools'
 import { createShapeId } from '@canvas/utils/util'
-import { type GroupResizeContext, getPositionWithoutGroupRotation, getShapePositionInNewBorder } from './group'
+import { type GroupResizeContext, getMirroredRotation, getPositionWithoutGroupRotation, getShapePositionInNewBorder } from './group'
 
 const getEllipseBorder = (ellipse: Ellipse, settings: Pick<UtilsSettings, 'selectionPadding'>): Rect => {
   const baseRect: Rect = {
@@ -88,15 +88,9 @@ export const resizeEllipse = (
   )
 }
 
-export const resizeEllipseInGroup = (
-  shape: ShapeEntity<'ellipse'>,
-  group: SelectionType & { type: 'group' },
-  groupCtx: GroupResizeContext
-): ShapeEntity<'ellipse'> => {
-  const { isXinverted, isYinverted, settings, widthMultiplier, heightMultiplier } = groupCtx
-  const shouldFlipRotation =
-    (isXinverted || isYinverted) && !(isXinverted && isYinverted) && (shape.rotation ?? 0) !== 0 && groupCtx.rotation !== shape.rotation
-  const pos = getShapePositionInNewBorder(shape, group, groupCtx)
+export const resizeEllipseInGroup = (shape: ShapeEntity<'ellipse'>, groupCtx: GroupResizeContext): ShapeEntity<'ellipse'> => {
+  const { settings, widthMultiplier, heightMultiplier } = groupCtx
+  const pos = getShapePositionInNewBorder(shape, groupCtx)
   const newRadiusX = (shape.radiusX || 0.5) * widthMultiplier
   const newRadiusY = (shape.radiusY || 0.5) * heightMultiplier
   const newCenter = getPositionWithoutGroupRotation(groupCtx, pos.x, pos.y, newRadiusX * 2, newRadiusY * 2)
@@ -107,7 +101,7 @@ export const resizeEllipseInGroup = (
       radiusY: newRadiusY,
       x: newCenter[0],
       y: newCenter[1],
-      rotation: shouldFlipRotation ? -(shape.rotation ?? 0) : (shape.rotation ?? 0)
+      rotation: getMirroredRotation(shape.rotation, groupCtx)
     },
     settings
   )

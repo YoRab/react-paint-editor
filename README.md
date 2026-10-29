@@ -18,6 +18,7 @@ An open-source canvas-based library for React used for image annotation or as a 
 - **Rich Drawing Tools** - Brush, shapes (rectangles, circles, ellipses, polygons, curves), lines, text, and picture support
 - **Interactive Canvas** - Full support for zoom, pan, pinch gestures, and infinite or fixed-size canvases, scaled to their container or filling it
 - **Shape Manipulation** - Select, move, resize, rotate, and transform shapes with intuitive controls
+- **Groups** - Group shapes, groups included, to move, turn, resize, fade, hide or lock them together, and double click a group to select inside it
 - **Eraser & Laser Pointer** - Erase the shapes a stroke crosses, or point at things with a trail that fades out, both optional in the editor
 - **Eyedropper & Recent Colors** - Pick a color of the drawing, and find the custom colors used last in every color field of the editor
 - **Customizable Styling** - Control colors, line widths, opacity, line styles (dashes, joins and caps), rounded corners, picture borders, arrowheads, fill patterns and gradients, fonts, font sizes, text alignment, line heights, text backgrounds, outlines, underlines and strikethroughs
@@ -271,6 +272,9 @@ paint.actions.updateShapes([{ id: rectId, x: 20, width: 200, style: { strokeColo
 paint.actions.rotateShapes([rectId, textId], Math.PI / 12)
 paint.actions.resizeShapes([textId], { x: 300, y: 300, width: 200, height: 80 })
 
+// the group is moved, turned and resized as a whole, and has its own opacity and name
+const groupId = paint.actions.groupShapes([rectId, textId])
+
 paint.registerEvent('shapeClicked', (shape, { canvasPosition }) => console.log(shape.id, shape.data, canvasPosition))
 
 // a popover placed at the top right corner of a shape, with position: fixed
@@ -284,6 +288,7 @@ const popoverPosition = box && paint.toClientPosition([box.x + box.width, box.y]
 | Move, turn, resize, flip | `actions.translateShapes(ids, [dx, dy])`, `actions.rotateShapes(ids, angle, { center })`, `actions.resizeShapes(ids, box)`, `actions.transformShapes(ids, action)` |
 | Style of shapes, default style of tools | `actions.setShapesStyle(ids, style, { updateTool })`, `actions.setToolStyle(toolId, style)` |
 | Order | `actions.moveShapes(ids, 'first' \| 'last' \| 'forward' \| 'backward')`, `actions.setShapeIndex(id, index)`, `actions.reorderShapes(ids)` |
+| Groups | `actions.groupShapes(ids)`, `actions.ungroupShapes(ids)`, `actions.updateShapes([{ id, name, style: { opacity } }])` |
 | Points of lines, polygons and curves | `actions.insertShapePoint`, `actions.moveShapePoint`, `actions.removeShapePoint` |
 | Visibility, lock | `actions.setShapesVisibility(ids, visible)`, `actions.setShapesLocked(ids, locked)` |
 | Selection | `actions.selectShapes(ids, { mode: 'replace' \| 'add' \| 'remove' })`, `actions.selectAllShapes()`, `actions.clearSelection()` |
@@ -303,7 +308,8 @@ const popoverPosition = box && paint.toClientPosition([box.x + box.width, box.y]
 - Coordinates are in the units of the drawing, angles are in radians, clockwise. The actions work in every mode: `viewer` and `disabled` only restrict the user.
 - `shapeClicked` and `shapeHovered` are also emitted in viewer mode, to make the shapes clickable. `canvasClicked` and `canvasDoubleClicked` are emitted for any click on the drawing, with the shape under the pointer or `undefined`, for instance to add a pin to an empty area.
 - `addShapes` returns before the pictures are loaded: `pictureLoaded` tells when one is drawn. `pictureLoadFailed` tells that the image of a picture cannot be loaded: a picture of loaded data is then left out.
-- `dataChanged(data, source, changes)` gives the shapes added, updated (with their previous version) and removed since the previous state, to send only what changed: `changes.added`, `changes.updated`, `changes.removed`, and `changes.reordered`. An undo gives the reverse changes.
+- A group holds its shapes in its `shapes` field, from the foreground: `state.shapes` and the exported data are a tree. `flattenShapes(shapes)` lists all the shapes, each group before its shapes, and `getShapeLeaves(shapes)` the shapes drawn. The actions find the shapes of the groups by their ids, and the order actions never take a shape out of its group. A group left with a single shape is dissolved: the shape takes its place.
+- `dataChanged(data, source, changes)` gives the shapes added, updated (with their previous version) and removed since the previous state, to send only what changed: `changes.added`, `changes.updated`, `changes.removed`, and `changes.reordered`. An undo gives the reverse changes. The shapes of the groups are listed too: a group is updated when its own fields or the ids of its shapes change. `changes.reordered` tells that shapes still there changed their order or their group: build the drawing again from `data.shapes` then.
 - `setOptions` overrides options of `useReactPaint` until `resetOptions`. `resetSettings` restores what was changed while editing: the default styles of the tools, the grid, the zoom and the active tool.
 
 ### Picture annotation
