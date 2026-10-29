@@ -145,3 +145,9 @@ export const zoomOut =
 
 export const groupIcon =
   '<svg><path d="M3.333 17.5V16.667H7.5V17.5ZM3.333 14.167V13.333H9.167V14.167ZM3.333 10.833V10H10.833V10.833ZM3.333 7.5V6.667H12.5V7.5ZM3.333 4.167V3.333H13.333V4.167ZM3.333 0.833V0H16.667V0.833Z"/></svg>'
+
+/** Two squares in a dashed frame, and two squares each in its own frame */
+export const groupShapesIcon =
+  '<svg><path fill="none" stroke="currentColor" stroke-width="1.5" stroke-dasharray="2 1.5" d="M2.75 2.75H17.25V17.25H2.75Z"/><path d="M5.5 5.5H10V10H5.5ZM10 10H14.5V14.5H10Z"/></svg>'
+export const ungroupShapesIcon =
+  '<svg><path fill="none" stroke="currentColor" stroke-width="1.25" stroke-dasharray="1.5 1.25" d="M1.75 1.75H9.25V9.25H1.75ZM10.75 10.75H18.25V18.25H10.75Z"/><path d="M3.75 3.75H7.25V7.25H3.75ZM12.75 12.75H16.25V16.25H12.75Z"/></svg>'

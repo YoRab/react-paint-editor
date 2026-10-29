@@ -1,13 +1,17 @@
 import type { UtilsSettings } from '@canvas/constants/app'
 import type { SelectionModeData } from '@canvas/types/Mode'
-import type { Point, ShapeEntity } from '@canvas/types/Shapes'
+import type { MultiSelection, Point, ShapeEntity } from '@canvas/types/Shapes'
 import { transformCanvas, updateCanvasContext } from '@canvas/utils/canvas'
 import { drawRectAnchors, strokeBorders } from '@canvas/utils/selection/anchors'
 import { getSelectionOutline } from '@canvas/utils/selection/rectSelection'
 
+/**
+ * Selection of shapes framed together, the shapes selected or the shapes of a group: the outline of each of them, a group
+ * being outlined by its frame, then their frame
+ */
 export const drawSelectionGroup = (
   ctx: CanvasRenderingContext2D,
-  shape: ShapeEntity<'group'>,
+  shape: MultiSelection | ShapeEntity<'group'>,
   selectionColor: string,
   selectionWidth: number,
   selectionMode: SelectionModeData<number | Point>,
@@ -52,8 +56,8 @@ export const drawSelectionGroup = (
     lineWidth: selectionWidth / settings.canvasSize.scaleRatio
   })
 
-  if (withAnchors && !shape.locked) {
-    strokeBorders(ctx, shape.computed.borders)
-    drawRectAnchors(ctx, shape.computed.borders, settings)
-  }
+  const hasAnchors = withAnchors && !shape.locked
+  // a group is shown by its frame, also when it is hovered or locked
+  if (hasAnchors || shape.type === 'group') strokeBorders(ctx, shape.computed.borders)
+  if (hasAnchors) drawRectAnchors(ctx, shape.computed.borders, settings)
 }

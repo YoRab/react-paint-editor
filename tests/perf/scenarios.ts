@@ -5,12 +5,15 @@ import { nextFrame, waitFor } from './metrics'
 import {
   CANVAS_HEIGHT,
   CANVAS_WIDTH,
+  generateGroup,
   generateLongBrush,
   generateMixedShapes,
+  generateNestedGroups,
   generateOutlinedShapes,
   generatePictures,
   generateTransparentShapes,
   getGrabPoint,
+  getLeaves,
   getPhotoFile,
   getShapeCenter,
   LONG_BRUSH_STROKES,
@@ -123,8 +126,10 @@ const drag = async (start: Point, points: Point[], eventsPerFrame: number) => {
   await nextFrame()
 }
 
+type StateShape = EditorState['shapes'][number]
+
 /** Abscissa of a rectangle or a picture, or of the first point of a brush */
-const getShapeX = (shape: EditorState['shapes'][number]) => {
+const getShapeX = (shape: StateShape) => {
   if (shape.type === 'brush') return shape.points[0]![0]![0]
   return shape.type === 'rect' || shape.type === 'picture' ? shape.x : undefined
 }
@@ -147,18 +152,25 @@ const MOVES = 300
 /** No render of the consumer nor of the canvas during a gesture, and a single save of the history at its end */
 const GESTURE_CRITERIA: Criteria = { hostRenders: 0, probeCommits: 1, canvasCommits: 0 }
 
-const hover: Scenario = {
-  id: 'hover',
+/** 300 moves from the first shape drawn to the last one, without button: the shape hovered at the end has this type */
+const createHoverScenario = ({ hoveredType, ...scenario }: Pick<Scenario, 'id' | 'generate'> & { hoveredType: StateShape['type'] }): Scenario => ({
+  ...scenario,
   run: async ({ shapes, eventsPerFrame }) => {
-    const points = interpolate(getShapeCenter(shapes[0]!), getShapeCenter(shapes[shapes.length - 1]!), MOVES)
+    const leaves = getLeaves(shapes)
+    const points = interpolate(getShapeCenter(leaves[0]!), getShapeCenter(leaves[leaves.length - 1]!), MOVES)
     await playPoints(points, eventsPerFrame, point => dispatchPointer('pointermove', point))
   },
   verify: ({ app }) => {
-    expect(app.getState().interaction.hoveredShape).toBeDefined()
+    expect(app.getState().interaction.hoveredShape?.type).toBe(hoveredType)
     expect(app.getState().selectedShapes).toHaveLength(0)
   },
   criteria: { ...GESTURE_CRITERIA, probeCommits: 0 }
-}
+})
+
+const hover = createHoverScenario({ id: 'hover', hoveredType: 'rect' })
+
+// a move over a group hovers the group
+const hoverGroups = createHoverScenario({ id: 'hover-groups', generate: generateNestedGroups, hoveredType: 'group' })
 
 /**
  * Drag of a shape by 150 px: the one found by `pick` among the generated shapes, the middle one by default. With
@@ -170,7 +182,9 @@ const createTranslateScenario = ({
   selectAll = false,
   ...scenario
 }: Pick<Scenario, 'id' | 'generate' | 'options'> & { pick?: (shapes: ShapeInput[]) => number; selectAll?: boolean }): Scenario => {
-  let movedShapes: { id: string; x: number | undefined }[] = []
+  let movedIds: string[] = []
+  // the shapes drawn by the moved shapes, which move with them
+  let movedLeaves: { id: string; x: number | undefined }[] = []
   let index = 0
   return {
     id,
@@ -182,7 +196,9 @@ const createTranslateScenario = ({
         await waitFor(() => app.getState().selectedShapes.length === shapes.length, 'all the shapes selected')
       }
       const currentShapes = app.getState().shapes
-      movedShapes = (selectAll ? currentShapes : [currentShapes[index]!]).map(shape => ({ id: shape.id, x: getShapeX(shape) }))
+      const movedShapes = selectAll ? currentShapes : [currentShapes[index]!]
+      movedIds = movedShapes.map(shape => shape.id)
+      movedLeaves = getLeaves(movedShapes).map(shape => ({ id: shape.id, x: getShapeX(shape) }))
     },
     run: async ({ shapes, eventsPerFrame }) => {
       const start = getGrabPoint(shapes[index]!)
@@ -190,8 +206,10 @@ const createTranslateScenario = ({
     },
     verify: ({ app }) => {
       const { selectedShapes } = app.getState()
-      expect(selectedShapes.map(shape => shape.id)).toEqual(movedShapes.map(shape => shape.id))
-      for (const [position, shape] of selectedShapes.entries()) expect(getShapeX(shape)).toBeCloseTo(movedShapes[position]!.x! + 150, 0)
+      expect(selectedShapes.map(shape => shape.id)).toEqual(movedIds)
+      const leaves = getLeaves(selectedShapes)
+      expect(leaves.map(shape => shape.id)).toEqual(movedLeaves.map(shape => shape.id))
+      for (const [position, shape] of leaves.entries()) expect(getShapeX(shape)).toBeCloseTo(movedLeaves[position]!.x! + 150, 0)
     },
     criteria: GESTURE_CRITERIA
   }
@@ -200,6 +218,9 @@ const createTranslateScenario = ({
 const translate = createTranslateScenario({ id: 'translate' })
 
 const translateAll = createTranslateScenario({ id: 'translate-all', selectAll: true })
+
+// the shapes of translate-all, in a single group of 3 levels
+const translateGroup = createTranslateScenario({ id: 'translate-group', generate: generateGroup, pick: () => 0 })
 
 // the brush is in the foreground
 const translateLongBrush = createTranslateScenario({ id: 'translate-long-brush', generate: generateLongBrush, pick: () => 0 })
@@ -333,14 +354,15 @@ const longBrush: Scenario = {
 const UNDO_CLICKS = 20
 
 /** Clicks alternating undo and redo in the toolbar, after the removal of a shape */
-const createUndoScenario = ({ id, listenData = false }: Pick<Scenario, 'id' | 'listenData'>): Scenario => {
+const createUndoScenario = ({ id, listenData = false, ...scenario }: Pick<Scenario, 'id' | 'listenData' | 'generate'>): Scenario => {
   let dataEventsBefore = 0
   return {
     id,
     listenData,
+    ...scenario,
     setup: async ({ app, shapes }) => {
       // Selects then removes a shape, to have an action to undo
-      const center = getShapeCenter(shapes[0]!)
+      const center = getGrabPoint(shapes[0]!)
       dispatchPointer('pointerdown', center, { button: 0, buttons: 1 })
       await nextFrame()
       dispatchPointer('pointerup', center, { button: 0 })
@@ -362,6 +384,9 @@ const createUndoScenario = ({ id, listenData = false }: Pick<Scenario, 'id' | 'l
 const undo = createUndoScenario({ id: 'undo' })
 
 const undoAutosave = createUndoScenario({ id: 'undo-autosave', listenData: true })
+
+// a group of 25 rectangles is removed: each click exports the groups and compares them
+const undoGroupsAutosave = createUndoScenario({ id: 'undo-groups-autosave', generate: generateNestedGroups, listenData: true })
 
 const LAYER_CLICKS = 20
 
@@ -474,5 +499,8 @@ export const SCENARIOS: Scenario[] = [
   translateAll,
   translateLongBrush,
   addPicture,
-  addPictureAutosave
+  addPictureAutosave,
+  hoverGroups,
+  translateGroup,
+  undoGroupsAutosave
 ]

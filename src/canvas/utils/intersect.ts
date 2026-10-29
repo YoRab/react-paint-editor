@@ -7,6 +7,7 @@ import { hasVisibleFill } from '@canvas/utils/fill'
 import { getSelectedShapes } from '@canvas/utils/selectedShapes'
 import { getAnchorRadius, getResizeAnchorCenter, getRotationAnchorCenter, hasPointAnchors } from '@canvas/utils/selection/anchors'
 import { createLinePath, expandRect, getBrushPointScaler, getCornerRadius, getCurveSegments } from '@canvas/utils/shapes/path'
+import { indexShapeTree, type ShapeLeaf } from '@canvas/utils/shapes/tree'
 import { getRectCorners, isCircleIntersectRect, isPointInsideRect, rotatePoint } from './trigo'
 
 export const getCursorPositionInElement = (e: MouseEvent, element: HTMLElement, canvasSize: CanvasSize): Point => {
@@ -66,7 +67,7 @@ export const getPointPositionBeforeCanvasTransformation = (point: Point, shapeRo
 const isPartOfRect = (rect: Rect, point: Point, radius: number) =>
   radius ? isCircleIntersectRect(rect, { x: point[0], y: point[1], radius }) : isPointInsideRect(rect, point)
 
-const checkAnchorsSelection = (shape: ShapeEntity, newPosition: Point, settings: UtilsSettings, radius = 0): false | HoverModeData => {
+const checkAnchorsSelection = (shape: SelectionType, newPosition: Point, settings: UtilsSettings, radius = 0): false | HoverModeData => {
   const anchorRadius = getAnchorRadius(settings)
   // an anchor is hovered in the square around it
   const isOverAnchor = ([x, y]: Point) =>
@@ -167,12 +168,16 @@ const shouldCheckFillShape = (shape: ShapeEntity, isSelected = false) => {
   return hasVisibleFill(shape.style) || ['picture', 'text'].includes(shape.type)
 }
 
+/** Whether the point is on the shape, on one of the shapes of a group */
 export const checkPositionIntersection = (
   ctx: CanvasRenderingContext2D,
-  shape: SelectionType,
+  shape: ShapeEntity,
   position: Point,
   settings: UtilsSettings
 ): false | HoverModeData => {
+  if (shape.type === 'group') {
+    return shape.shapes.some(child => checkPositionIntersection(ctx, child, position, settings)) ? { mode: 'translate' } : false
+  }
   const { center } = shape.computed
 
   const newPosition = getPointPositionAfterCanvasTransformation(position, shape.rotation ?? 0, center)
@@ -275,15 +280,28 @@ const isRectInsideHole = (shape: ShapeEntity, rect: Rect, distance: number): boo
   return getRectCorners(rect).every(corner => isInHole(getPointPositionAfterCanvasTransformation(corner, shape.rotation ?? 0, center)))
 }
 
+/** Box of a selection frame drawn from a corner to the other one */
+const getFrameRect = ([[fromX, fromY], [toX, toY]]: [Point, Point]): Rect => ({
+  x: Math.min(fromX, toX),
+  y: Math.min(fromY, toY),
+  width: Math.abs(toX - fromX),
+  height: Math.abs(toY - fromY)
+})
+
+/** Whether the selection frame crosses the shape, or one of the shapes of a group */
 export const checkSelectionFrameCollision = (ctx: CanvasRenderingContext2D, shape: ShapeEntity, selectionFrame: [Point, Point]): boolean => {
+  if (shape.type === 'group') {
+    return (
+      !!getRectIntersection(shape.computed.boundingBox, getFrameRect(selectionFrame)) &&
+      shape.shapes.some(child => checkSelectionFrameCollision(ctx, child, selectionFrame))
+    )
+  }
   const { borders, center, boundingBox } = shape.computed
 
-  const minX = Math.min(selectionFrame[0][0], selectionFrame[1][0])
-  const maxX = Math.max(selectionFrame[0][0], selectionFrame[1][0])
-  const minY = Math.min(selectionFrame[0][1], selectionFrame[1][1])
-  const maxY = Math.max(selectionFrame[0][1], selectionFrame[1][1])
-
-  const frameRect = { x: minX, y: minY, width: maxX - minX, height: maxY - minY }
+  const frameRect = getFrameRect(selectionFrame)
+  const { x: minX, y: minY } = frameRect
+  const maxX = minX + frameRect.width
+  const maxY = minY + frameRect.height
 
   const frameCollision = getRectIntersection(boundingBox, frameRect)
   if (!frameCollision) return false
@@ -369,17 +387,22 @@ export const hasPointerMoved = (e: ClientPosition, startPosition: ClientPosition
 export const shouldCancelLongPress = (e: PointerEvent, startPosition: ClientPosition): boolean =>
   !isTouchGesture(e) || hasPointerMoved(e, startPosition)
 
-const isShapeAt = (ctx: CanvasRenderingContext2D, shape: ShapeEntity, point: Point, settings: UtilsSettings) =>
-  shape.visible !== false && isPointInsideRect(shape.computed.boundingBox, point) && !!checkPositionIntersection(ctx, shape, point, settings)
+const isLeafAt = (ctx: CanvasRenderingContext2D, { leaf, visible }: ShapeLeaf, point: Point, settings: UtilsSettings) =>
+  visible && isPointInsideRect(leaf.computed.boundingBox, point) && !!checkPositionIntersection(ctx, leaf, point, settings)
 
-/** Visible shapes under a point, from the foreground. Locked shapes are found too */
+/**
+ * Visible shapes under a point, from the foreground: the shapes drawn, those of the groups, which are visible when their
+ * groups are visible too. Locked shapes are found too
+ */
 export const findShapesAt = (ctx: CanvasRenderingContext2D, shapes: ShapeEntity[], point: Point, settings: UtilsSettings): ShapeEntity[] =>
-  shapes.filter(shape => isShapeAt(ctx, shape, point, settings))
+  indexShapeTree(shapes)
+    .leaves.filter(leaf => isLeafAt(ctx, leaf, point, settings))
+    .map(({ leaf }) => leaf)
 
-/** Visible shapes under one of the points, from the foreground, as found by findShapesAt */
-export const findShapesAtPoints = (ctx: CanvasRenderingContext2D, shapes: ShapeEntity[], points: Point[], settings: UtilsSettings): ShapeEntity[] =>
-  shapes.filter(shape => points.some(point => isShapeAt(ctx, shape, point, settings)))
+/** Visible shapes drawn under one of the points, among shapes of the table of a tree (see indexShapeTree) */
+export const findLeavesAtPoints = (ctx: CanvasRenderingContext2D, leaves: ShapeLeaf[], points: Point[], settings: UtilsSettings): ShapeLeaf[] =>
+  leaves.filter(leaf => points.some(point => isLeafAt(ctx, leaf, point, settings)))
 
 /** The shape of the foreground under a point, as found by findShapesAt */
 export const findShapeAt = (ctx: CanvasRenderingContext2D, shapes: ShapeEntity[], point: Point, settings: UtilsSettings): ShapeEntity | undefined =>
-  shapes.find(shape => isShapeAt(ctx, shape, point, settings))
+  indexShapeTree(shapes).leaves.find(leaf => isLeafAt(ctx, leaf, point, settings))?.leaf

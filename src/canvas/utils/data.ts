@@ -2,11 +2,15 @@ import type { DataChanges } from '@canvas/types/editor'
 import type { ExportedShape, ShapeEntity, StateData } from '@canvas/types/Shapes'
 import { shallowEqual } from '@canvas/utils/equality'
 import { isEqual } from '@canvas/utils/object'
+import { flattenShapes, indexShapeTree } from '@canvas/utils/shapes/tree'
 import { roundValues } from '@canvas/utils/transform'
 import { getBase64Image, isSourceEncodedOnExport } from './file'
 
-/** Fields left out of the export: the image, the paths and the computed data are built again from the others */
-const OMITTED_FIELDS = new Set(['img', 'path', 'arrows', 'tempPoint', 'computed'])
+/**
+ * Fields left out of the export: the image, the paths and the computed data are built again from the others. The shapes
+ * of a group are exported apart
+ */
+const OMITTED_FIELDS = new Set(['img', 'path', 'arrows', 'tempPoint', 'computed', 'shapes'])
 
 /** Flags only exported when they are set */
 const OPTIONAL_FLAGS = new Set(['flipX', 'flipY'])
@@ -65,7 +69,10 @@ const roundField = (field: string, value: unknown): unknown => {
   return decimals !== undefined && typeof value === 'number' ? roundValues(value, decimals) : value
 }
 
-/** The fields kept and rounded, copied into a new object: removing fields from a copy would slow down the access to the copy */
+/**
+ * The fields kept and rounded, copied into a new object: removing fields from a copy would slow down the access to the
+ * copy
+ */
 const buildExportedShape = (shape: ShapeEntity): ExportedShape => {
   const exported: Record<string, unknown> = {}
   for (const field of Object.keys(shape)) {
@@ -78,7 +85,7 @@ const buildExportedShape = (shape: ShapeEntity): ExportedShape => {
 
 /**
  * Exports of the shapes, built once per shape: a shape is never changed, only replaced, and all the shapes are exported on
- * each change of the history
+ * each change of the history. The export of a group only holds its own fields
  */
 const exportCache = new WeakMap<ShapeEntity, ExportedShape>()
 
@@ -93,6 +100,7 @@ const getCachedExport = (shape: ShapeEntity): ExportedShape => {
 /** The export of a shape, shared between the calls: it is copied before it is given to the consumers */
 const getExportedShape = (shape: ShapeEntity): ExportedShape => {
   const exported = getCachedExport(shape)
+  if (shape.type === 'group') return { ...exported, shapes: shape.shapes.map(getExportedShape) } as ExportedShape
   // the source of a picture may be encoded from its image, which may be loaded after the first export. An image which cannot
   // be encoded keeps its source
   return shape.type === 'picture' && isSourceEncodedOnExport(shape.src)
@@ -100,8 +108,14 @@ const getExportedShape = (shape: ShapeEntity): ExportedShape => {
     : exported
 }
 
-/** The shape as exported: its id and its data are kept, the computed data are left out. Each call returns a new object */
-const cleanShapeBeforeExport = (shape: ShapeEntity): ExportedShape => ({ ...getExportedShape(shape) })
+/**
+ * The shape as exported: its id and its data are kept, the computed data are left out. Each call returns a new object, a
+ * group with new objects for its shapes
+ */
+const cleanShapeBeforeExport = (shape: ShapeEntity): ExportedShape =>
+  shape.type === 'group'
+    ? ({ ...getCachedExport(shape), shapes: cleanShapesBeforeExport(shape.shapes) } as ExportedShape)
+    : { ...getExportedShape(shape) }
 
 export const cleanShapesBeforeExport = (shapes: ShapeEntity[]): ExportedShape[] => shapes.map(cleanShapeBeforeExport)
 
@@ -115,29 +129,55 @@ export const buildDataToExport = (shapes: ShapeEntity[], width: number, height: 
   }
 }
 
-/** Changes from the previous shapes to the new ones, found by id. The new shapes are given with their export */
+/** All the exported shapes, each group before its shapes, in the order of flattenShapes */
+const flattenExportedShapes = (shapes: ExportedShape[]): ExportedShape[] =>
+  shapes.flatMap(shape => (shape.type === 'group' ? [shape, ...flattenExportedShapes(shape.shapes)] : [shape]))
+
+/**
+ * Whether a shape is exported as before: a group changes with its own fields and the ids of its shapes, not with its
+ * shapes
+ */
+const isSameExport = (previousShape: ShapeEntity, exported: ExportedShape): boolean => {
+  if (previousShape.type !== 'group' || exported.type !== 'group') return isEqual(getExportedShape(previousShape), exported)
+  const { shapes, ...fields } = exported
+  return (
+    isEqual(getCachedExport(previousShape), fields) &&
+    shallowEqual(
+      previousShape.shapes.map(shape => shape.id),
+      shapes.map(shape => shape.id)
+    )
+  )
+}
+
+/**
+ * Changes from the previous shapes to the new ones, found by id, the shapes of the groups included. The new shapes are given
+ * with their export. The shapes kept are reordered when they are in another order, or in another group
+ */
 export const getDataChanges = (previousShapes: ShapeEntity[], shapes: ShapeEntity[], exportedShapes: ExportedShape[]): DataChanges => {
-  const previousById = new Map(previousShapes.map(shape => [shape.id, shape]))
-  const ids = new Set(shapes.map(shape => shape.id))
+  const previousNodes = flattenShapes(previousShapes)
+  const nodes = flattenShapes(shapes)
+  const exportedNodes = flattenExportedShapes(exportedShapes)
+  const previousIndex = indexShapeTree(previousShapes)
+  const index = indexShapeTree(shapes)
   const added: ExportedShape[] = []
   const updated: DataChanges['updated'] = []
-  shapes.forEach((shape, index) => {
-    const previousShape = previousById.get(shape.id)
-    const exportedShape = exportedShapes[index]!
+  nodes.forEach((shape, position) => {
+    const previousShape = previousIndex.byId.get(shape.id)
+    const exportedShape = exportedNodes[position]!
     if (!previousShape) {
       added.push(exportedShape)
     } else if (previousShape !== shape) {
       // a shape is rebuilt without change when its computed data are refreshed
-      const previous = getExportedShape(previousShape)
-      if (!isEqual(previous, exportedShape)) updated.push({ shape: exportedShape, previous: { ...previous } })
+      if (!isSameExport(previousShape, exportedShape)) updated.push({ shape: exportedShape, previous: cleanShapeBeforeExport(previousShape) })
     }
   })
-  const keptIds = shapes.filter(shape => previousById.has(shape.id)).map(shape => shape.id)
-  const previousKeptIds = previousShapes.filter(shape => ids.has(shape.id)).map(shape => shape.id)
+  const keptIds = nodes.filter(shape => previousIndex.byId.has(shape.id)).map(shape => shape.id)
+  const previousKeptIds = previousNodes.filter(shape => index.byId.has(shape.id)).map(shape => shape.id)
+  const getParentId = ({ ancestorsById }: typeof index, id: string) => ancestorsById.get(id)?.at(-1)?.id
   return {
     added,
     updated,
-    removed: cleanShapesBeforeExport(previousShapes.filter(shape => !ids.has(shape.id))),
-    reordered: !shallowEqual(keptIds, previousKeptIds)
+    removed: cleanShapesBeforeExport(previousNodes.filter(shape => !index.byId.has(shape.id))),
+    reordered: !shallowEqual(keptIds, previousKeptIds) || keptIds.some(id => getParentId(index, id) !== getParentId(previousIndex, id))
   }
 }

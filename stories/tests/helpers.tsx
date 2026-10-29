@@ -8,6 +8,7 @@ import {
   type Point,
   type ReactPaint,
   type ShapeEntity,
+  type ShapeInput,
   type StateData,
   type ToolsType,
   type UseReactPaintProps,
@@ -27,6 +28,25 @@ export const getPaint = () => {
 }
 
 export const getState = () => getPaint().getState()
+
+/** A filled square 100 wide, at x and y */
+export const square = (id: string, x: number, y: number): ShapeInput => ({
+  type: 'rect',
+  id,
+  x,
+  y,
+  width: 100,
+  height: 100,
+  style: { strokeColor: '#000000', fillColor: '#4a90d9', opacity: 100, lineWidth: 2 }
+})
+
+const getIds = (shapes: readonly ShapeEntity[]) => shapes.map(shape => shape.id)
+
+/** Ids of the shapes of the drawing, the groups without their shapes */
+export const getRootIds = () => getIds(getState().shapes)
+
+/** Ids of the shapes of a group */
+export const getChildIds = (id: string) => getIds((getPaint().getShape(id) as ShapeEntity<'group'>).shapes)
 
 export const wait = (ms = 50) => new Promise(res => setTimeout(res, ms))
 

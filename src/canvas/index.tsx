@@ -150,9 +150,14 @@ export type {
   EditableShapeType,
   ExportedDrawableShape as DrawableShape,
   ExportedDrawableShape,
+  ExportedGroup,
   ExportedShape,
+  GroupPatch,
+  GroupShapeInput,
+  MultiSelection,
   Point,
   Rect,
+  SelectionType,
   ShapeData,
   ShapeEntity,
   ShapeInput,
@@ -165,5 +170,7 @@ export type {
 export type { ActionsTool, CustomTool, CustomToolInput, ToolsType } from '@canvas/types/tools'
 export { shallowEqual } from '@canvas/utils/equality'
 export { getSelectedShapes, getSelectedShapesTools } from '@canvas/utils/selectedShapes'
+export { getSelectedLeaves, getSelectionStyle } from '@canvas/utils/selection'
+export { canGroupShapes, flattenShapes, getParentGroup, getShapeLeaves } from '@canvas/utils/shapes/tree'
 export type { CanvasComponentProps }
 export { Canvas }

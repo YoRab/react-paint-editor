@@ -1,7 +1,6 @@
 import type { ChangeSource } from '@canvas/types/editor'
 import type { SelectionType, ShapeEntity } from '@canvas/types/Shapes'
-import { insertAt } from '@canvas/utils/array'
-import { isEqual, omit } from '@canvas/utils/object'
+import { isEqual } from '@canvas/utils/object'
 
 // --- Types ---
 
@@ -18,17 +17,16 @@ export type ShapesState = {
 }
 
 export type ShapesAction =
-  | { type: 'ADD'; newShapes: ShapeEntity[]; index?: number | undefined }
-  | { type: 'UPDATE'; updatedShapes: ShapeEntity[]; newSelectedShape: SelectionType | undefined; save: boolean; source?: ChangeSource | undefined }
-  | { type: 'REMOVE'; ids: Set<string>; newSelectedShape: SelectionType | undefined; source?: ChangeSource | undefined }
-  | { type: 'DUPLICATE'; newShapesMap: Map<string, ShapeEntity>; newSelectedShape: SelectionType | undefined }
-  | { type: 'RESET_AND_SAVE'; shapes: ShapeEntity[]; newSelectedShape: SelectionType | undefined }
+  /**
+   * Sets the shapes of the drawing, built by the store, and the selection which follows them. With save, the change is a
+   * step of the history
+   */
+  | { type: 'SET_SHAPES'; shapes: ShapeEntity[]; newSelectedShape: SelectionType | undefined; save: boolean; source?: ChangeSource | undefined }
   | { type: 'SET_SELECTION'; newSelectedShape: SelectionType | undefined }
   | { type: 'SAVE'; source?: ChangeSource | undefined }
   | { type: 'UNDO' }
   | { type: 'REDO' }
   | { type: 'CLEAR'; shapes: ShapeEntity[]; clearHistory: boolean; source: ChangeSource }
-  | { type: 'REFRESH_ALL'; shapes: ShapeEntity[]; newSelectedShape: SelectionType | undefined }
   /** Merges the steps added after the cursor `from` into a single one, the last */
   | { type: 'SQUASH_HISTORY'; from: number }
 
@@ -57,43 +55,10 @@ const addHistoryEntry = (
 
 export const shapesReducer = (state: ShapesState, action: ShapesAction): ShapesState => {
   switch (action.type) {
-    case 'ADD':
-      return { ...state, shapes: insertAt(state.shapes, action.index ?? 0, ...action.newShapes) }
-
-    case 'UPDATE': {
-      const byId = new Map(action.updatedShapes.map(s => [s.id, s]))
-      const newShapes = state.shapes.map(s => byId.get(s.id) ?? s)
-      const next = { ...state, shapes: newShapes, selectedShape: action.newSelectedShape }
-      return action.save ? { ...next, history: addHistoryEntry(next.history, newShapes, action.newSelectedShape, action.source) } : next
-    }
-
-    case 'REMOVE': {
-      const newShapes = state.shapes.filter(s => !action.ids.has(s.id))
-      return {
-        ...state,
-        shapes: newShapes,
-        selectedShape: action.newSelectedShape,
-        history: addHistoryEntry(state.history, newShapes, action.newSelectedShape, action.source)
-      }
-    }
-
-    case 'DUPLICATE': {
-      const newShapes = state.shapes.flatMap(s => {
-        const dup = action.newShapesMap.get(s.id)
-        return dup ? [dup, s] : [s]
-      })
-      return { ...state, shapes: newShapes, selectedShape: action.newSelectedShape ?? state.selectedShape }
-    }
-
-    case 'RESET_AND_SAVE': {
-      // only the shapes with the flag of an old list of layers are copied: the others keep their identity
-      const pureShapes = action.shapes.map(s => ('chosen' in s ? omit(['chosen'], s) : s))
-      return {
-        ...state,
-        shapes: pureShapes,
-        selectedShape: action.newSelectedShape,
-        history: addHistoryEntry(state.history, pureShapes, action.newSelectedShape)
-      }
+    case 'SET_SHAPES': {
+      const { shapes, newSelectedShape, save, source } = action
+      const next = shapes === state.shapes && newSelectedShape === state.selectedShape ? state : { ...state, shapes, selectedShape: newSelectedShape }
+      return save ? { ...next, history: addHistoryEntry(next.history, shapes, newSelectedShape, source) } : next
     }
 
     case 'SET_SELECTION':
@@ -129,9 +94,6 @@ export const shapesReducer = (state: ShapesState, action: ShapesAction): ShapesS
             selectedShape: undefined,
             history: addHistoryEntry(state.history, action.shapes, undefined, action.source)
           }
-
-    case 'REFRESH_ALL':
-      return { ...state, shapes: action.shapes, selectedShape: action.newSelectedShape }
 
     case 'SQUASH_HISTORY': {
       const { states, cursor } = state.history

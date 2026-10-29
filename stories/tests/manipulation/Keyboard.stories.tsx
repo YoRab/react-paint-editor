@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import { expect, userEvent, within } from 'storybook/test'
 import type { DrawableShape } from '../../../src/index'
-import { getPaint, getState, makeCoordConverters, ReactPaintWrapper } from './../helpers'
+import { getPaint, getRootIds, getState, makeCoordConverters, ReactPaintWrapper } from './../helpers'
 
 const meta = {
   title: 'Tests/Manipulation',
@@ -139,6 +139,26 @@ export const Keyboard: Story = {
     expect(getState().shapes.map(shape => shape.id)).toEqual([leftId])
     await user.keyboard('{Control>}z{/Control}')
     expect(getState().shapes).toHaveLength(2)
+
+    // =====================================================================
+    // Ctrl+G groups the selection and Ctrl+Shift+G ungroups it, each in a step of the history
+    // =====================================================================
+
+    await user.keyboard('{Control>}a{/Control}')
+    await user.keyboard('{Control>}g{/Control}')
+    const [groupId] = getRootIds()
+    expect(getPaint().getShape(groupId!)).toMatchObject({ type: 'group', shapes: [{ id: leftId }, { id: rightId }] })
+    expect(getState().selectedShapeIds).toEqual([groupId])
+    await user.keyboard('{Control>}{Shift>}G{/Shift}{/Control}')
+    expect(getRootIds()).toEqual([leftId, rightId])
+    expect(getState().selectedShapeIds).toEqual([leftId, rightId])
+    await user.keyboard('{Control>}z{/Control}')
+    expect(getRootIds()).toEqual([groupId])
+    await user.keyboard('{Control>}z{/Control}')
+    expect(getRootIds()).toEqual([leftId, rightId])
+    await user.keyboard('{Control>}{Shift>}Z{/Shift}{/Control}')
+    expect(getRootIds()).toEqual([groupId])
+    await user.keyboard('{Control>}z{/Control}')
 
     // =====================================================================
     // Escape clears the selection

@@ -196,14 +196,39 @@ export const generateLongBrush = (count: number): ShapeInput[] => [
   ...generateShapes(count - 1)
 ]
 
+/** Groups each `size` shapes in turn, a single shape left at the end going into the previous group: a group holds 2 shapes at least */
+const groupBy = (shapes: ShapeInput[], size: number): ShapeInput[] => {
+  const groups: ShapeInput[][] = []
+  for (let index = 0; index < shapes.length; index += size) groups.push(shapes.slice(index, index + size))
+  if (groups.length > 1 && groups[groups.length - 1]!.length < 2) groups[groups.length - 2]!.push(...groups.pop()!)
+  return groups.map(groupShapes => (groupShapes.length > 1 ? { type: 'group', shapes: groupShapes } : groupShapes[0]!))
+}
+
+/** The grid, in groups of 5 rectangles, themselves in groups of 5: the shapes of the drawing are these last groups */
+export const generateNestedGroups = (count: number): ShapeInput[] => groupBy(groupBy(generateShapes(count), 5), 5)
+
+/** The groups of generateNestedGroups in a single group: 3 levels of groups */
+export const generateGroup = (count: number): ShapeInput[] => [{ type: 'group', shapes: generateNestedGroups(count) }]
+
+/** The shapes drawn by the shapes, given or in the state: the shapes of the groups, from the foreground */
+export const getLeaves = <T extends { type: string }>(shapes: readonly T[]): T[] =>
+  shapes.flatMap(shape => (shape.type === 'group' ? getLeaves((shape as T & { shapes: T[] }).shapes) : [shape]))
+
 /** Center of a rectangle, in canvas coordinates */
 export const getShapeCenter = (shape: ShapeInput): Point => {
   if (shape.type !== 'rect' && shape.type !== 'picture') throw new Error('Only the center of a rectangle or a picture is known')
   return [shape.x + shape.width / 2, shape.y + shape.height / 2]
 }
 
-/** A point where the shape can be grabbed: the center of a rectangle or a picture, the middle point of the first stroke of a brush */
+/**
+ * A point where the shape can be grabbed: the center of a rectangle or a picture, the middle point of the first stroke of
+ * a brush, a point of the middle shape drawn by a group
+ */
 export const getGrabPoint = (shape: ShapeInput): Point => {
+  if (shape.type === 'group') {
+    const leaves = getLeaves<ShapeInput>([shape])
+    return getGrabPoint(leaves[Math.floor(leaves.length / 2)]!)
+  }
   if (shape.type !== 'brush') return getShapeCenter(shape)
   const stroke = shape.points[0]!
   return stroke[Math.floor(stroke.length / 2)]!

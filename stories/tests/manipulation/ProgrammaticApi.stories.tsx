@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react-vite'
 import { useEffect } from 'react'
 import { expect, userEvent, waitFor, within } from 'storybook/test'
 import { Canvas, type ShapeEntity, type UseReactPaintProps, useReactPaint } from '../../../src/index'
-import { getPaint, makeCoordConverters, paintRef } from './../helpers'
+import { getPaint, getPixel, makeCoordConverters, paintRef, wait } from './../helpers'
 
 const SHAPE_EVENTS = ['shapeClicked', 'shapeHovered', 'canvasClicked', 'canvasDoubleClicked'] as const
 
@@ -184,6 +184,34 @@ export const ZoomToShapes: Story = {
     const [x, y] = paint.toCanvasPosition(corner)!
     expect(x).toBeCloseTo(box.x)
     expect(y).toBeCloseTo(box.y)
+  }
+}
+
+/** A group is faded as a whole: its shapes covering each other show the same color through it. A hidden group is not drawn */
+export const GroupOpacity: Story = {
+  play: async ({ canvasElement }) => {
+    const drawCanvas = (await within(canvasElement).findByTestId('draw-canvas')) as HTMLCanvasElement
+    const paint = getPaint()
+    const style = { fillColor: 'red', strokeColor: 'transparent' }
+    const [groupId] = paint.actions.addShapes([
+      {
+        type: 'group',
+        style: { opacity: 50 },
+        shapes: [
+          { type: 'rect', x: 100, y: 100, width: 200, height: 100, style },
+          { type: 'rect', x: 200, y: 100, width: 200, height: 100, style }
+        ]
+      }
+    ])
+    await wait(100)
+    const alone = getPixel(drawCanvas, [150, 150])
+    expect(alone[3]).toBeGreaterThan(110)
+    expect(alone[3]).toBeLessThan(145)
+    expect(getPixel(drawCanvas, [250, 150])).toEqual(alone)
+
+    paint.actions.setShapesVisibility([groupId!], false)
+    await wait(100)
+    expect(getPixel(drawCanvas, [250, 150])[3]).toBe(0)
   }
 }
 

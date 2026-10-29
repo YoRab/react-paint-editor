@@ -114,7 +114,7 @@ const resizeRectSelectionKeepingRatio = (
   borderHeight: number,
   isXinverted: boolean,
   isYinverted: boolean,
-  originalShape: ShapeEntity,
+  originalShape: SelectionType,
   selectionMode: SelectionModeResize,
   settings: UtilsSettings
 ) => {
@@ -185,7 +185,7 @@ const calculateRectSelectionData = ({
   borderY: number
   borderHeight: number
   center: Point
-  originalShape: ShapeEntity
+  originalShape: SelectionType
 }) => {
   const centerVector = [borderX + borderWidth / 2 - center[0], borderY + borderHeight / 2 - center[1]] as Point
 
@@ -207,7 +207,7 @@ type ResizeFromCenterParams = {
   borders: Rect
   center: Point
   selectionMode: SelectionModeResize
-  originalShape: ShapeEntity
+  originalShape: SelectionType
   settings: UtilsSettings
 }
 
@@ -275,7 +275,7 @@ const resizeRectSelectionFromCenterWithRatio = ({
 
 export const resizeRectSelection = (
   cursorPosition: Point,
-  originalShape: ShapeEntity,
+  originalShape: SelectionType,
   selectionMode: SelectionModeResize,
   settings: UtilsSettings,
   keepRatio = false,

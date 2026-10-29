@@ -6,11 +6,12 @@ import {
   checkSelectionFrameCollision,
   checkSelectionIntersection,
   clientToCanvasPosition,
-  findShapesAtPoints,
+  findLeavesAtPoints,
   getCursorPositionInTransformedCanvas,
   hasPointerMoved,
   shouldCancelLongPress
 } from '@canvas/utils/intersect'
+import { indexShapeTree } from '@canvas/utils/shapes/tree'
 import { describe, expect, it, vi } from 'vitest'
 import { createShape, stubPath2D } from './helpers'
 
@@ -195,11 +196,13 @@ describe('checkSelectionIntersection', () => {
   })
 })
 
-describe('findShapesAtPoints', () => {
+describe('findLeavesAtPoints', () => {
   const settings = { selectionPadding: 0, canvasSize: { scaleRatio: 1 }, canvasZoom: 1 } as UtilsSettings
   const left = createShape({ type: 'rect', x: 0, y: 0, width: 100, height: 100, style: OUTLINED })
   const right = createShape({ type: 'rect', x: 200, y: 0, width: 100, height: 100, style: OUTLINED })
   const hidden = { ...createShape({ type: 'rect', x: 0, y: 0, width: 300, height: 100, style: OUTLINED }), visible: false }
+  const findShapesAtPoints = (ctx: CanvasRenderingContext2D, shapes: ShapeEntity[], points: Point[], settings: UtilsSettings) =>
+    findLeavesAtPoints(ctx, indexShapeTree(shapes).leaves, points, settings).map(({ leaf }) => leaf)
 
   it('finds the visible shapes under one of the points, in their order, by their bounding boxes first', () => {
     const ctx = createContext(true)

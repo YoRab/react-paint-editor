@@ -9,7 +9,8 @@ import usePressOutside from '@editor/hooks/usePressOutside'
 import { type RefObject, useEffect, useRef, useState } from 'react'
 
 const BUTTON_HEIGHT = 36
-const HR_HEIGHT = 16
+// a border of 1 pixel between margins of 8
+const HR_HEIGHT = 17
 const MENU_PADDING_VERTICAL = 8
 const MENU_MARGIN = 8
 const MENU_WIDTH = 160 + MENU_MARGIN * 2
@@ -23,7 +24,7 @@ type ContextMenuContentType = {
 }
 
 const ContextMenuContent = ({ contextMenu, containerRef, hasCopiedShapes, actions }: ContextMenuContentType) => {
-  const { shapes: selectedShapes, anchorIndex, canRemoveAnchor, clientPosition } = contextMenu
+  const { shapes: selectedShapes, anchorIndex, canRemoveAnchor, canGroup, canUngroup, clientPosition } = contextMenu
   const selectedIds = selectedShapes.map(shape => shape.id)
   const hasSelectedShape = selectedShapes.length > 0
   const firstShape = selectedShapes[0]
@@ -34,7 +35,7 @@ const ContextMenuContent = ({ contextMenu, containerRef, hasCopiedShapes, action
   const { ref: transformMenuRef, isOpen: isTransformMenuOpen } = useMenu({ trigger: 'hover', disabled: isLocked })
 
   const menuHeight =
-    MENU_PADDING_VERTICAL * 2 + BUTTON_HEIGHT * (2 + (hasSelectedShape ? 8 : 0) + (canRemoveAnchor ? 1 : 0)) + HR_HEIGHT * (hasSelectedShape ? 3 : 1)
+    MENU_PADDING_VERTICAL * 2 + BUTTON_HEIGHT * (2 + (hasSelectedShape ? 10 : 0) + (canRemoveAnchor ? 1 : 0)) + HR_HEIGHT * (hasSelectedShape ? 3 : 1)
 
   const [menuPosition, setMenuPosition] = useState<{ x: number; y: number; subMenuPosition: 'left' | 'right' } | undefined>()
 
@@ -74,6 +75,10 @@ const ContextMenuContent = ({ contextMenu, containerRef, hasCopiedShapes, action
   const onSelectAllShapes = runAndClose(actions.selectAllShapes)
 
   const onDuplicateShape = runAndClose(() => actions.duplicateShapes(selectedIds, { translate: true, select: true }))
+
+  const onGroupShapes = runAndClose(() => actions.groupShapes(selectedIds))
+
+  const onUngroupShapes = runAndClose(() => actions.ungroupShapes(selectedIds))
 
   const onCutShape = runAndClose(() => actions.cut(selectedIds))
 
@@ -130,6 +135,12 @@ const ContextMenuContent = ({ contextMenu, containerRef, hasCopiedShapes, action
       {hasSelectedShape && (
         <>
           <Button onClick={onDuplicateShape}>Duplicate</Button>
+          <Button onClick={onGroupShapes} disabled={!canGroup}>
+            Group
+          </Button>
+          <Button onClick={onUngroupShapes} disabled={!canUngroup}>
+            Ungroup
+          </Button>
           <Button onClick={onToggleShapeVisibility}>{isVisible ? 'Hide' : 'Show'}</Button>
           <Button onClick={onToggleShapeLock}>{isLocked ? 'Unlock' : 'Lock'}</Button>
           <Button onClick={onRemoveShape}>Delete</Button>

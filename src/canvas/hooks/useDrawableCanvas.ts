@@ -9,18 +9,19 @@ import {
   checkCurveLinesSelectionIntersection,
   checkPolygonLinesSelectionIntersection,
   checkSelectionIntersection,
-  findShapesAtPoints,
+  findLeavesAtPoints,
   getCursorPositionInElement,
   getCursorPositionInTransformedCanvas,
   isTouchGesture,
   shouldCancelLongPress
 } from '@canvas/utils/intersect'
 import { getSelectedShapes } from '@canvas/utils/selectedShapes'
-import { buildShapesGroup, isIdleSelectionMode, selectShape } from '@canvas/utils/selection'
+import { buildShapesSelection, findShapeInGroup, isIdleSelectionMode, selectShape } from '@canvas/utils/selection'
 import { createShape } from '@canvas/utils/shapes'
 import { addNewPointGroupToShape } from '@canvas/utils/shapes/brush'
 import { addCurveLine, addCurvePoint } from '@canvas/utils/shapes/curve'
 import { addPolygonLine, addPolygonPoint } from '@canvas/utils/shapes/polygon'
+import { indexShapeTree } from '@canvas/utils/shapes/tree'
 import { transformSelectedShapes } from '@canvas/utils/transform'
 import { isPointInsideRect, sampleSegment } from '@canvas/utils/trigo'
 import { clamp } from '@canvas/utils/util'
@@ -33,8 +34,8 @@ const LONG_PRESS_DELAY_MS = 500
 const ERASER_STEP = 4
 
 /**
- * Ids of the shapes erased by a stroke, with the ones it crosses from a point to the next one, inside the view.
- * The locked shapes are kept
+ * Ids of the shapes erased by a stroke, with the ones it crosses from a point to the next one, inside the view: the shapes
+ * drawn, those of the groups. The locked shapes are kept, like the shapes of the locked groups
  */
 const getErasedShapeIds = (
   ctx: CanvasRenderingContext2D,
@@ -46,9 +47,9 @@ const getErasedShapeIds = (
 ): string[] => {
   const points = sampleSegment(from, to, ERASER_STEP / settings.canvasSize.scaleRatio).filter(point => isCursorInsideMask(point, settings))
   const erased = new Set(erasedShapeIds)
-  const candidates = shapes.filter(shape => !shape.locked && !erased.has(shape.id))
-  const found = findShapesAtPoints(ctx, candidates, points, settings)
-  return found.length ? [...erasedShapeIds, ...found.map(shape => shape.id)] : erasedShapeIds
+  const candidates = indexShapeTree(shapes).leaves.filter(({ leaf, locked }) => !locked && !erased.has(leaf.id))
+  const found = findLeavesAtPoints(ctx, candidates, points, settings)
+  return found.length ? [...erasedShapeIds, ...found.map(({ leaf }) => leaf.id)] : erasedShapeIds
 }
 
 /** Speed of the auto scroll on one axis, when the cursor of a selection frame is close to a border */
@@ -77,7 +78,7 @@ const useDrawableCanvas = (store: PaintStore, canvas: HTMLCanvasElement | null) 
     if (!canvas) return
 
     let longPressTimeout: { timeout: ReturnType<typeof setTimeout>; startPosition: { clientX: number; clientY: number } } | null = null
-    // the double clicks edit a text and add a point to a polygon or a curve
+    // the double clicks open a group, edit a text and add a point to a polygon or a curve
     const clicks = createClickTracker()
     // the pointers down on the canvas: more than one is a pinch, handled by useZoom
     const activePointers = new Set<number>()
@@ -170,11 +171,11 @@ const useDrawableCanvas = (store: PaintStore, canvas: HTMLCanvasElement | null) 
       if (selectionMode.mode === 'preview') {
         const firstShape = getSelectedShapes(selectedShape)[0]
         if (firstShape?.type === 'curve') {
-          store.setSelectedShape(buildShapesGroup([addCurvePoint(firstShape, cursorPosition, settings, true)], settings))
+          store.setSelectedShape(buildShapesSelection([addCurvePoint(firstShape, cursorPosition, settings, true)], settings))
           return
         }
         if (firstShape?.type === 'polygon') {
-          store.setSelectedShape(buildShapesGroup([addPolygonPoint(firstShape, cursorPosition, settings, true)], settings))
+          store.setSelectedShape(buildShapesSelection([addPolygonPoint(firstShape, cursorPosition, settings, true)], settings))
           return
         }
       }
@@ -404,7 +405,7 @@ const useDrawableCanvas = (store: PaintStore, canvas: HTMLCanvasElement | null) 
               const newShape = createShape(ctx, activeTool, cursorPosition, settings)
               if (!newShape) return
               store.addShapes([newShape])
-              store.setSelectedShape(buildShapesGroup([newShape], settings))
+              store.setSelectedShape(buildShapesSelection([newShape], settings))
             }
             store.setSelectionMode({ mode: 'brush' })
           })
@@ -414,13 +415,13 @@ const useDrawableCanvas = (store: PaintStore, canvas: HTMLCanvasElement | null) 
               ? addPolygonPoint(firstShape, cursorPosition, settings)
               : addCurvePoint(firstShape, cursorPosition, settings)
           store.batch(() => {
-            store.setSelectedShape(buildShapesGroup([newShape], settings))
+            store.setSelectedShape(buildShapesSelection([newShape], settings))
             store.updateShapes([newShape], true)
           })
         } else if (activeTool.type !== 'picture') {
           const newShape = createShape(ctx, activeTool as Exclude<CustomTool, { type: 'picture' }>, cursorPosition, settings)
           if (!newShape) return
-          const newSelectedShapes = buildShapesGroup([newShape], settings)!
+          const newSelectedShapes = buildShapesSelection([newShape], settings)!
           store.batch(() => {
             store.addShapes([newShape])
             store.setSelectedShape(newSelectedShapes)
@@ -453,6 +454,12 @@ const useDrawableCanvas = (store: PaintStore, canvas: HTMLCanvasElement | null) 
       const cursorPosition = getCursorPositionInTransformedCanvas(e, canvas, settings)
       if (!isCursorInsideMask(cursorPosition, settings)) return
 
+      // the group is opened: the shape of the group under the cursor is selected
+      if (firstShape?.type === 'group') {
+        const shape = findShapeInGroup(ctx, state.document.shapes, firstShape, cursorPosition, settings)
+        if (shape) store.setSelectedShape(shape)
+        return
+      }
       if (firstShape?.type === 'text') {
         if (checkSelectionIntersection(ctx, selectedShape!, cursorPosition, settings)) {
           store.setSelectionMode({

@@ -1,6 +1,6 @@
 import type { UtilsSettings } from '@canvas/constants/app'
 import type { SelectionModeResize } from '@canvas/types/Mode'
-import type { DrawableShape, Point, Rect, SelectionType, ShapeEntity } from '@canvas/types/Shapes'
+import type { DrawableShape, Point, Rect, ShapeEntity } from '@canvas/types/Shapes'
 import type { ToolsSettingsType } from '@canvas/types/tools'
 import { resizeRectSelection } from '@canvas/utils/selection/rectSelection'
 import {
@@ -15,7 +15,7 @@ import {
 import { getToolDefaultStyle } from '@canvas/utils/tools'
 import { roundValues, scalePoint } from '@canvas/utils/transform'
 import { createShapeId } from '@canvas/utils/util'
-import { type GroupResizeContext, getPositionWithoutGroupRotation, getShapePositionInNewBorder } from './group'
+import { type GroupResizeContext, getMirroredRotation, getPositionWithoutGroupRotation, getShapePositionInNewBorder } from './group'
 
 export const getBrushBorder = (brush: DrawableShape<'brush'>, { selectionPadding }: Pick<UtilsSettings, 'selectionPadding'>): Rect => {
   const bounds = getBrushPointsBounds(brush.points)
@@ -126,11 +126,7 @@ export const resizeBrush = (
   )
 }
 
-export const resizeBrushInGroup = (
-  shape: ShapeEntity<'brush'>,
-  group: SelectionType & { type: 'group' },
-  groupCtx: GroupResizeContext
-): ShapeEntity<'brush'> => {
+export const resizeBrushInGroup = (shape: ShapeEntity<'brush'>, groupCtx: GroupResizeContext): ShapeEntity<'brush'> => {
   const { isXinverted, isYinverted, settings, widthMultiplier, heightMultiplier } = groupCtx
   const originalBordersWithoutScale = getBrushBorder({ ...shape, scaleX: 1, scaleY: 1 }, settings)
   const originalShapeWidthWithoutScale = originalBordersWithoutScale.width - 2 * settings.selectionPadding
@@ -140,7 +136,7 @@ export const resizeBrushInGroup = (
   const newWidth = originalShapeWidthWithoutScale * scaleX
   const newHeight = originalShapeHeightWithoutScale * scaleY
 
-  const pos = getShapePositionInNewBorder(shape, group, groupCtx)
+  const pos = getShapePositionInNewBorder(shape, groupCtx)
   const newCenter = getPositionWithoutGroupRotation(groupCtx, pos.x, pos.y, newWidth, newHeight)
   const diffX =
     roundValues(newCenter[0] - newWidth / 2 - shape.computed.borders.x - settings.selectionPadding) +
@@ -148,8 +144,6 @@ export const resizeBrushInGroup = (
   const diffY =
     roundValues(newCenter[1] - newHeight / 2 - shape.computed.borders.y - settings.selectionPadding) +
     (isYinverted ? 2 * shape.computed.borders.y + originalBordersWithoutScale.height : 0)
-  const shouldFlipRotation =
-    (isXinverted || isYinverted) && !(isXinverted && isYinverted) && (shape.rotation ?? 0) !== 0 && groupCtx.rotation !== shape.rotation
 
   return buildPath(
     {
@@ -157,7 +151,7 @@ export const resizeBrushInGroup = (
       points: shape.points.map(coord => coord.map(([x, y]) => [isXinverted ? -x + diffX : x + diffX, isYinverted ? -y + diffY : y + diffY] as Point)),
       scaleX,
       scaleY,
-      rotation: shouldFlipRotation ? -(shape.rotation ?? 0) : (shape.rotation ?? 0)
+      rotation: getMirroredRotation(shape.rotation, groupCtx)
     },
     groupCtx.settings
   )

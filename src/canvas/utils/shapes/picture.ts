@@ -1,7 +1,7 @@
 import type { PictureSrcResolver, UtilsSettings } from '@canvas/constants/app'
 import { PICTURE_TOOL_ID } from '@canvas/constants/tools'
 import type { SelectionModeResize } from '@canvas/types/Mode'
-import type { DrawableShape, Point, SelectionType, ShapeEntity } from '@canvas/types/Shapes'
+import type { DrawableShape, Point, ShapeEntity } from '@canvas/types/Shapes'
 import type { CustomTool } from '@canvas/types/tools'
 import { createDetachedContext, isVisibleColor } from '@canvas/utils/canvas'
 import { addSizeAndConvertSvgToObjectUrl, isSvg, loadPicture, readFileAsDataUrl } from '@canvas/utils/file'
@@ -9,7 +9,7 @@ import { resizeRectSelection } from '@canvas/utils/selection/rectSelection'
 import { getToolDefaultStyle } from '@canvas/utils/tools'
 import { fitContentInsideContainer } from '@canvas/utils/transform'
 import { createShapeId } from '@canvas/utils/util'
-import { type GroupResizeContext, getPositionWithoutGroupRotation, getShapePositionInNewBorder } from './group'
+import { type GroupResizeContext, getMirroredRotation, getPositionWithoutGroupRotation, getShapePositionInNewBorder } from './group'
 import { createRecPath, getComputedShapeInfos, getCornerRadius } from './path'
 import { getRectBorder } from './rectangle'
 
@@ -190,18 +190,12 @@ export const resizePicture = (
   )
 }
 
-export const resizePictureInGroup = (
-  shape: ShapeEntity<'picture'>,
-  group: SelectionType & { type: 'group' },
-  groupCtx: GroupResizeContext
-): ShapeEntity<'picture'> => {
+export const resizePictureInGroup = (shape: ShapeEntity<'picture'>, groupCtx: GroupResizeContext): ShapeEntity<'picture'> => {
   const { isXinverted, isYinverted, settings, widthMultiplier, heightMultiplier } = groupCtx
-  const pos = getShapePositionInNewBorder(shape, group, groupCtx)
+  const pos = getShapePositionInNewBorder(shape, groupCtx)
   const newWidth = (shape.width === 0 || shape.height === 0 ? (shape.ratio ?? 1) : shape.width) * widthMultiplier
   const newHeight = (shape.width === 0 || shape.height === 0 ? (shape.ratio ?? 1) : shape.height) * heightMultiplier
   const newCenter = getPositionWithoutGroupRotation(groupCtx, pos.x, pos.y, newWidth, newHeight)
-  const shouldFlipRotation =
-    (isXinverted || isYinverted) && !(isXinverted && isYinverted) && (shape.rotation ?? 0) !== 0 && groupCtx.rotation !== shape.rotation
   return buildPath(
     {
       ...shape,
@@ -211,7 +205,7 @@ export const resizePictureInGroup = (
       y: newCenter[1] - newHeight / 2,
       flipX: isXinverted ? !shape.flipX : !!shape.flipX,
       flipY: isYinverted ? !shape.flipY : !!shape.flipY,
-      rotation: shouldFlipRotation ? -(shape.rotation ?? 0) : (shape.rotation ?? 0)
+      rotation: getMirroredRotation(shape.rotation, groupCtx)
     },
     settings
   )

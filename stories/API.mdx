@@ -132,9 +132,9 @@ import LinkTo from '@storybook/addon-links/react';
         <li><code>view</code> - <code>{'{ zoom, offset, displayWidth, displayHeight, scaleRatio, visibleArea }'}</code>. A point of the drawing is displayed at <code>(point + offset) × scaleRatio</code> pixels from the top left corner of the canvas. <code>visibleArea</code> is the part of the drawing displayed, as a <code>Rect</code> in its units: it goes beyond a fixed drawing smaller than the view</li>
         <li><code>options</code> - Options in effect: the options of the hook with the overrides of <code>setOptions</code> and their defaults, without the functions (<code>clearCallback</code>, <code>resolvePictureSrc</code>). The grid and the default styles of the tools changed while editing are in <code>gridGap</code> and <code>tools</code></li>
         <li><code>gridGap</code> - Current grid gap</li>
-        <li><code>shapes</code> - All shapes, from top to bottom</li>
-        <li><code>selection</code> - Selected shape, or group of shapes when several are selected</li>
-        <li><code>selectedShapes</code> - Selected shapes as an array</li>
+        <li><code>shapes</code> - The shapes of the drawing, from the foreground. A group holds its shapes in its <code>shapes</code> field: <code>flattenShapes(state.shapes)</code> lists all of them</li>
+        <li><code>selection</code> - Selected shape, or the frame of the shapes selected together when several are selected: a <code>MultiSelection</code>, of type <code>'multiSelection'</code>, which is not part of the drawing</li>
+        <li><code>selectedShapes</code> - Selected shapes as an array: a selected group, not its shapes</li>
         <li><code>selectedShapeIds</code> - Ids of the selected shapes, to give to the actions. The array keeps its identity while the same shapes are selected</li>
         <li><code>activeTool</code>, <code>tools</code> - Active tool (the selection, move, eraser or laser tool, or one of the tools, kept up to date with them) and available drawing tools</li>
         <li><code>history</code> - <code>{'{ canUndo: boolean; canRedo: boolean; canClear: boolean }'}</code></li>
@@ -145,22 +145,24 @@ import LinkTo from '@storybook/addon-links/react';
           <p><code>interaction</code> - <code>{'{ mode, hoveredShape, selectionHover, selectionFrame, modifiers: { shift, alt, space }, isPanning, focus: { component, canvas } }'}</code>. It changes on each move of the pointer</p>
           <ul>
             <li><code>mode</code> - The gesture running: <code>'translate'</code>, <code>'rotate'</code>, <code>'resize'</code>, <code>'selectionFrame'</code>, <code>'brush'</code>, <code>'preview'</code> (a polygon or a curve being drawn), <code>'textedition'</code>, <code>'contextMenu'</code>, <code>'eraser'</code>, <code>'laser'</code>, <code>'eyedropper'</code> (a color being picked by <code>pickColor</code>), or <code>'default'</code> between them</li>
-            <li><code>hoveredShape</code> - Shape under the mouse, searched between the gestures. The anchors of the selection outside of its shape are given by <code>selectionHover</code></li>
+            <li><code>hoveredShape</code> - Shape under the mouse, searched between the gestures: the shape a click selects, a group for a shape of a group. The anchors of the selection outside of its shape are given by <code>selectionHover</code></li>
             <li><code>selectionHover</code> - Part of the selection under the pointer, which tells the gesture a press starts: <code>{"{ mode: 'translate' }"}</code> inside it, <code>{"{ mode: 'rotate' }"}</code> on the anchor of the rotation, <code>{"{ mode: 'resize', anchor }"}</code> on an anchor of the resize. The <code>anchor</code> is the index of a point of a line, a polygon or a curve, or else its place on the borders of the selection before its rotation, from <code>[0, 0]</code> (top left) to <code>[1, 1]</code> (bottom right). <code>undefined</code> away from the selection and during the gestures</li>
           </ul>
         </li>
-        <li><code>contextMenu</code> - <code>{'{ shapes, anchorIndex, canRemoveAnchor, canvasPosition, clientPosition }'}</code> when the context menu is open. <code>canRemoveAnchor</code> tells whether the point under the cursor can be removed with <code>removeShapePoint</code>, <code>undefined</code> otherwise</li>
+        <li><code>contextMenu</code> - <code>{'{ shapes, anchorIndex, canRemoveAnchor, canGroup, canUngroup, canvasPosition, clientPosition }'}</code> when the context menu is open, <code>undefined</code> otherwise. <code>canRemoveAnchor</code> tells whether the point under the cursor can be removed with <code>removeShapePoint</code>, <code>canGroup</code> and <code>canUngroup</code> whether <code>groupShapes</code> and <code>ungroupShapes</code> act on the shapes</li>
       </ul>
 
       <h4>Actions</h4>
       <ul>
         <li><code>selectTool(toolOrId)</code> - Selects the selection tool, the move tool or one of the tools, found by id. An unknown tool is ignored</li>
         <li><code>updateToolSettings(toolId, field, value)</code>, <code>setToolStyle(toolId, style)</code> - Default values of a tool, a field the tool has not is ignored</li>
-        <li><code>selectShapes(ids, {"{ mode? }"})</code>, <code>selectAllShapes()</code>, <code>clearSelection()</code> - <code>mode</code> is <code>'replace'</code>, <code>'add'</code> or <code>'remove'</code></li>
+        <li><code>selectShapes(ids, {"{ mode? }"})</code>, <code>selectAllShapes()</code>, <code>clearSelection()</code> - <code>mode</code> is <code>'replace'</code>, <code>'add'</code> or <code>'remove'</code>. A shape of a group selected too is left out, and a shape of a locked group is replaced by the group</li>
         <li><code>addShapes(shapes, {'{ select?, index?, save?, source? }'})</code>, <code>updateShapes(patches, {'{ updateTool?, save?, source? }'})</code> - See <a href="#Actions" target="_self">Driving the canvas from the code</a></li>
-        <li><code>removeShapes(ids)</code>, <code>duplicateShapes(ids, {'{ translate?, select? }'})</code></li>
+        <li><code>removeShapes(ids)</code>, <code>duplicateShapes(ids, {'{ translate?, select? }'})</code> - A group with its shapes. A copy is inserted in front of its shape, in its group</li>
+        <li><code>groupShapes(ids)</code> - Groups the shapes in a new group, in the place of the shape in front, and returns its id. Returns <code>undefined</code>, without changing anything, for less than 2 shapes or for all the shapes of a group</li>
+        <li><code>ungroupShapes(ids)</code> - Puts the shapes of the groups among the shapes in their places, hidden, locked and faded with them, and returns their ids. The names, the rotations and the data of the groups are lost</li>
         <li><code>translateShapes(ids, [dx, dy])</code>, <code>rotateShapes(ids, angle, {'{ center? }'})</code>, <code>resizeShapes(ids, box)</code></li>
-        <li><code>moveShapes(ids, 'first' | 'last' | 'forward' | 'backward')</code>, <code>swapShapes(firstId, secondId)</code>, <code>setShapeIndex(id, index)</code>, <code>reorderShapes(ids)</code></li>
+        <li><code>moveShapes(ids, 'first' | 'last' | 'forward' | 'backward')</code>, <code>swapShapes(firstId, secondId)</code>, <code>setShapeIndex(id, index)</code>, <code>reorderShapes(ids)</code> - Each shape among the shapes of its group, which it never leaves: <code>swapShapes</code> only swaps shapes of the same group</li>
         <li><code>toggleShapesVisibility(ids)</code>, <code>toggleShapesLock(ids)</code> - Toggle each shape</li>
         <li><code>setShapesVisibility(ids, visible)</code>, <code>setShapesLocked(ids, locked)</code> - Set the same value on all shapes</li>
         <li><code>setShapesStyle(ids, style, {'{ updateTool?, save? }'})</code>, <code>updateShapesStyle(ids, field, value, {'{ save? }'})</code> - Updates style fields. Text size is recomputed when changing the font</li>
@@ -669,11 +671,15 @@ const annotationsStyle = useAnnotationsStyle(paint)
           <tr>
             <td><code>changes</code></td>
             <td><code>DataChanges</code></td>
-            <td>Shapes changed since the previous state, in the format of <code>data.shapes</code>: <code>added</code>, <code>updated</code> as <code>{`{ shape, previous }`}</code>, <code>removed</code>, and <code>reordered</code> when the shapes still there are in another order. An undo gives the reverse changes</td>
+            <td>Shapes changed since the previous state, in the format of <code>data.shapes</code>: <code>added</code>, <code>updated</code> as <code>{`{ shape, previous }`}</code>, <code>removed</code>, and <code>reordered</code> when the shapes still there are in another order, or in another group. An undo gives the reverse changes</td>
           </tr>
         </tbody>
       </table>
       <p>The data are only built while a listener is registered: the pictures are encoded in them. The changes allow to send only what changed to a server: a shape is only given as updated when its exported data differ.</p>
+      <p>
+        The shapes of the groups are listed too, each one with its own changes: a group is updated when its own fields (its rotation, its name, its opacity...) or the ids of its shapes change. A group added or removed is listed with each of its shapes, its export holding them too.
+        Grouping shapes adds a group and sets <code>reordered</code>: when it is set, a shape may have changed its group, build the drawing again from <code>data.shapes</code>.
+      </p>
 
       <h3>selectionChanged</h3>
       <p>
@@ -694,7 +700,7 @@ const annotationsStyle = useAnnotationsStyle(paint)
       <h3>shapeClicked and shapeHovered</h3>
       <p>
         Fired when a visible shape is clicked, and when the pointer enters a shape or leaves it (<code>undefined</code>). They are also fired in viewer mode, where the cursor shows the clickable shapes, and for locked shapes.
-        The shapes under the pointer are only searched while one of these events is listened.
+        The shapes under the pointer are only searched while one of these events is listened. They give the shapes drawn, the shapes of the groups, like <code>canvasClicked</code> and <code>getShapesAt</code>: <code>getParentGroup(paint.getState().shapes, shape.id)</code> gives the group of a shape.
       </p>
       <Source language='typescript' code={`paint.registerEvent('shapeClicked', (shape: ShapeEntity, info: ShapePointerInfo) => {
   // info.canvasPosition: position in the drawing, info.clientPosition: position in the viewport
@@ -764,7 +770,7 @@ paint.registerEvent('pictureLoadFailed', (shape: ShapeEntity<'picture'>, error: 
 })`} />
 
       <h3>getShape, getBounds and getShapesAt</h3>
-      <p>Read the shapes without subscribing to the state: a shape by its id, the box of shapes (in the frame of their selection, without padding), and the visible shapes under a point of the drawing, from the foreground.</p>
+      <p>Read the shapes without subscribing to the state: a shape by its id, a shape of a group too, the box of shapes (in the frame of their selection, without padding), and the visible shapes under a point of the drawing, from the foreground: the shapes of the groups, not the groups.</p>
       <Source language='typescript' code={`getShape(id: string): ShapeEntity | undefined
 getBounds(ids: string[]): (Rect & { rotation: number; center: Point }) | undefined
 getShapesAt(point: Point): ShapeEntity[]`} />
@@ -859,6 +865,10 @@ paint.actions.panBy([50, 0]) // scrolls the view, in the units of the drawing`} 
             <td><code>moveShapes(ids, action)</code>, <code>setShapeIndex(id, index)</code> (0 is the foreground), <code>reorderShapes(ids)</code>, <code>swapShapes(id, id)</code></td>
           </tr>
           <tr>
+            <td>Groups</td>
+            <td><code>groupShapes(ids)</code>, <code>ungroupShapes(ids)</code>, <code>updateShapes([{`{ id, name, style: { opacity } }`}])</code></td>
+          </tr>
+          <tr>
             <td>Points of lines, polygons and curves</td>
             <td><code>insertShapePoint(id, index, point)</code>, <code>moveShapePoint(id, index, point)</code>, <code>removeShapePoint(id, index)</code></td>
           </tr>
@@ -902,6 +912,15 @@ paint.actions.panBy([50, 0]) // scrolls the view, in the units of the drawing`} 
         <li><code>addShapes</code> keeps a free id, completes the style with the default style of the tool, and computes the size of a text from its font size or its font size from its width. A text given without its size takes the font size of its tool. A picture is drawn once its source is loaded</li>
         <li><code>addShapes</code>, <code>updateShapes</code> and <code>loadData</code> make the negative sizes positive, keeping the area the canvas draws: a rect of width -100 at x 300 goes from x 200 to 300, and a circle of radius -10 gets a radius of 10. The flips of a picture or a text are kept</li>
         <li><code>updateShapes</code> merges the style and replaces the <code>data</code>. The box of a text follows its new content, or its font size follows its new width. Locked shapes are updated, whereas the transformations leave them unchanged</li>
+        <li>
+          A group holds its shapes, which keep their own positions and rotations in the drawing. It has its own rotation (the one of its frame, changed by <code>rotateShapes</code>), its own opacity (its shapes are drawn together, then faded like a single picture),
+          a name, and its own <code>visible</code>, <code>locked</code> and <code>data</code> fields: hidden or locked, its shapes are hidden or locked with it. <code>updateShapes</code> only changes these fields of a group, <code>setShapesStyle</code> its opacity, the other fields of the style going to its shapes.
+          A group left with a single shape, by a removal, the eraser or a new group, is dissolved: the shape takes its place, hidden, locked and faded with it
+        </li>
+        <li>
+          The actions find the shapes of the groups by their ids. The transformations and the copies take the shapes as they are selected: a shape of a group given with the group is left out, and a shape of a locked group acts as the group.
+          The selection of the shapes grouped by <code>groupShapes</code> becomes the new group, the one of a group ungrouped by <code>ungroupShapes</code> its shapes
+        </li>
         <li><code>setOptions</code> overrides options of <code>useReactPaint</code> until <code>resetOptions</code>: objects are merged, arrays like <code>availableTools</code> are replaced. <code>resetSettings</code> restores the default styles of the tools, the grid, the zoom and the active tool</li>
         <li>
           The source of a picture is an image data URL, a blob URL, SVG markup or a URL of the web, relative ones included. Other sources are refused. A URL of the web
@@ -962,8 +981,12 @@ const box = paint.getBounds([rectId])`} />
         <li><code>'brush'</code> - Brush stroke</li>
         <li><code>'text'</code> - Text</li>
         <li><code>'picture'</code> - Picture/image</li>
-        <li><code>'group'</code> - Group of shapes</li>
+        <li><code>'group'</code> - Group of shapes, holding them (see <a href="#Group" target="_self">Group</a>)</li>
       </ul>
+      <p>
+        <code>EditableShapeType</code> is the type of the shapes drawn, all of them but the groups. Several shapes selected together are framed by a <code>MultiSelection</code>, of type <code>'multiSelection'</code>: it is a
+        <code>SelectionType</code>, like the selected shape, and never part of the drawing.
+      </p>
 
       <h3>Point</h3>
       <p>A 2D point represented as a tuple.</p>
@@ -1024,7 +1047,7 @@ type ArrowHead = 'none' | 'triangle' | 'triangleOutline' | 'open' | 'circle' | '
       <h3>StateData</h3>
       <p>Complete canvas state data structure.</p>
       <Source language='typescript' code={`type StateData = {
-  shapes?: ExportedShape[] // ExportedDrawableShape with its id
+  shapes?: ExportedShape[] // ExportedDrawableShape with its id, a group holding its shapes (ExportedGroup)
   config?: {
     width: number
     height: number
@@ -1038,11 +1061,14 @@ type ArrowHead = 'none' | 'triangle' | 'triangleOutline' | 'open' | 'circle' | '
 
       <h3>ShapeInput and ShapePatch</h3>
       <p>
-        <code>ShapeInput</code> is a shape given to <code>addShapes</code>, <code>resetCanvas</code> or <code>useReactPaint</code>: an <code>ExportedDrawableShape</code>, whose text can be given without its size.
-        <code>ShapePatch</code> is given to <code>updateShapes</code>: the id of a shape and the fields to change, its type excepted.
+        <code>ShapeInput</code> is a shape given to <code>addShapes</code>, <code>resetCanvas</code> or <code>useReactPaint</code>: an <code>ExportedDrawableShape</code>, whose text can be given without its size, or a group of shapes given the same way (<code>GroupShapeInput</code>), holding 2 shapes at least.
+        Without rotation, a group is turned like its shapes when they are all turned the same way.
+        <code>ShapePatch</code> is given to <code>updateShapes</code>: the id of a shape and the fields to change, its type excepted. The patch of a group (<code>GroupPatch</code>) only changes its <code>visible</code>, <code>locked</code>, <code>data</code> and <code>name</code> fields, and its opacity: a name set to <code>undefined</code> is removed.
       </p>
       <Source language='typescript' code={`const text: ShapeInput = { type: 'text', x: 0, y: 0, value: ['Hello'], fontSize: 24 }
-const patch: ShapePatch = { id: 'rect_1', width: 200, style: { fillColor: 'red' } }`} />
+const group: ShapeInput = { type: 'group', name: 'Title', shapes: [text, { type: 'rect', x: 0, y: 40, width: 200, height: 4 }] }
+const patch: ShapePatch = { id: 'rect_1', width: 200, style: { fillColor: 'red' } }
+const groupPatch: ShapePatch = { id: 'group_1', name: 'Header', style: { opacity: 50 } }`} />
 
       <h3>ShapeEntity</h3>
       <p>
@@ -1080,7 +1106,7 @@ const patch: ShapePatch = { id: 'rect_1', width: 200, style: { fillColor: 'red' 
         <li><code>ToolsCurveSettings</code> - Curve settings (includes closedPoints, lineCap, arrowStart, arrowEnd, arrowSize and the fill)</li>
         <li><code>ToolsTextSettings</code> - Text settings (includes font options, textAlign, lineHeight, fillColor for the background, fontUnderline, fontStrikethrough, outlineColor, outlineWidth, and fontSize: the font size of the new texts, which are as wide as their content, or 150 wide without it. Its max is optional)</li>
         <li><code>ToolsPictureSettings</code> - Picture settings (opacity, and the border: strokeColor, lineWidth and cornerRadius)</li>
-        <li><code>ToolsGroupSettings</code> - Group settings</li>
+        <li><code>ToolsGroupSettings</code> - Settings shared by shapes of several tools, given by <code>getSelectedShapesTools</code></li>
       </ul>
 
       <h3>OptionalOptions</h3>
@@ -1106,8 +1132,14 @@ const patch: ShapePatch = { id: 'rect_1', width: 200, style: { fillColor: 'red' 
       <h2 id="Helpers">Helpers</h2>
       <p>Exported from the package root and from <code>@yorab/react-paint/canvas</code>, they are useful to build a custom editor:</p>
       <ul>
-        <li><code>getSelectedShapes(selection)</code> - Returns the shapes of a selection, which can be a single shape or a group</li>
-        <li><code>getSelectedShapesTools(selection, tools)</code> - Returns the tool matching the selection. For several shapes, it returns a tool whose settings are the ones shared by all the shapes</li>
+        <li><code>getSelectedShapes(selection)</code> - Returns the selected shapes: the selected shape, or the shapes of a <code>MultiSelection</code>. A selected group is given, not its shapes</li>
+        <li><code>getSelectedLeaves(selection)</code> - Returns the shapes drawn by the selection: the selected shapes, the shapes of the groups in place of the groups</li>
+        <li><code>getSelectionStyle(selection)</code> - Returns the style of the selection, as an editor shows it: the fields shared by the shapes it draws, and the opacity shared by the selected shapes themselves, the one of a group being its own</li>
+        <li><code>getSelectedShapesTools(selection, tools)</code> - Returns the tool of the shapes drawn by the selection, the shapes of its groups. When they have several tools, it returns a tool of type <code>'group'</code> whose settings are the ones shared by these tools</li>
+        <li><code>flattenShapes(shapes)</code> - Returns all the shapes, each group before its shapes, from the foreground</li>
+        <li><code>getShapeLeaves(shapes)</code> - Returns the shapes drawn by the shapes: the shapes of the groups in place of the groups</li>
+        <li><code>getParentGroup(shapes, id)</code> - Returns the group holding a shape, <code>undefined</code> for a shape which is not in a group</li>
+        <li><code>canGroupShapes(shapes, nodes)</code> - Tells whether <code>actions.groupShapes</code> groups shapes of the drawing: at least 2 of them, which are not all the shapes of a group</li>
         <li><code>DEFAULT_TOOLS</code> - Default drawing tools</li>
         <li><code>SELECTION_TOOL</code>, <code>MOVE_TOOL</code> - Selection and move tools, to give to <code>actions.selectTool</code></li>
         <li>
@@ -1182,6 +1214,15 @@ const patch: ShapePatch = { id: 'rect_1', width: 200, style: { fillColor: 'red' 
   src: string
 }`} />
 
+      <h3 id="Group">Group</h3>
+      <p>
+        A group has no position nor size: its frame, turned by its <code>rotation</code>, frames its shapes. Its <code>style</code> only has an <code>opacity</code>.
+      </p>
+      <Source language='typescript' code={`type Group = {
+  shapes: ShapeEntity[] // from the foreground, in their own positions and rotations
+  name?: string // shown in the layers instead of its id
+}`} />
+
       <h2>Keyboard Shortcuts</h2>
       <p>
         React Paint supports the following keyboard shortcuts, while the focus is inside the canvas, or inside the area set by <code>scopeRef</code> (the whole <code>Editor</code>):
@@ -1219,8 +1260,16 @@ const patch: ShapePatch = { id: 'rect_1', width: 200, style: { fillColor: 'red' 
             <td>Select all shapes</td>
           </tr>
           <tr>
+            <td><code>Ctrl+G</code> (or <code>Cmd+G</code> on Mac)</td>
+            <td>Group selected shapes</td>
+          </tr>
+          <tr>
+            <td><code>Ctrl+Shift+G</code> (or <code>Cmd+Shift+G</code> on Mac)</td>
+            <td>Ungroup selected groups</td>
+          </tr>
+          <tr>
             <td><code>Escape</code></td>
-            <td>Deselect all / Cancel current operation</td>
+            <td>Select the group holding the selected shape(s), or deselect all / Cancel current operation</td>
           </tr>
           <tr>
             <td><code>Arrow Keys</code></td>
@@ -1232,6 +1281,10 @@ const patch: ShapePatch = { id: 'rect_1', width: 200, style: { fillColor: 'red' 
           </tr>
         </tbody>
       </table>
+      <p>
+        With the pointer, a click on a shape of a group selects the group. A double click on a selected group selects its shape under the pointer, one level down: a click then selects among the shapes of this group, until a click outside of it, and <code>Escape</code> goes back up one level.
+        A locked group is selected as a whole. <code>Shift</code> + click adds a shape to the selection, or removes it.
+      </p>
 
       <h2>Examples</h2>
       

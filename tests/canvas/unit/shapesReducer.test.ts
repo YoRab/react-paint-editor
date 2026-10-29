@@ -7,10 +7,13 @@ const shape = (id: string, x = 0) => ({ id, type: 'rect', x, y: 0, width: 10, he
 const withShapes = (shapes: ShapeEntity[]): ShapesState =>
   shapesReducer(INITIAL_SHAPES_STATE, { type: 'CLEAR', shapes, clearHistory: true, source: 'remote' })
 
+const setShapes = (state: ShapesState, shapes: ShapeEntity[], save = true) =>
+  shapesReducer(state, { type: 'SET_SHAPES', shapes, newSelectedShape: undefined, save })
+
 describe('shapesReducer', () => {
   it('saves each change in the history, and moves in it with undo and redo', () => {
     const initial = withShapes([shape('a'), shape('b')])
-    const removed = shapesReducer(initial, { type: 'REMOVE', ids: new Set(['a']), newSelectedShape: undefined })
+    const removed = setShapes(initial, [shape('b')])
     expect(removed.shapes.map(item => item.id)).toEqual(['b'])
     expect(removed.history.cursor).toBe(1)
 
@@ -31,9 +34,9 @@ describe('shapesReducer', () => {
 
   it('drops the redo entries on a new change', () => {
     const initial = withShapes([shape('a'), shape('b')])
-    const removed = shapesReducer(initial, { type: 'REMOVE', ids: new Set(['a']), newSelectedShape: undefined })
+    const removed = setShapes(initial, [shape('b')])
     const undone = shapesReducer(removed, { type: 'UNDO' })
-    const updated = shapesReducer(undone, { type: 'UPDATE', updatedShapes: [shape('b', 50)], newSelectedShape: undefined, save: true })
+    const updated = setShapes(undone, [shape('a'), shape('b', 50)])
     expect(updated.history.states).toHaveLength(2)
     expect(updated.history.cursor).toBe(1)
     expect(shapesReducer(updated, { type: 'REDO' })).toBe(updated)
@@ -44,23 +47,23 @@ describe('shapesReducer', () => {
     const saved = shapesReducer(initial, { type: 'SAVE' })
     expect(saved.history).toBe(initial.history)
 
-    const moved = shapesReducer(initial, { type: 'UPDATE', updatedShapes: [shape('a', 20)], newSelectedShape: undefined, save: false })
+    const moved = setShapes(initial, [shape('a', 20)], false)
     expect(moved.history).toBe(initial.history)
     const movedAndSaved = shapesReducer(moved, { type: 'SAVE' })
     expect(movedAndSaved.history.cursor).toBe(1)
     expect(shapesReducer(movedAndSaved, { type: 'SAVE' }).history).toBe(movedAndSaved.history)
   })
 
-  it('adds the new shapes on top, without saving', () => {
+  it('keeps the state when the shapes and the selection are the same, without saving', () => {
     const initial = withShapes([shape('a')])
-    const added = shapesReducer(initial, { type: 'ADD', newShapes: [shape('b')] })
-    expect(added.shapes.map(item => item.id)).toEqual(['b', 'a'])
-    expect(added.history).toBe(initial.history)
+    expect(setShapes(initial, initial.shapes, false)).toBe(initial)
+    // the same shapes saved: the history does not change either
+    expect(setShapes(initial, initial.shapes).history).toBe(initial.history)
   })
 
   it('clears the history, or keeps it with a new entry', () => {
     const initial = withShapes([shape('a')])
-    const removed = shapesReducer(initial, { type: 'REMOVE', ids: new Set(['a']), newSelectedShape: undefined })
+    const removed = setShapes(initial, [])
 
     const cleared = shapesReducer(removed, { type: 'CLEAR', shapes: [shape('c')], clearHistory: true, source: 'remote' })
     expect(cleared.history).toEqual({ states: [{ shapes: cleared.shapes, selectedShape: undefined, source: 'remote' }], cursor: 0 })
@@ -72,22 +75,14 @@ describe('shapesReducer', () => {
     expect(kept.selectedShape).toBeUndefined()
   })
 
-  it('inserts the duplicates before their original shape', () => {
-    const initial = withShapes([shape('a'), shape('b')])
-    const duplicated = shapesReducer(initial, {
-      type: 'DUPLICATE',
-      newShapesMap: new Map([['b', shape('b2')]]),
-      newSelectedShape: undefined
+  it('gives the source of a change to its step', () => {
+    const changed = shapesReducer(withShapes([shape('a')]), {
+      type: 'SET_SHAPES',
+      shapes: [],
+      newSelectedShape: undefined,
+      save: true,
+      source: 'remote'
     })
-    expect(duplicated.shapes.map(item => item.id)).toEqual(['a', 'b2', 'b'])
-  })
-
-  it('keeps the shapes of a new order, and leaves out the flag of an old list of layers', () => {
-    const first = shape('a')
-    const second = { ...shape('b'), chosen: true } as unknown as ShapeEntity
-    const reordered = shapesReducer(withShapes([first, second]), { type: 'RESET_AND_SAVE', shapes: [second, first], newSelectedShape: undefined })
-    expect(reordered.shapes[1]).toBe(first)
-    expect(reordered.shapes[0]).toEqual(shape('b'))
-    expect(reordered.history.states[reordered.history.cursor]?.shapes).toBe(reordered.shapes)
+    expect(changed.history.states[1]!.source).toBe('remote')
   })
 })

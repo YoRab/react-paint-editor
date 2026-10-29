@@ -2,13 +2,13 @@ import type { UtilsSettings } from '@canvas/constants/app'
 import { STYLE_FONT_DEFAULT, STYLE_FONT_SIZE_DEFAULT, STYLE_LINE_HEIGHT_DEFAULT, STYLE_OUTLINE_WIDTH_DEFAULT } from '@canvas/constants/rendering'
 import { FONT_STYLE_FIELDS } from '@canvas/constants/shapes'
 import type { SelectionModeResize } from '@canvas/types/Mode'
-import type { DrawableShape, Point, Rect, SelectionType, ShapeEntity, StyleShape, Text, TextAlign, TextShapeInput } from '@canvas/types/Shapes'
+import type { DrawableShape, Point, Rect, ShapeEntity, StyleShape, Text, TextAlign, TextShapeInput } from '@canvas/types/Shapes'
 import type { ToolsSettingsType } from '@canvas/types/tools'
 import { isVisibleColor } from '@canvas/utils/canvas'
 import { resizeRectSelection } from '@canvas/utils/selection/rectSelection'
 import { getToolDefaultStyle } from '@canvas/utils/tools'
 import { createShapeId } from '@canvas/utils/util'
-import { type GroupResizeContext, getPositionWithoutGroupRotation, getShapePositionInNewBorder } from './group'
+import { type GroupResizeContext, getMirroredRotation, getPositionWithoutGroupRotation, getShapePositionInNewBorder } from './group'
 import { createRecPath, expandRect, getComputedShapeInfos } from './path'
 import { getRectOppositeAnchorAbsolutePosition } from './rectangle'
 
@@ -321,13 +321,10 @@ export const resizeText = (
 export const resizeTextInGroup = (
   canvasCtx: CanvasRenderingContext2D,
   shape: ShapeEntity<'text'>,
-  group: SelectionType & { type: 'group' },
   groupCtx: GroupResizeContext
 ): ShapeEntity<'text'> => {
   const { isXinverted, isYinverted, settings, widthMultiplier, heightMultiplier } = groupCtx
-  const shouldFlipRotation =
-    (isXinverted || isYinverted) && !(isXinverted && isYinverted) && (shape.rotation ?? 0) !== 0 && groupCtx.rotation !== shape.rotation
-  const pos = getShapePositionInNewBorder(shape, group, groupCtx)
+  const pos = getShapePositionInNewBorder(shape, groupCtx)
   const newWidth = (shape.width === 0 || shape.height === 0 ? (shape.ratio ?? 1) : shape.width) * widthMultiplier
   const newHeight = (shape.width === 0 || shape.height === 0 ? (shape.ratio ?? 1) : shape.height) * heightMultiplier
   const newCenter = getPositionWithoutGroupRotation(groupCtx, pos.x, pos.y, newWidth, newHeight)
@@ -340,7 +337,7 @@ export const resizeTextInGroup = (
       y: newCenter[1] - newHeight / 2,
       flipX: isXinverted ? !shape.flipX : !!shape.flipX,
       flipY: isYinverted ? !shape.flipY : !!shape.flipY,
-      rotation: shouldFlipRotation ? -(shape.rotation ?? 0) : (shape.rotation ?? 0)
+      rotation: getMirroredRotation(shape.rotation, groupCtx)
     },
     settings
   )

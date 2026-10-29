@@ -31,7 +31,7 @@ describe('getShapeInputError', () => {
     [null, 'a shape must be an object'],
     [[RECT], 'a shape must be an object'],
     [{ ...RECT, type: 'star' }, 'unknown shape type "star"'],
-    [{ ...RECT, type: 'group' }, 'unknown shape type "group"'],
+    [{ ...RECT, type: 'group' }, 'unknown field "x" for a group'],
     [{ ...RECT, id: '' }, '"id" must be a non empty string'],
     [{ ...RECT, id: 3 }, '"id" must be a non empty string'],
     [{ type: 'circle', x: 0, y: 0, radius: 10, points: POINTS }, 'unknown field "points" for a circle'],
@@ -70,6 +70,29 @@ describe('getShapeInputError', () => {
     [{ type: 'brush', points: [] }, '"points" must be a non empty array of non empty point lists'],
     [{ type: 'brush', points: [[]] }, '"points" must be a non empty array of non empty point lists']
   ])('checks the geometry of each type: %j', (shape, error) => {
+    expect(getShapeInputError(shape)).toBe(error)
+  })
+
+  it('accepts a group of at least 2 shapes, groups included, with its name and its opacity', () => {
+    const group = { type: 'group', shapes: [RECT, RECT] }
+    expect(getShapeInputError(group)).toBeUndefined()
+    expect(
+      getShapeInputError({ ...group, id: 'g', name: 'Logo', rotation: 0.5, visible: false, style: { opacity: 50 }, data: { a: 1 } })
+    ).toBeUndefined()
+    expect(getShapeInputError({ type: 'group', shapes: [group, RECT] })).toBeUndefined()
+  })
+
+  it.each([
+    [{ type: 'group', shapes: [RECT] }, '"shapes" must hold at least 2 shapes'],
+    [{ type: 'group', shapes: RECT }, '"shapes" must hold at least 2 shapes'],
+    [{ type: 'group' }, '"shapes" must hold at least 2 shapes'],
+    [{ type: 'group', shapes: [RECT, RECT], toolId: 'rect' }, 'unknown field "toolId" for a group'],
+    [{ type: 'group', shapes: [RECT, RECT], name: 3 }, '"name" must be a string'],
+    [{ type: 'group', shapes: [RECT, RECT], style: { strokeColor: 'red' } }, 'the style of a group only has an opacity, not "strokeColor"'],
+    [{ type: 'group', shapes: [RECT, RECT], locked: 'yes' }, '"locked" must be a boolean'],
+    [{ type: 'group', shapes: [RECT, { type: 'circle', x: 0, y: 0 }] }, 'shapes[1], "radius" must be a finite number'],
+    [{ type: 'group', shapes: [{ type: 'group', shapes: [RECT, { ...RECT, x: 'a' }] }, RECT] }, 'shapes[0], shapes[1], "x" must be a finite number']
+  ])('checks a group and its shapes: %j', (shape, error) => {
     expect(getShapeInputError(shape)).toBe(error)
   })
 })
