@@ -19,6 +19,8 @@ type EditorOptionsType = {
   withEraser: boolean
   /** Shows the laser pointer, whose trail fades out without changing the drawing */
   withLaser: boolean
+  /** Shows the map of the drawing under the buttons of the zoom panel */
+  withMinimap: boolean
 }
 
 export type EditorOptions = {
@@ -43,5 +45,6 @@ export const DEFAULT_EDITOR_OPTIONS: EditorOptionsType = {
   withUploadPicture: true,
   withUrlPicture: false,
   withEraser: false,
-  withLaser: false
+  withLaser: false,
+  withMinimap: true
 }

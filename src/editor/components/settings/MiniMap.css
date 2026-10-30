@@ -1,0 +1,9 @@
+.react-paint-editor-minimap {
+  display: block;
+  border-radius: 4px;
+  /* the drag of the view must not scroll the page on a touch screen */
+  touch-action: none;
+  user-select: none;
+  border: 1px solid var(--react-paint-editor-app-divider-color);
+  box-sizing: border-box;
+}
