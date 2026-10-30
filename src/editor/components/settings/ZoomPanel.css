@@ -1,0 +1,11 @@
+.react-paint-editor-zoom-panel.react-paint-editor-zoom-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.react-paint-editor-zoom-panel-buttons {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}

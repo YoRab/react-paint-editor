@@ -2,6 +2,7 @@ import { type EditorState, type ExportView, PaintProvider, type ReactPaint, shal
 import Loading from '@editor/components/common/Loading'
 import SnackbarContainer from '@editor/components/common/Snackbar'
 import Layouts from '@editor/components/settings/Layouts'
+import MiniMap from '@editor/components/settings/MiniMap'
 import SettingsBar from '@editor/components/settings/SettingsBar'
 import ZoomPanel from '@editor/components/settings/ZoomPanel'
 import Toolbar from '@editor/components/toolbox/Toolbar'
@@ -53,7 +54,8 @@ const Editor = ({ paint, className, style, options, children }: EditorComponentP
     withUploadPicture,
     withUrlPicture,
     withEraser,
-    withLaser
+    withLaser,
+    withMinimap
   } = withDefaults(DEFAULT_EDITOR_OPTIONS, options)
 
   const isEditMode = mode !== 'viewer'
@@ -206,7 +208,11 @@ const Editor = ({ paint, className, style, options, children }: EditorComponentP
         )}
         {children}
         {isEditMode && layersManipulation && <Layouts isLayoutPanelShown={isLayoutPanelShown} disabled={disabled} />}
-        {isZoomPanelShown && <ZoomPanel isEditMode={isEditMode} />}
+        {isZoomPanelShown && (
+          <ZoomPanel isEditMode={isEditMode}>
+            {withMinimap && <MiniMap shapesColor={fontColor} selectionColor={fontSelectedBackgroundColor} />}
+          </ZoomPanel>
+        )}
         {isEditMode && (
           <>
             <SettingsBar
