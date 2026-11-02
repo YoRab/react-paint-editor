@@ -9,7 +9,8 @@ import { vi } from 'vitest'
 /** Images of the tests: they load once their source is set, as large as given by size, or fail when fails says so */
 export class FakeImage {
   static fails = (_src: string) => false
-  static size = (_src: string) => 100
+  /** Size of the image of a source: a square of this side, or its width and its height */
+  static size: (src: string) => number | [width: number, height: number] = () => 100
   complete = false
   width = 0
   height = 0
@@ -31,7 +32,10 @@ export class FakeImage {
         this.onerror?.()
         return
       }
-      this.width = this.height = this.naturalWidth = this.naturalHeight = FakeImage.size(value)
+      const size = FakeImage.size(value)
+      const [width, height] = Array.isArray(size) ? size : [size, size]
+      this.width = this.naturalWidth = width
+      this.height = this.naturalHeight = height
       this.onload?.()
     })
   }

@@ -1,10 +1,11 @@
 import type { PictureSrcResolver, UtilsSettings } from '@canvas/constants/app'
-import type { DrawableShape, EditableShapeType, GroupShapeInput, Point, ShapeEntity, ShapeInput } from '@canvas/types/Shapes'
+import type { DrawableShape, EditableShapeType, ExportedDrawableShape, GroupShapeInput, Point, ShapeEntity, ShapeInput } from '@canvas/types/Shapes'
 import type { CustomTool } from '@canvas/types/tools'
 import { compact } from '@canvas/utils/array'
 import { loadPicture } from '@canvas/utils/file'
 import { isRecord } from '@canvas/utils/object'
 import { refreshShape } from '@canvas/utils/shapes'
+import { findCustomShapeTool, getCustomToolError, MISSING_CUSTOM_DEFINITION } from '@canvas/utils/shapes/custom'
 import { sizeText } from '@canvas/utils/shapes/text'
 import { foldGroupInto, GROUP_MIN_SHAPES, getCommonRotation, getShapeLeaves, refreshGroup, removeShapesFromTree } from '@canvas/utils/shapes/tree'
 import { findShapeTool, getToolDefaultStyle } from '@canvas/utils/tools'
@@ -19,6 +20,7 @@ export const GROUP_FIELDS = ['id', 'type', 'rotation', 'visible', 'locked', 'sty
 const SHAPE_FIELDS: Record<EditableShapeType, string[]> = {
   rect: ['x', 'y', 'width', 'height'],
   square: ['x', 'y', 'width', 'height'],
+  custom: ['x', 'y', 'width', 'height', 'params', 'flipX', 'flipY', 'ratio'],
   picture: ['x', 'y', 'width', 'height', 'src', 'flipX', 'flipY', 'ratio'],
   text: ['x', 'y', 'width', 'height', 'value', 'fontSize', 'flipX', 'flipY', 'ratio'],
   circle: ['x', 'y', 'radius'],
@@ -38,6 +40,8 @@ const isFiniteNumber = (value: unknown): value is number => typeof value === 'nu
 const isPoint = (value: unknown): value is Point => Array.isArray(value) && value.length === 2 && isFiniteNumber(value[0]) && isFiniteNumber(value[1])
 
 const isPointList = (value: unknown, min: number): value is Point[] => Array.isArray(value) && value.length >= min && value.every(isPoint)
+
+const isNumberRecord = (value: unknown): value is Record<string, number> => isRecord(value) && Object.values(value).every(isFiniteNumber)
 
 /** Checks that a shape, or a patch, only has the fields of its type */
 export const getUnknownFieldError = (shape: Record<string, unknown>, type: EditableShapeType): string | undefined => {
@@ -61,10 +65,15 @@ export const getGeometryError = (shape: Record<string, unknown>, type: EditableS
   switch (type) {
     case 'rect':
     case 'square':
-    case 'picture': {
+    case 'picture':
+    case 'custom': {
       const field = numbers('x', 'y', 'width', 'height')
       if (field) return `"${field}" must be a finite number`
       if (type === 'picture' && (typeof shape.src !== 'string' || !shape.src)) return '"src" must be a non empty string'
+      if (type === 'custom') {
+        if (typeof shape.toolId !== 'string' || !shape.toolId) return '"toolId" must name the custom tool drawing the shape'
+        if (shape.params !== undefined && !isNumberRecord(shape.params)) return '"params" must be an object of finite numbers'
+      }
       return undefined
     }
     case 'text': {
@@ -109,33 +118,39 @@ export const getGroupFieldsError = (group: Record<string, unknown>, fields: stri
 
 /**
  * Checks a shape given to create or update a shape: its type, the fields allowed for this type and its geometry, the
- * shapes of a group too. Returns the error message, or undefined when the shape is valid.
+ * shapes of a group too. With the ids of the custom tools, a custom shape must name one of them, which carries its
+ * geometry. Returns the error message, or undefined when the shape is valid.
  */
-export const getShapeInputError = (shape: unknown): string | undefined => {
+export const getShapeInputError = (shape: unknown, customToolIds?: ReadonlySet<string>): string | undefined => {
   if (!isRecord(shape)) return 'a shape must be an object'
   const { type } = shape
   if (type !== 'group' && !isEditableShapeType(type)) return `unknown shape type "${String(type)}"`
   if (shape.id !== undefined && (typeof shape.id !== 'string' || !shape.id)) return '"id" must be a non empty string'
-  if (type === 'group') return getGroupInputError(shape)
-  return getUnknownFieldError(shape, type) ?? getCommonFieldsError(shape) ?? getGeometryError(shape, type)
+  if (type === 'group') return getGroupInputError(shape, customToolIds)
+  return (
+    getUnknownFieldError(shape, type) ??
+    getCommonFieldsError(shape) ??
+    getGeometryError(shape, type) ??
+    (type === 'custom' ? getCustomToolError(shape.toolId, customToolIds) : undefined)
+  )
 }
 
-const getGroupInputError = (group: Record<string, unknown>): string | undefined => {
+const getGroupInputError = (group: Record<string, unknown>, customToolIds?: ReadonlySet<string>): string | undefined => {
   const fieldsError = getGroupFieldsError(group, GROUP_FIELDS)
   if (fieldsError) return fieldsError
   const { shapes } = group
   if (!Array.isArray(shapes) || shapes.length < GROUP_MIN_SHAPES) return `"shapes" must hold at least ${GROUP_MIN_SHAPES} shapes`
   for (const [index, shape] of shapes.entries()) {
-    const error = getShapeInputError(shape)
+    const error = getShapeInputError(shape, customToolIds)
     if (error) return `shapes[${index}], ${error}`
   }
   return undefined
 }
 
 /** Throws an error naming the faulty shape when one of them is invalid */
-export const assertValidShapes = (shapes: unknown[], action: string) => {
+export const assertValidShapes = (shapes: unknown[], action: string, customToolIds?: ReadonlySet<string>) => {
   shapes.forEach((shape, index) => {
-    const error = getShapeInputError(shape)
+    const error = getShapeInputError(shape, customToolIds)
     if (error) throw new Error(`react-paint ${action}: invalid shape at index ${index}, ${error}`)
   })
 }
@@ -151,6 +166,7 @@ export const normalizeGeometry = <T extends { type: string }>(shape: T): T => {
     case 'rect':
     case 'square':
     case 'picture':
+    case 'custom':
     case 'text': {
       const { x, y, width = 0, height = 0 } = input
       if (width >= 0 && height >= 0) return shape
@@ -173,6 +189,8 @@ type BuildShapeOptions = {
   usedIds: Set<string>
   /** Completes the style with the default style of the tool of the shape. Loaded shapes keep their own style */
   completeStyle: boolean
+  /** Filled with the custom shapes left out because no custom tool of their toolId draws them */
+  droppedCustomShapes?: ExportedDrawableShape<'custom'>[]
 }
 
 /** The id given with a shape when it is free, or else a new one, taken in the ids used */
@@ -210,8 +228,14 @@ export const buildShapeEntity = (input: ShapeInput, options: BuildShapeOptions):
     case 'text':
       // a text given without its size takes the font size of its tool
       return refreshShape(sizeText(ctx, shape, tool?.type === 'text' ? tool.settings.fontSize?.default : undefined), settings)
-    case 'picture':
-      return refreshShape({ ...shape, img: new Image() }, settings)
+    case 'picture': {
+      // a picture keeps the proportions it is given: without a ratio, the ones of its box, drawn before its image is loaded
+      const ratio = shape.ratio ?? (shape.width && shape.height ? shape.width / shape.height : undefined)
+      return refreshShape({ ...shape, ...(ratio === undefined ? {} : { ratio }), img: new Image() }, settings)
+    }
+    case 'custom':
+      // its geometry comes from its tool, found by its exact id: a shape without it draws nothing
+      return refreshShape({ ...shape, definition: findCustomShapeTool(tools, shape.toolId)?.shape ?? MISSING_CUSTOM_DEFINITION }, settings)
     default:
       return refreshShape(shape as DrawableShape & { id: string }, settings)
   }
@@ -224,10 +248,15 @@ type FailedPicture = { shape: ShapeEntity<'picture'>; error: unknown }
 
 /**
  * A shape of loaded data, a group with the shapes it can load: a group left with a single shape is dissolved, and an
- * empty one is left out, like a shape of an unknown type
+ * empty one is left out, like a shape of an unknown type and a custom shape whose tool is not available
  */
 const decodeShape = (input: unknown, options: BuildShapeOptions): ShapeEntity | undefined => {
   if (!isRecord(input)) return undefined
+  if (input.type === 'custom' && !findCustomShapeTool(options.tools, input.toolId as string)) {
+    console.warn(`react-paint: a custom shape is left out, no custom tool "${String(input.toolId)}" draws it`)
+    options.droppedCustomShapes?.push(input as unknown as ExportedDrawableShape<'custom'>)
+    return undefined
+  }
   if (input.type === 'group') {
     const shapes = Array.isArray(input.shapes) ? compact(input.shapes.map(shape => decodeShape(shape, options))) : []
     if (shapes.length < GROUP_MIN_SHAPES) return shapes[0] && foldGroupInto(input, shapes[0])
@@ -239,15 +268,17 @@ const decodeShape = (input: unknown, options: BuildShapeOptions): ShapeEntity | 
 
 /**
  * Builds the shapes of loaded data and waits for their pictures. The shapes of an unknown type are left out, like the
- * pictures which cannot be loaded, with a warning: these pictures are returned apart, and their groups are dissolved
- * when a single shape is left. The others keep their style.
+ * pictures which cannot be loaded and the custom shapes whose tool is not available, with a warning: these pictures and
+ * these custom shapes are returned apart, and their groups are dissolved when a single shape is left. The others keep
+ * their style.
  */
 export const decodeImportedData = async (
   inputs: ShapeInput[],
   { resolvePictureSrc, ...options }: DecodeOptions
-): Promise<{ shapes: ShapeEntity[]; failedPictures: FailedPicture[] }> => {
-  if (!inputs) return { shapes: [], failedPictures: [] }
-  const buildOptions = { ...options, completeStyle: false }
+): Promise<{ shapes: ShapeEntity[]; failedPictures: FailedPicture[]; droppedCustomShapes: ExportedDrawableShape<'custom'>[] }> => {
+  if (!inputs) return { shapes: [], failedPictures: [], droppedCustomShapes: [] }
+  const droppedCustomShapes: ExportedDrawableShape<'custom'>[] = []
+  const buildOptions = { ...options, completeStyle: false, droppedCustomShapes }
   const shapes = compact(inputs.map(input => decodeShape(input, buildOptions)))
   const pictures = getShapeLeaves(shapes).filter((shape): shape is ShapeEntity<'picture'> => shape.type === 'picture')
   const loadings = await Promise.allSettled(pictures.map(picture => loadPicture(picture.img, picture.src, resolvePictureSrc)))
@@ -259,5 +290,5 @@ export const decodeImportedData = async (
     console.warn(`react-paint: the picture ${shape.id} is left out, it could not be loaded`, loading.reason)
   })
   const failedIds = new Set(failedPictures.map(({ shape }) => shape.id))
-  return { shapes: removeShapesFromTree(shapes, failedIds, options.settings), failedPictures }
+  return { shapes: removeShapesFromTree(shapes, failedIds, options.settings), failedPictures, droppedCustomShapes }
 }

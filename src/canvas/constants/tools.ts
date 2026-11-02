@@ -19,6 +19,7 @@ import type {
   SettingsLineJoin,
   ToolsBrushSettings,
   ToolsCurveSettings,
+  ToolsCustomSettings,
   ToolsEllipseSettings,
   ToolsLineSettings,
   ToolsPictureSettings,
@@ -152,6 +153,9 @@ const SETTINGS_DEFAULT_ELLIPSE: ToolsEllipseSettings = {
 }
 
 export const SETTINGS_DEFAULT_RECT: ToolsRectSettings = { ...SETTINGS_DEFAULT_ELLIPSE, ...SETTING_LINE_JOIN, ...SETTING_CORNER_RADIUS }
+
+/** Settings of a custom tool which gives none: like a rectangle, without the corner radius its own path decides */
+export const SETTINGS_DEFAULT_CUSTOM: ToolsCustomSettings = { ...SETTINGS_DEFAULT_ELLIPSE, ...SETTING_LINE_JOIN }
 
 const SETTINGS_DEFAULT_PICTURE: ToolsPictureSettings = {
   opacity: {

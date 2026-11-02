@@ -1,7 +1,7 @@
 import type { UtilsSettings } from '@canvas/constants/app'
 import type { Point, ShapeEntity, StyleShape } from '@canvas/types/Shapes'
 import type { CustomTool } from '@canvas/types/tools'
-import { canRemoveShapePoint, createShape, isStyleFieldOfShape } from '@canvas/utils/shapes'
+import { canRemoveShapePoint, createShape, isStyleFieldOfShape, sizeShapeOnClick } from '@canvas/utils/shapes'
 import { addNewPointGroupToShape, addNewPointToShape, getBrushBorder, refreshBrush } from '@canvas/utils/shapes/brush'
 import { refreshCurve } from '@canvas/utils/shapes/curve'
 import { createBrushPath, createPolygonPath, getCornerRadius, getCubicBezierBounds, getCurveSegments } from '@canvas/utils/shapes/path'
@@ -22,7 +22,7 @@ describe('createShape', () => {
       { type: 'rect', settings: { fillColor: { default: 'red' } } },
       { type: 'line', settings: { arrowEnd: { default: 'triangle' } } },
       { type: 'text', settings: { fontBold: { default: true } } }
-    ]) as Exclude<CustomTool, { type: 'picture' }>[]
+    ]) as Exclude<CustomTool, { type: 'group' }>[]
     expect(createShape(MEASURE_CONTEXT, rectTool!, [10, 10], UTILS_SETTINGS)?.style).toEqual({
       strokeColor: 'black',
       fillColor: 'red',
@@ -60,6 +60,47 @@ describe('createShape', () => {
       outlineColor: 'transparent',
       outlineWidth: 2
     })
+  })
+})
+
+describe('sizeShapeOnClick', () => {
+  const sizeOnClick = (shape: ShapeEntity, center: Point = [50, 50]) => sizeShapeOnClick(shape, center, UTILS_SETTINGS)
+
+  it('gives a box shape the default size, centered on the click', () => {
+    const rect = createEntity<ShapeEntity<'rect'>>({ type: 'rect', x: 50, y: 50, width: 0, height: 0 })
+    expect(sizeOnClick(rect)).toMatchObject({ x: 0, y: 0, width: 100, height: 100 })
+  })
+
+  it('gives a circle and an ellipse the default size around their center, which does not move', () => {
+    const circle = createEntity<ShapeEntity<'circle'>>({ type: 'circle', x: 50, y: 50, radius: 0 })
+    expect(sizeOnClick(circle)).toMatchObject({ x: 50, y: 50, radius: 50 })
+    const ellipse = createEntity<ShapeEntity<'ellipse'>>({ type: 'ellipse', x: 50, y: 50, radiusX: 0, radiusY: 0 })
+    expect(sizeOnClick(ellipse)).toMatchObject({ x: 50, y: 50, radiusX: 50, radiusY: 50 })
+  })
+
+  it('draws a line of the default size, centered on the click', () => {
+    const line = createEntity<ShapeEntity<'line'>>({ type: 'line', points: [[50, 50], [50, 50]] })
+    expect(sizeOnClick(line)).toMatchObject({
+      points: [
+        [0, 50],
+        [100, 50]
+      ]
+    })
+  })
+
+  it('leaves a shape which was drawn by a drag as it is', () => {
+    const rect = createEntity<ShapeEntity<'rect'>>({ type: 'rect', x: 50, y: 50, width: 10, height: 0 })
+    expect(sizeOnClick(rect)).toBeUndefined()
+    const circle = createEntity<ShapeEntity<'circle'>>({ type: 'circle', x: 50, y: 50, radius: 1 })
+    expect(sizeOnClick(circle)).toBeUndefined()
+    const line = createEntity<ShapeEntity<'line'>>({ type: 'line', points: [[50, 50], [50, 51]] })
+    expect(sizeOnClick(line)).toBeUndefined()
+  })
+
+  it('leaves the shapes whose click already draws something: a brush, a polygon and a curve', () => {
+    expect(sizeOnClick(withPoints('polygon', 1))).toBeUndefined()
+    expect(sizeOnClick(withPoints('curve', 1))).toBeUndefined()
+    expect(sizeOnClick(createEntity<ShapeEntity<'brush'>>({ type: 'brush', points: [[[50, 50]]] }))).toBeUndefined()
   })
 })
 

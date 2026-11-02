@@ -5,6 +5,8 @@ import { nextFrame, waitFor } from './metrics'
 import {
   CANVAS_HEIGHT,
   CANVAS_WIDTH,
+  CUSTOM_SHAPE_OPTIONS,
+  generateCustomShapes,
   generateGroup,
   generateLongBrush,
   generateMixedShapes,
@@ -131,7 +133,7 @@ type StateShape = EditorState['shapes'][number]
 /** Abscissa of a rectangle or a picture, or of the first point of a brush */
 const getShapeX = (shape: StateShape) => {
   if (shape.type === 'brush') return shape.points[0]![0]![0]
-  return shape.type === 'rect' || shape.type === 'picture' ? shape.x : undefined
+  return shape.type === 'rect' || shape.type === 'picture' || shape.type === 'custom' ? shape.x : undefined
 }
 
 /** The brush tool may be inside a group of the toolbar, to open first */
@@ -235,6 +237,9 @@ const pickMiddleRect = (shapes: ShapeInput[]) => {
 }
 
 const mixed = createTranslateScenario({ id: 'mixed', generate: generateMixedShapes, pick: pickMiddleRect })
+
+// the grid as stars: the path of a custom shape is built from its parameters again on each move. Compare it to translate
+const translateCustom = createTranslateScenario({ id: 'translate-custom', generate: generateCustomShapes, options: CUSTOM_SHAPE_OPTIONS })
 
 // the first picture is in the foreground
 const pictures = createTranslateScenario({ id: 'pictures', generate: generatePictures, pick: () => 0 })
@@ -502,5 +507,6 @@ export const SCENARIOS: Scenario[] = [
   addPictureAutosave,
   hoverGroups,
   translateGroup,
-  undoGroupsAutosave
+  undoGroupsAutosave,
+  translateCustom
 ]

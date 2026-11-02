@@ -21,7 +21,8 @@ export const createEventEmitter = (): EventEmitter => {
     canvasDoubleClicked: [],
     pictureDropFailed: [],
     pictureLoaded: [],
-    pictureLoadFailed: []
+    pictureLoadFailed: [],
+    customShapeLoadFailed: []
   }
 
   const unregisterEvent: EventEmitter['unregisterEvent'] = (event, fn) => {

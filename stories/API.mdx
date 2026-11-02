@@ -539,7 +539,7 @@ const annotationsStyle = useAnnotationsStyle(paint)
           <tr>
             <td><code>availableTools</code></td>
             <td><code>CustomToolInput[]</code></td>
-            <td>Custom list of available tools, each one merged with the default tool of the same type</td>
+            <td>Custom list of available tools, each one merged with the default tool of the same type. A tool of type <code>'custom'</code> draws a shape of your own, and a tool of type <code>'picture'</code> with a <code>src</code> is a sticker (see <a href="#CustomShapes" target="_self">Custom shapes and stickers</a>)</td>
             <td><code>DEFAULT_TOOLS</code></td>
           </tr>
           <tr>
@@ -748,6 +748,16 @@ paint.registerEvent('canvasDoubleClicked', (shape: ShapeEntity | undefined) => s
       <Source language='typescript' code={`paint.registerEvent('pictureLoaded', () => upload(paint.getCurrentImage()))
 paint.registerEvent('pictureLoadFailed', (shape: ShapeEntity<'picture'>, error: unknown) => {
   console.warn('Cannot load', shape.src, error)
+})`} />
+
+      <h3>customShapeLoadFailed</h3>
+      <p>
+        Fired for each custom shape of loaded data which is left out: no custom tool of its <code>toolId</code> is available to draw it, so its
+        geometry cannot be found. Give the same custom tools in <code>availableTools</code> before loading data which holds their shapes (see
+        <a href="#CustomShapes" target="_self"> Custom shapes and stickers</a>). The Editor shows an error message for them.
+      </p>
+      <Source language='typescript' code={`paint.registerEvent('customShapeLoadFailed', (shape: ExportedDrawableShape<'custom'>) => {
+  console.warn('No custom tool draws', shape.toolId)
 })`} />
 
       <h2 id="Methods">Methods</h2>
@@ -1098,7 +1108,96 @@ const groupPatch: ShapePatch = { id: 'group_1', name: 'Header', style: { opacity
   label?: string
   type: ShapeType
   settings: ToolsSettingsType<ShapeType>
+  // a tool of type 'custom' only: the geometry of the shapes it draws
+  shape?: CustomShapeDefinition
+  // a tool of type 'picture' only: the source of a sticker, and the proportions it keeps
+  src?: string
+  ratio?: number
 }`} />
+
+      <h3 id="CustomShapes">Custom shapes and stickers</h3>
+      <p>
+        A tool of type <code>'custom'</code> draws a shape of your own: a star, a heart, a speech bubble. Its <code>shape</code> gives an SVG path,
+        drawn inside its view box, which is fitted in the box of each shape it draws: the shape is then styled, resized, turned, flipped and
+        grouped like a rectangle. A path built from the parameters of the shape is drawn again whenever they change. Without an
+        <code> icon</code>, the Editor shows the shape the tool draws in its toolbar and in the layers of its shapes, its path built with the
+        default values of its parameters.
+      </p>
+      <Source language='typescript' code={`type CustomShapeDefinition = {
+  // box of the path in its own coordinates, like an SVG viewBox: it must be the extent the path draws
+  viewBox: readonly [x: number, y: number, width: number, height: number]
+  // SVG path data, written for the non zero winding: reverse the direction of a subpath which must make a hole
+  path: string | ((params: Record<string, number>) => string)
+  // the shapes keep the proportions of the view box while they are resized, like a picture
+  keepRatio?: boolean
+  // size of a shape drawn by a single click, in the units of the view box. The size of the view box by default
+  defaultSize?: readonly [width: number, height: number]
+}`} />
+      <p>
+        The <code>params</code> setting of the tool declares the parameters of its path: each of them is kept on every shape it draws, stays
+        editable once the shape is drawn, and the Editor shows it as a slider (the first two in its settings bar, the others in its
+        &quot;Plus d&apos;options&quot; panel). <code>actions.updateShapes</code> changes one of them, and <code>actions.updateToolSettings</code>
+        sets its default under the name <code>params.&lt;parameter&gt;</code>.
+      </p>
+      <p>
+        The path is written by your application: the library ships none. In the example below, the path of the star is built from its
+        parameters, and the one of the heart is a fixed string.
+      </p>
+      <Source language='typescript' code={`// a star of as many branches, inside the circle of its view box of 100: its notches are depth percent of its radius deep
+const starPath = ({ branches = 5, depth = 50 }: CustomShapeParams) => {
+  const points = Array.from({ length: branches * 2 }, (_, index) => {
+    const radius = index % 2 ? 50 - depth / 2 : 50
+    const angle = (index * Math.PI) / branches - Math.PI / 2
+    return \`\${50 + radius * Math.cos(angle)} \${50 + radius * Math.sin(angle)}\`
+  })
+  return \`M\${points.join(' L')} Z\`
+}
+
+const STAR: CustomToolInput = {
+  id: 'star',
+  type: 'custom',
+  label: 'Étoile',
+  shape: { viewBox: [0, 0, 100, 100], path: starPath },
+  settings: {
+    ...SETTINGS_DEFAULT_CUSTOM,
+    params: {
+      branches: { label: 'Branches', min: 3, max: 12, step: 1, default: 5 },
+      depth: { label: 'Creux', min: 10, max: 90, step: 5, default: 50 }
+    }
+  }
+}
+
+// a heart drawn by curves, which fills its view box of 100 x 90, and keeps its proportions
+const HEART: CustomToolInput = {
+  id: 'heart',
+  type: 'custom',
+  label: 'Cœur',
+  shape: {
+    viewBox: [0, 0, 100, 90],
+    path: 'M50 90 C20 70 0 50 0 28 C0 12 12 0 27 0 C38 0 46 6 50 15 C54 6 62 0 73 0 C88 0 100 12 100 28 C100 50 80 70 50 90 Z',
+    keepRatio: true
+  },
+  settings: SETTINGS_DEFAULT_CUSTOM
+}
+
+// a sticker: a picture tool which gives its own source, drawn by a press like the other drawing tools
+const STICKER: CustomToolInput = { id: 'party', type: 'picture', label: 'Confettis', src: '/party.svg', settings: {} }
+
+useReactPaint({ options: { availableTools: [...DEFAULT_TOOLS, STAR, HEART, STICKER] } })`} />
+      <p>
+        A shape of type <code>'custom'</code> is exported with the <code>toolId</code> of its tool and its <code>params</code>, not with its path:
+        give the same custom tools in <code>availableTools</code> before loading data which holds their shapes, or they are left out, like the
+        shapes of an unknown type, and the <code>customShapeLoadFailed</code> event tells which. A shape given to
+        <code> actions.addShapes</code> whose custom tool is not available is refused.
+      </p>
+      <p>
+        A sticker is an ordinary picture: it keeps the <code>src</code> of its tool, its border, its rounded corners and its flips, and it keeps
+        the proportions of its image while it is drawn, like a picture. The image of a sticker tool is loaded as soon as the tool is chosen, and
+        shared by all the stickers it draws, so that the drag starts at once: a sticker drawn before its image is loaded is drawn square, then
+        fitted inside the box of its drag once its proportions are known. The <code>ratio</code> of the tool gives them without waiting for the
+        image. A picture tool without <code>src</code> is the one opening a file, for <code>actions.addPicture</code>, a drop or the Editor: it is
+        not shown in the toolbar.
+      </p>
 
       <h3>ToolsSettingsType</h3>
       <p>
@@ -1115,6 +1214,7 @@ const groupPatch: ShapePatch = { id: 'group_1', name: 'Header', style: { opacity
         <li><code>ToolsCurveSettings</code> - Curve settings (includes closedPoints, lineCap, arrowStart, arrowEnd, arrowSize and the fill)</li>
         <li><code>ToolsTextSettings</code> - Text settings (includes font options, textAlign, lineHeight, fillColor for the background, fontUnderline, fontStrikethrough, outlineColor, outlineWidth, and fontSize: the font size of the new texts, which are as wide as their content, or 150 wide without it. Its max is optional)</li>
         <li><code>ToolsPictureSettings</code> - Picture settings (opacity, and the border: strokeColor, lineWidth and cornerRadius)</li>
+        <li><code>ToolsCustomSettings</code> - Settings of a custom tool (like a rectangle, without cornerRadius, and <code>params</code>: the parameters of its path, see <a href="#CustomShapes" target="_self">Custom shapes and stickers</a>)</li>
         <li><code>ToolsGroupSettings</code> - Settings shared by shapes of several tools, given by <code>getSelectedShapesTools</code></li>
       </ul>
 
@@ -1163,6 +1263,7 @@ const groupPatch: ShapePatch = { id: 'group_1', name: 'Header', style: { opacity
         </li>
         <li><code>ZOOM_LEVELS</code> - Levels of <code>actions.setZoom</code>, from <code>0.05</code> to <code>8</code>: every zoom stays between the first and the last one, to disable a button or to build a zoom menu</li>
         <li><code>shallowEqual(a, b)</code> - Equality function for <code>usePaintState</code> selectors building an object or an array</li>
+        <li><code>SETTINGS_DEFAULT_CUSTOM</code> - Default settings of a custom tool, to spread in its own settings</li>
       </ul>
 
       <h2>Shape-Specific Types</h2>

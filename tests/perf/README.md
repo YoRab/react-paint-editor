@@ -58,6 +58,7 @@ The drawing is a grid of opaque rectangles, unless another one is given (`shapes
 | `hover-groups` | rectangles in groups of 5, themselves in groups of 5 | as `hover`: a move over a rectangle hovers its outer group |
 | `translate-group` | the groups of `hover-groups` in a single group | drag of the group, 300 moves: compare it to `translate-all`, which moves the same rectangles |
 | `undo-groups-autosave` | as `hover-groups`, with a listener of `dataChanged` | as `undo`, after the removal of a group of 25 rectangles: each click exports the groups |
+| `translate-custom` | the grid as stars of a custom tool, their path built from their parameters | drag of a star, 300 moves: its path is built again on each move, compare it to `translate` |
 
 `fixture.tsx` mounts the measured app: a host calling `useReactPaint`, a heavy sibling standing for the UI of the consumer, the editor, the canvas, and a probe subscribed to `state.history`. It is the only file that depends on the public API.
 

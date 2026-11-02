@@ -25,6 +25,7 @@ export const TOOL_LABELS: Record<ShapeType, string> = {
   ellipse: 'Ellipse',
   picture: 'Image',
   text: 'Texte',
+  custom: 'Forme',
   group: 'Groupe'
 }
 

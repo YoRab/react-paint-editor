@@ -11,6 +11,7 @@ import { getSelectedShapes } from '@canvas/utils/selectedShapes'
 import { isIdleSelectionMode } from '@canvas/utils/selection'
 import { canRemoveShapePoint } from '@canvas/utils/shapes'
 import { canGroupShapes, indexShapeTree, isGroup } from '@canvas/utils/shapes/tree'
+import { isUploadPictureTool } from '@canvas/utils/tools'
 import { getCurrentView } from '@canvas/utils/zoom'
 
 /** The text being edited, shown in a text box over the canvas */
@@ -146,9 +147,9 @@ export const createSelectors = () => {
 
   const selectWithContextMenu = ({ config }: InternalState) => config.options.withContextMenu && config.mode !== 'viewer' && !config.disabled
 
-  /** Image files can be dropped on the canvas when it is edited, and a picture can be added to it */
+  /** Image files can be dropped on the canvas when it is edited, and a picture can be added to it: a sticker tool is not one */
   const selectWithDropPicture = (state: InternalState) =>
-    state.config.options.withDropPicture && selectFeatures(state).edition && state.tools.available.some(tool => tool.type === 'picture')
+    state.config.options.withDropPicture && selectFeatures(state).edition && state.tools.available.some(isUploadPictureTool)
 
   const keepLayout = keepIfSame<EditorState['layout']>()
   const keepVisibleArea = keepIfSame<Rect>()

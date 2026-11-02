@@ -46,6 +46,7 @@ import {
   copyShapes,
   flipShapes,
   getSelectionBounds,
+  refreshShape,
   refreshShapeTree,
   resizeShapesToBounds,
   rotateShape,
@@ -53,7 +54,8 @@ import {
   updateShapeStyle
 } from '@canvas/utils/shapes'
 import { removeCurvePoint } from '@canvas/utils/shapes/curve'
-import { createPicture } from '@canvas/utils/shapes/picture'
+import { findCustomShapeTool, getCustomShapeToolIds } from '@canvas/utils/shapes/custom'
+import { createPicture, fitPictureToImage } from '@canvas/utils/shapes/picture'
 import { removePolygonPoint } from '@canvas/utils/shapes/polygon'
 import {
   flattenShapes,
@@ -69,7 +71,7 @@ import {
   setShapeLists,
   ungroupShapesInTree
 } from '@canvas/utils/shapes/tree'
-import { buildAvailableTools, findShapeTool } from '@canvas/utils/tools'
+import { buildAvailableTools, findShapeTool, isStickerTool, isUploadPictureTool } from '@canvas/utils/tools'
 import { getBoundingRect } from '@canvas/utils/trigo'
 import { clamp } from '@canvas/utils/util'
 import {
@@ -165,16 +167,27 @@ const withInteraction = (state: InternalState, patch: Partial<Interaction>): Int
 const withTransformation = (state: InternalState, transformation: CanvasTransformation): InternalState =>
   isSameTransformation(transformation, state.view.transformation) ? state : { ...state, view: { ...state.view, transformation } }
 
-/** Sets default values of the settings of a tool. The fields the tool has not, and unchanged values, are ignored */
+/** The values a change of shapes keeps in their tools: each parameter of a custom shape is named params.<parameter> */
+const toolValuesOfChange = (values: Record<string, unknown>): Record<string, unknown> => {
+  const { params, ...others } = values
+  if (!isRecord(params)) return values
+  return { ...others, ...Object.fromEntries(Object.entries(params).map(([name, value]) => [`params.${name}`, value])) }
+}
+
+/**
+ * Sets default values of the settings of a tool. The fields the tool has not, and unchanged values, are ignored. A
+ * parameter of a custom shape is named params.<parameter>, and its own default is set
+ */
 const setToolDefaults = (state: InternalState, toolId: string, style: Record<string, unknown>): InternalState => {
   let hasChanged = false
   const available = state.tools.available.map(tool => {
     if (tool.id !== toolId) return tool
     return Object.entries(style).reduce((newTool, [field, value]) => {
-      const setting = (newTool.settings as Record<string, { default?: unknown } | undefined>)[field]
+      const path = field.split('.')
+      const setting = path.reduce<unknown>((node, key) => (isRecord(node) ? node[key] : undefined), newTool.settings) as { default?: unknown } | undefined
       if (!setting || value === undefined || Object.is(setting.default, value)) return newTool
       hasChanged = true
-      return set(['settings', field, 'default'], value, newTool)
+      return set(['settings', ...path, 'default'], value, newTool)
     }, tool)
   })
   return hasChanged ? { ...state, tools: { ...state.tools, available } } : state
@@ -657,8 +670,11 @@ export const createPaintStore = (props: UseReactPaintProps = {}) => {
 
   // --- Tools ---
 
-  const setActiveTool = (tool: ToolsType) =>
+  const setActiveTool = (tool: ToolsType) => {
+    // the image of a sticker is loaded as soon as its tool is chosen: the sticker drawn by the next press keeps its proportions
+    if (isStickerTool(tool)) loadStickerImage(tool.src)
     update(state => (state.tools.activeToolId === tool.id ? state : { ...state, tools: { ...state.tools, activeToolId: tool.id } }))
+  }
 
   const selectTool = (tool: ToolsType) =>
     batch(() => {
@@ -831,9 +847,34 @@ export const createPaintStore = (props: UseReactPaintProps = {}) => {
   /** The resolver of the sources of the pictures, read when they are loaded: it may be written inline */
   const getPictureSrcResolver = () => resolveConfig(latest.props, latest.overrides).resolvePictureSrc
 
+  /**
+   * Images of the stickers, loaded once per source and shared by the stickers they draw: a sticker is drawn by a press,
+   * which cannot wait for its image, and its proportions are known as soon as the image of its tool is loaded
+   */
+  const stickerImages = new Map<string, { img: HTMLImageElement; loading: Promise<void> }>()
+
+  /**
+   * Loads the image of a sticker tool, once: it is loaded again by the next sticker when it fails. The failure is reported
+   * by loadPictureOf, for each sticker which waits for it
+   */
+  const loadStickerImage = (src: string) => {
+    const loaded = stickerImages.get(src)
+    if (loaded) return loaded
+    const img = new Image()
+    const sticker = { img, loading: loadPicture(img, src, getPictureSrcResolver()) }
+    sticker.loading.catch(() => {
+      if (stickerImages.get(src) === sticker) stickerImages.delete(src)
+    })
+    stickerImages.set(src, sticker)
+    return sticker
+  }
+
+  /** The image of a sticker tool, loaded or not: the shape it draws takes it, and is drawn once it is loaded */
+  const getStickerImage = (src: string) => loadStickerImage(src).img
+
   const resetCanvas = async (json: ShapeInput[], options: ResetOptions) => {
     const state = get()
-    const { shapes, failedPictures } = await decodeImportedData(json, {
+    const { shapes, failedPictures, droppedCustomShapes } = await decodeImportedData(json, {
       ctx: getMeasureContext(),
       settings: getSettings(state),
       tools: state.tools.available,
@@ -843,6 +884,7 @@ export const createPaintStore = (props: UseReactPaintProps = {}) => {
     resetCanvasWithShapeEntity(shapes, options)
     // once the other shapes are loaded, so that the listeners read the new drawing
     for (const { shape, error } of failedPictures) emit('pictureLoadFailed', shape, error)
+    for (const shape of droppedCustomShapes) emit('customShapeLoadFailed', shape)
   }
 
   /** Loads the shapes given in the props of the hook, once */
@@ -994,8 +1036,9 @@ export const createPaintStore = (props: UseReactPaintProps = {}) => {
   }
 
   /**
-   * Redraws a picture once its image is loaded: the shape is replaced by a copy, without a step in the history. The events
-   * are only emitted while the picture is still in the drawing with this image: it may have been removed or given another source
+   * Redraws a picture once its image is loaded: the shape is replaced by a copy, fitted to the proportions of the image
+   * when it has none of its own, without a step in the history. The events are only emitted while the picture is still in
+   * the drawing with this image: it may have been removed or given another source
    */
   const loadPictureOf = (shape: ShapeEntity) => {
     if (shape.type !== 'picture') return
@@ -1003,12 +1046,15 @@ export const createPaintStore = (props: UseReactPaintProps = {}) => {
       const current = indexShapeTree(get().document.shapes).byId.get(shape.id)
       return current?.type === 'picture' && current.img === shape.img ? (current as ShapeEntity<'picture'>) : undefined
     }
+    // the image of a sticker is loaded once for its tool, and shared by all its stickers
+    const sticker = stickerImages.get(shape.src)
+    const loading = sticker?.img === shape.img ? sticker.loading : loadPicture(shape.img, shape.src, getPictureSrcResolver())
     // a listener throwing is not taken for a failure of the load
-    loadPicture(shape.img, shape.src, getPictureSrcResolver()).then(
+    loading.then(
       () => {
         const current = findCurrent()
         if (!current) return
-        const loaded = { ...current }
+        const loaded = fitPictureToImage(current, getSettings())
         updateShapes([loaded])
         emit('pictureLoaded', loaded)
       },
@@ -1022,8 +1068,8 @@ export const createPaintStore = (props: UseReactPaintProps = {}) => {
 
   /** Creates shapes given by the consumer, and returns their ids */
   const addShapesFromInputs = (inputs: ShapeInput[], options?: InsertOptions): string[] => {
-    assertValidShapes(inputs, 'addShapes')
     const state = get()
+    assertValidShapes(inputs, 'addShapes', getCustomShapeToolIds(state.tools.available))
     // the ids of the shapes of the groups are free too
     const usedIds = new Set(indexShapeTree(state.document.shapes).byId.keys())
     const buildOptions = { ctx: getMeasureContext(), settings: getSettings(state), tools: state.tools.available, usedIds, completeStyle: true }
@@ -1041,7 +1087,7 @@ export const createPaintStore = (props: UseReactPaintProps = {}) => {
   const keepToolDefaults = (changes: [ShapeEntity, Record<string, unknown>][]) => {
     const { available } = get().tools
     const leafChanges = changes.flatMap(([shape, values]): [ShapeEntity, Record<string, unknown>][] => {
-      if (!isGroup(shape)) return [[shape, values]]
+      if (!isGroup(shape)) return [[shape, toolValuesOfChange(values)]]
       const { opacity: _, ...leafValues } = values
       return getShapeLeaves([shape]).map(leaf => [leaf, leafValues])
     })
@@ -1056,7 +1102,8 @@ export const createPaintStore = (props: UseReactPaintProps = {}) => {
   /** Applies patches of the consumer to the shapes. They are all checked before any change */
   const patchShapes = (patches: ShapePatch[], { updateTool = false, ...options }: ShapesActionOptions & { updateTool?: boolean } = {}) => {
     const shapesById = getShapesById()
-    assertValidPatches(patches, shapesById)
+    const { available } = get().tools
+    assertValidPatches(patches, shapesById, getCustomShapeToolIds(available))
 
     const ctx = getMeasureContext()
     const settings = getSettings()
@@ -1070,6 +1117,11 @@ export const createPaintStore = (props: UseReactPaintProps = {}) => {
       if (newShape.type === 'picture' && shape.type === 'picture' && newShape.src !== shape.src) {
         newShape = { ...newShape, img: new Image() }
         reloadedPictures.push(newShape)
+      }
+      // a custom shape given another tool takes its geometry: the tool is known, the patch was checked
+      if (newShape.type === 'custom' && shape.type === 'custom' && newShape.toolId !== shape.toolId) {
+        const definition = findCustomShapeTool(available, newShape.toolId)?.shape
+        if (definition) newShape = refreshShape({ ...newShape, definition }, settings)
       }
       updatedShapes.set(patch.id, newShape)
     }
@@ -1233,7 +1285,9 @@ export const createPaintStore = (props: UseReactPaintProps = {}) => {
       })
     },
     addPicture: async (fileOrUrl, { maxWidth = get().config.width, maxHeight = get().config.height, select = true, position } = {}) => {
-      const pictureTool = findShapeTool(get().tools.available, { type: 'picture', toolId: PICTURE_TOOL_ID })
+      // the tool of the pictures opened from a file: never a sticker tool, which gives its own source
+      const { available } = get().tools
+      const pictureTool = available.find(tool => tool.id === PICTURE_TOOL_ID) ?? available.find(isUploadPictureTool)
       const pictureShape = await createPicture(fileOrUrl, maxWidth, maxHeight, getSettings(), getPictureSrcResolver(), pictureTool, position)
       insertShapes([pictureShape], { select })
       return pictureShape
@@ -1380,6 +1434,8 @@ export const createPaintStore = (props: UseReactPaintProps = {}) => {
     // engine used by the canvas
     setSelectedShape,
     addShapes,
+    loadPictureOf,
+    getStickerImage,
     duplicateShapes,
     refreshHoveredShape,
     clearHover,

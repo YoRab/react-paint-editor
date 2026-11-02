@@ -1,9 +1,18 @@
 .react-paint-editor-toolbargroup-panel-content {
   display: flex;
+  /*
+   * a group holding many tools, like the custom shapes of the consumer, wraps every 6 of them instead of overflowing: its
+   * width is the one of its tools in a row, which a panel of the width of the button of the group would wrap at each one
+   */
+  flex-wrap: wrap;
+  width: max-content;
+  max-width: 240px;
 }
 
 .react-paint-editor-toolbargroup-panel-content[data-vertical='1'] {
   flex-direction: column;
+  flex-wrap: nowrap;
+  max-width: none;
 }
 
 .react-paint-editor-toolbargroup-relative {

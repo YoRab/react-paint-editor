@@ -1,4 +1,4 @@
-import type { ArrowHead, FillGradient, FillPattern, ShapeType, TextAlign } from './Shapes'
+import type { ArrowHead, CustomShapeDefinition, FillGradient, FillPattern, ShapeType, TextAlign } from './Shapes'
 
 export type CustomToolInput = {
   id: string
@@ -44,7 +44,20 @@ export type CustomToolInput = {
     }
   | {
       type: 'picture'
+      /**
+       * Source of a sticker: SVG markup, a data URL or the URL of an image. A picture tool with a source draws it on a
+       * press, like the other drawing tools; one without opens a file, for addPicture, a drop or an editor
+       */
+      src?: string
+      /** Proportions its stickers keep, known from its image otherwise: given here, they are kept before the image is loaded */
+      ratio?: number
       settings: ToolsSettingsType<'picture'>
+    }
+  | {
+      type: 'custom'
+      /** Geometry of the shapes it draws, fitted in the box of each of them */
+      shape: CustomShapeDefinition
+      settings: ToolsSettingsType<'custom'>
     }
 )
 
@@ -92,7 +105,17 @@ export type CustomTool = {
     }
   | {
       type: 'picture'
+      /** Source of a sticker, drawn on a press like the other drawing tools: see CustomToolInput */
+      src?: string
+      /** Proportions its stickers keep, known from its image otherwise: given here, they are kept before the image is loaded */
+      ratio?: number
       settings: ToolsSettingsType<'picture'>
+    }
+  | {
+      type: 'custom'
+      /** Geometry of the shapes it draws, fitted in the box of each of them */
+      shape: CustomShapeDefinition
+      settings: ToolsSettingsType<'custom'>
     }
   | {
       type: 'group'
@@ -300,6 +323,25 @@ export type SettingsFontSize = {
   }
 }
 
+/**
+ * Parameters which build the path of the shapes of a custom tool, like the branches of a star: an editor shows them as
+ * sliders, their values are kept on each shape and stay editable once it is drawn
+ */
+export type SettingsCustomParams = {
+  params: Record<
+    string,
+    {
+      /** Shown by an editor next to the slider */
+      label: string
+      min: number
+      max: number
+      step: number
+      default: number
+      hidden?: boolean
+    }
+  >
+}
+
 export type SettingsClosedPoints = {
   closedPoints: {
     default: number
@@ -359,6 +401,13 @@ export type ToolsCurveSettings = SettingsOpacity &
 
 export type ToolsPictureSettings = SettingsOpacity & Partial<SettingsStrokeColor & SettingsLineWidth & SettingsCornerRadius>
 
+export type ToolsCustomSettings = SettingsStrokeColor &
+  SettingsFillColor &
+  SettingsOpacity &
+  SettingsLineWidth &
+  SettingsLineDash &
+  Partial<SettingsLineJoin & SettingsFill & SettingsCustomParams>
+
 export type ToolsGroupSettings = Partial<
   SettingsOpacity &
     SettingsStrokeColor &
@@ -393,9 +442,11 @@ export type ToolsSettingsType<T extends ShapeType> = T extends 'rect'
                   ? ToolsCurveSettings
                   : T extends 'picture'
                     ? ToolsPictureSettings
-                    : T extends 'group'
-                      ? ToolsGroupSettings
-                      : never
+                    : T extends 'custom'
+                      ? ToolsCustomSettings
+                      : T extends 'group'
+                        ? ToolsGroupSettings
+                        : never
 
 /** Tools handled by the canvas besides the drawing tools. The buttons of an editor (undo, export...) are not tools */
 export type ActionsType = 'selection' | 'move' | 'eraser' | 'laser'

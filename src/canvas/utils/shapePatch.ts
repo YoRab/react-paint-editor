@@ -10,24 +10,36 @@ import {
   normalizeGeometry
 } from '@canvas/utils/shapeInput'
 import { refreshShape } from '@canvas/utils/shapes'
+import { getCustomToolError } from '@canvas/utils/shapes/custom'
 import { fitTextFontSize, fitTextToStyle, getTextHeightInFontSizes, resizeTextShapeWithNewContent } from '@canvas/utils/shapes/text'
 
 /** Fields of a group which a patch changes: its rotation and its shapes change with their own actions */
 const GROUP_PATCH_FIELDS = GROUP_FIELDS.filter(field => field !== 'rotation' && field !== 'shapes')
 
 /** Checks a patch against the shape it updates. Returns the error message, or undefined when the patch is valid */
-const getPatchError = (shape: ShapeEntity | undefined, patch: Record<string, unknown>): string | undefined => {
+const getPatchError = (
+  shape: ShapeEntity | undefined,
+  patch: Record<string, unknown>,
+  customToolIds?: ReadonlySet<string>
+): string | undefined => {
   if (!shape) return undefined
   const { type } = shape
   if (patch.type !== undefined && patch.type !== type) return 'the type of a shape cannot change'
   if (type === 'group') return getGroupFieldsError(patch, GROUP_PATCH_FIELDS)
-  return getUnknownFieldError(patch, type) ?? getCommonFieldsError(patch) ?? getGeometryError({ ...shape, ...patch }, type)
+  return (
+    getUnknownFieldError(patch, type) ??
+    getCommonFieldsError(patch) ??
+    getGeometryError({ ...shape, ...patch }, type) ??
+    // the toolId of a custom shape carries its geometry: it can only move to another custom tool
+    (type === 'custom' && patch.toolId !== undefined ? getCustomToolError(patch.toolId, customToolIds) : undefined)
+  )
 }
 
 /** Throws an error naming the faulty patch when one of them is invalid. The patches of unknown shapes are ignored */
-export const assertValidPatches = (patches: unknown[], shapesById: ReadonlyMap<string, ShapeEntity>) => {
+export const assertValidPatches = (patches: unknown[], shapesById: ReadonlyMap<string, ShapeEntity>, customToolIds?: ReadonlySet<string>) => {
   patches.forEach((patch, index) => {
-    const error = isRecord(patch) && typeof patch.id === 'string' ? getPatchError(shapesById.get(patch.id), patch) : '"id" must be a string'
+    const error =
+      isRecord(patch) && typeof patch.id === 'string' ? getPatchError(shapesById.get(patch.id), patch, customToolIds) : '"id" must be a string'
     if (error) throw new Error(`react-paint updateShapes: invalid patch at index ${index}, ${error}`)
   })
 }
@@ -43,7 +55,10 @@ export const applyShapePatch = (ctx: CanvasRenderingContext2D, shape: ShapeEntit
   const style = fields.style ? { ...shape.style, ...fields.style } : shape.style
   // the fields of a group do not change its frame. A name set to undefined is removed
   if (shape.type === 'group') return omitUndefined({ ...shape, ...fields, style } as ShapeEntity)
-  const next = normalizeGeometry({ ...shape, ...fields, style } as ShapeEntity)
+  // the parameters of a custom shape are merged like its style, so that a patch can change a single one of them
+  const patchedParams = 'params' in fields ? fields.params : undefined
+  const params = shape.type === 'custom' && patchedParams ? { ...shape.params, ...patchedParams } : undefined
+  const next = normalizeGeometry({ ...shape, ...fields, style, ...(params ? { params } : {}) } as ShapeEntity)
 
   if (next.type === 'square' && ('width' in fields || 'height' in fields)) {
     const side = 'width' in fields ? next.width : next.height
