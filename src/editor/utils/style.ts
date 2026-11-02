@@ -65,8 +65,7 @@ const getCustomToolIcon = (tool: Extract<CustomTool, { type: 'custom' }>): strin
 }
 
 /** The icon of a tool, in the toolbar and in the layers of its shapes: the one it gives, or else the one of its type */
-export const getToolIcon = (tool: CustomTool): string =>
-  tool.icon ?? (tool.type === 'custom' ? getCustomToolIcon(tool) : getShapePicture(tool.type))
+export const getToolIcon = (tool: CustomTool): string => tool.icon ?? (tool.type === 'custom' ? getCustomToolIcon(tool) : getShapePicture(tool.type))
 
 export type DisplayTool = CustomTool & { icon: string; label: string }
 

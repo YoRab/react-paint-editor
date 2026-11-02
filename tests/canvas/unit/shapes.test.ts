@@ -79,7 +79,13 @@ describe('sizeShapeOnClick', () => {
   })
 
   it('draws a line of the default size, centered on the click', () => {
-    const line = createEntity<ShapeEntity<'line'>>({ type: 'line', points: [[50, 50], [50, 50]] })
+    const line = createEntity<ShapeEntity<'line'>>({
+      type: 'line',
+      points: [
+        [50, 50],
+        [50, 50]
+      ]
+    })
     expect(sizeOnClick(line)).toMatchObject({
       points: [
         [0, 50],
@@ -93,7 +99,13 @@ describe('sizeShapeOnClick', () => {
     expect(sizeOnClick(rect)).toBeUndefined()
     const circle = createEntity<ShapeEntity<'circle'>>({ type: 'circle', x: 50, y: 50, radius: 1 })
     expect(sizeOnClick(circle)).toBeUndefined()
-    const line = createEntity<ShapeEntity<'line'>>({ type: 'line', points: [[50, 50], [50, 51]] })
+    const line = createEntity<ShapeEntity<'line'>>({
+      type: 'line',
+      points: [
+        [50, 50],
+        [50, 51]
+      ]
+    })
     expect(sizeOnClick(line)).toBeUndefined()
   })
 

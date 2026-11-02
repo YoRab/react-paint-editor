@@ -1,13 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
-import {
-  Canvas,
-  DEFAULT_TOOLS,
-  Editor,
-  type EditorOptions,
-  SETTINGS_DEFAULT_CUSTOM,
-  type UseReactPaintProps,
-  useReactPaint
-} from '../src/index'
+import { Canvas, DEFAULT_TOOLS, Editor, type EditorOptions, SETTINGS_DEFAULT_CUSTOM, type UseReactPaintProps, useReactPaint } from '../src/index'
 import { HEART_PATH, starPath, TREE_AND_CLOUDS } from './fixture'
 
 const ReactPaintWrapper = ({ editorOptions, ...args }: UseReactPaintProps & { editorOptions?: EditorOptions }) => {

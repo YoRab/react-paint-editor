@@ -17,11 +17,7 @@ import { fitTextFontSize, fitTextToStyle, getTextHeightInFontSizes, resizeTextSh
 const GROUP_PATCH_FIELDS = GROUP_FIELDS.filter(field => field !== 'rotation' && field !== 'shapes')
 
 /** Checks a patch against the shape it updates. Returns the error message, or undefined when the patch is valid */
-const getPatchError = (
-  shape: ShapeEntity | undefined,
-  patch: Record<string, unknown>,
-  customToolIds?: ReadonlySet<string>
-): string | undefined => {
+const getPatchError = (shape: ShapeEntity | undefined, patch: Record<string, unknown>, customToolIds?: ReadonlySet<string>): string | undefined => {
   if (!shape) return undefined
   const { type } = shape
   if (patch.type !== undefined && patch.type !== type) return 'the type of a shape cannot change'

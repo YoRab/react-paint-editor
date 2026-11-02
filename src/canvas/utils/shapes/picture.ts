@@ -105,10 +105,7 @@ export const fitPictureToImage = (shape: ShapeEntity<'picture'>, settings: Utils
   // an empty box is given its default size by sizeShapeOnClick, from the ratio
   if (!shape.width || !shape.height) return { ...shape, ratio }
   const [width, height] = fitContentInsideContainer(shape.img.naturalWidth, shape.img.naturalHeight, shape.width, shape.height, true)
-  return buildPath(
-    { ...shape, ratio, width, height, x: shape.x + (shape.width - width) / 2, y: shape.y + (shape.height - height) / 2 },
-    settings
-  )
+  return buildPath({ ...shape, ratio, width, height, x: shape.x + (shape.width - width) / 2, y: shape.y + (shape.height - height) / 2 }, settings)
 }
 
 /** Loads the image of a new picture, and returns the source kept in its shape: the URL, or the content of the file */

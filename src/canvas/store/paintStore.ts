@@ -184,7 +184,9 @@ const setToolDefaults = (state: InternalState, toolId: string, style: Record<str
     if (tool.id !== toolId) return tool
     return Object.entries(style).reduce((newTool, [field, value]) => {
       const path = field.split('.')
-      const setting = path.reduce<unknown>((node, key) => (isRecord(node) ? node[key] : undefined), newTool.settings) as { default?: unknown } | undefined
+      const setting = path.reduce<unknown>((node, key) => (isRecord(node) ? node[key] : undefined), newTool.settings) as
+        | { default?: unknown }
+        | undefined
       if (!setting || value === undefined || Object.is(setting.default, value)) return newTool
       hasChanged = true
       return set(['settings', ...path, 'default'], value, newTool)

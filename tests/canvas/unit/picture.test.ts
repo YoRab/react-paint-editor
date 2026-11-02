@@ -354,7 +354,10 @@ describe('stickers', () => {
 
   /** A sticker as a press draws it: an empty box, with the image of its tool, which may still be loading */
   const emptySticker = (img: HTMLImageElement) =>
-    refreshShape({ id: 'sticker_1', type: 'picture', x: 100, y: 100, width: 0, height: 0, src: PNG_DATA_URL, img } as DrawableShape & { id: string }, NO_PADDING) as ShapeEntity<'picture'>
+    refreshShape(
+      { id: 'sticker_1', type: 'picture', x: 100, y: 100, width: 0, height: 0, src: PNG_DATA_URL, img } as DrawableShape & { id: string },
+      NO_PADDING
+    ) as ShapeEntity<'picture'>
 
   const loaded = (img: HTMLImageElement) => vi.waitFor(() => expect(img.complete).toBe(true))
 

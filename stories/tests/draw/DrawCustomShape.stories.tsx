@@ -2,16 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react-vite'
 import { expect, userEvent, within } from 'storybook/test'
 import { type CustomToolInput, DEFAULT_TOOLS, type Point, SETTINGS_DEFAULT_CUSTOM } from '../../../src/index'
 import { starPath } from '../../fixture'
-import {
-  assertNoInternalFields,
-  getCurrentDataRef,
-  getPixel,
-  ReactPaintWrapper,
-  selectTool,
-  setRangeSetting,
-  toClient,
-  wait
-} from './../helpers'
+import { assertNoInternalFields, getCurrentDataRef, getPixel, ReactPaintWrapper, selectTool, setRangeSetting, toClient, wait } from './../helpers'
 
 const meta = {
   title: 'Tests/Draw',

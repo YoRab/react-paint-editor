@@ -133,9 +133,7 @@ const getParamFields = (params: CustomParams | undefined): SettingField[] =>
 const withParamFields = (fields: SettingField[], paramFields: SettingField[]): SettingField[] => {
   if (!paramFields.length) return fields
   const opacityIndex = fields.findIndex(({ field }) => field === 'opacity')
-  return opacityIndex < 0
-    ? [...fields, ...paramFields]
-    : [...fields.slice(0, opacityIndex), ...paramFields, ...fields.slice(opacityIndex)]
+  return opacityIndex < 0 ? [...fields, ...paramFields] : [...fields.slice(0, opacityIndex), ...paramFields, ...fields.slice(opacityIndex)]
 }
 
 /** A field of a setting a tool declares by its name: the parameters of a custom tool come with their own declarations */
@@ -332,7 +330,9 @@ const NO_PARAMS: Record<string, number> = {}
 const getSelectedParams = (leaves: ShapeEntity[]) => {
   const first = leaves[0]
   if (first?.type !== 'custom') return undefined
-  return leaves.every(shape => shape.type === 'custom' && shallowEqual(shape.params ?? NO_PARAMS, first.params ?? NO_PARAMS)) ? first.params : undefined
+  return leaves.every(shape => shape.type === 'custom' && shallowEqual(shape.params ?? NO_PARAMS, first.params ?? NO_PARAMS))
+    ? first.params
+    : undefined
 }
 
 const createSettingsBarSelector = () => {
