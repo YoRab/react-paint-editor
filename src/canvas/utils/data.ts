@@ -7,10 +7,10 @@ import { roundValues } from '@canvas/utils/transform'
 import { getBase64Image, isSourceEncodedOnExport } from './file'
 
 /**
- * Fields left out of the export: the image, the paths and the computed data are built again from the others. The shapes
- * of a group are exported apart
+ * Fields left out of the export: the image, the definition of a custom shape, the paths and the computed data are built
+ * again from the others. The shapes of a group are exported apart
  */
-const OMITTED_FIELDS = new Set(['img', 'path', 'arrows', 'tempPoint', 'computed', 'shapes'])
+const OMITTED_FIELDS = new Set(['img', 'definition', 'path', 'arrows', 'tempPoint', 'computed', 'shapes'])
 
 /** Flags only exported when they are set */
 const OPTIONAL_FLAGS = new Set(['flipX', 'flipY'])

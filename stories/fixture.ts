@@ -1,4 +1,4 @@
-import type { DrawableShape } from '../src/index'
+import type { CustomShapeParams, DrawableShape } from '../src/index'
 
 export const TREE_AND_CLOUDS: DrawableShape[] = [
   {
@@ -2395,3 +2395,19 @@ export const WITH_PICTURE: DrawableShape[] = [
     rotation: 0
   }
 ]
+
+/**
+ * Path of a custom shape written by the application: a star of as many branches, inside the circle of its view box of
+ * 100, whose notches are `depth` percent of its radius deep
+ */
+export const starPath = ({ branches = 5, depth = 50 }: CustomShapeParams) => {
+  const points = Array.from({ length: branches * 2 }, (_, index) => {
+    const radius = index % 2 ? 50 - depth / 2 : 50
+    const angle = (index * Math.PI) / branches - Math.PI / 2
+    return `${50 + radius * Math.cos(angle)} ${50 + radius * Math.sin(angle)}`
+  })
+  return `M${points.join(' L')} Z`
+}
+
+/** Path of a custom shape written by the application: a heart drawn by curves, which fills its view box of 100 x 90 */
+export const HEART_PATH = 'M50 90 C20 70 0 50 0 28 C0 12 12 0 27 0 C38 0 46 6 50 15 C54 6 62 0 73 0 C88 0 100 12 100 28 C100 50 80 70 50 90 Z'

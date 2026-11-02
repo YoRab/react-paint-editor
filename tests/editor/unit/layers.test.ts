@@ -26,7 +26,16 @@ describe('editor/utils/layers', () => {
       ['c', 2, 'inner'],
       ['d', 0, undefined]
     ])
-    expect(layers[0]).toEqual({ id: 'outer', type: 'group', name: 'Outer', visible: undefined, locked: true, depth: 0, parentId: undefined })
+    expect(layers[0]).toEqual({
+      id: 'outer',
+      type: 'group',
+      toolId: undefined,
+      name: 'Outer',
+      visible: undefined,
+      locked: true,
+      depth: 0,
+      parentId: undefined
+    })
   })
 
   it('keeps the layers which have not changed', () => {

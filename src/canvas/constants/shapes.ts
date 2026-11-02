@@ -16,7 +16,10 @@ export const SELECTION_RESIZE_ANCHOR_POSITIONS: Point[] = [
   [0, 0.5]
 ]
 
-export const SHAPES_WITH_ROTATION = ['rect', 'square', 'circle', 'ellipse', 'picture', 'text', 'brush', 'group']
+/** Size of a shape drawn by a single click, without a drag, in the units of the drawing */
+export const SHAPE_DEFAULT_SIZE = 100
+
+export const SHAPES_WITH_ROTATION = ['rect', 'square', 'circle', 'ellipse', 'picture', 'text', 'brush', 'custom', 'group']
 export const SHAPES_KEEPING_RATIO = ['square', 'circle', 'picture', 'text']
 
 /** Style fields of the font of a text: its font size is fitted to its width when they change */
@@ -36,7 +39,7 @@ const TEXT_STYLE_FIELDS: (keyof StyleShape)[] = [
 /** Style fields of the fills drawn inside the path of a shape: the background of a text stays a solid color */
 const FILL_STYLE_FIELDS: (keyof StyleShape)[] = ['fillPattern', 'fillGradient', 'fillColor2', 'fillGradientAngle']
 
-const FILLED_SHAPE_TYPES: readonly ShapeType[] = ['rect', 'square', 'circle', 'ellipse', 'polygon', 'curve']
+const FILLED_SHAPE_TYPES: readonly ShapeType[] = ['rect', 'square', 'circle', 'ellipse', 'polygon', 'curve', 'custom']
 
 const withShapeTypes = (fields: (keyof StyleShape)[], types: readonly ShapeType[]) =>
   Object.fromEntries(fields.map((field): [keyof StyleShape, readonly ShapeType[]] => [field, types]))
@@ -46,7 +49,7 @@ export const STYLE_FIELDS_SHAPE_TYPES: Partial<Record<keyof StyleShape, readonly
   ...withShapeTypes(TEXT_STYLE_FIELDS, ['text']),
   ...withShapeTypes(FILL_STYLE_FIELDS, FILLED_SHAPE_TYPES),
   lineCap: ['line', 'brush', 'polygon', 'curve'],
-  lineJoin: ['rect', 'square', 'polygon', 'brush'],
+  lineJoin: ['rect', 'square', 'polygon', 'brush', 'custom'],
   cornerRadius: ['rect', 'square', 'picture', 'polygon'],
   arrowStart: ['line', 'polygon', 'curve'],
   arrowEnd: ['line', 'polygon', 'curve'],
@@ -54,6 +57,19 @@ export const STYLE_FIELDS_SHAPE_TYPES: Partial<Record<keyof StyleShape, readonly
 }
 
 /** Settings of the tools which give a field of their new shapes instead of a style field */
-export const TOOL_SHAPE_FIELDS: readonly string[] = ['fontSize']
+export const TOOL_SHAPE_FIELDS: readonly string[] = ['fontSize', 'params']
 
-export const ShapeTypeArray = ['brush', 'rect', 'square', 'line', 'polygon', 'circle', 'curve', 'ellipse', 'picture', 'text', 'group'] as const
+export const ShapeTypeArray = [
+  'brush',
+  'rect',
+  'square',
+  'line',
+  'polygon',
+  'circle',
+  'curve',
+  'ellipse',
+  'picture',
+  'text',
+  'custom',
+  'group'
+] as const

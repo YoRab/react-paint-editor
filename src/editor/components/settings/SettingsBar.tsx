@@ -1,4 +1,5 @@
 import {
+  type CustomShapeParams,
   type CustomTool,
   type EditorState,
   getSelectedLeaves,
@@ -36,6 +37,7 @@ import {
   lineWidthIcon,
   moreIcon,
   opacityIcon,
+  paramIcon,
   polygonIcon,
   settingsIcon,
   strikethroughIcon,
@@ -43,6 +45,7 @@ import {
   textOutlineIcon,
   underlineIcon
 } from '@editor/constants/icons'
+import { getDefaultParams } from '@editor/utils/style'
 import { uniqueId } from '@editor/utils/util'
 import type React from 'react'
 import { Fragment, useState } from 'react'
@@ -76,6 +79,14 @@ type SettingName = keyof ToolSettings
 /** Names of the settings of the given type, optional or not */
 type SettingsOfType<T> = { [K in SettingName]-?: NonNullable<ToolSettings[K]> extends T ? K : never }[SettingName]
 
+/** The parameters a custom tool declares: their own fields are named params.<parameter> */
+type CustomParams = NonNullable<Extract<CustomTool, { type: 'custom' }>['settings']['params']>
+
+const PARAM_FIELD_PREFIX = 'params.'
+
+/** The parameters kept in the settings bar: the other ones go to the panel of the other options */
+const PARAMS_IN_BAR = 2
+
 /** A field of the settings, shown when the tool has a setting of its name which is not hidden */
 type SettingField = {
   title: string
@@ -98,10 +109,38 @@ type SettingField = {
       /** Values of a setting without a list of values */
       values?: (string | number)[]
     }
+  /** A slider of a parameter of a custom shape, declared by its tool: its value is kept on each shape */
+  | { kind: 'param'; field: string; param: string; icon: string; min: number; max: number; step: number }
 )
 
+/** The fields of the parameters a custom tool declares, in the order of their declaration */
+const getParamFields = (params: CustomParams | undefined): SettingField[] =>
+  Object.entries(params ?? {})
+    .filter(([, declaration]) => !declaration.hidden)
+    .map(([param, declaration], index) => ({
+      kind: 'param',
+      field: `${PARAM_FIELD_PREFIX}${param}`,
+      param,
+      title: declaration.label,
+      icon: paramIcon,
+      min: declaration.min,
+      max: declaration.max,
+      step: declaration.step,
+      advanced: index >= PARAMS_IN_BAR
+    }))
+
+/** The fields with the parameters of a custom shape, before the opacity which closes the bar */
+const withParamFields = (fields: SettingField[], paramFields: SettingField[]): SettingField[] => {
+  if (!paramFields.length) return fields
+  const opacityIndex = fields.findIndex(({ field }) => field === 'opacity')
+  return opacityIndex < 0 ? [...fields, ...paramFields] : [...fields.slice(0, opacityIndex), ...paramFields, ...fields.slice(opacityIndex)]
+}
+
+/** A field of a setting a tool declares by its name: the parameters of a custom tool come with their own declarations */
+type DeclaredSettingField = Exclude<SettingField, { kind: 'param' }>
+
 /** The fields of the settings, in their order */
-const SETTING_FIELDS: SettingField[] = [
+const SETTING_FIELDS: DeclaredSettingField[] = [
   { field: 'strokeColor', kind: 'color', title: 'Couleur du trait', mode: 'stroke' },
   { field: 'fillColor', kind: 'color', title: 'Couleur de fond' },
   { field: 'fillPattern', kind: 'select', title: 'Motif du fond', icon: fillPatternIcon, option: FillPatternOption },
@@ -153,6 +192,8 @@ type SettingsItemsType = {
   fields: SettingField[]
   settings: Partial<ToolSettings>
   style: SettingValues
+  /** Values of the parameters of the selected custom shapes, or the defaults of the active custom tool */
+  params: CustomShapeParams | undefined
   disabled: boolean
   selectedSettings: string | undefined
   setSelectedSettings: React.Dispatch<React.SetStateAction<string | undefined>>
@@ -161,8 +202,22 @@ type SettingsItemsType = {
   colors: Pick<React.ComponentProps<typeof ColorField>, 'recentColors' | 'addRecentColor' | 'pickColor' | 'isPicking'>
 }
 
-const renderSettingField = (item: SettingField, { settings, style, saveShapes, colors, ...props }: Omit<SettingsItemsType, 'fields'>) => {
+const renderSettingField = (item: SettingField, { settings, style, params, saveShapes, colors, ...props }: Omit<SettingsItemsType, 'fields'>) => {
   switch (item.kind) {
+    case 'param':
+      return (
+        <RangeField
+          {...props}
+          saveShapes={saveShapes}
+          title={item.title}
+          icon={item.icon}
+          field={item.field}
+          value={params?.[item.param]}
+          min={item.min}
+          max={item.max}
+          step={item.step}
+        />
+      )
     case 'color':
       return (
         <ColorField
@@ -256,6 +311,7 @@ type SettingsBarState = {
   /** Only the style of the selection is shown: its geometry changes on each move of a drag */
   selectedStyle: StyleShape | undefined
   selectedFontSize: number | undefined
+  selectedParams: CustomShapeParams | undefined
   selectedShapeIds: string[]
   selectedShapeTool: CustomTool | undefined
   isPickingColor: boolean
@@ -266,6 +322,17 @@ const getSelectedFontSize = (leaves: ShapeEntity[]) => {
   const first = leaves[0]
   if (first?.type !== 'text') return undefined
   return leaves.every(shape => shape.type === 'text' && shape.fontSize === first.fontSize) ? first.fontSize : undefined
+}
+
+const NO_PARAMS: Record<string, number> = {}
+
+/** Parameters of the selected custom shapes, the ones of the selected groups too, when they all have the same */
+const getSelectedParams = (leaves: ShapeEntity[]) => {
+  const first = leaves[0]
+  if (first?.type !== 'custom') return undefined
+  return leaves.every(shape => shape.type === 'custom' && shallowEqual(shape.params ?? NO_PARAMS, first.params ?? NO_PARAMS))
+    ? first.params
+    : undefined
 }
 
 const createSettingsBarSelector = () => {
@@ -283,6 +350,7 @@ const createSettingsBarSelector = () => {
       // the style of the shapes of the selected groups, and the opacity of the groups
       selectedStyle: getSelectionStyle(state.selection),
       selectedFontSize: getSelectedFontSize(leaves),
+      selectedParams: getSelectedParams(leaves),
       selectedShapeIds: state.selectedShapeIds,
       selectedShapeTool: lastTool.tool,
       isPickingColor: state.interaction.mode === 'eyedropper'
@@ -297,7 +365,8 @@ const isSameSettingsBarState = (a: SettingsBarState, b: SettingsBarState) =>
   a.selectedShapeTool === b.selectedShapeTool &&
   a.selectedFontSize === b.selectedFontSize &&
   a.isPickingColor === b.isPickingColor &&
-  shallowEqual(a.selectedStyle, b.selectedStyle)
+  shallowEqual(a.selectedStyle, b.selectedStyle) &&
+  shallowEqual(a.selectedParams ?? NO_PARAMS, b.selectedParams ?? NO_PARAMS)
 
 type SettingsBarType = {
   disabled: boolean
@@ -323,7 +392,7 @@ const SettingsBar = ({
   const paint = usePaint()
   const { actions } = paint
   const [selectSettingsBarState] = useState(createSettingsBarSelector)
-  const { width, activeTool, selectedStyle, selectedFontSize, selectedShapeIds, selectedShapeTool, isPickingColor } = usePaintState(
+  const { width, activeTool, selectedStyle, selectedFontSize, selectedParams, selectedShapeIds, selectedShapeTool, isPickingColor } = usePaintState(
     paint,
     selectSettingsBarState,
     isSameSettingsBarState
@@ -342,12 +411,19 @@ const SettingsBar = ({
   }
 
   // the settings of the tool of the selection, or of the active tool without selection
-  const settings: Partial<ToolSettings> = hasSelection ? (selectedShapeTool?.settings ?? {}) : 'settings' in activeTool ? activeTool.settings : {}
+  const tool = hasSelection ? selectedShapeTool : activeTool
+  const settings: Partial<ToolSettings> = tool && 'settings' in tool ? tool.settings : {}
   const toolFields = SETTING_FIELDS.filter(({ field }) => settings[field] && !settings[field].hidden)
   const style: SettingValues = hasSelection
     ? { ...selectedStyle, fontSize: selectedFontSize }
     : (Object.fromEntries(toolFields.map(({ field }) => [field, settings[field]?.default])) as SettingValues)
-  const fields = toolFields.filter(({ visibleIf }) => visibleIf?.(style) ?? true)
+  // the parameters of a custom tool are declared by it, not by the fields: their values are kept on its shapes
+  const paramSettings = tool?.type === 'custom' ? tool.settings.params : undefined
+  const params = hasSelection ? selectedParams : getDefaultParams(paramSettings)
+  const fields = withParamFields(
+    toolFields.filter(({ visibleIf }) => visibleIf?.(style) ?? true),
+    getParamFields(paramSettings)
+  )
   const barFields = fields.filter(({ advanced }) => !advanced)
   const advancedFields = fields.filter(({ advanced }) => advanced)
 
@@ -361,6 +437,14 @@ const SettingsBar = ({
   const handleShapeStyleChange = (field: string, value: ToolSettingValue, needHistorySave = true) => {
     if (!selectedShapeIds.length) {
       actions.updateToolSettings(activeTool.id, field, value)
+    } else if (field.startsWith(PARAM_FIELD_PREFIX)) {
+      // the parameter is changed on the selected custom shapes, and their tools keep the value for the next shapes
+      const param = field.slice(PARAM_FIELD_PREFIX.length)
+      const shapes = getSelectedLeaves(paint.getState().selection).filter(shape => shape.type === 'custom')
+      actions.updateShapes(
+        shapes.map(shape => ({ id: shape.id, params: { [param]: value } }) as ShapePatch),
+        { save: needHistorySave, updateTool: true }
+      )
     } else if (SHAPES_FIELDS.includes(field)) {
       // the field is changed on the shapes which have it, the shapes of the groups too, and their tools keep the value for the next shapes
       const shapes = getSelectedLeaves(paint.getState().selection).filter(shape => field in shape)
@@ -377,6 +461,7 @@ const SettingsBar = ({
   const itemsProps = {
     settings,
     style,
+    params,
     disabled,
     selectedSettings,
     setSelectedSettings,

@@ -23,7 +23,7 @@ import {
 } from '@editor/constants/icons'
 import useDrag, { type DraggedLayer } from '@editor/hooks/useDrag'
 import { buildLayers, getLayerAncestorIds, getShownLayers, type LayerItem } from '@editor/utils/layers'
-import { getShapePicture } from '@editor/utils/style'
+import { getShapePicture, getToolIcon } from '@editor/utils/style'
 import type React from 'react'
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import './Layouts.css'
@@ -80,6 +80,7 @@ const LayoutNameInput = ({ name, finishRenaming }: LayoutNameInputType) => {
 type LayoutType = {
   disabled?: boolean
   shape: LayerItem
+  icon: string
   selected: boolean
   collapsed: boolean
   layoutDragging: DraggedLayer | undefined
@@ -97,6 +98,7 @@ type LayoutType = {
 const Layout = memo(function Layout({
   disabled = false,
   shape,
+  icon,
   selected,
   collapsed,
   layoutDragging,
@@ -202,7 +204,7 @@ const Layout = memo(function Layout({
       ) : (
         <span className='react-paint-editor-layout-chevron-space' />
       )}
-      <span dangerouslySetInnerHTML={{ __html: getShapePicture(shape.type) }} />
+      <span dangerouslySetInnerHTML={{ __html: icon }} />
       {isRenaming ? <LayoutNameInput name={shape.name} finishRenaming={finishRenaming} /> : <span>{shape.name ?? shape.id}</span>}
       <div className='react-paint-editor-layouts-separator' />
 
@@ -247,6 +249,8 @@ const createLayersSelector = () => {
 
 const selectSelectedShapeIds = (state: EditorState) => state.selectedShapeIds
 
+const selectTools = (state: EditorState) => state.tools
+
 type GroupActions = { canGroup: boolean; canUngroup: boolean }
 
 /** Whether the selected shapes can be grouped, or hold groups to ungroup: computed again when the shapes change */
@@ -274,6 +278,14 @@ const LayoutsPanel = ({ disabled }: { disabled: boolean }) => {
   const [collapsedIds, setCollapsedIds] = useState<ReadonlySet<string>>(() => new Set())
   const [shownSelection, setShownSelection] = useState(selectedShapeIds)
   const selectedShapeIdSet = useMemo(() => new Set(selectedShapeIds), [selectedShapeIds])
+  const tools = usePaintState(paint, selectTools)
+  const toolsById = useMemo(() => new Map(tools.map(tool => [tool.id, { type: tool.type, icon: getToolIcon(tool) }])), [tools])
+
+  // a layer shows the icon of the tool which drew its shape, as in the toolbar, or else the one of the type of its shape
+  const getLayerIcon = (layer: LayerItem) => {
+    const tool = layer.toolId === undefined ? undefined : toolsById.get(layer.toolId)
+    return tool?.type === layer.type ? tool.icon : getShapePicture(layer.type)
+  }
 
   // the groups holding the shapes newly selected are expanded, to show them
   if (shownSelection !== selectedShapeIds) {
@@ -347,6 +359,7 @@ const LayoutsPanel = ({ disabled }: { disabled: boolean }) => {
                 <Layout
                   key={layer.id}
                   shape={layer}
+                  icon={getLayerIcon(layer)}
                   disabled={disabled}
                   collapsed={collapsedIds.has(layer.id)}
                   layoutDragging={layoutDragging}

@@ -28,6 +28,8 @@ export type SelectionModeResize<AnchorType extends Point | number = Point> = {
   originalShape: SelectionType
   selectedShapesLengthAtMouseDown: number
   anchor: AnchorType
+  /** Position of the press which drew a new shape: released without a drag, the shape is given its default size there */
+  creationStart?: Point
 }
 
 export type SelectionModeRotate = {

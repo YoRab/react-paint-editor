@@ -1,7 +1,18 @@
 import type { AppOptions, OptionalOptions } from '@canvas/constants/app'
 import type { Resize, Size } from '@canvas/types/Canvas'
 import type { SelectionModeData } from '@canvas/types/Mode'
-import type { ExportedShape, Point, Rect, SelectionType, ShapeEntity, ShapeInput, ShapePatch, StateData, StyleShape } from '@canvas/types/Shapes'
+import type {
+  ExportedDrawableShape,
+  ExportedShape,
+  Point,
+  Rect,
+  SelectionType,
+  ShapeEntity,
+  ShapeInput,
+  ShapePatch,
+  StateData,
+  StyleShape
+} from '@canvas/types/Shapes'
 import type { CustomTool, ToolsType } from '@canvas/types/tools'
 
 /*
@@ -342,6 +353,11 @@ export type ReactPaintEventArgs = {
    * when it was added by addShapes or updateShapes: getShape(shape.id) tells which
    */
   pictureLoadFailed: [shape: ShapeEntity<'picture'>, error: unknown]
+  /**
+   * A custom shape of loaded data is left out: no custom tool of its toolId is available to draw it. Give the same
+   * custom tools in availableTools before loading data which holds their shapes
+   */
+  customShapeLoadFailed: [shape: ExportedDrawableShape<'custom'>]
 }
 
 export type ReactPaintEvents = { [E in keyof ReactPaintEventArgs]: (...args: ReactPaintEventArgs[E]) => void }

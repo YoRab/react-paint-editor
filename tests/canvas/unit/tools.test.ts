@@ -41,7 +41,9 @@ describe('DEFAULT_TOOLS', () => {
   it('gives the settings of the joins, of the caps, of the corners and of the alignment to the tools of the shapes they apply to', () => {
     for (const field of ['lineJoin', 'lineCap', 'cornerRadius', 'textAlign'] as const) {
       const types = DEFAULT_TOOLS.filter(tool => field in tool.settings).map(tool => tool.type)
-      expect(types.sort()).toEqual([...STYLE_FIELDS_SHAPE_TYPES[field]!].sort())
+      // the custom shapes are drawn by the tools of the consumer: no default tool has their type
+      const typesWithDefaultTool = STYLE_FIELDS_SHAPE_TYPES[field]!.filter(type => DEFAULT_TOOLS.some(tool => tool.type === type))
+      expect(types.sort()).toEqual([...typesWithDefaultTool].sort())
     }
   })
 })

@@ -17,12 +17,13 @@ import {
 } from '@canvas/utils/intersect'
 import { getSelectedShapes } from '@canvas/utils/selectedShapes'
 import { buildShapesSelection, findShapeInGroup, isIdleSelectionMode, selectShape } from '@canvas/utils/selection'
-import { createShape } from '@canvas/utils/shapes'
+import { createShape, sizeShapeOnClick } from '@canvas/utils/shapes'
 import { addNewPointGroupToShape } from '@canvas/utils/shapes/brush'
 import { addCurveLine, addCurvePoint } from '@canvas/utils/shapes/curve'
 import { addPolygonLine, addPolygonPoint } from '@canvas/utils/shapes/polygon'
 import { indexShapeTree } from '@canvas/utils/shapes/tree'
-import { transformSelectedShapes } from '@canvas/utils/transform'
+import { isStickerTool } from '@canvas/utils/tools'
+import { roundForGrid, transformSelectedShapes } from '@canvas/utils/transform'
 import { isPointInsideRect, sampleSegment } from '@canvas/utils/trigo'
 import { clamp } from '@canvas/utils/util'
 import { isCursorInsideMask } from '@canvas/utils/zoom'
@@ -282,6 +283,12 @@ const useDrawableCanvas = (store: PaintStore, canvas: HTMLCanvasElement | null) 
       if (selectionMode.mode !== 'default') {
         store.batch(() => {
           if (selectionMode.mode === 'brush' && settings.isBrushShapeDoneOnMouseUp) store.setSelectedShape(undefined)
+          // a shape drawn by a click, without a drag, would stay empty: it is given the default size of its type
+          if (selectionMode.mode === 'resize' && selectionMode.creationStart) {
+            const drawnShape = getSelectedShapes(state.document.selectedShape)[0]
+            const sizedShape = drawnShape && sizeShapeOnClick(drawnShape, selectionMode.creationStart, settings)
+            if (sizedShape) store.updateShapes([sizedShape])
+          }
           store.setSelectionMode({ mode: 'default' })
           store.setSelectionFrame(undefined)
           store.actions.saveShapes()
@@ -418,8 +425,10 @@ const useDrawableCanvas = (store: PaintStore, canvas: HTMLCanvasElement | null) 
             store.setSelectedShape(buildShapesSelection([newShape], settings))
             store.updateShapes([newShape], true)
           })
-        } else if (activeTool.type !== 'picture') {
-          const newShape = createShape(ctx, activeTool as Exclude<CustomTool, { type: 'picture' }>, cursorPosition, settings)
+        } else {
+          // a picture tool only draws a shape when it gives the source of a sticker, with the image loaded for its tool
+          const stickerImage = isStickerTool(activeTool) ? store.getStickerImage(activeTool.src) : undefined
+          const newShape = createShape(ctx, activeTool as Exclude<CustomTool, { type: 'group' }>, cursorPosition, settings, stickerImage)
           if (!newShape) return
           const newSelectedShapes = buildShapesSelection([newShape], settings)!
           store.batch(() => {
@@ -435,10 +444,14 @@ const useDrawableCanvas = (store: PaintStore, canvas: HTMLCanvasElement | null) 
                 originalShape: newSelectedShapes,
                 // a new line is drawn from its first point to its last one, which has the end head
                 anchor: newShape.type === 'line' ? 1 : [1, 1],
-                selectedShapesLengthAtMouseDown: getSelectedShapes(newSelectedShapes).length
+                selectedShapesLengthAtMouseDown: getSelectedShapes(newSelectedShapes).length,
+                // released without a drag, the shape is given its default size around this point, on the grid
+                creationStart: [roundForGrid(cursorPosition[0], settings), roundForGrid(cursorPosition[1], settings)]
               })
             }
           })
+          // the image of a sticker is loaded once it is drawn: it keeps the box given by the drag
+          if (newShape.type === 'picture') store.loadPictureOf(newShape)
         }
       }
     }

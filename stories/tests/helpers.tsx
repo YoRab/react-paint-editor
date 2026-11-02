@@ -101,7 +101,9 @@ const TOOL_GROUPS: Record<string, string> = {
   rect: 'shapes',
   square: 'shapes',
   circle: 'shapes',
-  ellipse: 'shapes'
+  ellipse: 'shapes',
+  custom: 'shapes',
+  picture: 'stickers'
 }
 
 export async function selectTool(view: ReturnType<typeof within>, toolId: string) {

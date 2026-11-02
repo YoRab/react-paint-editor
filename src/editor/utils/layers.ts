@@ -4,6 +4,8 @@ import type { ShapeEntity } from '@canvas/index'
 export type LayerItem = {
   id: string
   type: ShapeEntity['type']
+  /** Tool which drew the shape, whose icon the layer shows */
+  toolId: string | undefined
   /** Name of a group, shown instead of its id */
   name: string | undefined
   visible: boolean | undefined
@@ -22,17 +24,18 @@ export const buildLayers = (shapes: readonly ShapeEntity[], previousLayers: Read
   const layers: LayerItem[] = []
   const addLayers = (nodes: readonly ShapeEntity[], depth: number, parentId: string | undefined) => {
     for (const shape of nodes) {
-      const { id, type, visible, locked } = shape
+      const { id, type, toolId, visible, locked } = shape
       const name = shape.type === 'group' ? shape.name : undefined
       const previous = previousLayers.get(id)
       const isSame =
         previous?.type === type &&
+        previous.toolId === toolId &&
         previous.name === name &&
         previous.visible === visible &&
         previous.locked === locked &&
         previous.depth === depth &&
         previous.parentId === parentId
-      layers.push(isSame ? previous : { id, type, name, visible, locked, depth, parentId })
+      layers.push(isSame ? previous : { id, type, toolId, name, visible, locked, depth, parentId })
       if (shape.type === 'group') addLayers(shape.shapes, depth + 1, id)
     }
   }

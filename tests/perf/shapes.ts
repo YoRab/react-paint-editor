@@ -1,4 +1,12 @@
-import type { Point, ShapeInput, StyleShape } from '../../src/index'
+import {
+  type CustomShapeParams,
+  type CustomToolInput,
+  DEFAULT_TOOLS,
+  type Point,
+  SETTINGS_DEFAULT_CUSTOM,
+  type ShapeInput,
+  type StyleShape
+} from '../../src/index'
 
 /** Logical size of the measured canvas */
 export const CANVAS_WIDTH = 1000
@@ -30,6 +38,33 @@ const createRect = (cell: Cell, style: StyleShape = STYLE): ShapeInput => ({ typ
 
 /** Generates `count` rectangles laid out on a grid, always the same for a given count */
 export const generateShapes = (count: number): ShapeInput[] => getGridCells(count).map(cell => createRect(cell))
+
+/** Path of a star of as many branches, inside the circle of its view box of 100, written like an application would */
+const starPath = ({ branches = 5, depth = 50 }: CustomShapeParams) => {
+  const points = Array.from({ length: branches * 2 }, (_, index) => {
+    const radius = index % 2 ? 50 - depth / 2 : 50
+    const angle = (index * Math.PI) / branches - Math.PI / 2
+    return `${50 + radius * Math.cos(angle)} ${50 + radius * Math.sin(angle)}`
+  })
+  return `M${points.join(' L')} Z`
+}
+
+/** Options of generateCustomShapes: the tool of the stars, whose path is built from the parameters of each shape */
+export const CUSTOM_SHAPE_OPTIONS = {
+  availableTools: [
+    ...DEFAULT_TOOLS,
+    {
+      id: 'star',
+      type: 'custom',
+      shape: { viewBox: [0, 0, 100, 100], path: starPath },
+      settings: SETTINGS_DEFAULT_CUSTOM
+    }
+  ] as CustomToolInput[]
+}
+
+/** The grid, as stars of 5 branches: the path of a custom shape is built again whenever it is refreshed */
+export const generateCustomShapes = (count: number): ShapeInput[] =>
+  getGridCells(count).map(cell => ({ type: 'custom', toolId: 'star', ...cell, rotation: 0, params: { branches: 5, depth: 50 }, style: STYLE }))
 
 /** The rectangles of the grid, filled and stroked at half opacity: each one is drawn with its opacity */
 export const generateTransparentShapes = (count: number): ShapeInput[] => getGridCells(count).map(cell => createRect(cell, { ...STYLE, opacity: 50 }))
@@ -214,14 +249,15 @@ export const generateGroup = (count: number): ShapeInput[] => [{ type: 'group', 
 export const getLeaves = <T extends { type: string }>(shapes: readonly T[]): T[] =>
   shapes.flatMap(shape => (shape.type === 'group' ? getLeaves((shape as T & { shapes: T[] }).shapes) : [shape]))
 
-/** Center of a rectangle, in canvas coordinates */
+/** Center of a shape drawn in a box, in canvas coordinates */
 export const getShapeCenter = (shape: ShapeInput): Point => {
-  if (shape.type !== 'rect' && shape.type !== 'picture') throw new Error('Only the center of a rectangle or a picture is known')
-  return [shape.x + shape.width / 2, shape.y + shape.height / 2]
+  if (shape.type !== 'rect' && shape.type !== 'picture' && shape.type !== 'custom')
+    throw new Error('Only the center of a rectangle, a picture or a custom shape is known')
+  return [shape.x + (shape.width ?? 0) / 2, shape.y + (shape.height ?? 0) / 2]
 }
 
 /**
- * A point where the shape can be grabbed: the center of a rectangle or a picture, the middle point of the first stroke of
+ * A point where the shape can be grabbed: the center of a shape drawn in a box, the middle point of the first stroke of
  * a brush, a point of the middle shape drawn by a group
  */
 export const getGrabPoint = (shape: ShapeInput): Point => {

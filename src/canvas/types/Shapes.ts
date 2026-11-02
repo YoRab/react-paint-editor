@@ -138,6 +138,24 @@ export type StyleShape = {
 /** Data of the application attached to a shape: it is not drawn, and is kept in the history, the copies and the exported data */
 export type ShapeData = Record<string, unknown>
 
+/** Values of the parameters which build the path of a custom shape, kept on the shape and exported with it */
+export type CustomShapeParams = Record<string, number>
+
+/**
+ * Geometry of the shapes of a custom tool: SVG path data drawn inside a view box, which is fitted to the box of each
+ * shape. A path built from the parameters of a shape is drawn again whenever they change
+ */
+export type CustomShapeDefinition = {
+  /** Box of the path in its own coordinates, like an SVG viewBox: it must be the extent the path draws */
+  viewBox: readonly [x: number, y: number, width: number, height: number]
+  /** SVG path data, written for the non zero winding: reverse the direction of a subpath which must make a hole */
+  path: string | ((params: CustomShapeParams) => string)
+  /** The shapes keep the proportions of the view box while they are resized, like a picture */
+  keepRatio?: boolean
+  /** Size of a shape drawn by a single click, in the units of the view box. The size of the view box by default */
+  defaultSize?: readonly [width: number, height: number]
+}
+
 type GenericDrawableShape = {
   /** Kept when the shape is exported and loaded again. A new id is created when it is missing or already used */
   id?: string
@@ -157,6 +175,7 @@ type GenericDrawableShape = {
       img: HTMLImageElement
       flipX?: boolean
       flipY?: boolean
+      /** Proportions it keeps while it is resized: those of its box, or of its image for a sticker drawn before it is loaded */
       ratio?: number
     })
   | (Text & {
@@ -188,6 +207,20 @@ type GenericDrawableShape = {
       scaleX?: number
       scaleY?: number
     })
+  | (Rect & {
+      /**
+       * A shape drawn by a custom tool, which its toolId names: a star, a heart, a speech bubble. Its path comes from
+       * the definition of its tool, fitted in its box, and it is styled and resized like a rectangle
+       */
+      type: 'custom'
+      /** Values of the parameters which build its path, merged by a patch. The defaults of its tool when it is drawn */
+      params?: CustomShapeParams
+      /** Definition of its tool, resolved when the shape is built: it is never exported, like the image of a picture */
+      definition: CustomShapeDefinition
+      flipX?: boolean
+      flipY?: boolean
+      ratio?: number
+    })
   | {
       /**
        * A group of shapes, moved, turned and resized together. Its rotation is the one of its frame, its style only has an
@@ -212,9 +245,11 @@ export interface ExportedGroup extends Omit<DrawableShape<'group'>, 'shapes'> {
 
 export type ExportedDrawableShape<T extends ShapeType = ShapeType> = T extends 'picture'
   ? Omit<DrawableShape<'picture'>, 'img'>
-  : T extends 'group'
-    ? ExportedGroup
-    : DrawableShape<T>
+  : T extends 'custom'
+    ? Omit<DrawableShape<'custom'>, 'definition'>
+    : T extends 'group'
+      ? ExportedGroup
+      : DrawableShape<T>
 
 export type ShapeEntity<T extends ShapeType = ShapeType> = {
   id: string

@@ -1,10 +1,14 @@
-import { DATA_FILE_MAX_SIZE } from '@canvas/constants/app'
+import { DATA_FILE_MAX_SIZE, type UtilsSettings } from '@canvas/constants/app'
 import { PICTURE_DEFAULT_SIZE, PICTURE_LOAD_TIMEOUT, PICTURE_MAX_SIZE } from '@canvas/constants/picture'
 import { createPaintStore, type PaintStore } from '@canvas/store/paintStore'
-import type { ShapeEntity, ShapeInput } from '@canvas/types/Shapes'
+import type { DrawableShape, Point, ShapeEntity, ShapeInput } from '@canvas/types/Shapes'
+import type { CustomTool, CustomToolInput } from '@canvas/types/tools'
 import { decodeJson, getPictureSource, loadPicture } from '@canvas/utils/file'
+import { createShape, refreshShape, sizeShapeOnClick } from '@canvas/utils/shapes'
+import { fitPictureToImage, resizePicture } from '@canvas/utils/shapes/picture'
+import { buildAvailableTools } from '@canvas/utils/tools'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { createLoadedStore, FakeImage, RECTS, stubPath2D } from './helpers'
+import { createLoadedStore, FakeImage, MEASURE_CONTEXT, RECTS, stubPath2D } from './helpers'
 
 /**
  * @vitest-environment jsdom
@@ -15,6 +19,9 @@ const PNG_DATA_URL = 'data:image/png;base64,iVBORw0KGgo='
 const SVG = "<svg xmlns='http://www.w3.org/2000/svg' width='10' height='10'><rect width='10' height='10'/></svg>"
 
 const picture = (src: string): ShapeInput => ({ type: 'picture', x: 0, y: 0, width: 100, height: 100, src })
+
+/** Settings without selection padding: the boxes of the stickers are read as they are drawn */
+const NO_PADDING = { selectionPadding: 0, gridGap: 0 } as UtilsSettings
 
 /** Response of the fetch of a picture */
 const pictureResponse = ({ type = 'image/png', ok = true, body = 'image' } = {}) => ({
@@ -333,5 +340,112 @@ describe('picture load events', () => {
     expect(seen).toEqual([{ id: 'bad', types: ['rect', 'picture'], found: undefined }])
     // the pictures of loaded data are loaded before the promise is resolved
     expect(loaded).not.toHaveBeenCalled()
+  })
+})
+
+describe('stickers', () => {
+  const stickerTool = (ratio?: number): CustomToolInput => ({
+    id: 'sticker',
+    type: 'picture',
+    src: PNG_DATA_URL,
+    settings: { opacity: { min: 0, max: 100, step: 1, default: 100 } },
+    ...(ratio === undefined ? {} : { ratio })
+  })
+
+  /** A sticker as a press draws it: an empty box, with the image of its tool, which may still be loading */
+  const emptySticker = (img: HTMLImageElement) =>
+    refreshShape(
+      { id: 'sticker_1', type: 'picture', x: 100, y: 100, width: 0, height: 0, src: PNG_DATA_URL, img } as DrawableShape & { id: string },
+      NO_PADDING
+    ) as ShapeEntity<'picture'>
+
+  const loaded = (img: HTMLImageElement) => vi.waitFor(() => expect(img.complete).toBe(true))
+
+  it('loads the image of a sticker tool once it is chosen, and shares it between its stickers', async () => {
+    FakeImage.size = () => [200, 100]
+    const store = await createLoadedStore({ options: { availableTools: [stickerTool()] } }, [])
+    const tool = store.getState().tools.available.find(({ id }) => id === 'sticker')!
+    store.setActiveTool(tool)
+
+    const img = store.getStickerImage(PNG_DATA_URL)
+    await loaded(img)
+    expect(img.naturalWidth).toBe(200)
+    // the stickers of the tool share its image: it is never loaded again
+    expect(store.getStickerImage(PNG_DATA_URL)).toBe(img)
+  })
+
+  it('draws a sticker with the proportions of the image of its tool, or the ratio the tool gives', async () => {
+    FakeImage.size = () => [200, 100]
+    const img = new Image()
+    img.src = PNG_DATA_URL
+    await loaded(img)
+
+    const tools = buildAvailableTools([stickerTool(), { ...stickerTool(3), id: 'wide' }])
+    const sticker = (id: string, image?: HTMLImageElement) =>
+      createShape(MEASURE_CONTEXT, tools.find(tool => tool.id === id)! as Extract<CustomTool, { type: 'picture' }>, [10, 20], NO_PADDING, image)
+
+    expect(sticker('sticker', img)).toMatchObject({ type: 'picture', x: 10, y: 20, width: 0, height: 0, ratio: 2 })
+    // the ratio of the tool is kept, even once the image is loaded: the consumer gives the proportions it wants
+    expect(sticker('wide', img)).toMatchObject({ ratio: 3 })
+    // without the image of its tool, the sticker has no proportions yet: see fitPictureToImage
+    expect(sticker('sticker')).not.toHaveProperty('ratio')
+  })
+
+  it('keeps the proportions of the image while a sticker is drawn, and draws a square until it is loaded', async () => {
+    FakeImage.size = () => [200, 100]
+    const img = new Image()
+    const sticker = emptySticker(img)
+    const dragTo = (to: Point) =>
+      resizePicture(
+        to,
+        sticker,
+        { mode: 'resize', anchor: [1, 1], cursorStartPosition: [100, 100], originalShape: sticker, selectedShapesLengthAtMouseDown: 1 },
+        NO_PADDING,
+        false
+      )
+
+    // the image of its tool is not loaded yet: the drag is square, and the sticker has no proportions of its own
+    expect(dragTo([300, 300])).toMatchObject({ x: 100, y: 100, width: 200, height: 200 })
+    expect(dragTo([300, 300])).not.toHaveProperty('ratio')
+
+    img.src = PNG_DATA_URL
+    await loaded(img)
+    // the same drag, once the image is loaded: the box keeps its proportions, which the sticker now knows
+    expect(dragTo([300, 300])).toMatchObject({ x: 100, y: 100, width: 400, height: 200, ratio: 2 })
+  })
+
+  it('fits a sticker drawn before its image inside the box of its drag, once it is loaded', async () => {
+    FakeImage.size = () => [200, 100]
+    const img = new Image()
+    img.src = PNG_DATA_URL
+    await loaded(img)
+
+    // the square box of a drag made before the image was loaded
+    const square = refreshShape({ ...emptySticker(img), width: 200, height: 200 }, NO_PADDING) as ShapeEntity<'picture'>
+    expect(fitPictureToImage(square, NO_PADDING)).toMatchObject({ x: 100, y: 150, width: 200, height: 100, ratio: 2 })
+    // an empty box is sized by sizeShapeOnClick, from the proportions it is given here
+    expect(fitPictureToImage(emptySticker(img), NO_PADDING)).toMatchObject({ width: 0, height: 0, ratio: 2 })
+    expect(sizeShapeOnClick({ ...emptySticker(img), ratio: 2 }, [400, 300], NO_PADDING)).toMatchObject({
+      x: 250,
+      y: 225,
+      width: PICTURE_DEFAULT_SIZE,
+      height: PICTURE_DEFAULT_SIZE / 2
+    })
+    // a picture which already knows its proportions keeps its box: only its image was missing
+    const given = refreshShape({ ...emptySticker(img), width: 200, height: 200, ratio: 1 }, NO_PADDING) as ShapeEntity<'picture'>
+    expect(fitPictureToImage(given, NO_PADDING)).toMatchObject({ x: 100, y: 100, width: 200, height: 200, ratio: 1 })
+  })
+
+  it('gives a picture added without a box the proportions of its image, and keeps the box it is given', async () => {
+    FakeImage.size = () => [200, 100]
+    const store = createPaintStore()
+    const [empty, box] = store.actions.addShapes([
+      { type: 'picture', x: 0, y: 0, width: 0, height: 0, src: PNG_DATA_URL },
+      { type: 'picture', x: 0, y: 0, width: 300, height: 300, src: PNG_DATA_URL }
+    ])
+
+    await vi.waitFor(() => expect(store.getShape(empty!)).toMatchObject({ ratio: 2 }))
+    // the box given by the consumer is the one of the picture, whatever its image: it gives its proportions
+    expect(store.getShape(box!)).toMatchObject({ x: 0, y: 0, width: 300, height: 300, ratio: 1 })
   })
 })

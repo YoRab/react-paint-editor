@@ -19,6 +19,7 @@ An open-source canvas-based library for React used for image annotation or as a 
 - **Interactive Canvas** - Full support for zoom, pan, pinch gestures, and infinite or fixed-size canvases, scaled to their container or filling it
 - **Shape Manipulation** - Select, move, resize, rotate, and transform shapes with intuitive controls
 - **Groups** - Group shapes, groups included, to move, turn, resize, fade, hide or lock them together, and double click a group to select inside it
+- **Custom Shapes & Stickers** - Define your own tools: parametric vector shapes (a star whose branches stay editable) styled like the native ones, and stickers drawn from an image you provide
 - **Eraser & Laser Pointer** - Erase the shapes a stroke crosses, or point at things with a trail that fades out, both optional in the editor
 - **Eyedropper & Recent Colors** - Pick a color of the drawing, and find the custom colors used last in every color field of the editor
 - **Customizable Styling** - Control colors, line widths, opacity, line styles (dashes, joins and caps), rounded corners, picture borders, arrowheads, fill patterns and gradients, fonts, font sizes, text alignment, line heights, text backgrounds, outlines, underlines and strikethroughs
@@ -311,6 +312,54 @@ const popoverPosition = box && paint.toClientPosition([box.x + box.width, box.y]
 - A group holds its shapes in its `shapes` field, from the foreground: `state.shapes` and the exported data are a tree. `flattenShapes(shapes)` lists all the shapes, each group before its shapes, and `getShapeLeaves(shapes)` the shapes drawn. The actions find the shapes of the groups by their ids, and the order actions never take a shape out of its group. A group left with a single shape is dissolved: the shape takes its place.
 - `dataChanged(data, source, changes)` gives the shapes added, updated (with their previous version) and removed since the previous state, to send only what changed: `changes.added`, `changes.updated`, `changes.removed`, and `changes.reordered`. An undo gives the reverse changes. The shapes of the groups are listed too: a group is updated when its own fields or the ids of its shapes change. `changes.reordered` tells that shapes still there changed their order or their group: build the drawing again from `data.shapes` then.
 - `setOptions` overrides options of `useReactPaint` until `resetOptions`. `resetSettings` restores what was changed while editing: the default styles of the tools, the grid, the zoom and the active tool.
+
+### Custom shapes and stickers
+
+A tool of type `custom` draws a shape of your own. Its `shape` gives an SVG path and the view box it is drawn in, which is fitted in the box of every shape it draws: the shape is then styled, resized, turned and grouped like a rectangle. When its path is built from the parameters declared by its `params` setting, their values are kept on each shape and stay editable afterwards — the editor shows them as sliders. Without an `icon`, the toolbar shows the shape the tool draws, and so do the layers of its shapes.
+
+A tool of type `picture` which gives a `src` is a sticker: it draws that image on a press, like the other drawing tools, keeping the proportions of the image. Its image is loaded as soon as the tool is chosen and shared by all its stickers; a `ratio` on the tool gives these proportions without waiting for it.
+
+The path is yours: a fixed string, or a function of the parameters of the shape, built again whenever they change. The view box must be the extent the path draws, since it is fitted in the box of the shape.
+
+```tsx
+import { type CustomShapeParams, type CustomToolInput, DEFAULT_TOOLS, SETTINGS_DEFAULT_CUSTOM, useReactPaint } from '@yorab/react-paint'
+
+// a star of as many branches, inside the circle of its view box of 100: its notches are depth percent of its radius deep
+const starPath = ({ branches = 5, depth = 50 }: CustomShapeParams) => {
+  const points = Array.from({ length: branches * 2 }, (_, index) => {
+    const radius = index % 2 ? 50 - depth / 2 : 50
+    const angle = (index * Math.PI) / branches - Math.PI / 2
+    return `${50 + radius * Math.cos(angle)} ${50 + radius * Math.sin(angle)}`
+  })
+  return `M${points.join(' L')} Z`
+}
+
+// a heart drawn by curves, which fills its view box of 100 x 90
+const HEART_PATH = 'M50 90 C20 70 0 50 0 28 C0 12 12 0 27 0 C38 0 46 6 50 15 C54 6 62 0 73 0 C88 0 100 12 100 28 C100 50 80 70 50 90 Z'
+
+const TOOLS: CustomToolInput[] = [
+  ...DEFAULT_TOOLS,
+  {
+    id: 'star',
+    type: 'custom',
+    label: 'Star',
+    shape: { viewBox: [0, 0, 100, 100], path: starPath },
+    settings: {
+      ...SETTINGS_DEFAULT_CUSTOM,
+      params: {
+        branches: { label: 'Branches', min: 3, max: 12, step: 1, default: 5 },
+        depth: { label: 'Depth', min: 10, max: 90, step: 5, default: 50 }
+      }
+    }
+  },
+  { id: 'heart', type: 'custom', label: 'Heart', shape: { viewBox: [0, 0, 100, 90], path: HEART_PATH, keepRatio: true }, settings: SETTINGS_DEFAULT_CUSTOM },
+  { id: 'party', type: 'picture', label: 'Confetti', src: '/stickers/party.svg', settings: {} }
+]
+
+const paint = useReactPaint({ options: { availableTools: TOOLS } })
+```
+
+A custom shape is exported with the `toolId` of its tool and its `params`, not with its path: give the same tools before loading data which holds their shapes, or they are left out and `customShapeLoadFailed` tells which.
 
 ### Picture annotation
 

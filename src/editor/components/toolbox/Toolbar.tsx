@@ -43,8 +43,15 @@ const TOOLBAR_STRUCTURE: (
     vertical: false
   },
   {
+    // the custom tools of the consumer join the shapes: they all draw a shape in a box
     title: 'shapes',
-    toolsType: ['rect', 'square', 'circle', 'ellipse'],
+    toolsType: ['rect', 'square', 'circle', 'ellipse', 'custom'],
+    vertical: false
+  },
+  {
+    // the stickers of the consumer: the group is not shown when it gives none
+    title: 'stickers',
+    toolsType: ['picture'],
     vertical: false
   },
   'text'
@@ -89,7 +96,8 @@ const Toolbar = ({
   const paint = usePaint()
   const { actions } = paint
   const { activeTool, tools, history, width } = usePaintState(paint, selectToolbarState, shallowEqual)
-  const availableTools = useMemo(() => tools.map(getDisplayTool), [tools])
+  // the picture tool which opens a file is not shown in the toolbar: only the sticker tools, which give their source
+  const availableTools = useMemo(() => tools.filter(tool => tool.type !== 'picture' || tool.src).map(getDisplayTool), [tools])
   const { canUndo: hasActionToUndo, canRedo: hasActionToRedo, canClear: hasActionToClear } = history
   const { undo: undoAction, redo: redoAction, clearCanvas } = actions
 
@@ -202,19 +210,17 @@ const Toolbar = ({
       </div>
       {isMenuOpen && (
         <Modal className='react-paint-editor-toolbar-modal' onClose={toggleTools} title='Outils'>
-          {availableTools.map(toolType =>
-            toolType.type === 'picture' ? null : (
-              <Tool
-                disabled={disabled}
-                key={toolType.id}
-                type={toolType}
-                img={toolType.icon}
-                withText={false}
-                isActive={activeTool.id === toolType.id}
-                setActive={() => setActiveTool(toolType.id)}
-              />
-            )
-          )}
+          {availableTools.map(toolType => (
+            <Tool
+              disabled={disabled}
+              key={toolType.id}
+              type={toolType}
+              img={toolType.icon}
+              withText={false}
+              isActive={activeTool.id === toolType.id}
+              setActive={() => setActiveTool(toolType.id)}
+            />
+          ))}
         </Modal>
       )}
       {isPictureUrlModalOpen && <PictureUrlModal togglePictureUrlModal={togglePictureUrlModal} addPicture={addPicture} />}

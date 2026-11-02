@@ -1,5 +1,12 @@
 import type { UtilsSettings } from '@canvas/constants/app'
-import { SELECTION_DEFAULT_WIDTH, SHAPES_KEEPING_RATIO, SHAPES_WITH_ROTATION, STYLE_FIELDS_SHAPE_TYPES } from '@canvas/constants/shapes'
+import { PICTURE_DEFAULT_SIZE } from '@canvas/constants/picture'
+import {
+  SELECTION_DEFAULT_WIDTH,
+  SHAPE_DEFAULT_SIZE,
+  SHAPES_KEEPING_RATIO,
+  SHAPES_WITH_ROTATION,
+  STYLE_FIELDS_SHAPE_TYPES
+} from '@canvas/constants/shapes'
 import type { HoverModeData, SelectionModeData, SelectionModeResize } from '@canvas/types/Mode'
 import type { DrawableShape, Point, Rect, SelectionType, ShapeEntity, ShapeType, StyleShape } from '@canvas/types/Shapes'
 import type { CustomTool } from '@canvas/types/tools'
@@ -12,18 +19,19 @@ import { drawSelectionGroup } from '@canvas/utils/selection/groupSelection'
 import { drawLineSelection } from '@canvas/utils/selection/lineSelection'
 import { drawBoundingBox, drawSelectionRect } from '@canvas/utils/selection/rectSelection'
 import { drawFrame } from '@canvas/utils/selection/selectionFrame'
-import { boundVectorToSingleAxis, roundForGrid } from '@canvas/utils/transform'
+import { boundVectorToSingleAxis, fitContentInsideContainer, roundForGrid } from '@canvas/utils/transform'
 import { getBoundingRect, getPointsBounds, getRectCorners, rotatePoint } from '@canvas/utils/trigo'
 import { createShapeId } from '@canvas/utils/util'
 import { getCurrentView } from '@canvas/utils/zoom'
 import { createBrush, drawBrush, refreshBrush, resizeBrush, resizeBrushInGroup } from './brush'
 import { createCircle, drawCircle, refreshCircle, resizeCircle, resizeCircleInGroup } from './circle'
 import { createCurve, drawCurve, refreshCurve, resizeCurve } from './curve'
+import { createCustomShape, drawCustomShape, refreshCustomShape, resizeCustomShape, resizeCustomShapeInGroup } from './custom'
 import { createEllipse, drawEllipse, refreshEllipse, resizeEllipse, resizeEllipseInGroup } from './ellipse'
 import { buildGroupResizeContext, type GroupResizeContext, getGroupResizeContext, getMirroredRotation } from './group'
 import { createLine, drawLine, refreshLine, resizeLine, resizeLinePolygonCurveInGroup } from './line'
 import { expandRect } from './path'
-import { drawPicture, hasPictureBorder, refreshPicture, resizePicture, resizePictureInGroup } from './picture'
+import { createSticker, drawPicture, getPictureRatio, hasPictureBorder, refreshPicture, resizePicture, resizePictureInGroup } from './picture'
 import { createPolygon, drawPolygon, refreshPolygon, resizePolygon } from './polygon'
 import { createRectangle, drawRect, refreshRect, resizeRect, resizeRectInGroup } from './rectangle'
 import { createText, drawText, fitTextToStyle, isTextPaintedSeveralTimes, refreshText, resizeText, resizeTextInGroup } from './text'
@@ -31,9 +39,11 @@ import { getShapeLeaves, mapGroupShapes, refreshGroup } from './tree'
 
 export const createShape = (
   ctx: CanvasRenderingContext2D,
-  shape: Exclude<CustomTool, { type: 'picture' }>,
+  shape: Exclude<CustomTool, { type: 'group' }>,
   cursorPosition: Point,
-  settings: UtilsSettings
+  settings: UtilsSettings,
+  /** Image of a sticker tool, loaded once and shared by its stickers: see createSticker */
+  stickerImage?: HTMLImageElement
 ): ShapeEntity | undefined => {
   const roundCursorPosition: Point = [roundForGrid(cursorPosition[0], settings), roundForGrid(cursorPosition[1], settings)]
   switch (shape.type) {
@@ -54,6 +64,11 @@ export const createShape = (
       return createEllipse(shape, roundCursorPosition, settings)
     case 'circle':
       return createCircle(shape, roundCursorPosition, settings)
+    case 'custom':
+      return createCustomShape(shape, roundCursorPosition, settings)
+    // a picture tool only draws when it gives the source of a sticker: the others open a file
+    case 'picture':
+      return createSticker(shape, roundCursorPosition, settings, stickerImage)
   }
 }
 
@@ -88,6 +103,9 @@ const drawShapeByType = (ctx: CanvasRenderingContext2D, shape: ShapeEntity): voi
       break
     case 'picture':
       drawPicture(ctx, shape)
+      break
+    case 'custom':
+      drawCustomShape(ctx, shape)
       break
   }
 }
@@ -385,6 +403,15 @@ export const resizeShape = <T extends ShapeEntity>(
       return resizeText(ctx, cursorPosition, originalShape, selectionMode as SelectionModeResize, settings, isAltPressed) as T
     case 'picture':
       return resizePicture(cursorPosition, originalShape, selectionMode as SelectionModeResize, settings, isAltPressed) as T
+    case 'custom':
+      return resizeCustomShape(
+        cursorPosition,
+        originalShape,
+        selectionMode as SelectionModeResize,
+        settings,
+        originalShape.ratio !== undefined || isShiftPressed,
+        isAltPressed
+      ) as T
     case 'group': {
       // the shapes of the group are resized in its frame
       const keepRatio = isShiftPressed || mustKeepRatio(originalShape.shapes, originalShape.rotation)
@@ -396,13 +423,16 @@ export const resizeShape = <T extends ShapeEntity>(
 
 /**
  * Whether shapes resized together, in a frame turned by the rotation, keep their proportions: a shape keeping its ratio,
- * or a turned shape which is not turned like the frame, cannot be stretched. The points of the lines, the polygons and
- * the curves are stretched along the sides of the frame, whatever its rotation. The shapes of the groups are the ones
- * resized
+ * a custom shape of a definition which keeps the one of its view box, or a turned shape which is not turned like the
+ * frame, cannot be stretched. The points of the lines, the polygons and the curves are stretched along the sides of the
+ * frame, whatever its rotation. The shapes of the groups are the ones resized
  */
 export const mustKeepRatio = (shapes: ShapeEntity[], frameRotation = 0): boolean =>
   getShapeLeaves(shapes).some(
-    shape => SHAPES_KEEPING_RATIO.includes(shape.type) || (SHAPES_WITH_ROTATION.includes(shape.type) && (shape.rotation ?? 0) !== frameRotation)
+    shape =>
+      SHAPES_KEEPING_RATIO.includes(shape.type) ||
+      (shape.type === 'custom' && shape.ratio !== undefined) ||
+      (SHAPES_WITH_ROTATION.includes(shape.type) && (shape.rotation ?? 0) !== frameRotation)
   )
 
 /**
@@ -426,6 +456,8 @@ export const resizeShapeInGroup = (ctx: CanvasRenderingContext2D, shape: ShapeEn
       return resizeRectInGroup(shape, groupCtx)
     case 'picture':
       return resizePictureInGroup(shape, groupCtx)
+    case 'custom':
+      return resizeCustomShapeInGroup(shape, groupCtx)
     case 'text':
       return resizeTextInGroup(ctx, shape, groupCtx)
     case 'ellipse':
@@ -526,6 +558,7 @@ export const translateShape = (shape: ShapeEntity, translationX: number, transla
     case 'circle':
     case 'picture':
     case 'text':
+    case 'custom':
       return refreshShape(
         {
           ...shape,
@@ -606,9 +639,57 @@ export const refreshShape = (shape: DrawableShape & { id: string }, settings: Ut
       return refreshCurve(shape, settings)
     case 'brush':
       return refreshBrush(shape, settings)
+    case 'custom':
+      return refreshCustomShape(shape, settings)
     case 'group':
       // its shapes are already built: only its frame is built again
       return refreshGroup(shape, settings)
+  }
+}
+
+/**
+ * The shape drawn by a single click, at the default size of its type, centered on the press: drawn without a drag it
+ * would stay empty, and invisible. Undefined when the shape is not empty, like a text as wide as its content, and for
+ * the shapes whose click draws something: a dot of a brush, a point of a polygon or of a curve
+ */
+export const sizeShapeOnClick = (shape: ShapeEntity, center: Point, settings: UtilsSettings): ShapeEntity | undefined => {
+  const sizeBox = (width: number, height: number) =>
+    refreshShape({ ...shape, x: center[0] - width / 2, y: center[1] - height / 2, width, height } as DrawableShape & { id: string }, settings)
+
+  switch (shape.type) {
+    case 'rect':
+    case 'square':
+    case 'text':
+      return shape.width || shape.height ? undefined : sizeBox(SHAPE_DEFAULT_SIZE, SHAPE_DEFAULT_SIZE)
+    case 'picture': {
+      if (shape.width || shape.height) return undefined
+      // the picture fills a box of the default size of the pictures, keeping its proportions
+      const ratio = shape.ratio ?? getPictureRatio(shape.img) ?? 1
+      return sizeBox(...fitContentInsideContainer(ratio, 1, PICTURE_DEFAULT_SIZE, PICTURE_DEFAULT_SIZE, true))
+    }
+    case 'custom': {
+      if (shape.width || shape.height) return undefined
+      const { viewBox, defaultSize } = shape.definition
+      const [width, height] = defaultSize ?? [viewBox[2], viewBox[3]]
+      return sizeBox(width, height)
+    }
+    case 'circle':
+      return shape.radius ? undefined : refreshShape({ ...shape, radius: SHAPE_DEFAULT_SIZE / 2 }, settings)
+    case 'ellipse':
+      return shape.radiusX || shape.radiusY
+        ? undefined
+        : refreshShape({ ...shape, radiusX: SHAPE_DEFAULT_SIZE / 2, radiusY: SHAPE_DEFAULT_SIZE / 2 }, settings)
+    case 'line': {
+      const [start, end] = shape.points
+      if (start[0] !== end[0] || start[1] !== end[1]) return undefined
+      const points: [Point, Point] = [
+        [center[0] - SHAPE_DEFAULT_SIZE / 2, center[1]],
+        [center[0] + SHAPE_DEFAULT_SIZE / 2, center[1]]
+      ]
+      return refreshShape({ ...shape, points }, settings)
+    }
+    default:
+      return undefined
   }
 }
 
@@ -683,6 +764,7 @@ export const drawShapeSelection = ({
     case 'picture':
     case 'text':
     case 'brush':
+    case 'custom':
       drawSelectionRect(ctx, shape, selectionColor, selectionWidth, settings, withAnchors)
       break
     case 'multiSelection':
@@ -723,12 +805,13 @@ export const drawSelectionFrame = ({
 
 /**
  * Copy of a shape with a new id, a group with copies of its shapes. The copy does not share the data of the application
- * with the original
+ * with the original, nor the parameters of a custom shape
  */
 export const cloneShape = <T extends ShapeEntity>(shape: T): T => ({
   ...shape,
   id: createShapeId(shape.type),
   ...(shape.data ? { data: structuredClone(shape.data) } : {}),
+  ...(shape.type === 'custom' && shape.params ? { params: { ...shape.params } } : {}),
   ...(shape.type === 'group' ? { shapes: shape.shapes.map(cloneShape) } : {})
 })
 

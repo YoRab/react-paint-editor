@@ -25,6 +25,10 @@ const buildPath = <T extends DrawableShape<'picture'>>(shape: T & { id: string }
 
 export const refreshPicture = buildPath
 
+/** Proportions of the image of a picture, known once it is loaded: the ones of a sticker are known only then */
+export const getPictureRatio = (img: HTMLImageElement): number | undefined =>
+  img.naturalWidth && img.naturalHeight ? img.naturalWidth / img.naturalHeight : undefined
+
 const createPictureShape = (
   img: HTMLImageElement,
   storedSrc: string,
@@ -55,6 +59,53 @@ const createPictureShape = (
     },
     settings
   )
+}
+
+/**
+ * A sticker drawn by a press, when its tool gives a source: its image is the one loaded for its tool, so that the drag
+ * starts at once and keeps the proportions of the image. Its box is empty, like the one of the other shapes drawn by a
+ * drag, and it has no ratio yet when its image is not loaded: see fitPictureToImage
+ */
+export const createSticker = (
+  tool: Extract<CustomTool, { type: 'picture' }>,
+  cursorPosition: Point,
+  settings: UtilsSettings,
+  /** Image of the tool, shared by its stickers: without it, the image of this sticker alone is loaded */
+  image?: HTMLImageElement
+): ShapeEntity<'picture'> | undefined => {
+  if (!tool.src) return undefined
+  const img = image ?? new Image()
+  const ratio = tool.ratio ?? getPictureRatio(img)
+  return buildPath(
+    {
+      toolId: tool.id,
+      type: 'picture',
+      id: createShapeId('picture'),
+      x: cursorPosition[0],
+      y: cursorPosition[1],
+      width: 0,
+      height: 0,
+      ...(ratio === undefined ? {} : { ratio }),
+      src: tool.src,
+      img,
+      style: getToolDefaultStyle(tool)
+    },
+    settings
+  )
+}
+
+/**
+ * The picture, with the proportions of its image once it is loaded: a sticker drawn before its image is loaded takes
+ * them, and its box is fitted inside the one its drag gave. A picture which already has a ratio, given by the consumer,
+ * taken from its box or from its tool, keeps it: only its image was missing
+ */
+export const fitPictureToImage = (shape: ShapeEntity<'picture'>, settings: UtilsSettings): ShapeEntity<'picture'> => {
+  const ratio = getPictureRatio(shape.img)
+  if (ratio === undefined || shape.ratio !== undefined) return { ...shape }
+  // an empty box is given its default size by sizeShapeOnClick, from the ratio
+  if (!shape.width || !shape.height) return { ...shape, ratio }
+  const [width, height] = fitContentInsideContainer(shape.img.naturalWidth, shape.img.naturalHeight, shape.width, shape.height, true)
+  return buildPath({ ...shape, ratio, width, height, x: shape.x + (shape.width - width) / 2, y: shape.y + (shape.height - height) / 2 }, settings)
 }
 
 /** Loads the image of a new picture, and returns the source kept in its shape: the URL, or the content of the file */
@@ -164,9 +215,12 @@ export const resizePicture = (
   settings: UtilsSettings,
   resizeFromCenter: boolean
 ): ShapeEntity<'picture'> => {
+  // a picture keeps its proportions: the ones of its image, known as soon as a sticker is loaded. Its drag is square
+  // until then, and the picture is fitted to its image once it is loaded (fitPictureToImage)
+  const ratio = originalShape.ratio ?? getPictureRatio(originalShape.img)
   const { borderX, borderHeight, borderY, borderWidth, isXinverted, isYinverted } = resizeRectSelection(
     cursorPosition,
-    originalShape,
+    { ...originalShape, ratio: ratio ?? 1 },
     selectionMode,
     settings,
     true,
@@ -179,6 +233,7 @@ export const resizePicture = (
   return buildPath(
     {
       ...originalShape,
+      ...(ratio === undefined ? {} : { ratio }),
       width,
       height,
       x: borderX + settings.selectionPadding,

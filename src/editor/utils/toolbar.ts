@@ -35,7 +35,8 @@ export const getCurrentStructure = (
         return availableTools.filter(tool => tool.type === group)
       }
       const toolsType = availableTools.filter(tool => group.toolsType.includes(tool.type))
-      if (!toolsType) return null
+      // a group without any available tool is not shown, and takes no room in the toolbar
+      if (!toolsType.length) return null
       return { ...group, toolsType }
     }
   )

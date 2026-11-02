@@ -158,6 +158,14 @@ const Editor = ({ paint, className, style, options, children }: EditorComponentP
   const reportPictureLoadFailed = useDebounce(showPictureLoadFailed, 0)
   useEffect(() => paint.registerEvent('pictureLoadFailed', reportPictureLoadFailed), [paint, reportPictureLoadFailed])
 
+  const showCustomShapeLoadFailed = useCallback(
+    () => addSnackbar({ type: 'error', text: "Certaines formes personnalisées n'ont pas pu être chargées" }),
+    [addSnackbar]
+  )
+  // the custom shapes left out of the same loaded data give a single message
+  const reportCustomShapeLoadFailed = useDebounce(showCustomShapeLoadFailed, 0)
+  useEffect(() => paint.registerEvent('customShapeLoadFailed', reportCustomShapeLoadFailed), [paint, reportCustomShapeLoadFailed])
+
   // the upload of a picture also covers the drop of a file on the canvas: the option comes back to the props afterwards
   useEffect(() => {
     if (withUploadPicture) return
