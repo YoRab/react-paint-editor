@@ -46,7 +46,7 @@ export const Grid: Story = {
     const setGrid = async (label: 'S' | 'M' | 'L') => {
       await userEvent.click(await view.findByRole('button', { name: 'Toggle layers panel' }))
       await new Promise(res => setTimeout(res, 50))
-      await userEvent.click(await view.findByRole('button', { name: label }))
+      await userEvent.click(await view.findByRole('button', { name: new RegExp(`^${label}, `) }))
       await new Promise(res => setTimeout(res, 50))
       await userEvent.click(await view.findByRole('button', { name: 'Toggle layers panel' }))
       await new Promise(res => setTimeout(res, 50))

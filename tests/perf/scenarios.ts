@@ -436,7 +436,8 @@ const layersAutosave = createLayersScenario({ id: 'layers-autosave', listenData:
 
 const ADDED_PICTURES = 3
 
-const UPLOAD_INPUT = 'label[title="Upload picture"] input[type="file"]'
+// the input of the file button, next to it
+const UPLOAD_INPUT = 'button[title="Upload picture"] + input[type="file"]'
 
 /** Adds photos from the menu of the toolbar, as files chosen by the user. Each one is added once loaded, then exported if listened */
 const createAddPictureScenario = ({ id, listenData = false }: Pick<Scenario, 'id' | 'listenData'>): Scenario => {

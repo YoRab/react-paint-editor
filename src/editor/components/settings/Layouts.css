@@ -10,8 +10,9 @@
   margin: 2px 0;
 }
 
-.react-paint-editor-layouts-remove-button.react-paint-editor-layouts-remove-button:not(:hover) {
-  opacity: 0.2;
+/* the button of the layer shows as dim, until the pointer or the focus is on it: dim, it keeps a contrast of 3:1 */
+.react-paint-editor-layouts-remove-button.react-paint-editor-layouts-remove-button:not(:hover, :focus-visible) {
+  opacity: 0.6;
 }
 
 .react-paint-editor-layout {
@@ -24,14 +25,66 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+  /* the row is dragged with the mouse, instead of selecting its text */
+  user-select: none;
+  /* the rows out of view are not laid out nor painted, which keeps a list of hundreds of layers cheap */
+  content-visibility: auto;
+  contain-intrinsic-size: auto 50px;
 }
 
-.react-paint-editor-layout[data-is-over='1'] {
-  border: 3px dotted var(--react-paint-editor-app-font-hover-bg);
-}
-
+/* the layer dragged, see useLayerDrag */
 .react-paint-editor-layout[data-is-dragging='1'] {
   opacity: 0.4;
+}
+
+/* the line where the layer dragged is dropped, between two rows, indented to the depth of the layer dragged */
+.react-paint-editor-layout[data-drop]::before {
+  content: '';
+  position: absolute;
+  z-index: 1;
+  left: calc(var(--react-paint-editor-layout-drop-depth, 0) * 16px + 24px);
+  right: 0;
+  border-top: 2px solid var(--react-paint-editor-app-focus-color, var(--react-paint-editor-app-font-color));
+  pointer-events: none;
+}
+
+.react-paint-editor-layout[data-drop='before']::before {
+  /* inside the row: its paint is contained, the part outside would be clipped */
+  top: 0;
+}
+
+.react-paint-editor-layout[data-drop='after']::before {
+  bottom: 0;
+}
+
+/* the handle of a layer drags it with any pointer: a finger moving on the rest of the row scrolls the list */
+.react-paint-editor-layout-handle {
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: grab;
+  touch-action: none;
+  -webkit-touch-callout: none;
+  opacity: 0.6;
+}
+
+/* Shown under the pointer. A style of :hover also makes the handle a target of the touch adjustment of Chromium, which
+   would otherwise move a finger pressing it to the name of the layer, a focusable element next to it */
+.react-paint-editor-layout-handle:is(:hover, :active) {
+  opacity: 1;
+}
+
+.react-paint-editor-layout-handle > svg {
+  fill: currentColor;
+  width: 20px;
+  height: 20px;
+}
+
+.react-paint-editor-layout[data-disabled='1'] .react-paint-editor-layout-handle {
+  cursor: default;
 }
 
 .react-paint-editor-layout[data-selected='1'] {
@@ -63,37 +116,65 @@
   cursor: move;
 }
 
-.react-paint-editor-layout > span {
+.react-paint-editor-layouts-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* the name of the layer, which selects its shape */
+.react-paint-editor-layout-select {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  border-radius: var(--react-paint-editor-app-font-radius);
+}
+
+.react-paint-editor-layout-select > span {
   height: 20px;
   line-height: 1;
   color: #6b6b6b;
 }
 
-.react-paint-editor-layout[data-selected='1'] > span {
-  color: var(--react-paint-editor-app-font-selected-color);
+.react-paint-editor-layout-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.react-paint-editor-layout > span > svg {
-  fill: #6b6b6b;
+.react-paint-editor-layout-icon > svg {
+  fill: currentColor;
   width: 20px;
   height: 20px;
   padding: 0 4px;
   transform: scale(0.75);
 }
 
+/* the smallest target of 24 pixels, for the arrow of a group and the buttons moving a layer */
+.react-paint-editor-layout-chevron.react-paint-editor-layout-chevron,
+.react-paint-editor-layouts-move-button.react-paint-editor-layouts-move-button {
+  min-width: 24px;
+  width: 24px;
+}
+
 .react-paint-editor-layout-chevron.react-paint-editor-layout-chevron {
-  min-width: 20px;
-  width: 20px;
-  height: 20px;
+  height: 24px;
   margin: 0;
 }
 
-.react-paint-editor-layout-chevron .react-paint-editor-button-content {
+.react-paint-editor-layouts-move-button.react-paint-editor-layouts-move-button {
+  margin: 2px 0;
+}
+
+.react-paint-editor-layout-chevron .react-paint-editor-button-content,
+.react-paint-editor-layouts-move-button .react-paint-editor-button-content {
   justify-content: center;
   padding: 0;
 }
 
-.react-paint-editor-layout-chevron.react-paint-editor-layout-chevron svg {
+.react-paint-editor-layout-chevron.react-paint-editor-layout-chevron svg,
+.react-paint-editor-layouts-move-button.react-paint-editor-layouts-move-button svg {
   width: 16px;
   height: 16px;
 }
@@ -104,7 +185,7 @@
 
 /* the shapes which are not groups are aligned with the groups, when the drawing has groups */
 .react-paint-editor-layout-chevron-space {
-  width: 20px;
+  width: 24px;
   flex-shrink: 0;
 }
 
@@ -121,7 +202,7 @@
   color: var(--react-paint-editor-app-font-color);
   border: 1px solid var(--react-paint-editor-app-font-color);
   background: var(--react-paint-editor-app-toolbar-bg);
-  outline: none;
+  user-select: text;
 }
 
 .react-paint-editor-layouts-visible-button.react-paint-editor-layouts-visible-button {
@@ -129,7 +210,7 @@
 }
 
 .react-paint-editor-layouts-visible-button.react-paint-editor-layouts-visible-button[data-visible='false'] {
-  opacity: 0.2;
+  opacity: 0.6;
 }
 
 .react-paint-editor-layouts-locked-button.react-paint-editor-layouts-locked-button {
@@ -137,7 +218,7 @@
 }
 
 .react-paint-editor-layouts-locked-button.react-paint-editor-layouts-locked-button[data-locked='false'] {
-  opacity: 0.2;
+  opacity: 0.6;
 }
 
 .react-paint-editor-layouts-grid-button.react-paint-editor-layouts-grid-button span {
@@ -149,12 +230,8 @@
   font-weight: bold;
 }
 
-.react-paint-editor-layouts-separator {
-  flex: 1;
-}
-
 .react-paint-editor-layouts-panel.react-paint-editor-layouts-panel.react-paint-editor-layouts-panel {
-  bottom: 36px;
+  bottom: var(--react-paint-editor-bar-height);
   top: unset;
 }
 
@@ -163,10 +240,17 @@
   top: unset;
 }
 
+/* the panel of the layers stays between the toolbar and the settings bar of the editor, with its margin of 4 pixels: its list scrolls */
+.react-paint-editor-layers-panel.react-paint-editor-layers-panel {
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100% - 2 * var(--react-paint-editor-bar-height) - 8px);
+}
+
 .react-paint-editor-layouts-panel-content {
   display: flex;
   flex-direction: column;
-  max-height: 100%;
+  min-height: 0;
 }
 
 .react-paint-editor-layouts-scrolling-content {
@@ -184,4 +268,20 @@
   opacity: 0.6;
   text-align: center;
   padding: 12px 0px;
+}
+
+/* the focus of a layer stays inside the list, which scrolls */
+.react-paint-editor-layout-select:focus-visible {
+  outline-offset: -2px;
+}
+
+/* the color of the row, on its background when it is selected or hovered */
+.react-paint-editor-layout:is([data-selected='1'], :hover) .react-paint-editor-layout-select > span {
+  color: inherit;
+}
+
+/* the cursor of the row dragged, which holds the pointer, and of the rows under it */
+.react-paint-editor-layouts-list[data-dragging='1'] .react-paint-editor-layout,
+.react-paint-editor-layouts-list[data-dragging='1'] .react-paint-editor-layout * {
+  cursor: grabbing;
 }

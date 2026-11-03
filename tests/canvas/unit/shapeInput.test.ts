@@ -22,7 +22,9 @@ describe('getShapeInputError', () => {
       { type: 'polygon', points: POINTS },
       { type: 'curve', points: POINTS },
       { type: 'brush', points: [[[0, 0]]] },
-      { ...RECT, id: 'rect_1', rotation: 0.5, visible: false, locked: true, style: { strokeColor: 'red' }, data: { checked: true } }
+      { ...RECT, id: 'rect_1', rotation: 0.5, visible: false, locked: true, style: { strokeColor: 'red' }, data: { checked: true } },
+      // any shape can be named, like the alternative text of a picture
+      { type: 'picture', x: 0, y: 0, width: 10, height: 10, src: 'image.png', name: 'Logo of the company' }
     ]
     for (const shape of shapes) expect(getShapeInputError(shape)).toBeUndefined()
   })
@@ -39,7 +41,8 @@ describe('getShapeInputError', () => {
     [{ ...RECT, style: ['red'] }, '"style" must be an object'],
     [{ ...RECT, data: 'checked' }, '"data" must be an object'],
     [{ ...RECT, visible: 'oui' }, '"visible" must be a boolean'],
-    [{ ...RECT, locked: 1 }, '"locked" must be a boolean']
+    [{ ...RECT, locked: 1 }, '"locked" must be a boolean'],
+    [{ ...RECT, name: 3 }, '"name" must be a string']
   ])('checks the common fields: %j', (shape, error) => {
     expect(getShapeInputError(shape)).toBe(error)
   })

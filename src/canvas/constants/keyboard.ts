@@ -6,6 +6,8 @@ export const KeyboardCode = {
   Delete: 'Delete',
   Backspace: 'Backspace',
   Escape: 'Escape',
+  Enter: 'Enter',
+  Tab: 'Tab',
   Shift: 'Shift',
   Alt: 'Alt',
   Option: 'Option',

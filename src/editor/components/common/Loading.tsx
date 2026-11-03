@@ -24,6 +24,8 @@ const Loading = ({ isLoading = false }: LoadingType) => {
   return loadingState === 'hidden' ? null : (
     <div
       className='react-paint-editor-loading'
+      role='status'
+      aria-label='Chargement'
       data-loading={loadingState}
       style={{
         '--react-paint-editor-loading-zindex': STYLE_ZINDEX.LOADING,

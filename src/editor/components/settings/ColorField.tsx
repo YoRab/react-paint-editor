@@ -1,7 +1,8 @@
 import Button from '@editor/components/common/Button'
 import Panel from '@editor/components/common/Panel'
 import { eyedropperIcon, noFillIcon, noStrokeIcon, paletteIcon } from '@editor/constants/icons'
-import { uniqueId } from '@editor/utils/util'
+import useArrowNavigation from '@editor/hooks/useArrowNavigation'
+import useSettingsPanel from '@editor/hooks/useSettingsPanel'
 import type React from 'react'
 import { useEffect, useState } from 'react'
 import './ColorField.css'
@@ -28,20 +29,39 @@ type ShapeStyleColorType = {
 type ColorButtonType = {
   color: string
   mode: 'fill' | 'stroke'
-  selected: boolean
+  selected?: boolean
+  pressed?: boolean
   onClick: () => void
   title?: string
   disabled?: boolean
-}
+} & Pick<React.ButtonHTMLAttributes<HTMLButtonElement>, 'aria-expanded' | 'aria-controls'> & {
+    buttonRef?: React.Ref<HTMLButtonElement | HTMLInputElement>
+  }
+
+/** Name of a color of a palette: 'transparent' is no color */
+const getColorName = (color: string) => (color === 'transparent' ? 'Aucune couleur' : color)
 
 /** A button showing a color, named after it by default */
-const ColorButton = ({ color, mode, selected, onClick, title = color, disabled = false }: ColorButtonType) => (
+const ColorButton = ({
+  color,
+  mode,
+  selected,
+  pressed,
+  onClick,
+  title = getColorName(color),
+  disabled = false,
+  buttonRef,
+  ...ariaProps
+}: ColorButtonType) => (
   <Button
+    ref={buttonRef}
     title={title}
     selected={selected}
+    pressed={pressed}
     disabled={disabled}
     icon={color === 'transparent' ? (mode === 'fill' ? noFillIcon : noStrokeIcon) : undefined}
     onClick={onClick}
+    {...ariaProps}
   >
     {color !== 'transparent' && (
       <div
@@ -70,11 +90,17 @@ const ColorField = ({
   pickColor,
   isPicking
 }: ShapeStyleColorType) => {
-  const [customKey] = useState(uniqueId('settings_'))
+  const {
+    isPanelVisible,
+    // a function component takes no ref in React 18: the color button takes it as the buttonRef prop
+    triggerProps: { ref: triggerRef, ...triggerProps },
+    panelProps
+  } = useSettingsPanel(selectedSettings, setSelectedSettings)
+  // the palette and the recent colors are two groups of the arrows
+  const paletteRef = useArrowNavigation()
+  const recentColorsRef = useArrowNavigation()
   // the element is kept in a state, so that the listener is set once it is mounted
   const [customColorInput, setCustomColorInput] = useState<HTMLInputElement | null>(null)
-  const isPanelVisible = selectedSettings === customKey
-
   // the color is chosen once the picker is closed: it sends 'input' events while it is open, and 'change' at the end
   useEffect(() => {
     if (!customColorInput) return
@@ -99,31 +125,26 @@ const ColorField = ({
     valueChanged(field, color)
   }
 
-  const togglePanel = () => {
-    setSelectedSettings(prev => {
-      return prev === customKey ? undefined : customKey
-    })
-  }
-
   if (!values.length) return null
 
   const otherRecentColors = recentColors.filter(color => !values.includes(color))
   const renderColor = (color: string) => (
-    <ColorButton key={color} color={color} mode={mode} selected={color === value} onClick={() => handleClick(color)} />
+    <ColorButton key={color} color={color} mode={mode} pressed={color === value} onClick={() => handleClick(color)} />
   )
+  const isCustomColor = value !== '' && !values.includes(value)
 
   return (
     <>
-      <ColorButton color={value} mode={mode} title={title} disabled={disabled} selected={isPanelVisible} onClick={togglePanel} />
+      <ColorButton buttonRef={triggerRef} color={value} mode={mode} title={title} disabled={disabled} {...triggerProps} />
       {isPanelVisible && (
-        <Panel title={title} alignment='left' position='bottom'>
-          <div className='react-paint-editor-colorfield-wrapper'>
+        <Panel title={title} alignment='left' position='bottom' {...panelProps}>
+          <div className='react-paint-editor-colorfield-wrapper' ref={paletteRef}>
             {values.map(renderColor)}
             <Button
               ref={setCustomColorInput as React.Ref<HTMLInputElement | HTMLButtonElement>}
               type='color'
-              title='Custom color'
-              selected={value !== '' && !values.includes(value)}
+              title='Couleur personnalisée'
+              pressed={isCustomColor}
               value={value}
               onChange={handleChange}
             >
@@ -136,12 +157,17 @@ const ColorField = ({
                 <span dangerouslySetInnerHTML={{ __html: paletteIcon }} />
               </div>
             </Button>
-            <Button title='Pipette' icon={eyedropperIcon} selected={isPicking} onClick={handlePick} />
+            <Button title='Pipette' icon={eyedropperIcon} pressed={isPicking} onClick={handlePick} />
           </div>
           {otherRecentColors.length > 0 && (
-            <div className='react-paint-editor-colorfield-wrapper' title='Couleurs récentes'>
+            <fieldset
+              className='react-paint-editor-colorfield-wrapper'
+              title='Couleurs récentes'
+              aria-label='Couleurs récentes'
+              ref={recentColorsRef}
+            >
               {otherRecentColors.map(renderColor)}
-            </div>
+            </fieldset>
           )}
         </Panel>
       )}

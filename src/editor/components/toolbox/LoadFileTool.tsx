@@ -9,9 +9,11 @@ type LoadFileToolType = {
   type: EditorActionTool
   accept: string
   withText?: boolean
+  /** An item of a menu: its role is menuitem */
+  role?: 'menuitem'
 }
 
-const LoadFileTool = ({ disabled = false, withText = false, loadFile, type, accept }: LoadFileToolType) => {
+const LoadFileTool = ({ disabled = false, withText = false, loadFile, type, accept, role }: LoadFileToolType) => {
   const inputRef = useRef<HTMLInputElement>(null)
 
   const handleClick = () => {
@@ -34,6 +36,7 @@ const LoadFileTool = ({ disabled = false, withText = false, loadFile, type, acce
       title={type.label}
       icon={type.icon}
       disabled={disabled}
+      role={role}
     >
       {withText ? type.label : undefined}
     </Button>

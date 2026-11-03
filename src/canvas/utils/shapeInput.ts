@@ -11,7 +11,7 @@ import { foldGroupInto, GROUP_MIN_SHAPES, getCommonRotation, getShapeLeaves, ref
 import { findShapeTool, getToolDefaultStyle } from '@canvas/utils/tools'
 import { createShapeId } from '@canvas/utils/util'
 
-const COMMON_FIELDS = ['id', 'type', 'rotation', 'toolId', 'visible', 'locked', 'style', 'data']
+const COMMON_FIELDS = ['id', 'type', 'rotation', 'toolId', 'visible', 'locked', 'style', 'data', 'name']
 
 /** Fields of a group: it has no tool, its style only has an opacity */
 export const GROUP_FIELDS = ['id', 'type', 'rotation', 'visible', 'locked', 'style', 'data', 'shapes', 'name']
@@ -56,6 +56,7 @@ export const getCommonFieldsError = (shape: Record<string, unknown>): string | u
   if (shape.data !== undefined && !isRecord(shape.data)) return '"data" must be an object'
   if (shape.visible !== undefined && typeof shape.visible !== 'boolean') return '"visible" must be a boolean'
   if (shape.locked !== undefined && typeof shape.locked !== 'boolean') return '"locked" must be a boolean'
+  if (shape.name !== undefined && typeof shape.name !== 'string') return '"name" must be a string'
   return undefined
 }
 
@@ -110,7 +111,6 @@ export const getGroupFieldsError = (group: Record<string, unknown>, fields: stri
   if (unknownField === 'rotation') return '"rotation" of a group is changed by rotateShapes'
   if (unknownField === 'shapes') return '"shapes" of a group are changed by groupShapes and ungroupShapes'
   if (unknownField !== undefined) return `unknown field "${unknownField}" for a group`
-  if (group.name !== undefined && typeof group.name !== 'string') return '"name" must be a string'
   const styleField = isRecord(group.style) ? Object.keys(group.style).find(field => field !== 'opacity') : undefined
   if (styleField !== undefined) return `the style of a group only has an opacity, not "${styleField}"`
   return getCommonFieldsError(group)

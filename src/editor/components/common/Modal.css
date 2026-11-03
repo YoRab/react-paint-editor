@@ -36,3 +36,12 @@
   bottom: 0;
   background: #00000073;
 }
+
+/* the button closing the modal takes a whole row, under the content */
+.react-paint-editor-modal-close.react-paint-editor-modal-close {
+  grid-column: 1 / -1;
+}
+
+.react-paint-editor-modal-close .react-paint-editor-button-children {
+  justify-content: center;
+}

@@ -1,8 +1,9 @@
 import type { CustomTool, ToolsType } from '@canvas/index'
 import Button from '@editor/components/common/Button'
 import Panel from '@editor/components/common/Panel'
-import usePressOutside from '@editor/hooks/usePressOutside'
-import { useCallback, useRef, useState, useTransition } from 'react'
+import useArrowNavigation from '@editor/hooks/useArrowNavigation'
+import usePopup from '@editor/hooks/usePopup'
+import { useState, useTransition } from 'react'
 import Tool from './Tool'
 import './ToolbarGroup.css'
 
@@ -20,8 +21,7 @@ type ToolbarGroupType = {
 }
 
 const ToolbarGroup = ({ activeTool, group, disabled = false, setActiveToolFromId }: ToolbarGroupType) => {
-  const panelRef = useRef<HTMLDivElement | null>(null)
-  const [isOpen, setIsOpen] = useState(false)
+  const { containerRef, isOpen, setIsOpen, close: closePanel, triggerProps, panelProps, closeAndFocus } = usePopup()
   const [, startTransition] = useTransition()
   const [localActiveTool, setLocalActiveTool] = useState<ToolsType | undefined>(undefined)
 
@@ -30,8 +30,7 @@ const ToolbarGroup = ({ activeTool, group, disabled = false, setActiveToolFromId
     setActiveToolFromId(tool.id)
   }
 
-  const closePanel = useCallback(() => setIsOpen(false), [])
-  usePressOutside(panelRef, closePanel, isOpen)
+  const toolsRef = useArrowNavigation({ orientation: !('type' in group) && group.vertical ? 'vertical' : 'horizontal' })
 
   if ('type' in group) {
     return <Tool disabled={disabled} type={group} img={group.icon} isActive={activeTool.id === group.id} setActive={setActiveTool} />
@@ -54,7 +53,12 @@ const ToolbarGroup = ({ activeTool, group, disabled = false, setActiveToolFromId
 
   const groupIcon = localActiveTool ? localActiveTool.icon : group.toolsType?.[0]?.icon
 
-  const openPanel = () => {
+  // the opening selects the last tool chosen in the group
+  const togglePanel = () => {
+    if (isOpen) {
+      closePanel()
+      return
+    }
     if (localActiveTool) setActiveToolFromId(localActiveTool.id)
     else group.toolsType?.[0] && setActiveTool(group.toolsType[0])
     startTransition(() => {
@@ -62,15 +66,21 @@ const ToolbarGroup = ({ activeTool, group, disabled = false, setActiveToolFromId
     })
   }
 
+  // like an item of a menu, the tool chosen closes the panel, the focus going back to its button
+  const chooseTool = (tool: ToolsType) => {
+    setActiveTool(tool)
+    closeAndFocus()
+  }
+
   return (
-    <div className='react-paint-editor-toolbargroup-relative'>
+    <div className='react-paint-editor-toolbargroup-relative' ref={containerRef}>
       {/* the icon is rendered as HTML, the title as text */}
-      <Button selected={isActive} title={group.title} disabled={disabled} onClick={openPanel} icon={groupIcon}>
+      <Button selected={isActive} title={group.title} disabled={disabled} onClick={togglePanel} icon={groupIcon} {...triggerProps}>
         {groupIcon === undefined ? group.title : undefined}
       </Button>
       {isOpen && (
-        <Panel alignment='center' position='top'>
-          <div className='react-paint-editor-toolbargroup-panel-content' data-vertical={+group.vertical} ref={panelRef}>
+        <Panel alignment='center' position='top' {...panelProps}>
+          <div className='react-paint-editor-toolbargroup-panel-content' data-vertical={+group.vertical} ref={toolsRef}>
             {group.toolsType.map(toolType => (
               <Tool
                 disabled={disabled}
@@ -78,7 +88,7 @@ const ToolbarGroup = ({ activeTool, group, disabled = false, setActiveToolFromId
                 type={toolType}
                 img={toolType.icon}
                 isActive={activeTool.id === toolType.id}
-                setActive={setActiveTool}
+                setActive={chooseTool}
               />
             ))}
           </div>

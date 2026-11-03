@@ -8,5 +8,8 @@ export const SNACKBAR_DEFAULT_SETTINGS: {
   duration: 4000
 }
 
+/** Duration of an error, which stays longer to be read */
+export const SNACKBAR_ERROR_DURATION = 8000
+
 export const SNACKBAR_DURATION = 500
 export const SNACKBAR_TOGGLE_ANIMATION_DURATION = 100

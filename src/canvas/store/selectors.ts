@@ -25,6 +25,8 @@ export type CanvasView = {
   isEditMode: boolean
   features: UtilsSettings['features']
   textEdition: TextEdition | undefined
+  /** Whether the shapes are gone through from the keyboard */
+  isKeyboardNavigation: boolean
 }
 
 /** Memoizes the last result of a function, its arguments being compared one by one with Object.is */
@@ -228,7 +230,8 @@ export const createSelectors = () => {
         selectionFrame: interaction.selectionFrame?.frame,
         modifiers: interaction.modifiers,
         isPanning: interaction.panStart !== undefined,
-        focus: interaction.focus
+        focus: interaction.focus,
+        keyboardNavigation: interaction.keyboardNavigation
       }),
       contextMenu: buildContextMenu(withContextMenu, interaction.selectionMode, document.shapes)
     })
@@ -256,7 +259,8 @@ export const createSelectors = () => {
       resize: config.options.resize,
       isEditMode: config.mode !== 'viewer',
       features: selectFeatures(state),
-      textEdition: buildTextEdition(interaction.selectionMode, document.selectedShape, selectSettings(state))
+      textEdition: buildTextEdition(interaction.selectionMode, document.selectedShape, selectSettings(state)),
+      isKeyboardNavigation: interaction.keyboardNavigation
     })
   })
 

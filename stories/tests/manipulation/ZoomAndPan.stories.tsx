@@ -122,24 +122,24 @@ export const ZoomAndPan: Story = {
     touch('pointerdown', 3, [300, 300])
     await wait(600)
     touch('pointerup', 3, [300, 300])
-    expect(await view.findByRole('button', { name: 'Duplicate' })).toBeInTheDocument()
+    expect(await view.findByRole('menuitem', { name: 'Duplicate' })).toBeInTheDocument()
 
     // its sub menus open while they are hovered
-    await user.hover(view.getByRole('button', { name: 'Organize' }))
-    expect(await view.findByRole('button', { name: 'Move forward' })).toBeInTheDocument()
-    await user.unhover(view.getByRole('button', { name: 'Organize' }))
-    await waitFor(() => expect(view.queryByRole('button', { name: 'Move forward' })).toBeNull())
-    await user.hover(view.getByRole('button', { name: 'Transform' }))
-    expect(await view.findByRole('button', { name: 'Flip horizontally' })).toBeInTheDocument()
+    await user.hover(view.getByRole('menuitem', { name: 'Organize' }))
+    expect(await view.findByRole('menuitem', { name: 'Move forward' })).toBeInTheDocument()
+    await user.unhover(view.getByRole('menuitem', { name: 'Organize' }))
+    await waitFor(() => expect(view.queryByRole('menuitem', { name: 'Move forward' })).toBeNull())
+    await user.hover(view.getByRole('menuitem', { name: 'Transform' }))
+    expect(await view.findByRole('menuitem', { name: 'Flip horizontally' })).toBeInTheDocument()
 
     await user.pointer({ target: document.body, keys: '[MouseLeft]' })
-    await waitFor(() => expect(view.queryByRole('button', { name: 'Duplicate' })).toBeNull())
+    await waitFor(() => expect(view.queryByRole('menuitem', { name: 'Duplicate' })).toBeNull())
 
     touch('pointerdown', 4, [300, 300])
     touch('pointermove', 4, [330, 300])
     await wait(600)
     touch('pointerup', 4, [330, 300])
-    expect(view.queryByRole('button', { name: 'Duplicate' })).toBeNull()
+    expect(view.queryByRole('menuitem', { name: 'Duplicate' })).toBeNull()
     // the finger moved the square
     expect(getState().shapes[0]).toMatchObject({ x: 280, y: 250 })
   }

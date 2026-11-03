@@ -33,6 +33,9 @@ export const getPointsBounds = (pointLists: readonly (readonly Point[])[]): Boun
   return { minX, minY, maxX, maxY }
 }
 
+/** The center of a rectangle, the view or the box of a shape for instance */
+export const getRectCenter = ({ x, y, width, height }: Rect): Point => [x + width / 2, y + height / 2]
+
 /** The 4 corners of a rectangle, clockwise from its top left corner */
 export const getRectCorners = ({ x, y, width, height }: Rect): Point[] => [
   [x, y],

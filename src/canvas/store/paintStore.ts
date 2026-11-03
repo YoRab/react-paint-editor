@@ -126,6 +126,7 @@ const createInitialState = (config: PaintConfig): InternalState => ({
     panStart: undefined,
     moveAcceleration: [0, 0],
     focus: { component: false, canvas: false },
+    keyboardNavigation: false,
     laserTrail: []
   }
 })
@@ -365,6 +366,11 @@ export const createPaintStore = (props: UseReactPaintProps = {}) => {
     // The interactions are off when the canvas can neither be edited nor zoomed
     if (!selectors.selectIsInteractive(state) && (state.interaction.focus.component || state.interaction.focus.canvas)) {
       state = withInteraction(state, { focus: { component: false, canvas: false } })
+    }
+
+    // The shapes are only gone through from the keyboard while they can be edited
+    if (!selectors.selectFeatures(state).edition && state.interaction.keyboardNavigation) {
+      state = withInteraction(state, { keyboardNavigation: false })
     }
 
     // The computed data of the shapes depend on some settings
@@ -701,6 +707,9 @@ export const createPaintStore = (props: UseReactPaintProps = {}) => {
 
   const setFocus = (patch: Partial<Focus>) => update(state => withInteraction(state, { focus: patchObject(state.interaction.focus, patch) }))
 
+  /** Enters or leaves the navigation through the shapes from the keyboard, see InternalState */
+  const setKeyboardNavigation = (keyboardNavigation: boolean) => setInteractionField('keyboardNavigation', keyboardNavigation)
+
   /** Starts a stroke of the laser pointer at a point of the drawing, or goes on with the current one */
   const addLaserPoint = (point: Point, isNewStroke: boolean) =>
     update(state => withInteraction(state, { laserTrail: addLaserTrailPoint(state.interaction.laserTrail, point, Date.now(), isNewStroke) }))
@@ -972,6 +981,8 @@ export const createPaintStore = (props: UseReactPaintProps = {}) => {
 
   /** Gives the focus back to the draw canvas, like when an element over it closes: the shortcuts stay active */
   const focusCanvas = () => canvasElement?.focus()
+
+  const getCanvasElement = () => canvasElement
 
   /** Place of the draw canvas in the viewport, while it is displayed: the positions of the viewport are measured on it */
   const getCanvasRect = () => {
@@ -1431,6 +1442,7 @@ export const createPaintStore = (props: UseReactPaintProps = {}) => {
     setScopeElement,
     setCanvasRootElement,
     setCanvasElement,
+    getCanvasElement,
     focusCanvas,
     listenScope,
     // engine used by the canvas
@@ -1452,6 +1464,7 @@ export const createPaintStore = (props: UseReactPaintProps = {}) => {
     setPanStart,
     setMoveAcceleration,
     setModifiers,
+    setKeyboardNavigation,
     addLaserPoint,
     pickColorAt,
     setCanvasSize,

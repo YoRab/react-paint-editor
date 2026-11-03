@@ -11,6 +11,7 @@ import {
   SELECTION_TOOL_DISPLAY,
   UNDO_TOOL
 } from '@editor/constants/tools'
+import useArrowNavigation from '@editor/hooks/useArrowNavigation'
 import { getDisplayTool } from '@editor/utils/style'
 import { getCurrentStructure } from '@editor/utils/toolbar'
 import { useMemo, useState } from 'react'
@@ -123,6 +124,7 @@ const Toolbar = ({
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [isPictureUrlModalOpen, setIsPictureUrlModalOpen] = useState(false)
   const [isExportModalOpen, setIsExportModalOpen] = useState(false)
+  const modalToolsRef = useArrowNavigation()
 
   const toggleTools = () => {
     setIsMenuOpen(prev => !prev)
@@ -167,7 +169,15 @@ const Toolbar = ({
             />
           ))}
           {toolsInMenu ? (
-            <Button disabled={disabled} onClick={toggleTools} title='Toggle tools' icon={shapesIcon} selected={isAnyToolSelected} />
+            <Button
+              disabled={disabled}
+              onClick={toggleTools}
+              title='Toggle tools'
+              icon={shapesIcon}
+              selected={isAnyToolSelected}
+              aria-haspopup='dialog'
+              aria-expanded={isMenuOpen}
+            />
           ) : (
             currentStructure.map(group => (
               <ToolbarGroup
@@ -209,18 +219,21 @@ const Toolbar = ({
         />
       </div>
       {isMenuOpen && (
-        <Modal className='react-paint-editor-toolbar-modal' onClose={toggleTools} title='Outils'>
-          {availableTools.map(toolType => (
-            <Tool
-              disabled={disabled}
-              key={toolType.id}
-              type={toolType}
-              img={toolType.icon}
-              withText={false}
-              isActive={activeTool.id === toolType.id}
-              setActive={() => setActiveTool(toolType.id)}
-            />
-          ))}
+        <Modal className='react-paint-editor-toolbar-modal' onClose={toggleTools} title='Outils' withCloseButton>
+          {/* like the tools of a group, the active tool takes the focus first */}
+          <div className='react-paint-editor-toolbar-modal-tools' ref={modalToolsRef}>
+            {availableTools.map(toolType => (
+              <Tool
+                disabled={disabled}
+                key={toolType.id}
+                type={toolType}
+                img={toolType.icon}
+                withText={false}
+                isActive={activeTool.id === toolType.id}
+                setActive={() => setActiveTool(toolType.id)}
+              />
+            ))}
+          </div>
         </Modal>
       )}
       {isPictureUrlModalOpen && <PictureUrlModal togglePictureUrlModal={togglePictureUrlModal} addPicture={addPicture} />}

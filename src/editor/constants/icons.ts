@@ -155,3 +155,13 @@ export const groupShapesIcon =
   '<svg><path fill="none" stroke="currentColor" stroke-width="1.5" stroke-dasharray="2 1.5" d="M2.75 2.75H17.25V17.25H2.75Z"/><path d="M5.5 5.5H10V10H5.5ZM10 10H14.5V14.5H10Z"/></svg>'
 export const ungroupShapesIcon =
   '<svg><path fill="none" stroke="currentColor" stroke-width="1.25" stroke-dasharray="1.5 1.25" d="M1.75 1.75H9.25V9.25H1.75ZM10.75 10.75H18.25V18.25H10.75Z"/><path d="M3.75 3.75H7.25V7.25H3.75ZM12.75 12.75H16.25V16.25H12.75Z"/></svg>'
+
+/** A dot of 3 pixels, drawn from its left side */
+const DOT_PATH = 'a1.5 1.5 0 1 0 3 0a1.5 1.5 0 1 0-3 0Z'
+
+/** Two columns of three dots: the handle dragging a layer */
+export const dragHandleIcon = `<svg><path d="${[5, 10, 15].map(y => `M6 ${y}${DOT_PATH}M11 ${y}${DOT_PATH}`).join('')}"/></svg>`
+
+/** Arrows moving a layer towards the foreground, at the top of the layers, or towards the background */
+export const arrowUpwardIcon = '<svg><path d="M9.25 16.5V6.37L4.81 10.81L3.75 9.75L10 3.5L16.25 9.75L15.19 10.81L10.75 6.37V16.5Z"/></svg>'
+export const arrowDownwardIcon = '<svg><path d="M9.25 3.5V13.63L4.81 9.19L3.75 10.25L10 16.5L16.25 10.25L15.19 9.19L10.75 13.63V3.5Z"/></svg>'

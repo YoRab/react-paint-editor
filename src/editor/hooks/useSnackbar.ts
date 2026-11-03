@@ -1,10 +1,10 @@
-import { SNACKBAR_DEFAULT_SETTINGS } from '@editor/constants/snackbar'
+import { SNACKBAR_DEFAULT_SETTINGS, SNACKBAR_ERROR_DURATION } from '@editor/constants/snackbar'
 import type { SnackBarType, SnackbarTypeType } from '@editor/types/snackbar'
 import { uniqueId } from '@editor/utils/util'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useState } from 'react'
 
+/** The messages shown by the editor: each message removes itself at the end of its duration, see Snackbar */
 const useSnackbar = () => {
-  const timers = useRef<NodeJS.Timeout[]>([])
   const [snackbarList, setSnackbarList] = useState<SnackBarType[]>([])
 
   const removeSnackbar = useCallback((id: string) => {
@@ -13,40 +13,20 @@ const useSnackbar = () => {
 
   // stable, so that the callbacks and the effects using it are not rebuilt at each render
   const addSnackbar = useCallback(
-    ({
-      type = SNACKBAR_DEFAULT_SETTINGS.type,
-      duration = SNACKBAR_DEFAULT_SETTINGS.duration,
-      text
-    }: {
-      type?: SnackbarTypeType
-      duration?: number
-      text: string
-    }) => {
+    ({ type = SNACKBAR_DEFAULT_SETTINGS.type, duration, text }: { type?: SnackbarTypeType; duration?: number; text: string }) => {
       const newSnackbar = {
         id: uniqueId('snackbar_'),
-        duration,
+        // an error stays longer, to be read
+        duration: duration ?? (type === 'error' ? SNACKBAR_ERROR_DURATION : SNACKBAR_DEFAULT_SETTINGS.duration),
         type,
         text
       }
       setSnackbarList(prev => [...prev, newSnackbar])
-      const timerId = setTimeout(() => {
-        removeSnackbar(newSnackbar.id)
-        timers.current = timers.current.filter(t => t !== timerId)
-      }, duration)
-      timers.current = [...timers.current, timerId]
     },
-    [removeSnackbar]
+    []
   )
 
-  useEffect(() => {
-    return () => {
-      for (const timer of timers.current) {
-        clearTimeout(timer)
-      }
-    }
-  }, [])
-
-  return { snackbarList, addSnackbar }
+  return { snackbarList, addSnackbar, removeSnackbar }
 }
 
 export default useSnackbar

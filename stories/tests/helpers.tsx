@@ -45,6 +45,8 @@ const getIds = (shapes: readonly ShapeEntity[]) => shapes.map(shape => shape.id)
 /** Ids of the shapes of the drawing, the groups without their shapes */
 export const getRootIds = () => getIds(getState().shapes)
 
+export const getSelectedIds = () => getState().selectedShapeIds
+
 /** Ids of the shapes of a group */
 export const getChildIds = (id: string) => getIds((getPaint().getShape(id) as ShapeEntity<'group'>).shapes)
 
@@ -141,15 +143,25 @@ export function assertNoInternalFields(shape: unknown) {
 /** Position in the page of a point of the drawing */
 export const toClient = (point: Point) => getPaint().toClientPosition(point)!
 
+/** Dispatches an event of a pointer at a position in the page: the pointer 1 is the primary one */
+export const dispatchPointer = (
+  target: EventTarget,
+  type: string,
+  pointerType: 'mouse' | 'touch',
+  pointerId: number,
+  { x, y }: { x: number; y: number }
+) => {
+  target.dispatchEvent(
+    new PointerEvent(type, { pointerId, pointerType, isPrimary: pointerId === 1, clientX: x, clientY: y, bubbles: true, cancelable: true })
+  )
+}
+
 /**
  * Dispatches an event of a finger at a position in the page. The fingers of a pinch are given as events: user-event
  * releases only one of them
  */
-export const dispatchTouch = (target: EventTarget, type: string, pointerId: number, { x, y }: { x: number; y: number }) => {
-  target.dispatchEvent(
-    new PointerEvent(type, { pointerId, pointerType: 'touch', isPrimary: pointerId === 1, clientX: x, clientY: y, bubbles: true, cancelable: true })
-  )
-}
+export const dispatchTouch = (target: EventTarget, type: string, pointerId: number, position: { x: number; y: number }) =>
+  dispatchPointer(target, type, 'touch', pointerId, position)
 
 /** Color of the pixel of the draw canvas at a point of the drawing */
 export const getPixel = (drawCanvas: HTMLCanvasElement, point: Point) => {
@@ -159,6 +171,10 @@ export const getPixel = (drawCanvas: HTMLCanvasElement, point: Point) => {
   const y = Math.round(((position.y - rect.top) * drawCanvas.height) / rect.height)
   return [...drawCanvas.getContext('2d')!.getImageData(x, y, 1, 1).data]
 }
+
+/** The input of a button opening a file chooser, found by the title of the button: the files are given to it */
+export const findFileInput = async (view: ReturnType<typeof within>, title: string) =>
+  (await view.findByTitle(title)).nextElementSibling as HTMLInputElement
 
 // ─── Settings panel helpers ────────────────────────────────────────────────────
 
@@ -238,7 +254,7 @@ export const SVG_DATA_URI =
 /** Adds a picture from its URL through the menu (needs the withUrlPicture option), then waits for it to be loaded and selected. */
 export async function addPictureFromUrl(view: ReturnType<typeof within>, src: string) {
   await userEvent.click(await view.findByTitle('Menu'))
-  await userEvent.click(await view.findByRole('button', { name: 'Add picture from URL' }))
+  await userEvent.click(await view.findByRole('menuitem', { name: 'Add picture from URL' }))
   const urlInput = await view.findByRole('textbox')
   await userEvent.clear(urlInput)
   await userEvent.type(urlInput, src)
@@ -276,6 +292,6 @@ export async function openContextMenuAndClick(
 ) {
   await user.pointer({ target: drawCanvas, keys: '[MouseRight]', coords: { x: clientX, y: clientY } })
   await new Promise(res => setTimeout(res, 100))
-  await userEvent.click(await view.findByRole('button', { name: itemName }))
+  await userEvent.click(await view.findByRole('menuitem', { name: itemName }))
   await new Promise(res => setTimeout(res, 100))
 }

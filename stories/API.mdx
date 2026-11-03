@@ -142,7 +142,7 @@ import LinkTo from '@storybook/addon-links/react';
         <li><code>withContextMenu</code> - Whether the context menu is enabled</li>
         <li><code>withDropPicture</code> - Whether the image files dropped on the canvas are added: the <code>withDropPicture</code> option, the edition and the picture tool are needed</li>
         <li>
-          <p><code>interaction</code> - <code>{'{ mode, hoveredShape, selectionHover, selectionFrame, modifiers: { shift, alt, space }, isPanning, focus: { component, canvas } }'}</code>. It changes on each move of the pointer</p>
+          <p><code>interaction</code> - <code>{'{ mode, hoveredShape, selectionHover, selectionFrame, modifiers: { shift, alt, space }, isPanning, focus: { component, canvas }, keyboardNavigation }'}</code>. It changes on each move of the pointer. <code>keyboardNavigation</code> tells whether the shapes are gone through from the keyboard, see the <a href="#keyboard">keyboard shortcuts</a></p>
           <ul>
             <li><code>mode</code> - The gesture running: <code>'translate'</code>, <code>'rotate'</code>, <code>'resize'</code>, <code>'selectionFrame'</code>, <code>'brush'</code>, <code>'preview'</code> (a polygon or a curve being drawn), <code>'textedition'</code>, <code>'contextMenu'</code>, <code>'eraser'</code>, <code>'laser'</code>, <code>'eyedropper'</code> (a color being picked by <code>pickColor</code>), or <code>'default'</code> between them</li>
             <li><code>hoveredShape</code> - Shape under the mouse, searched between the gestures: the shape a click selects, a group for a shape of a group. The anchors of the selection outside of its shape are given by <code>selectionHover</code></li>
@@ -511,6 +511,16 @@ const annotationsStyle = useAnnotationsStyle(paint)
             <td><code>number</code></td>
             <td>Width of the trail of the laser pointer at its newest point, in pixels of the screen: it narrows as it fades out</td>
             <td><code>6</code></td>
+          </tr>
+          <tr>
+            <td><code>canvasLabels</code></td>
+            <td><code>Partial&lt;CanvasLabels&gt;</code></td>
+            <td>
+              Texts of the canvas for the assistive technologies, merged with <code>DEFAULT_CANVAS_LABELS</code> (in French): the name of the canvas (<code>canvas</code>), its role (<code>roleDescription</code>), its keys
+              (<code>instructions</code>), the hint shown when it takes the focus from the keyboard (<code>keyboardHint</code> and <code>keyboardHintKey</code>), the name of the text edition box (<code>textBox</code>) and of the list of
+              the shapes (<code>shapesList</code>), the word added to a selected shape (<code>selected</code>), and the name of each type of shape (<code>shapeTypes</code>, merged too)
+            </td>
+            <td><code>DEFAULT_CANVAS_LABELS</code></td>
           </tr>
         </tbody>
       </table>
@@ -982,6 +992,7 @@ const box = paint.getBounds([rectId])`} />
   toolId?: string
   visible?: boolean
   locked?: boolean
+  name?: string // shown in the layers and read by the assistive technologies: the alternative text of a picture
   rotation: number
   style?: StyleShape
   // ... shape-specific properties based on type
@@ -1082,7 +1093,7 @@ type ArrowHead = 'none' | 'triangle' | 'triangleOutline' | 'open' | 'circle' | '
       <p>
         <code>ShapeInput</code> is a shape given to <code>addShapes</code>, <code>resetCanvas</code> or <code>useReactPaint</code>: an <code>ExportedDrawableShape</code>, whose text can be given without its size, or a group of shapes given the same way (<code>GroupShapeInput</code>), holding 2 shapes at least.
         Without rotation, a group is turned like its shapes when they are all turned the same way.
-        <code>ShapePatch</code> is given to <code>updateShapes</code>: the id of a shape and the fields to change, its type excepted. The patch of a group (<code>GroupPatch</code>) only changes its <code>visible</code>, <code>locked</code>, <code>data</code> and <code>name</code> fields, and its opacity: a name set to <code>undefined</code> is removed.
+        <code>ShapePatch</code> is given to <code>updateShapes</code>: the id of a shape and the fields to change, its type excepted. A <code>name</code> set to <code>undefined</code> is removed. The patch of a group (<code>GroupPatch</code>) only changes its <code>visible</code>, <code>locked</code>, <code>data</code> and <code>name</code> fields, and its opacity.
       </p>
       <Source language='typescript' code={`const text: ShapeInput = { type: 'text', x: 0, y: 0, value: ['Hello'], fontSize: 24 }
 const group: ShapeInput = { type: 'group', name: 'Title', shapes: [text, { type: 'rect', x: 0, y: 40, width: 200, height: 4 }] }
@@ -1330,12 +1341,12 @@ useReactPaint({ options: { availableTools: [...DEFAULT_TOOLS, STAR, HEART, STICK
       </p>
       <Source language='typescript' code={`type Group = {
   shapes: ShapeEntity[] // from the foreground, in their own positions and rotations
-  name?: string // shown in the layers instead of its id
 }`} />
 
-      <h2>Keyboard Shortcuts</h2>
+      <h2 id="keyboard">Keyboard Shortcuts</h2>
       <p>
-        React Paint supports the following keyboard shortcuts, while the focus is inside the canvas, or inside the area set by <code>scopeRef</code> (the whole <code>Editor</code>):
+        React Paint supports the following keyboard shortcuts, while the focus is inside the canvas, or inside the area set by <code>scopeRef</code> (the whole <code>Editor</code>). A key handled by an element of this area
+        (its default prevented), like the arrows of a menu of the editor, is left to it:
       </p>
       <table>
         <thead>
@@ -1387,10 +1398,51 @@ useReactPaint({ options: { availableTools: [...DEFAULT_TOOLS, STAR, HEART, STICK
           </tr>
           <tr>
             <td><code>Shift + Arrow Keys</code></td>
-            <td>Move selected shape(s) by 10 pixels</td>
+            <td>Move selected shape(s) by 10 pixels, or by 10 gaps of the grid</td>
+          </tr>
+          <tr>
+            <td><code>Arrow Keys</code> on the canvas, without selection</td>
+            <td>Move the view by 50 pixels of the screen, 500 with <code>Shift</code></td>
+          </tr>
+          <tr>
+            <td><code>Shift+F10</code> or the menu key on the canvas</td>
+            <td>Open the context menu on the selection, or at the center of the view</td>
           </tr>
         </tbody>
       </table>
+      <p>
+        Reached with <code>Tab</code>, the canvas shows a hint (<code>canvasLabels.keyboardHint</code>): <code>Enter</code> then goes through its shapes, until <code>Escape</code> leaves them
+        (<code>state.interaction.keyboardNavigation</code>):
+      </p>
+      <table>
+        <thead>
+          <tr>
+            <th>Key</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>Tab</code> / <code>Shift+Tab</code></td>
+            <td>
+              Select the next or the previous shape, among the visible shapes which are not locked of the drawing or of the group of the selection: it goes round, the focus staying on the canvas. The view moves to show
+              a shape outside of it
+            </td>
+          </tr>
+          <tr>
+            <td><code>Enter</code></td>
+            <td>
+              Go inside the selected group, edit the selected text, or, with a drawing tool, draw a shape of its default size at the center of the view (the brush, the polygon and the curve follow the path of the
+              pointer, they are not drawn from the keyboard)
+            </td>
+          </tr>
+          <tr>
+            <td><code>Escape</code></td>
+            <td>Select the group of the selection, keep a text whose edition ends selected, then clear the selection and leave the shapes: <code>Tab</code> leaves the canvas again</td>
+          </tr>
+        </tbody>
+      </table>
+      <p>A press of the pointer on the canvas, or the focus going elsewhere, leaves the shapes too.</p>
       <p>
         With the pointer, a click on a shape of a group selects the group. A double click on a selected group selects its shape under the pointer, one level down: a click then selects among the shapes of this group, until a click outside of it, and <code>Escape</code> goes back up one level.
         A locked group is selected as a whole. <code>Shift</code> + click adds a shape to the selection, or removes it.

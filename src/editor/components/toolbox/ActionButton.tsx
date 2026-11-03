@@ -5,17 +5,19 @@ type ActionButtonType = {
   type: EditorActionTool
   withText?: boolean
   disabled?: boolean
+  /** An item of a menu: its role is menuitem */
+  role?: 'menuitem'
   onClick: () => void
 }
 
 // Button of an action of the editor (undo, export...): unlike a tool, it is never active
-const ActionButton = ({ type, withText = false, disabled = false, onClick }: ActionButtonType) => {
+const ActionButton = ({ type, withText = false, disabled = false, role, onClick }: ActionButtonType) => {
   const handleClick = () => {
     onClick()
   }
 
   return (
-    <Button disabled={disabled} onClick={handleClick} title={type.label} icon={type.icon} data-testid={`tool-${type.type}`}>
+    <Button disabled={disabled} onClick={handleClick} title={type.label} icon={type.icon} role={role} data-testid={`tool-${type.type}`}>
       {withText ? type.label : undefined}
     </Button>
   )

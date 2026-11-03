@@ -43,8 +43,8 @@ export const assertValidPatches = (patches: unknown[], shapesById: ReadonlyMap<s
 /**
  * Applies a patch to a shape: its fields replace the current ones, except the style which is merged. A square keeps
  * equal sides. The box of a text follows its new content, font size or line height; its font size follows a new width
- * or font, like in the editor. The image of a picture whose source changes is reloaded by the caller. A patch of a
- * group only changes its flags, its data, its name and its opacity.
+ * or font, like in the editor. The image of a picture whose source changes is reloaded by the caller. A name set to
+ * undefined is removed. A patch of a group only changes its flags, its data, its name and its opacity.
  */
 export const applyShapePatch = (ctx: CanvasRenderingContext2D, shape: ShapeEntity, patch: ShapePatch, settings: UtilsSettings): ShapeEntity => {
   const { id: _id, type: _type, ...fields } = patch as ShapePatch & { type?: unknown }
@@ -54,7 +54,9 @@ export const applyShapePatch = (ctx: CanvasRenderingContext2D, shape: ShapeEntit
   // the parameters of a custom shape are merged like its style, so that a patch can change a single one of them
   const patchedParams = 'params' in fields ? fields.params : undefined
   const params = shape.type === 'custom' && patchedParams ? { ...shape.params, ...patchedParams } : undefined
-  const next = normalizeGeometry({ ...shape, ...fields, style, ...(params ? { params } : {}) } as ShapeEntity)
+  const patched = { ...shape, ...fields, style, ...(params ? { params } : {}) } as ShapeEntity
+  if ('name' in fields && fields.name === undefined) delete patched.name
+  const next = normalizeGeometry(patched)
 
   if (next.type === 'square' && ('width' in fields || 'height' in fields)) {
     const side = 'width' in fields ? next.width : next.height

@@ -1,5 +1,6 @@
 import { type EditorState, type Point, type Rect, usePaint } from '@canvas/index'
 import usePanTransition from '@editor/hooks/usePanTransition'
+import { isPastDragThreshold } from '@editor/utils/dom'
 import {
   canPanView,
   createMinimapShapesCollector,
@@ -14,7 +15,7 @@ import {
 } from '@editor/utils/minimap'
 import { clamp } from '@editor/utils/util'
 import type React from 'react'
-import { useCallback, useLayoutEffect, useRef } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useRef } from 'react'
 import './MiniMap.css'
 
 /** The largest pixel ratio drawn: the minimap stays sharp on a dense screen without drawing four times more pixels */
@@ -32,8 +33,11 @@ const PAGE_BORDER_ALPHA = 0.3
 /** Background of a drawing of a fixed size, drawn like a page under the shapes */
 const PAGE_COLOR = 'white'
 
-/** Pixels the pointer travels before a press becomes a drag instead of a click */
-const DRAG_THRESHOLD = 3
+const ARROW_DIRECTIONS: Record<string, Point> = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] }
+
+/** Part of the view an arrow moves it by, and with Shift */
+const ARROW_STEP_RATIO = 0.1
+const ARROW_SHIFT_STEP_RATIO = 0.5
 
 type MiniMapType = {
   /** Color of the shapes, the background, the page and the view, each with its own opacity */
@@ -170,6 +174,25 @@ const MiniMap = ({ shapesColor, selectionColor }: MiniMapType) => {
     }
   }, [paint, shapesColor, selectionColor])
 
+  // The arrows move the view, further with Shift. They are prevented, so that the shortcuts of the canvas leave them
+  useEffect(() => {
+    const canvas = canvasRef.current
+    if (!canvas) return
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const direction = ARROW_DIRECTIONS[e.key]
+      const state = paint.getState()
+      if (!direction || !canPanView(state)) return
+      e.preventDefault()
+      stop()
+      const { width, height } = state.view.visibleArea
+      // like on the canvas, Shift is read from the keys pressed in the scope
+      const ratio = state.interaction.modifiers.shift ? ARROW_SHIFT_STEP_RATIO : ARROW_STEP_RATIO
+      actions.panBy([direction[0] * width * ratio, direction[1] * height * ratio])
+    }
+    canvas.addEventListener('keydown', handleKeyDown)
+    return () => canvas.removeEventListener('keydown', handleKeyDown)
+  }, [paint, actions, stop])
+
   /** Offset of the view showing in its middle the point of the drawing under the pointer, undefined when the view cannot move */
   const getCenterOffset = ({ rect }: { rect: DOMRect }, clientX: number, clientY: number): Point | undefined => {
     const transform = transformRef.current
@@ -201,7 +224,7 @@ const MiniMap = ({ shapesColor, selectionColor }: MiniMapType) => {
     const drag = dragRef.current
     if (drag?.pointerId !== event.pointerId) return
     if (!drag.isDragging) {
-      if (Math.abs(event.clientX - drag.origin[0]) < DRAG_THRESHOLD && Math.abs(event.clientY - drag.origin[1]) < DRAG_THRESHOLD) return
+      if (!isPastDragThreshold(drag.origin, event)) return
       drag.isDragging = true
     }
     const offset = getCenterOffset(drag, event.clientX, event.clientY)
@@ -226,7 +249,10 @@ const MiniMap = ({ shapesColor, selectionColor }: MiniMapType) => {
       ref={canvasRef}
       className='react-paint-editor-minimap'
       data-testid='minimap'
+      // the keyboard moves the view with the arrows
+      tabIndex={0}
       aria-label='Minimap'
+      title='The arrows move the view'
       width={MINIMAP_SIZE.width}
       height={MINIMAP_SIZE.height}
       style={{ width: `${MINIMAP_SIZE.width}px`, height: `${MINIMAP_SIZE.height}px` }}

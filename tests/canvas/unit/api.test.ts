@@ -172,6 +172,17 @@ describe('updateShapes', () => {
     expect(getShape(store, id!).computed.borders.x).toBe(50)
   })
 
+  it('names any shape, exports its name, and removes a name set to undefined', () => {
+    const store = createPaintStore()
+    const [id] = store.actions.addShapes([{ ...RECT, name: 'Box' }])
+    expect(getShape(store, id!).name).toBe('Box')
+    store.actions.updateShapes([{ id: id!, name: 'Frame' }])
+    expect(store.getCurrentData().shapes![0]).toMatchObject({ id, name: 'Frame' })
+    store.actions.updateShapes([{ id: id!, name: undefined }])
+    expect(getShape(store, id!)).not.toHaveProperty('name')
+    expect(() => store.actions.updateShapes([{ id: id!, name: 3 as unknown as string }])).toThrow('"name" must be a string')
+  })
+
   it('keeps equal sides for a square, and adapts the size of a text', () => {
     const store = createPaintStore()
     const [square, text] = store.actions.addShapes([

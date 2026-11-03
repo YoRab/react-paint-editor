@@ -1,6 +1,6 @@
 import Button from '@editor/components/common/Button'
 import Modal from '@editor/components/common/Modal'
-import './ExportModal.css'
+import './ToolboxModal.css'
 
 const TITLE = 'Choose export settings'
 
@@ -16,7 +16,7 @@ const ExportModal = ({ toggleExportModal, exportCanvasInFile }: ExportModalProps
   }
 
   return (
-    <Modal className='react-paint-editor-toolbox-export-modal' onClose={toggleExportModal} title={TITLE}>
+    <Modal className='react-paint-editor-toolbox-modal' onClose={toggleExportModal} title={TITLE}>
       <h3>{TITLE}</h3>
       <hr />
       <Button onClick={() => triggerExport('currentZoom')}>Exporter la vue actuelle</Button>

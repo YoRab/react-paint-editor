@@ -1,5 +1,5 @@
 import CanvasElement from '@canvas/components/Canvas'
-import { type CanvasOptions, DEFAULT_CANVAS_OPTIONS } from '@canvas/constants/app'
+import { type CanvasLabels, type CanvasOptions, DEFAULT_CANVAS_LABELS, DEFAULT_CANVAS_OPTIONS } from '@canvas/constants/app'
 import useAutoScroll from '@canvas/hooks/useAutoScroll'
 import useKeyboard from '@canvas/hooks/useKeyboard'
 import useResizeObserver from '@canvas/hooks/useResizeObserver'
@@ -8,7 +8,7 @@ import type { ReactPaint } from '@canvas/types/editor'
 import { canScaleDown, canScaleUp, getScaledCanvasSize, getUnscaledCanvasSize } from '@canvas/utils/canvas'
 import { withDefaults } from '@canvas/utils/object'
 import { cssVar } from '@canvas/utils/util'
-import { type CSSProperties, useCallback, useEffect, useRef, useSyncExternalStore } from 'react'
+import { type CSSProperties, useCallback, useEffect, useMemo, useRef, useSyncExternalStore } from 'react'
 
 // fills its parent, also as an item of a flex column, whatever the size of the canvas
 const EXTEND_ROOT_STYLE: CSSProperties = {
@@ -40,6 +40,16 @@ const Canvas = ({ paint, options, className, style }: CanvasComponentProps) => {
     DEFAULT_CANVAS_OPTIONS,
     options
   )
+
+  // the labels are compared by value: labels written inline do not describe the shapes again
+  const canvasLabelsKey = JSON.stringify(options?.canvasLabels ?? {})
+  const labels = useMemo((): CanvasLabels => {
+    const canvasLabels: CanvasOptions['canvasLabels'] = JSON.parse(canvasLabelsKey)
+    return {
+      ...withDefaults(DEFAULT_CANVAS_LABELS, canvasLabels),
+      shapeTypes: withDefaults(DEFAULT_CANVAS_LABELS.shapeTypes, canvasLabels?.shapeTypes)
+    }
+  }, [canvasLabelsKey])
 
   const containerRef = useRef<HTMLDivElement | null>(null)
   // the root of the Canvas is the default scope of the interactions
@@ -96,6 +106,7 @@ const Canvas = ({ paint, options, className, style }: CanvasComponentProps) => {
       <CanvasElement
         store={store}
         view={view}
+        labels={labels}
         backgroundColor={canvasBackgroundColor}
         selectionColor={canvasSelectionColor}
         selectionWidth={canvasSelectionWidth}
@@ -107,7 +118,9 @@ const Canvas = ({ paint, options, className, style }: CanvasComponentProps) => {
 }
 
 export {
+  type CanvasLabels,
   type CanvasOptions,
+  DEFAULT_CANVAS_LABELS,
   DEFAULT_OPTIONS,
   type OptionalOptions,
   type OptionalOptions as UseReactPaintOptions,

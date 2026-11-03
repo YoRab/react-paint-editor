@@ -5,6 +5,7 @@ import {
   getChildIds,
   getPaint,
   getRootIds,
+  getSelectedIds,
   getState,
   ReactPaintWrapper,
   setColorSetting,
@@ -36,7 +37,6 @@ const C: Point = [450, 150]
 const FREE: Point = [700, 150]
 const L1: Point = [150, 400]
 
-const getSelectedIds = () => getState().selectedShapeIds
 const getHoveredId = () => getState().interaction.hoveredShape?.id
 const getPosition = (id: string) => {
   const { x, y } = getPaint().getShape(id) as { x: number; y: number }

@@ -26,7 +26,7 @@ const ToggleField = ({ setSelectedSettings, disabled = false, field, icon, title
 
   if (values.length !== 2) return null
 
-  return <Button onClick={handleClick} selected={value} disabled={disabled} icon={icon} title={title} />
+  return <Button onClick={handleClick} pressed={value} disabled={disabled} icon={icon} title={title} />
 }
 
 export default ToggleField

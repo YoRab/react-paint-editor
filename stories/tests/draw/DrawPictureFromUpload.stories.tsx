@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import { expect, userEvent, waitFor, within } from 'storybook/test'
-import { assertNoInternalFields, getCurrentDataRef, ReactPaintWrapper, setRangeSetting } from './../helpers'
+import { assertNoInternalFields, findFileInput, getCurrentDataRef, ReactPaintWrapper, setRangeSetting } from './../helpers'
 
 const meta = {
   title: 'Tests/Draw',
@@ -26,9 +26,8 @@ export const DrawPictureFromUpload: Story = {
     // Open the menu
     await userEvent.click(await view.findByTitle('Menu'))
 
-    // Upload the file via the hidden file input inside the "Upload picture" label
-    const uploadLabel = await view.findByTitle('Upload picture')
-    await userEvent.upload(uploadLabel, file)
+    // Upload the file via the hidden file input of the "Upload picture" button
+    await userEvent.upload(await findFileInput(view, 'Upload picture'), file)
 
     // Wait for the image to load and the shape to be added (auto-selected)
     await new Promise(res => setTimeout(res, 500))
@@ -68,7 +67,7 @@ export const DrawPhotoFromUpload: Story = {
     const file = await createPhotoFile()
 
     await userEvent.click(await view.findByTitle('Menu'))
-    await userEvent.upload(await view.findByTitle('Upload picture'), file)
+    await userEvent.upload(await findFileInput(view, 'Upload picture'), file)
 
     // Wait for the image to load and the shape to be added
     await waitFor(() => expect(getCurrentDataRef.current!().shapes).toHaveLength(1))

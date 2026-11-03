@@ -1,4 +1,6 @@
 .react-paint-editor-app {
+  /* height of the toolbar and of the settings bar */
+  --react-paint-editor-bar-height: 36px;
   display: flex;
   color: var(--react-paint-editor-app-font-color);
   position: relative;
@@ -26,4 +28,37 @@
   width: 100%;
   border: none;
   border-top: 1px solid var(--react-paint-editor-app-divider-color);
+}
+
+/* read by the assistive technologies only */
+.react-paint-editor-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  border: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* the element with the focus of the keyboard, a selected button included */
+.react-paint-editor-app :focus-visible {
+  outline: 2px solid var(--react-paint-editor-app-focus-color, var(--react-paint-editor-app-font-color));
+  outline-offset: 2px;
+}
+
+/* the colors of the system replace the backgrounds which tell the selected elements, and the colors shown */
+@media (forced-colors: active) {
+  .react-paint-editor-button[data-selected='1'],
+  .react-paint-editor-layout[data-selected='1'] {
+    outline: 2px solid Highlight;
+    outline-offset: -2px;
+  }
+
+  .react-paint-editor-colorfield-color,
+  .react-paint-editor-colorfield-customcolor {
+    forced-color-adjust: none;
+  }
 }

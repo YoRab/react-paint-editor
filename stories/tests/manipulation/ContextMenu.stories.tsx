@@ -45,7 +45,7 @@ export const ContextMenuAfterToolbarSelection: Story = {
     // --- A single right click on the square opens the context menu ---
     await user.pointer({ target: drawCanvas, keys: '[MouseRight]', coords: { x: toClientX(300), y: toClientY(300) } })
     await new Promise(res => setTimeout(res, 100))
-    const duplicateButton = view.queryByRole('button', { name: 'Duplicate' })
+    const duplicateButton = view.queryByRole('menuitem', { name: 'Duplicate' })
     expect(duplicateButton).not.toBeNull()
 
     await userEvent.click(duplicateButton!)
@@ -80,25 +80,25 @@ export const ContextMenuGroups: Story = {
     // a single shape is neither grouped nor ungrouped
     await openContextMenu([200, 500])
     expect(getState().selectedShapeIds).toEqual(['left'])
-    expect(view.getByRole('button', { name: 'Group' })).toBeDisabled()
-    expect(view.getByRole('button', { name: 'Ungroup' })).toBeDisabled()
-    await user.click(view.getByRole('button', { name: 'Select all' }))
+    expect(view.getByRole('menuitem', { name: 'Group' })).toBeDisabled()
+    expect(view.getByRole('menuitem', { name: 'Ungroup' })).toBeDisabled()
+    await user.click(view.getByRole('menuitem', { name: 'Select all' }))
 
     // the selected shapes are grouped, and the group is selected
     await openContextMenu([200, 500])
     const menu = canvasElement.querySelector('.react-paint-editor-toolbox-contextmenu')!
     expect(menu.getBoundingClientRect().bottom).toBeLessThanOrEqual(window.innerHeight)
-    expect(view.getByRole('button', { name: 'Ungroup' })).toBeDisabled()
-    await user.click(view.getByRole('button', { name: 'Group' }))
-    expect(view.queryByRole('button', { name: 'Group' })).toBeNull()
+    expect(view.getByRole('menuitem', { name: 'Ungroup' })).toBeDisabled()
+    await user.click(view.getByRole('menuitem', { name: 'Group' }))
+    expect(view.queryByRole('menuitem', { name: 'Group' })).toBeNull()
     const [groupId] = getRootIds()
     expect(getRootIds()).toEqual([groupId])
     expect(getState().selectedShapeIds).toEqual([groupId])
 
     // the group alone cannot be grouped again, it is ungrouped: its shapes are selected
     await openContextMenu([500, 500])
-    expect(view.getByRole('button', { name: 'Group' })).toBeDisabled()
-    await user.click(view.getByRole('button', { name: 'Ungroup' }))
+    expect(view.getByRole('menuitem', { name: 'Group' })).toBeDisabled()
+    await user.click(view.getByRole('menuitem', { name: 'Ungroup' }))
     expect(getRootIds()).toEqual(['left', 'right'])
     expect(getState().selectedShapeIds).toEqual(['left', 'right'])
   }

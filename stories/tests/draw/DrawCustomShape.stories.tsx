@@ -88,7 +88,7 @@ export const DrawCustomShape: Story = {
     // their layers show the icon of their tool, the star it draws in its view box, and not the generic one of the custom shapes
     await userEvent.click(await view.findByRole('button', { name: 'Toggle layers panel' }))
     await wait()
-    const layerIcons = [...canvasElement.querySelectorAll('.react-paint-editor-layout > span > svg')]
+    const layerIcons = [...canvasElement.querySelectorAll('.react-paint-editor-layout-icon > svg')]
     expect(layerIcons).toHaveLength(2)
     for (const icon of layerIcons) expect(icon.getAttribute('viewBox')).toBe('0 0 100 100')
   }
