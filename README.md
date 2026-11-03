@@ -383,8 +383,20 @@ The styles of the canvas are inline. Some of its properties read a CSS variable:
 | `--react-paint-app-row-aspectratio` | root | `aspect-ratio`. Not with `resize: 'extend'` |
 | `--react-paint-canvas-edittextbox-color`, `-opacity`, `-fontfamily` | text edition box | `color`, `opacity`, `font-family` |
 | `--react-paint-canvas-edittextbox-transform`, `-fontsize`, `-padding` | text edition box | `transform`, `font-size`, `padding`: they follow the edited text, overriding them moves the box away from it |
+| `--react-paint-canvas-keyboard-hint-bg`, `-color` | hint of the keyboard | `background`, `color` of the hint shown when the canvas takes the focus from the keyboard |
 
 The other properties of the canvas elements are not set inline, or keep the canvas working (stacked canvases, touch): style the root with the `className` and `style` props of `Canvas`.
+
+### Accessibility
+
+The canvas and the editor are used from the keyboard and by the assistive technologies:
+
+- Reached with Tab, the canvas shows the hint "Déplacer le focus sur le canvas": Enter then goes through its shapes with Tab and Shift+Tab, the focus staying on the canvas, until Escape leaves them. Enter goes inside a group, edits a text, or draws a shape of the active tool at the center of the view. The arrows move the selection, or the view without selection, and Shift+F10 opens the context menu. See the [keyboard shortcuts](https://yorab.github.io/react-paint-editor/?path=/docs/api-reference--docs#keyboard).
+- The canvas is named and described, and its fallback content lists the visible shapes, their names and the content of the texts. Give a `name` to a shape, like the alternative text of a picture. Its texts are the `canvasLabels` option of `Canvas`, in French by default (`DEFAULT_CANVAS_LABELS`).
+- The buttons of the editor tell their state. Its menus and panels follow the same keys: opened from their button, they take the focus on the value chosen, a group of buttons is a single stop of Tab gone round with the arrows, Home and End, and Escape gives the focus back to their button, closing them, except the panels of the zoom and of the layers, which stay open. Tab leaving a menu or a panel of the toolbar or of the settings closes it too. The layers are gone round with the arrows (ArrowRight and ArrowLeft expand and collapse a group, Enter selects, Alt+arrows reorder, F2 renames, Delete removes), the modals keep the focus, and the "Position et taille" panel types the position, the size and the angle of the selection, instead of a drag. The editor announces the tool, the selection, the shapes added or removed and the zoom in a live region, like its messages.
+- The focus of the keyboard is outlined with `--react-paint-editor-app-focus-color` (the `fontColor` option by default), and the title of a button without text is shown while it has the focus (`--react-paint-editor-tooltip-bg`, `--react-paint-editor-tooltip-color`). The editor follows the forced colors mode and `prefers-reduced-motion`.
+
+The free drawing (brush, polygon, curve) follows the path of the pointer: it is not done from the keyboard.
 
 ### Performance
 

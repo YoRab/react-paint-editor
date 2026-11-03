@@ -7,6 +7,7 @@ import type { ToolsSettingsType } from '@canvas/types/tools'
 import { isVisibleColor } from '@canvas/utils/canvas'
 import { resizeRectSelection } from '@canvas/utils/selection/rectSelection'
 import { getToolDefaultStyle } from '@canvas/utils/tools'
+import { getRectCenter } from '@canvas/utils/trigo'
 import { createShapeId } from '@canvas/utils/util'
 import { type GroupResizeContext, getMirroredRotation, getPositionWithoutGroupRotation, getShapePositionInNewBorder } from './group'
 import { createRecPath, expandRect, getComputedShapeInfos } from './path'
@@ -363,15 +364,12 @@ const calculateTextWidth = (
   fontFamily?: string
 ) => measureWidestLine(ctx, text, fontSize, fontBold, fontItalic, fontFamily) || 20
 
-/** Center of the box of a text, around which it is turned: its selection frame has the same one */
-const getTextCenter = (text: Rect): Point => [text.x + text.width / 2, text.y + text.height / 2]
-
 /** Moves a text whose box changed so that it keeps the top of the side of its alignment, or the top of its middle */
 const keepTextAnchor = <T extends DrawableShape<'text'>>(shape: DrawableShape<'text'>, resizedShape: T): T => {
   // the anchor is the opposite one
   const anchor: Point = [1 - TEXT_ALIGN_POSITIONS[shape.style?.textAlign ?? 'left'], 1]
-  const [oppTrueX, oppTrueY] = getRectOppositeAnchorAbsolutePosition(anchor, getTextCenter(shape), shape)
-  const [newOppTrueX, newOppTrueY] = getRectOppositeAnchorAbsolutePosition(anchor, getTextCenter(resizedShape), resizedShape)
+  const [oppTrueX, oppTrueY] = getRectOppositeAnchorAbsolutePosition(anchor, getRectCenter(shape), shape)
+  const [newOppTrueX, newOppTrueY] = getRectOppositeAnchorAbsolutePosition(anchor, getRectCenter(resizedShape), resizedShape)
 
   return {
     ...resizedShape,

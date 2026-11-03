@@ -129,11 +129,11 @@ export const Commands: Story = {
 
     await user.pointer({ target: drawCanvas, keys: '[MouseRight]', coords: { x: toClientX(340), y: toClientY(340) } })
     await new Promise(res => setTimeout(res, 100))
-    expect(view.getByRole('button', { name: 'Duplicate' })).toBeInTheDocument()
+    expect(view.getByRole('menuitem', { name: 'Duplicate' })).toBeInTheDocument()
 
     await user.pointer({ target: document.body, keys: '[MouseLeft]' })
     await new Promise(res => setTimeout(res, 100))
-    expect(view.queryByRole('button', { name: 'Duplicate' })).toBeNull()
+    expect(view.queryByRole('menuitem', { name: 'Duplicate' })).toBeNull()
     expect(getCurrentDataRef.current!().shapes).toHaveLength(3)
   }
 }

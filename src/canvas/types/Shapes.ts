@@ -166,6 +166,11 @@ type GenericDrawableShape = {
   style?: StyleShape | undefined
   /** Free data of the application, which must be serializable in JSON. A patch replaces it as a whole */
   data?: ShapeData | undefined
+  /**
+   * Name of the shape, shown in the layers of the editor and given to the assistive technologies: the alternative text of
+   * a picture. A patch setting it to undefined removes it
+   */
+  name?: string | undefined
 } & (
   | (Line & {
       type: 'line'
@@ -229,8 +234,6 @@ type GenericDrawableShape = {
       type: 'group'
       /** Its shapes, from the foreground: they keep their own positions and rotations in the drawing */
       shapes: ShapeEntity[]
-      /** Name of the group, shown in the layers instead of its id */
-      name?: string
     }
 )
 

@@ -12,6 +12,7 @@
 
 .react-paint-editor-snackbar {
   display: inline-block;
+  position: relative;
   padding: 12px 48px;
   margin: 4px;
   color: white;
@@ -43,4 +44,32 @@
 .react-paint-editor-snackbar[data-is-shown='0'] {
   opacity: 0;
   transform: translate3d(0px, 40px, 0px);
+}
+
+.react-paint-editor-snackbar-close {
+  position: absolute;
+  top: 50%;
+  right: 8px;
+  transform: translateY(-50%);
+  min-width: 24px;
+  height: 24px;
+  padding: 0;
+  border: none;
+  border-radius: 4px;
+  background: none;
+  color: inherit;
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.react-paint-editor-snackbar-close:hover {
+  background: #ffffff33;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .react-paint-editor-snackbar,
+  .react-paint-editor-snackbar[data-is-shown] {
+    transform: none;
+  }
 }

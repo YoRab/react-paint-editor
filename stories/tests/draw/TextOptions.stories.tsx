@@ -31,7 +31,7 @@ export const TextOptions: Story = {
     const user = userEvent.setup()
     await selectTool(view, 'text')
     await setNumberSetting(view, 'Taille du texte', 20)
-    await setSelectSetting(view, 'Alignement du texte', 'center')
+    await setSelectSetting(view, 'Alignement du texte', 'Centré')
 
     const drawCanvas = await view.findByTestId('draw-canvas')
     const rect = drawCanvas.getBoundingClientRect()

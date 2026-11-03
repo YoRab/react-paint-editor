@@ -100,13 +100,18 @@ export const Responsive: Story = {
 
     const toolsModal = canvasElement.querySelector('.react-paint-editor-toolbar-modal')
     expect(toolsModal).not.toBeNull()
-    expect(toolsModal!.querySelectorAll('button').length).toBe(9)
+    expect(toolsModal!.querySelectorAll('button:not(.react-paint-editor-modal-close)').length).toBe(9)
+    // the modal takes the focus, and has its own button to close it
+    expect(toolsModal!.contains(document.activeElement)).toBe(true)
+    expect(within(toolsModal as HTMLElement).getByRole('button', { name: 'Fermer' })).toBeInTheDocument()
 
     // =====================================================================
-    // Step 7: Close tools modal by clicking the mask
+    // Step 7: Close tools modal with Escape: the focus goes back to its button
     // =====================================================================
-    await userEvent.click(canvasElement.querySelector('.react-paint-editor-modal-mask') as HTMLElement)
+    await userEvent.keyboard('{Escape}')
     await new Promise(res => setTimeout(res, 100))
+    expect(canvasElement.querySelector('.react-paint-editor-toolbar-modal')).toBeNull()
+    expect(document.activeElement).toBe(view.getByRole('button', { name: 'Toggle tools' }))
 
     // =====================================================================
     // Step 8: Narrow layout — settings bar
@@ -125,7 +130,7 @@ export const Responsive: Story = {
 
     const settingsModal = canvasElement.querySelector('.react-paint-editor-settings-modal')
     expect(settingsModal).not.toBeNull()
-    expect(settingsModal!.querySelectorAll('button').length).toBe(13)
+    expect(settingsModal!.querySelectorAll('button:not(.react-paint-editor-modal-close)').length).toBe(13)
 
     // =====================================================================
     // Step 10: Close settings modal by clicking the mask

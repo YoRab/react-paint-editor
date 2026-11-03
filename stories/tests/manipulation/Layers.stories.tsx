@@ -3,6 +3,8 @@ import { expect, userEvent, within } from 'storybook/test'
 import type { DrawableShape, ShapeEntity } from '../../../src/index'
 import {
   assertNoInternalFields,
+  dispatchPointer,
+  dispatchTouch,
   getChildIds,
   getCurrentDataRef,
   getPaint,
@@ -57,27 +59,23 @@ const INITIAL_CIRCLE_LAYER: DrawableShape = {
   }
 }
 
+type PagePoint = { x: number; y: number }
+
+/** Point of an element in the page, from its left and its top, in fractions of its size */
+const pointOf = (element: Element, ratioX = 0.5, ratioY = 0.5): PagePoint => {
+  const rect = element.getBoundingClientRect()
+  return { x: rect.left + rect.width * ratioX, y: rect.top + rect.height * ratioY }
+}
+
 /**
- * Simulates the HTML5 drag-and-drop of the layers. Passing a plain object as dataTransfer in the DragEvent constructor
- * fails browser validation: each DragEvent is created without dataTransfer, which is then shadowed on the instance.
- * dispatchDrag returns false when the default of the event is prevented, as a layer accepting the drop does on dragover
+ * Presses an element of a layer and moves the pointer through the positions, beyond the threshold of the drag. The events
+ * go to the element pressed, like with a capture of the pointer. Returns the release
  */
-const createDragEvents = () => {
-  const dt = {
-    data: {} as Record<string, string>,
-    effectAllowed: 'move' as string,
-    setData(type: string, val: string) {
-      this.data[type] = val
-    },
-    getData(type: string) {
-      return this.data[type] ?? ''
-    }
-  }
-  return (type: string, target: HTMLElement, withDt = true) => {
-    const event = new DragEvent(type, { bubbles: true, cancelable: true })
-    if (withDt) Object.defineProperty(event, 'dataTransfer', { value: dt, configurable: true })
-    return target.dispatchEvent(event)
-  }
+const pressAndMove = (pressed: Element, pointerType: 'mouse' | 'touch', ...positions: PagePoint[]) => {
+  const start = pointOf(pressed)
+  dispatchPointer(pressed, 'pointerdown', pointerType, 1, start)
+  for (const position of positions) dispatchPointer(pressed, 'pointermove', pointerType, 1, position)
+  return () => dispatchPointer(pressed, 'pointerup', pointerType, 1, positions.at(-1) ?? start)
 }
 
 export const Layers: Story = {
@@ -99,19 +97,24 @@ export const Layers: Story = {
     await new Promise(res => setTimeout(res, 100))
 
     // =====================================================================
-    // Step 2: Swap layers — drag rect (index 0) onto circle (index 1)
-    // moveItemPosition(shapes, 0, 1) → [circle, rect]
+    // Step 2: Reorder layers — drag the row of rect (index 0) with the mouse, below circle (index 1)
+    // → [circle, rect]
     // =====================================================================
     const layerItems = canvasElement.querySelectorAll('.react-paint-editor-layout')
     const rectLayerItem = layerItems[0] as HTMLElement
     const circleLayerItem = layerItems[1] as HTMLElement
 
-    const dispatchDrag = createDragEvents()
-    dispatchDrag('dragstart', rectLayerItem)
-    await new Promise(res => setTimeout(res, 50))
-    dispatchDrag('dragover', circleLayerItem)
-    dispatchDrag('drop', circleLayerItem)
-    dispatchDrag('dragend', rectLayerItem, false)
+    const release = pressAndMove(rectLayerItem, 'mouse', pointOf(circleLayerItem, 0.5, 0.9))
+    // the line shows the layer going after circle, the layer dragged is selected
+    expect(circleLayerItem.dataset.drop).toBe('after')
+    expect(rectLayerItem.dataset.isDragging).toBe('1')
+    release()
+    const [rectId] = getPaint().getState().selectedShapeIds
+    expect(rectLayerItem.dataset.isDragging).toBeUndefined()
+    expect(circleLayerItem.dataset.drop).toBeUndefined()
+    // the click of the release does not select the layer again: Shift would remove it from the selection
+    rectLayerItem.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, shiftKey: true }))
+    expect(getPaint().getState().selectedShapeIds).toEqual([rectId])
     await new Promise(res => setTimeout(res, 100))
 
     // =====================================================================
@@ -126,7 +129,7 @@ export const Layers: Story = {
     // =====================================================================
     // Step 3: Toggle circle visibility (hide) and lock the rect
     // Layer items have been re-rendered in new order: [0]=circle, [1]=rect.
-    // shape.visible is undefined by default → title='Show'; clicking sets visible=false.
+    // shape.visible is undefined by default → title='Hide'; clicking sets visible=false.
     // shape.locked is undefined by default → title='Unlocked'; clicking sets locked=true.
     // =====================================================================
     const updatedLayerItems = canvasElement.querySelectorAll('.react-paint-editor-layout')
@@ -214,11 +217,11 @@ export const LayersPanelActions: Story = {
     await new Promise(res => setTimeout(res, 100))
 
     const getLayers = () => [...canvasElement.querySelectorAll<HTMLElement>('.react-paint-editor-layout')]
-    // the layers show the ids of the shapes, from the foreground
-    const [frontId, backId] = getPaint()
+    // the layers show the default names of the shapes, from the foreground, numbered from the background
+    const [, backId] = getPaint()
       .getState()
       .shapes.map(shape => shape.id) as [string, string]
-    expect(getLayers().map(layer => layer.textContent)).toEqual([frontId, backId])
+    expect(getLayers().map(layer => layer.textContent)).toEqual(['Carré 2', 'Carré 1'])
 
     // --- A click on a layer selects its shape ---
     await userEvent.click(getLayers()[1]!)
@@ -236,7 +239,7 @@ export const LayersPanelActions: Story = {
     expect(getPaint().getState().selectedShapeIds).toEqual([backId])
 
     // --- The grid can be removed again ---
-    await userEvent.click(view.getByRole('button', { name: 'L' }))
+    await userEvent.click(view.getByRole('button', { name: 'L, Large grid' }))
     expect(getPaint().getState().gridGap).toBe(40)
     await userEvent.click(view.getByRole('button', { name: 'No grid' }))
     expect(getPaint().getState().gridGap).toBe(0)
@@ -272,27 +275,30 @@ export const LayersOfGroups: Story = {
 
     const getLayers = () => [...canvasElement.querySelectorAll<HTMLElement>('.react-paint-editor-layout')]
     const getLabels = () => getLayers().map(layer => layer.textContent)
-    const getLayer = (label: string) => getLayers().find(layer => layer.textContent === label)!
+    const getLayer = (id: string) => getLayers().find(layer => layer.dataset.layerId === id)!
+    const getLayerButton = (id: string) => within(getLayer(id)).getByRole('button', { pressed: getLayer(id).dataset.selected === '1' })
 
     // =====================================================================
-    // A group is followed by its shapes, indented below it. It shows its name, or else its id
+    // A group is followed by its shapes, indented below it. A layer shows the name of its shape, or else its type
+    // numbered from the background
     // =====================================================================
 
-    expect(getLabels()).toEqual(['Outer', 'a', 'inner', 'b', 'c', 'd'])
+    expect(getLabels()).toEqual(['Outer', 'Rectangle 4', 'Groupe 1', 'Rectangle 3', 'Rectangle 2', 'Rectangle 1'])
     expect(getLayers().map(layer => layer.style.getPropertyValue('--react-paint-editor-layout-depth'))).toEqual(['0', '1', '1', '2', '2', '0'])
 
     // a collapsed group hides its shapes, at any depth
     await user.click(within(getLayer('inner')).getByRole('button', { name: 'Collapse' }))
-    expect(getLabels()).toEqual(['Outer', 'a', 'inner', 'd'])
-    await user.click(within(getLayer('Outer')).getByRole('button', { name: 'Collapse' }))
-    expect(getLabels()).toEqual(['Outer', 'd'])
+    expect(getLabels()).toEqual(['Outer', 'Rectangle 4', 'Groupe 1', 'Rectangle 1'])
+    await user.click(within(getLayer('outer')).getByRole('button', { name: 'Collapse' }))
+    expect(getLabels()).toEqual(['Outer', 'Rectangle 1'])
     expect(getSelectedIds()).toEqual([])
 
     // the groups holding a shape selected are expanded again, to show it
     getPaint().actions.selectShapes(['b'])
     await wait()
-    expect(getLabels()).toEqual(['Outer', 'a', 'inner', 'b', 'c', 'd'])
+    expect(getLabels()).toEqual(['Outer', 'Rectangle 4', 'Groupe 1', 'Rectangle 3', 'Rectangle 2', 'Rectangle 1'])
     expect(getLayer('b').dataset.selected).toBe('1')
+    expect(getLayerButton('b')).toHaveAccessibleName('Rectangle 3')
 
     // =====================================================================
     // Shift+click adds a shape to the selection, Ctrl+click removes a selected one
@@ -330,20 +336,21 @@ export const LayersOfGroups: Story = {
     expect(getRootIds()).toEqual([groupId])
     expect(getChildIds(groupId!)).toEqual(['outer', 'd'])
     expect(getSelectedIds()).toEqual([groupId])
-    expect(getLabels()).toEqual([groupId, 'Outer', 'a', 'inner', 'b', 'c', 'd'])
+    expect(getLabels()).toEqual(['Groupe 2', 'Outer', 'Rectangle 4', 'Groupe 1', 'Rectangle 3', 'Rectangle 2', 'Rectangle 1'])
 
     await user.click(ungroupButton)
     expect(getRootIds()).toEqual(['outer', 'd'])
     expect(getSelectedIds()).toEqual(['d', 'outer'])
 
     // =====================================================================
-    // A double click on a group renames it: Enter keeps the name typed, Escape cancels, an empty name shows the id again
+    // A double click on a layer renames its shape: Enter keeps the name typed, Escape cancels, an empty name shows the
+    // default name again
     // =====================================================================
 
-    const getNameField = () => view.queryByRole('textbox', { name: 'Group name' })
+    const getNameField = () => view.queryByRole('textbox', { name: 'Layer name' })
     const getName = () => (getPaint().getShape('outer') as ShapeEntity<'group'>).name
 
-    await user.dblClick(getLayer('Outer'))
+    await user.dblClick(getLayer('outer'))
     expect(getNameField()).toHaveValue('Outer')
     await user.clear(getNameField()!)
     await user.type(getNameField()!, 'Front{Enter}')
@@ -351,47 +358,70 @@ export const LayersOfGroups: Story = {
     expect(getNameField()).toBeNull()
     expect(getLabels()[0]).toBe('Front')
     // the layer keeps the focus, for the shortcuts
-    expect(document.activeElement).toBe(getLayer('Front'))
+    await wait()
+    expect(document.activeElement).toBe(getLayerButton('outer'))
     expect(getState().interaction.focus.component).toBe(true)
 
-    await user.dblClick(getLayer('Front'))
+    await user.dblClick(getLayer('outer'))
     await user.type(getNameField()!, ' and back{Escape}')
     expect(getName()).toBe('Front')
     expect(getNameField()).toBeNull()
 
-    await user.dblClick(getLayer('Front'))
+    await user.dblClick(getLayer('outer'))
     await user.clear(getNameField()!)
     await user.keyboard('{Enter}')
     expect(getPaint().getShape('outer')).not.toHaveProperty('name')
-    expect(getLabels()[0]).toBe('outer')
+    expect(getLabels()[0]).toBe('Groupe 2')
 
     // a double click on a button of the layer does not rename it
     await user.dblClick(within(getLayer('inner')).getByRole('button', { name: 'Collapse' }))
     expect(getNameField()).toBeNull()
-    expect(getLabels()).toEqual(['outer', 'a', 'inner', 'b', 'c', 'd'])
+    expect(getLabels()).toEqual(['Groupe 2', 'Rectangle 4', 'Groupe 1', 'Rectangle 3', 'Rectangle 2', 'Rectangle 1'])
 
     // =====================================================================
-    // A shape is dropped among the shapes of its group only
+    // A layer is dragged by its handle, with a finger too, and dropped among the shapes of its group only: a line shows
+    // where it goes
     // =====================================================================
 
-    const dispatchDrag = createDragEvents()
-    dispatchDrag('dragstart', getLayer('a'))
+    const getHandle = (id: string) => getLayer(id).querySelector<HTMLElement>('.react-paint-editor-layout-handle')!
+    const getDropLines = () => getLayers().flatMap(layer => (layer.dataset.drop ? [[layer.dataset.layerId, layer.dataset.drop]] : []))
+
+    // a finger on the row, outside of its handle, scrolls the list instead
+    let release = pressAndMove(getLayer('a').querySelector('.react-paint-editor-layout-select')!, 'touch', pointOf(getLayer('c'), 0.5, 0.9))
+    expect(getLayer('a').dataset.isDragging).toBeUndefined()
+    expect(getDropLines()).toEqual([])
+    release()
+
+    // the line goes after inner and its shapes, a single block of the group of a
+    release = pressAndMove(getHandle('a'), 'touch', pointOf(getLayer('c'), 0.5, 0.9))
+    expect(getLayer('a').dataset.isDragging).toBe('1')
+    expect(getDropLines()).toEqual([['c', 'after']])
+    // over a layer out of the group of a, the line is hidden and the layer is not dropped
+    dispatchTouch(getHandle('a'), 'pointermove', 1, pointOf(getLayer('d'), 0.5, 0.9))
+    expect(getDropLines()).toEqual([])
+    release()
     await wait()
-    // the move over a layer of another group is not accepted, the drop on it does nothing
-    expect(dispatchDrag('dragover', getLayer('d'))).toBe(true)
-    dispatchDrag('drop', getLayer('d'))
-    dispatchDrag('dragend', getLayer('a'), false)
-    await wait(100)
     expect(getRootIds()).toEqual(['outer', 'd'])
     expect(getChildIds('outer')).toEqual(['a', 'inner'])
+    expect(getLayer('a').dataset.isDragging).toBeUndefined()
 
-    dispatchDrag('dragstart', getLayer('a'))
+    release = pressAndMove(getHandle('a'), 'touch', pointOf(getLayer('c'), 0.5, 0.9))
+    release()
     await wait()
-    expect(dispatchDrag('dragover', getLayer('inner'))).toBe(false)
-    dispatchDrag('drop', getLayer('inner'))
-    dispatchDrag('dragend', getLayer('a'), false)
-    await wait(100)
     expect(getChildIds('outer')).toEqual(['inner', 'a'])
+    expect(getSelectedIds()).toEqual(['a'])
+
+    // with the mouse, the whole row is dragged: Escape cancels the drag, the panel staying open
+    release = pressAndMove(getLayer('d'), 'mouse', pointOf(getLayer('outer'), 0.5, 0.1))
+    expect(getDropLines()).toEqual([['outer', 'before']])
+    await user.keyboard('{Escape}')
+    expect(getDropLines()).toEqual([])
+    expect(getLayer('d').dataset.isDragging).toBeUndefined()
+    release()
+    await wait()
+    expect(getRootIds()).toEqual(['outer', 'd'])
+    expect(getSelectedIds()).toEqual(['d'])
+    expect(view.getByRole('list', { name: 'Layers' })).toBeInTheDocument()
 
     // =====================================================================
     // The eye and the lock of a group change its own flags: a selected shape of a group locked is replaced by the group

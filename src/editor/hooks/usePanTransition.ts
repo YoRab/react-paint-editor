@@ -22,7 +22,9 @@ const usePanTransition = (getOffset: () => Point, setOffset: (offset: Point) => 
     (target: Point) => {
       stop()
       const start = getOffset()
-      if (Math.abs(target[0] - start[0]) < TRANSITION_MIN_DISTANCE && Math.abs(target[1] - start[1]) < TRANSITION_MIN_DISTANCE) {
+      const isClose = Math.abs(target[0] - start[0]) < TRANSITION_MIN_DISTANCE && Math.abs(target[1] - start[1]) < TRANSITION_MIN_DISTANCE
+      // the view is moved at once for the users who ask for less motion
+      if (isClose || window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) {
         setOffset(target)
         return
       }

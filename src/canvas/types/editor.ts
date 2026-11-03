@@ -75,6 +75,8 @@ export type InteractionState = {
   modifiers: { shift: boolean; alt: boolean; space: boolean }
   isPanning: boolean
   focus: { component: boolean; canvas: boolean }
+  /** Entered by Enter on the canvas: Tab and Shift+Tab then go through the shapes, until Escape leaves them */
+  keyboardNavigation: boolean
 }
 
 export type EditorState = {

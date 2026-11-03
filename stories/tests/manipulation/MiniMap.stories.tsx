@@ -48,8 +48,12 @@ const clickMinimap = (minimap: HTMLElement, position: Point) => {
 
 const getImage = (minimap: HTMLCanvasElement) => [...minimap.getContext('2d')!.getImageData(0, 0, minimap.width, minimap.height).data]
 
-/** Waits for the transition of the view to be over: the offset no longer changes between two frames */
+/**
+ * Waits for the transition of the view to be over: the offset no longer changes between two frames, once the transition
+ * of 250 ms could have run, so that a busy page which has not started it yet is not taken for a settled one
+ */
 const waitForView = async () => {
+  await wait(300)
   let previous: Point = [Number.NaN, Number.NaN]
   await waitFor(() => {
     const { offset } = getView()

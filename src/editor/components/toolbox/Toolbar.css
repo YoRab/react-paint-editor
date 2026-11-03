@@ -7,7 +7,7 @@
 
 .react-paint-editor-toolbar-toolbox {
   display: flex;
-  max-height: 36px;
+  max-height: var(--react-paint-editor-bar-height);
   background: var(--react-paint-editor-app-toolbar-bg);
   border-bottom: 1px solid var(--react-paint-editor-app-divider-color);
   box-sizing: border-box;
@@ -16,4 +16,9 @@
 
 .react-paint-editor-toolbar-modal {
   grid-template-columns: 1fr 1fr 1fr;
+}
+
+/* the tools are laid out by the grid of the modal */
+.react-paint-editor-toolbar-modal-tools {
+  display: contents;
 }

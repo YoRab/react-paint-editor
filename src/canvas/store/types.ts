@@ -56,6 +56,8 @@ export type InternalState = {
     /** Speed of the auto scroll, while a selection frame is drawn close to the borders */
     moveAcceleration: Point
     focus: Focus
+    /** Entered by Enter on the canvas: Tab and Shift+Tab then go through the shapes, until Escape leaves them */
+    keyboardNavigation: boolean
     /** Strokes of the laser pointer, which fade out: they are not part of the drawing */
     laserTrail: LaserPoint[][]
   }

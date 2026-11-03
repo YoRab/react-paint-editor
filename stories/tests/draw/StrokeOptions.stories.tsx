@@ -31,12 +31,12 @@ export const StrokeOptions: Story = {
     await selectTool(view, 'polygon')
 
     await userEvent.click(await view.findByRole('button', { name: MORE_OPTIONS }))
-    await setSelectSetting(view, 'Angles du trait', 'miter')
-    await setSelectSetting(view, 'Extrémités du trait', 'butt')
+    await setSelectSetting(view, 'Angles du trait', 'Pointus')
+    await setSelectSetting(view, 'Extrémités du trait', 'Plates')
     expect(view.getByRole('heading', { name: MORE_OPTIONS })).toBeInTheDocument()
     await userEvent.click(view.getByRole('button', { name: MORE_OPTIONS }))
     expect(view.queryByRole('heading', { name: MORE_OPTIONS })).toBeNull()
-    await setSelectSetting(view, 'Type de traits', '4')
+    await setSelectSetting(view, 'Type de traits', 'Tirets et points')
 
     const drawCanvas = await view.findByTestId('draw-canvas')
     const rect = drawCanvas.getBoundingClientRect()
@@ -59,7 +59,7 @@ export const StrokeOptions: Story = {
     // the selected polygon, clicked on its stroke, takes the new join
     await user.pointer({ target: drawCanvas, keys: '[MouseLeft]', coords: { x: cx, y: cy + 40 } })
     await wait(100)
-    await inMoreOptions(view, () => setSelectSetting(view, 'Angles du trait', 'bevel'))
+    await inMoreOptions(view, () => setSelectSetting(view, 'Angles du trait', 'Biseautés'))
     expect(getCurrentDataRef.current!().shapes![0]).toMatchObject({ style: { lineJoin: 'bevel', lineCap: 'butt' } })
 
     // a circle has neither corners nor ends: only the gradient of its fill in the other options

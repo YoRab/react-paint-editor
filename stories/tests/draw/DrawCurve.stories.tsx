@@ -34,7 +34,7 @@ export const DrawCurve: Story = {
     await setColorSetting(view, 'Couleur du trait', 'red')
     await setColorSetting(view, 'Couleur de fond', 'blue')
     await setRangeSetting(view, 'Epaisseur du trait', 5)
-    await setSelectSetting(view, 'Type de traits', '1')
+    await setSelectSetting(view, 'Type de traits', 'Pointillés')
     await setSelectSetting(view, 'Fermer les points', 'Oui')
     await setRangeSetting(view, 'Opacité', 50)
 
@@ -72,7 +72,7 @@ export const DrawCurve: Story = {
     await setColorSetting(view, 'Couleur du trait', 'green')
     await setColorSetting(view, 'Couleur de fond', 'yellow')
     await setRangeSetting(view, 'Epaisseur du trait', 10)
-    await setSelectSetting(view, 'Type de traits', '2')
+    await setSelectSetting(view, 'Type de traits', 'Tirets')
     await setSelectSetting(view, 'Fermer les points', 'Non')
     await setRangeSetting(view, 'Opacité', 75)
 

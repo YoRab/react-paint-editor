@@ -31,6 +31,8 @@ const getNodeValue = (node: ChildNode): string => {
 }
 
 type EditTextBoxType = {
+  /** Name of the box, given to the assistive technologies */
+  label: string
   disabled?: boolean
   shape: ShapeEntity<'text'>
   defaultValue: string[]
@@ -39,7 +41,7 @@ type EditTextBoxType = {
   saveShapes: () => void
 }
 
-const EditTextBox = ({ disabled = false, shape, defaultValue, updateValue, saveShapes, settings }: EditTextBoxType) => {
+const EditTextBox = ({ label, disabled = false, shape, defaultValue, updateValue, saveShapes, settings }: EditTextBoxType) => {
   const ref = useRef<HTMLDivElement>(null)
   const saveShapesRef = useRef(saveShapes)
 
@@ -124,7 +126,8 @@ const EditTextBox = ({ disabled = false, shape, defaultValue, updateValue, saveS
     <div
       className='react-paint-canvas-edittextbox'
       ref={ref}
-      aria-label='Text content'
+      aria-label={label}
+      aria-multiline='true'
       contentEditable={isEditable}
       role='textbox'
       tabIndex={isEditable ? 0 : undefined}

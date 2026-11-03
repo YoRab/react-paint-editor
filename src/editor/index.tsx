@@ -1,4 +1,5 @@
 import { type EditorState, type ExportView, PaintProvider, type ReactPaint, shallowEqual, usePaintState } from '@canvas/index'
+import Announcements from '@editor/components/common/Announcements'
 import Loading from '@editor/components/common/Loading'
 import SnackbarContainer from '@editor/components/common/Snackbar'
 import Layouts from '@editor/components/settings/Layouts'
@@ -8,6 +9,7 @@ import ZoomPanel from '@editor/components/settings/ZoomPanel'
 import Toolbar from '@editor/components/toolbox/Toolbar'
 import { DEFAULT_EDITOR_OPTIONS, type EditorOptions } from '@editor/constants/options'
 import useDebounce from '@editor/hooks/useDebounce'
+import useDisclosure from '@editor/hooks/useDisclosure'
 import useRecentColors from '@editor/hooks/useRecentColors'
 import useSnackbar from '@editor/hooks/useSnackbar'
 import { withDefaults } from '@editor/utils/util'
@@ -76,10 +78,13 @@ const Editor = ({ paint, className, style, options, children }: EditorComponentP
   const [isZoomPanelOpen, setIsZoomPanelShown] = useState(withZoom)
 
   const isZoomPanelShown = withZoom && isZoomPanelOpen
+  // the panels of the zoom and of the layers stay open while the drawing goes on: Escape gives the focus back to their button
+  const zoomPanel = useDisclosure(isZoomPanelShown)
+  const layersPanel = useDisclosure(isEditMode && layersManipulation && isLayoutPanelShown)
   // kept when the settings bar is hidden, in the viewer mode
   const { recentColors, addRecentColor } = useRecentColors()
 
-  const { snackbarList, addSnackbar } = useSnackbar()
+  const { snackbarList, addSnackbar, removeSnackbar } = useSnackbar()
 
   const exportCanvasInFile = useCallback(
     (exportView: ExportView) => {
@@ -180,6 +185,7 @@ const Editor = ({ paint, className, style, options, children }: EditorComponentP
       ref={setRootRef}
       className={appClassName}
       data-resize={layout.resize}
+      aria-busy={isLoading}
       style={{
         // bounds the width of the editor according to data-resize, like the canvas, which reads the same variable
         '--react-paint-editor-app-canvasWidth': `calc(var(--react-paint-app-canvaswidth, ${width}) * 1px)`,
@@ -215,9 +221,9 @@ const Editor = ({ paint, className, style, options, children }: EditorComponentP
           />
         )}
         {children}
-        {isEditMode && layersManipulation && <Layouts isLayoutPanelShown={isLayoutPanelShown} disabled={disabled} />}
+        {isEditMode && layersManipulation && <Layouts isLayoutPanelShown={isLayoutPanelShown} disabled={disabled} {...layersPanel.panelProps} />}
         {isZoomPanelShown && (
-          <ZoomPanel isEditMode={isEditMode}>
+          <ZoomPanel isEditMode={isEditMode} {...zoomPanel.panelProps}>
             {withMinimap && <MiniMap shapesColor={fontColor} selectionColor={fontSelectedBackgroundColor} />}
           </ZoomPanel>
         )}
@@ -227,19 +233,22 @@ const Editor = ({ paint, className, style, options, children }: EditorComponentP
               disabled={disabled}
               withZoom={withZoom}
               layersManipulation={layersManipulation}
+              layersPanel={layersPanel}
               toggleLayoutPanel={() => {
                 setIsLayoutPanelShown(prev => !prev)
               }}
+              zoomPanel={zoomPanel}
               isZoomPanelShown={isZoomPanelShown}
               setIsZoomPanelShown={setIsZoomPanelShown}
               recentColors={recentColors}
               addRecentColor={addRecentColor}
             />
             <Loading isLoading={isLoading} />
-            <SnackbarContainer snackbarList={snackbarList} />
+            <SnackbarContainer snackbarList={snackbarList} removeSnackbar={removeSnackbar} />
           </>
         )}
         <ContextMenu containerRef={rootRef} />
+        <Announcements paint={paint} />
       </PaintProvider>
     </div>
   )

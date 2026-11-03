@@ -34,7 +34,7 @@ export const DrawBrushShape: Story = {
     // --- Shape 1 settings ---
     await setColorSetting(view, 'Couleur du trait', 'red')
     await setRangeSetting(view, 'Epaisseur du trait', 14)
-    await setSelectSetting(view, 'Type de traits', '1')
+    await setSelectSetting(view, 'Type de traits', 'Pointillés')
     await setRangeSetting(view, 'Opacité', 50)
 
     const drawCanvas = await view.findByTestId('draw-canvas')
@@ -76,7 +76,7 @@ export const DrawBrushShape: Story = {
     // --- Shape 2 settings (shape 2 is now selected) ---
     await setColorSetting(view, 'Couleur du trait', 'green')
     await setRangeSetting(view, 'Epaisseur du trait', 8)
-    await setSelectSetting(view, 'Type de traits', '2')
+    await setSelectSetting(view, 'Type de traits', 'Tirets')
     await setRangeSetting(view, 'Opacité', 75)
 
     // --- Assertions ---

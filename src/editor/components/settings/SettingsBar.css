@@ -3,7 +3,7 @@
   display: flex;
   background: var(--react-paint-editor-app-toolbar-bg);
   position: relative;
-  height: 36px;
+  height: var(--react-paint-editor-bar-height);
   border-top: 1px solid var(--react-paint-editor-app-divider-color);
   box-sizing: border-box;
 }
@@ -41,4 +41,10 @@
 
 .react-paint-editor-zoom-button-value {
   min-width: 60px;
+}
+
+/* the buttons of the bar, at the bottom, show their tooltip above them, see Button.css */
+.react-paint-editor-settings-bar .react-paint-editor-button[data-tooltip]:focus-visible::after {
+  top: auto;
+  bottom: calc(100% + 6px);
 }

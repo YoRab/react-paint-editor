@@ -1,9 +1,8 @@
 import Button from '@editor/components/common/Button'
 import Panel from '@editor/components/common/Panel'
 import useDebounce from '@editor/hooks/useDebounce'
-import { uniqueId } from '@editor/utils/util'
+import useSettingsPanel from '@editor/hooks/useSettingsPanel'
 import type React from 'react'
-import { useState } from 'react'
 import './RangeField.css'
 
 export type RangeFieldType = {
@@ -41,8 +40,8 @@ const RangeField = ({
   // the value is shown with the decimals of the step
   const decimals = String(step).split('.')[1]?.length ?? 0
   const displayedValue = indeterminate ? 'N/A' : `${+value.toFixed(decimals)}${unity}`
-  const [customKey] = useState(uniqueId('settings_'))
-  const debouncedSaveChanged = useDebounce(saveShapes)
+  const { isPanelVisible, triggerProps, panelProps } = useSettingsPanel(selectedSettings, setSelectedSettings)
+  const debouncedSaveChanged = useDebounce(saveShapes, 500, true)
 
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const parsedValue = +event.target.value
@@ -51,25 +50,20 @@ const RangeField = ({
     debouncedSaveChanged()
   }
 
-  const togglePanel = () => {
-    setSelectedSettings(prev => {
-      return prev === customKey ? undefined : customKey
-    })
-  }
-
-  const isPanelVisible = selectedSettings === customKey
-
   if (min === max) return null
 
   return (
     <>
-      <Button selected={isPanelVisible} title={title} disabled={disabled} icon={icon} onClick={togglePanel} />
+      <Button title={title} disabled={disabled} icon={icon} {...triggerProps} />
       {isPanelVisible && (
-        <Panel title={title} alignment='left' fitContainer position='bottom'>
+        <Panel title={title} alignment='left' fitContainer position='bottom' {...panelProps}>
           <div>
             <label className='react-paint-editor-rangefield'>
               <input
                 type='range'
+                aria-label={title}
+                // the shapes selected have different values: the slider shows the middle of the range
+                aria-valuetext={indeterminate ? 'Valeurs différentes' : displayedValue}
                 min={min}
                 max={max}
                 step={step}

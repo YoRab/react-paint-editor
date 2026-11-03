@@ -1,8 +1,8 @@
 import Button from '@editor/components/common/Button'
 import Panel from '@editor/components/common/Panel'
-import { uniqueId } from '@editor/utils/util'
+import useArrowNavigation from '@editor/hooks/useArrowNavigation'
+import useSettingsPanel from '@editor/hooks/useSettingsPanel'
 import type React from 'react'
-import { useState } from 'react'
 import './SelectField.css'
 
 type SelectFieldType = {
@@ -16,6 +16,8 @@ type SelectFieldType = {
   icon: string
   field: string
   values: (string | number)[]
+  /** Names of the values drawn by the option, given to their buttons: a value without a name is named after itself */
+  optionLabels?: Record<string, string> | undefined
   defaultValue?: number | string | undefined
   valueChanged: (field: string, value: string | number) => void
 }
@@ -29,38 +31,32 @@ const SelectField = ({
   field,
   icon,
   values,
+  optionLabels,
   defaultValue,
   valueChanged
 }: SelectFieldType) => {
-  const [customKey] = useState(uniqueId('settings_'))
+  const { isPanelVisible, triggerProps, panelProps } = useSettingsPanel(selectedSettings, setSelectedSettings)
+  const optionsRef = useArrowNavigation()
 
   const handleClick = (value: string | number) => {
     valueChanged(field, value)
   }
 
-  const togglePanel = () => {
-    setSelectedSettings(prev => {
-      return prev === customKey ? undefined : customKey
-    })
-  }
-
-  const isPanelVisible = selectedSettings === customKey
-
   if (!values.length) return null
 
   return (
     <>
-      <Button selected={isPanelVisible} title={title} icon={icon} disabled={disabled} onClick={togglePanel} />
+      <Button title={title} icon={icon} disabled={disabled} {...triggerProps} />
       {isPanelVisible && (
-        <Panel title={title} alignment='left' fitContainer position='bottom'>
-          <div className='react-paint-editor-selectfield-wrapper'>
+        <Panel title={title} alignment='left' fitContainer position='bottom' {...panelProps}>
+          <div className='react-paint-editor-selectfield-wrapper' ref={optionsRef}>
             {values.map(value => {
               return (
                 <Button
                   key={value}
-                  title={`${value}`}
+                  title={optionLabels?.[`${value}`] ?? `${value}`}
                   onClick={() => handleClick(value)}
-                  selected={defaultValue === value}
+                  pressed={defaultValue === value}
                   style={{
                     '--react-paint-editor-button-padding': '16px'
                   }}

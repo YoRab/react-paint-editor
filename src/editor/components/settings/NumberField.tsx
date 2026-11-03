@@ -1,10 +1,9 @@
 import Button from '@editor/components/common/Button'
+import NumberInput from '@editor/components/common/NumberInput'
 import Panel from '@editor/components/common/Panel'
 import type { RangeFieldType } from '@editor/components/settings/RangeField'
 import useDebounce from '@editor/hooks/useDebounce'
-import { uniqueId } from '@editor/utils/util'
-import type React from 'react'
-import { useState } from 'react'
+import useSettingsPanel from '@editor/hooks/useSettingsPanel'
 import './NumberField.css'
 
 type NumberFieldType = RangeFieldType & { title: string }
@@ -25,45 +24,30 @@ const NumberField = ({
   valueChanged,
   saveShapes
 }: NumberFieldType) => {
-  const [customKey] = useState(uniqueId('settings_'))
-  // the typed text while the field has the focus: it can be empty or out of the limits for a moment
-  const [draft, setDraft] = useState<string | undefined>(undefined)
-  const debouncedSaveChanged = useDebounce(saveShapes)
+  const { isPanelVisible, triggerProps, panelProps } = useSettingsPanel(selectedSettings, setSelectedSettings)
+  const debouncedSaveChanged = useDebounce(saveShapes, 500, true)
 
-  const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setDraft(event.target.value)
-    const typedValue = event.target.valueAsNumber
-    if (!Number.isFinite(typedValue) || (min !== undefined && typedValue < min) || (max !== undefined && typedValue > max)) return
+  const handleValueChange = (typedValue: number) => {
     valueChanged(field, typedValue, false)
     debouncedSaveChanged()
   }
 
-  const togglePanel = () => {
-    setSelectedSettings(prev => {
-      return prev === customKey ? undefined : customKey
-    })
-  }
-
-  const isPanelVisible = selectedSettings === customKey
-
   return (
     <>
-      <Button selected={isPanelVisible} title={title} disabled={disabled} icon={icon} onClick={togglePanel} />
+      <Button title={title} disabled={disabled} icon={icon} {...triggerProps} />
       {isPanelVisible && (
-        <Panel title={title} alignment='left' fitContainer position='bottom'>
+        <Panel title={title} alignment='left' fitContainer position='bottom' {...panelProps}>
           <div>
             <label className='react-paint-editor-numberfield'>
-              <input
-                type='number'
+              <NumberInput
                 aria-label={title}
                 min={min}
                 max={max}
                 step={step}
-                value={draft ?? (value === undefined ? '' : Math.round(value))}
+                value={value}
                 placeholder={value === undefined ? 'N/A' : undefined}
                 disabled={disabled}
-                onChange={handleChange}
-                onBlur={() => setDraft(undefined)}
+                onValueChange={handleValueChange}
               />
               {unity}
             </label>

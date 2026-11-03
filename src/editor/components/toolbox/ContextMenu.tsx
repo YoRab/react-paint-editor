@@ -6,7 +6,8 @@ import Menu from '@editor/components/common/Menu'
 import { rightChevronIcon } from '@editor/constants/icons'
 import useMenu from '@editor/hooks/useMenu'
 import usePressOutside from '@editor/hooks/usePressOutside'
-import { type RefObject, useEffect, useRef, useState } from 'react'
+import { type ReactNode, type RefObject, useEffect, useRef, useState } from 'react'
+import PropertiesModal from './PropertiesModal'
 
 const BUTTON_HEIGHT = 36
 // a border of 1 pixel between margins of 8
@@ -16,14 +17,46 @@ const MENU_MARGIN = 8
 const MENU_WIDTH = 160 + MENU_MARGIN * 2
 const SUB_MENU_WIDTH = 200
 
+type ItemType = { onClick: () => void; disabled?: boolean; children: ReactNode }
+
+const Item = ({ onClick, disabled, children }: ItemType) => (
+  <Button role='menuitem' onClick={onClick} disabled={disabled}>
+    {children}
+  </Button>
+)
+
+type SubmenuItemType = {
+  menu: ReturnType<typeof useMenu>
+  label: string
+  disabled?: boolean
+  position: 'left' | 'right' | undefined
+  children: ReactNode
+}
+
+/** An item opening its sub menu: by the hover, a click, Enter or ArrowRight */
+const SubmenuItem = ({ menu, label, disabled, position, children }: SubmenuItemType) => (
+  <div className='react-paint-editor-toolbox-contextmenu-group' ref={menu.ref}>
+    <Button role='menuitem' icon={rightChevronIcon} disabled={disabled} aria-haspopup='menu' aria-expanded={menu.isOpen} onClick={menu.openMenu}>
+      {label}
+    </Button>
+    {menu.isOpen && (
+      <Menu position={position} label={label} onClose={menu.closeMenu} isSubmenu>
+        {children}
+      </Menu>
+    )}
+  </div>
+)
+
 type ContextMenuContentType = {
   contextMenu: ContextMenuState
   containerRef: RefObject<HTMLElement | null>
   hasCopiedShapes: boolean
   actions: EditorActions
+  /** Opens the modal of the properties of the selection, which stays once the menu is closed */
+  openProperties: () => void
 }
 
-const ContextMenuContent = ({ contextMenu, containerRef, hasCopiedShapes, actions }: ContextMenuContentType) => {
+const ContextMenuContent = ({ contextMenu, containerRef, hasCopiedShapes, actions, openProperties }: ContextMenuContentType) => {
   const { shapes: selectedShapes, anchorIndex, canRemoveAnchor, canGroup, canUngroup, clientPosition } = contextMenu
   const selectedIds = selectedShapes.map(shape => shape.id)
   const hasSelectedShape = selectedShapes.length > 0
@@ -31,11 +64,11 @@ const ContextMenuContent = ({ contextMenu, containerRef, hasCopiedShapes, action
 
   const isVisible = !selectedShapes.some(shape => shape.visible === false)
   const isLocked = selectedShapes.some(shape => shape.locked)
-  const { ref: organizeMenuRef, isOpen: isOrganizeMenuOpen } = useMenu({ trigger: 'hover' })
-  const { ref: transformMenuRef, isOpen: isTransformMenuOpen } = useMenu({ trigger: 'hover', disabled: isLocked })
+  const organizeMenu = useMenu()
+  const transformMenu = useMenu({ disabled: isLocked })
 
   const menuHeight =
-    MENU_PADDING_VERTICAL * 2 + BUTTON_HEIGHT * (2 + (hasSelectedShape ? 10 : 0) + (canRemoveAnchor ? 1 : 0)) + HR_HEIGHT * (hasSelectedShape ? 3 : 1)
+    MENU_PADDING_VERTICAL * 2 + BUTTON_HEIGHT * (2 + (hasSelectedShape ? 11 : 0) + (canRemoveAnchor ? 1 : 0)) + HR_HEIGHT * (hasSelectedShape ? 4 : 1)
 
   const [menuPosition, setMenuPosition] = useState<{ x: number; y: number; subMenuPosition: 'left' | 'right' } | undefined>()
 
@@ -86,6 +119,8 @@ const ContextMenuContent = ({ contextMenu, containerRef, hasCopiedShapes, action
 
   const onPasteShape = runAndClose(actions.paste)
 
+  const onOpenProperties = runAndClose(openProperties)
+
   const onMoveShapes = (action: ShapesOrderAction) => runAndClose(() => actions.moveShapes(selectedIds, action))
 
   const onTransformShapes = (action: ShapesTransformAction) => runAndClose(() => actions.transformShapes(selectedIds, action))
@@ -95,72 +130,88 @@ const ContextMenuContent = ({ contextMenu, containerRef, hasCopiedShapes, action
   const onToggleShapeLock = runAndClose(() => actions.setShapesLocked(selectedIds, !isLocked))
 
   return (
-    <Menu className='react-paint-editor-toolbox-contextmenu' style={style} menuRef={menuRef}>
+    <Menu
+      className='react-paint-editor-toolbox-contextmenu'
+      style={style}
+      menuRef={menuRef}
+      label='Menu contextuel'
+      onClose={actions.closeContextMenu}
+      // the menu is hidden until it is placed: it takes the focus once shown
+      autoFocus={menuPosition !== undefined}
+    >
       {hasSelectedShape && (
         <>
-          {canRemoveAnchor && <Button onClick={onDeleteAnchor}>Delete point</Button>}
-          <div className='react-paint-editor-toolbox-contextmenu-group' ref={organizeMenuRef}>
-            <Button icon={rightChevronIcon}>Organize</Button>
-            {isOrganizeMenuOpen && (
-              <Menu position={menuPosition?.subMenuPosition}>
-                <Button onClick={onMoveShapes('forward')}>Move forward</Button>
-                <Button onClick={onMoveShapes('first')}>Put on first</Button>
-                <Button onClick={onMoveShapes('backward')}>Move backward</Button>
-                <Button onClick={onMoveShapes('last')}>Put on last</Button>
-              </Menu>
-            )}
-          </div>
-          <div className='react-paint-editor-toolbox-contextmenu-group' ref={transformMenuRef}>
-            <Button icon={rightChevronIcon} disabled={isLocked}>
-              Transform
-            </Button>
-            {isTransformMenuOpen && (
-              <Menu position={menuPosition?.subMenuPosition}>
-                <Button onClick={onTransformShapes('flipHorizontally')}>Flip horizontally</Button>
-                <Button onClick={onTransformShapes('flipVertically')}>Flip vertically</Button>
-                <Button onClick={onTransformShapes('rotateClockwise')}>Rotate clockwise</Button>
-                <Button onClick={onTransformShapes('rotateCounterclockwise')}>Rotate counterclockwise</Button>
-              </Menu>
-            )}
-          </div>
+          {canRemoveAnchor && <Item onClick={onDeleteAnchor}>Delete point</Item>}
+          <SubmenuItem menu={organizeMenu} label='Organize' position={menuPosition?.subMenuPosition}>
+            <Item onClick={onMoveShapes('forward')}>Move forward</Item>
+            <Item onClick={onMoveShapes('first')}>Put on first</Item>
+            <Item onClick={onMoveShapes('backward')}>Move backward</Item>
+            <Item onClick={onMoveShapes('last')}>Put on last</Item>
+          </SubmenuItem>
+          <SubmenuItem menu={transformMenu} label='Transform' disabled={isLocked} position={menuPosition?.subMenuPosition}>
+            <Item onClick={onTransformShapes('flipHorizontally')}>Flip horizontally</Item>
+            <Item onClick={onTransformShapes('flipVertically')}>Flip vertically</Item>
+            <Item onClick={onTransformShapes('rotateClockwise')}>Rotate clockwise</Item>
+            <Item onClick={onTransformShapes('rotateCounterclockwise')}>Rotate counterclockwise</Item>
+          </SubmenuItem>
           <hr />
-          <Button onClick={onCutShape}>Cut</Button>
-          <Button onClick={onCopyShape}>Copy</Button>
+          <Item onClick={onCutShape}>Cut</Item>
+          <Item onClick={onCopyShape}>Copy</Item>
         </>
       )}
-      <Button onClick={onPasteShape} disabled={!hasCopiedShapes}>
+      <Item onClick={onPasteShape} disabled={!hasCopiedShapes}>
         Paste
-      </Button>
+      </Item>
       <hr />
       {hasSelectedShape && (
         <>
-          <Button onClick={onDuplicateShape}>Duplicate</Button>
-          <Button onClick={onGroupShapes} disabled={!canGroup}>
+          <Item onClick={onDuplicateShape}>Duplicate</Item>
+          <Item onClick={onGroupShapes} disabled={!canGroup}>
             Group
-          </Button>
-          <Button onClick={onUngroupShapes} disabled={!canUngroup}>
+          </Item>
+          <Item onClick={onUngroupShapes} disabled={!canUngroup}>
             Ungroup
-          </Button>
-          <Button onClick={onToggleShapeVisibility}>{isVisible ? 'Hide' : 'Show'}</Button>
-          <Button onClick={onToggleShapeLock}>{isLocked ? 'Unlock' : 'Lock'}</Button>
-          <Button onClick={onRemoveShape}>Delete</Button>
+          </Item>
+          <Item onClick={onToggleShapeVisibility}>{isVisible ? 'Hide' : 'Show'}</Item>
+          <Item onClick={onToggleShapeLock}>{isLocked ? 'Unlock' : 'Lock'}</Item>
+          <Item onClick={onRemoveShape}>Delete</Item>
           <hr />
         </>
       )}
-      <Button onClick={onSelectAllShapes}>Select all</Button>
+      <Item onClick={onSelectAllShapes}>Select all</Item>
+      {hasSelectedShape && (
+        <>
+          <hr />
+          <Item onClick={onOpenProperties} disabled={isLocked}>
+            Propriétés
+          </Item>
+        </>
+      )}
     </Menu>
   )
 }
 
-/** Context menu of the canvas, shown when the canvas opens it */
+/** Context menu of the canvas, shown when the canvas opens it, and the modal of the properties it opens */
 const ContextMenu = ({ containerRef }: { containerRef: RefObject<HTMLElement | null> }) => {
   const paint = usePaint()
   const contextMenu = usePaintState(paint, state => state.contextMenu)
   const hasCopiedShapes = usePaintState(paint, state => state.clipboard.hasContent)
+  const [isPropertiesOpen, setIsPropertiesOpen] = useState(false)
 
-  return contextMenu ? (
-    <ContextMenuContent contextMenu={contextMenu} containerRef={containerRef} hasCopiedShapes={hasCopiedShapes} actions={paint.actions} />
-  ) : null
+  return (
+    <>
+      {contextMenu && (
+        <ContextMenuContent
+          contextMenu={contextMenu}
+          containerRef={containerRef}
+          hasCopiedShapes={hasCopiedShapes}
+          actions={paint.actions}
+          openProperties={() => setIsPropertiesOpen(true)}
+        />
+      )}
+      {isPropertiesOpen && <PropertiesModal onClose={() => setIsPropertiesOpen(false)} />}
+    </>
+  )
 }
 
 export default ContextMenu

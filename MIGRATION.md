@@ -203,6 +203,9 @@ The options also give a `backgroundColor`, and a `backgroundImage` drawn under t
 - `ShapeType` holds two more types than in 0.x: `'group'` and `'custom'`, the shapes of the custom tools. Code switching on every shape type, or building a `Record<ShapeType, …>`, must handle them.
 - The drawing can hold groups, shapes of type `'group'` which hold their shapes in `shapes`: `state.shapes`, `state.selectedShapes`, `getSelectedShapes`, the exported data (`StateData`, `dataChanged`, `getCurrentData`) and the data loaded can give groups, and `ShapeInput` accepts them. Code walking the shapes reaches all of them with `flattenShapes(shapes)`, or the shapes drawn with `getShapeLeaves(shapes)`, and finds the group of a shape with `getParentGroup`. A group has no `x`, `y`, `width` nor `height`: its box is given by `paint.getBounds([id])`. `dataChanged` lists the shapes of the groups too: when `changes.reordered` is set, a shape may have changed its group, build the drawing again from `data.shapes`.
 
+- Every shape can have a `name`, which only groups had: it is exported and loaded with the shape, shown in the layers of the editor instead of its id, and read by the assistive technologies.
+- The items of the menus of the editor have the role `menuitem` instead of `button`, and its file and color buttons are `<button>` elements, with their `<input>` next to them instead of inside a `<label>`: a test finds them by these roles, and gives its files to the input. The name of the text edition box is `'Texte'` (`canvasLabels.textBox`) instead of `'Text content'`.
+
 Everything the editor does can now be done from the code: see [Driving the canvas from the code](./README.md#driving-the-canvas-from-the-code).
 
 ## CSS

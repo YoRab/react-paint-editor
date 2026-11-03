@@ -32,8 +32,8 @@ export const DrawLine: Story = {
     // --- Shape 1 settings ---
     await setColorSetting(view, 'Couleur du trait', 'red')
     await setRangeSetting(view, 'Epaisseur du trait', 5)
-    await setSelectSetting(view, 'Type de traits', '1')
-    await setSelectSetting(view, 'Flèche au début', 'triangle')
+    await setSelectSetting(view, 'Type de traits', 'Pointillés')
+    await setSelectSetting(view, 'Flèche au début', 'Triangle')
     await setRangeSetting(view, 'Opacité', 50)
 
     const drawCanvas = await view.findByTestId('draw-canvas')
@@ -63,8 +63,8 @@ export const DrawLine: Story = {
     // --- Shape 2 settings (shape 2 is now selected) ---
     await setColorSetting(view, 'Couleur du trait', 'green')
     await setRangeSetting(view, 'Epaisseur du trait', 10)
-    await setSelectSetting(view, 'Type de traits', '2')
-    await setSelectSetting(view, 'Flèche à la fin', 'circle')
+    await setSelectSetting(view, 'Type de traits', 'Tirets')
+    await setSelectSetting(view, 'Flèche à la fin', 'Rond')
     await setRangeSetting(view, 'Opacité', 75)
 
     // --- Assertions ---

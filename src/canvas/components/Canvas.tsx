@@ -1,16 +1,17 @@
-import { DRAWCANVAS_CLASSNAME, SELECTIONCANVAS_CLASSNAME } from '@canvas/constants/app'
+import { type CanvasLabels, DRAWCANVAS_CLASSNAME, SELECTIONCANVAS_CLASSNAME } from '@canvas/constants/app'
 import useCanvasRenderer from '@canvas/hooks/useCanvasRenderer'
 import useDrawableCanvas from '@canvas/hooks/useDrawableCanvas'
 import useDropPicture from '@canvas/hooks/useDropPicture'
 import useShapeEvents from '@canvas/hooks/useShapeEvents'
 import useZoom from '@canvas/hooks/useZoom'
 import type { PaintStore } from '@canvas/store/paintStore'
-import type { CanvasView } from '@canvas/store/selectors'
+import { type CanvasView, memoizeLast } from '@canvas/store/selectors'
+import { createShapesDescriber, type ShapeDescription } from '@canvas/utils/description'
 import { getSelectedShapes } from '@canvas/utils/selectedShapes'
 import { applyShapePatch } from '@canvas/utils/shapePatch'
 import { cssVar } from '@canvas/utils/util'
 import type React from 'react'
-import { type CSSProperties, useCallback, useEffect, useRef, useState } from 'react'
+import { type CSSProperties, useCallback, useEffect, useId, useRef, useState } from 'react'
 import EditTextBox from './EditTextBox'
 
 // The canvas module ships no stylesheet: its styles are inline, the class names are kept for the consumers,
@@ -35,6 +36,27 @@ const CANVAS_BASE_STYLE: CSSProperties = {
   touchAction: 'none'
 }
 
+// over the top of the canvas, without catching the pointer
+const KEYBOARD_HINT_STYLE: CSSProperties = {
+  position: 'absolute',
+  top: 8,
+  left: '50%',
+  transform: 'translateX(-50%)',
+  padding: '6px 12px',
+  borderRadius: 6,
+  font: '14px sans-serif',
+  whiteSpace: 'nowrap',
+  pointerEvents: 'none'
+}
+
+const KEYBOARD_HINT_KEY_STYLE: CSSProperties = {
+  marginRight: 8,
+  padding: '0 6px',
+  border: '1px solid currentColor',
+  borderRadius: 4,
+  font: 'inherit'
+}
+
 type LayoutStyles = { box: CSSProperties; container: CSSProperties; canvas: CSSProperties }
 
 // A scaled canvas fills the root, which has the bounds of the scale. Both canvases are stacked in the same cell of the grid
@@ -52,9 +74,40 @@ const EXTEND_STYLES: LayoutStyles = {
   canvas: { ...CANVAS_BASE_STYLE, position: 'absolute', left: 0, top: 0 }
 }
 
+/** Gives its items to a list, moving only the ones which are not at their place: a change of one shape changes one item */
+const syncChildren = (list: HTMLElement, items: HTMLElement[]) => {
+  const kept = new Set<Element>(items)
+  for (const child of [...list.children]) if (!kept.has(child)) child.remove()
+  items.forEach((item, index) => {
+    const current = list.children[index]
+    if (current !== item) list.insertBefore(item, current ?? null)
+  })
+}
+
+/**
+ * The items of a list describing shapes, a group holding the list of its shapes. A description which has not changed
+ * keeps its item, which is only moved
+ */
+const buildDescriptionItems = (descriptions: ShapeDescription[], items: WeakMap<ShapeDescription, HTMLLIElement>): HTMLLIElement[] =>
+  descriptions.map(description => {
+    const cached = items.get(description)
+    if (cached) return cached
+    const { label, shapes } = description
+    const item = document.createElement('li')
+    item.textContent = label
+    if (shapes) {
+      const list = document.createElement('ul')
+      syncChildren(list, buildDescriptionItems(shapes, items))
+      item.append(list)
+    }
+    items.set(description, item)
+    return item
+  })
+
 type CanvasElementProps = {
   store: PaintStore
   view: CanvasView
+  labels: CanvasLabels
   backgroundColor: string
   selectionColor: string
   selectionWidth: number
@@ -66,8 +119,9 @@ type CanvasElementProps = {
  * Canvases of the drawing and of the selection. React only renders what changes the DOM (sizes, mode, text edition):
  * the gestures update the store, which draws the canvases and sets the cursor directly.
  */
-const Canvas = ({ store, view, backgroundColor, selectionColor, selectionWidth, laserColor, laserWidth }: CanvasElementProps) => {
-  const { canvasSize, resize, isEditMode, features, textEdition } = view
+const Canvas = ({ store, view, labels, backgroundColor, selectionColor, selectionWidth, laserColor, laserWidth }: CanvasElementProps) => {
+  const { canvasSize, resize, isEditMode, features, textEdition, isKeyboardNavigation } = view
+  const instructionsId = useId()
   const containerRef = useRef<HTMLDivElement | null>(null)
   const selectionCanvasRef = useRef<HTMLCanvasElement | null>(null)
   const withSelectionCanvas = isEditMode
@@ -100,6 +154,73 @@ const Canvas = ({ store, view, backgroundColor, selectionColor, selectionWidth, 
     applyCursor(store.selectors.selectCursor(store.getState()))
     return store.watch(store.selectors.selectCursor, applyCursor)
   }, [store])
+
+  // The fallback content of the draw canvas lists its shapes for the assistive technologies: it is never displayed. Like
+  // the cursor, it is written without rendering, only when the shapes read differently, a selection during a gesture included
+  useEffect(() => {
+    if (!drawCanvas) return
+    const describe = memoizeLast(createShapesDescriber(labels))
+    const selectDescriptions = ({ document }: ReturnType<PaintStore['getState']>) =>
+      describe(document.shapes, store.selectors.selectSelectedShapeIds(store.selectors.selectSelectedShapes(document.selectedShape)))
+    const list = document.createElement('ul')
+    list.setAttribute('aria-label', labels.shapesList)
+    const items = new WeakMap<ShapeDescription, HTMLLIElement>()
+    const writeDescriptions = (descriptions: ShapeDescription[]) => syncChildren(list, buildDescriptionItems(descriptions, items))
+    writeDescriptions(selectDescriptions(store.getState()))
+    drawCanvas.append(list)
+    const unwatch = store.watch(selectDescriptions, writeDescriptions)
+    return () => {
+      unwatch()
+      list.remove()
+    }
+  }, [store, drawCanvas, labels])
+
+  // The hint is shown while the canvas has the focus from the keyboard: the focus ring, or a key pressed in the scope.
+  // Like the cursor, it is shown and hidden without rendering: a press of the canvas renders nothing
+  const keyboardFocusRef = useRef(false)
+  const hintRef = useRef<HTMLDivElement | null>(null)
+  useEffect(() => {
+    if (!drawCanvas) return
+    const showHint = (isShown: boolean) => {
+      keyboardFocusRef.current = isShown
+      if (hintRef.current) hintRef.current.hidden = !isShown
+    }
+    // the last input in the scope, and whether a press of the canvas gives it the focus: the hint is never shown then
+    let isKeyboardInput = false
+    let isPressed = false
+    const stopListening = store.listenScope({
+      keydown: () => {
+        isKeyboardInput = true
+        isPressed = false
+      },
+      pointerdown: () => {
+        isKeyboardInput = false
+      }
+    })
+    // before the press gives the focus to the canvas. The pointer also leaves the shapes gone through from the keyboard
+    const handlePress = () => {
+      isKeyboardInput = false
+      isPressed = true
+      showHint(false)
+      store.setKeyboardNavigation(false)
+    }
+    const handleFocus = () => showHint(!isPressed && (isKeyboardInput || drawCanvas.matches(':focus-visible')))
+    // the shapes are left with the focus, unless it goes to the box editing a text
+    const handleBlur = (e: FocusEvent) => {
+      showHint(false)
+      if (!(e.relatedTarget instanceof Node && containerRef.current?.contains(e.relatedTarget))) store.setKeyboardNavigation(false)
+    }
+    drawCanvas.addEventListener('pointerdown', handlePress, true)
+    drawCanvas.addEventListener('focus', handleFocus)
+    drawCanvas.addEventListener('blur', handleBlur)
+    return () => {
+      stopListening()
+      drawCanvas.removeEventListener('pointerdown', handlePress, true)
+      drawCanvas.removeEventListener('focus', handleFocus)
+      drawCanvas.removeEventListener('blur', handleBlur)
+    }
+  }, [store, drawCanvas])
+  const withKeyboardHint = isEditMode && features.edition && !isKeyboardNavigation && !textEdition
 
   const updateSelectedShapeText = useCallback(
     (newText: string[]) => {
@@ -139,6 +260,10 @@ const Canvas = ({ store, view, backgroundColor, selectionColor, selectionWidth, 
           height={canvasSize.height}
           onContextMenu={preventRightClick}
           tabIndex={tabIndex}
+          // edited, the canvas takes the keys. Its fallback content describes the drawing
+          {...(isEditMode
+            ? { role: 'application', 'aria-roledescription': labels.roleDescription, 'aria-label': labels.canvas, 'aria-describedby': instructionsId }
+            : {})}
         />
         {withSelectionCanvas && (
           <canvas
@@ -150,8 +275,30 @@ const Canvas = ({ store, view, backgroundColor, selectionColor, selectionWidth, 
             onContextMenu={preventRightClick}
           />
         )}
+        {isEditMode && (
+          <div id={instructionsId} hidden>
+            {labels.instructions}
+          </div>
+        )}
+        {withKeyboardHint && (
+          <div
+            ref={hintRef}
+            className='react-paint-canvas-keyboard-hint'
+            aria-hidden='true'
+            hidden={!keyboardFocusRef.current}
+            style={{
+              ...KEYBOARD_HINT_STYLE,
+              background: cssVar('--react-paint-canvas-keyboard-hint-bg', '#000000cc'),
+              color: cssVar('--react-paint-canvas-keyboard-hint-color', '#ffffff')
+            }}
+          >
+            <kbd style={KEYBOARD_HINT_KEY_STYLE}>{labels.keyboardHintKey}</kbd>
+            {labels.keyboardHint}
+          </div>
+        )}
         {isEditMode && textEdition && (
           <EditTextBox
+            label={labels.textBox}
             disabled={!features.edition}
             shape={textEdition.shape}
             defaultValue={textEdition.defaultValue}

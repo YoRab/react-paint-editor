@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import { expect, spyOn, userEvent, waitFor, within } from 'storybook/test'
 import type { DrawableShape } from '../../../src/index'
-import { getPaint, getState, ReactPaintWrapper, wait } from './../helpers'
+import { findFileInput, getPaint, getState, ReactPaintWrapper, wait } from './../helpers'
 
 const meta = {
   title: 'Tests/Manipulation',
@@ -62,7 +62,7 @@ export const FileActions: Story = {
     }
     const loadProject = async (file: File) => {
       await openMenu()
-      await userEvent.upload(await view.findByTitle('Load project'), file)
+      await userEvent.upload(await findFileInput(view, 'Load project'), file)
     }
 
     try {
@@ -108,12 +108,14 @@ export const FileActions: Story = {
       await userEvent.click(document.body)
       await waitFor(() => expect(view.queryByTitle('Save project')).toBeNull())
 
-      // the space bar opens the file chooser of a file button
+      // the space bar and Enter open the file chooser of a file button
       const chooseFile = spyOn(HTMLInputElement.prototype, 'click').mockImplementation(() => undefined)
       await openMenu()
       ;(await view.findByTitle('Load project')).focus()
       await userEvent.keyboard(' ')
       expect(chooseFile).toHaveBeenCalledTimes(1)
+      await userEvent.keyboard('{Enter}')
+      expect(chooseFile).toHaveBeenCalledTimes(2)
       chooseFile.mockRestore()
 
       // =====================================================================
@@ -136,7 +138,7 @@ export const FileActions: Story = {
 
       // a picture which cannot be read fails the same way
       await openMenu()
-      await userEvent.upload(await view.findByTitle('Upload picture'), new File(['not an image'], 'broken.png', { type: 'image/png' }))
+      await userEvent.upload(await findFileInput(view, 'Upload picture'), new File(['not an image'], 'broken.png', { type: 'image/png' }))
       await waitFor(() => expect(view.getAllByText('Le chargement a échoué')).toHaveLength(2))
       expect(getState().shapes).toHaveLength(2)
 

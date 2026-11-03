@@ -21,7 +21,8 @@
         "noUselessElse": "error"
       },
       "a11y": {
-        "useKeyWithClickEvents": "off"
+        "useKeyWithClickEvents": "off",
+        "noLabelWithoutControl": { "level": "error", "options": { "inputComponents": ["NumberInput"] } }
       },
       "security": {
         "noDangerouslySetInnerHtml": "off"

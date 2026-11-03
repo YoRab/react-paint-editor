@@ -1,0 +1,8 @@
+.react-paint-editor-geometryfield {
+  display: grid;
+  gap: 4px;
+}
+
+.react-paint-editor-geometryfield-label {
+  min-width: 4.5em;
+}
