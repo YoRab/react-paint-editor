@@ -12,6 +12,7 @@ import {
   textIcon
 } from '@editor/constants/icons'
 import { TOOL_LABELS } from '@editor/constants/tools'
+import type { ReactNode } from 'react'
 
 export const getShapePicture = (shape: ShapeType) => {
   switch (shape) {
@@ -47,17 +48,20 @@ export const getShapePicture = (shape: ShapeType) => {
 export const getDefaultParams = (declarations: Record<string, { default: number }> | undefined): CustomShapeParams =>
   Object.fromEntries(Object.entries(declarations ?? {}).map(([name, declaration]) => [name, declaration.default]))
 
-const escapeAttribute = (value: string) => value.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;')
-
 /**
  * The icon of a custom tool which gives none: the shape it draws, its path built with the default values of its
  * parameters and fitted in the icon by its view box. The generic icon when the path cannot be built
  */
-const getCustomToolIcon = (tool: Extract<CustomTool, { type: 'custom' }>): string => {
+const getCustomToolIcon = (tool: Extract<CustomTool, { type: 'custom' }>): ReactNode => {
   const { viewBox, path } = tool.shape
   try {
     const data = typeof path === 'string' ? path : path(getDefaultParams(tool.settings.params))
-    if (data) return `<svg viewBox="${viewBox.join(' ')}"><path d="${escapeAttribute(data)}"/></svg>`
+    if (data)
+      return (
+        <svg viewBox={viewBox.join(' ')} aria-hidden='true'>
+          <path d={data} />
+        </svg>
+      )
   } catch {
     // the canvas warns about it when it draws a shape of the tool
   }
@@ -65,9 +69,10 @@ const getCustomToolIcon = (tool: Extract<CustomTool, { type: 'custom' }>): strin
 }
 
 /** The icon of a tool, in the toolbar and in the layers of its shapes: the one it gives, or else the one of its type */
-export const getToolIcon = (tool: CustomTool): string => tool.icon ?? (tool.type === 'custom' ? getCustomToolIcon(tool) : getShapePicture(tool.type))
+export const getToolIcon = (tool: CustomTool): ReactNode =>
+  tool.icon ?? (tool.type === 'custom' ? getCustomToolIcon(tool) : getShapePicture(tool.type))
 
-export type DisplayTool = CustomTool & { icon: string; label: string }
+export type DisplayTool = CustomTool & { icon: ReactNode; label: string }
 
 /** Tools coming from the canvas may have no icon or label: they are resolved here from the tool type */
 export const getDisplayTool = (tool: CustomTool): DisplayTool => ({

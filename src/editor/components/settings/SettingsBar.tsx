@@ -100,12 +100,12 @@ type SettingField = {
 } & (
   | { kind: 'color'; field: SettingsOfType<{ values: string[] }>; mode?: 'fill' | 'stroke' }
   /** A slider, or a number typed in a field for a setting which can have no upper limit */
-  | { kind: 'range' | 'number'; field: SettingsOfType<{ min: number }>; icon: string; unity: string }
-  | { kind: 'toggle'; field: SettingsOfType<{ values: boolean[] }>; icon: string }
+  | { kind: 'range' | 'number'; field: SettingsOfType<{ min: number }>; icon: React.ReactNode; unity: string }
+  | { kind: 'toggle'; field: SettingsOfType<{ values: boolean[] }>; icon: React.ReactNode }
   | {
       kind: 'select'
       field: SettingsOfType<{ default: string | number }>
-      icon: string
+      icon: React.ReactNode
       option: React.FC<{ children?: React.ReactNode }>
       /** Names of the values drawn by their option, given to the assistive technologies */
       optionLabels?: Record<string, string>
@@ -113,7 +113,7 @@ type SettingField = {
       values?: (string | number)[]
     }
   /** A slider of a parameter of a custom shape, declared by its tool: its value is kept on each shape */
-  | { kind: 'param'; field: string; param: string; icon: string; min: number; max: number; step: number }
+  | { kind: 'param'; field: string; param: string; icon: React.ReactNode; min: number; max: number; step: number }
 )
 
 /** The fields of the parameters a custom tool declares, in the order of their declaration */

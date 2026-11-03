@@ -1,9 +1,10 @@
+import type { ReactNode } from 'react'
 import type { ArrowHead, CustomShapeDefinition, FillGradient, FillPattern, ShapeType, TextAlign } from './Shapes'
 
 export type CustomToolInput = {
   id: string
-  /** SVG markup, rendered as HTML by the editor: it must be trusted, never built from what a user typed or loaded */
-  icon?: string
+  /** Shown by the editor in its toolbar and in its layers, usually an <svg> element drawn in currentColor */
+  icon?: ReactNode
   label?: string
 } & (
   | {
@@ -63,8 +64,8 @@ export type CustomToolInput = {
 
 export type CustomTool = {
   id: string
-  /** SVG markup, rendered as HTML by the editor: it must be trusted, never built from what a user typed or loaded */
-  icon?: string
+  /** Shown by the editor in its toolbar and in its layers, usually an <svg> element drawn in currentColor */
+  icon?: ReactNode
   label?: string
 } & (
   | {
@@ -454,8 +455,8 @@ export type ActionsType = 'selection' | 'move' | 'eraser' | 'laser'
 export type ActionsTool = {
   id: string
   type: ActionsType
-  /** SVG markup, rendered as HTML by the editor: it must be trusted, never built from what a user typed or loaded */
-  icon?: string
+  /** Shown by the editor in its toolbar and in its layers, usually an <svg> element drawn in currentColor */
+  icon?: ReactNode
   label?: string
 }
 

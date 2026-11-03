@@ -1,4 +1,5 @@
 import { isEqual, mergeWith, omit, set, withDefaults } from '@canvas/utils/object'
+import { createElement } from 'react'
 import { describe, expect, it } from 'vitest'
 
 describe('canvas/utils/object', () => {
@@ -197,6 +198,39 @@ describe('canvas/utils/object', () => {
       const arr1 = [1, { a: 2 }, [3, 4]]
       const arr2 = [1, { a: 3 }, [3, 4]]
       expect(isEqual(arr1, arr2)).toBe(false)
+    })
+
+    it('should tell an array from an object with the same keys', () => {
+      expect(isEqual([], {})).toBe(false)
+      expect(isEqual({}, [])).toBe(false)
+      expect(isEqual([1, 2], { 0: 1, 1: 2 })).toBe(false)
+    })
+
+    it('should compare the lengths of the arrays, and the arrays nested in them', () => {
+      expect(isEqual([1, 2], [1, 2, 3])).toBe(false)
+      expect(isEqual([[[0, 1]], [[2, 3]]], [[[0, 1]], [[2, 3]]])).toBe(true)
+      expect(isEqual([[[0, 1]], [[2, 3]]], [[[0, 1]], [[2, 4]]])).toBe(false)
+      expect(isEqual([undefined], [])).toBe(false)
+    })
+
+    it('should tell a key set to undefined from a missing key', () => {
+      expect(isEqual({ a: undefined }, {})).toBe(false)
+      expect(isEqual({ a: undefined }, { b: undefined })).toBe(false)
+    })
+
+    it('should compare React elements by their type, key and props, and never their owner', () => {
+      // the owner of an element created in a render is a fiber, linked to the others in cycles
+      const withOwner = (element: object) => {
+        const owner: Record<string, unknown> = {}
+        owner.self = owner
+        return { ...element, _owner: owner }
+      }
+      const icon = (d: string) => withOwner(createElement('svg', { viewBox: '0 0 20 20' }, createElement('path', { d })))
+      expect(isEqual({ icon: icon('M0 0H20') }, { icon: icon('M0 0H20') })).toBe(true)
+      expect(isEqual({ icon: icon('M0 0H20') }, { icon: icon('M0 0V20') })).toBe(false)
+      expect(isEqual(createElement('svg'), createElement('svg', { key: 'a' }))).toBe(false)
+      expect(isEqual(createElement('svg'), createElement('g'))).toBe(false)
+      expect(isEqual(createElement('svg'), { type: 'svg', key: null, props: {} })).toBe(false)
     })
   })
 

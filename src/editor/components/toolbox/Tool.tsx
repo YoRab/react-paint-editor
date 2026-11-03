@@ -1,9 +1,10 @@
 import type { ToolsType } from '@canvas/index'
 import Button from '@editor/components/common/Button'
+import type { ReactNode } from 'react'
 
 type ToolComponentType = {
   type: ToolsType
-  img?: string | undefined
+  img?: ReactNode
   withText?: boolean
   isActive: boolean
   disabled?: boolean

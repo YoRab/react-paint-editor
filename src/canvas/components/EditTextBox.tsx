@@ -75,7 +75,7 @@ const EditTextBox = ({ label, disabled = false, shape, defaultValue, updateValue
     for (const rowValue of defaultValue) {
       const rowDiv = document.createElement('div')
       if (rowValue === '') {
-        rowDiv.innerHTML = '<br/>'
+        rowDiv.appendChild(document.createElement('br'))
       } else {
         rowDiv.innerText = rowValue
       }

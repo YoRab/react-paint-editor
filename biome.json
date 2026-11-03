@@ -24,9 +24,6 @@
         "useKeyWithClickEvents": "off",
         "noLabelWithoutControl": { "level": "error", "options": { "inputComponents": ["NumberInput"] } }
       },
-      "security": {
-        "noDangerouslySetInnerHtml": "off"
-      },
       "suspicious": {
         "noExplicitAny": "error"
       }

@@ -97,7 +97,7 @@ const LayoutNameInput = ({ name, finishRenaming }: LayoutNameInputType) => {
 type LayoutType = {
   disabled?: boolean
   shape: LayerItem
-  icon: string
+  icon: React.ReactNode
   selected: boolean
   collapsed: boolean
   /** Whether the name of the layer is being typed */
@@ -169,6 +169,12 @@ const Layout = memo(function Layout({
   // the button keeps the focus once its layer is moved, see moveLayer
   const onMove = (action: 'forward' | 'backward') => onButtonClick(() => moveLayer(shape.id, action, `[data-move="${action}"]`))
 
+  const iconSpan = (
+    <span className='react-paint-editor-layout-icon' aria-hidden='true'>
+      {icon}
+    </span>
+  )
+
   return (
     // the clicks of the row are the ones of its select button, given to the whole row. The row is dragged by its handle,
     // or with the mouse from anywhere outside of its buttons, see useLayerDrag
@@ -183,12 +189,9 @@ const Layout = memo(function Layout({
       style={{ '--react-paint-editor-layout-depth': shape.depth } as React.CSSProperties}
     >
       {/* the pointer only: the keyboard and the assistive technologies move the layer with its buttons, or Alt and the arrows */}
-      <span
-        className='react-paint-editor-layout-handle'
-        aria-hidden='true'
-        title='Drag to reorder'
-        dangerouslySetInnerHTML={{ __html: dragHandleIcon }}
-      />
+      <span className='react-paint-editor-layout-handle' aria-hidden='true' title='Drag to reorder'>
+        {dragHandleIcon}
+      </span>
       {isGroup ? (
         // out of the order of Tab: ArrowRight and ArrowLeft expand and collapse the group, see handleLayerKeyDown
         <Button
@@ -205,7 +208,7 @@ const Layout = memo(function Layout({
       )}
       {isRenaming ? (
         <>
-          <span className='react-paint-editor-layout-icon' aria-hidden='true' dangerouslySetInnerHTML={{ __html: icon }} />
+          {iconSpan}
           <LayoutNameInput name={shape.name ?? shape.label} finishRenaming={finishRenaming} />
         </>
       ) : (
@@ -220,7 +223,7 @@ const Layout = memo(function Layout({
           aria-disabled={disabled}
           data-layer-id={shape.id}
         >
-          <span className='react-paint-editor-layout-icon' aria-hidden='true' dangerouslySetInnerHTML={{ __html: icon }} />
+          {iconSpan}
           <span className='react-paint-editor-layout-label'>{shape.label}</span>
         </span>
       )}

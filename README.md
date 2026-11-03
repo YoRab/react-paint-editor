@@ -432,7 +432,7 @@ Looking for the documentation of version 0.x? It lives on the [`v0-stable` branc
 
 ## Security
 
-A drawing loaded from a source you do not control is untrusted, filter its pictures with the `resolvePictureSrc` option. The `icon` of a tool is rendered as HTML and must be trusted. See the [security model](https://github.com/YoRab/react-paint-editor/blob/main/SECURITY.md#security-model), and the [security policy](https://github.com/YoRab/react-paint-editor/blob/main/SECURITY.md#reporting-a-vulnerability) to report a vulnerability.
+A drawing loaded from a source you do not control is untrusted, filter its pictures with the `resolvePictureSrc` option. See the [security model](https://github.com/YoRab/react-paint-editor/blob/main/SECURITY.md#security-model), and the [security policy](https://github.com/YoRab/react-paint-editor/blob/main/SECURITY.md#reporting-a-vulnerability) to report a vulnerability.
 
 ## Resources
 

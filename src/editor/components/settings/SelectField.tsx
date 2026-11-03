@@ -13,7 +13,7 @@ type SelectFieldType = {
   setSelectedSettings: React.Dispatch<React.SetStateAction<string | undefined>>
   title?: string
   disabled?: boolean
-  icon: string
+  icon: React.ReactNode
   field: string
   values: (string | number)[]
   /** Names of the values drawn by the option, given to their buttons: a value without a name is named after itself */
