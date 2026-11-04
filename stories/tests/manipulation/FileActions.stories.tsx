@@ -52,11 +52,11 @@ export const FileActions: Story = {
     const warn = spyOn(console, 'warn').mockImplementation(() => undefined)
 
     const openMenu = async () => {
-      if (!view.queryByTitle('Save project')) await userEvent.click(await view.findByTitle('Menu'))
+      if (!view.queryByRole('menuitem', { name: 'Save project' })) await userEvent.click(await view.findByTitle('Menu'))
     }
     const exportView = async (buttonName: string) => {
       await openMenu()
-      await userEvent.click(await view.findByTitle('Export PNG'))
+      await userEvent.click(await view.findByRole('menuitem', { name: 'Export PNG' }))
       await userEvent.click(await view.findByRole('button', { name: buttonName }))
       await wait()
     }
@@ -86,7 +86,7 @@ export const FileActions: Story = {
 
       // the modal closes without exporting
       await openMenu()
-      await userEvent.click(await view.findByTitle('Export PNG'))
+      await userEvent.click(await view.findByRole('menuitem', { name: 'Export PNG' }))
       await userEvent.click(await view.findByRole('button', { name: 'Annuler' }))
       expect(view.queryByRole('button', { name: 'Exporter le dessin entier' })).toBeNull()
       expect(downloads).toHaveLength(3)
@@ -97,7 +97,7 @@ export const FileActions: Story = {
 
       downloads.length = 0
       await openMenu()
-      await userEvent.click(await view.findByTitle('Save project'))
+      await userEvent.click(await view.findByRole('menuitem', { name: 'Save project' }))
       expect(downloads).toHaveLength(1)
       expect(downloads[0]!.download).toBe('drawing.json')
       const saved = JSON.parse(decodeURIComponent(downloads[0]!.href.slice(JSON_PREFIX.length)))
@@ -106,12 +106,12 @@ export const FileActions: Story = {
       // a click outside of the menu closes it
       await openMenu()
       await userEvent.click(document.body)
-      await waitFor(() => expect(view.queryByTitle('Save project')).toBeNull())
+      await waitFor(() => expect(view.queryByRole('menuitem', { name: 'Save project' })).toBeNull())
 
       // the space bar and Enter open the file chooser of a file button
       const chooseFile = spyOn(HTMLInputElement.prototype, 'click').mockImplementation(() => undefined)
       await openMenu()
-      ;(await view.findByTitle('Load project')).focus()
+      ;(await view.findByRole('menuitem', { name: 'Load project' })).focus()
       await userEvent.keyboard(' ')
       expect(chooseFile).toHaveBeenCalledTimes(1)
       await userEvent.keyboard('{Enter}')

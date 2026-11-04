@@ -78,6 +78,9 @@ export const EXPORT_TOOL: EditorActionTool = {
   label: 'Export PNG'
 }
 
+/** Files accepted as a project by the buttons which load one */
+export const PROJECT_FILE_ACCEPT = 'application/JSON'
+
 export const LOAD_TOOL: EditorActionTool = {
   type: 'loadfile',
   icon: openFileIcon,

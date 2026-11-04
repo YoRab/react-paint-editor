@@ -1,4 +1,6 @@
 import Button from '@editor/components/common/Button'
+import { getShortcutProps, ShortcutLabel } from '@editor/components/common/ShortcutHint'
+import { ACTION_SHORTCUTS } from '@editor/constants/shortcuts'
 import type { EditorActionTool } from '@editor/types/tools'
 
 type ActionButtonType = {
@@ -15,10 +17,18 @@ const ActionButton = ({ type, withText = false, disabled = false, role, onClick 
   const handleClick = () => {
     onClick()
   }
+  const shortcut = ACTION_SHORTCUTS[type.type]
 
   return (
-    <Button disabled={disabled} onClick={handleClick} title={type.label} icon={type.icon} role={role} data-testid={`tool-${type.type}`}>
-      {withText ? type.label : undefined}
+    <Button
+      disabled={disabled}
+      onClick={handleClick}
+      {...getShortcutProps(type.label, shortcut)}
+      icon={type.icon}
+      role={role}
+      data-testid={`tool-${type.type}`}
+    >
+      {withText ? <ShortcutLabel label={type.label} shortcut={shortcut} /> : undefined}
     </Button>
   )
 }

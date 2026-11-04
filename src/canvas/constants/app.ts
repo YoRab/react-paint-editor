@@ -29,7 +29,7 @@ export type AppOptions = {
   withFrameSelection: boolean
   withSkeleton: boolean
   withContextMenu: boolean
-  /** Adds the image files dropped on the canvas as pictures, when the picture tool is available */
+  /** Adds the image files dropped on the canvas, or pasted from the clipboard of the system, as pictures, when the picture tool is available */
   withDropPicture: boolean
   clearCallback: 'empty' | 'defaultShapes' | (() => ShapeInput[])
   /** Filters or rewrites the URLs of the remote pictures, which may come from data drawn by someone else */
@@ -96,6 +96,7 @@ export const DEFAULT_CANVAS_LABELS: CanvasLabels = {
   instructions:
     'Entrée : parcourir les formes avec Tab et Maj+Tab, puis ouvrir un groupe ou éditer un texte. Avec un outil de dessin, Entrée ajoute une forme au centre de la vue. ' +
     'Flèches : déplacer la sélection, Maj pour aller plus loin, ou déplacer la vue sans sélection. Suppr : supprimer. ' +
+    "Ctrl+D : dupliquer. Ctrl+] et Ctrl+[ : avancer et reculer, avec Maj au premier plan et à l'arrière-plan. " +
     'Échap : remonter au groupe, puis quitter les formes. Maj+F10 : menu contextuel.',
   keyboardHint: 'Déplacer le focus sur le canvas',
   keyboardHintKey: 'Entrée',

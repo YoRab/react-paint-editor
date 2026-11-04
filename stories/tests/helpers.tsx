@@ -174,7 +174,8 @@ export const getPixel = (drawCanvas: HTMLCanvasElement, point: Point) => {
 
 /** The input of a button opening a file chooser, found by the title of the button: the files are given to it */
 export const findFileInput = async (view: ReturnType<typeof within>, title: string) =>
-  (await view.findByTitle(title)).nextElementSibling as HTMLInputElement
+  // the title of the button may end with its shortcut: 'Load project (Ctrl+O)'
+  (await view.findByTitle((content: string) => content === title || content.startsWith(`${title} (`))).nextElementSibling as HTMLInputElement
 
 // ─── Settings panel helpers ────────────────────────────────────────────────────
 

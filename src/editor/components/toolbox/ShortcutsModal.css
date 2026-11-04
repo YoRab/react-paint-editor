@@ -1,0 +1,41 @@
+.react-paint-editor-shortcuts-list {
+  max-height: min(60vh, 480px);
+  overflow-y: auto;
+  min-width: min(480px, 80vw);
+  font-size: 14px;
+}
+
+.react-paint-editor-shortcuts-list h4 {
+  margin: 16px 0 4px;
+  font-size: 15px;
+}
+
+.react-paint-editor-shortcuts-list dl {
+  margin: 0;
+}
+
+.react-paint-editor-shortcuts-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 16px;
+  padding: 4px 0;
+  border-bottom: 1px solid var(--react-paint-editor-app-divider-color);
+}
+
+.react-paint-editor-shortcuts-row dd {
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 4px;
+}
+
+.react-paint-editor-shortcuts-row kbd {
+  font-family: inherit;
+  font-size: 12px;
+  white-space: nowrap;
+  padding: 2px 6px;
+  border: 1px solid var(--react-paint-editor-app-divider-color);
+  border-radius: 4px;
+}

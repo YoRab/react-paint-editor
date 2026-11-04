@@ -530,6 +530,32 @@ export const createPaintStore = (props: UseReactPaintProps = {}) => {
 
   const saveShapes = (source?: ChangeSource) => dispatch({ type: 'SAVE', source })
 
+  /**
+   * Escape during a gesture of the pointer: a gesture saves its shapes once released, so the last step of the history holds
+   * them as they were before it. The selection of the press is given back, a shape being drawn is removed.
+   * Returns whether a gesture was cancelled
+   */
+  const cancelGesture = (): boolean => {
+    const { interaction, document } = get()
+    const { selectionMode } = interaction
+    if (selectionMode.mode !== 'translate' && selectionMode.mode !== 'resize' && selectionMode.mode !== 'rotate' && selectionMode.mode !== 'brush') {
+      return false
+    }
+    const saved = document.history.states[document.history.cursor]!
+    const selection =
+      selectionMode.mode === 'brush'
+        ? saved.selectedShape
+        : selectionMode.mode === 'resize' && selectionMode.creationStart
+          ? undefined
+          : selectionMode.originalShape
+    batch(() => {
+      dispatch({ type: 'SET_SHAPES', shapes: saved.shapes, newSelectedShape: selection, save: false })
+      setSelectionMode({ mode: 'default' })
+      setSelectionFrame(undefined)
+    })
+    return true
+  }
+
   const undo = () => dispatch({ type: 'UNDO' })
 
   const redo = () => dispatch({ type: 'REDO' })
@@ -1215,7 +1241,11 @@ export const createPaintStore = (props: UseReactPaintProps = {}) => {
     addShapes: addShapesFromInputs,
     updateShapes: patchShapes,
     removeShapes: (ids, { source } = {}) => removeShapes(resolveShapes(ids), source),
-    duplicateShapes: (ids, { translate = false, select = false } = {}) => duplicateShapes(resolveShapes(ids), translate, select),
+    duplicateShapes: (ids, { translate = false, select = false, save = true, source } = {}) =>
+      batch(() => {
+        duplicateShapes(resolveShapes(ids), translate, select)
+        if (save) saveShapes(source)
+      }),
     groupShapes,
     ungroupShapes,
 
@@ -1315,7 +1345,13 @@ export const createPaintStore = (props: UseReactPaintProps = {}) => {
     },
     paste: () => {
       const { clipboard } = get()
-      if (clipboard) pasteShapes(copyShapes(clipboard, getSettings()))
+      // a step of the history, like the other changes
+      if (clipboard) {
+        batch(() => {
+          pasteShapes(copyShapes(clipboard, getSettings()))
+          saveShapes()
+        })
+      }
     },
 
     undo,
@@ -1455,6 +1491,7 @@ export const createPaintStore = (props: UseReactPaintProps = {}) => {
     clearHover,
     updateShapes,
     removeShapes,
+    cancelGesture,
     refreshSelectedShapes,
     setSelectionFrame,
     setActiveTool,

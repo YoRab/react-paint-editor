@@ -108,7 +108,7 @@ export type EditorState = {
   history: { canUndo: boolean; canRedo: boolean; canClear: boolean }
   clipboard: { hasContent: boolean }
   withContextMenu: boolean
-  /** Whether image files dropped on the canvas are added: the withDropPicture option, the edition and the picture tool */
+  /** Whether image files dropped on the canvas or pasted are added: the withDropPicture option, the edition and the picture tool */
   withDropPicture: boolean
   interaction: InteractionState
   contextMenu: ContextMenuState | undefined
@@ -198,7 +198,7 @@ export type EditorActions = {
    */
   removeShapes: (ids: string[], options?: ShapesActionOptions) => void
   /** Copies the shapes, a group with its shapes: each copy is inserted in front of its shape, in its group */
-  duplicateShapes: (ids: string[], options?: { translate?: boolean; select?: boolean }) => void
+  duplicateShapes: (ids: string[], options?: { translate?: boolean; select?: boolean } & ShapesActionOptions) => void
   /**
    * Groups the shapes in a new group, and returns its id. The group takes the place of the shape in front, in its group,
    * and the shapes keep their order. A shape of a group which is given with it, or of a locked group, is grouped with the
@@ -346,7 +346,7 @@ export type ReactPaintEventArgs = {
   canvasClicked: [shape: ShapeEntity | undefined, info: ShapePointerInfo]
   /** The drawing is clicked twice at the same place, after the second canvasClicked */
   canvasDoubleClicked: [shape: ShapeEntity | undefined, info: ShapePointerInfo]
-  /** A file dropped on the canvas is not added as a picture: its type is not an accepted image, or the image could not be loaded */
+  /** A file dropped on the canvas or pasted is not added as a picture: its type is not an accepted image, or the image could not be loaded */
   pictureDropFailed: [file: File, error: unknown]
   /** A picture added by addShapes, or whose source is changed by updateShapes, is loaded and drawn */
   pictureLoaded: [shape: ShapeEntity<'picture'>]

@@ -8,7 +8,7 @@ import { set } from '@canvas/utils/object'
 import { addStraightArrowHeads, drawArrowHeads, withArrowHeadsOuterBorder } from '@canvas/utils/shapes/arrow'
 import { createLinePath, getComputedShapeInfos, getDefaultOuterBorder } from '@canvas/utils/shapes/path'
 import { getToolDefaultStyle } from '@canvas/utils/tools'
-import { roundForGrid } from '@canvas/utils/transform'
+import { snapToShapePoint } from '@canvas/utils/transform'
 import { createShapeId } from '@canvas/utils/util'
 import { refreshCurve } from './curve'
 import { type GroupResizeContext, getPointPositionInNewBorder } from './group'
@@ -62,9 +62,10 @@ export const resizeLine = (
   cursorPosition: Point,
   originalShape: ShapeEntity<'line'>,
   selectionMode: SelectionModeResize<number>,
-  settings: UtilsSettings
+  settings: UtilsSettings,
+  isShiftPressed = false
 ): ShapeEntity<'line'> => {
-  const roundCursorPosition: Point = [roundForGrid(cursorPosition[0], settings), roundForGrid(cursorPosition[1], settings)]
+  const roundCursorPosition = snapToShapePoint(cursorPosition, settings, originalShape, selectionMode.anchor, isShiftPressed)
 
   const cursorPositionBeforeResize = getPointPositionAfterCanvasTransformation(
     roundCursorPosition,

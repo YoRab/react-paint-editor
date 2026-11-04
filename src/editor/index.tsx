@@ -206,6 +206,7 @@ const Editor = ({ paint, className, style, options, children }: EditorComponentP
       <PaintProvider paint={paint}>
         {isEditMode && (
           <Toolbar
+            scopeRef={rootRef}
             disabled={disabled}
             withMoveTool={withZoom}
             withEraser={withEraser}

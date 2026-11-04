@@ -23,12 +23,9 @@ type ToolbarGroupType = {
 const ToolbarGroup = ({ activeTool, group, disabled = false, setActiveToolFromId }: ToolbarGroupType) => {
   const { containerRef, isOpen, setIsOpen, close: closePanel, triggerProps, panelProps, closeAndFocus } = usePopup()
   const [, startTransition] = useTransition()
-  const [localActiveTool, setLocalActiveTool] = useState<ToolsType | undefined>(undefined)
+  const [lastTool, setLastTool] = useState<ToolsType | undefined>(undefined)
 
-  const setActiveTool = (tool: ToolsType) => {
-    setLocalActiveTool(tool)
-    setActiveToolFromId(tool.id)
-  }
+  const setActiveTool = (tool: ToolsType) => setActiveToolFromId(tool.id)
 
   const toolsRef = useArrowNavigation({ orientation: !('type' in group) && group.vertical ? 'vertical' : 'horizontal' })
 
@@ -51,7 +48,11 @@ const ToolbarGroup = ({ activeTool, group, disabled = false, setActiveToolFromId
 
   const isActive = group?.toolsType.find(tool => tool.type === activeTool.type) !== undefined
 
-  const groupIcon = localActiveTool ? localActiveTool.icon : group.toolsType?.[0]?.icon
+  // the group shows the last tool chosen in it, whether by its panel or elsewhere, like by a shortcut
+  const activeToolOfGroup = group.toolsType.find(tool => tool.id === activeTool.id)
+  if (activeToolOfGroup && activeToolOfGroup.id !== lastTool?.id) setLastTool(activeToolOfGroup)
+  const shownTool = activeToolOfGroup ?? lastTool
+  const groupIcon = shownTool ? shownTool.icon : group.toolsType?.[0]?.icon
 
   // the opening selects the last tool chosen in the group
   const togglePanel = () => {
@@ -59,7 +60,7 @@ const ToolbarGroup = ({ activeTool, group, disabled = false, setActiveToolFromId
       closePanel()
       return
     }
-    if (localActiveTool) setActiveToolFromId(localActiveTool.id)
+    if (shownTool) setActiveToolFromId(shownTool.id)
     else group.toolsType?.[0] && setActiveTool(group.toolsType[0])
     startTransition(() => {
       setIsOpen(true)

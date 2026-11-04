@@ -172,11 +172,11 @@ const useDrawableCanvas = (store: PaintStore, canvas: HTMLCanvasElement | null) 
       if (selectionMode.mode === 'preview') {
         const firstShape = getSelectedShapes(selectedShape)[0]
         if (firstShape?.type === 'curve') {
-          store.setSelectedShape(buildShapesSelection([addCurvePoint(firstShape, cursorPosition, settings, true)], settings))
+          store.setSelectedShape(buildShapesSelection([addCurvePoint(firstShape, cursorPosition, settings, true, modifiers.shift)], settings))
           return
         }
         if (firstShape?.type === 'polygon') {
-          store.setSelectedShape(buildShapesSelection([addPolygonPoint(firstShape, cursorPosition, settings, true)], settings))
+          store.setSelectedShape(buildShapesSelection([addPolygonPoint(firstShape, cursorPosition, settings, true, modifiers.shift)], settings))
           return
         }
       }
@@ -419,8 +419,8 @@ const useDrawableCanvas = (store: PaintStore, canvas: HTMLCanvasElement | null) 
         } else if (selectionMode.mode === 'preview' && (firstShape?.type === 'polygon' || firstShape?.type === 'curve')) {
           const newShape =
             firstShape.type === 'polygon'
-              ? addPolygonPoint(firstShape, cursorPosition, settings)
-              : addCurvePoint(firstShape, cursorPosition, settings)
+              ? addPolygonPoint(firstShape, cursorPosition, settings, false, state.interaction.modifiers.shift)
+              : addCurvePoint(firstShape, cursorPosition, settings, false, state.interaction.modifiers.shift)
           store.batch(() => {
             store.setSelectedShape(buildShapesSelection([newShape], settings))
             store.updateShapes([newShape], true)

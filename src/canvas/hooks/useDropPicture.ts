@@ -1,9 +1,26 @@
 import { PICTURE_DROP_GAP, PICTURE_MIME_TYPES } from '@canvas/constants/picture'
 import type { PaintStore } from '@canvas/store/paintStore'
+import type { Point } from '@canvas/types/Shapes'
 import { getCursorPositionInTransformedCanvas } from '@canvas/utils/intersect'
 import { useEffect } from 'react'
 
 const hasFiles = (e: DragEvent) => e.dataTransfer?.types.includes('Files') ?? false
+
+/**
+ * Adds image files as pictures, the first one at a position of the drawing and each next one a little further. One at a time:
+ * each picture is selected after the previous one, and they are not stacked at the same place. A failure is reported by the
+ * pictureDropFailed event, and the next files are still added
+ */
+export const addPicturesAt = async (store: PaintStore, files: File[], [x, y]: Point) => {
+  for (const [index, file] of files.entries()) {
+    try {
+      await store.actions.addPicture(file, { position: [x + index * PICTURE_DROP_GAP, y + index * PICTURE_DROP_GAP] })
+    } catch (error) {
+      console.warn(error)
+      store.emit('pictureDropFailed', file, error)
+    }
+  }
+}
 
 /**
  * Adds the image files dropped from the file explorer on the canvas as pictures, centered on the cursor. Without this,
@@ -29,16 +46,7 @@ const useDropPicture = (store: PaintStore, canvas: HTMLCanvasElement | null) => 
       for (const file of files) {
         if (!pictures.includes(file)) store.emit('pictureDropFailed', file, new Error(`Unsupported file type: ${file.type || file.name}`))
       }
-      const [x, y] = getCursorPositionInTransformedCanvas(e, canvas, store.getSettings())
-      // one at a time: each picture is selected after the previous one, and they are not stacked at the same place
-      for (const [index, file] of pictures.entries()) {
-        try {
-          await store.actions.addPicture(file, { position: [x + index * PICTURE_DROP_GAP, y + index * PICTURE_DROP_GAP] })
-        } catch (error) {
-          console.warn(error)
-          store.emit('pictureDropFailed', file, error)
-        }
-      }
+      await addPicturesAt(store, pictures, getCursorPositionInTransformedCanvas(e, canvas, store.getSettings()))
     }
 
     canvas.addEventListener('dragover', onDragOver)

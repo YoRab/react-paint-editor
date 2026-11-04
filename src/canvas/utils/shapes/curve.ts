@@ -18,7 +18,7 @@ import {
 } from '@canvas/utils/shapes/path'
 import { getRectBorder } from '@canvas/utils/shapes/rectangle'
 import { getToolDefaultStyle } from '@canvas/utils/tools'
-import { roundForGrid } from '@canvas/utils/transform'
+import { snapToShapePoint } from '@canvas/utils/transform'
 import { createShapeId } from '@canvas/utils/util'
 import { getPolygonBorder } from './polygon'
 
@@ -92,9 +92,10 @@ export const resizeCurve = (
   cursorPosition: Point,
   originalShape: ShapeEntity<'curve'>,
   selectionMode: SelectionModeResize<number>,
-  settings: UtilsSettings
+  settings: UtilsSettings,
+  isShiftPressed = false
 ): ShapeEntity<'curve'> => {
-  const roundCursorPosition: Point = [roundForGrid(cursorPosition[0], settings), roundForGrid(cursorPosition[1], settings)]
+  const roundCursorPosition = snapToShapePoint(cursorPosition, settings, originalShape, selectionMode.anchor, isShiftPressed)
 
   const originalCenter = originalShape.computed.center
 
@@ -132,9 +133,10 @@ export const addCurvePoint = (
   shape: ShapeEntity<'curve'>,
   cursorPosition: Point,
   settings: UtilsSettings,
-  temporary = false
+  temporary = false,
+  isShiftPressed = false
 ): ShapeEntity<'curve'> => {
-  const roundCursorPosition: Point = [roundForGrid(cursorPosition[0], settings), roundForGrid(cursorPosition[1], settings)]
+  const roundCursorPosition = snapToShapePoint(cursorPosition, settings, shape, shape.points.length, isShiftPressed)
 
   const originalCenter = shape.computed.center
 
