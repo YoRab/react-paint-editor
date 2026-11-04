@@ -11,7 +11,7 @@ export type RangeFieldType = {
   title?: string
   disabled?: boolean | undefined
   field: string
-  icon: string
+  icon: React.ReactNode
   min?: number | undefined
   max?: number | undefined
   step?: number | undefined

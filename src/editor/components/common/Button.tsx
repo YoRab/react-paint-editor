@@ -8,7 +8,7 @@ type CommonType = {
   selected?: boolean | undefined
   /** Shown as selected, and pressed for the assistive technologies: the button of a value chosen, or of a mode on */
   pressed?: boolean | undefined
-  icon?: string | undefined
+  icon?: React.ReactNode
 }
 
 type ButtonType = CommonType & React.ButtonHTMLAttributes<HTMLButtonElement>
@@ -36,7 +36,11 @@ const ButtonElement = React.forwardRef<HTMLButtonElement, ButtonType>(
     >
       <span className='react-paint-editor-button-content'>
         {children && <span className='react-paint-editor-button-children'>{children}</span>}
-        {icon && <span className='react-paint-editor-button-icon' dangerouslySetInnerHTML={{ __html: icon }} />}
+        {icon && (
+          <span className='react-paint-editor-button-icon' aria-hidden='true'>
+            {icon}
+          </span>
+        )}
       </span>
     </button>
   )

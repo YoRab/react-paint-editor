@@ -154,7 +154,7 @@ const ColorField = ({
                   '--react-paint-editor-colorfield-color-value': values.includes(value) ? 'var(--react-paint-editor-app-font-color)' : value
                 }}
               >
-                <span dangerouslySetInnerHTML={{ __html: paletteIcon }} />
+                <span aria-hidden='true'>{paletteIcon}</span>
               </div>
             </Button>
             <Button title='Pipette' icon={eyedropperIcon} pressed={isPicking} onClick={handlePick} />

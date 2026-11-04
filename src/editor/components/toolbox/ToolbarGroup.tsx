@@ -74,7 +74,7 @@ const ToolbarGroup = ({ activeTool, group, disabled = false, setActiveToolFromId
 
   return (
     <div className='react-paint-editor-toolbargroup-relative' ref={containerRef}>
-      {/* the icon is rendered as HTML, the title as text */}
+      {/* the title of the group is rendered as text, next to the icon */}
       <Button selected={isActive} title={group.title} disabled={disabled} onClick={togglePanel} icon={groupIcon} {...triggerProps}>
         {groupIcon === undefined ? group.title : undefined}
       </Button>

@@ -7,7 +7,7 @@ type ShapeStyleSelectType = {
   setSelectedSettings: React.Dispatch<React.SetStateAction<string | undefined>>
   disabled?: boolean | undefined
   field: string
-  icon: string
+  icon: React.ReactNode
   title?: string
   values: boolean[]
   value?: boolean | undefined

@@ -1114,8 +1114,8 @@ const groupPatch: ShapePatch = { id: 'group_1', name: 'Header', style: { opacity
       </p>
       <Source language='typescript' code={`type CustomToolInput = {
   id: string
-  // SVG markup, rendered as HTML by the editor: it must be trusted, never built from what a user typed or loaded
-  icon?: string
+  // a React node, usually an <svg> drawn in currentColor, like <svg viewBox='0 0 20 20'><path d='…' /></svg>
+  icon?: ReactNode
   label?: string
   type: ShapeType
   settings: ToolsSettingsType<ShapeType>

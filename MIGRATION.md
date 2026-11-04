@@ -94,7 +94,7 @@ The `canGrow` and `canShrink` options are replaced by `resize`, which also adds 
 
 ## Default tools
 
-`DEFAULT_SHAPE_TOOLS` (editor) is replaced by `DEFAULT_TOOLS` (canvas). Default tools don't have an icon nor a label anymore: the editor resolves them from the tool type. Tools given in `options.availableTools` can still define their own `icon` and `label`.
+`DEFAULT_SHAPE_TOOLS` (editor) is replaced by `DEFAULT_TOOLS` (canvas). Default tools don't have an icon nor a label anymore: the editor resolves them from the tool type. Tools given in `options.availableTools` can still define their own `icon` and `label`. The `icon` is now a React node, like `<svg viewBox='0 0 20 20'><path d='…' /></svg>`, instead of SVG markup in a string: a string is shown as text.
 
 The same goes for the selection and move tools, exported as `SELECTION_TOOL` and `MOVE_TOOL`: `icon` and `label` of `ActionsTool` become optional. Select them by id, with `paint.actions.selectTool(SELECTION_TOOL.id)`.
 

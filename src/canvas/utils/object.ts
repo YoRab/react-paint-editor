@@ -1,3 +1,5 @@
+import { isValidElement } from 'react'
+
 export const omit = <T extends Record<string, unknown>>(keys: string[], obj: T): T => {
   const result = { ...obj }
   for (const key of keys) delete result[key]
@@ -69,6 +71,20 @@ export const isEqual = (a: unknown, b: unknown): boolean => {
     return false
   }
 
+  // by index: Object.keys would build an array of strings for each one, like each point of a brush
+  if (Array.isArray(a) || Array.isArray(b)) {
+    if (!Array.isArray(a) || !Array.isArray(b) || a.length !== b.length) return false
+    for (let i = 0; i < a.length; i++) {
+      if (a[i] !== b[i] && !isEqual(a[i], b[i])) return false
+    }
+    return true
+  }
+
+  // React elements, like the icons of the tools: their owner and debug fields are fibers and stacks, never compared
+  if (isValidElement(a) || isValidElement(b)) {
+    return isValidElement(a) && isValidElement(b) && a.type === b.type && a.key === b.key && isEqual(a.props, b.props)
+  }
+
   const keysA = Object.keys(a)
 
   if (keysA.length !== Object.keys(b).length) {
@@ -78,9 +94,8 @@ export const isEqual = (a: unknown, b: unknown): boolean => {
   const recordA = a as Record<string, unknown>
   const recordB = b as Record<string, unknown>
   for (const key of keysA) {
-    if (!Object.hasOwn(recordB, key) || !isEqual(recordA[key], recordB[key])) {
-      return false
-    }
+    if (!Object.hasOwn(recordB, key)) return false
+    if (recordA[key] !== recordB[key] && !isEqual(recordA[key], recordB[key])) return false
   }
 
   return true
