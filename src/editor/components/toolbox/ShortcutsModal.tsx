@@ -1,14 +1,6 @@
-import type { ToolsType } from '@canvas/index'
+import { CANVAS_SHORTCUTS, formatShortcut, type Shortcut, type ToolsType } from '@canvas/index'
 import Modal from '@editor/components/common/Modal'
-import {
-  ACTION_SHORTCUTS,
-  CANVAS_SHORTCUTS,
-  formatShortcut,
-  HELP_LABEL,
-  HELP_SHORTCUT,
-  type Shortcut,
-  TOOL_SHORTCUTS
-} from '@editor/constants/shortcuts'
+import { ACTION_SHORTCUTS, HELP_LABEL, HELP_SHORTCUT, TOOL_SHORTCUTS } from '@editor/constants/shortcuts'
 import { isMacOs } from '@editor/utils/util'
 import './ShortcutsModal.css'
 
@@ -38,11 +30,11 @@ const getSections = (tools: readonly ToolsType[], isMac: boolean, withLoadAndSav
     {
       title: 'Édition',
       rows: [
-        { label: 'Annuler', keys: [ACTION_SHORTCUTS.undo!] },
-        { label: 'Rétablir', keys: isMac ? [ACTION_SHORTCUTS.redo!] : [ACTION_SHORTCUTS.redo!, { key: 'y', ctrl: true }] },
+        { label: 'Annuler', keys: [S.undo] },
+        { label: 'Rétablir', keys: isMac ? [S.redo] : [S.redo, S.redoAlt] },
         { label: 'Couper, copier, coller', keys: [S.cut, S.copy, S.paste] },
         { label: 'Dupliquer', keys: [S.duplicate, 'Alt + glisser'] },
-        { label: 'Supprimer', keys: [S.remove, { key: 'Backspace' }] },
+        { label: 'Supprimer', keys: [S.remove, S.removeAlt] },
         { label: 'Tout sélectionner', keys: [S.selectAll] },
         { label: 'Ajouter à la sélection', keys: ['Maj + clic'] },
         { label: 'Grouper, dégrouper', keys: [S.group, S.ungroup] },
@@ -60,7 +52,7 @@ const getSections = (tools: readonly ToolsType[], isMac: boolean, withLoadAndSav
       rows: [
         { label: 'Garder les proportions, aligner les angles par 15°', keys: ['Maj'] },
         { label: 'Redimensionner depuis le centre', keys: ['Alt'] },
-        { label: 'Terminer un polygone ou une courbe, retirer son dernier point', keys: [S.enter, { key: 'Backspace' }] },
+        { label: 'Terminer un polygone ou une courbe, retirer son dernier point', keys: [S.enter, S.removeAlt] },
         { label: 'Ajouter une forme au centre de la vue', keys: [S.enter] }
       ]
     },
@@ -79,7 +71,7 @@ const getSections = (tools: readonly ToolsType[], isMac: boolean, withLoadAndSav
     {
       title: 'Clavier',
       rows: [
-        { label: 'Parcourir les formes, ouvrir un groupe, éditer un texte', keys: [S.enter, { key: 'Tab' }, { key: 'Tab', shift: true }] },
+        { label: 'Parcourir les formes, ouvrir un groupe, éditer un texte', keys: [S.enter, S.nextShape, S.previousShape] },
         ...fileRows,
         { label: 'Cette liste', keys: [HELP_SHORTCUT] }
       ]

@@ -1,4 +1,4 @@
-import { formatShortcut, getAriaKeyShortcut, type Shortcut } from '@editor/constants/shortcuts'
+import { formatShortcut, getAriaKeyShortcut, type Shortcut } from '@canvas/index'
 import { isMacOs } from '@editor/utils/util'
 
 /** Text of a shortcut at the end of an item of a menu: the assistive technologies read aria-keyshortcuts instead */

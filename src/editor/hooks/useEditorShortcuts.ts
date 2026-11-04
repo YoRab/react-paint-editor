@@ -1,5 +1,5 @@
-import type { ReactPaint } from '@canvas/index'
-import { ACTION_SHORTCUTS, HELP_SHORTCUT, matchesShortcut, type Shortcut, TOOL_SHORTCUTS } from '@editor/constants/shortcuts'
+import { matchesShortcut, type ReactPaint, type Shortcut } from '@canvas/index'
+import { ACTION_SHORTCUTS, HELP_SHORTCUT, TOOL_SHORTCUTS } from '@editor/constants/shortcuts'
 import useLatest from '@editor/hooks/useLatest'
 import { type RefObject, useEffect } from 'react'
 

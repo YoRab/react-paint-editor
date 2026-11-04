@@ -1,11 +1,20 @@
-import { type ContextMenuState, type EditorActions, type ShapesOrderAction, type ShapesTransformAction, usePaint, usePaintState } from '@canvas/index'
+import {
+  CANVAS_SHORTCUTS,
+  type ContextMenuState,
+  type EditorActions,
+  getAriaKeyShortcut,
+  type ShapesOrderAction,
+  type ShapesTransformAction,
+  type Shortcut,
+  usePaint,
+  usePaintState
+} from '@canvas/index'
 import { clamp, isMacOs } from '@editor/utils/util'
 import './ContextMenu.css'
 import Button from '@editor/components/common/Button'
 import Menu from '@editor/components/common/Menu'
 import ShortcutHint from '@editor/components/common/ShortcutHint'
 import { rightChevronIcon } from '@editor/constants/icons'
-import { CANVAS_SHORTCUTS, getAriaKeyShortcut, type Shortcut } from '@editor/constants/shortcuts'
 import useMenu from '@editor/hooks/useMenu'
 import usePressOutside from '@editor/hooks/usePressOutside'
 import { type ReactNode, type RefObject, useEffect, useRef, useState } from 'react'

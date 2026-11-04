@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import { expect, userEvent, within } from 'storybook/test'
 import type { DrawableShape, ShapeEntity } from '../../../src/index'
-import { getPaint, getRootIds, getState, makeCoordConverters, ReactPaintWrapper, selectTool, wait } from './../helpers'
+import { getPaint, getRootIds, getSelectedIds, getState, makeCoordConverters, ReactPaintWrapper, selectTool, wait } from './../helpers'
 
 const meta = {
   title: 'Tests/Manipulation',
@@ -231,7 +231,7 @@ export const DrawingKeys: Story = {
     expect(getState().selectedShapeIds).toEqual([polygonId])
     expect(getPoints(polygonId)).toHaveLength(2)
 
-    // --- A polygon of a single point draws nothing: Enter and Backspace remove it ---
+    // --- A polygon of a single point draws nothing: Escape, Enter and Backspace remove it ---
     await selectTool(view, 'polygon')
     await click(600, 200)
     expect(getRootIds()).toHaveLength(2)
@@ -242,6 +242,12 @@ export const DrawingKeys: Story = {
     await user.keyboard('{Backspace}')
     expect(getRootIds()).toEqual([polygonId])
     expect(getState().interaction.mode).toBe('default')
+    await selectTool(view, 'polygon')
+    await click(600, 200)
+    expect(getRootIds()).toHaveLength(2)
+    await user.keyboard('{Escape}')
+    expect(getRootIds()).toEqual([polygonId])
+    expect(getSelectedIds()).toEqual([])
 
     // =====================================================================
     // With Shift, a line drawn and a new side of a polygon take a regular angle

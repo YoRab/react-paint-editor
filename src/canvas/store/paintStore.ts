@@ -347,6 +347,15 @@ export const createPaintStore = (props: UseReactPaintProps = {}) => {
       state = withInteraction(state, { selectionMode: { mode: 'default' } })
     }
 
+    // A polygon or a curve of a single point, left when its drawing ends, draws nothing: it is removed, with the step of the
+    // history it added if it was saved
+    if (previousMode === 'preview' && state.interaction.selectionMode.mode !== 'preview') {
+      const [drawn] = getSelectedShapes(previous.document.selectedShape)
+      if ((drawn?.type === 'polygon' || drawn?.type === 'curve') && drawn.points.length < 2) {
+        state = { ...state, document: shapesReducer(state.document, getRemoveShapesAction(state, [drawn])) }
+      }
+    }
+
     // A pick of a color is cancelled by a change of tool
     if (mode === 'eyedropper' && previous.tools.activeToolId !== state.tools.activeToolId) {
       state = withInteraction(state, { selectionMode: { mode: 'default' } })
@@ -623,13 +632,15 @@ export const createPaintStore = (props: UseReactPaintProps = {}) => {
    * Removes shapes of the drawing, at any depth, and their shapes with the groups: a group left with a single shape is
    * dissolved, the selection goes to the shape left
    */
+  const getRemoveShapesAction = (state: InternalState, shapesToRemove: ShapeEntity[], source?: ChangeSource) => {
+    const replacedIds = new Map<string, string[]>()
+    const ids = new Set(shapesToRemove.map(shape => shape.id))
+    const shapes = removeShapesFromTree(state.document.shapes, ids, getSettings(state), replacedIds)
+    return setShapesAction(state, { shapes, save: true, source, replacedIds })
+  }
+
   const removeShapes = (shapesToRemove: ShapeEntity[], source?: ChangeSource) =>
-    dispatch(state => {
-      const replacedIds = new Map<string, string[]>()
-      const ids = new Set(shapesToRemove.map(shape => shape.id))
-      const shapes = removeShapesFromTree(state.document.shapes, ids, getSettings(state), replacedIds)
-      return setShapesAction(state, { shapes, save: true, source, replacedIds })
-    })
+    dispatch(state => getRemoveShapesAction(state, shapesToRemove, source))
 
   /** Sets new lists of shapes of the drawing, see setShapeLists: a step of the history is added when they change */
   const setLists = (lists: ReadonlyMap<string | undefined, ShapeEntity[]>) => {

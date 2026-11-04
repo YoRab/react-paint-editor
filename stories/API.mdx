@@ -1273,6 +1273,11 @@ useReactPaint({ options: { availableTools: [...DEFAULT_TOOLS, STAR, HEART, STICK
           and <code>canvasLaserWidth</code> options of the Canvas component. It is not part of the drawing, of its history nor of its exports
         </li>
         <li><code>ZOOM_LEVELS</code> - Levels of <code>actions.setZoom</code>, from <code>0.05</code> to <code>8</code>: every zoom stays between the first and the last one, to disable a button or to build a zoom menu</li>
+        <li>
+          <code>CANVAS_SHORTCUTS</code> - The keys of the commands of the canvas (see the keyboard shortcuts), as <code>Shortcut</code> objects <code>{'{ key, ctrl?, shift?, otherKeys?, codes? }'}</code> where <code>ctrl</code> is <code>⌘</code> on macOS.
+          To show them in a custom editor, to avoid them for its own, or to listen the same keys: <code>matchesShortcut(event, shortcut, isShiftPressed)</code> tells whether a key event is a shortcut (a letter whatever Caps Lock, the digits and the signs
+          also from their physical key, the modifiers given exactly), <code>formatShortcut(shortcut, isMac)</code> writes it for a menu (<code>Ctrl+Maj+G</code>, <code>⇧⌘G</code>) and <code>getAriaKeyShortcut(shortcut, isMac)</code> gives the value of <code>aria-keyshortcuts</code>
+        </li>
         <li><code>shallowEqual(a, b)</code> - Equality function for <code>usePaintState</code> selectors building an object or an array</li>
         <li><code>SETTINGS_DEFAULT_CUSTOM</code> - Default settings of a custom tool, to spread in its own settings</li>
       </ul>

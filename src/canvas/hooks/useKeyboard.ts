@@ -1,6 +1,7 @@
-import { KeyboardCode, KeyboardCommand, KeyboardPhysicalCode } from '@canvas/constants/keyboard'
+import { KeyboardCode, KeyboardCommand } from '@canvas/constants/keyboard'
 import { PICTURE_MIME_TYPES } from '@canvas/constants/picture'
 import { ShapeTypeArray } from '@canvas/constants/shapes'
+import { matchesShortcut, CANVAS_SHORTCUTS as S, type Shortcut } from '@canvas/constants/shortcuts'
 import { SELECTION_TOOL } from '@canvas/constants/tools'
 import { addPicturesAt } from '@canvas/hooks/useDropPicture'
 import type { PaintStore } from '@canvas/store/paintStore'
@@ -22,13 +23,15 @@ import { useEffect } from 'react'
 const isFormField = (target: EventTarget | null) =>
   target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement || target instanceof HTMLSelectElement
 
-/** A letter, whatever Shift and Caps Lock */
-const isLetter = (e: KeyboardEvent, letter: string) => e.key.toLowerCase() === letter
+/** A command of the keyboard of the canvas: it runs when its shortcut is pressed outside of a field */
+type Command = {
+  shortcut: Shortcut
+  run: () => void
+  /** A text being edited keeps its keys */
+  notWhileEditingText?: boolean
+}
 
-/** A key read from its character or from its physical key: the signs and the digits move between the layouts */
-const isKey = (e: KeyboardEvent, keys: readonly string[], codes: readonly string[]) => keys.includes(e.key) || codes.includes(e.code)
-
-/** Margin around the shapes fitted in the view by Shift+1 and Shift+2, in pixels of the screen */
+/** Margin around the shapes fitted in the view by the commands of the zoom, in pixels of the screen */
 const ZOOM_FIT_PADDING = 20
 
 /**
@@ -119,26 +122,88 @@ const useKeyboard = (store: PaintStore) => {
       else if (shape.type === 'group') selectFromKeyboard(getFirstShapeOfGroup(shape))
     }
 
-    const getSelectedIds = () => getSelectedShapes(store.getState().document.selectedShape).map(shape => shape.id)
+    /** A command on the selection and its ids, which does nothing without a selection */
+    const withSelection = (action: (shapes: ShapeEntity[], ids: string[]) => void) => () => {
+      const shapes = getSelectedShapes(store.getState().document.selectedShape)
+      if (shapes.length)
+        action(
+          shapes,
+          shapes.map(shape => shape.id)
+        )
+    }
+
+    // Ctrl+G is also the next result of a search of the browser, Ctrl+D a bookmark: they are prevented. The commands of the
+    // shapes leave the keys to a text being edited
+    const commands: Command[] = [
+      { shortcut: S.undo, run: () => store.actions.undo() },
+      { shortcut: S.redo, run: () => store.actions.redo() },
+      ...(isMacOs() ? [] : [{ shortcut: S.redoAlt, run: () => store.actions.redo() }]),
+      { shortcut: S.selectAll, run: () => store.actions.selectAllShapes() },
+      { shortcut: S.group, notWhileEditingText: true, run: withSelection((_, ids) => store.actions.groupShapes(ids)) },
+      { shortcut: S.ungroup, notWhileEditingText: true, run: withSelection((_, ids) => store.actions.ungroupShapes(ids)) },
+      {
+        shortcut: S.duplicate,
+        notWhileEditingText: true,
+        run: withSelection((_, ids) => store.actions.duplicateShapes(ids, { translate: true, select: true }))
+      },
+      // the order of the selection: forward and backward, to the foreground and to the background with Shift
+      ...(['forward', 'backward', 'first', 'last'] as const).map(move => ({
+        shortcut: S[move],
+        notWhileEditingText: true,
+        run: withSelection((_, ids) => store.actions.moveShapes(ids, move))
+      })),
+      // locks the selection, or unlocks it when it already is, and the same for hiding it
+      {
+        shortcut: S.lock,
+        notWhileEditingText: true,
+        run: withSelection((shapes, ids) => store.actions.setShapesLocked(ids, !shapes.some(shape => shape.locked)))
+      },
+      {
+        shortcut: S.hide,
+        notWhileEditingText: true,
+        run: withSelection((shapes, ids) =>
+          store.actions.setShapesVisibility(
+            ids,
+            shapes.some(shape => shape.visible === false)
+          )
+        )
+      },
+      ...(['flipHorizontally', 'flipVertically'] as const).map(transform => ({
+        shortcut: S[transform],
+        notWhileEditingText: true,
+        run: withSelection((shapes, ids) => {
+          if (!shapes.some(shape => shape.locked)) store.actions.transformShapes(ids, transform)
+        })
+      })),
+      { shortcut: S.zoomIn, run: () => store.actions.setZoom('zoom') },
+      { shortcut: S.zoomOut, run: () => store.actions.setZoom('unzoom') },
+      { shortcut: S.resetZoom, run: () => store.actions.resetZoom() },
+      {
+        shortcut: S.zoomToFit,
+        notWhileEditingText: true,
+        run: () => store.actions.zoomToShapes(undefined, { padding: ZOOM_FIT_PADDING })
+      },
+      {
+        shortcut: S.zoomToSelection,
+        notWhileEditingText: true,
+        run: withSelection((_, ids) => store.actions.zoomToShapes(ids, { padding: ZOOM_FIT_PADDING }))
+      }
+    ]
 
     /** Enter ends a polygon or a curve being drawn: it is selected, without the point following the pointer */
     const endDrawing = (shape: ShapeEntity<'polygon' | 'curve'>) => {
       store.batch(() => {
+        // the store removes a shape of a single point, which draws nothing, when its drawing ends
         store.setSelectionMode({ mode: 'default' })
         store.setActiveTool(SELECTION_TOOL)
-        // a single point draws nothing
-        if (shape.points.length < 2) store.removeShapes([shape])
-        else store.actions.selectShapes([shape.id])
+        store.actions.selectShapes([shape.id])
       })
     }
 
-    /** Backspace removes the last point of a polygon or a curve being drawn, and the shape with its first point */
+    /** Backspace removes the last point of a polygon or a curve being drawn, and ends its drawing with its first point */
     const removeLastPoint = (shape: ShapeEntity<'polygon' | 'curve'>) => {
       if (shape.points.length < 2) {
-        store.batch(() => {
-          store.setSelectionMode({ mode: 'default' })
-          store.removeShapes([shape])
-        })
+        store.setSelectionMode({ mode: 'default' })
         return
       }
       const settings = store.getSettings()
@@ -251,97 +316,13 @@ const useKeyboard = (store: PaintStore) => {
       if (!isInteractive() || e.defaultPrevented) return
       // only the modifiers are followed in a field
       const isInField = isFormField(e.target)
-      if ((e.metaKey || e.ctrlKey) && !isInField) {
-        if (isLetter(e, 'z')) {
+      const { shift } = store.getState().interaction.modifiers
+      if (!isInField) {
+        const command = commands.find(({ shortcut }) => matchesShortcut(e, shortcut, shift))
+        if (command && !(command.notWhileEditingText && isEditingText())) {
           e.preventDefault()
           e.stopPropagation()
-          if (e.shiftKey) {
-            store.actions.redo()
-          } else {
-            store.actions.undo()
-          }
-          return
-        }
-        if (!isMacOs() && isLetter(e, 'y')) {
-          e.preventDefault()
-          e.stopPropagation()
-          store.actions.redo()
-          return
-        }
-
-        if (isLetter(e, 'a')) {
-          e.preventDefault()
-          e.stopPropagation()
-          store.actions.selectAllShapes()
-          return
-        }
-
-        // Ctrl+G is also the next result of a search of the browser, which is prevented
-        if (isLetter(e, 'g') && !isEditingText()) {
-          e.preventDefault()
-          e.stopPropagation()
-          const ids = getSelectedIds()
-          if (e.shiftKey) {
-            store.actions.ungroupShapes(ids)
-          } else {
-            store.actions.groupShapes(ids)
-          }
-          return
-        }
-
-        // Ctrl+D is also a bookmark of the browser, which is prevented
-        if (isLetter(e, 'd') && !isEditingText()) {
-          e.preventDefault()
-          e.stopPropagation()
-          const ids = getSelectedIds()
-          if (ids.length) store.actions.duplicateShapes(ids, { translate: true, select: true })
-          return
-        }
-
-        // the order of the selection: forward and backward, to the foreground and to the background with Shift
-        const isForward = isKey(e, [KeyboardCode.BracketRight], [KeyboardPhysicalCode.BracketRight])
-        if ((isForward || isKey(e, [KeyboardCode.BracketLeft], [KeyboardPhysicalCode.BracketLeft])) && !isEditingText()) {
-          e.preventDefault()
-          e.stopPropagation()
-          const ids = getSelectedIds()
-          const { shift } = store.getState().interaction.modifiers
-          if (ids.length) store.actions.moveShapes(ids, isForward ? (shift ? 'first' : 'forward') : shift ? 'last' : 'backward')
-          return
-        }
-
-        // Ctrl+Shift+L locks the selection, Ctrl+Shift+H hides it, or the other way round when it already is
-        if ((isLetter(e, 'l') || isLetter(e, 'h')) && store.getState().interaction.modifiers.shift && !isEditingText()) {
-          e.preventDefault()
-          e.stopPropagation()
-          const shapes = getSelectedShapes(store.getState().document.selectedShape)
-          const ids = shapes.map(shape => shape.id)
-          if (!ids.length) return
-          if (isLetter(e, 'l')) store.actions.setShapesLocked(ids, !shapes.some(shape => shape.locked))
-          else
-            store.actions.setShapesVisibility(
-              ids,
-              shapes.some(shape => shape.visible === false)
-            )
-          return
-        }
-
-        // Ctrl+= is the zoom of the browsers too, and the digits are read from their key, whatever the layout
-        if (isKey(e, [KeyboardCode.Plus, KeyboardCode.Equal], [KeyboardPhysicalCode.Equal, KeyboardPhysicalCode.NumpadAdd])) {
-          e.preventDefault()
-          e.stopPropagation()
-          store.actions.setZoom('zoom')
-          return
-        }
-        if (isKey(e, [KeyboardCode.Minus], [KeyboardPhysicalCode.Minus, KeyboardPhysicalCode.NumpadSubtract])) {
-          e.preventDefault()
-          e.stopPropagation()
-          store.actions.setZoom('unzoom')
-          return
-        }
-        if (isKey(e, [KeyboardCode.Zero], [KeyboardPhysicalCode.Digit0, KeyboardPhysicalCode.Numpad0])) {
-          e.preventDefault()
-          e.stopPropagation()
-          store.actions.resetZoom()
+          command.run()
           return
         }
       }
@@ -377,29 +358,6 @@ const useKeyboard = (store: PaintStore) => {
       const { selectedShape } = state.document
       const { keyboardNavigation, modifiers } = state.interaction
       const isOnCanvas = e.target === store.getCanvasElement()
-
-      const isShiftShortcut = modifiers.shift && !e.ctrlKey && !e.metaKey && !e.altKey && !isInField && !isEditingText()
-      // Shift+1 fits the drawing in the view, Shift+2 the selection: the digits are read from their key
-      if (isShiftShortcut && (e.code === KeyboardPhysicalCode.Digit1 || e.code === KeyboardPhysicalCode.Digit2)) {
-        e.preventDefault()
-        e.stopPropagation()
-        if (e.code === KeyboardPhysicalCode.Digit1) store.actions.zoomToShapes(undefined, { padding: ZOOM_FIT_PADDING })
-        else if (selectedShape) store.actions.zoomToShapes(getSelectedIds(), { padding: ZOOM_FIT_PADDING })
-        return
-      }
-      // Shift+H flips the selection horizontally, Shift+V vertically
-      if (isShiftShortcut && (isLetter(e, 'h') || isLetter(e, 'v'))) {
-        e.preventDefault()
-        e.stopPropagation()
-        const shapes = getSelectedShapes(selectedShape)
-        if (shapes.length && !shapes.some(shape => shape.locked)) {
-          store.actions.transformShapes(
-            shapes.map(shape => shape.id),
-            isLetter(e, 'h') ? 'flipHorizontally' : 'flipVertically'
-          )
-        }
-        return
-      }
 
       // a polygon or a curve being drawn: Enter ends it, Backspace removes its last point
       // (Enter on a button of the scope clicks it)
