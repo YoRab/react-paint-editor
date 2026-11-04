@@ -1,5 +1,7 @@
 import { ERASER_TOOL, LASER_TOOL } from '@canvas/constants/tools'
 import { createPaintStore, type PaintStore } from '@canvas/store/paintStore'
+import type { Point, ShapeEntity } from '@canvas/types/Shapes'
+import { removePolygonPoint } from '@canvas/utils/shapes/polygon'
 import { describe, expect, it, vi } from 'vitest'
 import { createLoadedStore, RECTS, stubPath2D } from './helpers'
 
@@ -386,6 +388,52 @@ describe('consistency rules', () => {
     store.setSelectionMode({ mode: 'preview' })
     store.actions.selectShapes([second!])
     expect(store.getState().interaction.selectionMode).toEqual({ mode: 'default' })
+  })
+
+  describe('a polygon of a single point', () => {
+    const SEGMENT: Point[] = [
+      [10, 10],
+      [200, 10]
+    ]
+
+    const getPolygon = (store: PaintStore, id: string) => store.getState().document.shapes.find(shape => shape.id === id) as ShapeEntity<'polygon'>
+
+    /** The state of a polygon being drawn, after the first click: it has one point, and is selected in preview mode */
+    const startDrawing = async () => {
+      const store = await createLoadedStore()
+      const before = getIds(store)
+      const [id] = store.actions.addShapes([{ type: 'polygon', points: SEGMENT }])
+      store.updateShapes([removePolygonPoint(getPolygon(store, id!), 1, store.getSettings())])
+      store.actions.selectShapes([id!])
+      store.setSelectionMode({ mode: 'preview' })
+      return { store, before, id: id! }
+    }
+
+    it('draws nothing: it is removed when its drawing ends', async () => {
+      const { store, before, id } = await startDrawing()
+      expect(getIds(store)).toContain(id)
+      store.setSelectionMode({ mode: 'default' })
+      expect(getIds(store)).toEqual(before)
+      expect(getSelectedIds(store)).toEqual([])
+    })
+
+    it('is removed when another shape is selected or the tool changes', async () => {
+      const { store, before } = await startDrawing()
+      store.actions.selectShapes([before[0]!])
+      expect(getIds(store)).toEqual(before)
+
+      const other = await startDrawing()
+      other.store.actions.selectTool('react-paint-rect')
+      expect(getIds(other.store)).toEqual(other.before)
+    })
+
+    it('is kept with 2 points, or while it is drawn', async () => {
+      const { store, id } = await startDrawing()
+      store.actions.selectShapes([id])
+      store.updateShapes([{ ...getPolygon(store, id), points: SEGMENT }])
+      store.setSelectionMode({ mode: 'default' })
+      expect(getIds(store)).toContain(id)
+    })
   })
 
   it('notifies a change of the hover mode only when its values change', async () => {

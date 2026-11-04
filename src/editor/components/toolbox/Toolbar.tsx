@@ -7,19 +7,22 @@ import {
   ERASER_TOOL_DISPLAY,
   LASER_TOOL_DISPLAY,
   MOVE_TOOL_DISPLAY,
+  PROJECT_FILE_ACCEPT,
   REDO_TOOL,
   SELECTION_TOOL_DISPLAY,
   UNDO_TOOL
 } from '@editor/constants/tools'
 import useArrowNavigation from '@editor/hooks/useArrowNavigation'
+import useEditorShortcuts from '@editor/hooks/useEditorShortcuts'
 import { getDisplayTool } from '@editor/utils/style'
 import { getCurrentStructure } from '@editor/utils/toolbar'
-import { useMemo, useState } from 'react'
+import { type RefObject, useMemo, useRef, useState } from 'react'
 import MenuGroup from './MenuGroup'
 import PictureUrlModal from './PictureUrlInput'
 import Tool from './Tool'
 import './Toolbar.css'
 import ExportModal from '@editor/components/toolbox/ExportModal'
+import ShortcutsModal from '@editor/components/toolbox/ShortcutsModal'
 import ActionButton from './ActionButton'
 import ToolbarGroup from './ToolbarGroup'
 
@@ -66,6 +69,8 @@ const selectToolbarState = (state: EditorState) => ({
 })
 
 type ToolboxType = {
+  /** Root of the editor, where its shortcuts are listened */
+  scopeRef: RefObject<HTMLElement | null>
   disabled: boolean
   withMoveTool: boolean
   withEraser: boolean
@@ -81,6 +86,7 @@ type ToolboxType = {
 }
 
 const Toolbar = ({
+  scopeRef,
   disabled,
   withMoveTool,
   withEraser,
@@ -124,11 +130,16 @@ const Toolbar = ({
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [isPictureUrlModalOpen, setIsPictureUrlModalOpen] = useState(false)
   const [isExportModalOpen, setIsExportModalOpen] = useState(false)
+  const [isShortcutsModalOpen, setIsShortcutsModalOpen] = useState(false)
+  // the input of Ctrl+O: the button of the menu, which has its own, is not rendered while the menu is closed
+  const openFileInputRef = useRef<HTMLInputElement | null>(null)
   const modalToolsRef = useArrowNavigation()
 
   const toggleTools = () => {
     setIsMenuOpen(prev => !prev)
   }
+
+  const openShortcutsModal = () => setIsShortcutsModalOpen(true)
 
   const openPictureUrlModal = () => {
     setIsPictureUrlModalOpen(true)
@@ -148,6 +159,25 @@ const Toolbar = ({
   }
 
   const isAnyToolSelected = availableTools.find(tool => tool.type === activeTool.type) !== undefined
+
+  const shownTools = [...actionTools, ...availableTools]
+  useEditorShortcuts(paint, {
+    scopeRef,
+    enabled: !disabled,
+    toolIds: shownTools.map(tool => tool.id),
+    selectTool: setActiveTool,
+    saveFile: withLoadAndSave ? saveFile : undefined,
+    openFile: withLoadAndSave
+      ? () => {
+          const input = openFileInputRef.current
+          if (!input) return
+          input.value = ''
+          input.click()
+        }
+      : undefined,
+    openExport: withExport ? () => setIsExportModalOpen(true) : undefined,
+    openHelp: openShortcutsModal
+  })
 
   return (
     <>
@@ -205,6 +235,7 @@ const Toolbar = ({
           loadFile={loadFile}
           saveFile={saveFile}
           togglePictureUrlModal={openPictureUrlModal}
+          openShortcuts={openShortcutsModal}
           toggleExportModal={toggleExportModal}
           withUploadPicture={withUploadPicture}
           withUrlPicture={withUrlPicture}
@@ -238,6 +269,29 @@ const Toolbar = ({
       )}
       {isPictureUrlModalOpen && <PictureUrlModal togglePictureUrlModal={togglePictureUrlModal} addPicture={addPicture} />}
       {isExportModalOpen && <ExportModal toggleExportModal={toggleExportModal} exportCanvasInFile={exportCanvasInFile} />}
+      {isShortcutsModalOpen && (
+        <ShortcutsModal
+          onClose={() => setIsShortcutsModalOpen(false)}
+          tools={shownTools}
+          withLoadAndSave={withLoadAndSave}
+          withExport={withExport}
+          withZoom={withMoveTool}
+        />
+      )}
+      {withLoadAndSave && (
+        <input
+          ref={openFileInputRef}
+          className='react-paint-editor-fileinput'
+          type='file'
+          accept={PROJECT_FILE_ACCEPT}
+          tabIndex={-1}
+          aria-hidden='true'
+          onChange={event => {
+            const file = event.target.files?.item(0)
+            if (file) loadFile(file)
+          }}
+        />
+      )}
     </>
   )
 }

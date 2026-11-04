@@ -11,18 +11,7 @@ export const KeyboardCode = {
   Shift: 'Shift',
   Alt: 'Alt',
   Option: 'Option',
-  Space: ' ',
-  A: 'A',
-  a: 'a',
-  z: 'z',
-  Z: 'Z',
-  y: 'y',
-  Y: 'Y',
-  g: 'g',
-  G: 'G',
-  Plus: '+',
-  Minus: '-',
-  Zero: '0'
+  Space: ' '
 } as const
 
 export const KeyboardCommand = {

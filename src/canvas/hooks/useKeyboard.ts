@@ -1,12 +1,17 @@
 import { KeyboardCode, KeyboardCommand } from '@canvas/constants/keyboard'
+import { PICTURE_MIME_TYPES } from '@canvas/constants/picture'
 import { ShapeTypeArray } from '@canvas/constants/shapes'
+import { matchesShortcut, CANVAS_SHORTCUTS as S, type Shortcut } from '@canvas/constants/shortcuts'
 import { SELECTION_TOOL } from '@canvas/constants/tools'
+import { addPicturesAt } from '@canvas/hooks/useDropPicture'
 import type { PaintStore } from '@canvas/store/paintStore'
 import type { Point, ShapeEntity } from '@canvas/types/Shapes'
 import type { CustomTool } from '@canvas/types/tools'
 import { getFirstShapeOfGroup, getNextShape, getOffsetShowingBox } from '@canvas/utils/keyboardNavigation'
 import { getSelectedShapes } from '@canvas/utils/selectedShapes'
 import { createShape, sizeShapeOnClick, translateShapes } from '@canvas/utils/shapes'
+import { removeCurvePoint } from '@canvas/utils/shapes/curve'
+import { removePolygonPoint } from '@canvas/utils/shapes/polygon'
 import { getCommonGroup } from '@canvas/utils/shapes/tree'
 import { isStickerTool } from '@canvas/utils/tools'
 import { getRectCenter } from '@canvas/utils/trigo'
@@ -17,6 +22,23 @@ import { useEffect } from 'react'
 /** A field of a form, like one of the editor: the shortcuts leave it its keys and its clipboard */
 const isFormField = (target: EventTarget | null) =>
   target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement || target instanceof HTMLSelectElement
+
+/** A command of the keyboard of the canvas: it runs when its shortcut is pressed outside of a field */
+type Command = {
+  shortcut: Shortcut
+  run: () => void
+  /** A text being edited keeps its keys */
+  notWhileEditingText?: boolean
+}
+
+/** Margin around the shapes fitted in the view by the commands of the zoom, in pixels of the screen */
+const ZOOM_FIT_PADDING = 20
+
+/**
+ * Type written in the clipboard of the system by a copy of shapes: a paste finding it pastes the shapes, a paste without it
+ * comes from a copy made elsewhere since, an image or a text
+ */
+const CLIPBOARD_SHAPES_TYPE = 'application/x-react-paint-shapes'
 
 const ARROW_DIRECTIONS: Record<string, Point> = {
   [KeyboardCode.ArrowLeft]: [-1, 0],
@@ -58,16 +80,20 @@ const useKeyboard = (store: PaintStore) => {
       if (offset) store.actions.setOffset(offset)
     }
 
-    /** Draws a shape of the default size of its tool at the center of the view, inside a drawing of a fixed size */
+    /** Center of the view, inside a drawing of a fixed size: where the keyboard and the clipboard add their shapes */
+    const getViewCenter = (): Point => {
+      const state = store.getState()
+      const [viewCenterX, viewCenterY] = getRectCenter(getCurrentView(store.getSettings(state)))
+      const { width, height, options } = state.config
+      return options.size === 'fixed' ? [clamp(viewCenterX, 0, width), clamp(viewCenterY, 0, height)] : [viewCenterX, viewCenterY]
+    }
+
+    /** Draws a shape of the default size of its tool at the center of the view */
     const drawFromKeyboard = (tool: CustomTool) => {
       const ctx = store.getCanvasElement()?.getContext('2d')
       if (!ctx || tool.type === 'group') return
-      const state = store.getState()
-      const settings = store.getSettings(state)
-      const view = getCurrentView(settings)
-      const { width, height, options } = state.config
-      const [viewCenterX, viewCenterY] = getRectCenter(view)
-      const center: Point = options.size === 'fixed' ? [clamp(viewCenterX, 0, width), clamp(viewCenterY, 0, height)] : [viewCenterX, viewCenterY]
+      const settings = store.getSettings()
+      const center = getViewCenter()
       const stickerImage = isStickerTool(tool) ? store.getStickerImage(tool.src) : undefined
       const drawn = createShape(ctx, tool, center, settings, stickerImage)
       if (!drawn) return
@@ -96,6 +122,98 @@ const useKeyboard = (store: PaintStore) => {
       else if (shape.type === 'group') selectFromKeyboard(getFirstShapeOfGroup(shape))
     }
 
+    /** A command on the selection and its ids, which does nothing without a selection */
+    const withSelection = (action: (shapes: ShapeEntity[], ids: string[]) => void) => () => {
+      const shapes = getSelectedShapes(store.getState().document.selectedShape)
+      if (shapes.length)
+        action(
+          shapes,
+          shapes.map(shape => shape.id)
+        )
+    }
+
+    // Ctrl+G is also the next result of a search of the browser, Ctrl+D a bookmark: they are prevented. The commands of the
+    // shapes leave the keys to a text being edited
+    const commands: Command[] = [
+      { shortcut: S.undo, run: () => store.actions.undo() },
+      { shortcut: S.redo, run: () => store.actions.redo() },
+      ...(isMacOs() ? [] : [{ shortcut: S.redoAlt, run: () => store.actions.redo() }]),
+      { shortcut: S.selectAll, run: () => store.actions.selectAllShapes() },
+      { shortcut: S.group, notWhileEditingText: true, run: withSelection((_, ids) => store.actions.groupShapes(ids)) },
+      { shortcut: S.ungroup, notWhileEditingText: true, run: withSelection((_, ids) => store.actions.ungroupShapes(ids)) },
+      {
+        shortcut: S.duplicate,
+        notWhileEditingText: true,
+        run: withSelection((_, ids) => store.actions.duplicateShapes(ids, { translate: true, select: true }))
+      },
+      // the order of the selection: forward and backward, to the foreground and to the background with Shift
+      ...(['forward', 'backward', 'first', 'last'] as const).map(move => ({
+        shortcut: S[move],
+        notWhileEditingText: true,
+        run: withSelection((_, ids) => store.actions.moveShapes(ids, move))
+      })),
+      // locks the selection, or unlocks it when it already is, and the same for hiding it
+      {
+        shortcut: S.lock,
+        notWhileEditingText: true,
+        run: withSelection((shapes, ids) => store.actions.setShapesLocked(ids, !shapes.some(shape => shape.locked)))
+      },
+      {
+        shortcut: S.hide,
+        notWhileEditingText: true,
+        run: withSelection((shapes, ids) =>
+          store.actions.setShapesVisibility(
+            ids,
+            shapes.some(shape => shape.visible === false)
+          )
+        )
+      },
+      ...(['flipHorizontally', 'flipVertically'] as const).map(transform => ({
+        shortcut: S[transform],
+        notWhileEditingText: true,
+        run: withSelection((shapes, ids) => {
+          if (!shapes.some(shape => shape.locked)) store.actions.transformShapes(ids, transform)
+        })
+      })),
+      { shortcut: S.zoomIn, run: () => store.actions.setZoom('zoom') },
+      { shortcut: S.zoomOut, run: () => store.actions.setZoom('unzoom') },
+      { shortcut: S.resetZoom, run: () => store.actions.resetZoom() },
+      {
+        shortcut: S.zoomToFit,
+        notWhileEditingText: true,
+        run: () => store.actions.zoomToShapes(undefined, { padding: ZOOM_FIT_PADDING })
+      },
+      {
+        shortcut: S.zoomToSelection,
+        notWhileEditingText: true,
+        run: withSelection((_, ids) => store.actions.zoomToShapes(ids, { padding: ZOOM_FIT_PADDING }))
+      }
+    ]
+
+    /** Enter ends a polygon or a curve being drawn: it is selected, without the point following the pointer */
+    const endDrawing = (shape: ShapeEntity<'polygon' | 'curve'>) => {
+      store.batch(() => {
+        // the store removes a shape of a single point, which draws nothing, when its drawing ends
+        store.setSelectionMode({ mode: 'default' })
+        store.setActiveTool(SELECTION_TOOL)
+        store.actions.selectShapes([shape.id])
+      })
+    }
+
+    /** Backspace removes the last point of a polygon or a curve being drawn, and ends its drawing with its first point */
+    const removeLastPoint = (shape: ShapeEntity<'polygon' | 'curve'>) => {
+      if (shape.points.length < 2) {
+        store.setSelectionMode({ mode: 'default' })
+        return
+      }
+      const settings = store.getSettings()
+      const lastIndex = shape.points.length - 1
+      store.updateShapes(
+        [shape.type === 'curve' ? removeCurvePoint(shape, lastIndex, settings) : removePolygonPoint(shape, lastIndex, settings)],
+        true
+      )
+    }
+
     // The keys opening a context menu (Shift+F10, the menu key) give a context menu event without a pointer
     const pointers = { down: 0, releaseTime: 0 }
     const handlePointerDown = () => {
@@ -122,22 +240,57 @@ const useKeyboard = (store: PaintStore) => {
       store.showContextMenu({ cursorStartPosition: point, clientPosition, originalShape: selection, anchor: undefined })
     }
 
-    const handleCopy = (e: ClipboardEvent) => {
+    /** A copy or a cut of the selection, which marks the clipboard of the system: see CLIPBOARD_SHAPES_TYPE */
+    const handleCopyOrCut = (action: 'copy' | 'cut') => (e: ClipboardEvent) => {
       if (!isInteractive() || !hasSelection() || isEditingText() || isFormField(e.target)) return
       e.preventDefault()
-      store.actions.copy()
+      e.clipboardData?.setData(CLIPBOARD_SHAPES_TYPE, 'shapes')
+      store.actions[action]()
     }
 
-    const handleCut = (e: ClipboardEvent) => {
-      if (!isInteractive() || !hasSelection() || isEditingText() || isFormField(e.target)) return
-      e.preventDefault()
-      store.actions.cut()
+    /** A text pasted becomes a text of the text tool, centered in the view and selected, in a single step of the history */
+    const pasteText = (textToolId: string, text: string) => {
+      const center = getViewCenter()
+      const value = text.split(/\r\n|\r|\n/)
+      store.transaction(() => {
+        const [id] = store.actions.addShapes([{ type: 'text', toolId: textToolId, x: center[0], y: center[1], value }], { select: true })
+        const bounds = id === undefined ? undefined : store.getBounds([id])
+        if (id !== undefined && bounds) store.actions.translateShapes([id], [center[0] - bounds.center[0], center[1] - bounds.center[1]])
+      })
     }
 
+    /**
+     * The shapes copied in the canvas, or else what the clipboard of the system holds: images, which follow the option of the
+     * dropped pictures, or a text. The shapes come first when the clipboard of the system is the one marked by their copy,
+     * or is not readable
+     */
     const handlePaste = (e: ClipboardEvent) => {
-      if (!isInteractive() || store.getState().clipboard === undefined || isEditingText() || isFormField(e.target)) return
-      e.preventDefault()
-      store.actions.paste()
+      if (!isInteractive() || isEditingText() || isFormField(e.target)) return
+      const state = store.getState()
+      if (!store.selectors.selectFeatures(state).edition) return
+      const hasCopiedShapes = state.clipboard !== undefined
+      const data = e.clipboardData
+      const isOwnCopy = hasCopiedShapes && (!data || data.types.includes(CLIPBOARD_SHAPES_TYPE))
+      if (!isOwnCopy) {
+        const pictures = Array.from(data?.files ?? []).filter(file => PICTURE_MIME_TYPES.includes(file.type))
+        if (pictures.length && store.selectors.selectWithDropPicture(state)) {
+          e.preventDefault()
+          void addPicturesAt(store, pictures, getViewCenter())
+          return
+        }
+        const text = data?.getData('text/plain').trim()
+        const textTool = state.tools.available.find(tool => tool.type === 'text')
+        if (text && textTool) {
+          e.preventDefault()
+          pasteText(textTool.id, text)
+          return
+        }
+      }
+      // the shapes copied before, if any
+      if (hasCopiedShapes) {
+        e.preventDefault()
+        store.actions.paste()
+      }
     }
 
     const handleKeyUp = (e: KeyboardEvent) => {
@@ -163,60 +316,13 @@ const useKeyboard = (store: PaintStore) => {
       if (!isInteractive() || e.defaultPrevented) return
       // only the modifiers are followed in a field
       const isInField = isFormField(e.target)
-      if ((e.metaKey || e.ctrlKey) && !isInField) {
-        if (e.key === KeyboardCode.Z || e.key === KeyboardCode.z) {
+      const { shift } = store.getState().interaction.modifiers
+      if (!isInField) {
+        const command = commands.find(({ shortcut }) => matchesShortcut(e, shortcut, shift))
+        if (command && !(command.notWhileEditingText && isEditingText())) {
           e.preventDefault()
           e.stopPropagation()
-          if (e.shiftKey) {
-            store.actions.redo()
-          } else {
-            store.actions.undo()
-          }
-          return
-        }
-        if (!isMacOs() && (e.key === KeyboardCode.Y || e.key === KeyboardCode.y)) {
-          e.preventDefault()
-          e.stopPropagation()
-          store.actions.redo()
-          return
-        }
-
-        if (e.key === KeyboardCode.A || e.key === KeyboardCode.a) {
-          e.preventDefault()
-          e.stopPropagation()
-          store.actions.selectAllShapes()
-          return
-        }
-
-        // Ctrl+G is also the next result of a search of the browser, which is prevented
-        if ((e.key === KeyboardCode.G || e.key === KeyboardCode.g) && !isEditingText()) {
-          e.preventDefault()
-          e.stopPropagation()
-          const ids = getSelectedShapes(store.getState().document.selectedShape).map(shape => shape.id)
-          if (e.shiftKey) {
-            store.actions.ungroupShapes(ids)
-          } else {
-            store.actions.groupShapes(ids)
-          }
-          return
-        }
-
-        if (e.key === KeyboardCode.Plus) {
-          e.preventDefault()
-          e.stopPropagation()
-          store.actions.setZoom('zoom')
-          return
-        }
-        if (e.key === KeyboardCode.Minus) {
-          e.preventDefault()
-          e.stopPropagation()
-          store.actions.setZoom('unzoom')
-          return
-        }
-        if (e.key === KeyboardCode.Zero) {
-          e.preventDefault()
-          e.stopPropagation()
-          store.actions.resetZoom()
+          command.run()
           return
         }
       }
@@ -253,6 +359,22 @@ const useKeyboard = (store: PaintStore) => {
       const { keyboardNavigation, modifiers } = state.interaction
       const isOnCanvas = e.target === store.getCanvasElement()
 
+      // a polygon or a curve being drawn: Enter ends it, Backspace removes its last point
+      // (Enter on a button of the scope clicks it)
+      const endsDrawing = e.key === KeyboardCode.Enter && isOnCanvas
+      const removesPoint = e.key === KeyboardCode.Backspace || e.key === KeyboardCode.Delete
+      if (mode === 'preview' && !isInField && (endsDrawing || removesPoint)) {
+        // the selected shape is the one being drawn
+        const [drawn] = getSelectedShapes(selectedShape)
+        if (drawn?.type === 'polygon' || drawn?.type === 'curve') {
+          e.preventDefault()
+          e.stopPropagation()
+          if (endsDrawing) endDrawing(drawn)
+          else removeLastPoint(drawn)
+          return
+        }
+      }
+
       // Enter on the canvas goes through its shapes with Tab, which stays on the canvas until Escape leaves them
       if (isOnCanvas && store.selectors.selectFeatures(state).edition) {
         if (e.key === KeyboardCode.Enter) {
@@ -282,6 +404,11 @@ const useKeyboard = (store: PaintStore) => {
       if (isInField) return
 
       if (e.key === KeyboardCode.Escape) {
+        // a gesture of the pointer is cancelled, with the selection it started from
+        if (store.cancelGesture()) {
+          e.preventDefault()
+          return
+        }
         // the selection goes up to the group holding the selected shapes, a text being edited included, or is cleared.
         // Going through the shapes, a text being edited stays selected, and a cleared selection leaves the shapes
         const { shapes } = state.document
@@ -339,9 +466,9 @@ const useKeyboard = (store: PaintStore) => {
       pointerdown: handlePointerDown,
       pointerup: handlePointerEnd,
       pointercancel: handlePointerEnd,
-      [KeyboardCommand.Copy]: handleCopy,
+      [KeyboardCommand.Copy]: handleCopyOrCut('copy'),
       [KeyboardCommand.Paste]: handlePaste,
-      [KeyboardCommand.Cut]: handleCut
+      [KeyboardCommand.Cut]: handleCopyOrCut('cut')
     })
   }, [store])
 }

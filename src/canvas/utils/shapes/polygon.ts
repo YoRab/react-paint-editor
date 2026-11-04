@@ -8,7 +8,7 @@ import { set } from '@canvas/utils/object'
 import { addStraightArrowHeads, drawArrowHeads, withArrowHeadsOuterBorder } from '@canvas/utils/shapes/arrow'
 import { createPolygonPath, expandRect, getComputedShapeInfos, getDrawnPoints, getSharpOuterBorder, isClosedPath } from '@canvas/utils/shapes/path'
 import { getToolDefaultStyle } from '@canvas/utils/tools'
-import { roundForGrid } from '@canvas/utils/transform'
+import { snapToShapePoint } from '@canvas/utils/transform'
 import { getPointsBounds } from '@canvas/utils/trigo'
 import { createShapeId } from '@canvas/utils/util'
 
@@ -61,9 +61,10 @@ export const resizePolygon = (
   cursorPosition: Point,
   originalShape: ShapeEntity<'polygon'>,
   selectionMode: SelectionModeResize<number>,
-  settings: UtilsSettings
+  settings: UtilsSettings,
+  isShiftPressed = false
 ): ShapeEntity<'polygon'> => {
-  const roundCursorPosition: Point = [roundForGrid(cursorPosition[0], settings), roundForGrid(cursorPosition[1], settings)]
+  const roundCursorPosition = snapToShapePoint(cursorPosition, settings, originalShape, selectionMode.anchor, isShiftPressed)
 
   const cursorPositionBeforeResize = getPointPositionAfterCanvasTransformation(
     roundCursorPosition,
@@ -98,9 +99,10 @@ export const addPolygonPoint = (
   shape: ShapeEntity<'polygon'>,
   cursorPosition: Point,
   settings: UtilsSettings,
-  temporary = false
+  temporary = false,
+  isShiftPressed = false
 ): ShapeEntity<'polygon'> => {
-  const roundCursorPosition: Point = [roundForGrid(cursorPosition[0], settings), roundForGrid(cursorPosition[1], settings)]
+  const roundCursorPosition = snapToShapePoint(cursorPosition, settings, shape, shape.points.length, isShiftPressed)
 
   const cursorPositionBeforeResize = getPointPositionAfterCanvasTransformation(roundCursorPosition, shape.rotation ?? 0, shape.computed.center)
 

@@ -3,6 +3,7 @@ import type { ShapeInput, ShapeType } from '@canvas/types/Shapes'
 import type { CustomToolInput } from '@canvas/types/tools'
 import type { RecursivePartial } from '@canvas/types/utils'
 import { SELECTION_DEFAULT_COLOR, SELECTION_DEFAULT_PADDING, SELECTION_DEFAULT_WIDTH } from './shapes'
+import { CANVAS_SHORTCUTS, formatShortcut, type Shortcut } from './shortcuts'
 import { DEFAULT_TOOLS } from './tools'
 
 export const APP_NAME = 'react_paint'
@@ -29,7 +30,7 @@ export type AppOptions = {
   withFrameSelection: boolean
   withSkeleton: boolean
   withContextMenu: boolean
-  /** Adds the image files dropped on the canvas as pictures, when the picture tool is available */
+  /** Adds the image files dropped on the canvas, or pasted from the clipboard of the system, as pictures, when the picture tool is available */
   withDropPicture: boolean
   clearCallback: 'empty' | 'defaultShapes' | (() => ShapeInput[])
   /** Filters or rewrites the URLs of the remote pictures, which may come from data drawn by someone else */
@@ -90,15 +91,20 @@ export type CanvasLabels = {
   shapeTypes: Record<ShapeType, string>
 }
 
+const S = CANVAS_SHORTCUTS
+/** A key as the instructions say it: the same ones whatever the system */
+const key = (shortcut: Shortcut) => formatShortcut(shortcut, false)
+
 export const DEFAULT_CANVAS_LABELS: CanvasLabels = {
   canvas: 'Dessin',
   roleDescription: 'zone de dessin',
   instructions:
-    'Entrée : parcourir les formes avec Tab et Maj+Tab, puis ouvrir un groupe ou éditer un texte. Avec un outil de dessin, Entrée ajoute une forme au centre de la vue. ' +
-    'Flèches : déplacer la sélection, Maj pour aller plus loin, ou déplacer la vue sans sélection. Suppr : supprimer. ' +
-    'Échap : remonter au groupe, puis quitter les formes. Maj+F10 : menu contextuel.',
+    `${key(S.enter)} : parcourir les formes avec ${key(S.nextShape)} et ${key(S.previousShape)}, puis ouvrir un groupe ou éditer un texte. Avec un outil de dessin, ${key(S.enter)} ajoute une forme au centre de la vue. ` +
+    `Flèches : déplacer la sélection, Maj pour aller plus loin, ou déplacer la vue sans sélection. ${key(S.remove)} : supprimer. ` +
+    `${key(S.duplicate)} : dupliquer. ${key(S.forward)} et ${key(S.backward)} : avancer et reculer, avec Maj au premier plan et à l'arrière-plan. ` +
+    `${key(S.escape)} : remonter au groupe, puis quitter les formes. ${key(S.contextMenu)} : menu contextuel.`,
   keyboardHint: 'Déplacer le focus sur le canvas',
-  keyboardHintKey: 'Entrée',
+  keyboardHintKey: key(S.enter),
   textBox: 'Texte',
   shapesList: 'Formes du dessin',
   selected: 'sélectionnée',

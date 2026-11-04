@@ -1,7 +1,18 @@
 import Button from '@editor/components/common/Button'
 import Menu from '@editor/components/common/Menu'
+import { getShortcutProps, ShortcutLabel } from '@editor/components/common/ShortcutHint'
 import { menuIcon, publicIcon } from '@editor/constants/icons'
-import { CLEAR_TOOL, EXPORT_TOOL, LOAD_TOOL, REDO_TOOL, SAVE_TOOL, UNDO_TOOL, UPLOAD_PICTURE_TOOL } from '@editor/constants/tools'
+import { HELP_LABEL, HELP_SHORTCUT } from '@editor/constants/shortcuts'
+import {
+  CLEAR_TOOL,
+  EXPORT_TOOL,
+  LOAD_TOOL,
+  PROJECT_FILE_ACCEPT,
+  REDO_TOOL,
+  SAVE_TOOL,
+  UNDO_TOOL,
+  UPLOAD_PICTURE_TOOL
+} from '@editor/constants/tools'
 import LoadFileTool from './LoadFileTool'
 import './MenuGroup.css'
 import usePopup from '@editor/hooks/usePopup'
@@ -15,6 +26,8 @@ type MenuGroupType = {
   saveFile: () => void
   toggleExportModal: () => void
   togglePictureUrlModal: () => void
+  /** Opens the list of the shortcuts */
+  openShortcuts: () => void
   withLoadAndSave: boolean
   withExport: boolean
   hasActionToUndo?: boolean
@@ -41,6 +54,7 @@ const MenuGroup = ({
   addPicture,
   loadFile,
   togglePictureUrlModal,
+  openShortcuts,
   saveFile,
   toggleExportModal,
   withUploadPicture,
@@ -57,9 +71,7 @@ const MenuGroup = ({
       await callback(...args)
     }
 
-  const withMenu = withActionsInMenu || withUploadPicture || withUrlPicture || withLoadAndSave || withExport
-
-  return withMenu ? (
+  return (
     <div className='react-paint-editor-toolbox-relative' ref={containerRef}>
       <Button
         title='Menu'
@@ -130,7 +142,7 @@ const MenuGroup = ({
                 type={LOAD_TOOL}
                 disabled={disabled}
                 loadFile={triggerAndCloseMenu(loadFile)}
-                accept='application/JSON'
+                accept={PROJECT_FILE_ACCEPT}
               />
 
               <ActionButton withText={true} role='menuitem' disabled={disabled} type={SAVE_TOOL} onClick={triggerAndCloseMenu(saveFile)} />
@@ -139,10 +151,14 @@ const MenuGroup = ({
           {withExport && (
             <ActionButton withText={true} role='menuitem' disabled={disabled} type={EXPORT_TOOL} onClick={triggerAndCloseMenu(toggleExportModal)} />
           )}
+          {(withActionsInMenu || withUploadPicture || withUrlPicture || withLoadAndSave || withExport) && <hr />}
+          <Button role='menuitem' onClick={triggerAndCloseMenu(openShortcuts)} {...getShortcutProps(HELP_LABEL, HELP_SHORTCUT)}>
+            <ShortcutLabel label={HELP_LABEL} shortcut={HELP_SHORTCUT} />
+          </Button>
         </Menu>
       )}
     </div>
-  ) : null
+  )
 }
 
 export default MenuGroup

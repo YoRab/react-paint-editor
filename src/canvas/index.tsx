@@ -127,6 +127,7 @@ export {
   type PictureSrcResolver
 } from '@canvas/constants/app'
 export { GRID_PRESETS } from '@canvas/constants/grid'
+export { CANVAS_SHORTCUTS, formatShortcut, getAriaKeyShortcut, matchesShortcut, type Shortcut } from '@canvas/constants/shortcuts'
 export { DEFAULT_TOOLS, ERASER_TOOL, LASER_TOOL, MOVE_TOOL, SELECTION_TOOL, SETTINGS_DEFAULT_CUSTOM } from '@canvas/constants/tools'
 export { ZOOM_LEVELS } from '@canvas/constants/zoom'
 export { PaintProvider, usePaint } from '@canvas/context/PaintContext'

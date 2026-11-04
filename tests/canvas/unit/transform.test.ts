@@ -1,10 +1,11 @@
 import type { UtilsSettings } from '@canvas/constants/app'
 import { PICTURE_DEFAULT_SIZE } from '@canvas/constants/picture'
-import { boundVectorToSingleAxis, fitContentInsideContainer, roundForGrid, roundRotationForGrid } from '@canvas/utils/transform'
+import { boundVectorToSingleAxis, fitContentInsideContainer, roundForGrid, roundRotationForGrid, snapAngle } from '@canvas/utils/transform'
 import { degreesToRadians, radiansToDegrees } from '@canvas/utils/trigo'
 import { describe, expect, it } from 'vitest'
 
 const ROTATION_STEP = Math.PI / 18
+const SHIFT_STEP = Math.PI / 12
 
 describe('roundRotationForGrid', () => {
   const withoutGrid = { gridGap: 0 } as UtilsSettings
@@ -14,22 +15,45 @@ describe('roundRotationForGrid', () => {
     expect(roundRotationForGrid(0.12345, withoutGrid, false)).toBe(0.123)
   })
 
-  it('turns by steps of 10° with Shift or the grid', () => {
-    expect(roundRotationForGrid(0.2, withoutGrid, true)).toBeCloseTo(ROTATION_STEP)
-    expect(roundRotationForGrid(0.3, withoutGrid, true)).toBeCloseTo(2 * ROTATION_STEP)
+  it('turns by steps of 10° on the grid', () => {
+    expect(roundRotationForGrid(0.2, { gridGap: 20 } as UtilsSettings, false)).toBeCloseTo(ROTATION_STEP)
     expect(roundRotationForGrid(0.3, { gridGap: 20 } as UtilsSettings, false)).toBeCloseTo(2 * ROTATION_STEP)
+  })
+
+  it('turns by steps of 15° with Shift, on the grid too', () => {
+    expect(roundRotationForGrid(0.2, withoutGrid, true)).toBeCloseTo(SHIFT_STEP)
+    expect(roundRotationForGrid(0.4, withoutGrid, true)).toBeCloseTo(2 * SHIFT_STEP)
+    expect(roundRotationForGrid(0.4, { gridGap: 20 } as UtilsSettings, true)).toBeCloseTo(2 * SHIFT_STEP)
   })
 
   it('turns a negative rotation to its closest step, like a positive one', () => {
     const snap = (degrees: number) => radiansToDegrees(roundRotationForGrid(degreesToRadians(degrees), withoutGrid, true))
     expect(snap(-3)).toBeCloseTo(0)
-    expect(snap(-8)).toBeCloseTo(-10)
-    expect(snap(-12)).toBeCloseTo(-10)
-    expect(snap(-17)).toBeCloseTo(-20)
-    expect(snap(-22)).toBeCloseTo(-20)
+    expect(snap(-8)).toBeCloseTo(-15)
+    expect(snap(-20)).toBeCloseTo(-15)
+    expect(snap(-23)).toBeCloseTo(-30)
+    expect(snap(-37)).toBeCloseTo(-30)
     expect(snap(-178)).toBeCloseTo(-180)
     // the steps are the same on both sides of 0
     for (const degrees of [3, 8, 12, 17, 22, 95, 173, 178, 352]) expect(snap(-degrees)).toBeCloseTo(-snap(degrees))
+  })
+})
+
+describe('snapAngle', () => {
+  it('keeps the point on its origin', () => {
+    expect(snapAngle([5, 5], [5, 5])).toEqual([5, 5])
+  })
+
+  it('puts the point on the closest direction by 15°, projected on it', () => {
+    expect(snapAngle([100, 3], [0, 0])).toEqual([100, 0])
+    expect(snapAngle([10, 110], [10, 10])).toEqual([10, 110])
+    // 44° goes to 45°, at the projected distance
+    const [x, y] = snapAngle([20 + 100 * Math.cos((Math.PI * 44) / 180), 20 + 100 * Math.sin((Math.PI * 44) / 180)], [20, 20])
+    expect(x - 20).toBeCloseTo(y - 20, 1)
+    expect(Math.hypot(x - 20, y - 20)).toBeCloseTo(100 * Math.cos(Math.PI / 180), 1)
+    // the directions turn on both sides
+    const [nx, ny] = snapAngle([-100, -27], [0, 0])
+    expect(Math.atan2(ny, nx)).toBeCloseTo(-Math.PI + SHIFT_STEP)
   })
 })
 

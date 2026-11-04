@@ -21,3 +21,6 @@ export const compact = <T>(array: (T | undefined | null)[]): T[] => {
 /** Shallow merges the options into the defaults, ignoring the options set to undefined */
 export const withDefaults = <T extends object>(defaults: T, options: object | undefined): T =>
   ({ ...defaults, ...Object.fromEntries(Object.entries(options ?? {}).filter(([, value]) => value !== undefined)) }) as T
+
+/** The shortcuts take ⌘ instead of Ctrl on macOS */
+export const isMacOs = (): boolean => typeof navigator !== 'undefined' && navigator.userAgent.includes('Macintosh')

@@ -111,12 +111,19 @@ export const EditorOverlays: Story = {
     expect(menuButton).toHaveAttribute('aria-expanded', 'true')
     const menu = await view.findByRole('menu', { name: 'Menu' })
     const items = within(menu).getAllByRole('menuitem')
-    expect(items.map(item => item.textContent)).toEqual(['Upload picture', 'Load project', 'Save project', 'Export PNG'])
+    // the shortcuts shown at the end of the items are not part of their names
+    expect(items.map(item => item.getAttribute('aria-label') ?? item.textContent)).toEqual([
+      'Upload picture',
+      'Load project',
+      'Save project',
+      'Export PNG',
+      'Raccourcis clavier'
+    ])
     await waitFor(() => expect(items[0]).toHaveFocus())
     await user.keyboard('{ArrowDown}')
     expect(items[1]).toHaveFocus()
     await user.keyboard('{ArrowUp}{ArrowUp}')
-    expect(items[3]).toHaveFocus()
+    expect(items[4]).toHaveFocus()
     await user.keyboard('{Home}')
     expect(items[0]).toHaveFocus()
     // the arrows of the menu do not move the selection

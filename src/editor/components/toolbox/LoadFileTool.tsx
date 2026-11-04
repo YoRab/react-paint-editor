@@ -1,4 +1,6 @@
 import Button from '@editor/components/common/Button'
+import { getShortcutProps, ShortcutLabel } from '@editor/components/common/ShortcutHint'
+import { ACTION_SHORTCUTS } from '@editor/constants/shortcuts'
 import type { EditorActionTool } from '@editor/types/tools'
 import type React from 'react'
 import { useRef } from 'react'
@@ -20,6 +22,8 @@ const LoadFileTool = ({ disabled = false, withText = false, loadFile, type, acce
     if (inputRef.current) inputRef.current.value = ''
   }
 
+  const shortcut = ACTION_SHORTCUTS[type.type]
+
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.item(0)
     if (!file) return
@@ -33,12 +37,12 @@ const LoadFileTool = ({ disabled = false, withText = false, loadFile, type, acce
       onClick={handleClick}
       onChange={handleChange}
       accept={accept}
-      title={type.label}
+      {...getShortcutProps(type.label, shortcut)}
       icon={type.icon}
       disabled={disabled}
       role={role}
     >
-      {withText ? type.label : undefined}
+      {withText ? <ShortcutLabel label={type.label} shortcut={shortcut} /> : undefined}
     </Button>
   )
 }

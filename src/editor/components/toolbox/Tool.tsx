@@ -1,5 +1,7 @@
 import type { ToolsType } from '@canvas/index'
 import Button from '@editor/components/common/Button'
+import { getShortcutProps } from '@editor/components/common/ShortcutHint'
+import { TOOL_SHORTCUTS } from '@editor/constants/shortcuts'
 import type { ReactNode } from 'react'
 
 type ToolComponentType = {
@@ -17,7 +19,14 @@ const Tool = ({ type, img, isActive, withText = false, disabled = false, setActi
   }
 
   return (
-    <Button disabled={disabled} pressed={isActive} onClick={handleClick} title={type.label ?? type.type} icon={img} data-testid={`tool-${type.type}`}>
+    <Button
+      disabled={disabled}
+      pressed={isActive}
+      onClick={handleClick}
+      {...getShortcutProps(type.label ?? type.type, TOOL_SHORTCUTS[type.id])}
+      icon={img}
+      data-testid={`tool-${type.type}`}
+    >
       {withText ? type.label : undefined}
     </Button>
   )

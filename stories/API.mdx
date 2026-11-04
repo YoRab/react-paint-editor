@@ -1273,6 +1273,11 @@ useReactPaint({ options: { availableTools: [...DEFAULT_TOOLS, STAR, HEART, STICK
           and <code>canvasLaserWidth</code> options of the Canvas component. It is not part of the drawing, of its history nor of its exports
         </li>
         <li><code>ZOOM_LEVELS</code> - Levels of <code>actions.setZoom</code>, from <code>0.05</code> to <code>8</code>: every zoom stays between the first and the last one, to disable a button or to build a zoom menu</li>
+        <li>
+          <code>CANVAS_SHORTCUTS</code> - The keys of the commands of the canvas (see the keyboard shortcuts), as <code>Shortcut</code> objects <code>{'{ key, ctrl?, shift?, otherKeys?, codes? }'}</code> where <code>ctrl</code> is <code>⌘</code> on macOS.
+          To show them in a custom editor, to avoid them for its own, or to listen the same keys: <code>matchesShortcut(event, shortcut, isShiftPressed)</code> tells whether a key event is a shortcut (a letter whatever Caps Lock, the digits and the signs
+          also from their physical key, the modifiers given exactly), <code>formatShortcut(shortcut, isMac)</code> writes it for a menu (<code>Ctrl+Maj+G</code>, <code>⇧⌘G</code>) and <code>getAriaKeyShortcut(shortcut, isMac)</code> gives the value of <code>aria-keyshortcuts</code>
+        </li>
         <li><code>shallowEqual(a, b)</code> - Equality function for <code>usePaintState</code> selectors building an object or an array</li>
         <li><code>SETTINGS_DEFAULT_CUSTOM</code> - Default settings of a custom tool, to spread in its own settings</li>
       </ul>
@@ -1374,7 +1379,14 @@ useReactPaint({ options: { availableTools: [...DEFAULT_TOOLS, STAR, HEART, STICK
           </tr>
           <tr>
             <td><code>Ctrl+V</code> (or <code>Cmd+V</code> on Mac)</td>
-            <td>Paste copied shape(s)</td>
+            <td>
+              Paste the copied shape(s). When something was copied elsewhere since, paste it from the clipboard of the system instead: images become pictures at the center of the view (like a drop, with{' '}
+              <code>withDropPicture</code>, a failure emitting <code>pictureDropFailed</code>), a text becomes a selected text of the text tool
+            </td>
+          </tr>
+          <tr>
+            <td><code>Ctrl+D</code> (or <code>Cmd+D</code> on Mac)</td>
+            <td>Duplicate the selected shape(s), a little further, and select the copies</td>
           </tr>
           <tr>
             <td><code>Ctrl+A</code> (or <code>Cmd+A</code> on Mac)</td>
@@ -1389,8 +1401,27 @@ useReactPaint({ options: { availableTools: [...DEFAULT_TOOLS, STAR, HEART, STICK
             <td>Ungroup selected groups</td>
           </tr>
           <tr>
+            <td><code>Ctrl+]</code> / <code>Ctrl+[</code> (or <code>Cmd</code> on Mac)</td>
+            <td>Move the selection forward / backward, to the foreground / the background with <code>Shift</code>. The physical key is read, whatever the layout of the keyboard</td>
+          </tr>
+          <tr>
+            <td><code>Shift+H</code> / <code>Shift+V</code></td>
+            <td>Flip the selection horizontally / vertically, unless it is locked</td>
+          </tr>
+          <tr>
+            <td><code>Ctrl+Shift+L</code> / <code>Ctrl+Shift+H</code> (or <code>Cmd</code> on Mac)</td>
+            <td>Lock / hide the selection, or unlock / show it when it is already</td>
+          </tr>
+          <tr>
             <td><code>Escape</code></td>
-            <td>Select the group holding the selected shape(s), or deselect all / Cancel current operation</td>
+            <td>
+              Cancel the gesture of the pointer (a move, a resize, a rotation, a stroke of the brush, a shape being drawn): the shapes go back, with the selection the gesture started from. Otherwise, select the
+              group holding the selected shape(s), or deselect all / cancel the current operation
+            </td>
+          </tr>
+          <tr>
+            <td><code>Enter</code> / <code>Backspace</code> while a polygon or a curve is drawn</td>
+            <td>End it, selected / remove its last point, and the shape with its first one</td>
           </tr>
           <tr>
             <td><code>Arrow Keys</code></td>
@@ -1407,6 +1438,14 @@ useReactPaint({ options: { availableTools: [...DEFAULT_TOOLS, STAR, HEART, STICK
           <tr>
             <td><code>Shift+F10</code> or the menu key on the canvas</td>
             <td>Open the context menu on the selection, or at the center of the view</td>
+          </tr>
+          <tr>
+            <td><code>Ctrl++</code> or <code>Ctrl+=</code>, <code>Ctrl+-</code>, <code>Ctrl+0</code> (or <code>Cmd</code> on Mac)</td>
+            <td>Zoom in, zoom out, reset the zoom. The digits and the signs are also read from their physical key: <code>Ctrl+0</code> works on an AZERTY keyboard</td>
+          </tr>
+          <tr>
+            <td><code>Shift+1</code> / <code>Shift+2</code></td>
+            <td>Fit all the visible shapes / the selection in the view</td>
           </tr>
         </tbody>
       </table>
@@ -1443,6 +1482,16 @@ useReactPaint({ options: { availableTools: [...DEFAULT_TOOLS, STAR, HEART, STICK
         </tbody>
       </table>
       <p>A press of the pointer on the canvas, or the focus going elsewhere, leaves the shapes too.</p>
+      <p>
+        During a gesture of the pointer, <code>Shift</code> keeps the proportions of a resized shape, moves along a single axis, turns by steps of 15° and gives a regular angle (by 15°) to a line, or to a side of a
+        polygon or a curve, being drawn or moved by its point. <code>Alt</code> resizes from the center, and duplicates the moved shapes.
+      </p>
+      <p>
+        The <code>Editor</code> adds its own shortcuts, while the focus is inside it and outside of its fields: a letter chooses a tool (<code>V</code> selection, <code>H</code> move, <code>E</code> eraser,{' '}
+        <code>K</code> laser, <code>B</code> brush, <code>L</code> line, <code>P</code> polygon, <code>C</code> curve, <code>R</code> rectangle, <code>Shift+R</code> square, <code>O</code> ellipse,{' '}
+        <code>Shift+O</code> circle, <code>T</code> text, for the tools it shows), <code>Ctrl+O</code> and <code>Ctrl+S</code> open and save a project (<code>withLoadAndSave</code>),{' '}
+        <code>Ctrl+Shift+E</code> exports an image (<code>withExport</code>), and <code>?</code> lists all the shortcuts, also listed from its menu. Its buttons and the items of its menus tell their shortcut.
+      </p>
       <p>
         With the pointer, a click on a shape of a group selects the group. A double click on a selected group selects its shape under the pointer, one level down: a click then selects among the shapes of this group, until a click outside of it, and <code>Escape</code> goes back up one level.
         A locked group is selected as a whole. <code>Shift</code> + click adds a shape to the selection, or removes it.

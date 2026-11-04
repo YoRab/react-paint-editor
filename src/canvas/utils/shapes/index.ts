@@ -378,11 +378,11 @@ export const resizeShape = <T extends ShapeEntity>(
 
   switch (originalShape.type) {
     case 'line':
-      return resizeLine(cursorPosition, originalShape, selectionMode as SelectionModeResize<number>, settings) as T
+      return resizeLine(cursorPosition, originalShape, selectionMode as SelectionModeResize<number>, settings, isShiftPressed) as T
     case 'polygon':
-      return resizePolygon(cursorPosition, originalShape, selectionMode as SelectionModeResize<number>, settings) as T
+      return resizePolygon(cursorPosition, originalShape, selectionMode as SelectionModeResize<number>, settings, isShiftPressed) as T
     case 'curve':
-      return resizeCurve(cursorPosition, originalShape, selectionMode as SelectionModeResize<number>, settings) as T
+      return resizeCurve(cursorPosition, originalShape, selectionMode as SelectionModeResize<number>, settings, isShiftPressed) as T
     case 'brush':
       return resizeBrush(cursorPosition, originalShape, selectionMode as SelectionModeResize, settings, isShiftPressed, isAltPressed) as T
     case 'circle':
