@@ -21,17 +21,18 @@ const png = (name = 'a.png') => new File(['image'], name, { type: 'image/png' })
 
 let root: Root | undefined
 
+const DropZone = ({ store, canvas }: { store: PaintStore; canvas: HTMLCanvasElement }) => {
+  useDropPicture(store, canvas)
+  return null
+}
+
 /** The canvas is displayed at the half of its pixels, and the drawing is shown at the scale 0.5: a client position is doubled */
 const mountCanvas = async (store: PaintStore) => {
   store.setCanvasSize({ realWidth: 1000, realHeight: 600, width: 500, height: 300, scaleRatio: 0.5 })
   const canvas = document.createElement('canvas')
   vi.spyOn(canvas, 'getBoundingClientRect').mockReturnValue({ left: 0, top: 0, width: 500, height: 300 } as DOMRect)
-  const Component = () => {
-    useDropPicture(store, canvas)
-    return null
-  }
   root = createRoot(document.createElement('div'))
-  await act(async () => root?.render(createElement(Component)))
+  await act(async () => root?.render(createElement(DropZone, { store, canvas })))
   return canvas
 }
 

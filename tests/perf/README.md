@@ -8,12 +8,12 @@ Measures what React and the main thread do during the continuous interactions of
 pnpm bench
 ```
 
-| Variable | Default | Use |
-| --- | --- | --- |
-| `PERF_LABEL` | `latest` | Name of the report, written to `tests/perf/results/<label>.json` |
-| `PERF_SHAPES` | `50,500` | Numbers of shapes to measure, separated by commas |
-| `PERF_CPU` | `1` | Slows the CPU down by this rate (Chrome DevTools Protocol), like a slower machine: `4` stands for a mid-range phone |
-| `PERF_EVENTS` | `1` | Pointer and wheel events sent in each frame: `1` stands for a 60 Hz mouse, `4` for a faster mouse in a browser which does not align the events on the frames |
+| Variable      | Default  | Use                                                                                                                                                          |
+| ------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `PERF_LABEL`  | `latest` | Name of the report, written to `tests/perf/results/<label>.json`                                                                                             |
+| `PERF_SHAPES` | `50,500` | Numbers of shapes to measure, separated by commas                                                                                                            |
+| `PERF_CPU`    | `1`      | Slows the CPU down by this rate (Chrome DevTools Protocol), like a slower machine: `4` stands for a mid-range phone                                          |
+| `PERF_EVENTS` | `1`      | Pointer and wheel events sent in each frame: `1` stands for a 60 Hz mouse, `4` for a faster mouse in a browser which does not align the events on the frames |
 
 ```bash
 PERF_LABEL=baseline pnpm bench          # bash
@@ -33,45 +33,45 @@ The scenarios are driven only by DOM events (`scenarios.ts`), sent one per frame
 
 The drawing is a grid of opaque rectangles, unless another one is given (`shapes.ts`).
 
-| id | drawing | gesture |
-| --- | --- | --- |
-| `hover` | rectangles | 300 moves over the shapes, without button |
-| `translate` | rectangles | drag of a shape, 300 moves |
-| `frame` | rectangles | selection frame from an empty area to a corner, 300 moves, which ends with the auto scroll |
-| `pan` | rectangles | 200 wheel events on an infinite canvas |
-| `brush` | rectangles | brush stroke, 300 moves |
-| `undo` | rectangles | 20 clicks alternating undo and redo in the toolbar |
-| `zoom` | rectangles | 200 ctrl + wheel events, each one changing the zoom |
-| `zoom-mixed` | as `mixed` | as `zoom` |
-| `opacity` | rectangles filled and stroked at half opacity | drag of a shape, 300 moves |
-| `mixed` | shapes of all the types (lines with arrows, curves, texts, brushes...), one out of two at half opacity | drag of a rectangle, 300 moves |
-| `pictures` | rectangles under 3 photos of 3000×2000 pixels, loaded from blob URLs | drag of a photo, 300 moves |
-| `long-brush` | rectangles, `isBrushShapeDoneOnMouseUp: false` | 4 brush strokes of 300 moves, added to the same shape |
-| `frame-inside` | rectangles under a large rectangle which is only stroked | selection frame inside the large rectangle, 150 moves: each point of the frame is checked against its stroke |
-| `undo-autosave` | rectangles, with a listener of `dataChanged` | as `undo`: each click exports the data |
-| `layers` | rectangles, with the panel of the layers open | 20 clicks alternating hiding and showing a shape in the panel: each click saves the shapes again |
-| `layers-autosave` | as `layers`, with a listener of `dataChanged` | as `layers`: each click exports the data |
-| `translate-all` | rectangles, all selected with ctrl + A | drag of all the shapes, 300 moves |
-| `translate-long-brush` | rectangles under a brush of 4 strokes of 1000 points | drag of the brush, 300 moves |
-| `add-picture` | rectangles | 3 photos of 3000×2000 pixels added from the menu of the toolbar, as files chosen by the user |
-| `add-picture-autosave` | as `add-picture`, with a listener of `dataChanged` | as `add-picture`: each photo is exported once added |
-| `hover-groups` | rectangles in groups of 5, themselves in groups of 5 | as `hover`: a move over a rectangle hovers its outer group |
-| `translate-group` | the groups of `hover-groups` in a single group | drag of the group, 300 moves: compare it to `translate-all`, which moves the same rectangles |
-| `undo-groups-autosave` | as `hover-groups`, with a listener of `dataChanged` | as `undo`, after the removal of a group of 25 rectangles: each click exports the groups |
-| `translate-custom` | the grid as stars of a custom tool, their path built from their parameters | drag of a star, 300 moves: its path is built again on each move, compare it to `translate` |
+| id                     | drawing                                                                                                | gesture                                                                                                      |
+| ---------------------- | ------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------ |
+| `hover`                | rectangles                                                                                             | 300 moves over the shapes, without button                                                                    |
+| `translate`            | rectangles                                                                                             | drag of a shape, 300 moves                                                                                   |
+| `frame`                | rectangles                                                                                             | selection frame from an empty area to a corner, 300 moves, which ends with the auto scroll                   |
+| `pan`                  | rectangles                                                                                             | 200 wheel events on an infinite canvas                                                                       |
+| `brush`                | rectangles                                                                                             | brush stroke, 300 moves                                                                                      |
+| `undo`                 | rectangles                                                                                             | 20 clicks alternating undo and redo in the toolbar                                                           |
+| `zoom`                 | rectangles                                                                                             | 200 ctrl + wheel events, each one changing the zoom                                                          |
+| `zoom-mixed`           | as `mixed`                                                                                             | as `zoom`                                                                                                    |
+| `opacity`              | rectangles filled and stroked at half opacity                                                          | drag of a shape, 300 moves                                                                                   |
+| `mixed`                | shapes of all the types (lines with arrows, curves, texts, brushes...), one out of two at half opacity | drag of a rectangle, 300 moves                                                                               |
+| `pictures`             | rectangles under 3 photos of 3000×2000 pixels, loaded from blob URLs                                   | drag of a photo, 300 moves                                                                                   |
+| `long-brush`           | rectangles, `isBrushShapeDoneOnMouseUp: false`                                                         | 4 brush strokes of 300 moves, added to the same shape                                                        |
+| `frame-inside`         | rectangles under a large rectangle which is only stroked                                               | selection frame inside the large rectangle, 150 moves: each point of the frame is checked against its stroke |
+| `undo-autosave`        | rectangles, with a listener of `dataChanged`                                                           | as `undo`: each click exports the data                                                                       |
+| `layers`               | rectangles, with the panel of the layers open                                                          | 20 clicks alternating hiding and showing a shape in the panel: each click saves the shapes again             |
+| `layers-autosave`      | as `layers`, with a listener of `dataChanged`                                                          | as `layers`: each click exports the data                                                                     |
+| `translate-all`        | rectangles, all selected with ctrl + A                                                                 | drag of all the shapes, 300 moves                                                                            |
+| `translate-long-brush` | rectangles under a brush of 4 strokes of 1000 points                                                   | drag of the brush, 300 moves                                                                                 |
+| `add-picture`          | rectangles                                                                                             | 3 photos of 3000×2000 pixels added from the menu of the toolbar, as files chosen by the user                 |
+| `add-picture-autosave` | as `add-picture`, with a listener of `dataChanged`                                                     | as `add-picture`: each photo is exported once added                                                          |
+| `hover-groups`         | rectangles in groups of 5, themselves in groups of 5                                                   | as `hover`: a move over a rectangle hovers its outer group                                                   |
+| `translate-group`      | the groups of `hover-groups` in a single group                                                         | drag of the group, 300 moves: compare it to `translate-all`, which moves the same rectangles                 |
+| `undo-groups-autosave` | as `hover-groups`, with a listener of `dataChanged`                                                    | as `undo`, after the removal of a group of 25 rectangles: each click exports the groups                      |
+| `translate-custom`     | the grid as stars of a custom tool, their path built from their parameters                             | drag of a star, 300 moves: its path is built again on each move, compare it to `translate`                   |
 
 `fixture.tsx` mounts the measured app: a host calling `useReactPaint`, a heavy sibling standing for the UI of the consumer, the editor, the canvas, and a probe subscribed to `state.history`. It is the only file that depends on the public API.
 
 ## Metrics
 
-| Metric | Meaning |
-| --- | --- |
-| `hostRenders`, `siblingRenders` | Renders of the component calling `useReactPaint`, and of its sibling |
-| `rootCommits`, `editorCommits`, `canvasCommits`, `probeCommits` | Commits of each `<Profiler>` |
-| `rootMs`, `editorMs`, `canvasMs` | Sum of the `actualDuration` of each `<Profiler>`. `editorUiMs` is the editor without the canvas |
-| `frameP50`, `frameP95`, `frameMax`, `slowFrames` | Intervals between two animation frames, and frames over 33 ms |
-| `totalMs` | Duration of the gesture |
-| `scriptMs`, `taskMs` | JavaScript, and all the work, of the main thread during the gesture (Chrome DevTools Protocol): event handlers, React, drawing of the canvas, style and layout |
+| Metric                                                          | Meaning                                                                                                                                                        |
+| --------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `hostRenders`, `siblingRenders`                                 | Renders of the component calling `useReactPaint`, and of its sibling                                                                                           |
+| `rootCommits`, `editorCommits`, `canvasCommits`, `probeCommits` | Commits of each `<Profiler>`                                                                                                                                   |
+| `rootMs`, `editorMs`, `canvasMs`                                | Sum of the `actualDuration` of each `<Profiler>`. `editorUiMs` is the editor without the canvas                                                                |
+| `frameP50`, `frameP95`, `frameMax`, `slowFrames`                | Intervals between two animation frames, and frames over 33 ms                                                                                                  |
+| `totalMs`                                                       | Duration of the gesture                                                                                                                                        |
+| `scriptMs`, `taskMs`                                            | JavaScript, and all the work, of the main thread during the gesture (Chrome DevTools Protocol): event handlers, React, drawing of the canvas, style and layout |
 
 The counts are deterministic: they are the acceptance criteria. The times depend on the machine and on the development build of React: compare them only between runs on the same machine. The frame intervals stay at 16.7 ms on a fast machine, whatever the work: `scriptMs` and `taskMs` show it.
 

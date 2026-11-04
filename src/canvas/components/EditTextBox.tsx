@@ -71,13 +71,13 @@ const EditTextBox = ({ label, disabled = false, shape, defaultValue, updateValue
 
     currentNode.addEventListener('paste', handlePaste)
 
-    currentNode.innerText = ''
+    currentNode.textContent = ''
     for (const rowValue of defaultValue) {
       const rowDiv = document.createElement('div')
       if (rowValue === '') {
         rowDiv.appendChild(document.createElement('br'))
       } else {
-        rowDiv.innerText = rowValue
+        rowDiv.textContent = rowValue
       }
       currentNode.appendChild(rowDiv)
     }
