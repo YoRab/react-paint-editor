@@ -164,7 +164,7 @@ The `resize` option sets how the canvas follows its container. The first four va
 | `'scaleUp'` | the width of the container, at least `width` pixels |
 | `'none'` | always `width` pixels |
 
-With `resize: 'extend'`, the canvas fills its container at the scale 1 and its visible area follows the container, redrawn in the same frame: a whiteboard needs no ResizeObserver. The container must have a height. `width` and `height` stay the size of the drawing:
+With `resize: 'extend'`, the canvas fills its container at the scale 1 and its visible area follows the container, redrawn in the same frame: a whiteboard needs no ResizeObserver. The canvas is `100%` wide and `100%` high, so its container must have a defined width and height (a block in the flow already has its width, but not its height, hence the `height: '100vh'` below; a flex or grid item or an inline element needs both): without them, the canvas has nothing to fill. `width` and `height` stay the size of the drawing:
 
 - with `size: 'infinite'`, they are the area exported by the `defaultView` of `exportPicture` and the size given in the exported data. The top left corner of the view stays still when the container is resized.
 - with `size: 'fixed'`, they are the page: it is centered with a mask around it when the container is larger, and the view is kept inside it otherwise.

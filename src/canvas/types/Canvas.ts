@@ -16,6 +16,7 @@ export type Size = 'infinite' | 'fixed'
  * - 'scaleUp': at least width pixels wide, scaled up in a wider container
  * - 'none': always width×height pixels
  *
- * 'extend' fills the container at the scale 1: the visible area of the drawing follows the container
+ * 'extend' fills the container at the scale 1: the visible area of the drawing follows the container. The canvas is 100%
+ * wide and 100% high: its container must have a defined width and height
  */
 export type Resize = 'scaleDown' | 'scale' | 'scaleUp' | 'none' | 'extend'

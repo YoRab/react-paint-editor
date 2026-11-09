@@ -641,7 +641,7 @@ const annotationsStyle = useAnnotationsStyle(paint)
             <td>
               How the canvas follows its container. The first four show the whole drawing, scaled to the width of the container:{' '}
               <code>'scaleDown'</code> at most width pixels wide, <code>'scale'</code> without bounds, <code>'scaleUp'</code> at least width pixels wide,{' '}
-              <code>'none'</code> always width×height pixels. <code>'extend'</code> fills the container, which must have a height, at the scale 1: the
+              <code>'none'</code> always width×height pixels. <code>'extend'</code> is 100% wide and 100% high, so its container must have a defined width and height, and fills it at the scale 1: the
               visible area follows the container, a fixed page is centered in it
             </td>
             <td><code>'scaleDown'</code></td>
