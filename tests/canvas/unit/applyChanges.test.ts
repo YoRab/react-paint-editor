@@ -18,14 +18,21 @@ const throughJson: Transport = changes => JSON.parse(JSON.stringify(changes))
 
 /**
  * Sends the changes of the user of a store to the other one, like the Collaboration story: the changes of a gesture as they
- * come, and the steps of the history, saved there too. The changes received are remote: they are not sent back
+ * come, and the steps of the history, saved there too. The changes received are remote: they are not sent back. They are
+ * received as soon as they are sent, unless `deliver` holds them
  */
-const sendChanges = (from: PaintStore, to: PaintStore, transport: Transport) => {
+const sendChanges = (from: PaintStore, to: PaintStore, transport: Transport, deliver: (receive: () => void) => void = receive => receive()) => {
   from.registerEvent('shapesChanged', (_shapes, source, changes) => {
-    if (source === 'user') to.actions.applyChanges(transport(changes), { save: false })
+    if (source === 'user') {
+      const received = transport(changes)
+      deliver(() => to.actions.applyChanges(received, { save: false }))
+    }
   })
   from.registerEvent('dataChanged', (_data, source, changes) => {
-    if (source === 'user') to.actions.applyChanges(transport(changes))
+    if (source === 'user') {
+      const received = transport(changes)
+      deliver(() => to.actions.applyChanges(received))
+    }
   })
 }
 
@@ -42,6 +49,29 @@ type Pair = Awaited<ReturnType<typeof createPair>>
 const expectSameDrawing = ({ alice, bob }: Pair) => expect(bob.getCurrentData()).toEqual(alice.getCurrentData())
 
 const getSelectedIds = (store: PaintStore) => store.getEditorState().selectedShapeIds
+
+const position = (store: PaintStore, id: string) => {
+  const { x, y } = store.getShape(id) as ShapeEntity<'rect'>
+  return [x, y]
+}
+
+const getStyle = (store: PaintStore, id: string) => (store.getShape(id) as ShapeEntity<'rect'>).style
+
+/**
+ * Two instances behind a network with latency: the changes sent, written in JSON, are received when they are delivered,
+ * so that both users change the drawing at once
+ */
+const createDelayedPair = async () => {
+  const queue: (() => void)[] = []
+  const alice = await createLoadedStore({}, SHAPES)
+  const bob = await createLoadedStore({}, SHAPES)
+  sendChanges(alice, bob, throughJson, receive => queue.push(receive))
+  sendChanges(bob, alice, throughJson, receive => queue.push(receive))
+  const deliver = () => {
+    while (queue.length) queue.shift()!()
+  }
+  return { alice, bob, deliver }
+}
 
 /** The actions of the test: each one is done by one of the instances, after which both draw the same */
 const runScenario = (pair: Pair) => {
@@ -84,7 +114,7 @@ describe('applyChanges', () => {
     runScenario(await createPair(SHAPES, throughJson))
   })
 
-  it('sends a drawing loaded by the user, whose history is cleared there only', async () => {
+  it('sends a drawing loaded by the user, which the other one cannot undo', async () => {
     const pair = await createPair(SHAPES, throughJson)
     const { alice, bob } = pair
     bob.actions.translateShapes(['r0'], [5, 5])
@@ -100,26 +130,33 @@ describe('applyChanges', () => {
     expect(getRootIds(bob)).toEqual(['loaded', 'title'])
     expectSameDrawing(pair)
     expect(alice.getEditorState().history.canUndo).toBe(false)
-    // a step for Bob, who undoes the loading for both of them
+    // the step of Bob moved a shape which is no longer there: it is passed
+    expect(bob.getEditorState().history.canUndo).toBe(true)
     bob.actions.undo()
-    expect(getRootIds(alice)).toEqual(getRootIds(bob))
-    expect(getRootIds(bob)).toEqual(['r0', 'r1', 'r2'])
+    expect(bob.getEditorState().history.canUndo).toBe(false)
+    expect(getRootIds(bob)).toEqual(['loaded', 'title'])
     expectSameDrawing(pair)
   })
 
-  it('shows the changes of a gesture before they are saved, then saves them', async () => {
+  it('shows the changes of a gesture before they are saved, then saves them without a step', async () => {
     const pair = await createPair()
     const { alice, bob } = pair
+    const bobData = vi.fn()
+    bob.registerEvent('dataChanged', bobData)
     alice.actions.translateShapes(['r0'], [10, 0], { save: false })
     expectSameDrawing(pair)
-    expect(bob.getEditorState().history.canUndo).toBe(false)
+    expect(bobData).not.toHaveBeenCalled()
 
     alice.actions.saveShapes()
     expectSameDrawing(pair)
-    expect(bob.getEditorState().history.canUndo).toBe(true)
-    // the instance which received them undoes them too, and sends it back
-    bob.actions.undo()
-    expect(alice.getCurrentData().shapes?.[0]).toMatchObject({ id: 'r0', x: 100 })
+    // saved by Bob, but it is a step of Alice only
+    expect(bobData).toHaveBeenCalledTimes(1)
+    expect(bobData.mock.calls[0]![1]).toBe('remote')
+    expect(bob.getEditorState().history.canUndo).toBe(false)
+    // Alice undoes it, for both of them
+    alice.actions.undo()
+    expect(position(bob, 'r0')).toEqual([100, 100])
+    expectSameDrawing(pair)
   })
 
   it('does not send back the changes received', async () => {
@@ -218,5 +255,190 @@ describe('applyChanges', () => {
     expect((bob.getShape('p') as ShapeEntity<'picture'>).img).not.toBe(image)
     await vi.waitFor(() => expect(onLoaded).toHaveBeenCalledWith(expect.objectContaining({ id: 'p' })))
     expectSameDrawing(pair)
+  })
+})
+
+describe('local history', () => {
+  it('undoes and redoes only the steps of the user, on the changes of the other one', async () => {
+    const pair = await createPair()
+    const { alice, bob } = pair
+    alice.actions.translateShapes(['r0'], [10, 0])
+    bob.actions.translateShapes(['r1'], [0, 10])
+    alice.actions.translateShapes(['r2'], [10, 0])
+
+    alice.actions.undo()
+    expect([position(bob, 'r0'), position(bob, 'r1'), position(bob, 'r2')]).toEqual([
+      [110, 100],
+      [300, 110],
+      [500, 100]
+    ])
+    expectSameDrawing(pair)
+    alice.actions.undo()
+    expect([position(bob, 'r0'), position(bob, 'r1')]).toEqual([
+      [100, 100],
+      [300, 110]
+    ])
+    expect(alice.getEditorState().history.canUndo).toBe(false)
+    expectSameDrawing(pair)
+
+    bob.actions.undo()
+    expect(position(alice, 'r1')).toEqual([300, 100])
+    expect(bob.getEditorState().history.canUndo).toBe(false)
+    expectSameDrawing(pair)
+
+    alice.actions.redo()
+    alice.actions.redo()
+    bob.actions.redo()
+    expect([position(bob, 'r0'), position(bob, 'r1'), position(bob, 'r2')]).toEqual([
+      [110, 100],
+      [300, 110],
+      [510, 100]
+    ])
+    expectSameDrawing(pair)
+  })
+
+  it('keeps the fields changed by the other one on a shape whose step is undone', async () => {
+    const pair = await createPair()
+    const { alice, bob } = pair
+    const style = getStyle(bob, 'r0')
+    bob.actions.setShapesStyle(['r0'], { strokeColor: 'blue' })
+    alice.actions.translateShapes(['r0'], [10, 0])
+    alice.actions.setShapesStyle(['r0'], { fillColor: 'red' })
+
+    bob.actions.undo()
+    expect(position(alice, 'r0')).toEqual([110, 100])
+    expect(getStyle(alice, 'r0')).toMatchObject({ strokeColor: style?.strokeColor, fillColor: 'red' })
+    expectSameDrawing(pair)
+  })
+
+  it('keeps the shapes added by the other one when a step is undone', async () => {
+    const pair = await createPair()
+    const { alice, bob } = pair
+    bob.actions.addShapes([{ ...RECTS[0]!, id: 'R', x: 50 } as ShapeInput])
+    alice.actions.addShapes([{ ...RECTS[1]!, id: 'S', x: 60 } as ShapeInput])
+    bob.actions.undo()
+    expect(getRootIds(alice)).toEqual(['S', 'r0', 'r1', 'r2'])
+    expectSameDrawing(pair)
+
+    // a group undone keeps them too
+    bob.actions.groupShapes(['r1', 'r2'])
+    alice.actions.addShapes([{ ...RECTS[2]!, id: 'T', x: 70 } as ShapeInput])
+    bob.actions.undo()
+    expect(getRootIds(alice)).toEqual(['T', 'S', 'r0', 'r1', 'r2'])
+    expectSameDrawing(pair)
+  })
+
+  it('passes the steps left without effect, when they are undone or redone', async () => {
+    const pair = await createPair()
+    const { alice, bob } = pair
+    bob.actions.translateShapes(['r0'], [10, 0])
+    bob.actions.translateShapes(['r1'], [10, 0])
+    alice.actions.removeShapes(['r1'])
+
+    bob.actions.undo()
+    expect(position(alice, 'r0')).toEqual([100, 100])
+    expect(bob.getEditorState().history.canUndo).toBe(false)
+    expectSameDrawing(pair)
+
+    bob.actions.redo()
+    expect(position(alice, 'r0')).toEqual([110, 100])
+    expect(bob.getEditorState().history.canRedo).toBe(true)
+    const shapes = bob.getState().document.shapes
+    bob.actions.redo()
+    expect(bob.getEditorState().history.canRedo).toBe(false)
+    expect(bob.getState().document.shapes).toBe(shapes)
+    expectSameDrawing(pair)
+  })
+
+  it('leaves out of a step the changes of a gesture received meanwhile, and does not send them back', async () => {
+    const pair = await createPair(SHAPES, throughJson)
+    const { alice, bob } = pair
+    const aliceApply = vi.spyOn(alice.actions, 'applyChanges')
+    // Bob saves a step while Alice drags a shape
+    alice.actions.translateShapes(['r0'], [10, 0], { save: false })
+    bob.actions.translateShapes(['r1'], [0, 10])
+    expect(aliceApply.mock.calls.flatMap(([changes]) => changes.updated.map(({ shape }) => shape.id))).toEqual(['r1', 'r1'])
+    alice.actions.translateShapes(['r0'], [10, 0], { save: false })
+    alice.actions.saveShapes()
+    expectSameDrawing(pair)
+
+    bob.actions.undo()
+    expect([position(alice, 'r0'), position(alice, 'r1')]).toEqual([
+      [120, 100],
+      [300, 100]
+    ])
+    expectSameDrawing(pair)
+    // the step of Alice starts before her gesture
+    alice.actions.undo()
+    expect(position(bob, 'r0')).toEqual([100, 100])
+    expectSameDrawing(pair)
+  })
+
+  it('cancels a gesture of the user, keeping the changes received during it', async () => {
+    const pair = await createPair()
+    const { alice, bob } = pair
+    bob.actions.selectShapes(['r0'])
+    bob.setSelectionMode({
+      mode: 'translate',
+      cursorStartPosition: [0, 0],
+      originalShape: bob.getState().document.selectedShape!,
+      selectedShapesLengthAtMouseDown: 1,
+      hasBeenDuplicated: false,
+      dateStart: 0
+    })
+    bob.actions.translateShapes(['r0'], [10, 0], { save: false })
+    alice.actions.translateShapes(['r1'], [0, 10])
+    expect(bob.cancelGesture()).toBe(true)
+    expect([position(bob, 'r0'), position(bob, 'r1')]).toEqual([
+      [100, 100],
+      [300, 110]
+    ])
+    expectSameDrawing(pair)
+  })
+
+  it('gives the same objects to a user alone', async () => {
+    const store = await createLoadedStore({}, SHAPES)
+    const initial = store.getState().document.shapes
+    store.actions.translateShapes(['r0'], [10, 0])
+    const moved = store.getState().document.shapes
+    store.actions.undo()
+    expect(store.getState().document.shapes).toBe(initial)
+    store.actions.redo()
+    expect(store.getState().document.shapes).toBe(moved)
+  })
+})
+
+describe('concurrent changes', () => {
+  it('keeps the changes of different fields of a shape made at once', async () => {
+    const { alice, bob, deliver } = await createDelayedPair()
+    alice.actions.translateShapes(['r0'], [10, 0])
+    bob.actions.setShapesStyle(['r0'], { strokeColor: 'blue' })
+    deliver()
+    expect(position(bob, 'r0')).toEqual([110, 100])
+    expect(getStyle(alice, 'r0')?.strokeColor).toBe('blue')
+    expect(bob.getCurrentData()).toEqual(alice.getCurrentData())
+  })
+
+  it('keeps the shapes added at once, in the same order once their list changes again', async () => {
+    const { alice, bob, deliver } = await createDelayedPair()
+    alice.actions.addShapes([{ ...RECTS[0]!, id: 'A' } as ShapeInput])
+    bob.actions.addShapes([{ ...RECTS[1]!, id: 'B' } as ShapeInput])
+    deliver()
+    expect([...getRootIds(alice)].sort()).toEqual(['A', 'B', 'r0', 'r1', 'r2'])
+    expect([...getRootIds(bob)].sort()).toEqual(['A', 'B', 'r0', 'r1', 'r2'])
+
+    alice.actions.moveShapes(['r2'], 'first')
+    deliver()
+    expect(getRootIds(bob)).toEqual(getRootIds(alice))
+    expect(bob.getCurrentData()).toEqual(alice.getCurrentData())
+  })
+
+  it('removes a shape moved at once by the other one', async () => {
+    const { alice, bob, deliver } = await createDelayedPair()
+    alice.actions.translateShapes(['r0'], [10, 0])
+    bob.actions.removeShapes(['r0'])
+    deliver()
+    expect(getRootIds(alice)).toEqual(['r1', 'r2'])
+    expect(bob.getCurrentData()).toEqual(alice.getCurrentData())
   })
 })

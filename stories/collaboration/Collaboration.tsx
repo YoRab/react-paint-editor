@@ -4,6 +4,9 @@ import { Canvas, type DataChanges, Editor, type ReactPaint, type ShapeInput, use
 /** Handles of the last rendered instances, driven by the tests */
 export const collaborationPaints: { alice: ReactPaint | null; bob: ReactPaint | null } = { alice: null, bob: null }
 
+/** An infinite drawing, which each user can zoom and scroll on their own */
+export const COLLABORATION_OPTIONS = { size: 'infinite', canZoom: 'always' } as const
+
 /** The drawing both users start from: the same shapes, with the same ids */
 export const SHARED_SHAPES: ShapeInput[] = [
   { type: 'rect', id: 'box', x: 120, y: 120, width: 220, height: 140, style: { fillColor: '#ffd166', strokeColor: '#073b4c', lineWidth: 3 } },
@@ -20,7 +23,8 @@ const receivingGrid = new WeakSet<ReactPaint>()
 /**
  * Sends the changes of the user of an instance to the other one, through a fake network: they are written in JSON and
  * received after the latency. The changes of a gesture are shown as they come, and the steps of the history are saved
- * there too. The changes received are remote: they are not sent back. The grid is shared too
+ * there too, without being steps of the other user: each one undoes their own. The changes received are remote: they are
+ * not sent back. The grid is shared too
  */
 export const useSendChanges = (from: ReactPaint, to: ReactPaint, latency: number) => {
   useEffect(() => {
@@ -81,8 +85,8 @@ export type CollaborationProps = {
 
 /** Two users, each one with an instance of their own, which applies the changes of the other one */
 export const Collaboration = ({ latency }: CollaborationProps) => {
-  const alice = useReactPaint({ shapes: SHARED_SHAPES })
-  const bob = useReactPaint({ shapes: SHARED_SHAPES })
+  const alice = useReactPaint({ shapes: SHARED_SHAPES, options: COLLABORATION_OPTIONS })
+  const bob = useReactPaint({ shapes: SHARED_SHAPES, options: COLLABORATION_OPTIONS })
   collaborationPaints.alice = alice
   collaborationPaints.bob = bob
   useSendChanges(alice, bob, latency)

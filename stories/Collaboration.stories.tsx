@@ -9,10 +9,11 @@ const meta = {
     docs: {
       description: {
         component: [
-          'Two users draw together in real time: each one has an instance of their own, with its selection, its tool, its zoom and its history, and applies the changes of the other one.',
+          'Two users draw together in real time: each one has an instance of their own, with its selection, its tool, its view and its history, and applies the changes of the other one.',
+          'The drawing is infinite: each user zooms and scrolls on their own, and sees the shapes of the other one wherever they are drawn. The zoom and the offset are not sent: an application which wants a shared view can send what `viewChanged` gives.',
           '`shapesChanged` gives the changes of a gesture as they come, `dataChanged` the steps of the history: both are sent, written in JSON like through a network, and applied with `actions.applyChanges`. The changes received are remote, so they are not sent back.',
           'The grid is shared too: `gridChanged` gives it, and `actions.setGridGap` applies it. This event gives no source, so the grid received is not sent back thanks to a flag set while it is applied.',
-          'The history is shared: an undo undoes the last step of the instance, which may be a step received from the other user, and the other user receives the undo. The last change wins when both users change the same shape. Showing where the other user is (their selection, their pointer) is up to the application.'
+          'Each user undoes their own changes: the changes received are not steps of the history, and an undo replays the last step of the user on the drawing, keeping the changes of the other user since. The other user receives the undo like any change. When both users change the same shape, the last change of each field wins. Showing where the other user is (their selection, their pointer) is up to the application.'
         ].join('\n\n')
       }
     }
@@ -77,8 +78,10 @@ const useSendChanges = (from: ReactPaint, to: ReactPaint, latency: number) => {
 
 const Collaboration = ({ latency = 0 }) => {
   // both users start from the same shapes, with the same ids
-  const alice = useReactPaint({ shapes: SHARED_SHAPES })
-  const bob = useReactPaint({ shapes: SHARED_SHAPES })
+  // an infinite drawing, zoomed and scrolled by each user on their own
+  const options = { size: 'infinite', canZoom: 'always' } as const
+  const alice = useReactPaint({ shapes: SHARED_SHAPES, options })
+  const bob = useReactPaint({ shapes: SHARED_SHAPES, options })
   useSendChanges(alice, bob, latency)
   useSendChanges(bob, alice, latency)
   return (

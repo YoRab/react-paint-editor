@@ -672,7 +672,7 @@ const annotationsStyle = useAnnotationsStyle(paint)
 
       <h3>dataChanged</h3>
       <p>
-        Fired whenever a step of the history of the drawing is saved, undone or redone (shapes added, removed, or modified). A gesture saves its step once released: <code>shapesChanged</code> gives its changes as they come.
+        Fired whenever the saved drawing changes (shapes added, removed, or modified): a step of the history saved, undone or redone, or changes of another instance applied with <code>applyChanges</code> and saved. A gesture saves its step once released: <code>shapesChanged</code> gives its changes as they come.
       </p>
       <Source language='typescript' code={`paint.registerEvent('dataChanged', (data: StateData, source: 'user' | 'remote', changes: DataChanges) => {
   // data.shapes contains all current shapes
@@ -1058,15 +1058,15 @@ const box = paint.getBounds([rectId])`} />
         Their changes are plain data, which can be sent in JSON, and <code>actions.applyChanges(changes, {'{ save, source }'})</code> applies them:
       </p>
       <ul>
-        <li>a shape added or updated is created, or replaced when it is there, built like loaded data: a picture keeps its image while its source is the same. A shape removed is removed when it is there</li>
-        <li>the lists of <code>changes.order</code> give the places of the shapes and their groups: a shape received without a place goes to the foreground</li>
-        <li>a shape already the same is left as it is: the step saved after the live changes of a gesture changes nothing more, but saves them</li>
+        <li>a shape added is created, built like loaded data: a picture keeps its image while its source is the same. A shape updated gets the fields changed from its previous version, the fields of the style one by one: the other fields of a shape changed here meanwhile are kept. A shape removed is removed. A shape updated or removed which is not here is ignored</li>
+        <li>the lists of <code>changes.order</code> give the places of the shapes and their groups, and keep the shapes added here meanwhile: a shape received without a place goes to the foreground, a group left with a single shape is dissolved</li>
+        <li>a shape already the same is left as it is: the changes saved after the live changes of a gesture change nothing more, but save them. With <code>save: false</code>, for the live changes, they are not saved: <code>dataChanged</code> gives the changes received once they are saved</li>
         <li>the selection follows the shapes. The source is <code>'remote'</code> by default, so that the changes received are not sent back: send only the changes whose source is <code>'user'</code></li>
         <li>it throws an error, without changing anything, when a shape is invalid, like a custom shape whose tool is not available</li>
       </ul>
       <p>
-        Each user keeps their selection, their tool, their zoom and their history. The history holds the steps received too: an undo undoes the last step of the instance, whoever made it, and is sent to the others like any change.
-        The last change wins when two users change the same shape at once. See the Collaboration story.
+        Each user keeps their selection, their tool, their zoom and their history. The changes received are not steps of the history: an undo replays the last step of the user, backwards, on the drawing, keeping the changes received since, and is sent to the others like any change. A step left without effect, like a move of a shape removed by another user since, is passed.
+        The last change of each field wins when two users change the same shape at once. Two shapes added at once in the same list are both kept, but each instance may order them its own way until the next change of this list. See the Collaboration story.
         The changes hold only the shapes: to share a setting, like the grid, send its event (<code>gridChanged</code>) and apply it (<code>actions.setGridGap</code>). These events give no source, but they are emitted while the setting is set: ignore the one emitted while you apply a setting received, otherwise it is sent back.
       </p>
       <Source language='typescript' code={`// sends the changes of the user

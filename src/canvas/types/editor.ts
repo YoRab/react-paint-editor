@@ -274,10 +274,14 @@ export type EditorActions = {
   removeShapePoint: (id: string, pointIndex: number) => void
   /**
    * Applies changes given by dataChanged or shapesChanged, received from another instance, also through JSON: the shapes
-   * added or updated are created, or updated when they are there, the shapes removed are removed when they are there, and
-   * the lists of order give their places and their groups. A shape already the same is left as it is, so that changes can
-   * be applied twice. The selection follows the shapes. The source is 'remote' by default, so that the changes received are
-   * not sent back. Throws an error, without changing anything, when a shape is invalid
+   * added are created, the shapes updated get the fields changed from their previous version (the other fields of a shape
+   * changed here meanwhile are kept), the shapes removed are removed, and the lists of order give their places and their
+   * groups, keeping the shapes added here meanwhile. A shape updated or removed which is not here is ignored. A shape
+   * already the same is left as it is, so that changes can be applied twice. The selection follows the shapes.
+   * The changes received are not steps of the history: an undo undoes the last step of the user, and keeps them. With save
+   * (true by default), they are saved here, and given to dataChanged: save false is for the changes of a gesture of the
+   * other instance (shapesChanged). The source is 'remote' by default, so that the changes received are not sent back.
+   * Throws an error, without changing anything, when a shape is invalid
    */
   applyChanges: (changes: DataChanges, options?: ShapesActionOptions) => void
   /** Selects a text and opens its edition box, like a double click. Does nothing when the Canvas is not mounted */

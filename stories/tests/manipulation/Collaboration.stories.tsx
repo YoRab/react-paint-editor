@@ -72,11 +72,28 @@ export const RealTimeCollaboration: Story = {
     expect(bobSteps.mock.calls[0]![1]).toBe('remote')
     unregisterBobSteps()
 
-    // --- Bob undoes it: the undo is sent to Alice ---
+    // --- The move is a step of Alice only: Bob's undo changes nothing ---
+    expect(getPaints().bob.getState().history.canUndo).toBe(false)
     bob.drawCanvas.focus()
     await user.keyboard('{Control>}z{/Control}')
     await wait(100)
-    expect(getPaints().alice.getShape('box')).toMatchObject({ x: 120 })
+    expect((getPaints().bob.getShape('box') as { x: number }).x).toBeCloseTo(220, 0)
+
+    // --- Bob moves the sun, then Alice undoes her move: the box comes back for both, the sun stays moved ---
+    const getSunY = (paint: ReactPaint) => (paint.getShape('sun') as { y: number }).y
+    getPaints().bob.actions.translateShapes(['sun'], [0, 40])
+    alice.drawCanvas.focus()
+    await user.keyboard('{Control>}z{/Control}')
+    await wait(100)
+    expect(getPaints().bob.getShape('box')).toMatchObject({ x: 120 })
+    expect(getSunY(getPaints().alice)).toBe(260)
+    expectSameDrawing()
+
+    // --- Bob undoes his move: the sun comes back for both ---
+    bob.drawCanvas.focus()
+    await user.keyboard('{Control>}z{/Control}')
+    await wait(100)
+    expect(getSunY(getPaints().alice)).toBe(220)
     expectSameDrawing()
 
     // --- Alice groups the box and the sun with Ctrl+G: Bob has the group ---
@@ -110,6 +127,24 @@ export const RealTimeCollaboration: Story = {
     await user.click(await bob.view.findByRole('button', { name: 'Toggle layers panel' }))
     await user.click(await bob.view.findByRole('button', { name: 'No grid' }))
     expect(getPaints().alice.getState().gridGap).toBe(0)
+
+    // --- Alice zooms with the panel of her editor: Bob's view does not change ---
+    await user.click(await alice.view.findByRole('button', { name: 'Zoom in' }))
+    expect(getPaints().alice.getState().view.zoom).toBe(2)
+    expect(getPaints().bob.getState().view.zoom).toBe(1)
+
+    // --- A shape far outside the first view, drawn by Bob, is drawn for Alice, who zooms and scrolls to it ---
+    getPaints().bob.actions.addShapes([{ type: 'rect', id: 'far', x: 4000, y: -2500, width: 300, height: 200 }])
+    await wait(100)
+    expect(getRootIds(getPaints().alice)).toContain('far')
+    expectSameDrawing()
+    getPaints().alice.actions.zoomToShapes(['far'])
+    await wait(50)
+    const { visibleArea } = getPaints().alice.getState().view
+    expect(visibleArea.x).toBeLessThan(4000)
+    expect(visibleArea.x + visibleArea.width).toBeGreaterThan(4300)
+    expect(getPaints().bob.getState().view).toMatchObject({ zoom: 1, offset: [0, 0] })
+    getPaints().alice.actions.resetZoom()
 
     // --- Alice loads a project from the menu: Bob has its drawing ---
     const project = { shapes: [{ type: 'rect', id: 'loaded', x: 40, y: 40, width: 200, height: 100, style: { strokeColor: '#ef476f' } }] }

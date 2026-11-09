@@ -1,7 +1,7 @@
 import type { DataChanges, ShapesOrder } from '@canvas/types/editor'
 import type { ExportedShape, ShapeEntity, StateData } from '@canvas/types/Shapes'
 import { shallowEqual } from '@canvas/utils/equality'
-import { isEqual } from '@canvas/utils/object'
+import { isEqual, isRecord } from '@canvas/utils/object'
 import { flattenShapes, indexShapeTree, isGroup, type ShapeTreeIndex } from '@canvas/utils/shapes/tree'
 import { roundValues } from '@canvas/utils/transform'
 import { getBase64Image, isSourceEncodedOnExport } from './file'
@@ -130,7 +130,7 @@ export const buildDataToExport = (shapes: ShapeEntity[], width: number, height: 
 }
 
 /** All the exported shapes, each group before its shapes, in the order of flattenShapes */
-export const flattenExportedShapes = (shapes: ExportedShape[]): ExportedShape[] =>
+const flattenExportedShapes = (shapes: ExportedShape[]): ExportedShape[] =>
   shapes.flatMap(shape => (shape.type === 'group' ? [shape, ...flattenExportedShapes(shape.shapes)] : [shape]))
 
 /**
@@ -145,6 +145,36 @@ export const isSameExport = (previousShape: ShapeEntity, exported: ExportedShape
 
 /** The ids of a list of shapes, entities or exported */
 export const getIds = (shapes: readonly { id: string }[]) => shapes.map(shape => shape.id)
+
+/** The fields with the ones changed from previous to next, the fields of an object (the style) one by one */
+const mergeChangedFields = (fields: Record<string, unknown>, previous: Record<string, unknown>, next: Record<string, unknown>) => {
+  const merged = { ...fields }
+  for (const key of new Set([...Object.keys(previous), ...Object.keys(next)])) {
+    const before = previous[key]
+    const after = next[key]
+    if (key === 'shapes' || isEqual(before, after)) continue
+    const current = merged[key]
+    if (isRecord(before) && isRecord(after) && isRecord(current)) merged[key] = mergeChangedFields(current, before, after)
+    else if (after === undefined) delete merged[key]
+    else merged[key] = after
+  }
+  return merged
+}
+
+/**
+ * The export of a shape with the changes made to another version of it, from previous to exported: only the fields they
+ * change are taken, the fields of the style one by one, so that the changes made to the shape meanwhile are kept. The
+ * shapes of a group are the ones of exported
+ */
+export const mergeExportedChanges = (shape: ShapeEntity, previous: ExportedShape, exported: ExportedShape): ExportedShape => {
+  const fields = shape.type === 'group' ? getCachedExport(shape) : getExportedShape(shape)
+  const merged = mergeChangedFields(
+    fields as unknown as Record<string, unknown>,
+    previous as unknown as Record<string, unknown>,
+    exported as unknown as Record<string, unknown>
+  )
+  return (exported.type === 'group' ? { ...merged, shapes: exported.shapes } : merged) as unknown as ExportedShape
+}
 
 /**
  * The lists of shapes of the new tree whose ids have changed, a group after the list holding it. A group which is the same
