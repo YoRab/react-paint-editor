@@ -130,13 +130,30 @@ export type DataChanges = {
   removed: ExportedShape[]
   /** Whether the shapes still there are in another order, or in another group: the drawing is then built again from data.shapes */
   reordered: boolean
+  /**
+   * Lists of shapes whose ids have changed (a shape added, removed, moved, grouped...): the id of their group, undefined for
+   * the drawing, and the ids of its shapes from the foreground. A group comes after the list holding it. With them, the
+   * changes tell where the shapes go, see actions.applyChanges
+   */
+  order: ShapesOrder[]
 }
+
+/** The shapes of a group, or of the drawing (parentId undefined), from the foreground */
+export type ShapesOrder = { parentId: string | undefined; ids: string[] }
 
 /** Options of the actions which change the shapes */
 export type ShapesActionOptions = {
   /** Adds a step to the history, true by default. A continuous change (like a slider) saves only its last step */
   save?: boolean
   /** Origin of the change given to dataChanged, 'user' by default */
+  source?: ChangeSource
+}
+
+/** Options of actions.loadData and actions.loadFile */
+export type LoadDataOptions = {
+  /** Clears the history, true by default: otherwise the drawing loaded is a step of it */
+  clearHistory?: boolean
+  /** Origin of the change given to dataChanged and shapesChanged: 'remote' by default for loadData, 'user' for loadFile */
   source?: ChangeSource
 }
 
@@ -255,6 +272,18 @@ export type EditorActions = {
   moveShapePoint: (id: string, index: number, point: Point) => void
   /** Removes a point of a polygon or a curve, unless it would keep less than 2 points */
   removeShapePoint: (id: string, pointIndex: number) => void
+  /**
+   * Applies changes given by dataChanged or shapesChanged, received from another instance, also through JSON: the shapes
+   * added are created, the shapes updated get the fields changed from their previous version (the other fields of a shape
+   * changed here meanwhile are kept), the shapes removed are removed, and the lists of order give their places and their
+   * groups, keeping the shapes added here meanwhile. A shape updated or removed which is not here is ignored. A shape
+   * already the same is left as it is, so that changes can be applied twice. The selection follows the shapes.
+   * The changes received are not steps of the history: an undo undoes the last step of the user, and keeps them. With save
+   * (true by default), they are saved here, and given to dataChanged: save false is for the changes of a gesture of the
+   * other instance (shapesChanged). The source is 'remote' by default, so that the changes received are not sent back.
+   * Throws an error, without changing anything, when a shape is invalid
+   */
+  applyChanges: (changes: DataChanges, options?: ShapesActionOptions) => void
   /** Selects a text and opens its edition box, like a double click. Does nothing when the Canvas is not mounted */
   editText: (id: string) => void
   /** Adds a picture from a file or an URL, at the center of the visible area, or centered on the position (in the units of the drawing) */
@@ -272,9 +301,10 @@ export type EditorActions = {
   saveShapes: () => void
 
   clearCanvas: () => void
-  loadFile: (file: File) => Promise<void>
-  /** Loads exported data, or their JSON string. The history is cleared by default */
-  loadData: (data: StateData | { shapes?: ShapeInput[] } | string, options?: { clearHistory?: boolean }) => Promise<void>
+  /** Loads a data file, like loadData: the file is chosen by the user, so the change is 'user' by default */
+  loadFile: (file: File, options?: LoadDataOptions) => Promise<void>
+  /** Loads exported data, or their JSON string. The history is cleared by default, and the change is 'remote' by default */
+  loadData: (data: StateData | { shapes?: ShapeInput[] } | string, options?: LoadDataOptions) => Promise<void>
   exportPicture: (options?: ExportImageOptions & { fileName?: string }) => void
   exportData: (options?: { fileName?: string }) => void
 
@@ -331,10 +361,32 @@ export type ShapePointerInfo = {
  * is found from its name only: a union of the listeners of all the events would be too complex for TypeScript
  */
 export type ReactPaintEventArgs = {
-  /** The drawing changes: its data, the origin of the change, and the shapes added, updated and removed */
+  /**
+   * A step of the history of the drawing is saved, undone or redone: its data, the origin of the change, and the shapes
+   * added, updated and removed since the previous step
+   */
   dataChanged: [data: StateData, source: ChangeSource, changes: DataChanges]
+  /**
+   * The shapes of the drawing change, also during a gesture, before it saves a step of the history, and for the actions
+   * given save false: the shapes, the origin of the change, and the changes since the previous shapes
+   */
+  shapesChanged: [shapes: ShapeEntity[], source: ChangeSource, changes: DataChanges]
   selectionChanged: [selectedShapes: ShapeEntity[]]
   toolChanged: [tool: ToolsType]
+  /** The view changes: its zoom, its offset, the size of the canvas or of the drawing. Gives state.view */
+  viewChanged: [view: EditorState['view']]
+  /** The gap of the grid changes. Gives state.gridGap */
+  gridChanged: [gridGap: number]
+  /** The tools change, like the default values of their settings while editing. Gives state.tools */
+  toolsChanged: [tools: CustomTool[]]
+  /** Whether the history can be undone, redone or cleared changes. Gives state.history */
+  historyChanged: [history: EditorState['history']]
+  /** Whether shapes can be pasted changes, after the first copy. Gives state.clipboard */
+  clipboardChanged: [clipboard: EditorState['clipboard']]
+  /** The context menu opens, changes or closes (undefined). Gives state.contextMenu */
+  contextMenuChanged: [contextMenu: ContextMenuState | undefined]
+  /** The options in effect change: the props of useReactPaint, or setOptions. Gives state.options */
+  optionsChanged: [options: ResolvedOptions]
   /** A visible shape is clicked, also in viewer mode: a shape of a group, not the group. Locked shapes are clicked too */
   shapeClicked: [shape: ShapeEntity, info: ShapePointerInfo]
   /** The pointer enters a visible shape, a shape of a group, or leaves it (undefined). Only computed while a listener is registered */

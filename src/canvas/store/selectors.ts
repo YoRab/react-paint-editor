@@ -182,12 +182,37 @@ export const createSelectors = () => {
   const selectSelectionHover = ({ interaction }: InternalState): SelectionHover | undefined =>
     interaction.hoverMode.mode === 'default' || !isIdleSelectionMode(interaction.selectionMode) ? undefined : interaction.hoverMode
 
+  // The slices of the editor state which have their event: they keep their identity while their values are unchanged, so
+  // that the events and the editor state give the same object
+
+  const selectView = memoizeLast((state: InternalState): EditorState['view'] => {
+    const { canvasSize, transformation } = state.view
+    const { zoom, offset } = transformation
+    return keepView({
+      zoom,
+      offset,
+      displayWidth: canvasSize.width,
+      displayHeight: canvasSize.height,
+      scaleRatio: canvasSize.scaleRatio * zoom,
+      visibleArea: keepVisibleArea(getCurrentView(selectSettings(state)))
+    })
+  })
+
+  const selectHistory = ({ document }: InternalState): EditorState['history'] =>
+    keepHistory({
+      canUndo: document.history.cursor > 0,
+      canRedo: document.history.cursor < document.history.states.length - 1,
+      canClear: document.shapes.length > 0
+    })
+
+  const selectClipboard = (state: InternalState): EditorState['clipboard'] => keepClipboard({ hasContent: state.clipboard !== undefined })
+
+  const selectContextMenu = (state: InternalState): ContextMenuState | undefined =>
+    buildContextMenu(selectWithContextMenu(state), state.interaction.selectionMode, state.document.shapes)
+
   /** State exposed to the editors */
   const selectEditorState = memoizeLast((state: InternalState): EditorState => {
     const { config, document, view, interaction } = state
-    const { history } = document
-    const { zoom, offset } = view.transformation
-    const withContextMenu = selectWithContextMenu(state)
     const selectedShapes = selectSelectedShapes(document.selectedShape)
     return keepEditorState({
       mode: config.mode,
@@ -199,14 +224,7 @@ export const createSelectors = () => {
         size: config.options.size,
         resize: config.options.resize
       }),
-      view: keepView({
-        zoom,
-        offset,
-        displayWidth: view.canvasSize.width,
-        displayHeight: view.canvasSize.height,
-        scaleRatio: view.canvasSize.scaleRatio * zoom,
-        visibleArea: keepVisibleArea(getCurrentView(selectSettings(state)))
-      }),
+      view: selectView(state),
       options: config.options,
       gridGap: view.gridGap,
       shapes: document.shapes,
@@ -215,13 +233,9 @@ export const createSelectors = () => {
       selectedShapeIds: selectSelectedShapeIds(selectedShapes),
       activeTool: selectActiveTool(state),
       tools: state.tools.available,
-      history: keepHistory({
-        canUndo: history.cursor > 0,
-        canRedo: history.cursor < history.states.length - 1,
-        canClear: document.shapes.length > 0
-      }),
-      clipboard: keepClipboard({ hasContent: state.clipboard !== undefined }),
-      withContextMenu,
+      history: selectHistory(state),
+      clipboard: selectClipboard(state),
+      withContextMenu: selectWithContextMenu(state),
       withDropPicture: selectWithDropPicture(state),
       interaction: keepInteraction({
         mode: interaction.selectionMode.mode,
@@ -233,7 +247,7 @@ export const createSelectors = () => {
         focus: interaction.focus,
         keyboardNavigation: interaction.keyboardNavigation
       }),
-      contextMenu: buildContextMenu(withContextMenu, interaction.selectionMode, document.shapes)
+      contextMenu: selectContextMenu(state)
     })
   })
 
@@ -287,6 +301,10 @@ export const createSelectors = () => {
     selectHoveredShape,
     selectWithContextMenu,
     selectWithDropPicture,
+    selectView,
+    selectHistory,
+    selectClipboard,
+    selectContextMenu,
     selectEditorState,
     selectCanvasView,
     selectCursor

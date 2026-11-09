@@ -4,7 +4,7 @@ import { PICTURE_TOOL_ID, SELECTION_TOOL } from '@canvas/constants/tools'
 import { createStore } from '@canvas/store/createStore'
 import { createEventEmitter } from '@canvas/store/eventEmitter'
 import { createSelectors, findSelectableTool, memoizeLast } from '@canvas/store/selectors'
-import { INITIAL_SHAPES_STATE, type ShapesAction, shapesReducer } from '@canvas/store/shapesReducer'
+import { type DocumentTrees, INITIAL_SHAPES_STATE, type ShapesAction, shapesReducer } from '@canvas/store/shapesReducer'
 import type {
   CanvasTransformation,
   Focus,
@@ -18,6 +18,7 @@ import type {
 import type { CanvasSize } from '@canvas/types/Canvas'
 import type {
   ChangeSource,
+  DataChanges,
   EditorActions,
   ExportImageOptions,
   ShapesActionOptions,
@@ -28,10 +29,11 @@ import type {
 import type { HoverModeData, SelectionModeContextMenu, SelectionModeData } from '@canvas/types/Mode'
 import type { Point, SelectionType, ShapeEntity, ShapeInput, ShapePatch, StateData, StyleShape } from '@canvas/types/Shapes'
 import type { ToolsType } from '@canvas/types/tools'
+import { applyDataChanges, type BuildReceivedShape } from '@canvas/utils/applyChanges'
 import { compact, insertAt, moveItemPosition } from '@canvas/utils/array'
 import { createApproximateTextContext, createDetachedContext, getScaledCanvasSize, getUnscaledCanvasSize } from '@canvas/utils/canvas'
 import { getDrawingColorAt } from '@canvas/utils/colorPicker'
-import { buildDataToExport, getDataChanges } from '@canvas/utils/data'
+import { buildDataToExport, getDataChanges, isSameExport } from '@canvas/utils/data'
 import { shallowEqual } from '@canvas/utils/equality'
 import { ReactPaintError } from '@canvas/utils/error'
 import { decodeJson, downloadFile, encodeShapesInString, getCanvasImage, loadPicture } from '@canvas/utils/file'
@@ -224,6 +226,9 @@ type ShapesChange = {
   replacedIds?: ReadonlyMap<string, readonly string[]> | undefined
 }
 
+/** The trees of shapes of the document, which an undo, a redo or changes received change */
+const TREES = ['shapes', 'base', 'saved'] as const
+
 /** The shapes of the group holding a shape of the tree, or of the tree itself */
 const getSiblingList = (shapes: ShapeEntity[], id: string) => {
   const parent = getParentGroup(shapes, id)
@@ -410,13 +415,93 @@ export const createPaintStore = (props: UseReactPaintProps = {}) => {
       return document === state.document ? state : { ...state, document }
     })
 
+  // --- Changes received, and steps replayed on them ---
+
+  /**
+   * Applies changes to trees of shapes, see applyDataChanges. The shapes are built like loaded data, once for all the trees
+   * when they are the same, and the shapes kept are taken while they are the same. A picture keeps its image while its
+   * source is the same: the others are added to the pictures to load, once the changes are applied
+   */
+  const createChangesApplier = (state: InternalState, loadedPictures: ShapeEntity[], keptShapes?: ReadonlyMap<string, ShapeEntity>) => {
+    const settings = getSettings(state)
+    const ctx = getMeasureContext()
+    const { available } = state.tools
+    const built = new Map<string, ShapeEntity>()
+    const buildShape: BuildReceivedShape = (exported, current) => {
+      for (const candidate of [built.get(exported.id), keptShapes?.get(exported.id)]) {
+        if (candidate && isSameExport(candidate, exported)) return candidate
+      }
+      // the id received is kept: the shape replaces the current one
+      let shape = buildShapeEntity(exported, { ctx, settings, tools: available, usedIds: new Set(), completeStyle: false })
+      if (shape.type === 'picture') {
+        if (current?.type === 'picture' && current.src === shape.src) shape = { ...shape, img: current.img }
+        else loadedPictures.push(shape)
+      }
+      built.set(exported.id, shape)
+      return shape
+    }
+    return (shapes: ShapeEntity[], changes: DataChanges) => applyDataChanges(shapes, changes, buildShape, settings)
+  }
+
+  /** Applies a change to trees of the document, each different tree once: they are mostly the same object */
+  const changeTrees = (
+    trees: DocumentTrees,
+    keys: readonly (keyof DocumentTrees)[],
+    change: (shapes: ShapeEntity[]) => ShapeEntity[]
+  ): DocumentTrees => {
+    const changed = new Map<ShapeEntity[], ShapeEntity[]>()
+    const result: DocumentTrees = { shapes: trees.shapes, base: trees.base, saved: trees.saved }
+    for (const key of keys) {
+      const tree = trees[key]
+      const newTree = changed.get(tree) ?? change(tree)
+      changed.set(tree, newTree)
+      result[key] = newTree
+    }
+    return result
+  }
+
+  /**
+   * Replays on trees the changes from a tree to another, like a step of the history undone or redone on the changes received
+   * since: a tree which is still the first one becomes the other one, otherwise the shapes of the other one are kept while
+   * they are the same
+   */
+  const replayChanges = (
+    state: InternalState,
+    trees: DocumentTrees,
+    keys: readonly (keyof DocumentTrees)[],
+    from: ShapeEntity[],
+    to: ShapeEntity[],
+    loadedPictures: ShapeEntity[] = []
+  ): DocumentTrees => {
+    let replay: ((shapes: ShapeEntity[]) => ShapeEntity[]) | undefined
+    return changeTrees(trees, keys, shapes => {
+      if (shapes === from) return to
+      if (!replay) {
+        const apply = createChangesApplier(state, loadedPictures, indexShapeTree(to).byId)
+        const changes = getDataChanges(from, to)
+        replay = tree => apply(tree, changes)
+      }
+      return replay(shapes)
+    })
+  }
+
+  /**
+   * The saved shapes with a step of the user, when the changes of a gesture received are not saved yet: they are left out,
+   * the other instance saves them. Otherwise the saved shapes are the ones of the step
+   */
+  const getSavedWithStep = (state: InternalState, shapes: ShapeEntity[]): ShapeEntity[] | undefined => {
+    const { document } = state
+    return document.saved === document.base ? undefined : replayChanges(state, document, ['saved'], document.base, shapes).saved
+  }
+
   /** The action setting new shapes of the drawing: the selection follows them, see reselect */
   const setShapesAction = (state: InternalState, { shapes, save, source, replacedIds }: ShapesChange): ShapesAction => ({
     type: 'SET_SHAPES',
     shapes,
     newSelectedShape: reselect(state.document.selectedShape, state.document.shapes, shapes, getSettings(state), replacedIds),
     save,
-    source
+    source,
+    saved: save ? getSavedWithStep(state, shapes) : undefined
   })
 
   const setInteractionField = <K extends keyof Interaction>(key: K, value: Interaction[K]) =>
@@ -442,17 +527,24 @@ export const createPaintStore = (props: UseReactPaintProps = {}) => {
 
   // --- Events, emitted after each update ---
 
-  // the changes are computed from the step of the history seen before: after an undo, it is the next one
+  // the saved shapes: after a step, an undo, a redo, or changes received and saved
   store.watch(
-    ({ document, config }) => [document.history, config.width, config.height] as const,
-    ([history, width, height], [previousHistory]) => {
+    ({ document, config }) => [document.saved, config.width, config.height] as const,
+    ([saved, width, height], [previousSaved]) => {
       // the data are only built when they are listened: pictures are encoded
       if (!hasListeners('dataChanged')) return
-      const { shapes, source } = history.states[history.cursor]!
-      const data = buildDataToExport(shapes, width, height)
-      emit('dataChanged', data, source, getDataChanges(previousHistory.states[previousHistory.cursor]!.shapes, shapes, data.shapes))
+      const data = buildDataToExport(saved, width, height)
+      emit('dataChanged', data, get().document.savedSource, getDataChanges(previousSaved, saved, data.shapes))
     },
     shallowEqual
+  )
+
+  // also the changes which are not saved, like the moves of a gesture: only the shapes changed are exported
+  store.watch(
+    state => state.document.shapes,
+    (shapes, previousShapes) => {
+      if (hasListeners('shapesChanged')) emit('shapesChanged', shapes, get().document.source, getDataChanges(previousShapes, shapes))
+    }
   )
 
   // the ids of the selected shapes are compared: the id of a selection of several shapes is made of theirs, which a group
@@ -467,6 +559,24 @@ export const createPaintStore = (props: UseReactPaintProps = {}) => {
     selectors.selectActiveTool,
     activeTool => emit('toolChanged', activeTool),
     (a, b) => a.id === b.id
+  )
+
+  // the slices of the editor state, which keep their identity while their values are unchanged
+  store.watch(selectors.selectView, view => emit('viewChanged', view))
+  store.watch(
+    state => state.view.gridGap,
+    gridGap => emit('gridChanged', gridGap)
+  )
+  store.watch(
+    state => state.tools.available,
+    tools => emit('toolsChanged', tools)
+  )
+  store.watch(selectors.selectHistory, history => emit('historyChanged', history))
+  store.watch(selectors.selectClipboard, clipboard => emit('clipboardChanged', clipboard))
+  store.watch(selectors.selectContextMenu, contextMenu => emit('contextMenuChanged', contextMenu))
+  store.watch(
+    state => state.config.options,
+    options => emit('optionsChanged', options)
   )
 
   // --- Color pick ---
@@ -538,15 +648,15 @@ export const createPaintStore = (props: UseReactPaintProps = {}) => {
     })
 
   /** Adds shapes to the drawing, at an index of its shapes, the foreground by default, without a step of the history */
-  const addShapes = (newShapes: ShapeEntity[], index = 0) =>
-    dispatch(state => setShapesAction(state, { shapes: insertAt(state.document.shapes, index, ...newShapes), save: false }))
+  const addShapes = (newShapes: ShapeEntity[], index = 0, source?: ChangeSource) =>
+    dispatch(state => setShapesAction(state, { shapes: insertAt(state.document.shapes, index, ...newShapes), save: false, source }))
 
-  const saveShapes = (source?: ChangeSource) => dispatch({ type: 'SAVE', source })
+  const saveShapes = (source?: ChangeSource) => dispatch(state => ({ type: 'SAVE', source, saved: getSavedWithStep(state, state.document.shapes) }))
 
   /**
-   * Escape during a gesture of the pointer: a gesture saves its shapes once released, so the last step of the history holds
-   * them as they were before it. The selection of the press is given back, a shape being drawn is removed.
-   * Returns whether a gesture was cancelled
+   * Escape during a gesture of the pointer: a gesture saves its shapes once released, so the base of the next step holds
+   * them as they were before it, with the changes received during the gesture. The selection of the press is given back, a
+   * shape being drawn is removed. Returns whether a gesture was cancelled
    */
   const cancelGesture = (): boolean => {
     const { interaction, document } = get()
@@ -554,24 +664,48 @@ export const createPaintStore = (props: UseReactPaintProps = {}) => {
     if (selectionMode.mode !== 'translate' && selectionMode.mode !== 'resize' && selectionMode.mode !== 'rotate' && selectionMode.mode !== 'brush') {
       return false
     }
-    const saved = document.history.states[document.history.cursor]!
     const selection =
       selectionMode.mode === 'brush'
-        ? saved.selectedShape
+        ? document.history.states[document.history.cursor]!.selectedShape
         : selectionMode.mode === 'resize' && selectionMode.creationStart
           ? undefined
           : selectionMode.originalShape
     batch(() => {
-      dispatch({ type: 'SET_SHAPES', shapes: saved.shapes, newSelectedShape: selection, save: false })
+      dispatch({ type: 'SET_SHAPES', shapes: document.base, newSelectedShape: selection, save: false })
       setSelectionMode({ mode: 'default' })
       setSelectionFrame(undefined)
     })
     return true
   }
 
-  const undo = () => dispatch({ type: 'UNDO' })
+  /**
+   * Undoes or redoes steps of the user: the trees of the document get each step undone or redone on the changes received
+   * since, which are kept. A step left without effect, like a change of shapes removed by another instance since, is passed.
+   * The selection of the step reached follows the shapes
+   */
+  const moveInHistory = (direction: -1 | 1) => {
+    const state = get()
+    const { document } = state
+    const { states } = document.history
+    let { cursor } = document.history
+    let trees: DocumentTrees = document
+    const loadedPictures: ShapeEntity[] = []
+    while (direction < 0 ? cursor > 0 : cursor < states.length - 1) {
+      const step = states[direction < 0 ? cursor : cursor + 1]!
+      cursor += direction
+      trees = replayChanges(state, trees, TREES, direction < 0 ? step.shapes : step.before, direction < 0 ? step.before : step.shapes, loadedPictures)
+      if (trees.shapes !== document.shapes || trees.base !== document.base || trees.saved !== document.saved) break
+    }
+    if (cursor === document.history.cursor) return
+    const reached = states[cursor]!
+    const selectedShape = reselect(reached.selectedShape, reached.shapes, trees.shapes, getSettings(state))
+    dispatch({ type: 'GO_TO_STEP', cursor, trees, selectedShape })
+    for (const picture of loadedPictures) loadPictureOf(picture)
+  }
 
-  const redo = () => dispatch({ type: 'REDO' })
+  const undo = () => moveInHistory(-1)
+
+  const redo = () => moveInHistory(1)
 
   const clearShapes = (shapesToInit: ShapeEntity[], { clearHistory, source }: ResetOptions) =>
     dispatch({ type: 'CLEAR', shapes: shapesToInit, clearHistory, source })
@@ -580,7 +714,7 @@ export const createPaintStore = (props: UseReactPaintProps = {}) => {
    * Copies shapes, with new ids for them and the shapes of their groups: each copy is inserted in front of its shape, in its
    * group. The shapes are normalized like a selection (see normalizeShapeNodes), and copied as they are given
    */
-  const duplicateShapes = (shapesToDuplicate: ShapeEntity[], translate = false, selectNewOnes = false) =>
+  const duplicateShapes = (shapesToDuplicate: ShapeEntity[], translate = false, selectNewOnes = false, source?: ChangeSource) =>
     dispatch(state => {
       const settings = getSettings(state)
       const { shapes } = state.document
@@ -592,10 +726,10 @@ export const createPaintStore = (props: UseReactPaintProps = {}) => {
       }
       if (!copiesById.size) return undefined
       const newShapes = insertShapesBefore(shapes, copiesById, settings)
-      if (!selectNewOnes) return setShapesAction(state, { shapes: newShapes, save: false })
+      if (!selectNewOnes) return setShapesAction(state, { shapes: newShapes, save: false, source })
       // the copies are selected in the order of the drawing
       const copies = flattenShapes(shapes).flatMap(shape => copiesById.get(shape.id) ?? [])
-      return { type: 'SET_SHAPES', shapes: newShapes, newSelectedShape: buildShapesSelection(copies, settings), save: false }
+      return { type: 'SET_SHAPES', shapes: newShapes, newSelectedShape: buildShapesSelection(copies, settings), save: false, source }
     })
 
   const refreshHoveredShape = (isOverCanvas: boolean, ctx: CanvasRenderingContext2D, cursorPosition: Point, isInsideMask: boolean) => {
@@ -880,7 +1014,7 @@ export const createPaintStore = (props: UseReactPaintProps = {}) => {
   /** Adds new shapes, at the foreground by default: a step is saved unless save is false */
   const insertShapes = (newShapes: ShapeEntity[], { index = 0, save = true, source, select = false }: InsertOptions = {}) =>
     batch(() => {
-      addShapes(newShapes, index)
+      addShapes(newShapes, index, source)
       if (save) saveShapes(source)
       if (select) selectShapes(newShapes)
     })
@@ -1192,6 +1326,26 @@ export const createPaintStore = (props: UseReactPaintProps = {}) => {
     for (const shape of reloadedPictures) loadPictureOf(shape)
   }
 
+  /**
+   * Applies changes of another instance, see applyDataChanges: the shapes received are all checked before any change. They
+   * are not a step of the history: they are applied to the shapes, to the base of the next step, and with save to the saved
+   * shapes, which the changes of a gesture received may already be applied to
+   */
+  const applyChanges = (changes: DataChanges, { save = true, source = 'remote' }: ShapesActionOptions = {}) => {
+    const state = get()
+    assertValidShapes([...changes.added, ...changes.updated.map(({ shape }) => shape)], 'applyChanges', getCustomShapeToolIds(state.tools.available))
+    const loadedPictures: ShapeEntity[] = []
+    const apply = createChangesApplier(state, loadedPictures)
+    const trees = changeTrees(state.document, save ? TREES : ['shapes', 'base'], shapes => apply(shapes, changes))
+    dispatch(current => ({
+      type: 'RECEIVE',
+      trees,
+      newSelectedShape: reselect(current.document.selectedShape, current.document.shapes, trees.shapes, getSettings(current)),
+      source
+    }))
+    for (const picture of loadedPictures) loadPictureOf(picture)
+  }
+
   /** Points of a line, a polygon or a curve, to update one of them */
   const getPointShape = (id: string, types: ShapeEntity['type'][]) => {
     const shape = resolveShapes([id])[0]
@@ -1258,7 +1412,7 @@ export const createPaintStore = (props: UseReactPaintProps = {}) => {
     removeShapes: (ids, { source } = {}) => removeShapes(resolveShapes(ids), source),
     duplicateShapes: (ids, { translate = false, select = false, save = true, source } = {}) =>
       batch(() => {
-        duplicateShapes(resolveShapes(ids), translate, select)
+        duplicateShapes(resolveShapes(ids), translate, select, source)
         if (save) saveShapes(source)
       }),
     groupShapes,
@@ -1333,6 +1487,7 @@ export const createPaintStore = (props: UseReactPaintProps = {}) => {
       const settings = getSettings()
       updateShapes([shape.type === 'curve' ? removeCurvePoint(shape, pointIndex, settings) : removePolygonPoint(shape, pointIndex, settings)], true)
     },
+    applyChanges,
     editText: id => {
       // a text of a locked group is not edited: the group is selected in its place
       const shape = resolveUnits([id])[0]
@@ -1384,11 +1539,12 @@ export const createPaintStore = (props: UseReactPaintProps = {}) => {
         resetCanvasWithShapeEntity([], { clearHistory: false, source: 'user' })
       }
     },
-    loadFile: async file => actions.loadData((await decodeJson(file)) as StateData),
-    loadData: async (data, { clearHistory = true } = {}) => {
+    // the file is chosen by the user, while data given by the code come from elsewhere
+    loadFile: async (file, { source = 'user', ...options } = {}) => actions.loadData((await decodeJson(file)) as StateData, { ...options, source }),
+    loadData: async (data, { clearHistory = true, source = 'remote' } = {}) => {
       const parsed: unknown = typeof data === 'string' ? JSON.parse(data) : data
       const shapes = isRecord(parsed) && Array.isArray(parsed.shapes) ? (parsed.shapes as ShapeInput[]) : []
-      await resetCanvas(shapes, { clearHistory, source: 'remote' })
+      await resetCanvas(shapes, { clearHistory, source })
     },
     exportPicture: ({ fileName, ...options } = {}) => downloadFile(getCurrentImage(options), fileName ?? getPictureFileName(options.format)),
     exportData: ({ fileName = 'drawing.json' } = {}) => {
@@ -1441,7 +1597,12 @@ export const createPaintStore = (props: UseReactPaintProps = {}) => {
     resetSettings: () =>
       update(state => {
         const { tools, view } = createInitialState(state.config)
-        return { ...state, tools, view: { ...state.view, transformation: view.transformation, gridGap: view.gridGap } }
+        // the values already there keep their objects: nothing changes, and no event is emitted, for settings already reset
+        const available = isEqual(tools.available, state.tools.available) ? state.tools.available : tools.available
+        const newTools = patchObject(state.tools, { available, activeToolId: tools.activeToolId })
+        let newState = withTransformation(newTools === state.tools ? state : { ...state, tools: newTools }, view.transformation)
+        if (newState.view.gridGap !== view.gridGap) newState = { ...newState, view: { ...newState.view, gridGap: view.gridGap } }
+        return newState
       })
   }
 

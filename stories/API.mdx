@@ -169,6 +169,7 @@ import LinkTo from '@storybook/addon-links/react';
         <li><code>setShapesStyle(ids, style, {'{ updateTool?, save? }'})</code>, <code>updateShapesStyle(ids, field, value, {'{ save? }'})</code> - Updates style fields. Text size is recomputed when changing the font</li>
         <li><code>transformShapes(ids, 'flipHorizontally' | 'flipVertically' | 'rotateClockwise' | 'rotateCounterclockwise')</code></li>
         <li><code>insertShapePoint(id, index, point)</code>, <code>moveShapePoint(id, index, point)</code>, <code>removeShapePoint(id, pointIndex)</code> - Points of a line, a polygon or a curve, which keep at least 2 points</li>
+        <li><code>applyChanges(changes, {'{ save?, source? }'})</code> - Applies the changes of <code>dataChanged</code> or <code>shapesChanged</code> received from another instance, see <a href="#Collaboration" target="_self">Real-time collaboration</a></li>
         <li><code>editText(id)</code> - Opens the edition box of a text</li>
         <li><code>addPicture(fileOrUrl, {'{ maxWidth?, maxHeight?, select?, position? }'})</code> - adds the picture at the center of the visible area, or centered on <code>position</code> (in the units of the drawing)</li>
         <li><code>copy(ids?)</code>, <code>cut(ids?)</code>, <code>paste()</code> - Use the selection when no ids are given</li>
@@ -640,7 +641,7 @@ const annotationsStyle = useAnnotationsStyle(paint)
             <td>
               How the canvas follows its container. The first four show the whole drawing, scaled to the width of the container:{' '}
               <code>'scaleDown'</code> at most width pixels wide, <code>'scale'</code> without bounds, <code>'scaleUp'</code> at least width pixels wide,{' '}
-              <code>'none'</code> always width×height pixels. <code>'extend'</code> fills the container, which must have a height, at the scale 1: the
+              <code>'none'</code> always width×height pixels. <code>'extend'</code> is 100% wide and 100% high, so its container must have a defined width and height, and fills it at the scale 1: the
               visible area follows the container, a fixed page is centered in it
             </td>
             <td><code>'scaleDown'</code></td>
@@ -671,7 +672,7 @@ const annotationsStyle = useAnnotationsStyle(paint)
 
       <h3>dataChanged</h3>
       <p>
-        Fired whenever the canvas state changes (shapes added, removed, or modified).
+        Fired whenever the saved drawing changes (shapes added, removed, or modified): a step of the history saved, undone or redone, or changes of another instance applied with <code>applyChanges</code> and saved. A gesture saves its step once released: <code>shapesChanged</code> gives its changes as they come.
       </p>
       <Source language='typescript' code={`paint.registerEvent('dataChanged', (data: StateData, source: 'user' | 'remote', changes: DataChanges) => {
   // data.shapes contains all current shapes
@@ -697,12 +698,12 @@ const annotationsStyle = useAnnotationsStyle(paint)
           <tr>
             <td><code>source</code></td>
             <td><code>'user' | 'remote'</code></td>
-            <td>Origin of the change: <code>'user'</code> for local interactions and actions, <code>'remote'</code> for loaded data, undo / redo, and actions given <code>{`{ source: 'remote' }`}</code></td>
+            <td>Origin of the change: <code>'user'</code> for local interactions and actions, undo and redo included, a file loaded by <code>loadFile</code> too, <code>'remote'</code> for data loaded by <code>loadData</code> or the <code>shapes</code> of the hook, <code>applyChanges</code> and actions given <code>{`{ source: 'remote' }`}</code></td>
           </tr>
           <tr>
             <td><code>changes</code></td>
             <td><code>DataChanges</code></td>
-            <td>Shapes changed since the previous state, in the format of <code>data.shapes</code>: <code>added</code>, <code>updated</code> as <code>{`{ shape, previous }`}</code>, <code>removed</code>, and <code>reordered</code> when the shapes still there are in another order, or in another group. An undo gives the reverse changes</td>
+            <td>Shapes changed since the previous state, in the format of <code>data.shapes</code>: <code>added</code>, <code>updated</code> as <code>{`{ shape, previous }`}</code>, <code>removed</code>, <code>reordered</code> when the shapes still there are in another order, or in another group, and <code>order</code>, the lists of shapes whose ids have changed as <code>{`{ parentId, ids }`}</code> (the id of their group, undefined for the drawing, and their ids from the foreground). An undo gives the reverse changes</td>
           </tr>
         </tbody>
       </table>
@@ -710,7 +711,19 @@ const annotationsStyle = useAnnotationsStyle(paint)
       <p>
         The shapes of the groups are listed too, each one with its own changes: a group is updated when its own fields (its rotation, its name, its opacity...) or the ids of its shapes change. A group added or removed is listed with each of its shapes, its export holding them too.
         Grouping shapes adds a group and sets <code>reordered</code>: when it is set, a shape may have changed its group, build the drawing again from <code>data.shapes</code>.
+        With <code>order</code>, the changes tell where each shape goes: another instance applies them with <code>actions.applyChanges</code>, see <a href="#Collaboration" target="_self">Real-time collaboration</a>.
       </p>
+
+      <h3>shapesChanged</h3>
+      <p>
+        Fired whenever the shapes of the drawing change, saved or not: also at each move of a gesture, before it saves its step, and for the actions given <code>{`{ save: false }`}</code>, like a slider.
+        It gives the shapes, the origin of the change, and the changes since the previous shapes, in the format of <code>dataChanged</code>: only the shapes changed are exported, and only while a listener is registered.
+        It is not fired for a change of the selection.
+      </p>
+      <Source language='typescript' code={`paint.registerEvent('shapesChanged', (shapes: ShapeEntity[], source: ChangeSource, changes: DataChanges) => {
+  // shown live to the other users, saved by dataChanged
+  if (source === 'user') socket.send(JSON.stringify({ type: 'live', changes }))
+})`} />
 
       <h3>selectionChanged</h3>
       <p>
@@ -727,6 +740,64 @@ const annotationsStyle = useAnnotationsStyle(paint)
       <Source language='typescript' code={`paint.registerEvent('toolChanged', (tool: ToolsType) => {
   console.log('Active tool:', tool.id)
 })`} />
+
+      <h3>Changes of the state</h3>
+      <p>
+        Each part of the state which the user can change from the Editor or the canvas has its event, fired when it changes, with its new value: the same object as in <code>paint.getState()</code>.
+        A value which does not change fires nothing, and the changes of a <code>batch</code> fire once.
+      </p>
+      <table>
+        <thead>
+          <tr>
+            <th>Event</th>
+            <th>Value</th>
+            <th>Fired when</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>viewChanged</code></td>
+            <td><code>state.view</code></td>
+            <td>The view is zoomed or moved (wheel, pinch, pan, zoom panel, minimap, shortcuts, auto scroll), or the canvas or the drawing is resized</td>
+          </tr>
+          <tr>
+            <td><code>gridChanged</code></td>
+            <td><code>state.gridGap</code></td>
+            <td>The grid is changed, like from the layers panel of the Editor, by <code>setGridGap</code> or <code>resetSettings</code></td>
+          </tr>
+          <tr>
+            <td><code>toolsChanged</code></td>
+            <td><code>state.tools</code></td>
+            <td>The default values of the settings of the tools change, like from the settings bar without selection, or the <code>availableTools</code> option</td>
+          </tr>
+          <tr>
+            <td><code>historyChanged</code></td>
+            <td><code>state.history</code></td>
+            <td>The history can be undone, redone or cleared, or no longer</td>
+          </tr>
+          <tr>
+            <td><code>clipboardChanged</code></td>
+            <td><code>state.clipboard</code></td>
+            <td>Shapes can be pasted, after the first copy or cut</td>
+          </tr>
+          <tr>
+            <td><code>contextMenuChanged</code></td>
+            <td><code>state.contextMenu</code></td>
+            <td>The context menu opens, changes, or closes (<code>undefined</code>)</td>
+          </tr>
+          <tr>
+            <td><code>optionsChanged</code></td>
+            <td><code>state.options</code></td>
+            <td>The options in effect change: the props of <code>useReactPaint</code>, <code>setOptions</code> (the Editor overrides <code>withDropPicture</code>) or <code>resetOptions</code></td>
+          </tr>
+        </tbody>
+      </table>
+      <Source language='typescript' code={`paint.registerEvent('gridChanged', (gridGap: number) => savePreference('grid', gridGap))
+paint.registerEvent('toolsChanged', (tools: CustomTool[]) => savePreference('tools', tools.map(tool => [tool.id, tool.settings])))`} />
+      <p>
+        <code>state.interaction</code> (the gesture running, the hovered shape, the modifiers, the focus...) changes many times per second and has no event: read it with <code>usePaintState</code>, or after <code>paint.subscribe</code>.
+        <code>shapeHovered</code> tells the shape under the pointer.
+      </p>
 
       <h3>shapeClicked and shapeHovered</h3>
       <p>
@@ -943,7 +1014,11 @@ paint.actions.panBy([50, 0]) // scrolls the view, in the units of the drawing`} 
           </tr>
           <tr>
             <td>Data and files</td>
-            <td><code>loadData(data | json, {`{ clearHistory }`})</code>, <code>loadFile(file)</code>, <code>exportData({`{ fileName }`})</code>, <code>exportPicture(options)</code>, <code>addPicture(fileOrUrl)</code>, <code>clearCanvas()</code></td>
+            <td><code>loadData(data | json, {`{ clearHistory, source }`})</code> (<code>'remote'</code> by default), <code>loadFile(file, {`{ clearHistory, source }`})</code> (<code>'user'</code> by default: the file is chosen by the user), <code>exportData({`{ fileName }`})</code>, <code>exportPicture(options)</code>, <code>addPicture(fileOrUrl)</code>, <code>clearCanvas()</code></td>
+          </tr>
+          <tr>
+            <td>Collaboration</td>
+            <td><code>applyChanges(changes, {`{ save, source }`})</code>, see <a href="#Collaboration" target="_self">Real-time collaboration</a></td>
           </tr>
         </tbody>
       </table>
@@ -976,6 +1051,36 @@ paint.actions.panBy([50, 0]) // scrolls the view, in the units of the drawing`} 
 paint.actions.updateShapes([{ id: rectId, x: 20, style: { strokeColor: 'red' } }])
 paint.actions.rotateShapes([rectId], Math.PI / 4)
 const box = paint.getBounds([rectId])`} />
+
+      <h3 id="Collaboration">Real-time collaboration</h3>
+      <p>
+        Instances of several users draw together when each one applies the changes of the others: <code>shapesChanged</code> gives the changes of a gesture as they come, <code>dataChanged</code> the steps of the history.
+        Their changes are plain data, which can be sent in JSON, and <code>actions.applyChanges(changes, {'{ save, source }'})</code> applies them:
+      </p>
+      <ul>
+        <li>a shape added is created, built like loaded data: a picture keeps its image while its source is the same. A shape updated gets the fields changed from its previous version, the fields of the style one by one: the other fields of a shape changed here meanwhile are kept. A shape removed is removed. A shape updated or removed which is not here is ignored</li>
+        <li>the lists of <code>changes.order</code> give the places of the shapes and their groups, and keep the shapes added here meanwhile: a shape received without a place goes to the foreground, a group left with a single shape is dissolved</li>
+        <li>a shape already the same is left as it is: the changes saved after the live changes of a gesture change nothing more, but save them. With <code>save: false</code>, for the live changes, they are not saved: <code>dataChanged</code> gives the changes received once they are saved</li>
+        <li>the selection follows the shapes. The source is <code>'remote'</code> by default, so that the changes received are not sent back: send only the changes whose source is <code>'user'</code></li>
+        <li>it throws an error, without changing anything, when a shape is invalid, like a custom shape whose tool is not available</li>
+      </ul>
+      <p>
+        Each user keeps their selection, their tool, their zoom and their history. The changes received are not steps of the history: an undo replays the last step of the user, backwards, on the drawing, keeping the changes received since, and is sent to the others like any change. A step left without effect, like a move of a shape removed by another user since, is passed.
+        The last change of each field wins when two users change the same shape at once. Two shapes added at once in the same list are both kept, but each instance may order them its own way until the next change of this list. See the Collaboration story.
+        The changes hold only the shapes: to share a setting, like the grid, send its event (<code>gridChanged</code>) and apply it (<code>actions.setGridGap</code>). These events give no source, but they are emitted while the setting is set: ignore the one emitted while you apply a setting received, otherwise it is sent back.
+      </p>
+      <Source language='typescript' code={`// sends the changes of the user
+paint.registerEvent('shapesChanged', (_shapes, source, changes) => {
+  if (source === 'user') socket.send(JSON.stringify({ changes, save: false }))
+})
+paint.registerEvent('dataChanged', (_data, source, changes) => {
+  if (source === 'user') socket.send(JSON.stringify({ changes, save: true }))
+})
+// applies the changes of the others, as remote changes
+socket.onmessage = ({ data }) => {
+  const { changes, save } = JSON.parse(data)
+  paint.actions.applyChanges(changes, { save })
+}`} />
 
       <h2 id="Performance">Performance</h2>
       <p>

@@ -246,7 +246,13 @@ describe('groupShapes and ungroupShapes', () => {
       added: [expect.objectContaining({ id: groupId, type: 'group' })],
       updated: [expect.objectContaining({ shape: expect.objectContaining({ id: 'outer' }) })],
       removed: [],
-      reordered: true
+      reordered: true,
+      // d leaves the drawing for the new group, which takes the place of c in outer
+      order: [
+        { parentId: undefined, ids: ['outer'] },
+        { parentId: 'outer', ids: ['inner', groupId] },
+        { parentId: groupId, ids: ['c', 'd'] }
+      ]
     })
     const data = listener.mock.lastCall?.[0]
     expect(data.shapes[0].shapes[1]).toMatchObject({ id: groupId, shapes: [{ id: 'c' }, { id: 'd' }] })

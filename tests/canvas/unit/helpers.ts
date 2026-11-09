@@ -78,6 +78,9 @@ export const RECTS: ExportedDrawableShape[] = [
   { type: 'rect', x: 500, y: 100, width: 100, height: 100, rotation: 0, style: STYLE }
 ]
 
+/** The ids of the shapes of the drawing, without those of the groups */
+export const getRootIds = (store: PaintStore) => store.getState().document.shapes.map(shape => shape.id)
+
 /** A store holding the shapes, RECTS by default */
 export const createLoadedStore = async (props: UseReactPaintProps = {}, shapes: ShapeInput[] = RECTS) => {
   const store = createPaintStore(props)

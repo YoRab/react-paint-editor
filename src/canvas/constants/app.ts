@@ -41,7 +41,8 @@ export type AppOptions = {
   size: Size
   /**
    * 'scaleDown', 'scale', 'scaleUp' and 'none' keep the width and the height and show the whole drawing, scaled to the
-   * width of the container within their bounds. 'extend' fills the container at the scale 1: the visible area follows it
+   * width of the container within their bounds. 'extend' fills the container at the scale 1: the visible area follows it,
+   * and the container must have a defined width and height
    */
   resize: Resize
   /** Always 'always' with an infinite size */

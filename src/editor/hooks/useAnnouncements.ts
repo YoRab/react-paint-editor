@@ -73,9 +73,9 @@ const useAnnouncements = (paint: ReactPaint, locale: EditorLocaleValue) => {
       return getPaintShapeNames(paint, shapes, tools, localeRef.current)
     }
 
+    // the view also changes when it is moved or resized
     let zoom = paint.getState().view.zoom
-    const unsubscribe = paint.subscribe(() => {
-      const newZoom = paint.getState().view.zoom
+    const unregisterView = paint.registerEvent('viewChanged', ({ zoom: newZoom }) => {
       if (newZoom === zoom) return
       zoom = newZoom
       const { lang, editor, format } = localeRef.current
@@ -91,7 +91,7 @@ const useAnnouncements = (paint: ReactPaint, locale: EditorLocaleValue) => {
 
     return () => {
       clearTimeout(timeout)
-      unsubscribe()
+      unregisterView()
       unregisterTool()
       unregisterSelection()
       unregisterData()

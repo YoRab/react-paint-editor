@@ -859,7 +859,8 @@ describe('dataChanged', () => {
       added: [expect.objectContaining({ id: first }), expect.objectContaining({ id: 'second' })],
       updated: [],
       removed: [],
-      reordered: false
+      reordered: false,
+      order: [{ parentId: undefined, ids: [first, 'second'] }]
     })
 
     store.transaction(() => {
@@ -870,7 +871,8 @@ describe('dataChanged', () => {
       added: [],
       updated: [{ shape: expect.objectContaining({ id: first, x: 20 }), previous: expect.objectContaining({ id: first, x: 10 }) }],
       removed: [expect.objectContaining({ id: second })],
-      reordered: false
+      reordered: false,
+      order: [{ parentId: undefined, ids: [first] }]
     })
 
     // an undo gives the reverse changes
@@ -882,8 +884,15 @@ describe('dataChanged', () => {
     const store = await createLoadedStore()
     const listener = vi.fn()
     store.registerEvent('dataChanged', listener)
-    store.actions.reorderShapes([...getIds(store)].reverse())
-    expect(listener.mock.lastCall?.[2]).toEqual({ added: [], updated: [], removed: [], reordered: true })
+    const reversedIds = [...getIds(store)].reverse()
+    store.actions.reorderShapes(reversedIds)
+    expect(listener.mock.lastCall?.[2]).toEqual({
+      added: [],
+      updated: [],
+      removed: [],
+      reordered: true,
+      order: [{ parentId: undefined, ids: reversedIds }]
+    })
 
     // loading the data again rebuilds every shape: only the one which differs is updated
     const [first, ...others] = store.getCurrentData().shapes ?? []
@@ -892,7 +901,8 @@ describe('dataChanged', () => {
       added: [],
       updated: [{ shape: expect.objectContaining({ id: first!.id, data: { checked: true } }), previous: first }],
       removed: [],
-      reordered: false
+      reordered: false,
+      order: []
     })
   })
 })
@@ -971,7 +981,7 @@ describe('rounded export', () => {
 
     await store.actions.loadData(data, { clearHistory: false })
     expect(listener).toHaveBeenCalledTimes(1)
-    expect(listener.mock.lastCall?.[2]).toEqual({ added: [], updated: [], removed: [], reordered: false })
+    expect(listener.mock.lastCall?.[2]).toEqual({ added: [], updated: [], removed: [], reordered: false, order: [] })
     expect(store.getCurrentData()).toEqual(data)
   })
 
