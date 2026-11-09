@@ -13,8 +13,16 @@ type EventEmitter = {
 export const createEventEmitter = (): EventEmitter => {
   const listeners: { [E in ReactPaintEventName]: ReactPaintEvents[E][] } = {
     dataChanged: [],
+    shapesChanged: [],
     selectionChanged: [],
     toolChanged: [],
+    viewChanged: [],
+    gridChanged: [],
+    toolsChanged: [],
+    historyChanged: [],
+    clipboardChanged: [],
+    contextMenuChanged: [],
+    optionsChanged: [],
     shapeClicked: [],
     shapeHovered: [],
     canvasClicked: [],

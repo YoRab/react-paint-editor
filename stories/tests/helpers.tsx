@@ -56,6 +56,27 @@ export const wait = (ms = 50) => new Promise(res => setTimeout(res, ms))
 /** Log of the selectionChanged / toolChanged events emitted by the last rendered wrapper */
 export const eventsLog: ({ name: 'selectionChanged'; ids: string[] } | { name: 'toolChanged'; toolId: string })[] = []
 
+/** Events of the state logged in stateEventsLog, with their first argument */
+const STATE_EVENT_NAMES = [
+  'dataChanged',
+  'shapesChanged',
+  'viewChanged',
+  'gridChanged',
+  'toolsChanged',
+  'historyChanged',
+  'clipboardChanged',
+  'contextMenuChanged',
+  'optionsChanged'
+] as const
+
+export type StateEventName = (typeof STATE_EVENT_NAMES)[number]
+
+/** Log of the events of the state emitted by the last rendered wrapper */
+export const stateEventsLog: { name: StateEventName; value: unknown }[] = []
+
+/** The values given to an event of the state, in the log */
+export const getLoggedValues = (name: StateEventName) => stateEventsLog.filter(event => event.name === name).map(event => event.value)
+
 export const ReactPaintWrapper = ({
   editorOptions,
   canvasOptions,
@@ -70,9 +91,11 @@ export const ReactPaintWrapper = ({
       eventsLog.push({ name: 'selectionChanged', ids: shapes.map(shape => shape.id) })
     )
     const unregisterTool = paint.registerEvent('toolChanged', (tool: ToolsType) => eventsLog.push({ name: 'toolChanged', toolId: tool.id }))
+    const unregisterStates = STATE_EVENT_NAMES.map(name => paint.registerEvent(name, (value: unknown) => stateEventsLog.push({ name, value })))
     return () => {
       unregisterSelection()
       unregisterTool()
+      for (const unregister of unregisterStates) unregister()
     }
   }, [paint])
 

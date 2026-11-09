@@ -14,6 +14,8 @@ export type ShapesState = {
   shapes: ShapeEntity[]
   selectedShape: SelectionType | undefined
   history: { states: HistoryEntry[]; cursor: number }
+  /** Origin of the last change of the shapes, saved or not: an undo or a redo is a change of the user */
+  source: ChangeSource
 }
 
 export type ShapesAction =
@@ -33,7 +35,8 @@ export type ShapesAction =
 export const INITIAL_SHAPES_STATE: ShapesState = {
   shapes: [],
   selectedShape: undefined,
-  history: { states: [{ shapes: [], selectedShape: undefined, source: 'remote' }], cursor: 0 }
+  history: { states: [{ shapes: [], selectedShape: undefined, source: 'remote' }], cursor: 0 },
+  source: 'remote'
 }
 
 // --- Helper ---
@@ -57,7 +60,11 @@ export const shapesReducer = (state: ShapesState, action: ShapesAction): ShapesS
   switch (action.type) {
     case 'SET_SHAPES': {
       const { shapes, newSelectedShape, save, source } = action
-      const next = shapes === state.shapes && newSelectedShape === state.selectedShape ? state : { ...state, shapes, selectedShape: newSelectedShape }
+      // the source is the one of the last change of the shapes: a change of the selection alone keeps it
+      const next =
+        shapes === state.shapes && newSelectedShape === state.selectedShape
+          ? state
+          : { ...state, shapes, selectedShape: newSelectedShape, source: shapes === state.shapes ? state.source : (source ?? 'user') }
       return save ? { ...next, history: addHistoryEntry(next.history, shapes, newSelectedShape, source) } : next
     }
 
@@ -71,14 +78,14 @@ export const shapesReducer = (state: ShapesState, action: ShapesAction): ShapesS
       if (state.history.cursor <= 0) return state
       const cursor = state.history.cursor - 1
       const { shapes, selectedShape } = state.history.states[cursor]!
-      return { ...state, shapes, selectedShape, history: { ...state.history, cursor } }
+      return { ...state, shapes, selectedShape, history: { ...state.history, cursor }, source: 'user' }
     }
 
     case 'REDO': {
       if (state.history.cursor >= state.history.states.length - 1) return state
       const cursor = state.history.cursor + 1
       const { shapes, selectedShape } = state.history.states[cursor]!
-      return { ...state, shapes, selectedShape, history: { ...state.history, cursor } }
+      return { ...state, shapes, selectedShape, history: { ...state.history, cursor }, source: 'user' }
     }
 
     case 'CLEAR':
@@ -86,13 +93,15 @@ export const shapesReducer = (state: ShapesState, action: ShapesAction): ShapesS
         ? {
             shapes: action.shapes,
             selectedShape: undefined,
-            history: { states: [{ shapes: action.shapes, selectedShape: undefined, source: action.source }], cursor: 0 }
+            history: { states: [{ shapes: action.shapes, selectedShape: undefined, source: action.source }], cursor: 0 },
+            source: action.source
           }
         : {
             ...state,
             shapes: action.shapes,
             selectedShape: undefined,
-            history: addHistoryEntry(state.history, action.shapes, undefined, action.source)
+            history: addHistoryEntry(state.history, action.shapes, undefined, action.source),
+            source: action.source
           }
 
     case 'SQUASH_HISTORY': {

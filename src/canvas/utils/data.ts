@@ -1,8 +1,8 @@
-import type { DataChanges } from '@canvas/types/editor'
+import type { DataChanges, ShapesOrder } from '@canvas/types/editor'
 import type { ExportedShape, ShapeEntity, StateData } from '@canvas/types/Shapes'
 import { shallowEqual } from '@canvas/utils/equality'
 import { isEqual } from '@canvas/utils/object'
-import { flattenShapes, indexShapeTree } from '@canvas/utils/shapes/tree'
+import { flattenShapes, indexShapeTree, isGroup, type ShapeTreeIndex } from '@canvas/utils/shapes/tree'
 import { roundValues } from '@canvas/utils/transform'
 import { getBase64Image, isSourceEncodedOnExport } from './file'
 
@@ -130,45 +130,64 @@ export const buildDataToExport = (shapes: ShapeEntity[], width: number, height: 
 }
 
 /** All the exported shapes, each group before its shapes, in the order of flattenShapes */
-const flattenExportedShapes = (shapes: ExportedShape[]): ExportedShape[] =>
+export const flattenExportedShapes = (shapes: ExportedShape[]): ExportedShape[] =>
   shapes.flatMap(shape => (shape.type === 'group' ? [shape, ...flattenExportedShapes(shape.shapes)] : [shape]))
 
 /**
  * Whether a shape is exported as before: a group changes with its own fields and the ids of its shapes, not with its
  * shapes
  */
-const isSameExport = (previousShape: ShapeEntity, exported: ExportedShape): boolean => {
+export const isSameExport = (previousShape: ShapeEntity, exported: ExportedShape): boolean => {
   if (previousShape.type !== 'group' || exported.type !== 'group') return isEqual(getExportedShape(previousShape), exported)
   const { shapes, ...fields } = exported
-  return (
-    isEqual(getCachedExport(previousShape), fields) &&
-    shallowEqual(
-      previousShape.shapes.map(shape => shape.id),
-      shapes.map(shape => shape.id)
-    )
-  )
+  return isEqual(getCachedExport(previousShape), fields) && shallowEqual(getIds(previousShape.shapes), getIds(shapes))
+}
+
+/** The ids of a list of shapes, entities or exported */
+export const getIds = (shapes: readonly { id: string }[]) => shapes.map(shape => shape.id)
+
+/**
+ * The lists of shapes of the new tree whose ids have changed, a group after the list holding it. A group which is the same
+ * object holds the same shapes: it is not gone through
+ */
+const getChangedOrder = (previousShapes: ShapeEntity[], shapes: ShapeEntity[], previousIndex: ShapeTreeIndex): ShapesOrder[] => {
+  const order: ShapesOrder[] = []
+  const visit = (list: readonly ShapeEntity[], previousList: readonly ShapeEntity[] | undefined, parentId: string | undefined) => {
+    if (list === previousList) return
+    const ids = getIds(list)
+    if (!previousList || !shallowEqual(ids, getIds(previousList))) order.push({ parentId, ids })
+    for (const shape of list) {
+      if (!isGroup(shape)) continue
+      const previousShape = previousIndex.byId.get(shape.id)
+      if (previousShape !== shape) visit(shape.shapes, previousShape && isGroup(previousShape) ? previousShape.shapes : undefined, shape.id)
+    }
+  }
+  visit(shapes, previousShapes, undefined)
+  return order
 }
 
 /**
- * Changes from the previous shapes to the new ones, found by id, the shapes of the groups included. The new shapes are given
- * with their export. The shapes kept are reordered when they are in another order, or in another group
+ * Changes from the previous shapes to the new ones, found by id, the shapes of the groups included. The new shapes may be
+ * given with their export, otherwise only the shapes changed are exported. The shapes kept are reordered when they are in
+ * another order, or in another group
  */
-export const getDataChanges = (previousShapes: ShapeEntity[], shapes: ShapeEntity[], exportedShapes: ExportedShape[]): DataChanges => {
+export const getDataChanges = (previousShapes: ShapeEntity[], shapes: ShapeEntity[], exportedShapes?: ExportedShape[]): DataChanges => {
   const previousNodes = flattenShapes(previousShapes)
   const nodes = flattenShapes(shapes)
-  const exportedNodes = flattenExportedShapes(exportedShapes)
+  const exportedNodes = exportedShapes && flattenExportedShapes(exportedShapes)
   const previousIndex = indexShapeTree(previousShapes)
   const index = indexShapeTree(shapes)
   const added: ExportedShape[] = []
   const updated: DataChanges['updated'] = []
   nodes.forEach((shape, position) => {
     const previousShape = previousIndex.byId.get(shape.id)
-    const exportedShape = exportedNodes[position]!
+    if (previousShape === shape) return
+    const exportedShape = exportedNodes?.[position] ?? cleanShapeBeforeExport(shape)
     if (!previousShape) {
       added.push(exportedShape)
-    } else if (previousShape !== shape) {
+    } else if (!isSameExport(previousShape, exportedShape)) {
       // a shape is rebuilt without change when its computed data are refreshed
-      if (!isSameExport(previousShape, exportedShape)) updated.push({ shape: exportedShape, previous: cleanShapeBeforeExport(previousShape) })
+      updated.push({ shape: exportedShape, previous: cleanShapeBeforeExport(previousShape) })
     }
   })
   const keptIds = nodes.filter(shape => previousIndex.byId.has(shape.id)).map(shape => shape.id)
@@ -178,6 +197,7 @@ export const getDataChanges = (previousShapes: ShapeEntity[], shapes: ShapeEntit
     added,
     updated,
     removed: cleanShapesBeforeExport(previousNodes.filter(shape => !index.byId.has(shape.id))),
-    reordered: !shallowEqual(keptIds, previousKeptIds) || keptIds.some(id => getParentId(index, id) !== getParentId(previousIndex, id))
+    reordered: !shallowEqual(keptIds, previousKeptIds) || keptIds.some(id => getParentId(index, id) !== getParentId(previousIndex, id)),
+    order: getChangedOrder(previousShapes, shapes, previousIndex)
   }
 }

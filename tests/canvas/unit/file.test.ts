@@ -49,6 +49,21 @@ describe('project files', () => {
     expect(store.getEditorState().history.canUndo).toBe(false)
   })
 
+  it('gives a file loaded as a change of the user, and data loaded as a remote change unless told', async () => {
+    const store = await createLoadedStore()
+    const steps: string[] = []
+    const changes: string[] = []
+    store.registerEvent('dataChanged', (_data, source) => steps.push(source))
+    store.registerEvent('shapesChanged', (_shapes, source) => changes.push(source))
+    await store.actions.loadFile(jsonFile({ shapes: [{ ...RECTS[0]!, id: 'file' }] }))
+    await store.actions.loadData({ shapes: [{ ...RECTS[0]!, id: 'data' }] })
+    await store.actions.loadData({ shapes: [{ ...RECTS[0]!, id: 'data-user' }] }, { source: 'user' })
+    await store.actions.loadFile(jsonFile({ shapes: [{ ...RECTS[0]!, id: 'file-remote' }] }), { source: 'remote', clearHistory: false })
+    expect(steps).toEqual(['user', 'remote', 'user', 'remote'])
+    expect(changes).toEqual(['user', 'remote', 'user', 'remote'])
+    expect(store.getEditorState().history.canUndo).toBe(true)
+  })
+
   it('keeps the drawing when the file is not a project', async () => {
     const store = await createLoadedStore()
     await expect(store.actions.loadFile(new File(['not json'], 'drawing.json'))).rejects.toThrow('Invalid JSON file')

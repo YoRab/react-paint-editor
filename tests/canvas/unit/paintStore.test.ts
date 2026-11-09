@@ -294,9 +294,10 @@ describe('events', () => {
     store.actions.setGridGap(20)
     expect(events.dataChanged).toHaveBeenCalledTimes(1)
 
+    // an undo is a change of the user, even back to the data loaded
     store.actions.undo()
     expect(events.dataChanged).toHaveBeenCalledTimes(2)
-    expect(events.dataChanged.mock.calls[1]![1]).toBe('remote')
+    expect(events.dataChanged.mock.calls[1]![1]).toBe('user')
   })
 
   it('emits dataChanged when the size of the canvas changes', async () => {

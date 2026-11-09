@@ -18,6 +18,7 @@ import type {
 import type { CanvasSize } from '@canvas/types/Canvas'
 import type {
   ChangeSource,
+  DataChanges,
   EditorActions,
   ExportImageOptions,
   ShapesActionOptions,
@@ -28,6 +29,7 @@ import type {
 import type { HoverModeData, SelectionModeContextMenu, SelectionModeData } from '@canvas/types/Mode'
 import type { Point, SelectionType, ShapeEntity, ShapeInput, ShapePatch, StateData, StyleShape } from '@canvas/types/Shapes'
 import type { ToolsType } from '@canvas/types/tools'
+import { applyDataChanges } from '@canvas/utils/applyChanges'
 import { compact, insertAt, moveItemPosition } from '@canvas/utils/array'
 import { createApproximateTextContext, createDetachedContext, getScaledCanvasSize, getUnscaledCanvasSize } from '@canvas/utils/canvas'
 import { getDrawingColorAt } from '@canvas/utils/colorPicker'
@@ -448,11 +450,22 @@ export const createPaintStore = (props: UseReactPaintProps = {}) => {
     ([history, width, height], [previousHistory]) => {
       // the data are only built when they are listened: pictures are encoded
       if (!hasListeners('dataChanged')) return
-      const { shapes, source } = history.states[history.cursor]!
+      const { shapes, source: stepSource } = history.states[history.cursor]!
+      // an undo or a redo only moves in the steps: it is a change of the user, whatever the origin of the step reached
+      const isUndoOrRedo = history.states === previousHistory.states && history.cursor !== previousHistory.cursor
       const data = buildDataToExport(shapes, width, height)
-      emit('dataChanged', data, source, getDataChanges(previousHistory.states[previousHistory.cursor]!.shapes, shapes, data.shapes))
+      const changes = getDataChanges(previousHistory.states[previousHistory.cursor]!.shapes, shapes, data.shapes)
+      emit('dataChanged', data, isUndoOrRedo ? 'user' : stepSource, changes)
     },
     shallowEqual
+  )
+
+  // also the changes which are not saved, like the moves of a gesture: only the shapes changed are exported
+  store.watch(
+    state => state.document.shapes,
+    (shapes, previousShapes) => {
+      if (hasListeners('shapesChanged')) emit('shapesChanged', shapes, get().document.source, getDataChanges(previousShapes, shapes))
+    }
   )
 
   // the ids of the selected shapes are compared: the id of a selection of several shapes is made of theirs, which a group
@@ -467,6 +480,24 @@ export const createPaintStore = (props: UseReactPaintProps = {}) => {
     selectors.selectActiveTool,
     activeTool => emit('toolChanged', activeTool),
     (a, b) => a.id === b.id
+  )
+
+  // the slices of the editor state, which keep their identity while their values are unchanged
+  store.watch(selectors.selectView, view => emit('viewChanged', view))
+  store.watch(
+    state => state.view.gridGap,
+    gridGap => emit('gridChanged', gridGap)
+  )
+  store.watch(
+    state => state.tools.available,
+    tools => emit('toolsChanged', tools)
+  )
+  store.watch(selectors.selectHistory, history => emit('historyChanged', history))
+  store.watch(selectors.selectClipboard, clipboard => emit('clipboardChanged', clipboard))
+  store.watch(selectors.selectContextMenu, contextMenu => emit('contextMenuChanged', contextMenu))
+  store.watch(
+    state => state.config.options,
+    options => emit('optionsChanged', options)
   )
 
   // --- Color pick ---
@@ -538,8 +569,8 @@ export const createPaintStore = (props: UseReactPaintProps = {}) => {
     })
 
   /** Adds shapes to the drawing, at an index of its shapes, the foreground by default, without a step of the history */
-  const addShapes = (newShapes: ShapeEntity[], index = 0) =>
-    dispatch(state => setShapesAction(state, { shapes: insertAt(state.document.shapes, index, ...newShapes), save: false }))
+  const addShapes = (newShapes: ShapeEntity[], index = 0, source?: ChangeSource) =>
+    dispatch(state => setShapesAction(state, { shapes: insertAt(state.document.shapes, index, ...newShapes), save: false, source }))
 
   const saveShapes = (source?: ChangeSource) => dispatch({ type: 'SAVE', source })
 
@@ -580,7 +611,7 @@ export const createPaintStore = (props: UseReactPaintProps = {}) => {
    * Copies shapes, with new ids for them and the shapes of their groups: each copy is inserted in front of its shape, in its
    * group. The shapes are normalized like a selection (see normalizeShapeNodes), and copied as they are given
    */
-  const duplicateShapes = (shapesToDuplicate: ShapeEntity[], translate = false, selectNewOnes = false) =>
+  const duplicateShapes = (shapesToDuplicate: ShapeEntity[], translate = false, selectNewOnes = false, source?: ChangeSource) =>
     dispatch(state => {
       const settings = getSettings(state)
       const { shapes } = state.document
@@ -592,10 +623,10 @@ export const createPaintStore = (props: UseReactPaintProps = {}) => {
       }
       if (!copiesById.size) return undefined
       const newShapes = insertShapesBefore(shapes, copiesById, settings)
-      if (!selectNewOnes) return setShapesAction(state, { shapes: newShapes, save: false })
+      if (!selectNewOnes) return setShapesAction(state, { shapes: newShapes, save: false, source })
       // the copies are selected in the order of the drawing
       const copies = flattenShapes(shapes).flatMap(shape => copiesById.get(shape.id) ?? [])
-      return { type: 'SET_SHAPES', shapes: newShapes, newSelectedShape: buildShapesSelection(copies, settings), save: false }
+      return { type: 'SET_SHAPES', shapes: newShapes, newSelectedShape: buildShapesSelection(copies, settings), save: false, source }
     })
 
   const refreshHoveredShape = (isOverCanvas: boolean, ctx: CanvasRenderingContext2D, cursorPosition: Point, isInsideMask: boolean) => {
@@ -880,7 +911,7 @@ export const createPaintStore = (props: UseReactPaintProps = {}) => {
   /** Adds new shapes, at the foreground by default: a step is saved unless save is false */
   const insertShapes = (newShapes: ShapeEntity[], { index = 0, save = true, source, select = false }: InsertOptions = {}) =>
     batch(() => {
-      addShapes(newShapes, index)
+      addShapes(newShapes, index, source)
       if (save) saveShapes(source)
       if (select) selectShapes(newShapes)
     })
@@ -1192,6 +1223,38 @@ export const createPaintStore = (props: UseReactPaintProps = {}) => {
     for (const shape of reloadedPictures) loadPictureOf(shape)
   }
 
+  /**
+   * Applies changes of another instance, see applyDataChanges: the shapes received are all checked before any change, and
+   * built like loaded data. A picture keeps its image while its source is the same
+   */
+  const applyChanges = (changes: DataChanges, { save = true, source = 'remote' }: ShapesActionOptions = {}) => {
+    const state = get()
+    const { available } = state.tools
+    assertValidShapes([...changes.added, ...changes.updated.map(({ shape }) => shape)], 'applyChanges', getCustomShapeToolIds(available))
+    const settings = getSettings(state)
+    const ctx = getMeasureContext()
+    const loadedPictures: ShapeEntity[] = []
+    const shapes = applyDataChanges(
+      state.document.shapes,
+      changes,
+      (exported, current) => {
+        // the id received is kept: the shape replaces the current one
+        const shape = buildShapeEntity(exported, { ctx, settings, tools: available, usedIds: new Set(), completeStyle: false })
+        if (shape.type !== 'picture') return shape
+        if (current?.type === 'picture' && current.src === shape.src) return { ...shape, img: current.img }
+        loadedPictures.push(shape)
+        return shape
+      },
+      settings
+    )
+    batch(() => {
+      if (shapes !== state.document.shapes) dispatch(current => setShapesAction(current, { shapes, save: false, source }))
+      // the changes received during a gesture of the other instance may already be there: they are saved anyway
+      if (save) saveShapes(source)
+    })
+    for (const picture of loadedPictures) loadPictureOf(picture)
+  }
+
   /** Points of a line, a polygon or a curve, to update one of them */
   const getPointShape = (id: string, types: ShapeEntity['type'][]) => {
     const shape = resolveShapes([id])[0]
@@ -1258,7 +1321,7 @@ export const createPaintStore = (props: UseReactPaintProps = {}) => {
     removeShapes: (ids, { source } = {}) => removeShapes(resolveShapes(ids), source),
     duplicateShapes: (ids, { translate = false, select = false, save = true, source } = {}) =>
       batch(() => {
-        duplicateShapes(resolveShapes(ids), translate, select)
+        duplicateShapes(resolveShapes(ids), translate, select, source)
         if (save) saveShapes(source)
       }),
     groupShapes,
@@ -1333,6 +1396,7 @@ export const createPaintStore = (props: UseReactPaintProps = {}) => {
       const settings = getSettings()
       updateShapes([shape.type === 'curve' ? removeCurvePoint(shape, pointIndex, settings) : removePolygonPoint(shape, pointIndex, settings)], true)
     },
+    applyChanges,
     editText: id => {
       // a text of a locked group is not edited: the group is selected in its place
       const shape = resolveUnits([id])[0]
@@ -1384,11 +1448,12 @@ export const createPaintStore = (props: UseReactPaintProps = {}) => {
         resetCanvasWithShapeEntity([], { clearHistory: false, source: 'user' })
       }
     },
-    loadFile: async file => actions.loadData((await decodeJson(file)) as StateData),
-    loadData: async (data, { clearHistory = true } = {}) => {
+    // the file is chosen by the user, while data given by the code come from elsewhere
+    loadFile: async (file, { source = 'user', ...options } = {}) => actions.loadData((await decodeJson(file)) as StateData, { ...options, source }),
+    loadData: async (data, { clearHistory = true, source = 'remote' } = {}) => {
       const parsed: unknown = typeof data === 'string' ? JSON.parse(data) : data
       const shapes = isRecord(parsed) && Array.isArray(parsed.shapes) ? (parsed.shapes as ShapeInput[]) : []
-      await resetCanvas(shapes, { clearHistory, source: 'remote' })
+      await resetCanvas(shapes, { clearHistory, source })
     },
     exportPicture: ({ fileName, ...options } = {}) => downloadFile(getCurrentImage(options), fileName ?? getPictureFileName(options.format)),
     exportData: ({ fileName = 'drawing.json' } = {}) => {
@@ -1441,7 +1506,12 @@ export const createPaintStore = (props: UseReactPaintProps = {}) => {
     resetSettings: () =>
       update(state => {
         const { tools, view } = createInitialState(state.config)
-        return { ...state, tools, view: { ...state.view, transformation: view.transformation, gridGap: view.gridGap } }
+        // the values already there keep their objects: nothing changes, and no event is emitted, for settings already reset
+        const available = isEqual(tools.available, state.tools.available) ? state.tools.available : tools.available
+        const newTools = patchObject(state.tools, { available, activeToolId: tools.activeToolId })
+        let newState = withTransformation(newTools === state.tools ? state : { ...state, tools: newTools }, view.transformation)
+        if (newState.view.gridGap !== view.gridGap) newState = { ...newState, view: { ...newState.view, gridGap: view.gridGap } }
+        return newState
       })
   }
 

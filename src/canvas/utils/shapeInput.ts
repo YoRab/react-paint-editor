@@ -201,7 +201,7 @@ const takeShapeId = (input: { id?: unknown; type: ShapeInput['type'] }, usedIds:
 }
 
 /** A group of shapes already built. Without rotation, it is turned like its shapes when they are all turned the same way */
-const buildGroupEntity = (input: GroupShapeInput, id: string, shapes: ShapeEntity[], settings: UtilsSettings): ShapeEntity<'group'> => {
+export const buildGroupEntity = (input: GroupShapeInput, id: string, shapes: ShapeEntity[], settings: UtilsSettings): ShapeEntity<'group'> => {
   const { shapes: _shapes, ...fields } = input
   return refreshGroup({ ...fields, id, rotation: input.rotation ?? getCommonRotation(shapes), shapes }, settings)
 }
