@@ -12,7 +12,7 @@ import {
 } from './../helpers'
 
 const meta = {
-  title: 'Tests/Manipulation',
+  title: 'Tests/Manipulation/Commands',
   component: ReactPaintWrapper,
   parameters: {
     layout: 'centered'

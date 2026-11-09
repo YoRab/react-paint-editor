@@ -4,7 +4,7 @@ import type { Point } from '../../../src/index'
 import { getPaint, getState, ReactPaintWrapper, square, wait } from './../helpers'
 
 const meta = {
-  title: 'Tests/Manipulation',
+  title: 'Tests/Manipulation/MiniMap',
   component: ReactPaintWrapper,
   parameters: {
     layout: 'centered'

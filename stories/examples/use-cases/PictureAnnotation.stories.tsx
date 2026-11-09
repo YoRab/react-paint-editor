@@ -1,8 +1,8 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import { type SyntheticEvent, useState } from 'react'
-import { Canvas, Editor, useAnnotationsStyle, useReactPaint } from '../src/index'
+import { Canvas, Editor, useAnnotationsStyle, useReactPaint } from '../../../src/index'
+import '../buttons.css'
 import './annotations.css'
-import './button.css'
 
 const PictureWithAnnotations = ({ src, alt }: { src: string; alt: string }) => {
   const [isEdit, setIsEdit] = useState(false)
@@ -30,8 +30,8 @@ const PictureWithAnnotations = ({ src, alt }: { src: string; alt: string }) => {
     <div>
       <div>
         <h3>Toggle edit mode</h3>
-        <div className='dynamic-buttons'>
-          <button type='button' className={`dynamic-button ${isEdit ? 'active' : ''}`} onClick={() => setIsEdit(prev => !prev)}>
+        <div className='example-buttons'>
+          <button type='button' className={`example-button ${isEdit ? 'active' : ''}`} onClick={() => setIsEdit(prev => !prev)}>
             {isEdit ? 'View Mode' : 'Edit Mode'}
           </button>
         </div>
@@ -61,24 +61,25 @@ const PictureAnnotation = () => {
   )
 }
 
-// More on how to set up stories at: https://storybook.js.org/docs/react/writing-stories/introduction#default-export
 const meta = {
-  title: 'React Paint/Picture annotation',
+  title: 'Use cases/Picture annotation',
   component: PictureAnnotation,
   parameters: {
-    // Optional parameter to center the component in the Canvas. More info: https://storybook.js.org/docs/react/configure/story-layout
-    layout: 'centered'
+    layout: 'centered',
+    docs: {
+      description: {
+        component:
+          "Annotations drawn over pictures: each canvas has the size of its picture, a transparent background, and is in the `'viewer'` mode until its Edit Mode button is pressed. `useAnnotationsStyle` keeps the picture aligned with the canvas when it is zoomed or moved."
+      }
+    }
   },
-  // This component will have an automatically generated Autodocs entry: https://storybook.js.org/docs/react/writing-docs/autodocs
-  tags: ['autodocs']
-  // More on argTypes: https://storybook.js.org/docs/react/api/argtypes
+  tags: ['autodocs', '!dev']
 } satisfies Meta<typeof PictureAnnotation>
 
 export default meta
 type Story = StoryObj<typeof meta>
 
-export const Default: Story = {
-  args: {},
+export const AnnotatedPictures: Story = {
   parameters: {
     docs: {
       source: {
@@ -143,8 +144,8 @@ export const Default: Story = {
     <div>
       <div>
         <h3>Toggle edit mode</h3>
-        <div className='dynamic-buttons'>
-          <button type='button' className={\`dynamic-button \${isEdit ? 'active' : ''}\`} onClick={() => setIsEdit(prev => !prev)}>
+        <div className='example-buttons'>
+          <button type='button' className={\`example-button \${isEdit ? 'active' : ''}\`} onClick={() => setIsEdit(prev => !prev)}>
             {isEdit ? 'View Mode' : 'Edit Mode'}
           </button>
         </div>

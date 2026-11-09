@@ -4,7 +4,7 @@ import type { Point } from '../../../src/index'
 import { dispatchTouch, getPaint, getPixel, getState, ReactPaintWrapper, selectTool, toClient, wait } from './../helpers'
 
 const meta = {
-  title: 'Tests/Manipulation',
+  title: 'Tests/Manipulation/EraserAndLaser',
   component: ReactPaintWrapper,
   parameters: {
     layout: 'centered'

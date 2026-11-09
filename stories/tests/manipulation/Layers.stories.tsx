@@ -18,7 +18,7 @@ import {
 } from './../helpers'
 
 const meta = {
-  title: 'Tests/Manipulation',
+  title: 'Tests/Manipulation/Layers',
   component: ReactPaintWrapper,
   parameters: {
     layout: 'centered'

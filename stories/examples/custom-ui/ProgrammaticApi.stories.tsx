@@ -1,7 +1,8 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import { type ReactNode, useEffect, useState } from 'react'
-import { Canvas, GRID_PRESETS, type ReactPaint, type ShapeEntity, usePaintState, useReactPaint } from '../src/index'
+import { Canvas, GRID_PRESETS, type ReactPaint, type ShapeEntity, usePaintState, useReactPaint } from '../../../src/index'
 import './customEditor.css'
+import { CanvasOnly } from './CanvasOnly'
 
 const Group = ({ title, children }: { title: string; children: ReactNode }) => (
   <fieldset>
@@ -179,24 +180,51 @@ const ProgrammaticApi = () => {
 }
 
 const meta = {
-  title: 'React Paint/Programmatic API',
+  title: 'Custom UI/Programmatic API',
   component: ProgrammaticApi,
   parameters: {
-    layout: 'centered'
+    layout: 'centered',
+    docs: {
+      description: {
+        component:
+          'The `Canvas` used without the library `Editor`, which is then not bundled: its state is read with `usePaintState` and it is driven from the code through `paint.actions`.'
+      }
+    }
   },
-  tags: ['autodocs']
+  tags: ['autodocs', '!dev']
 } satisfies Meta<typeof ProgrammaticApi>
 
 export default meta
 type Story = StoryObj<typeof meta>
 
-export const Default: Story = {
-  args: {},
+export const CanvasWithoutEditor: Story = {
+  render: () => <CanvasOnly />,
   parameters: {
     docs: {
       description: {
         story:
-          'Everything the editor does, driven from the code without the `Editor` component: shapes are created with `addShapes`, updated with `updateShapes`, transformed with `translateShapes`, `rotateShapes` and `resizeShapes`, styled with `setShapesStyle`, ordered with `setShapeIndex` and `reorderShapes`. `paint.batch` gathers several actions in one step of the history, `zoomToShapes` fits shapes in the view, `shapeClicked` tells which shape is clicked, and `dataChanged` gives the shapes added, updated and removed.'
+          'The lines under the canvas show the shapes, the selection, the hovered shape and the gesture running, read with `usePaintState`. The pointer works as soon as it is over the canvas, and the keyboard shortcuts while the focus is inside it: to widen the area of the shortcuts, set `paint.scopeRef` on an element wrapping it.'
+      },
+      source: {
+        code: `import { Canvas, useReactPaint } from '@yorab/react-paint/canvas'
+
+const CanvasOnly = () => {
+  const paint = useReactPaint({ shapes })
+
+  return <Canvas paint={paint} />
+}`,
+        language: 'tsx'
+      }
+    }
+  }
+}
+
+export const ActionsAndEvents: Story = {
+  parameters: {
+    docs: {
+      description: {
+        story:
+          'Each button of the panel calls one action on the selected shapes, or on all the shapes when none is selected, and the log shows the events received. Everything the editor does, driven from the code without the `Editor` component: shapes are created with `addShapes`, updated with `updateShapes`, transformed with `translateShapes`, `rotateShapes` and `resizeShapes`, styled with `setShapesStyle`, ordered with `setShapeIndex` and `reorderShapes`. `paint.batch` gathers several actions in one step of the history, `zoomToShapes` fits shapes in the view, `shapeClicked` tells which shape is clicked, and `dataChanged` gives the shapes added, updated and removed.'
       },
       source: {
         code: `const paint = useReactPaint()

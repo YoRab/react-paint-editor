@@ -4,7 +4,7 @@ import type { DrawableShape } from '../../../src/index'
 import { assertNoInternalFields, getCurrentDataRef, makeCoordConverters, ReactPaintWrapper, selectTool } from './../helpers'
 
 const meta = {
-  title: 'Tests/Manipulation',
+  title: 'Tests/Manipulation/SelectRotateResizeTranslate',
   component: ReactPaintWrapper,
   parameters: {
     layout: 'centered'

@@ -1,78 +1,21 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import { expect, userEvent, within } from 'storybook/test'
-import { Canvas, type DrawableShape, type Point, type SelectionHover, shallowEqual, usePaintState, useReactPaint } from '../src/index'
-import { makeCoordConverters, wait } from './tests/helpers'
-
-const SQUARE: DrawableShape = {
-  type: 'square',
-  x: 250,
-  y: 250,
-  width: 100,
-  height: 100,
-  rotation: 0,
-  style: { fillColor: 'red', strokeColor: 'black' }
-}
-
-/** The anchor of a resize is the index of a point, or its place on the borders of the selection */
-const describeSelectionHover = (hover: SelectionHover | undefined) => {
-  if (!hover) return 'none'
-  if (hover.mode !== 'resize') return hover.mode
-  return typeof hover.anchor === 'number' ? `resize point ${hover.anchor}` : `resize [${hover.anchor.join(', ')}]`
-}
-
-/** Canvas used without the library editor: the pointer works as soon as it is over it, the keyboard shortcuts while the focus is inside it */
-const CanvasOnly = () => {
-  const paint = useReactPaint({ shapes: [SQUARE] })
-  // the selector builds an object: shallowEqual keeps it while its values are unchanged
-  const { selectedShapes, shapes } = usePaintState(paint, state => ({ selectedShapes: state.selectedShapes, shapes: state.shapes }), shallowEqual)
-  const { mode, hoveredShape, selectionHover } = usePaintState(paint, state => state.interaction)
-
-  return (
-    <div style={{ width: 600 }}>
-      <Canvas paint={paint} options={{ canvasBackgroundColor: '#f5f5f5' }} />
-      <output data-testid='status'>
-        {shapes.length} shape(s) - selected:{' '}
-        {selectedShapes.map(shape => ('x' in shape ? `${shape.type} at x=${Math.round(shape.x)}` : shape.type)).join(', ') || 'none'}
-      </output>
-      <output data-testid='hovered'> - hovered: {hoveredShape?.type ?? 'none'}</output>
-      <output data-testid='selection-hover'> - selection hovered: {describeSelectionHover(selectionHover)}</output>
-      <output data-testid='gesture'> - gesture: {mode}</output>
-    </div>
-  )
-}
+import type { Point } from '../../../src/index'
+import { CanvasOnly as CanvasOnlyExample } from '../../examples/custom-ui/CanvasOnly'
+import { makeCoordConverters, wait } from '../helpers'
 
 const meta = {
-  title: 'React Paint/Canvas only',
-  component: CanvasOnly,
+  title: 'Tests/Examples/CanvasOnly',
+  component: CanvasOnlyExample,
   parameters: {
     layout: 'centered'
-  },
-  tags: ['autodocs']
-} satisfies Meta<typeof CanvasOnly>
+  }
+} satisfies Meta<typeof CanvasOnlyExample>
 
 export default meta
 type Story = StoryObj<typeof meta>
 
-export const Default: Story = {
-  args: {},
-  parameters: {
-    docs: {
-      description: {
-        story:
-          'The `Canvas` component used alone, without the library `Editor`, which is then not bundled. The pointer works as soon as it is over the canvas, and the keyboard shortcuts while the focus is inside it: to widen the area of the shortcuts, set `paint.scopeRef` on an element wrapping it.'
-      },
-      source: {
-        code: `import { Canvas, useReactPaint } from '@yorab/react-paint/canvas'
-
-const CanvasOnly = () => {
-  const paint = useReactPaint({ shapes })
-
-  return <Canvas paint={paint} />
-}`,
-        language: 'tsx'
-      }
-    }
-  },
+export const CanvasOnly: Story = {
   play: async ({ canvasElement }) => {
     const view = within(canvasElement)
     const user = userEvent.setup()

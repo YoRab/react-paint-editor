@@ -3,7 +3,7 @@ import { expect, userEvent, within } from 'storybook/test'
 import { getPaint, getPixel, getState, ReactPaintWrapper, selectTool, setInputValue, toClient, wait } from './../helpers'
 
 const meta = {
-  title: 'Tests/Manipulation',
+  title: 'Tests/Manipulation/Eyedropper',
   component: ReactPaintWrapper,
   parameters: {
     layout: 'centered'

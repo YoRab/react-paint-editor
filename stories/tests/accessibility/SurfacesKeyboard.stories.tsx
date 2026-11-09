@@ -3,7 +3,7 @@ import { expect, userEvent, waitFor, within } from 'storybook/test'
 import { getPaint, getSelectedIds, getState, ReactPaintWrapper, square, wait } from './../helpers'
 
 const meta = {
-  title: 'Tests/Accessibility',
+  title: 'Tests/Accessibility/SurfacesKeyboard',
   component: ReactPaintWrapper,
   parameters: {
     layout: 'centered'

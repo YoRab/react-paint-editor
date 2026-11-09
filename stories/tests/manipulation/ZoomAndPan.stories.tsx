@@ -4,7 +4,7 @@ import type { DrawableShape, Point } from '../../../src/index'
 import { dispatchTouch, getPaint, getState, makeCoordConverters, ReactPaintWrapper, wait } from './../helpers'
 
 const meta = {
-  title: 'Tests/Manipulation',
+  title: 'Tests/Manipulation/ZoomAndPan',
   component: ReactPaintWrapper,
   parameters: {
     layout: 'centered'

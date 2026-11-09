@@ -28,7 +28,7 @@ const InlineOptionsHarness = () => {
 }
 
 const meta = {
-  title: 'Tests/Manipulation',
+  title: 'Tests/Manipulation/InlineOptions',
   component: InlineOptionsHarness,
   parameters: {
     layout: 'centered'

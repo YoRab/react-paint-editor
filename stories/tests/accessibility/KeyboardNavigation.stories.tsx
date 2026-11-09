@@ -4,7 +4,7 @@ import type { ShapeInput } from '../../../src/index'
 import { getPaint, getSelectedIds, getState, ReactPaintWrapper, square, wait } from './../helpers'
 
 const meta = {
-  title: 'Tests/Accessibility',
+  title: 'Tests/Accessibility/KeyboardNavigation',
   component: ReactPaintWrapper,
   parameters: {
     layout: 'centered'
