@@ -95,45 +95,45 @@ export const LayersMoveButtons: Story = {
     const list = await view.findByRole('list', { name: 'Layers' })
     const getRow = (id: string) => list.querySelector<HTMLElement>(`.react-paint-editor-layout[data-layer-id="${id}"]`)!
     const getLayerButton = (id: string) => getRow(id).querySelector<HTMLElement>('.react-paint-editor-layout-select')!
-    const getMoveButton = (id: string, name: 'Move forward' | 'Move backward') => within(getRow(id)).getByRole('button', { name })
+    const getMoveButton = (id: string, name: 'Bring forward' | 'Send backward') => within(getRow(id)).getByRole('button', { name })
     const status = canvasElement.querySelector<HTMLElement>('.react-paint-editor-layouts-panel [role="status"]')!
 
     // the first shape cannot go forward, the last one cannot go backward
-    expect(getMoveButton('a', 'Move forward')).toBeDisabled()
-    expect(getMoveButton('a', 'Move backward')).toBeEnabled()
-    expect(getMoveButton('c', 'Move backward')).toBeDisabled()
+    expect(getMoveButton('a', 'Bring forward')).toBeDisabled()
+    expect(getMoveButton('a', 'Send backward')).toBeEnabled()
+    expect(getMoveButton('c', 'Send backward')).toBeDisabled()
     expect(status).toHaveTextContent('')
 
     // --- a button moves the shape without selecting it, and keeps the focus ---
-    await user.click(getMoveButton('a', 'Move backward'))
+    await user.click(getMoveButton('a', 'Send backward'))
     expect(getRootIds()).toEqual(['b', 'a', 'c'])
     expect(getSelectedIds()).toEqual([])
-    expect(status.textContent).toBe('Rectangle 2 : position 2 sur 3')
+    expect(status.textContent).toBe('Rectangle 2: position 2 of 3')
     await wait()
-    expect(getMoveButton('a', 'Move backward')).toHaveFocus()
+    expect(getMoveButton('a', 'Send backward')).toHaveFocus()
 
     // the button disabled at the end of the group gives the focus to its layer
-    await user.click(getMoveButton('a', 'Move backward'))
+    await user.click(getMoveButton('a', 'Send backward'))
     expect(getRootIds()).toEqual(['b', 'c', 'a'])
-    expect(status.textContent).toBe('Rectangle 2 : position 3 sur 3')
+    expect(status.textContent).toBe('Rectangle 2: position 3 of 3')
     await wait()
-    expect(getMoveButton('a', 'Move backward')).toBeDisabled()
+    expect(getMoveButton('a', 'Send backward')).toBeDisabled()
     expect(getLayerButton('a')).toHaveFocus()
 
     // --- Alt and Home or End put the shape first or last ---
     await user.keyboard('{Alt>}{Home}{/Alt}')
     expect(getRootIds()).toEqual(['a', 'b', 'c'])
-    expect(status.textContent).toBe('Rectangle 2 : position 1 sur 3')
+    expect(status.textContent).toBe('Rectangle 2: position 1 of 3')
     await wait()
     expect(getLayerButton('a')).toHaveFocus()
     await user.keyboard('{Alt>}{End}{/Alt}')
     expect(getRootIds()).toEqual(['b', 'c', 'a'])
-    expect(status.textContent).toBe('Rectangle 2 : position 3 sur 3')
+    expect(status.textContent).toBe('Rectangle 2: position 3 of 3')
     // the same place is announced again
     await wait()
     await user.keyboard('{Alt>}{End}{/Alt}')
     expect(getRootIds()).toEqual(['b', 'c', 'a'])
-    expect(status.textContent).toBe('Rectangle 2 : position 3 sur 3 ')
+    expect(status.textContent).toBe('Rectangle 2: position 3 of 3 ')
     // Home alone still goes to the first layer
     await wait()
     await user.keyboard('{Home}')

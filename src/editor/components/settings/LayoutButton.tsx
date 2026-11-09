@@ -1,6 +1,7 @@
 import Button from '@editor/components/common/Button'
 import { layersIcon } from '@editor/constants/icons'
 import type { Disclosure } from '@editor/hooks/useDisclosure'
+import useEditorLocale from '@editor/hooks/useEditorLocale'
 import './LayoutButton.css'
 
 type LayoutButtonType = {
@@ -11,9 +12,10 @@ type LayoutButtonType = {
 }
 
 const LayoutButton = ({ disabled, panel, toggleLayoutPanel }: LayoutButtonType) => {
+  const { editor } = useEditorLocale()
   return (
     <Button
-      title='Toggle layers panel'
+      title={editor.layers.togglePanel}
       disabled={disabled}
       onClick={toggleLayoutPanel}
       icon={layersIcon}

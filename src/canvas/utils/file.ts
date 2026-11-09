@@ -4,6 +4,7 @@ import type { ExportImageFormat, ExportImageOptions } from '@canvas/types/editor
 import type { Point, ShapeEntity } from '@canvas/types/Shapes'
 import { createDetachedContext, getUnscaledCanvasSize, initCanvasContext, transformCanvas } from '@canvas/utils/canvas'
 import { buildDataToExport } from '@canvas/utils/data'
+import { ReactPaintError } from '@canvas/utils/error'
 import { drawShapes } from '@canvas/utils/shapes'
 import { getBoundingRect } from '@canvas/utils/trigo'
 
@@ -11,7 +12,7 @@ export const addSizeAndConvertSvgToObjectUrl = (svgFileContent: string): string 
   const parser = new DOMParser()
   const result = parser.parseFromString(svgFileContent, 'text/xml')
   const inlineSVG = result.getElementsByTagName('svg')[0]
-  if (!inlineSVG) throw new Error('The SVG of the picture is invalid')
+  if (!inlineSVG) throw new ReactPaintError('pictureInvalidSvg', 'The SVG of the picture is invalid')
   const svgWidth = inlineSVG.getAttribute('width')
   const svgHeight = inlineSVG.getAttribute('height')
 
@@ -60,7 +61,8 @@ export const getPictureSource = (src: string): PictureSource => {
  */
 const fetchPicture = async (url: string, signal: AbortSignal): Promise<string> => {
   const response = await fetch(url, { credentials: 'omit', referrerPolicy: 'no-referrer', signal })
-  if (!response.ok) throw new Error(`The picture could not be fetched (${response.status})`)
+  if (!response.ok)
+    throw new ReactPaintError('pictureFetchFailed', `The picture could not be fetched (${response.status})`, { status: response.status })
   const type = (response.headers.get('content-type') ?? '').split(';')[0]!.trim().toLowerCase()
   const isImageType = type.startsWith('image/')
   if (type === 'image/svg+xml' || (!isImageType && isSvg(url))) return addSizeAndConvertSvgToObjectUrl(await response.text())
@@ -76,12 +78,13 @@ const getPictureUrl = async (src: string, resolvePictureSrc: PictureSrcResolver 
     case 'svg':
       return URL.createObjectURL(new Blob([src], { type: 'image/svg+xml' }))
     case 'refused':
-      throw new Error('The source of the picture is not supported')
+      throw new ReactPaintError('pictureSourceUnsupported', 'The source of the picture is not supported')
     case 'remote': {
       const resolved = resolvePictureSrc ? await resolvePictureSrc(source.url) : source.url
-      if (typeof resolved !== 'string') throw new Error('The source of the picture is refused')
+      if (typeof resolved !== 'string') throw new ReactPaintError('pictureSourceRefused', 'The source of the picture is refused')
       const resolvedSource = getPictureSource(resolved)
-      if (resolvedSource.kind !== 'remote') throw new Error('The resolved source of the picture must be an http(s) URL')
+      if (resolvedSource.kind !== 'remote')
+        throw new ReactPaintError('pictureSourceInvalid', 'The resolved source of the picture must be an http(s) URL')
       return fetchPicture(resolvedSource.url, signal)
     }
   }
@@ -140,15 +143,15 @@ export const loadPicture = (img: HTMLImageElement, src: string, resolvePictureSr
   let url: string | undefined
   let timeoutId: ReturnType<typeof setTimeout> | undefined
   return new Promise<void>((resolve, reject) => {
-    timeoutId = setTimeout(() => reject(new Error('Timeout while loading images')), PICTURE_LOAD_TIMEOUT)
+    timeoutId = setTimeout(() => reject(new ReactPaintError('pictureTimeout', 'Timeout while loading the picture')), PICTURE_LOAD_TIMEOUT)
     img.onload = () => {
       if (img.naturalWidth > PICTURE_MAX_SIZE || img.naturalHeight > PICTURE_MAX_SIZE) {
-        reject(new Error(`The picture is larger than ${PICTURE_MAX_SIZE} pixels`))
+        reject(new ReactPaintError('pictureTooLarge', `The picture is larger than ${PICTURE_MAX_SIZE} pixels`, { max: PICTURE_MAX_SIZE }))
       } else {
         resolve()
       }
     }
-    img.onerror = () => reject(new Error('Some images could not be loaded'))
+    img.onerror = () => reject(new ReactPaintError('pictureLoadFailed', 'The picture could not be loaded'))
     getPictureUrl(src, resolvePictureSrc, controller.signal).then(pictureUrl => {
       if (controller.signal.aborted) {
         revokeBlobUrl(pictureUrl)
@@ -188,7 +191,7 @@ const getShapesDataUrl = ({
 }): string => {
   const newCanvas = document.createElement('canvas')
   const ctx = newCanvas.getContext('2d')
-  if (!ctx) throw new Error('No context found for canvas')
+  if (!ctx) throw new ReactPaintError('exportContextUnavailable', 'No context found for canvas')
 
   const { realHeight: height, realWidth: width } = settings.canvasSize
   newCanvas.width = width
@@ -231,7 +234,7 @@ export const getCanvasImage = ({
   options?: ExportImageOptions | undefined
 }): string => {
   const { view = 'defaultView', ...imageOptions } = options
-  if (view === 'fitToShapes' && !shapes.length) throw new Error('No image found to export')
+  if (view === 'fitToShapes' && !shapes.length) throw new ReactPaintError('exportEmpty', 'No image found to export')
 
   if (view === 'fitToShapes') {
     const box = getBoundingRect(shapes.map(shape => shape.computed.boundingBox))
@@ -268,25 +271,28 @@ export const readFileAsDataUrl = (file: Blob) =>
   new Promise<string>((resolve, reject) => {
     const reader = new FileReader()
     reader.onload = () => resolve(reader.result as string)
-    reader.onerror = () => reject(reader.error ?? new Error('Failed to read file'))
+    reader.onerror = () => reject(new ReactPaintError('fileReadFailed', 'Failed to read file', {}, { cause: reader.error }))
     reader.readAsDataURL(file)
   })
 
 export const decodeJson = async (file: File) => {
-  if (file.size > DATA_FILE_MAX_SIZE) throw new Error(`The file is larger than ${DATA_FILE_MAX_SIZE / 1024 / 1024} MB`)
+  if (file.size > DATA_FILE_MAX_SIZE)
+    throw new ReactPaintError('fileTooLarge', `The file is larger than ${DATA_FILE_MAX_SIZE / 1024 / 1024} MB`, {
+      max: DATA_FILE_MAX_SIZE / 1024 / 1024
+    })
   return new Promise<unknown>((resolve, reject) => {
     const reader = new FileReader()
     reader.onload = event => {
       const result = event.target?.result
-      if (!result) return reject(new Error('Impossible de récupérer les données du fichier'))
+      if (!result) return reject(new ReactPaintError('fileInvalidJson', 'The file is empty'))
       try {
         const json = JSON.parse(result as string)
         resolve(json)
       } catch {
-        reject(new Error('Invalid JSON file'))
+        reject(new ReactPaintError('fileInvalidJson', 'Invalid JSON file'))
       }
     }
-    reader.onerror = () => reject(new Error('Failed to read file'))
+    reader.onerror = () => reject(new ReactPaintError('fileReadFailed', 'Failed to read file', {}, { cause: reader.error }))
     reader.readAsText(file)
   })
 }

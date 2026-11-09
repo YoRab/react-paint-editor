@@ -43,7 +43,9 @@ export const createShape = (
   cursorPosition: Point,
   settings: UtilsSettings,
   /** Image of a sticker tool, loaded once and shared by its stickers: see createSticker */
-  stickerImage?: HTMLImageElement
+  stickerImage?: HTMLImageElement,
+  /** Content of a new text, in the language of the canvas */
+  text?: string
 ): ShapeEntity | undefined => {
   const roundCursorPosition: Point = [roundForGrid(cursorPosition[0], settings), roundForGrid(cursorPosition[1], settings)]
   switch (shape.type) {
@@ -59,7 +61,7 @@ export const createShape = (
     case 'square':
       return createRectangle(shape, roundCursorPosition, settings)
     case 'text':
-      return createText(ctx, shape, roundCursorPosition, settings)
+      return createText(ctx, shape, roundCursorPosition, settings, text)
     case 'ellipse':
       return createEllipse(shape, roundCursorPosition, settings)
     case 'circle':

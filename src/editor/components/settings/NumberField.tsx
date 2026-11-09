@@ -3,6 +3,7 @@ import NumberInput from '@editor/components/common/NumberInput'
 import Panel from '@editor/components/common/Panel'
 import type { RangeFieldType } from '@editor/components/settings/RangeField'
 import useDebounce from '@editor/hooks/useDebounce'
+import useEditorLocale from '@editor/hooks/useEditorLocale'
 import useSettingsPanel from '@editor/hooks/useSettingsPanel'
 import './NumberField.css'
 
@@ -25,6 +26,7 @@ const NumberField = ({
   saveShapes
 }: NumberFieldType) => {
   const { isPanelVisible, triggerProps, panelProps } = useSettingsPanel(selectedSettings, setSelectedSettings)
+  const { editor } = useEditorLocale()
   const debouncedSaveChanged = useDebounce(saveShapes, 500, true)
 
   const handleValueChange = (typedValue: number) => {
@@ -45,7 +47,7 @@ const NumberField = ({
                 max={max}
                 step={step}
                 value={value}
-                placeholder={value === undefined ? 'N/A' : undefined}
+                placeholder={value === undefined ? editor.settings.noValue : undefined}
                 disabled={disabled}
                 onValueChange={handleValueChange}
               />

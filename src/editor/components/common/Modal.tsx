@@ -1,5 +1,6 @@
 import Button from '@editor/components/common/Button'
 import { STYLE_ZINDEX } from '@editor/constants/style'
+import useEditorLocale from '@editor/hooks/useEditorLocale'
 import useEscape from '@editor/hooks/useEscape'
 import useFocusReturn from '@editor/hooks/useFocusReturn'
 import { focusFirst, getFocusables } from '@editor/utils/dom'
@@ -23,6 +24,7 @@ type ModalType = {
  */
 const Modal = ({ children, onClose, position = 'center', title, className = '', withCloseButton = false }: ModalType) => {
   const ref = useRef<HTMLDivElement | null>(null)
+  const { lang, editor } = useEditorLocale()
   useFocusReturn(ref)
   useEscape(() => [ref.current], onClose)
 
@@ -59,6 +61,7 @@ const Modal = ({ children, onClose, position = 'center', title, className = '', 
       role='dialog'
       aria-modal='true'
       aria-label={title}
+      lang={lang}
     >
       {/* biome-ignore lint/a11y/noStaticElementInteractions: modal mask should not be exposed to screen readers*/}
       <div className='react-paint-editor-modal-mask' onClick={onClose} />
@@ -66,7 +69,7 @@ const Modal = ({ children, onClose, position = 'center', title, className = '', 
         {children}
         {withCloseButton && (
           <Button className='react-paint-editor-modal-close' onClick={onClose}>
-            Fermer
+            {editor.common.close}
           </Button>
         )}
       </div>

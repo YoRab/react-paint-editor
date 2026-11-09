@@ -2,17 +2,18 @@ import { type EditorState, type ReactPaint, type ShapeEntity, type ShapesBounds,
 import NumberInput from '@editor/components/common/NumberInput'
 import '@editor/components/settings/NumberField.css'
 import useDebounce from '@editor/hooks/useDebounce'
+import useEditorLocale from '@editor/hooks/useEditorLocale'
 import { useState } from 'react'
 import './GeometryFields.css'
 
 type GeometryKey = 'x' | 'y' | 'width' | 'height' | 'rotation'
 
-const GEOMETRY_FIELDS: { key: GeometryKey; label: string; unity?: string; min?: number }[] = [
-  { key: 'x', label: 'X' },
-  { key: 'y', label: 'Y' },
-  { key: 'width', label: 'Largeur', min: 1 },
-  { key: 'height', label: 'Hauteur', min: 1 },
-  { key: 'rotation', label: 'Rotation', unity: '°' }
+const GEOMETRY_FIELDS: { key: GeometryKey; unity?: string; min?: number }[] = [
+  { key: 'x' },
+  { key: 'y' },
+  { key: 'width', min: 1 },
+  { key: 'height', min: 1 },
+  { key: 'rotation', unity: '°' }
 ]
 
 /** An angle in radians, in whole degrees between 0 and 359 */
@@ -42,6 +43,7 @@ const GeometryFields = () => {
   const bounds = usePaintState(paint, selectBounds, isSameBounds)
   // like a slider, the fields only save their last change in the history
   const debouncedSave = useDebounce(actions.saveShapes, 500, true)
+  const { editor: messages } = useEditorLocale()
 
   if (!bounds) return null
   const values: Record<GeometryKey, number> = { ...bounds, rotation: toDegrees(bounds.rotation) }
@@ -72,9 +74,9 @@ const GeometryFields = () => {
 
   return (
     <div className='react-paint-editor-geometryfield'>
-      {GEOMETRY_FIELDS.map(({ key, label, unity, min }) => (
+      {GEOMETRY_FIELDS.map(({ key, unity, min }) => (
         <label key={key} className='react-paint-editor-numberfield'>
-          <span className='react-paint-editor-geometryfield-label'>{label}</span>
+          <span className='react-paint-editor-geometryfield-label'>{messages.properties[key]}</span>
           <NumberInput step={1} min={min} value={values[key]} onValueChange={value => apply(key, value)} />
           {unity && <span aria-hidden='true'>{unity}</span>}
         </label>

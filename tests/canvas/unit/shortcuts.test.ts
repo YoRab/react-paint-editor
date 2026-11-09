@@ -1,5 +1,6 @@
-import { DEFAULT_CANVAS_LABELS } from '@canvas/constants/app'
-import { CANVAS_SHORTCUTS, formatShortcut, getAriaKeyShortcut, matchesShortcut, type Shortcut } from '@canvas/constants/shortcuts'
+import { DEFAULT_CANVAS_LOCALE } from '@canvas/constants/locale'
+import { CANVAS_SHORTCUTS, formatShortcut, getAriaKeyShortcut, getShortcutParams, matchesShortcut, type Shortcut } from '@canvas/constants/shortcuts'
+import { formatMessage } from '@canvas/utils/locale'
 import { describe, expect, it } from 'vitest'
 
 // the tests run without a DOM: the event holds the fields the shortcuts read
@@ -56,17 +57,26 @@ describe('matchesShortcut', () => {
 
 describe('formatShortcut', () => {
   it('writes the modifiers as the menus of the system do', () => {
-    expect(formatShortcut(CANVAS_SHORTCUTS.ungroup, false)).toBe('Ctrl+Maj+G')
+    expect(formatShortcut(CANVAS_SHORTCUTS.ungroup, false)).toBe('Ctrl+Shift+G')
     expect(formatShortcut(CANVAS_SHORTCUTS.ungroup, true)).toBe('⇧⌘G')
-    expect(formatShortcut(CANVAS_SHORTCUTS.first, false)).toBe('Ctrl+Maj+]')
-    expect(formatShortcut(CANVAS_SHORTCUTS.contextMenu, false)).toBe('Maj+F10')
+    expect(formatShortcut(CANVAS_SHORTCUTS.first, false)).toBe('Ctrl+Shift+]')
+    expect(formatShortcut(CANVAS_SHORTCUTS.contextMenu, false)).toBe('Shift+F10')
   })
 
   it('names the keys which have a name, and shows no Shift for a key which comes with or without it', () => {
-    expect(formatShortcut(CANVAS_SHORTCUTS.remove, false)).toBe('Suppr')
-    expect(formatShortcut(CANVAS_SHORTCUTS.escape, true)).toBe('Échap')
+    expect(formatShortcut(CANVAS_SHORTCUTS.remove, false)).toBe('Delete')
+    expect(formatShortcut(CANVAS_SHORTCUTS.escape, true)).toBe('Esc')
     expect(formatShortcut(CANVAS_SHORTCUTS.nextShape, false)).toBe('Tab')
     expect(formatShortcut({ key: '?', shift: 'any' }, false)).toBe('?')
+  })
+
+  it('writes the names of the keys of a locale', () => {
+    const keys = { ...DEFAULT_CANVAS_LOCALE.canvas.keys, shift: 'Maj', delete: 'Suppr', escape: 'Échap' }
+    expect(formatShortcut(CANVAS_SHORTCUTS.ungroup, false, keys)).toBe('Ctrl+Maj+G')
+    expect(formatShortcut(CANVAS_SHORTCUTS.remove, false, keys)).toBe('Suppr')
+    expect(formatShortcut(CANVAS_SHORTCUTS.escape, true, keys)).toBe('Échap')
+    // the symbols of macOS are the same in every language
+    expect(formatShortcut(CANVAS_SHORTCUTS.ungroup, true, keys)).toBe('⇧⌘G')
   })
 })
 
@@ -87,11 +97,14 @@ describe('CANVAS_SHORTCUTS', () => {
     expect(new Set(ids).size).toBe(ids.length)
   })
 
-  it('is told by the instructions read by the assistive technologies', () => {
-    const { instructions, keyboardHintKey } = DEFAULT_CANVAS_LABELS
-    for (const shortcut of [CANVAS_SHORTCUTS.duplicate, CANVAS_SHORTCUTS.forward, CANVAS_SHORTCUTS.backward, CANVAS_SHORTCUTS.contextMenu]) {
-      expect(instructions).toContain(formatShortcut(shortcut, false))
+  it('is told by the instructions read by the assistive technologies, as the system writes it', () => {
+    const { instructions, keys } = DEFAULT_CANVAS_LOCALE.canvas
+    for (const isMac of [false, true]) {
+      const text = formatMessage(instructions, getShortcutParams(isMac, keys))
+      expect(text).not.toMatch(/{w+}/)
+      for (const shortcut of [CANVAS_SHORTCUTS.duplicate, CANVAS_SHORTCUTS.forward, CANVAS_SHORTCUTS.backward, CANVAS_SHORTCUTS.contextMenu]) {
+        expect(text).toContain(formatShortcut(shortcut, isMac))
+      }
     }
-    expect(keyboardHintKey).toBe(formatShortcut(CANVAS_SHORTCUTS.enter, false))
   })
 })

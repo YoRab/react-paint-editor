@@ -41,15 +41,15 @@ export const KeyboardNavigation: Story = {
     // =====================================================================
 
     expect(drawCanvas).toHaveAttribute('role', 'application')
-    expect(drawCanvas).toHaveAttribute('aria-roledescription', 'zone de dessin')
-    expect(drawCanvas).toHaveAccessibleName('Dessin')
-    expect(drawCanvas).toHaveAccessibleDescription(/Tab et Maj\+Tab/)
-    const list = within(drawCanvas).getByRole('list', { name: 'Formes du dessin' })
+    expect(drawCanvas).toHaveAttribute('aria-roledescription', 'drawing area')
+    expect(drawCanvas).toHaveAccessibleName('Drawing')
+    expect(drawCanvas).toHaveAccessibleDescription(/Tab and Shift\+Tab/)
+    const list = within(drawCanvas).getByRole('list', { name: 'Shapes of the drawing' })
     expect(
       within(list)
         .getAllByRole('listitem')
         .map(item => item.firstChild?.textContent)
-    ).toEqual(['Rectangle', 'Groupe', 'Rectangle', 'Rectangle', 'Texte : Bonjour'])
+    ).toEqual(['Rectangle', 'Group', 'Rectangle', 'Rectangle', 'Text: Bonjour'])
 
     // =====================================================================
     // Reached with Tab, the canvas shows a hint: Enter goes through the shapes
@@ -59,7 +59,7 @@ export const KeyboardNavigation: Story = {
     await user.tab()
     expect(document.activeElement).toBe(drawCanvas)
     expect(getHint(canvasElement)).toBeVisible()
-    expect(getHint(canvasElement)).toHaveTextContent('Déplacer le focus sur le canvas')
+    expect(getHint(canvasElement)).toHaveTextContent('Move the focus onto the canvas')
     expect(getState().interaction.keyboardNavigation).toBe(false)
 
     await user.keyboard('{Enter}')
@@ -82,7 +82,7 @@ export const KeyboardNavigation: Story = {
     expect(getSelectedIds()).toEqual(['t'])
     expect(document.activeElement).toBe(drawCanvas)
     // the selected shape is told in the fallback content
-    expect(within(list).getByText('Texte : Bonjour, sélectionnée')).toBeInTheDocument()
+    expect(within(list).getByText('Text: Bonjour, selected')).toBeInTheDocument()
 
     // =====================================================================
     // Enter goes inside a group, whose shapes Tab goes round, and Escape goes up to the group
@@ -107,7 +107,7 @@ export const KeyboardNavigation: Story = {
     await user.tab()
     expect(getSelectedIds()).toEqual(['t'])
     await user.keyboard('{Enter}')
-    expect(await view.findByRole('textbox', { name: 'Texte' })).toHaveFocus()
+    expect(await view.findByRole('textbox', { name: 'Text' })).toHaveFocus()
     await user.keyboard('{Escape}')
     expect(view.queryByRole('textbox')).toBeNull()
     expect(getSelectedIds()).toEqual(['t'])
@@ -122,7 +122,7 @@ export const KeyboardNavigation: Story = {
     expect(getSelectedIds()).toEqual([])
     expect(getState().interaction.keyboardNavigation).toBe(false)
     expect(getHint(canvasElement)).toBeVisible()
-    expect(getHint(canvasElement)).toHaveTextContent('Déplacer le focus sur le canvas')
+    expect(getHint(canvasElement)).toHaveTextContent('Move the focus onto the canvas')
     await user.tab()
     expect(document.activeElement).not.toBe(drawCanvas)
     expect(getSelectedIds()).toEqual([])
@@ -166,7 +166,7 @@ export const KeyboardNavigation: Story = {
     getPaint().actions.selectShapes(['a'])
     drawCanvas.focus()
     drawCanvas.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true }))
-    const menu = await view.findByRole('menu', { name: 'Menu contextuel' })
+    const menu = await view.findByRole('menu', { name: 'Context menu' })
     await waitFor(() => expect(within(menu).getByRole('menuitem', { name: 'Organize' })).toHaveFocus())
     expect(getState().contextMenu?.shapes.map(shape => shape.id)).toEqual(['a'])
 
@@ -193,11 +193,11 @@ export const KeyboardNavigation: Story = {
     // =====================================================================
 
     drawCanvas.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true }))
-    const reopenedMenu = await view.findByRole('menu', { name: 'Menu contextuel' })
+    const reopenedMenu = await view.findByRole('menu', { name: 'Context menu' })
     await waitFor(() => expect(within(reopenedMenu).getByRole('menuitem', { name: 'Organize' })).toHaveFocus())
     await user.keyboard('{End}{Enter}')
     await waitFor(() => expect(view.queryByRole('menu')).toBeNull())
-    const dialog = await view.findByRole('dialog', { name: 'Propriétés' })
+    const dialog = await view.findByRole('dialog', { name: 'Properties' })
     await waitFor(() => expect(within(dialog).getByRole('spinbutton', { name: 'X' })).toHaveFocus())
     await user.keyboard('{Tab}')
     expect(within(dialog).getByRole('spinbutton', { name: 'Y' })).toHaveFocus()

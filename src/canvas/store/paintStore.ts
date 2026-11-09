@@ -1,4 +1,5 @@
 import { DEFAULT_OPTIONS, type OptionalOptions, type UtilsSettings } from '@canvas/constants/app'
+import { DEFAULT_CANVAS_LOCALE } from '@canvas/constants/locale'
 import { PICTURE_TOOL_ID, SELECTION_TOOL } from '@canvas/constants/tools'
 import { createStore } from '@canvas/store/createStore'
 import { createEventEmitter } from '@canvas/store/eventEmitter'
@@ -32,6 +33,7 @@ import { createApproximateTextContext, createDetachedContext, getScaledCanvasSiz
 import { getDrawingColorAt } from '@canvas/utils/colorPicker'
 import { buildDataToExport, getDataChanges } from '@canvas/utils/data'
 import { shallowEqual } from '@canvas/utils/equality'
+import { ReactPaintError } from '@canvas/utils/error'
 import { decodeJson, downloadFile, encodeShapesInString, getCanvasImage, loadPicture } from '@canvas/utils/file'
 import { canvasToClientPosition, checkSelectionFrameCollision, clientToCanvasPosition, findShapeAt, findShapesAt } from '@canvas/utils/intersect'
 import { addLaserTrailPoint } from '@canvas/utils/laser'
@@ -281,6 +283,8 @@ export const createPaintStore = (props: UseReactPaintProps = {}) => {
 
   let canvasElement: HTMLCanvasElement | null = null
   let canvasRootElement: HTMLElement | null = null
+  // content of the texts drawn by the pointer or the keyboard, in the language of the Canvas
+  let defaultText = DEFAULT_CANVAS_LOCALE.canvas.defaultText
   let scopeElement: HTMLElement | null = null
   // the element whose focus is tracked: the scope set by the consumer, or else the root of the Canvas
   let focusScope: HTMLElement | null = null
@@ -1391,7 +1395,7 @@ export const createPaintStore = (props: UseReactPaintProps = {}) => {
       const { document, config } = get()
       const content = encodeShapesInString(document.shapes, config.width, config.height)
       if (!content) {
-        throw new Error("L'encodage a échoué")
+        throw new ReactPaintError('exportEncodingFailed', 'The data could not be encoded')
       }
       downloadFile(content, fileName)
     },
@@ -1490,6 +1494,11 @@ export const createPaintStore = (props: UseReactPaintProps = {}) => {
     setCanvasRootElement,
     setCanvasElement,
     getCanvasElement,
+    /** Sets the content of the texts drawn from now on */
+    setDefaultText: (text: string) => {
+      defaultText = text
+    },
+    getDefaultText: () => defaultText,
     focusCanvas,
     listenScope,
     // engine used by the canvas

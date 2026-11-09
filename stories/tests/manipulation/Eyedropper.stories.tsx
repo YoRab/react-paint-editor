@@ -13,7 +13,7 @@ const meta = {
 export default meta
 type Story = StoryObj<typeof meta>
 
-const FILL_TITLE = 'Couleur de fond'
+const FILL_TITLE = 'Fill color'
 
 /**
  * The eyedropper of the color fields picks a color of the drawing with the next press, which does nothing else, and the
@@ -66,10 +66,10 @@ export const Eyedropper: Story = {
     // the eyedropper of the panel picks the fill of the rect tool, without drawing a rect
     await selectTool(view, 'rect')
     await user.click(await view.findByRole('button', { name: FILL_TITLE }))
-    await user.click(await view.findByRole('button', { name: 'Pipette' }))
-    expect(view.getByRole('button', { name: 'Pipette' })).toHaveAttribute('data-selected', '1')
+    await user.click(await view.findByRole('button', { name: 'Eyedropper' }))
+    expect(view.getByRole('button', { name: 'Eyedropper' })).toHaveAttribute('data-selected', '1')
     await press([150, 150])
-    expect(view.getByRole('button', { name: 'Pipette' })).toHaveAttribute('data-selected', '0')
+    expect(view.getByRole('button', { name: 'Eyedropper' })).toHaveAttribute('data-selected', '0')
     const rectTool = () => getState().activeTool
     expect(rectTool()).toMatchObject({ settings: { fillColor: { default: '#123456' } } })
     expect(getState().shapes).toHaveLength(3)
@@ -83,7 +83,7 @@ export const Eyedropper: Story = {
     expect(view.queryByRole('button', { name: '#abcdef' })).toBeNull()
     customColor.dispatchEvent(new Event('change', { bubbles: true }))
     await wait()
-    const recentColors = [...canvasElement.querySelectorAll('[title="Couleurs récentes"] button')].map(button => button.getAttribute('title'))
+    const recentColors = [...canvasElement.querySelectorAll('[title="Recent colors"] button')].map(button => button.getAttribute('title'))
     expect(recentColors).toEqual(['#abcdef', '#123456'])
     await user.click(await view.findByRole('button', { name: FILL_TITLE }))
 
@@ -92,7 +92,7 @@ export const Eyedropper: Story = {
     await wait()
     await user.click(await view.findByRole('button', { name: FILL_TITLE }))
     expect(view.getByRole('button', { name: '#abcdef' })).toBeInTheDocument()
-    await user.click(await view.findByRole('button', { name: 'Pipette' }))
+    await user.click(await view.findByRole('button', { name: 'Eyedropper' }))
     await press([150, 150])
     expect(getPaint().getShape(translucent!)?.style).toMatchObject({ fillColor: '#123456', opacity: 50 })
     expect(getState().selectedShapeIds).toEqual([translucent])

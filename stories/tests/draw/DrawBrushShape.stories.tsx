@@ -32,10 +32,10 @@ export const DrawBrushShape: Story = {
     await selectTool(view, 'brush')
 
     // --- Shape 1 settings ---
-    await setColorSetting(view, 'Couleur du trait', 'red')
-    await setRangeSetting(view, 'Epaisseur du trait', 14)
-    await setSelectSetting(view, 'Type de traits', 'Pointillés')
-    await setRangeSetting(view, 'Opacité', 50)
+    await setColorSetting(view, 'Stroke color', 'red')
+    await setRangeSetting(view, 'Stroke width', 14)
+    await setSelectSetting(view, 'Stroke type', 'Dotted')
+    await setRangeSetting(view, 'Opacity', 50)
 
     const drawCanvas = await view.findByTestId('draw-canvas')
     const rect = drawCanvas.getBoundingClientRect()
@@ -74,10 +74,10 @@ export const DrawBrushShape: Story = {
     await new Promise(res => setTimeout(res, 100))
 
     // --- Shape 2 settings (shape 2 is now selected) ---
-    await setColorSetting(view, 'Couleur du trait', 'green')
-    await setRangeSetting(view, 'Epaisseur du trait', 8)
-    await setSelectSetting(view, 'Type de traits', 'Tirets')
-    await setRangeSetting(view, 'Opacité', 75)
+    await setColorSetting(view, 'Stroke color', 'green')
+    await setRangeSetting(view, 'Stroke width', 8)
+    await setSelectSetting(view, 'Stroke type', 'Dashed')
+    await setRangeSetting(view, 'Opacity', 75)
 
     // --- Assertions ---
     expect(getCurrentDataRef.current).not.toBeNull()

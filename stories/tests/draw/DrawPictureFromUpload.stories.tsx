@@ -33,7 +33,7 @@ export const DrawPictureFromUpload: Story = {
     await new Promise(res => setTimeout(res, 500))
 
     // --- Change opacity on the selected picture ---
-    await setRangeSetting(view, 'Opacité', 40)
+    await setRangeSetting(view, 'Opacity', 40)
 
     // --- Assertions ---
     expect(getCurrentDataRef.current).not.toBeNull()

@@ -1,6 +1,8 @@
 import { CANVAS_SHORTCUTS, formatShortcut, type Shortcut, type ToolsType } from '@canvas/index'
 import Modal from '@editor/components/common/Modal'
-import { ACTION_SHORTCUTS, HELP_LABEL, HELP_SHORTCUT, TOOL_SHORTCUTS } from '@editor/constants/shortcuts'
+import { ACTION_SHORTCUTS, HELP_SHORTCUT, TOOL_SHORTCUTS } from '@editor/constants/shortcuts'
+import useEditorLocale, { type EditorLocaleValue } from '@editor/hooks/useEditorLocale'
+import { getToolLabel } from '@editor/utils/style'
 import { isMacOs } from '@editor/utils/util'
 import './ShortcutsModal.css'
 
@@ -11,70 +13,75 @@ type Section = { title: string; rows: Row[] }
 
 const S = CANVAS_SHORTCUTS
 
-const getSections = (tools: readonly ToolsType[], isMac: boolean, withLoadAndSave: boolean, withExport: boolean, withZoom: boolean): Section[] => {
+const getSections = (
+  tools: readonly ToolsType[],
+  { canvas, editor, format }: EditorLocaleValue,
+  isMac: boolean,
+  withLoadAndSave: boolean,
+  withExport: boolean,
+  withZoom: boolean
+): Section[] => {
+  const { rows, gestures, sections } = editor.shortcuts
+  const { keys } = canvas
   const toolRows = tools.flatMap(tool => {
     const shortcut = TOOL_SHORTCUTS[tool.id]
-    return shortcut ? [{ label: tool.label ?? tool.type, keys: [shortcut] }] : []
+    return shortcut ? [{ label: getToolLabel(tool, editor), keys: [shortcut] }] : []
   })
   const fileRows: Row[] = [
     ...(withLoadAndSave
       ? [
-          { label: 'Ouvrir un projet', keys: [ACTION_SHORTCUTS.loadfile!] },
-          { label: 'Enregistrer le projet', keys: [ACTION_SHORTCUTS.savefile!] }
+          { label: rows.openProject, keys: [ACTION_SHORTCUTS.loadfile!] },
+          { label: rows.saveProject, keys: [ACTION_SHORTCUTS.savefile!] }
         ]
       : []),
-    ...(withExport ? [{ label: 'Exporter une image', keys: [ACTION_SHORTCUTS.export!] }] : [])
+    ...(withExport ? [{ label: rows.exportPicture, keys: [ACTION_SHORTCUTS.export!] }] : [])
   ]
   return [
-    ...(toolRows.length ? [{ title: 'Outils', rows: toolRows }] : []),
+    ...(toolRows.length ? [{ title: sections.tools, rows: toolRows }] : []),
     {
-      title: 'Édition',
+      title: sections.edition,
       rows: [
-        { label: 'Annuler', keys: [S.undo] },
-        { label: 'Rétablir', keys: isMac ? [S.redo] : [S.redo, S.redoAlt] },
-        { label: 'Couper, copier, coller', keys: [S.cut, S.copy, S.paste] },
-        { label: 'Dupliquer', keys: [S.duplicate, 'Alt + glisser'] },
-        { label: 'Supprimer', keys: [S.remove, S.removeAlt] },
-        { label: 'Tout sélectionner', keys: [S.selectAll] },
-        { label: 'Ajouter à la sélection', keys: ['Maj + clic'] },
-        { label: 'Grouper, dégrouper', keys: [S.group, S.ungroup] },
-        { label: 'Avancer, reculer', keys: [S.forward, S.backward] },
-        { label: 'Premier plan, arrière-plan', keys: [S.first, S.last] },
-        { label: 'Retourner horizontalement, verticalement', keys: [S.flipHorizontally, S.flipVertically] },
-        { label: 'Verrouiller, masquer', keys: [S.lock, S.hide] },
-        { label: 'Déplacer la sélection, plus loin', keys: ['Flèches', 'Maj + flèches'] },
-        { label: 'Annuler un geste, remonter au groupe, désélectionner', keys: [S.escape] },
-        { label: 'Menu contextuel', keys: [S.contextMenu] }
+        { label: rows.undo, keys: [S.undo] },
+        { label: rows.redo, keys: isMac ? [S.redo] : [S.redo, S.redoAlt] },
+        { label: rows.cutCopyPaste, keys: [S.cut, S.copy, S.paste] },
+        { label: rows.duplicate, keys: [S.duplicate, format(gestures.altDrag, keys)] },
+        { label: rows.remove, keys: [S.remove, S.removeAlt] },
+        { label: rows.selectAll, keys: [S.selectAll] },
+        { label: rows.addToSelection, keys: [format(gestures.shiftClick, keys)] },
+        { label: rows.groupUngroup, keys: [S.group, S.ungroup] },
+        { label: rows.forwardBackward, keys: [S.forward, S.backward] },
+        { label: rows.frontBack, keys: [S.first, S.last] },
+        { label: rows.flip, keys: [S.flipHorizontally, S.flipVertically] },
+        { label: rows.lockHide, keys: [S.lock, S.hide] },
+        { label: rows.moveSelection, keys: [keys.arrows, format(gestures.shiftArrows, keys)] },
+        { label: rows.escape, keys: [S.escape] },
+        { label: rows.contextMenu, keys: [S.contextMenu] }
       ]
     },
     {
-      title: 'Dessin',
+      title: sections.drawing,
       rows: [
-        { label: 'Garder les proportions, aligner les angles par 15°', keys: ['Maj'] },
-        { label: 'Redimensionner depuis le centre', keys: ['Alt'] },
-        { label: 'Terminer un polygone ou une courbe, retirer son dernier point', keys: [S.enter, S.removeAlt] },
-        { label: 'Ajouter une forme au centre de la vue', keys: [S.enter] }
+        { label: rows.keepRatio, keys: [keys.shift] },
+        { label: rows.resizeFromCenter, keys: [keys.alt] },
+        { label: rows.endShape, keys: [S.enter, S.removeAlt] },
+        { label: rows.addShape, keys: [S.enter] }
       ]
     },
     ...(withZoom
       ? [
           {
-            title: 'Vue',
+            title: sections.view,
             rows: [
-              { label: 'Zoomer, dézoomer, 100 %', keys: [S.zoomIn, S.zoomOut, S.resetZoom] },
-              { label: 'Afficher tout le dessin, la sélection', keys: [S.zoomToFit, S.zoomToSelection] },
-              { label: 'Déplacer la vue', keys: ['Espace + glisser', 'Flèches sans sélection'] }
+              { label: rows.zoom, keys: [S.zoomIn, S.zoomOut, S.resetZoom] },
+              { label: rows.fit, keys: [S.zoomToFit, S.zoomToSelection] },
+              { label: rows.pan, keys: [format(gestures.spaceDrag, keys), format(gestures.arrowsWithoutSelection, keys)] }
             ]
           }
         ]
       : []),
     {
-      title: 'Clavier',
-      rows: [
-        { label: 'Parcourir les formes, ouvrir un groupe, éditer un texte', keys: [S.enter, S.nextShape, S.previousShape] },
-        ...fileRows,
-        { label: 'Cette liste', keys: [HELP_SHORTCUT] }
-      ]
+      title: sections.keyboard,
+      rows: [{ label: rows.browse, keys: [S.enter, S.nextShape, S.previousShape] }, ...fileRows, { label: rows.help, keys: [HELP_SHORTCUT] }]
     }
   ]
 }
@@ -91,13 +98,15 @@ type ShortcutsModalProps = {
 /** List of the shortcuts of the editor and of the canvas, opened by ? and by the menu */
 const ShortcutsModal = ({ onClose, tools, withLoadAndSave, withExport, withZoom }: ShortcutsModalProps) => {
   const isMac = isMacOs()
+  const locale = useEditorLocale()
+  const { title } = locale.editor.shortcuts
   return (
-    <Modal className='react-paint-editor-toolbox-modal react-paint-editor-shortcuts' onClose={onClose} title={HELP_LABEL} withCloseButton>
-      <h3>{HELP_LABEL}</h3>
+    <Modal className='react-paint-editor-toolbox-modal react-paint-editor-shortcuts' onClose={onClose} title={title} withCloseButton>
+      <h3>{title}</h3>
       {/* the list scrolls, and takes the focus of the keyboard to do so */}
       {/* biome-ignore lint/a11y/noNoninteractiveTabindex: a scrolled region is reached by the keyboard */}
-      <section className='react-paint-editor-shortcuts-list' tabIndex={0} aria-label={HELP_LABEL}>
-        {getSections(tools, isMac, withLoadAndSave, withExport, withZoom).map(section => (
+      <section className='react-paint-editor-shortcuts-list' tabIndex={0} aria-label={title}>
+        {getSections(tools, locale, isMac, withLoadAndSave, withExport, withZoom).map(section => (
           <section key={section.title}>
             <h4>{section.title}</h4>
             <dl>
@@ -106,7 +115,7 @@ const ShortcutsModal = ({ onClose, tools, withLoadAndSave, withExport, withZoom 
                   <dt>{row.label}</dt>
                   <dd>
                     {row.keys.map(key => {
-                      const text = typeof key === 'string' ? key : formatShortcut(key, isMac)
+                      const text = typeof key === 'string' ? key : formatShortcut(key, isMac, locale.canvas.keys)
                       return <kbd key={text}>{text}</kbd>
                     })}
                   </dd>

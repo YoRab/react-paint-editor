@@ -293,21 +293,21 @@ export const GroupSettings: Story = {
 
     getPaint().actions.selectShapes(['texts'])
     await wait(100)
-    await setNumberSetting(view, 'Taille du texte', 50)
+    await setNumberSetting(view, 'Text size', 50)
     expect([getText('one').fontSize, getText('two').fontSize]).toEqual([50, 50])
 
     getPaint().actions.selectShapes(['pair'])
     await wait(100)
     // a group of rects has no font size
-    expect(view.queryByRole('button', { name: 'Taille du texte' })).toBeNull()
-    await setColorSetting(view, 'Couleur du trait', 'red')
-    await setRangeSetting(view, 'Opacité', 40)
+    expect(view.queryByRole('button', { name: 'Text size' })).toBeNull()
+    await setColorSetting(view, 'Stroke color', 'red')
+    await setRangeSetting(view, 'Opacity', 40)
     expect(getPaint().getShape('pair')?.style).toEqual({ opacity: 40 })
     expect(getPaint().getShape('a')?.style).toMatchObject({ strokeColor: 'red', opacity: 100 })
     expect(getPaint().getShape('b')?.style).toMatchObject({ strokeColor: 'red', opacity: 100 })
     // the bar shows the opacity of the group, not the one of its shapes
-    await userEvent.click(view.getByRole('button', { name: 'Opacité' }))
+    await userEvent.click(view.getByRole('button', { name: 'Opacity' }))
     expect(view.getByRole('slider')).toHaveValue('40')
-    await userEvent.click(view.getByRole('button', { name: 'Opacité' }))
+    await userEvent.click(view.getByRole('button', { name: 'Opacity' }))
   }
 }

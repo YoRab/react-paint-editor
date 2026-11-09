@@ -1,4 +1,5 @@
 import type { UtilsSettings } from '@canvas/constants/app'
+import { DEFAULT_CANVAS_LOCALE } from '@canvas/constants/locale'
 import { STYLE_FONT_DEFAULT, STYLE_FONT_SIZE_DEFAULT, STYLE_LINE_HEIGHT_DEFAULT, STYLE_OUTLINE_WIDTH_DEFAULT } from '@canvas/constants/rendering'
 import { FONT_STYLE_FIELDS } from '@canvas/constants/shapes'
 import type { SelectionModeResize } from '@canvas/types/Mode'
@@ -13,7 +14,6 @@ import { type GroupResizeContext, getMirroredRotation, getPositionWithoutGroupRo
 import { createRecPath, expandRect, getComputedShapeInfos } from './path'
 import { getRectOppositeAnchorAbsolutePosition } from './rectangle'
 
-const DEFAULT_TEXT_VALUE: string[] = ['Texte']
 const DEFAULT_TEXT_WIDTH = 150
 
 /** Position of the lines in the box of a text, from its left side (0) to its right side (1), for each alignment */
@@ -181,8 +181,10 @@ export const createText = (
     settings: ToolsSettingsType<'text'>
   },
   cursorPosition: Point,
-  settings: UtilsSettings
+  settings: UtilsSettings,
+  text = DEFAULT_CANVAS_LOCALE.canvas.defaultText
 ): ShapeEntity<'text'> => {
+  const value = [text]
   const style = getToolDefaultStyle(shape)
   // the text is as wide as its content at the font size of the tool, or else its font fills the default width
   const toolFontSize = shape.settings.fontSize?.default
@@ -190,7 +192,7 @@ export const createText = (
     type: 'text',
     x: 0,
     y: 0,
-    value: DEFAULT_TEXT_VALUE,
+    value,
     style,
     ...(toolFontSize === undefined ? { width: DEFAULT_TEXT_WIDTH } : { fontSize: toolFontSize })
   })
@@ -201,7 +203,7 @@ export const createText = (
       id: createShapeId(shape.type),
       x: cursorPosition[0] - width,
       y: cursorPosition[1] - height,
-      value: DEFAULT_TEXT_VALUE,
+      value,
       fontSize,
       width,
       height,

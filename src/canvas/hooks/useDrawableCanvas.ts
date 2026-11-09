@@ -428,7 +428,14 @@ const useDrawableCanvas = (store: PaintStore, canvas: HTMLCanvasElement | null) 
         } else {
           // a picture tool only draws a shape when it gives the source of a sticker, with the image loaded for its tool
           const stickerImage = isStickerTool(activeTool) ? store.getStickerImage(activeTool.src) : undefined
-          const newShape = createShape(ctx, activeTool as Exclude<CustomTool, { type: 'group' }>, cursorPosition, settings, stickerImage)
+          const newShape = createShape(
+            ctx,
+            activeTool as Exclude<CustomTool, { type: 'group' }>,
+            cursorPosition,
+            settings,
+            stickerImage,
+            store.getDefaultText()
+          )
           if (!newShape) return
           const newSelectedShapes = buildShapesSelection([newShape], settings)!
           store.batch(() => {

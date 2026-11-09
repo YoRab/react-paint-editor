@@ -387,13 +387,45 @@ The styles of the canvas are inline. Some of its properties read a CSS variable:
 
 The other properties of the canvas elements are not set inline, or keep the canvas working (stacked canvases, touch): style the root with the `className` and `style` props of `Canvas`.
 
+### Languages
+
+The canvas and the editor are in English, the only language the library ships. Give them another language with the `locale` option: a complete translation, or some texts to replace, merged into the English ones. The editor gives the canvas part of its locale to the canvases inside it.
+
+```tsx
+import { Canvas, Editor, useReactPaint, type EditorLocale } from '@yorab/react-paint'
+
+// annotated with its type, a complete translation is checked by TypeScript: it lists the texts it misses
+const FR_LOCALE: EditorLocale = {
+  lang: 'fr',
+  canvas: { canvas: 'Dessin', keys: { shift: 'Maj' /* ... */ } /* ... */ },
+  editor: { tools: { selection: 'Sélection' /* ... */ } /* ... */ }
+}
+
+const App = () => {
+  const paint = useReactPaint()
+  return (
+    <Editor paint={paint} options={{ locale: FR_LOCALE }}>
+      <Canvas paint={paint} />
+    </Editor>
+  )
+}
+```
+
+- A complete French translation is written in the [stories](https://github.com/YoRab/react-paint-editor/blob/main/stories/locales/fr.ts): copy it to start another language. The English texts are `DEFAULT_EDITOR_LOCALE` and `DEFAULT_CANVAS_LOCALE`.
+- Some texts only: `options={{ locale: { editor: { tools: { brush: 'Pencil' } } } }}`. The other texts stay the English ones.
+- A `Canvas` without editor takes a `CanvasLocale` in its own `locale` option, or from a `CanvasLocaleProvider` around it.
+- `lang`, a BCP 47 tag, is set on the elements holding the texts, never on the roots: the content given to the editor keeps the language of the page. It also decides the plurals and the numbers, like `150 %` in French.
+- The texts are plain data, which can be loaded from JSON files. A parameter is written `{name}`, and a message with a count gives its plural forms by the categories of `Intl.PluralRules`: `{ one: '{count} shape added', other: '{count} shapes added' }`. A plural message is replaced whole, never merged. `formatMessage(message, params, lang)` writes one, for a custom editor.
+- The shortcuts keep their keys in every language. Their names come from `canvas.keys`: give them to `formatShortcut(shortcut, isMac, keys)`.
+- The errors of the canvas a user may meet (a file too large, an image which cannot be loaded, nothing to export...) are `ReactPaintError`s with a `code`: the editor tells them with its `errors` texts. Their messages, like the other errors and warnings, are written in English for the developers.
+
 ### Accessibility
 
 The canvas and the editor are used from the keyboard and by the assistive technologies:
 
-- Reached with Tab, the canvas shows the hint "Déplacer le focus sur le canvas": Enter then goes through its shapes with Tab and Shift+Tab, the focus staying on the canvas, until Escape leaves them. Enter goes inside a group, edits a text, or draws a shape of the active tool at the center of the view. The arrows move the selection, or the view without selection, and Shift+F10 opens the context menu. See the [keyboard shortcuts](https://yorab.github.io/react-paint-editor/?path=/docs/api-reference--docs#keyboard).
-- The canvas is named and described, and its fallback content lists the visible shapes, their names and the content of the texts. Give a `name` to a shape, like the alternative text of a picture. Its texts are the `canvasLabels` option of `Canvas`, in French by default (`DEFAULT_CANVAS_LABELS`).
-- The buttons of the editor tell their state. Its menus and panels follow the same keys: opened from their button, they take the focus on the value chosen, a group of buttons is a single stop of Tab gone round with the arrows, Home and End, and Escape gives the focus back to their button, closing them, except the panels of the zoom and of the layers, which stay open. Tab leaving a menu or a panel of the toolbar or of the settings closes it too. The layers are gone round with the arrows (ArrowRight and ArrowLeft expand and collapse a group, Enter selects, Alt+arrows reorder, F2 renames, Delete removes), the modals keep the focus, and the "Position et taille" panel types the position, the size and the angle of the selection, instead of a drag. The editor announces the tool, the selection, the shapes added or removed and the zoom in a live region, like its messages.
+- Reached with Tab, the canvas shows the hint "Move the focus onto the canvas": Enter then goes through its shapes with Tab and Shift+Tab, the focus staying on the canvas, until Escape leaves them. Enter goes inside a group, edits a text, or draws a shape of the active tool at the center of the view. The arrows move the selection, or the view without selection, and Shift+F10 opens the context menu. See the [keyboard shortcuts](https://yorab.github.io/react-paint-editor/?path=/docs/api-reference--docs#keyboard).
+- The canvas is named and described, and its fallback content lists the visible shapes, their names and the content of the texts. Give a `name` to a shape, like the alternative text of a picture. Its texts are the `canvas` part of the locale, see [Languages](#languages).
+- The buttons of the editor tell their state. Its menus and panels follow the same keys: opened from their button, they take the focus on the value chosen, a group of buttons is a single stop of Tab gone round with the arrows, Home and End, and Escape gives the focus back to their button, closing them, except the panels of the zoom and of the layers, which stay open. Tab leaving a menu or a panel of the toolbar or of the settings closes it too. The layers are gone round with the arrows (ArrowRight and ArrowLeft expand and collapse a group, Enter selects, Alt+arrows reorder, F2 renames, Delete removes), the modals keep the focus, and the "Properties" panel types the position, the size and the angle of the selection, instead of a drag. The editor announces the tool, the selection, the shapes added or removed and the zoom in a live region, like its messages.
 - The focus of the keyboard is outlined with `--react-paint-editor-app-focus-color` (the `fontColor` option by default), and the title of a button without text is shown while it has the focus (`--react-paint-editor-tooltip-bg`, `--react-paint-editor-tooltip-color`). The editor follows the forced colors mode and `prefers-reduced-motion`.
 
 The free drawing (brush, polygon, curve) follows the path of the pointer: it is not done from the keyboard.

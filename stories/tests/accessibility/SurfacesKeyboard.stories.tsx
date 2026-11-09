@@ -38,7 +38,7 @@ export const PopupsKeyboard: Story = {
     // A group of tools: the focus goes to its active tool, the arrows go round the tools
     // =====================================================================
 
-    const groupButton = view.getByRole('button', { name: 'shapes' })
+    const groupButton = view.getByRole('button', { name: 'Shapes' })
     groupButton.focus()
     await user.keyboard('{Enter}')
     expect(groupButton).toHaveAttribute('aria-expanded', 'true')
@@ -107,10 +107,10 @@ export const PopupsKeyboard: Story = {
 
     await user.click(view.getByTestId('tool-selection'))
     getPaint().actions.selectShapes(['a'])
-    const lineTypeButton = await view.findByRole('button', { name: 'Type de traits' })
+    const lineTypeButton = await view.findByRole('button', { name: 'Stroke type' })
     lineTypeButton.focus()
     await user.keyboard('{Enter}')
-    const lineTypes = view.getByRole('group', { name: 'Type de traits' })
+    const lineTypes = view.getByRole('group', { name: 'Stroke type' })
     const options = within(lineTypes).getAllByRole('button')
     // no value is chosen yet: the first one takes the focus
     await waitFor(() => expect(options[0]).toHaveFocus())
@@ -119,18 +119,18 @@ export const PopupsKeyboard: Story = {
     expect(getTabStops(lineTypes)).toEqual([options.at(-1)])
     await user.keyboard('{Enter}')
     expect(options.at(-1)).toHaveAttribute('aria-pressed', 'true')
-    expect(view.getByRole('group', { name: 'Type de traits' })).toBeInTheDocument()
+    expect(view.getByRole('group', { name: 'Stroke type' })).toBeInTheDocument()
     // the arrows of the panel do not move the selected shape
     expect(getPaint().getShape('a')).toMatchObject({ x: 100, y: 100 })
     await user.tab()
-    await waitFor(() => expect(view.queryByRole('group', { name: 'Type de traits' })).toBeNull())
+    await waitFor(() => expect(view.queryByRole('group', { name: 'Stroke type' })).toBeNull())
 
     // --- opened again, the focus goes to the value chosen ---
     lineTypeButton.focus()
     await user.keyboard('{Enter}')
-    const chosen = within(view.getByRole('group', { name: 'Type de traits' })).getByRole('button', { pressed: true })
+    const chosen = within(view.getByRole('group', { name: 'Stroke type' })).getByRole('button', { pressed: true })
     await waitFor(() => expect(chosen).toHaveFocus())
-    expect(chosen).toHaveAccessibleName('Tirets et points')
+    expect(chosen).toHaveAccessibleName('Dashes and dots')
     await user.keyboard('{Escape}')
     expect(lineTypeButton).toHaveFocus()
   }
@@ -200,25 +200,25 @@ export const PanelsKeyboard: Story = {
 
     // --- a single layer takes Tab, with its buttons ---
     const list = within(layersPanel).getByRole('list', { name: 'Layers' })
-    const getNames = () => within(list).getAllByRole('button', { name: /^(Rectangle \d|Groupe \d)$/ })
+    const getNames = () => within(list).getAllByRole('button', { name: /^(Rectangle \d|Group \d)$/ })
     const stops = getTabStops(list)
     expect(stops.map(stop => stop.getAttribute('title') ?? stop.textContent)).toEqual([
       'Rectangle 4',
-      'Move forward',
-      'Move backward',
+      'Bring forward',
+      'Send backward',
       'Hide',
-      'Unlocked',
-      'Remove'
+      'Lock',
+      'Delete'
     ])
     await user.tab()
     expect(getNames()[0]).toHaveFocus()
     // the first layer cannot move forward: its disabled button is left out
     await user.tab()
-    expect(within(list).getAllByRole('button', { name: 'Move backward' })[0]).toHaveFocus()
+    expect(within(list).getAllByRole('button', { name: 'Send backward' })[0]).toHaveFocus()
     await user.tab()
     await user.tab()
     await user.tab()
-    expect(within(list).getAllByRole('button', { name: 'Remove' })[0]).toHaveFocus()
+    expect(within(list).getAllByRole('button', { name: 'Delete' })[0]).toHaveFocus()
     await user.tab()
     expect(list).not.toContainElement(document.activeElement as HTMLElement)
 
@@ -228,13 +228,13 @@ export const PanelsKeyboard: Story = {
     expect(getNames().at(-1)).toHaveFocus()
     await user.keyboard('{Home}{ArrowDown}')
     const group = getNames()[1]!
-    expect(group).toHaveTextContent('Groupe 1')
+    expect(group).toHaveTextContent('Group 1')
     expect(group).toHaveFocus()
     expect(getNames()).toHaveLength(5)
     await user.keyboard('{ArrowLeft}')
     await waitFor(() => expect(getNames()).toHaveLength(3))
     expect(within(list).getByRole('button', { name: 'Expand' })).toHaveAttribute('aria-expanded', 'false')
-    expect(document.activeElement).toHaveTextContent('Groupe 1')
+    expect(document.activeElement).toHaveTextContent('Group 1')
     await user.keyboard('{ArrowRight}')
     await waitFor(() => expect(getNames()).toHaveLength(5))
     // the arrows of the layers do not change the selection
@@ -248,7 +248,7 @@ export const PanelsKeyboard: Story = {
     await user.keyboard('{Escape}')
     expect(getPaint().getShape('g')?.name).toBeUndefined()
     await wait()
-    expect(document.activeElement).toHaveTextContent('Groupe 1')
+    expect(document.activeElement).toHaveTextContent('Group 1')
 
     // --- Escape in the panel gives the focus back to its button, the panel staying open ---
     await user.keyboard('{Escape}')

@@ -2,6 +2,7 @@ import Button from '@editor/components/common/Button'
 import Panel from '@editor/components/common/Panel'
 import { eyedropperIcon, noFillIcon, noStrokeIcon, paletteIcon } from '@editor/constants/icons'
 import useArrowNavigation from '@editor/hooks/useArrowNavigation'
+import useEditorLocale from '@editor/hooks/useEditorLocale'
 import useSettingsPanel from '@editor/hooks/useSettingsPanel'
 import type React from 'react'
 import { useEffect, useState } from 'react'
@@ -10,7 +11,7 @@ import './ColorField.css'
 type ShapeStyleColorType = {
   selectedSettings: string | undefined
   setSelectedSettings: React.Dispatch<React.SetStateAction<string | undefined>>
-  title?: string
+  title: string
   disabled?: boolean | undefined
   field: string
   mode?: 'fill' | 'stroke'
@@ -32,27 +33,14 @@ type ColorButtonType = {
   selected?: boolean
   pressed?: boolean
   onClick: () => void
-  title?: string
+  title: string
   disabled?: boolean
 } & Pick<React.ButtonHTMLAttributes<HTMLButtonElement>, 'aria-expanded' | 'aria-controls'> & {
     buttonRef?: React.Ref<HTMLButtonElement | HTMLInputElement>
   }
 
-/** Name of a color of a palette: 'transparent' is no color */
-const getColorName = (color: string) => (color === 'transparent' ? 'Aucune couleur' : color)
-
-/** A button showing a color, named after it by default */
-const ColorButton = ({
-  color,
-  mode,
-  selected,
-  pressed,
-  onClick,
-  title = getColorName(color),
-  disabled = false,
-  buttonRef,
-  ...ariaProps
-}: ColorButtonType) => (
+/** A button showing a color */
+const ColorButton = ({ color, mode, selected, pressed, onClick, title, disabled = false, buttonRef, ...ariaProps }: ColorButtonType) => (
   <Button
     ref={buttonRef}
     title={title}
@@ -78,7 +66,7 @@ const ColorButton = ({
 const ColorField = ({
   selectedSettings,
   setSelectedSettings,
-  title = 'Choisissez une couleur',
+  title,
   mode = 'fill',
   disabled = false,
   values,
@@ -96,6 +84,10 @@ const ColorField = ({
     triggerProps: { ref: triggerRef, ...triggerProps },
     panelProps
   } = useSettingsPanel(selectedSettings, setSelectedSettings)
+  const { editor } = useEditorLocale()
+  const { colorNames, noColor, customColor, eyedropper, recentColors: recentColorsLabel } = editor.settings
+  /** Name of a color of a palette: 'transparent' is no color, a color without a name is named after its value */
+  const getColorName = (color: string) => (color === 'transparent' ? noColor : (colorNames[color] ?? color))
   // the palette and the recent colors are two groups of the arrows
   const paletteRef = useArrowNavigation()
   const recentColorsRef = useArrowNavigation()
@@ -129,7 +121,7 @@ const ColorField = ({
 
   const otherRecentColors = recentColors.filter(color => !values.includes(color))
   const renderColor = (color: string) => (
-    <ColorButton key={color} color={color} mode={mode} pressed={color === value} onClick={() => handleClick(color)} />
+    <ColorButton key={color} color={color} mode={mode} title={getColorName(color)} pressed={color === value} onClick={() => handleClick(color)} />
   )
   const isCustomColor = value !== '' && !values.includes(value)
 
@@ -143,7 +135,7 @@ const ColorField = ({
             <Button
               ref={setCustomColorInput as React.Ref<HTMLInputElement | HTMLButtonElement>}
               type='color'
-              title='Couleur personnalisée'
+              title={customColor}
               pressed={isCustomColor}
               value={value}
               onChange={handleChange}
@@ -157,13 +149,13 @@ const ColorField = ({
                 <span aria-hidden='true'>{paletteIcon}</span>
               </div>
             </Button>
-            <Button title='Pipette' icon={eyedropperIcon} pressed={isPicking} onClick={handlePick} />
+            <Button title={eyedropper} icon={eyedropperIcon} pressed={isPicking} onClick={handlePick} />
           </div>
           {otherRecentColors.length > 0 && (
             <fieldset
               className='react-paint-editor-colorfield-wrapper'
-              title='Couleurs récentes'
-              aria-label='Couleurs récentes'
+              title={recentColorsLabel}
+              aria-label={recentColorsLabel}
               ref={recentColorsRef}
             >
               {otherRecentColors.map(renderColor)}

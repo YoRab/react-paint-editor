@@ -2,6 +2,7 @@ import { type EditorState, type ExportView, type ShapeType, shallowEqual, type T
 import Button from '@editor/components/common/Button'
 import Modal from '@editor/components/common/Modal'
 import { shapesIcon } from '@editor/constants/icons'
+import type { EditorMessages } from '@editor/constants/locale'
 import {
   CLEAR_TOOL,
   ERASER_TOOL_DISPLAY,
@@ -13,6 +14,7 @@ import {
   UNDO_TOOL
 } from '@editor/constants/tools'
 import useArrowNavigation from '@editor/hooks/useArrowNavigation'
+import useEditorLocale from '@editor/hooks/useEditorLocale'
 import useEditorShortcuts from '@editor/hooks/useEditorShortcuts'
 import { getDisplayTool } from '@editor/utils/style'
 import { getCurrentStructure } from '@editor/utils/toolbar'
@@ -28,33 +30,35 @@ import ToolbarGroup from './ToolbarGroup'
 
 const TOOL_WIDTH = 40
 
+type ToolbarGroupName = keyof EditorMessages['toolbar']['groups']
+
 const TOOLBAR_STRUCTURE: (
   | ShapeType
   | {
-      title: string
+      name: ToolbarGroupName
       toolsType: ShapeType[]
       vertical: boolean
     }
 )[] = [
   {
-    title: 'brush',
+    name: 'brush',
     toolsType: ['brush'],
     vertical: false
   },
   {
-    title: 'lines',
+    name: 'lines',
     toolsType: ['line', 'curve', 'polygon'],
     vertical: false
   },
   {
     // the custom tools of the consumer join the shapes: they all draw a shape in a box
-    title: 'shapes',
+    name: 'shapes',
     toolsType: ['rect', 'square', 'circle', 'ellipse', 'custom'],
     vertical: false
   },
   {
     // the stickers of the consumer: the group is not shown when it gives none
-    title: 'stickers',
+    name: 'stickers',
     toolsType: ['picture'],
     vertical: false
   },
@@ -102,13 +106,20 @@ const Toolbar = ({
 }: ToolboxType) => {
   const paint = usePaint()
   const { actions } = paint
+  const { lang, editor: messages } = useEditorLocale()
   const { activeTool, tools, history, width } = usePaintState(paint, selectToolbarState, shallowEqual)
   // the picture tool which opens a file is not shown in the toolbar: only the sticker tools, which give their source
-  const availableTools = useMemo(() => tools.filter(tool => tool.type !== 'picture' || tool.src).map(getDisplayTool), [tools])
+  const availableTools = useMemo(
+    () => tools.filter(tool => tool.type !== 'picture' || tool.src).map(tool => getDisplayTool(tool, messages)),
+    [tools, messages]
+  )
   const { canUndo: hasActionToUndo, canRedo: hasActionToRedo, canClear: hasActionToClear } = history
   const { undo: undoAction, redo: redoAction, clearCanvas } = actions
 
-  const currentStructure = getCurrentStructure(availableTools, TOOLBAR_STRUCTURE)
+  const currentStructure = getCurrentStructure(
+    availableTools,
+    TOOLBAR_STRUCTURE.map(group => (typeof group === 'object' ? { ...group, title: messages.toolbar.groups[group.name] } : group))
+  )
 
   // the selection tool and the action tools shown by the options, before the drawing tools
   const actionTools = [
@@ -183,6 +194,7 @@ const Toolbar = ({
     <>
       <div
         className='react-paint-editor-toolbar-toolbox'
+        lang={lang}
         style={{
           '--react-paint-editor-toolbar-minwidth': `${minWidth}px`
         }}
@@ -202,7 +214,7 @@ const Toolbar = ({
             <Button
               disabled={disabled}
               onClick={toggleTools}
-              title='Toggle tools'
+              title={messages.toolbar.showTools}
               icon={shapesIcon}
               selected={isAnyToolSelected}
               aria-haspopup='dialog'
@@ -250,7 +262,7 @@ const Toolbar = ({
         />
       </div>
       {isMenuOpen && (
-        <Modal className='react-paint-editor-toolbar-modal' onClose={toggleTools} title='Outils' withCloseButton>
+        <Modal className='react-paint-editor-toolbar-modal' onClose={toggleTools} title={messages.toolbar.tools} withCloseButton>
           {/* like the tools of a group, the active tool takes the focus first */}
           <div className='react-paint-editor-toolbar-modal-tools' ref={modalToolsRef}>
             {availableTools.map(toolType => (

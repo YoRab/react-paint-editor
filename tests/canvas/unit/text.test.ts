@@ -143,14 +143,21 @@ describe('createText', () => {
   it('makes a new text as wide as its content at the font size of its tool, without the font size in its style', () => {
     const settings = textTool.settings as ToolsSettingsType<'text'>
     const text = create({ ...settings, fontSize: { min: 8, max: 200, step: 1, default: 20 } })
-    expect(text).toMatchObject({ value: ['Texte'], fontSize: 20, width: 100, height: 20, x: 100, y: 80 })
+    // 4 letters of 1 em
+    expect(text).toMatchObject({ value: ['Text'], fontSize: 20, width: 80, height: 20, x: 120, y: 80 })
     expect(text.style).not.toHaveProperty('fontSize')
     expect(text.style).toMatchObject({ textAlign: 'left' })
   })
 
   it('makes a new text 150 wide without the font size setting', () => {
     const { fontSize: _fontSize, ...settings } = textTool.settings as ToolsSettingsType<'text'>
-    expect(create(settings)).toMatchObject({ fontSize: 30, width: 150, height: 30 })
+    expect(create(settings)).toMatchObject({ fontSize: 37.5, width: 150, height: 37.5 })
+  })
+
+  it('writes the text of the language of the canvas', () => {
+    const settings = textTool.settings as ToolsSettingsType<'text'>
+    const text = createTextShape(createContext(), { id: 'text-tool', type: 'text', settings }, [200, 100], UTILS_SETTINGS, 'Texte')
+    expect(text.value).toEqual(['Texte'])
   })
 })
 

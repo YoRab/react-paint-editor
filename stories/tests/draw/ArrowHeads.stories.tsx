@@ -36,10 +36,10 @@ export const ArrowHeads: Story = {
     const drawCanvas = (await view.findByTestId('draw-canvas')) as HTMLCanvasElement
 
     await selectTool(view, 'line')
-    await setSelectSetting(view, 'Flèche au début', 'Rond')
-    await setSelectSetting(view, 'Flèche à la fin', 'Triangle')
-    await setRangeSetting(view, 'Epaisseur du trait', 10)
-    await setAdvancedRangeSetting(view, 'Taille des flèches', 2)
+    await setSelectSetting(view, 'Arrow at the start', 'Circle')
+    await setSelectSetting(view, 'Arrow at the end', 'Triangle')
+    await setRangeSetting(view, 'Stroke width', 10)
+    await setAdvancedRangeSetting(view, 'Arrow size', 2)
 
     const start = toClient([300, 300])
     const end = toClient([600, 300])
@@ -71,8 +71,8 @@ export const ArrowHeads: Story = {
 
     // an open polygon of the polygon tool, which has its own heads: a triangle 40 long at its last point
     await selectTool(view, 'polygon')
-    await setSelectSetting(view, 'Flèche à la fin', 'Triangle')
-    await setRangeSetting(view, 'Epaisseur du trait', 5)
+    await setSelectSetting(view, 'Arrow at the end', 'Triangle')
+    await setRangeSetting(view, 'Stroke width', 5)
     for (const point of [
       [300, 420],
       [450, 420],

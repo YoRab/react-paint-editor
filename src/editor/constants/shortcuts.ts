@@ -37,6 +37,5 @@ export const ACTION_SHORTCUTS: Readonly<Partial<Record<EditorActionType, Shortcu
   export: { key: 'e', ctrl: true, shift: true }
 }
 
-/** Name of the list of the shortcuts, and the shortcut which opens it */
-export const HELP_LABEL = 'Raccourcis clavier'
+/** The shortcut which opens the list of the shortcuts */
 export const HELP_SHORTCUT: Shortcut = { key: '?', shift: 'any' }

@@ -1,3 +1,5 @@
+import { DEFAULT_CANVAS_LOCALE, type KeyNames } from './locale'
+
 /**
  * A key of the keyboard, with the modifiers it is pressed with. Ctrl is ⌘ on macOS. A letter is read whatever Caps Lock, and
  * the modifiers are given exactly: Shift too, unless it is 'any' (a sign, like ?, comes with or without it on the layouts)
@@ -67,20 +69,39 @@ export const matchesShortcut = (
   return e.key.toLowerCase() === key.toLowerCase() || (otherKeys?.includes(e.key) ?? false) || (!e.altKey && (codes?.includes(e.code) ?? false))
 }
 
-const KEY_LABELS: Record<string, string> = {
-  Delete: 'Suppr',
-  Backspace: 'Retour arrière',
-  Escape: 'Échap',
-  Enter: 'Entrée',
-  Tab: 'Tab'
+/** The keys written by their name in a locale: the other ones are written as their character */
+const NAMED_KEYS: Record<string, keyof KeyNames> = {
+  Delete: 'delete',
+  Backspace: 'backspace',
+  Escape: 'escape',
+  Enter: 'enter',
+  Tab: 'tab',
+  ' ': 'space'
 }
 
-/** Text of a shortcut, as the menus of the system show it: Ctrl+Maj+E, or ⇧⌘E on macOS */
-export const formatShortcut = ({ key, ctrl, shift }: Shortcut, isMac: boolean): string => {
-  const name = KEY_LABELS[key] ?? key.toUpperCase()
+/**
+ * Text of a shortcut, as the menus of the system show it: Ctrl+Shift+E, or ⇧⌘E on macOS. The names of the keys are the ones
+ * of a locale, in English by default
+ */
+export const formatShortcut = ({ key, ctrl, shift }: Shortcut, isMac: boolean, keys: KeyNames = DEFAULT_CANVAS_LOCALE.canvas.keys): string => {
+  const namedKey = NAMED_KEYS[key]
+  const name = namedKey ? keys[namedKey] : key.toUpperCase()
   if (isMac) return `${shift === true ? '⇧' : ''}${ctrl ? '⌘' : ''}${name}`
-  return [ctrl && 'Ctrl', shift === true && 'Maj', name].filter(Boolean).join('+')
+  return [ctrl && keys.ctrl, shift === true && keys.shift, name].filter(Boolean).join('+')
 }
+
+/**
+ * Texts of the shortcuts of the canvas by their name, with the names of the arrows and of Shift: the parameters of the
+ * instructions of a locale
+ */
+export const getShortcutParams = (isMac: boolean, keys: KeyNames): Record<keyof typeof CANVAS_SHORTCUTS | 'arrows' | 'shift', string> => ({
+  ...(Object.fromEntries(Object.entries(CANVAS_SHORTCUTS).map(([name, shortcut]) => [name, formatShortcut(shortcut, isMac, keys)])) as Record<
+    keyof typeof CANVAS_SHORTCUTS,
+    string
+  >),
+  arrows: keys.arrows,
+  shift: keys.shift
+})
 
 /** Value of aria-keyshortcuts: Control+Shift+E, or Meta+Shift+E on macOS */
 export const getAriaKeyShortcut = ({ key, ctrl, shift }: Shortcut, isMac: boolean): string =>

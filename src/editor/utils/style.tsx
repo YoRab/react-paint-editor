@@ -1,4 +1,4 @@
-import type { CustomShapeParams, CustomTool, ShapeType } from '@canvas/index'
+import type { CustomShapeParams, CustomTool, ShapeType, ToolsType } from '@canvas/index'
 import {
   arrowIcon,
   brushIcon,
@@ -11,7 +11,7 @@ import {
   starIcon,
   textIcon
 } from '@editor/constants/icons'
-import { TOOL_LABELS } from '@editor/constants/tools'
+import type { EditorMessages } from '@editor/constants/locale'
 import type { ReactNode } from 'react'
 
 export const getShapePicture = (shape: ShapeType) => {
@@ -74,9 +74,12 @@ export const getToolIcon = (tool: CustomTool): ReactNode =>
 
 export type DisplayTool = CustomTool & { icon: ReactNode; label: string }
 
+/** Name of a tool: the label it is given, or else the one of its type in the locale */
+export const getToolLabel = (tool: ToolsType, messages: EditorMessages): string => tool.label ?? messages.tools[tool.type]
+
 /** Tools coming from the canvas may have no icon or label: they are resolved here from the tool type */
-export const getDisplayTool = (tool: CustomTool): DisplayTool => ({
+export const getDisplayTool = (tool: CustomTool, messages: EditorMessages): DisplayTool => ({
   ...tool,
   icon: getToolIcon(tool),
-  label: tool.label ?? TOOL_LABELS[tool.type]
+  label: getToolLabel(tool, messages)
 })

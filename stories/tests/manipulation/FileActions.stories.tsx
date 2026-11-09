@@ -70,9 +70,9 @@ export const FileActions: Story = {
       // Export PNG: the whole drawing, the default canvas, or the current view
       // =====================================================================
 
-      await exportView('Exporter le dessin entier')
-      await exportView('Exporter le canevas par défaut')
-      await exportView('Exporter la vue actuelle')
+      await exportView('Export the whole drawing')
+      await exportView('Export the default canvas')
+      await exportView('Export the current view')
       expect(downloads).toHaveLength(3)
       for (const { href, download } of downloads) {
         expect(href.startsWith('data:image/png')).toBe(true)
@@ -87,8 +87,8 @@ export const FileActions: Story = {
       // the modal closes without exporting
       await openMenu()
       await userEvent.click(await view.findByRole('menuitem', { name: 'Export PNG' }))
-      await userEvent.click(await view.findByRole('button', { name: 'Annuler' }))
-      expect(view.queryByRole('button', { name: 'Exporter le dessin entier' })).toBeNull()
+      await userEvent.click(await view.findByRole('button', { name: 'Cancel' }))
+      expect(view.queryByRole('button', { name: 'Export the whole drawing' })).toBeNull()
       expect(downloads).toHaveLength(3)
 
       // =====================================================================
@@ -129,17 +129,18 @@ export const FileActions: Story = {
         ]
       }
       await loadProject(new File([JSON.stringify(project)], 'drawing.json', { type: 'application/json' }))
-      expect(await view.findByText('Fichier chargé !')).toBeInTheDocument()
+      expect(await view.findByText('File loaded')).toBeInTheDocument()
       expect(getState().shapes.map(shape => shape.id)).toEqual(['first', 'second'])
 
       await loadProject(new File(['not a project'], 'notes.json', { type: 'application/json' }))
-      expect(await view.findByText('Le chargement a échoué')).toBeInTheDocument()
+      // the code of the error of the canvas tells what went wrong
+      expect(await view.findByText('The file is not a project')).toBeInTheDocument()
       expect(getState().shapes).toHaveLength(2)
 
-      // a picture which cannot be read fails the same way
+      // a picture which cannot be read fails too
       await openMenu()
       await userEvent.upload(await findFileInput(view, 'Upload picture'), new File(['not an image'], 'broken.png', { type: 'image/png' }))
-      await waitFor(() => expect(view.getAllByText('Le chargement a échoué')).toHaveLength(2))
+      expect(await view.findByText('The picture could not be loaded')).toBeInTheDocument()
       expect(getState().shapes).toHaveLength(2)
 
       // the pictures of a project which cannot be loaded are left out, with a single message
@@ -147,7 +148,7 @@ export const FileActions: Story = {
       const withRefusedPictures = { shapes: [{ ...SQUARE, id: 'kept' }, refusedPicture('first-picture'), refusedPicture('second-picture')] }
       await loadProject(new File([JSON.stringify(withRefusedPictures)], 'drawing.json', { type: 'application/json' }))
       // findByText fails when several messages are shown
-      expect(await view.findByText("Certaines images n'ont pas pu être chargées")).toBeInTheDocument()
+      expect(await view.findByText('Some pictures could not be loaded')).toBeInTheDocument()
       expect(getState().shapes.map(shape => shape.id)).toEqual(['kept'])
 
       // =====================================================================
@@ -156,14 +157,14 @@ export const FileActions: Story = {
 
       getPaint().actions.clearCanvas()
       downloads.length = 0
-      await exportView('Exporter le dessin entier')
+      await exportView('Export the whole drawing')
       expect(downloads).toHaveLength(0)
-      expect(await view.findByText("L'export a échoué : No image found to export")).toBeInTheDocument()
+      expect(await view.findByText('There is no shape to export')).toBeInTheDocument()
       // the 3 failures of the editor, and the canvas about each picture left out
       expect(warn).toHaveBeenCalledTimes(5)
 
       // the messages go away after a few seconds
-      await waitFor(() => expect(view.queryByText('Fichier chargé !')).toBeNull(), { timeout: 5000 })
+      await waitFor(() => expect(view.queryByText('File loaded')).toBeNull(), { timeout: 5000 })
     } finally {
       click.mockRestore()
       warn.mockRestore()

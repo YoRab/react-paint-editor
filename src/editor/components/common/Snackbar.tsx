@@ -1,5 +1,6 @@
 import { SNACKBAR_DURATION, SNACKBAR_TOGGLE_ANIMATION_DURATION } from '@editor/constants/snackbar'
 import { STYLE_ZINDEX } from '@editor/constants/style'
+import useEditorLocale from '@editor/hooks/useEditorLocale'
 import type { SnackBarType } from '@editor/types/snackbar'
 import { useEffect, useState } from 'react'
 import './Snackbar.css'
@@ -18,6 +19,7 @@ type SnackbarProps = SnackBarType & { removeSnackbar: (id: string) => void }
 const Snackbar = ({ id, type, text, duration, removeSnackbar }: SnackbarProps) => {
   const [isShown, setIsShown] = useState(false)
   const [isPaused, setIsPaused] = useState(false)
+  const { editor } = useEditorLocale()
 
   useEffect(() => {
     const timeoutShowId = setTimeout(() => setIsShown(true), SNACKBAR_TOGGLE_ANIMATION_DURATION)
@@ -54,7 +56,13 @@ const Snackbar = ({ id, type, text, duration, removeSnackbar }: SnackbarProps) =
       onBlur={resume}
     >
       {text}
-      <button type='button' className='react-paint-editor-snackbar-close' title='Fermer' aria-label='Fermer' onClick={() => removeSnackbar(id)}>
+      <button
+        type='button'
+        className='react-paint-editor-snackbar-close'
+        title={editor.common.close}
+        aria-label={editor.common.close}
+        onClick={() => removeSnackbar(id)}
+      >
         ×
       </button>
     </div>
@@ -63,8 +71,14 @@ const Snackbar = ({ id, type, text, duration, removeSnackbar }: SnackbarProps) =
 
 /** The messages of the editor, read by the assistive technologies from this live region */
 const SnackbarContainer = ({ snackbarList, removeSnackbar }: SnackbarContainerType) => {
+  const { lang } = useEditorLocale()
   return (
-    <div className='react-paint-editor-snackbar-container' role='status' style={{ '--react-paint-editor-snackbar-zindex': STYLE_ZINDEX.SNACKBAR }}>
+    <div
+      className='react-paint-editor-snackbar-container'
+      role='status'
+      lang={lang}
+      style={{ '--react-paint-editor-snackbar-zindex': STYLE_ZINDEX.SNACKBAR }}
+    >
       {snackbarList.map(snackbar => (
         <Snackbar key={snackbar.id} {...snackbar} removeSnackbar={removeSnackbar} />
       ))}

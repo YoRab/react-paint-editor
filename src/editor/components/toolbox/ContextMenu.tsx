@@ -15,6 +15,7 @@ import Button from '@editor/components/common/Button'
 import Menu from '@editor/components/common/Menu'
 import ShortcutHint from '@editor/components/common/ShortcutHint'
 import { rightChevronIcon } from '@editor/constants/icons'
+import useEditorLocale from '@editor/hooks/useEditorLocale'
 import useMenu from '@editor/hooks/useMenu'
 import usePressOutside from '@editor/hooks/usePressOutside'
 import { type ReactNode, type RefObject, useEffect, useRef, useState } from 'react'
@@ -78,6 +79,8 @@ const ContextMenuContent = ({ contextMenu, containerRef, hasCopiedShapes, action
   const isVisible = !selectedShapes.some(shape => shape.visible === false)
   const isLocked = selectedShapes.some(shape => shape.locked)
   const organizeMenu = useMenu()
+  const { editor } = useEditorLocale()
+  const m = editor.contextMenu
   const transformMenu = useMenu({ disabled: isLocked })
 
   const menuHeight =
@@ -147,82 +150,82 @@ const ContextMenuContent = ({ contextMenu, containerRef, hasCopiedShapes, action
       className='react-paint-editor-toolbox-contextmenu'
       style={style}
       menuRef={menuRef}
-      label='Menu contextuel'
+      label={m.menu}
       onClose={actions.closeContextMenu}
       // the menu is hidden until it is placed: it takes the focus once shown
       autoFocus={menuPosition !== undefined}
     >
       {hasSelectedShape && (
         <>
-          {canRemoveAnchor && <Item onClick={onDeleteAnchor}>Delete point</Item>}
-          <SubmenuItem menu={organizeMenu} label='Organize' position={menuPosition?.subMenuPosition}>
+          {canRemoveAnchor && <Item onClick={onDeleteAnchor}>{m.removePoint}</Item>}
+          <SubmenuItem menu={organizeMenu} label={m.organize} position={menuPosition?.subMenuPosition}>
             <Item onClick={onMoveShapes('forward')} shortcut={CANVAS_SHORTCUTS.forward}>
-              Move forward
+              {m.bringForward}
             </Item>
             <Item onClick={onMoveShapes('first')} shortcut={CANVAS_SHORTCUTS.first}>
-              Put on first
+              {m.bringToFront}
             </Item>
             <Item onClick={onMoveShapes('backward')} shortcut={CANVAS_SHORTCUTS.backward}>
-              Move backward
+              {m.sendBackward}
             </Item>
             <Item onClick={onMoveShapes('last')} shortcut={CANVAS_SHORTCUTS.last}>
-              Put on last
+              {m.sendToBack}
             </Item>
           </SubmenuItem>
-          <SubmenuItem menu={transformMenu} label='Transform' disabled={isLocked} position={menuPosition?.subMenuPosition}>
+          <SubmenuItem menu={transformMenu} label={m.transform} disabled={isLocked} position={menuPosition?.subMenuPosition}>
             <Item onClick={onTransformShapes('flipHorizontally')} shortcut={CANVAS_SHORTCUTS.flipHorizontally}>
-              Flip horizontally
+              {m.flipHorizontally}
             </Item>
             <Item onClick={onTransformShapes('flipVertically')} shortcut={CANVAS_SHORTCUTS.flipVertically}>
-              Flip vertically
+              {m.flipVertically}
             </Item>
-            <Item onClick={onTransformShapes('rotateClockwise')}>Rotate clockwise</Item>
-            <Item onClick={onTransformShapes('rotateCounterclockwise')}>Rotate counterclockwise</Item>
+            <Item onClick={onTransformShapes('rotateClockwise')}>{m.rotateClockwise}</Item>
+            <Item onClick={onTransformShapes('rotateCounterclockwise')}>{m.rotateCounterclockwise}</Item>
           </SubmenuItem>
           <hr />
           <Item onClick={onCutShape} shortcut={CANVAS_SHORTCUTS.cut}>
-            Cut
+            {m.cut}
           </Item>
           <Item onClick={onCopyShape} shortcut={CANVAS_SHORTCUTS.copy}>
-            Copy
+            {m.copy}
           </Item>
         </>
       )}
       <Item onClick={onPasteShape} disabled={!hasCopiedShapes} shortcut={CANVAS_SHORTCUTS.paste}>
-        Paste
+        {m.paste}
       </Item>
       <hr />
       {hasSelectedShape && (
         <>
           <Item onClick={onDuplicateShape} shortcut={CANVAS_SHORTCUTS.duplicate}>
-            Duplicate
+            {m.duplicate}
           </Item>
           <Item onClick={onGroupShapes} disabled={!canGroup} shortcut={CANVAS_SHORTCUTS.group}>
-            Group
+            {m.group}
           </Item>
           <Item onClick={onUngroupShapes} disabled={!canUngroup} shortcut={CANVAS_SHORTCUTS.ungroup}>
-            Ungroup
+            {m.ungroup}
           </Item>
           <Item onClick={onToggleShapeVisibility} shortcut={CANVAS_SHORTCUTS.hide}>
-            {isVisible ? 'Hide' : 'Show'}
+            {isVisible ? m.hide : m.show}
           </Item>
           <Item onClick={onToggleShapeLock} shortcut={CANVAS_SHORTCUTS.lock}>
-            {isLocked ? 'Unlock' : 'Lock'}
+            {isLocked ? m.unlock : m.lock}
           </Item>
           <Item onClick={onRemoveShape} shortcut={CANVAS_SHORTCUTS.remove}>
-            Delete
+            {m.remove}
           </Item>
           <hr />
         </>
       )}
       <Item onClick={onSelectAllShapes} shortcut={CANVAS_SHORTCUTS.selectAll}>
-        Select all
+        {m.selectAll}
       </Item>
       {hasSelectedShape && (
         <>
           <hr />
           <Item onClick={onOpenProperties} disabled={isLocked}>
-            Propriétés
+            {m.properties}
           </Item>
         </>
       )}

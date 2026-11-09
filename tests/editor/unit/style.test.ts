@@ -1,5 +1,6 @@
 import { type CustomShapeDefinition, type CustomTool, SETTINGS_DEFAULT_CUSTOM } from '@canvas/index'
-import { getDisplayTool, getShapePicture } from '@editor/utils/style'
+import { DEFAULT_EDITOR_LOCALE } from '@editor/constants/locale'
+import { getDisplayTool as getDisplayToolIn, getShapePicture } from '@editor/utils/style'
 import { createElement, type ReactNode } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, it } from 'vitest'
@@ -12,6 +13,8 @@ const customTool = (shape: CustomShapeDefinition, params: NonNullable<typeof SET
 })
 
 const markup = (icon: ReactNode) => renderToStaticMarkup(icon)
+
+const getDisplayTool = (tool: CustomTool) => getDisplayToolIn(tool, DEFAULT_EDITOR_LOCALE.editor)
 
 describe('getDisplayTool of a custom tool', () => {
   it('draws the icon of a tool which gives none from its own path, in its view box', () => {
@@ -43,5 +46,15 @@ describe('getDisplayTool of a custom tool', () => {
     }
     expect(getDisplayTool(customTool({ viewBox: [0, 0, 10, 10], path: failing })).icon).toBe(getShapePicture('custom'))
     expect(getDisplayTool(customTool({ viewBox: [0, 0, 10, 10], path: () => '' })).icon).toBe(getShapePicture('custom'))
+  })
+})
+
+describe('getDisplayTool labels', () => {
+  it('names a tool by its label, or else by its type in the locale', () => {
+    const tool = customTool({ viewBox: [0, 0, 10, 10], path: 'M0 0 Z' })
+    expect(getDisplayTool(tool).label).toBe('Shape')
+    expect(getDisplayTool({ ...tool, label: 'Star' }).label).toBe('Star')
+    const messages = { ...DEFAULT_EDITOR_LOCALE.editor, tools: { ...DEFAULT_EDITOR_LOCALE.editor.tools, custom: 'Forme' } }
+    expect(getDisplayToolIn(tool, messages).label).toBe('Forme')
   })
 })

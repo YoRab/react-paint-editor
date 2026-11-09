@@ -1,4 +1,5 @@
 import { type EditorState, type Point, type Rect, usePaint } from '@canvas/index'
+import useEditorLocale from '@editor/hooks/useEditorLocale'
 import usePanTransition from '@editor/hooks/usePanTransition'
 import { isPastDragThreshold } from '@editor/utils/dom'
 import {
@@ -135,6 +136,7 @@ const drawMinimap = (
 const MiniMap = ({ shapesColor, selectionColor }: MiniMapType) => {
   const paint = usePaint()
   const { actions } = paint
+  const { lang, editor } = useEditorLocale()
   const canvasRef = useRef<HTMLCanvasElement | null>(null)
   // transformation of the last frame drawn: a press moves the view to the point it shows
   const transformRef = useRef<MinimapTransform | undefined>(undefined)
@@ -251,8 +253,9 @@ const MiniMap = ({ shapesColor, selectionColor }: MiniMapType) => {
       data-testid='minimap'
       // the keyboard moves the view with the arrows
       tabIndex={0}
-      aria-label='Minimap'
-      title='The arrows move the view'
+      aria-label={editor.zoom.minimap}
+      title={editor.zoom.minimapHint}
+      lang={lang}
       width={MINIMAP_SIZE.width}
       height={MINIMAP_SIZE.height}
       style={{ width: `${MINIMAP_SIZE.width}px`, height: `${MINIMAP_SIZE.height}px` }}
