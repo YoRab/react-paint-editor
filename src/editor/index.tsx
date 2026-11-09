@@ -1,4 +1,4 @@
-import { type EditorState, type ExportView, PaintProvider, type ReactPaint, shallowEqual, usePaintState } from '@canvas/index'
+import { type EditorState, type ExportView, PaintProvider, type ReactPaint, ReactPaintError, shallowEqual, usePaintState } from '@canvas/index'
 import Announcements from '@editor/components/common/Announcements'
 import Loading from '@editor/components/common/Loading'
 import SnackbarContainer from '@editor/components/common/Snackbar'
@@ -10,12 +10,17 @@ import Toolbar from '@editor/components/toolbox/Toolbar'
 import { DEFAULT_EDITOR_OPTIONS, type EditorOptions } from '@editor/constants/options'
 import useDebounce from '@editor/hooks/useDebounce'
 import useDisclosure from '@editor/hooks/useDisclosure'
+import { EditorLocaleProvider, type EditorLocaleValue, useResolvedEditorLocale } from '@editor/hooks/useEditorLocale'
 import useRecentColors from '@editor/hooks/useRecentColors'
 import useSnackbar from '@editor/hooks/useSnackbar'
 import { withDefaults } from '@editor/utils/util'
 import { type CSSProperties, type ReactNode, useCallback, useEffect, useRef, useState } from 'react'
 import './index.css'
 import ContextMenu from '@editor/components/toolbox/ContextMenu'
+
+/** What went wrong, told by the code of an error of the canvas, or else the message of the action which failed */
+const getErrorText = (error: unknown, fallback: string, { editor, format }: EditorLocaleValue): string =>
+  error instanceof ReactPaintError ? format(editor.errors[error.code], error.details) : fallback
 
 type EditorComponentProps = {
   /** Handle returned by useReactPaint */
@@ -59,6 +64,8 @@ const Editor = ({ paint, className, style, options, children }: EditorComponentP
     withLaser,
     withMinimap
   } = withDefaults(DEFAULT_EDITOR_OPTIONS, options)
+  const locale = useResolvedEditorLocale(options?.locale)
+  const { snackbars, files } = locale.editor
 
   const isEditMode = mode !== 'viewer'
   const disabled = !features.edition
@@ -86,54 +93,53 @@ const Editor = ({ paint, className, style, options, children }: EditorComponentP
 
   const { snackbarList, addSnackbar, removeSnackbar } = useSnackbar()
 
+  // the snackbar of an error, told by its code when the canvas gave one
+  const reportError = useCallback(
+    (error: unknown, fallback: string) => {
+      addSnackbar({ type: 'error', text: getErrorText(error, fallback, locale) })
+      console.warn(error)
+    },
+    [addSnackbar, locale]
+  )
+
   const exportCanvasInFile = useCallback(
     (exportView: ExportView) => {
       setIsLoading(true)
       try {
-        actions.exportPicture({ view: exportView })
+        actions.exportPicture({ view: exportView, fileName: `${files.drawing}.png` })
       } catch (e) {
-        if (e instanceof Error) {
-          addSnackbar({ type: 'error', text: `L'export a échoué : ${e.message}` })
-        }
-        console.warn(e)
+        reportError(e, snackbars.exportFailed)
       } finally {
         setIsLoading(false)
       }
     },
-    [actions, addSnackbar]
+    [actions, reportError, files, snackbars]
   )
 
   const saveFile = useCallback(() => {
     setIsLoading(true)
     try {
-      actions.exportData()
-      setIsLoading(false)
+      actions.exportData({ fileName: `${files.drawing}.json` })
     } catch (e) {
-      if (e instanceof Error) {
-        addSnackbar({ type: 'error', text: "L'enregistrement a échoué" })
-      }
-      console.warn(e)
+      reportError(e, snackbars.saveFailed)
     } finally {
       setIsLoading(false)
     }
-  }, [actions, addSnackbar])
+  }, [actions, reportError, files, snackbars])
 
   const onLoadFile = useCallback(
     async (file: File) => {
       setIsLoading(true)
       try {
         await actions.loadFile(file)
-        addSnackbar({ type: 'success', text: 'Fichier chargé !' })
+        addSnackbar({ type: 'success', text: snackbars.fileLoaded })
       } catch (e) {
-        if (e instanceof Error) {
-          addSnackbar({ type: 'error', text: 'Le chargement a échoué' })
-        }
-        console.warn(e)
+        reportError(e, snackbars.loadFailed)
       } finally {
         setIsLoading(false)
       }
     },
-    [actions, addSnackbar]
+    [actions, addSnackbar, reportError, snackbars]
   )
 
   const addPicture = useCallback(
@@ -142,31 +148,28 @@ const Editor = ({ paint, className, style, options, children }: EditorComponentP
       try {
         await actions.addPicture(fileOrUrl)
       } catch (e) {
-        if (e instanceof Error) {
-          addSnackbar({ type: 'error', text: 'Le chargement a échoué' })
-        }
-        console.warn(e)
+        reportError(e, snackbars.loadFailed)
       } finally {
         setIsLoading(false)
       }
     },
-    [actions, addSnackbar]
+    [actions, reportError, snackbars]
   )
 
   useEffect(
-    () => paint.registerEvent('pictureDropFailed', () => addSnackbar({ type: 'error', text: 'Le chargement a échoué' })),
-    [paint, addSnackbar]
+    () =>
+      paint.registerEvent('pictureDropFailed', (_file, error) =>
+        addSnackbar({ type: 'error', text: getErrorText(error, snackbars.loadFailed, locale) })
+      ),
+    [paint, addSnackbar, snackbars, locale]
   )
 
-  const showPictureLoadFailed = useCallback(() => addSnackbar({ type: 'error', text: "Certaines images n'ont pas pu être chargées" }), [addSnackbar])
+  const showPictureLoadFailed = useCallback(() => addSnackbar({ type: 'error', text: snackbars.picturesNotLoaded }), [addSnackbar, snackbars])
   // the pictures left out of the same loaded data give a single message
   const reportPictureLoadFailed = useDebounce(showPictureLoadFailed, 0)
   useEffect(() => paint.registerEvent('pictureLoadFailed', reportPictureLoadFailed), [paint, reportPictureLoadFailed])
 
-  const showCustomShapeLoadFailed = useCallback(
-    () => addSnackbar({ type: 'error', text: "Certaines formes personnalisées n'ont pas pu être chargées" }),
-    [addSnackbar]
-  )
+  const showCustomShapeLoadFailed = useCallback(() => addSnackbar({ type: 'error', text: snackbars.customShapesNotLoaded }), [addSnackbar, snackbars])
   // the custom shapes left out of the same loaded data give a single message
   const reportCustomShapeLoadFailed = useDebounce(showCustomShapeLoadFailed, 0)
   useEffect(() => paint.registerEvent('customShapeLoadFailed', reportCustomShapeLoadFailed), [paint, reportCustomShapeLoadFailed])
@@ -204,57 +207,60 @@ const Editor = ({ paint, className, style, options, children }: EditorComponentP
       }}
     >
       <PaintProvider paint={paint}>
-        {isEditMode && (
-          <Toolbar
-            scopeRef={rootRef}
-            disabled={disabled}
-            withMoveTool={withZoom}
-            withEraser={withEraser}
-            withLaser={withLaser}
-            exportCanvasInFile={exportCanvasInFile}
-            saveFile={saveFile}
-            loadFile={onLoadFile}
-            addPicture={addPicture}
-            withExport={withExport}
-            withLoadAndSave={withLoadAndSave}
-            withUploadPicture={withUploadPicture}
-            withUrlPicture={withUrlPicture}
-          />
-        )}
-        {children}
-        {isEditMode && layersManipulation && <Layouts isLayoutPanelShown={isLayoutPanelShown} disabled={disabled} {...layersPanel.panelProps} />}
-        {isZoomPanelShown && (
-          <ZoomPanel isEditMode={isEditMode} {...zoomPanel.panelProps}>
-            {withMinimap && <MiniMap shapesColor={fontColor} selectionColor={fontSelectedBackgroundColor} />}
-          </ZoomPanel>
-        )}
-        {isEditMode && (
-          <>
-            <SettingsBar
+        <EditorLocaleProvider locale={locale}>
+          {isEditMode && (
+            <Toolbar
+              scopeRef={rootRef}
               disabled={disabled}
-              withZoom={withZoom}
-              layersManipulation={layersManipulation}
-              layersPanel={layersPanel}
-              toggleLayoutPanel={() => {
-                setIsLayoutPanelShown(prev => !prev)
-              }}
-              zoomPanel={zoomPanel}
-              isZoomPanelShown={isZoomPanelShown}
-              setIsZoomPanelShown={setIsZoomPanelShown}
-              recentColors={recentColors}
-              addRecentColor={addRecentColor}
+              withMoveTool={withZoom}
+              withEraser={withEraser}
+              withLaser={withLaser}
+              exportCanvasInFile={exportCanvasInFile}
+              saveFile={saveFile}
+              loadFile={onLoadFile}
+              addPicture={addPicture}
+              withExport={withExport}
+              withLoadAndSave={withLoadAndSave}
+              withUploadPicture={withUploadPicture}
+              withUrlPicture={withUrlPicture}
             />
-            <Loading isLoading={isLoading} />
-            <SnackbarContainer snackbarList={snackbarList} removeSnackbar={removeSnackbar} />
-          </>
-        )}
-        <ContextMenu containerRef={rootRef} />
-        <Announcements paint={paint} />
+          )}
+          {children}
+          {isEditMode && layersManipulation && <Layouts isLayoutPanelShown={isLayoutPanelShown} disabled={disabled} {...layersPanel.panelProps} />}
+          {isZoomPanelShown && (
+            <ZoomPanel isEditMode={isEditMode} {...zoomPanel.panelProps}>
+              {withMinimap && <MiniMap shapesColor={fontColor} selectionColor={fontSelectedBackgroundColor} />}
+            </ZoomPanel>
+          )}
+          {isEditMode && (
+            <>
+              <SettingsBar
+                disabled={disabled}
+                withZoom={withZoom}
+                layersManipulation={layersManipulation}
+                layersPanel={layersPanel}
+                toggleLayoutPanel={() => {
+                  setIsLayoutPanelShown(prev => !prev)
+                }}
+                zoomPanel={zoomPanel}
+                isZoomPanelShown={isZoomPanelShown}
+                setIsZoomPanelShown={setIsZoomPanelShown}
+                recentColors={recentColors}
+                addRecentColor={addRecentColor}
+              />
+              <Loading isLoading={isLoading} />
+              <SnackbarContainer snackbarList={snackbarList} removeSnackbar={removeSnackbar} />
+            </>
+          )}
+          <ContextMenu containerRef={rootRef} />
+          <Announcements paint={paint} />
+        </EditorLocaleProvider>
       </PaintProvider>
     </div>
   )
 }
 
+export { DEFAULT_EDITOR_LOCALE, type EditorLocale, type EditorMessages, type SettingFieldName } from '@editor/constants/locale'
 export { DEFAULT_EDITOR_OPTIONS, type EditorOptions } from '@editor/constants/options'
 export type { EditorComponentProps }
 export { Editor }

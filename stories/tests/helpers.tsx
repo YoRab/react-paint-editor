@@ -3,6 +3,7 @@ import { expect, userEvent, type within } from 'storybook/test'
 import {
   Canvas,
   type CanvasOptions,
+  DEFAULT_EDITOR_LOCALE,
   Editor,
   type EditorOptions,
   type Point,
@@ -96,16 +97,17 @@ export function makeCoordConverters(rect: DOMRect) {
 // ─── Tool selection ────────────────────────────────────────────────────────────
 
 // Some tools are grouped inside ToolbarGroup panels.
+const { groups } = DEFAULT_EDITOR_LOCALE.editor.toolbar
 const TOOL_GROUPS: Record<string, string> = {
-  line: 'lines',
-  curve: 'lines',
-  polygon: 'lines',
-  rect: 'shapes',
-  square: 'shapes',
-  circle: 'shapes',
-  ellipse: 'shapes',
-  custom: 'shapes',
-  picture: 'stickers'
+  line: groups.lines,
+  curve: groups.lines,
+  polygon: groups.lines,
+  rect: groups.shapes,
+  square: groups.shapes,
+  circle: groups.shapes,
+  ellipse: groups.shapes,
+  custom: groups.shapes,
+  picture: groups.stickers
 }
 
 export async function selectTool(view: ReturnType<typeof within>, toolId: string) {
@@ -187,10 +189,10 @@ async function closeSettingPanel(view: ReturnType<typeof within>, title: string)
   await userEvent.click(await view.findByRole('button', { name: title }))
 }
 
-/** Selects a color in a ColorField panel. */
+/** Selects a color in a ColorField panel, by its value: its button is named after it in the locale */
 export async function setColorSetting(view: ReturnType<typeof within>, title: string, color: string) {
   await openSettingPanel(view, title)
-  await userEvent.click(await view.findByRole('button', { name: color }))
+  await userEvent.click(await view.findByRole('button', { name: DEFAULT_EDITOR_LOCALE.editor.settings.colorNames[color] ?? color }))
   await closeSettingPanel(view, title)
 }
 
@@ -225,7 +227,7 @@ export async function setSelectSetting(view: ReturnType<typeof within>, title: s
   await closeSettingPanel(view, title)
 }
 
-export const MORE_OPTIONS = "Plus d'options"
+export const MORE_OPTIONS = 'More options'
 
 /** Changes settings of the panel of the other options, opened then closed. */
 export async function inMoreOptions(view: ReturnType<typeof within>, change: () => Promise<void>) {
@@ -259,7 +261,7 @@ export async function addPictureFromUrl(view: ReturnType<typeof within>, src: st
   const urlInput = await view.findByRole('textbox')
   await userEvent.clear(urlInput)
   await userEvent.type(urlInput, src)
-  await userEvent.click(await view.findByRole('button', { name: 'Ajouter' }))
+  await userEvent.click(await view.findByRole('button', { name: 'Add' }))
   await new Promise(res => setTimeout(res, 500))
 }
 

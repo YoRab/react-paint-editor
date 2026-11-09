@@ -37,8 +37,8 @@ export const TextLineHeight: Story = {
     const view = within(canvasElement)
     const user = userEvent.setup()
     await selectTool(view, 'text')
-    await setNumberSetting(view, 'Taille du texte', 20)
-    await setAdvancedRangeSetting(view, 'Interligne', 1.5)
+    await setNumberSetting(view, 'Text size', 20)
+    await setAdvancedRangeSetting(view, 'Line height', 1.5)
 
     const drawCanvas = await view.findByTestId('draw-canvas')
     const rect = drawCanvas.getBoundingClientRect()
@@ -73,10 +73,10 @@ export const TextLineHeight: Story = {
     getPaint().actions.selectShapes([text!.id!])
     await wait()
     await inMoreOptions(view, async () => {
-      await userEvent.click(view.getByRole('button', { name: 'Interligne' }))
+      await userEvent.click(view.getByRole('button', { name: 'Line height' }))
       expect(view.getByText('1.5')).toBeTruthy()
-      await userEvent.click(view.getByRole('button', { name: 'Interligne' }))
-      await setRangeSetting(view, 'Interligne', 2)
+      await userEvent.click(view.getByRole('button', { name: 'Line height' }))
+      await setRangeSetting(view, 'Line height', 2)
     })
     await wait()
     const [updated] = getCurrentDataRef.current!().shapes!

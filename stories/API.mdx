@@ -31,6 +31,7 @@ import LinkTo from '@storybook/addon-links/react';
         <li><a href="#Actions" target="_self">Driving the canvas from the code</a></li>
         <li><a href="#Performance" target="_self">Performance</a></li>
         <li><a href="#Helpers" target="_self">Helpers</a></li>
+        <li><a href="#Languages" target="_self">Languages</a></li>
       </ul>
 
       <h2 id="useReactPaint">useReactPaint Hook</h2>
@@ -425,6 +426,15 @@ const annotationsStyle = useAnnotationsStyle(paint)
             </td>
             <td><code>true</code></td>
           </tr>
+          <tr>
+            <td><code>locale</code></td>
+            <td><code>PartialLocale&lt;EditorLocale&gt;</code></td>
+            <td>
+              Language and texts of the editor (<code>editor</code>) and of the canvases inside it (<code>canvas</code>), merged into <code>DEFAULT_EDITOR_LOCALE</code>, in English: a complete translation, or some
+              texts to replace. See the <a href="#Languages" target="_self">languages</a>
+            </td>
+            <td><code>DEFAULT_EDITOR_LOCALE</code></td>
+          </tr>
         </tbody>
       </table>
 
@@ -513,14 +523,16 @@ const annotationsStyle = useAnnotationsStyle(paint)
             <td><code>6</code></td>
           </tr>
           <tr>
-            <td><code>canvasLabels</code></td>
-            <td><code>Partial&lt;CanvasLabels&gt;</code></td>
+            <td><code>locale</code></td>
+            <td><code>PartialLocale&lt;CanvasLocale&gt;</code></td>
             <td>
-              Texts of the canvas for the assistive technologies, merged with <code>DEFAULT_CANVAS_LABELS</code> (in French): the name of the canvas (<code>canvas</code>), its role (<code>roleDescription</code>), its keys
-              (<code>instructions</code>), the hint shown when it takes the focus from the keyboard (<code>keyboardHint</code> and <code>keyboardHintKey</code>), the name of the text edition box (<code>textBox</code>) and of the list of
-              the shapes (<code>shapesList</code>), the word added to a selected shape (<code>selected</code>), and the name of each type of shape (<code>shapeTypes</code>, merged too)
+              Language (<code>lang</code>) and texts of the canvas (<code>canvas</code>), merged into the ones of the closest <code>CanvasLocaleProvider</code> or <code>Editor</code>, in English by default
+              (<code>DEFAULT_CANVAS_LOCALE</code>): the name of the canvas, its role, its keys (<code>instructions</code>, whose parameters are the shortcuts by name), the hint shown when it takes the focus
+              from the keyboard, the names of the text edition box and of the list of the shapes, the templates of the description of a shape (<code>namedShape</code>, <code>textShape</code>,
+              <code>selectedShape</code>), the content of a new text (<code>defaultText</code>), the name of each type of shape (<code>shapeTypes</code>) and the names of the keys (<code>keys</code>). See the{' '}
+              <a href="#Languages" target="_self">languages</a>
             </td>
-            <td><code>DEFAULT_CANVAS_LABELS</code></td>
+            <td>Inherited, else <code>DEFAULT_CANVAS_LOCALE</code></td>
           </tr>
         </tbody>
       </table>
@@ -1276,10 +1288,44 @@ useReactPaint({ options: { availableTools: [...DEFAULT_TOOLS, STAR, HEART, STICK
         <li>
           <code>CANVAS_SHORTCUTS</code> - The keys of the commands of the canvas (see the keyboard shortcuts), as <code>Shortcut</code> objects <code>{'{ key, ctrl?, shift?, otherKeys?, codes? }'}</code> where <code>ctrl</code> is <code>⌘</code> on macOS.
           To show them in a custom editor, to avoid them for its own, or to listen the same keys: <code>matchesShortcut(event, shortcut, isShiftPressed)</code> tells whether a key event is a shortcut (a letter whatever Caps Lock, the digits and the signs
-          also from their physical key, the modifiers given exactly), <code>formatShortcut(shortcut, isMac)</code> writes it for a menu (<code>Ctrl+Maj+G</code>, <code>⇧⌘G</code>) and <code>getAriaKeyShortcut(shortcut, isMac)</code> gives the value of <code>aria-keyshortcuts</code>
+          also from their physical key, the modifiers given exactly), <code>formatShortcut(shortcut, isMac, keys?)</code> writes it for a menu with the names of the keys of a locale, English by default (<code>Ctrl+Shift+G</code>, <code>⇧⌘G</code>) and <code>getAriaKeyShortcut(shortcut, isMac)</code> gives the value of <code>aria-keyshortcuts</code>
         </li>
         <li><code>shallowEqual(a, b)</code> - Equality function for <code>usePaintState</code> selectors building an object or an array</li>
         <li><code>SETTINGS_DEFAULT_CUSTOM</code> - Default settings of a custom tool, to spread in its own settings</li>
+      </ul>
+
+      <h2 id="Languages">Languages</h2>
+      <p>
+        The canvas and the editor are in English, the only language the library ships. The <code>locale</code> option of the <code>Editor</code> gives a language to the editor and to the canvases inside it;
+        a <code>Canvas</code> without editor takes its own <code>locale</code> option, or the one of a <code>CanvasLocaleProvider</code> around it. A complete French translation is written in the
+        stories (<code>stories/locales/fr.ts</code>), and shown by the Languages story.
+      </p>
+      <ul>
+        <li>
+          <code>EditorLocale</code> - <code>{'{ lang, canvas: CanvasMessages, editor: EditorMessages }'}</code>. Annotated with this type, a translation lists the texts it misses. <code>CanvasLocale</code> is{' '}
+          <code>{'{ lang, canvas }'}</code>
+        </li>
+        <li><code>PartialLocale&lt;T&gt;</code> - Some texts of a locale, merged into the English ones by the options: the groups are merged, a message and a plural message are replaced whole</li>
+        <li>
+          <code>lang</code> - A BCP 47 tag, set as the <code>lang</code> attribute of the elements holding the texts (never the roots, which hold the content of the consumer), and used for the plurals and the
+          numbers. An unknown tag falls back to English for them
+        </li>
+        <li>
+          <code>Message</code> - A text, with parameters written <code>{'{name}'}</code>, or a <code>PluralMessage</code>: <code>{"{ one: '{count} shape added', other: '{count} shapes added' }"}</code>, whose form is chosen by{' '}
+          <code>Intl.PluralRules</code> from the <code>count</code> parameter (<code>zero</code>, <code>one</code>, <code>two</code>, <code>few</code>, <code>many</code> or <code>other</code>, which is required). The texts
+          are plain data: they can be loaded from JSON
+        </li>
+        <li>
+          <code>formatMessage(message, params?, lang?)</code> - Writes a message in a language, the numbers too. <code>formatNumber(value, lang, options?)</code> writes a number with the options of{' '}
+          <code>Intl.NumberFormat</code>
+        </li>
+        <li><code>mergeLocale(locale, texts)</code> - The locale with some texts replaced, as the options merge them</li>
+        <li><code>CanvasLocaleProvider</code>, <code>useCanvasLocale()</code> - Give and read the locale of the canvases, for a custom editor</li>
+        <li>
+          <code>ReactPaintError</code> - The errors of the canvas a user may meet, with a <code>code</code> (<code>ReactPaintErrorCode</code>) and the values it depends on (<code>details</code>): the editor tells them
+          with its <code>errors</code> texts. Rejected by <code>loadFile</code>, <code>addPicture</code>, <code>exportPicture</code> and <code>exportData</code>, and given by <code>pictureLoadFailed</code> and{' '}
+          <code>pictureDropFailed</code>. Their messages, like the other errors and the warnings, are written in English for the developers
+        </li>
       </ul>
 
       <h2>Shape-Specific Types</h2>
@@ -1450,7 +1496,7 @@ useReactPaint({ options: { availableTools: [...DEFAULT_TOOLS, STAR, HEART, STICK
         </tbody>
       </table>
       <p>
-        Reached with <code>Tab</code>, the canvas shows a hint (<code>canvasLabels.keyboardHint</code>): <code>Enter</code> then goes through its shapes, until <code>Escape</code> leaves them
+        Reached with <code>Tab</code>, the canvas shows a hint (<code>canvas.keyboardHint</code> of the locale): <code>Enter</code> then goes through its shapes, until <code>Escape</code> leaves them
         (<code>state.interaction.keyboardNavigation</code>):
       </p>
       <table>

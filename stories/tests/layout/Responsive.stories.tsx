@@ -70,7 +70,7 @@ export const Responsive: Story = {
     // =====================================================================
     // Step 3: Default viewport — settings bar
     // 9 settings (strokeColor, fillColor, fontFamily, fontSize, fontBold, fontItalic, fontUnderline, textAlign, opacity)
-    // + "Plus d'options" (fontStrikethrough, outlineColor, outlineWidth) + 1 delete = 11
+    // + 'More options' (fontStrikethrough, outlineColor, outlineWidth) + 1 delete = 11
     // =====================================================================
     const defaultSettingsButtons = canvasElement.querySelectorAll('.react-paint-editor-settings-shrinkable button')
     expect(defaultSettingsButtons.length).toBe(11)
@@ -103,7 +103,7 @@ export const Responsive: Story = {
     expect(toolsModal!.querySelectorAll('button:not(.react-paint-editor-modal-close)').length).toBe(9)
     // the modal takes the focus, and has its own button to close it
     expect(toolsModal!.contains(document.activeElement)).toBe(true)
-    expect(within(toolsModal as HTMLElement).getByRole('button', { name: 'Fermer' })).toBeInTheDocument()
+    expect(within(toolsModal as HTMLElement).getByRole('button', { name: 'Close' })).toBeInTheDocument()
 
     // =====================================================================
     // Step 7: Close tools modal with Escape: the focus goes back to its button

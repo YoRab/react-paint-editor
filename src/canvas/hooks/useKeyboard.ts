@@ -95,7 +95,7 @@ const useKeyboard = (store: PaintStore) => {
       const settings = store.getSettings()
       const center = getViewCenter()
       const stickerImage = isStickerTool(tool) ? store.getStickerImage(tool.src) : undefined
-      const drawn = createShape(ctx, tool, center, settings, stickerImage)
+      const drawn = createShape(ctx, tool, center, settings, stickerImage, store.getDefaultText())
       if (!drawn) return
       const shape = sizeShapeOnClick(drawn, center, settings) ?? drawn
       store.batch(() => {

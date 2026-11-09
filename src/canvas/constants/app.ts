@@ -1,9 +1,9 @@
 import type { Resize, Size } from '@canvas/types/Canvas'
-import type { ShapeInput, ShapeType } from '@canvas/types/Shapes'
+import type { ShapeInput } from '@canvas/types/Shapes'
 import type { CustomToolInput } from '@canvas/types/tools'
 import type { RecursivePartial } from '@canvas/types/utils'
+import type { CanvasLocale, PartialLocale } from './locale'
 import { SELECTION_DEFAULT_COLOR, SELECTION_DEFAULT_PADDING, SELECTION_DEFAULT_WIDTH } from './shapes'
-import { CANVAS_SHORTCUTS, formatShortcut, type Shortcut } from './shortcuts'
 import { DEFAULT_TOOLS } from './tools'
 
 export const APP_NAME = 'react_paint'
@@ -69,61 +69,6 @@ export const DEFAULT_OPTIONS: AppOptions = {
   debug: false
 }
 
-/** Texts of the canvas given to the assistive technologies, and the hint shown when it takes the focus from the keyboard */
-export type CanvasLabels = {
-  /** Name of the canvas */
-  canvas: string
-  /** What the canvas is, read instead of its role */
-  roleDescription: string
-  /** Keys of the canvas, read when it takes the focus */
-  instructions: string
-  /** Shown over the canvas when it takes the focus from the keyboard, until Enter moves the focus onto its shapes */
-  keyboardHint: string
-  /** Key of the hint */
-  keyboardHintKey: string
-  /** Name of the box editing a text */
-  textBox: string
-  /** Name of the list of the shapes of the drawing */
-  shapesList: string
-  /** Added to the name of a selected shape */
-  selected: string
-  /** Name of a shape without a name, by type */
-  shapeTypes: Record<ShapeType, string>
-}
-
-const S = CANVAS_SHORTCUTS
-/** A key as the instructions say it: the same ones whatever the system */
-const key = (shortcut: Shortcut) => formatShortcut(shortcut, false)
-
-export const DEFAULT_CANVAS_LABELS: CanvasLabels = {
-  canvas: 'Dessin',
-  roleDescription: 'zone de dessin',
-  instructions:
-    `${key(S.enter)} : parcourir les formes avec ${key(S.nextShape)} et ${key(S.previousShape)}, puis ouvrir un groupe ou éditer un texte. Avec un outil de dessin, ${key(S.enter)} ajoute une forme au centre de la vue. ` +
-    `Flèches : déplacer la sélection, Maj pour aller plus loin, ou déplacer la vue sans sélection. ${key(S.remove)} : supprimer. ` +
-    `${key(S.duplicate)} : dupliquer. ${key(S.forward)} et ${key(S.backward)} : avancer et reculer, avec Maj au premier plan et à l'arrière-plan. ` +
-    `${key(S.escape)} : remonter au groupe, puis quitter les formes. ${key(S.contextMenu)} : menu contextuel.`,
-  keyboardHint: 'Déplacer le focus sur le canvas',
-  keyboardHintKey: key(S.enter),
-  textBox: 'Texte',
-  shapesList: 'Formes du dessin',
-  selected: 'sélectionnée',
-  shapeTypes: {
-    brush: 'Trait libre',
-    line: 'Ligne',
-    polygon: 'Polygone',
-    curve: 'Courbe',
-    rect: 'Rectangle',
-    square: 'Carré',
-    circle: 'Cercle',
-    ellipse: 'Ellipse',
-    picture: 'Image',
-    text: 'Texte',
-    custom: 'Forme',
-    group: 'Groupe'
-  }
-}
-
 export type CanvasOptions = {
   canvasBackgroundColor?: string | undefined
   canvasSelectionColor?: string | undefined
@@ -132,8 +77,11 @@ export type CanvasOptions = {
   canvasLaserColor?: string | undefined
   /** Width of the trail of the laser pointer at its newest point, in pixels of the screen: it narrows as it fades out */
   canvasLaserWidth?: number | undefined
-  /** Texts of the canvas for the assistive technologies, merged with the default ones (in French) */
-  canvasLabels?: RecursivePartial<CanvasLabels> | undefined
+  /**
+   * Language and texts of the canvas, merged into the ones given by the closest CanvasLocaleProvider or Editor, in English
+   * by default
+   */
+  locale?: PartialLocale<CanvasLocale> | undefined
 }
 
 export const DEFAULT_CANVAS_OPTIONS: {

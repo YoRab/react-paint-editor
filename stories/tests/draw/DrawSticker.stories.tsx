@@ -44,7 +44,7 @@ export const DrawSticker: Story = {
     const view = within(canvasElement)
 
     // the picture tool which opens a file is not a sticker: it stays out of the toolbar
-    expect(view.queryByRole('button', { name: 'Image' })).toBeNull()
+    expect(view.queryByRole('button', { name: 'Picture' })).toBeNull()
 
     const drawCanvas = await selectSticker(view)
     const user = userEvent.setup()

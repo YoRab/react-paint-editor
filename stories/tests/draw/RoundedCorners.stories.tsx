@@ -40,8 +40,8 @@ export const RoundedCorners: Story = {
     const drawCanvas = (await view.findByTestId('draw-canvas')) as HTMLCanvasElement
 
     await selectTool(view, 'rect')
-    await setColorSetting(view, 'Couleur de fond', 'blue')
-    await setAdvancedRangeSetting(view, 'Arrondi des angles', 30)
+    await setColorSetting(view, 'Fill color', 'blue')
+    await setAdvancedRangeSetting(view, 'Corner radius', 30)
 
     const rect = drawCanvas.getBoundingClientRect()
     const cx = rect.left + rect.width / 2
@@ -64,9 +64,9 @@ export const RoundedCorners: Story = {
 
     // a closed triangle, rounded at its 3 corners
     await selectTool(view, 'polygon')
-    await setAdvancedRangeSetting(view, 'Arrondi des angles', 40)
-    await setSelectSetting(view, 'Fermer les points', 'Oui')
-    await setColorSetting(view, 'Couleur de fond', 'blue')
+    await setAdvancedRangeSetting(view, 'Corner radius', 40)
+    await setSelectSetting(view, 'Close the points', 'Yes')
+    await setColorSetting(view, 'Fill color', 'blue')
     const corners: Point[] = [
       [cx + 60, cy - 80],
       [cx + 200, cy + 80],
@@ -86,9 +86,9 @@ export const RoundedCorners: Story = {
 
     // a picture, selected once added, gets a border and rounded corners
     await addPictureFromUrl(view, SVG_DATA_URI)
-    await setColorSetting(view, 'Couleur du trait', 'red')
-    await setRangeSetting(view, 'Epaisseur du trait', 6)
-    await setAdvancedRangeSetting(view, 'Arrondi des angles', 20)
+    await setColorSetting(view, 'Stroke color', 'red')
+    await setRangeSetting(view, 'Stroke width', 6)
+    await setAdvancedRangeSetting(view, 'Corner radius', 20)
 
     const picture = getCurrentDataRef.current!().shapes!.find(shape => shape.type === 'picture')
     expect(picture).toMatchObject({ type: 'picture', style: { strokeColor: 'red', lineWidth: 6, cornerRadius: 20 } })
@@ -101,7 +101,7 @@ export const RoundedCorners: Story = {
     // a circle has no corners: no radius in its other options
     await selectTool(view, 'circle')
     await inMoreOptions(view, async () => {
-      expect(view.queryByRole('button', { name: 'Arrondi des angles' })).toBeNull()
+      expect(view.queryByRole('button', { name: 'Corner radius' })).toBeNull()
     })
   }
 }

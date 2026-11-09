@@ -1,3 +1,6 @@
+import type { PartialLocale } from '@canvas/index'
+import type { EditorLocale } from './locale'
+
 type EditorOptionsType = {
   toolbarBackgroundColor: string
   dividerColor: string
@@ -25,6 +28,12 @@ type EditorOptionsType = {
 
 export type EditorOptions = {
   [K in keyof EditorOptionsType]?: EditorOptionsType[K] | undefined
+} & {
+  /**
+   * Language and texts of the editor and of the canvases inside it, merged into the English ones: a translation, or some
+   * texts to replace
+   */
+  locale?: PartialLocale<EditorLocale> | undefined
 }
 
 export const DEFAULT_EDITOR_OPTIONS: EditorOptionsType = {

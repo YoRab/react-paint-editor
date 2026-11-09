@@ -45,7 +45,9 @@ import {
   textOutlineIcon,
   underlineIcon
 } from '@editor/constants/icons'
+import type { EditorMessages, SettingFieldName } from '@editor/constants/locale'
 import type { Disclosure } from '@editor/hooks/useDisclosure'
+import useEditorLocale from '@editor/hooks/useEditorLocale'
 import useSettingsPanel from '@editor/hooks/useSettingsPanel'
 import { getDefaultParams } from '@editor/utils/style'
 import type React from 'react'
@@ -90,6 +92,7 @@ const PARAMS_IN_BAR = 2
 
 /** A field of the settings, shown when the tool has a setting of its name which is not hidden */
 type SettingField = {
+  /** Its name in the locale, or the label of a parameter of a custom tool */
   title: string
   /** Shown in the panel of the other options instead of the settings bar */
   advanced?: boolean
@@ -108,7 +111,7 @@ type SettingField = {
       icon: React.ReactNode
       option: React.FC<{ children?: React.ReactNode }>
       /** Names of the values drawn by their option, given to the assistive technologies */
-      optionLabels?: Record<string, string>
+      optionLabels?: Record<string, string> | undefined
       /** Values of a setting without a list of values */
       values?: (string | number)[]
     }
@@ -142,116 +145,139 @@ const withParamFields = (fields: SettingField[], paramFields: SettingField[]): S
 /** A field of a setting a tool declares by its name: the parameters of a custom tool come with their own declarations */
 type DeclaredSettingField = Exclude<SettingField, { kind: 'param' }>
 
-const ARROW_HEAD_LABELS: Record<string, string> = {
-  none: 'Aucune',
-  triangle: 'Triangle',
-  triangleOutline: 'Triangle vide',
-  open: 'Ouverte',
-  circle: 'Rond',
-  circleOutline: 'Rond vide',
-  diamond: 'Losange',
-  diamondOutline: 'Losange vide',
-  bar: 'Barre'
-}
+/** A declared field before its texts: they come from the locale, by the name of its setting and of its values */
+type SettingFieldDeclaration = DeclaredSettingField extends infer F
+  ? F extends DeclaredSettingField
+    ? Omit<F, 'title' | 'optionLabels'>
+    : never
+  : never
 
 /** The fields of the settings, in their order */
-const SETTING_FIELDS: DeclaredSettingField[] = [
-  { field: 'strokeColor', kind: 'color', title: 'Couleur du trait', mode: 'stroke' },
-  { field: 'fillColor', kind: 'color', title: 'Couleur de fond' },
+const SETTING_FIELDS: SettingFieldDeclaration[] = [
+  { field: 'strokeColor', kind: 'color', mode: 'stroke' },
+  { field: 'fillColor', kind: 'color' },
   {
     field: 'fillPattern',
     kind: 'select',
-    title: 'Motif du fond',
+
     icon: fillPatternIcon,
-    option: FillPatternOption,
-    optionLabels: { solid: 'Plein', hatch: 'Hachures', crossHatch: 'Hachures croisées', dots: 'Points' }
+    option: FillPatternOption
   },
   {
     field: 'fillGradient',
     kind: 'select',
-    title: 'Dégradé du fond',
+
     icon: fillGradientIcon,
     option: FillGradientOption,
-    optionLabels: { none: 'Aucun', linear: 'Linéaire', radial: 'Radial', conic: 'Conique' },
     advanced: true
   },
   {
     field: 'fillColor2',
     kind: 'color',
-    title: 'Deuxième couleur du dégradé',
+
     advanced: true,
     visibleIf: ({ fillGradient }) => fillGradient !== undefined && fillGradient !== 'none'
   },
   {
     field: 'fillGradientAngle',
     kind: 'range',
-    title: 'Angle du dégradé',
+
     icon: fillGradientAngleIcon,
     unity: '°',
     advanced: true,
     visibleIf: ({ fillGradient }) => fillGradient === 'linear' || fillGradient === 'conic'
   },
-  { field: 'lineWidth', kind: 'range', title: 'Epaisseur du trait', icon: lineWidthIcon, unity: 'px' },
+  { field: 'lineWidth', kind: 'range', icon: lineWidthIcon, unity: 'px' },
   {
     field: 'lineDash',
     kind: 'select',
-    title: 'Type de traits',
+
     icon: lineTypeIcon,
-    option: LineTypeOption,
-    optionLabels: { 0: 'Trait plein', 1: 'Pointillés', 2: 'Tirets', 3: 'Tirets longs', 4: 'Tirets et points' }
+    option: LineTypeOption
   },
   {
     field: 'lineJoin',
     kind: 'select',
-    title: 'Angles du trait',
+
     icon: lineJoinIcon,
     option: LineJoinOption,
-    optionLabels: { round: 'Arrondis', bevel: 'Biseautés', miter: 'Pointus' },
     advanced: true
   },
   {
     field: 'lineCap',
     kind: 'select',
-    title: 'Extrémités du trait',
+
     icon: lineCapIcon,
     option: LineCapOption,
-    optionLabels: { round: 'Arrondies', butt: 'Plates', square: 'Carrées' },
     advanced: true
   },
-  { field: 'cornerRadius', kind: 'range', title: 'Arrondi des angles', icon: cornerRadiusIcon, unity: 'px', advanced: true },
-  { field: 'arrowStart', kind: 'select', title: 'Flèche au début', icon: arrowStartIcon, option: ArrowStartOption, optionLabels: ARROW_HEAD_LABELS },
-  { field: 'arrowEnd', kind: 'select', title: 'Flèche à la fin', icon: arrowEndIcon, option: ArrowEndOption, optionLabels: ARROW_HEAD_LABELS },
-  { field: 'arrowSize', kind: 'range', title: 'Taille des flèches', icon: arrowSizeIcon, unity: '', advanced: true },
+  { field: 'cornerRadius', kind: 'range', icon: cornerRadiusIcon, unity: 'px', advanced: true },
+  { field: 'arrowStart', kind: 'select', icon: arrowStartIcon, option: ArrowStartOption },
+  { field: 'arrowEnd', kind: 'select', icon: arrowEndIcon, option: ArrowEndOption },
+  { field: 'arrowSize', kind: 'range', icon: arrowSizeIcon, unity: '', advanced: true },
   {
     field: 'closedPoints',
     kind: 'select',
-    title: 'Fermer les points',
+
     icon: polygonIcon,
     option: ClosedPointsOption,
-    optionLabels: { 0: 'Non', 1: 'Oui' },
     values: [0, 1]
   },
-  { field: 'fontFamily', kind: 'select', title: 'Police', icon: fontIcon, option: FontFamilyOption },
-  { field: 'fontSize', kind: 'number', title: 'Taille du texte', icon: fontSizeIcon, unity: 'px', ofShapes: true },
-  { field: 'fontBold', kind: 'toggle', title: 'Gras', icon: boldIcon },
-  { field: 'fontItalic', kind: 'toggle', title: 'Italique', icon: italicIcon },
-  { field: 'fontUnderline', kind: 'toggle', title: 'Souligné', icon: underlineIcon },
-  { field: 'fontStrikethrough', kind: 'toggle', title: 'Barré', icon: strikethroughIcon, advanced: true },
+  { field: 'fontFamily', kind: 'select', icon: fontIcon, option: FontFamilyOption },
+  { field: 'fontSize', kind: 'number', icon: fontSizeIcon, unity: 'px', ofShapes: true },
+  { field: 'fontBold', kind: 'toggle', icon: boldIcon },
+  { field: 'fontItalic', kind: 'toggle', icon: italicIcon },
+  { field: 'fontUnderline', kind: 'toggle', icon: underlineIcon },
+  { field: 'fontStrikethrough', kind: 'toggle', icon: strikethroughIcon, advanced: true },
   {
     field: 'textAlign',
     kind: 'select',
-    title: 'Alignement du texte',
+
     icon: textAlignIcon,
-    option: TextAlignOption,
-    optionLabels: { left: 'À gauche', center: 'Centré', right: 'À droite' }
+    option: TextAlignOption
   },
-  { field: 'lineHeight', kind: 'range', title: 'Interligne', icon: lineHeightIcon, unity: '', advanced: true },
-  { field: 'outlineColor', kind: 'color', title: 'Couleur du contour', mode: 'stroke', advanced: true },
-  { field: 'outlineWidth', kind: 'range', title: 'Epaisseur du contour', icon: textOutlineIcon, unity: 'px', advanced: true },
-  { field: 'opacity', kind: 'range', title: 'Opacité', icon: opacityIcon, unity: '%' }
+  { field: 'lineHeight', kind: 'range', icon: lineHeightIcon, unity: '', advanced: true },
+  { field: 'outlineColor', kind: 'color', mode: 'stroke', advanced: true },
+  { field: 'outlineWidth', kind: 'range', icon: textOutlineIcon, unity: 'px', advanced: true },
+  { field: 'opacity', kind: 'range', icon: opacityIcon, unity: '%' }
 ]
 
 const SHAPES_FIELDS: string[] = SETTING_FIELDS.filter(({ ofShapes }) => ofShapes).map(({ field }) => field)
+
+/** Names of the values of a setting drawn by their option: the dashes are numbered, the other values are named */
+const getOptionLabels = (field: SettingFieldName, { settings }: EditorMessages): Record<string, string> | undefined => {
+  switch (field) {
+    case 'fillPattern':
+      return settings.fillPattern
+    case 'fillGradient':
+      return settings.fillGradient
+    case 'lineDash': {
+      const { solid, dotted, dashed, longDashed, dashDotted } = settings.lineDash
+      return { 0: solid, 1: dotted, 2: dashed, 3: longDashed, 4: dashDotted }
+    }
+    case 'lineJoin':
+      return settings.lineJoin
+    case 'lineCap':
+      return settings.lineCap
+    case 'arrowStart':
+    case 'arrowEnd':
+      return settings.arrowHeads
+    case 'textAlign':
+      return settings.textAlign
+    case 'closedPoints':
+      return { 0: settings.closedPoints.no, 1: settings.closedPoints.yes }
+    default:
+      return undefined
+  }
+}
+
+/** A declared field with its texts in the locale */
+const withTexts = (declaration: SettingFieldDeclaration, messages: EditorMessages): DeclaredSettingField =>
+  ({
+    ...declaration,
+    title: messages.settings.fields[declaration.field],
+    ...(declaration.kind === 'select' ? { optionLabels: getOptionLabels(declaration.field, messages) } : {})
+  }) as DeclaredSettingField
 
 /** Values of the fields: the style and the font size of the selection, or the default values of the settings of the active tool */
 type SettingValues = StyleShape & { fontSize?: number | undefined }
@@ -351,6 +377,7 @@ const SettingsItems = ({ fields, ...props }: SettingsItemsType) =>
 
 /** Button of the panel of the other options. Their own panels open above it, the panel staying open */
 const MoreSettings = ({ selectedSettings, setSelectedSettings, ...props }: SettingsItemsType) => {
+  const { editor: messages } = useEditorLocale()
   const { isPanelVisible, togglePanel, triggerProps, panelProps } = useSettingsPanel(selectedSettings, setSelectedSettings)
   const [selectedMoreSettings, setSelectedMoreSettings] = useState<string | undefined>(undefined)
 
@@ -361,9 +388,9 @@ const MoreSettings = ({ selectedSettings, setSelectedSettings, ...props }: Setti
 
   return (
     <>
-      <Button title="Plus d'options" icon={moreIcon} disabled={props.disabled} {...triggerProps} onClick={handleToggle} />
+      <Button title={messages.settings.moreOptions} icon={moreIcon} disabled={props.disabled} {...triggerProps} onClick={handleToggle} />
       {isPanelVisible && (
-        <Panel title="Plus d'options" alignment='left' position='bottom' {...panelProps}>
+        <Panel title={messages.settings.moreOptions} alignment='left' position='bottom' {...panelProps}>
           <div className='react-paint-editor-settings-more'>
             <SettingsItems {...props} selectedSettings={selectedMoreSettings} setSelectedSettings={setSelectedMoreSettings} />
           </div>
@@ -464,6 +491,7 @@ const SettingsBar = ({
 }: SettingsBarType) => {
   const paint = usePaint()
   const { actions } = paint
+  const { lang, editor: messages } = useEditorLocale()
   const [selectSettingsBarState] = useState(createSettingsBarSelector)
   const { width, activeTool, selectedStyle, selectedFontSize, selectedParams, selectedShapeIds, selectedShapeTool, isPickingColor } = usePaintState(
     paint,
@@ -486,7 +514,9 @@ const SettingsBar = ({
   // the settings of the tool of the selection, or of the active tool without selection
   const tool = hasSelection ? selectedShapeTool : activeTool
   const settings: Partial<ToolSettings> = tool && 'settings' in tool ? tool.settings : {}
-  const toolFields = SETTING_FIELDS.filter(({ field }) => settings[field] && !settings[field].hidden)
+  const toolFields = SETTING_FIELDS.filter(({ field }) => settings[field] && !settings[field].hidden).map(declaration =>
+    withTexts(declaration, messages)
+  )
   const style: SettingValues = hasSelection
     ? { ...selectedStyle, fontSize: selectedFontSize }
     : (Object.fromEntries(toolFields.map(({ field }) => [field, settings[field]?.default])) as SettingValues)
@@ -544,7 +574,7 @@ const SettingsBar = ({
 
   return (
     <>
-      <div className='react-paint-editor-settings-bar'>
+      <div className='react-paint-editor-settings-bar' lang={lang}>
         <div className='react-paint-editor-settings-shrinkable'>
           {withZoom && (
             <ZoomButton
@@ -557,7 +587,7 @@ const SettingsBar = ({
             <Button
               disabled={disabled}
               onClick={toggleTools}
-              title='Toggle settings'
+              title={messages.settings.showSettings}
               icon={settingsIcon}
               aria-haspopup='dialog'
               aria-expanded={isMenuOpen}
@@ -577,7 +607,13 @@ const SettingsBar = ({
         {layersManipulation && <LayoutButton disabled={disabled} panel={layersPanel} toggleLayoutPanel={toggleLayoutPanel} />}
       </div>
       {isMenuOpen && (
-        <Modal className='react-paint-editor-settings-modal' onClose={toggleTools} position='bottom' title='Settings' withCloseButton>
+        <Modal
+          className='react-paint-editor-settings-modal'
+          onClose={toggleTools}
+          position='bottom'
+          title={messages.settings.settings}
+          withCloseButton
+        >
           <SettingsItems {...itemsProps} fields={fields} />
         </Modal>
       )}

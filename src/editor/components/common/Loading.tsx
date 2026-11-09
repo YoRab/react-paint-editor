@@ -1,5 +1,6 @@
 import { LOADING_TRANSITION_DURATION } from '@editor/constants/loading'
 import { STYLE_ZINDEX } from '@editor/constants/style'
+import useEditorLocale from '@editor/hooks/useEditorLocale'
 import { useEffect, useState } from 'react'
 import './Loading.css'
 
@@ -9,6 +10,7 @@ export type LoadingType = {
 
 const Loading = ({ isLoading = false }: LoadingType) => {
   const [loadingState, setLoadingState] = useState<'hidden' | 'visible' | 'fadeOut'>('hidden')
+  const { lang, editor } = useEditorLocale()
   useEffect(() => {
     if (isLoading) {
       setLoadingState('visible')
@@ -25,7 +27,8 @@ const Loading = ({ isLoading = false }: LoadingType) => {
     <div
       className='react-paint-editor-loading'
       role='status'
-      aria-label='Chargement'
+      aria-label={editor.common.loading}
+      lang={lang}
       data-loading={loadingState}
       style={{
         '--react-paint-editor-loading-zindex': STYLE_ZINDEX.LOADING,

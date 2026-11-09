@@ -1,4 +1,6 @@
-import { type CanvasLabels, DRAWCANVAS_CLASSNAME, SELECTIONCANVAS_CLASSNAME } from '@canvas/constants/app'
+import { DRAWCANVAS_CLASSNAME, SELECTIONCANVAS_CLASSNAME } from '@canvas/constants/app'
+import type { CanvasLocale } from '@canvas/constants/locale'
+import { CANVAS_SHORTCUTS, formatShortcut, getShortcutParams } from '@canvas/constants/shortcuts'
 import useCanvasRenderer from '@canvas/hooks/useCanvasRenderer'
 import useDrawableCanvas from '@canvas/hooks/useDrawableCanvas'
 import useDropPicture from '@canvas/hooks/useDropPicture'
@@ -7,11 +9,12 @@ import useZoom from '@canvas/hooks/useZoom'
 import type { PaintStore } from '@canvas/store/paintStore'
 import { type CanvasView, memoizeLast } from '@canvas/store/selectors'
 import { createShapesDescriber, type ShapeDescription } from '@canvas/utils/description'
+import { formatMessage } from '@canvas/utils/locale'
 import { getSelectedShapes } from '@canvas/utils/selectedShapes'
 import { applyShapePatch } from '@canvas/utils/shapePatch'
-import { cssVar } from '@canvas/utils/util'
+import { cssVar, isMacOs } from '@canvas/utils/util'
 import type React from 'react'
-import { type CSSProperties, useCallback, useEffect, useId, useRef, useState } from 'react'
+import { type CSSProperties, useCallback, useEffect, useId, useMemo, useRef, useState } from 'react'
 import EditTextBox from './EditTextBox'
 
 // The canvas module ships no stylesheet: its styles are inline, the class names are kept for the consumers,
@@ -107,7 +110,7 @@ const buildDescriptionItems = (descriptions: ShapeDescription[], items: WeakMap<
 type CanvasElementProps = {
   store: PaintStore
   view: CanvasView
-  labels: CanvasLabels
+  locale: CanvasLocale
   backgroundColor: string
   selectionColor: string
   selectionWidth: number
@@ -119,7 +122,7 @@ type CanvasElementProps = {
  * Canvases of the drawing and of the selection. React only renders what changes the DOM (sizes, mode, text edition):
  * the gestures update the store, which draws the canvases and sets the cursor directly.
  */
-const Canvas = ({ store, view, labels, backgroundColor, selectionColor, selectionWidth, laserColor, laserWidth }: CanvasElementProps) => {
+const Canvas = ({ store, view, locale, backgroundColor, selectionColor, selectionWidth, laserColor, laserWidth }: CanvasElementProps) => {
   const { canvasSize, resize, isEditMode, features, textEdition, isKeyboardNavigation } = view
   const instructionsId = useId()
   const containerRef = useRef<HTMLDivElement | null>(null)
@@ -159,11 +162,11 @@ const Canvas = ({ store, view, labels, backgroundColor, selectionColor, selectio
   // the cursor, it is written without rendering, only when the shapes read differently, a selection during a gesture included
   useEffect(() => {
     if (!drawCanvas) return
-    const describe = memoizeLast(createShapesDescriber(labels))
+    const describe = memoizeLast(createShapesDescriber(locale))
     const selectDescriptions = ({ document }: ReturnType<PaintStore['getState']>) =>
       describe(document.shapes, store.selectors.selectSelectedShapeIds(store.selectors.selectSelectedShapes(document.selectedShape)))
     const list = document.createElement('ul')
-    list.setAttribute('aria-label', labels.shapesList)
+    list.setAttribute('aria-label', locale.canvas.shapesList)
     const items = new WeakMap<ShapeDescription, HTMLLIElement>()
     const writeDescriptions = (descriptions: ShapeDescription[]) => syncChildren(list, buildDescriptionItems(descriptions, items))
     writeDescriptions(selectDescriptions(store.getState()))
@@ -173,7 +176,7 @@ const Canvas = ({ store, view, labels, backgroundColor, selectionColor, selectio
       unwatch()
       list.remove()
     }
-  }, [store, drawCanvas, labels])
+  }, [store, drawCanvas, locale])
 
   // The hint is shown while the canvas has the focus from the keyboard: the focus ring, or a key pressed in the scope.
   // Like the cursor, it is shown and hidden without rendering: a press of the canvas renders nothing
@@ -222,6 +225,10 @@ const Canvas = ({ store, view, labels, backgroundColor, selectionColor, selectio
   }, [store, drawCanvas])
   const withKeyboardHint = isEditMode && features.edition && !isKeyboardNavigation && !textEdition
 
+  const { lang, canvas: messages } = locale
+  const isMac = isMacOs()
+  const instructions = useMemo(() => formatMessage(messages.instructions, getShortcutParams(isMac, messages.keys), lang), [messages, isMac, lang])
+
   const updateSelectedShapeText = useCallback(
     (newText: string[]) => {
       const state = store.getState()
@@ -256,13 +263,19 @@ const Canvas = ({ store, view, labels, backgroundColor, selectionColor, selectio
           ref={drawCanvasRef}
           style={styles.canvas}
           data-testid='draw-canvas'
+          lang={lang}
           width={canvasSize.width}
           height={canvasSize.height}
           onContextMenu={preventRightClick}
           tabIndex={tabIndex}
           // edited, the canvas takes the keys. Its fallback content describes the drawing
           {...(isEditMode
-            ? { role: 'application', 'aria-roledescription': labels.roleDescription, 'aria-label': labels.canvas, 'aria-describedby': instructionsId }
+            ? {
+                role: 'application',
+                'aria-roledescription': messages.roleDescription,
+                'aria-label': messages.canvas,
+                'aria-describedby': instructionsId
+              }
             : {})}
         />
         {withSelectionCanvas && (
@@ -276,8 +289,8 @@ const Canvas = ({ store, view, labels, backgroundColor, selectionColor, selectio
           />
         )}
         {isEditMode && (
-          <div id={instructionsId} hidden>
-            {labels.instructions}
+          <div id={instructionsId} lang={lang} hidden>
+            {instructions}
           </div>
         )}
         {withKeyboardHint && (
@@ -285,6 +298,7 @@ const Canvas = ({ store, view, labels, backgroundColor, selectionColor, selectio
             ref={hintRef}
             className='react-paint-canvas-keyboard-hint'
             aria-hidden='true'
+            lang={lang}
             hidden={!keyboardFocusRef.current}
             style={{
               ...KEYBOARD_HINT_STYLE,
@@ -292,13 +306,13 @@ const Canvas = ({ store, view, labels, backgroundColor, selectionColor, selectio
               color: cssVar('--react-paint-canvas-keyboard-hint-color', '#ffffff')
             }}
           >
-            <kbd style={KEYBOARD_HINT_KEY_STYLE}>{labels.keyboardHintKey}</kbd>
-            {labels.keyboardHint}
+            <kbd style={KEYBOARD_HINT_KEY_STYLE}>{formatShortcut(CANVAS_SHORTCUTS.enter, isMac, messages.keys)}</kbd>
+            {messages.keyboardHint}
           </div>
         )}
         {isEditMode && textEdition && (
           <EditTextBox
-            label={labels.textBox}
+            label={messages.textBox}
             disabled={!features.edition}
             shape={textEdition.shape}
             defaultValue={textEdition.defaultValue}

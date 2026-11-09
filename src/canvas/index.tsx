@@ -1,5 +1,6 @@
 import CanvasElement from '@canvas/components/Canvas'
-import { type CanvasLabels, type CanvasOptions, DEFAULT_CANVAS_LABELS, DEFAULT_CANVAS_OPTIONS } from '@canvas/constants/app'
+import { type CanvasOptions, DEFAULT_CANVAS_OPTIONS } from '@canvas/constants/app'
+import { useCanvasLocale, useMergedLocale } from '@canvas/context/LocaleContext'
 import useAutoScroll from '@canvas/hooks/useAutoScroll'
 import useKeyboard from '@canvas/hooks/useKeyboard'
 import useResizeObserver from '@canvas/hooks/useResizeObserver'
@@ -8,7 +9,7 @@ import type { ReactPaint } from '@canvas/types/editor'
 import { canScaleDown, canScaleUp, getScaledCanvasSize, getUnscaledCanvasSize } from '@canvas/utils/canvas'
 import { withDefaults } from '@canvas/utils/object'
 import { cssVar } from '@canvas/utils/util'
-import { type CSSProperties, useCallback, useEffect, useMemo, useRef, useSyncExternalStore } from 'react'
+import { type CSSProperties, useCallback, useEffect, useRef, useSyncExternalStore } from 'react'
 
 // fills its parent, also as an item of a flex column, whatever the size of the canvas
 const EXTEND_ROOT_STYLE: CSSProperties = {
@@ -41,15 +42,8 @@ const Canvas = ({ paint, options, className, style }: CanvasComponentProps) => {
     options
   )
 
-  // the labels are compared by value: labels written inline do not describe the shapes again
-  const canvasLabelsKey = JSON.stringify(options?.canvasLabels ?? {})
-  const labels = useMemo((): CanvasLabels => {
-    const canvasLabels: CanvasOptions['canvasLabels'] = JSON.parse(canvasLabelsKey)
-    return {
-      ...withDefaults(DEFAULT_CANVAS_LABELS, canvasLabels),
-      shapeTypes: withDefaults(DEFAULT_CANVAS_LABELS.shapeTypes, canvasLabels?.shapeTypes)
-    }
-  }, [canvasLabelsKey])
+  // the texts are compared by value: texts written inline do not describe the shapes again
+  const locale = useMergedLocale(useCanvasLocale(), options?.locale)
 
   const containerRef = useRef<HTMLDivElement | null>(null)
   // the root of the Canvas is the default scope of the interactions
@@ -86,6 +80,8 @@ const Canvas = ({ paint, options, className, style }: CanvasComponentProps) => {
 
   useAutoScroll(store)
   useKeyboard(store)
+  // the content of the texts drawn from now on
+  useEffect(() => store.setDefaultText(locale.canvas.defaultText), [store, locale])
   useResizeObserver({ element: containerRef, onResized })
 
   // unitless, like the variable that overrides it
@@ -106,7 +102,7 @@ const Canvas = ({ paint, options, className, style }: CanvasComponentProps) => {
       <CanvasElement
         store={store}
         view={view}
-        labels={labels}
+        locale={locale}
         backgroundColor={canvasBackgroundColor}
         selectionColor={canvasSelectionColor}
         selectionWidth={canvasSelectionWidth}
@@ -118,18 +114,26 @@ const Canvas = ({ paint, options, className, style }: CanvasComponentProps) => {
 }
 
 export {
-  type CanvasLabels,
   type CanvasOptions,
-  DEFAULT_CANVAS_LABELS,
   DEFAULT_OPTIONS,
   type OptionalOptions,
   type OptionalOptions as UseReactPaintOptions,
   type PictureSrcResolver
 } from '@canvas/constants/app'
 export { GRID_PRESETS } from '@canvas/constants/grid'
+export {
+  type CanvasLocale,
+  type CanvasMessages,
+  DEFAULT_CANVAS_LOCALE,
+  type KeyNames,
+  type Message,
+  type PartialLocale,
+  type PluralMessage
+} from '@canvas/constants/locale'
 export { CANVAS_SHORTCUTS, formatShortcut, getAriaKeyShortcut, matchesShortcut, type Shortcut } from '@canvas/constants/shortcuts'
 export { DEFAULT_TOOLS, ERASER_TOOL, LASER_TOOL, MOVE_TOOL, SELECTION_TOOL, SETTINGS_DEFAULT_CUSTOM } from '@canvas/constants/tools'
 export { ZOOM_LEVELS } from '@canvas/constants/zoom'
+export { CanvasLocaleProvider, useCanvasLocale, useMergedLocale } from '@canvas/context/LocaleContext'
 export { PaintProvider, usePaint } from '@canvas/context/PaintContext'
 export { default as useAnnotationsStyle } from '@canvas/hooks/useAnnotationsStyle'
 export { default as usePaintState } from '@canvas/hooks/usePaintState'
@@ -185,6 +189,8 @@ export type {
 } from '@canvas/types/Shapes'
 export type { ActionsTool, CustomTool, CustomToolInput, ToolsType } from '@canvas/types/tools'
 export { shallowEqual } from '@canvas/utils/equality'
+export { ReactPaintError, type ReactPaintErrorCode } from '@canvas/utils/error'
+export { formatMessage, formatNumber, type MessageParams, mergeLocale } from '@canvas/utils/locale'
 export { getSelectedShapes, getSelectedShapesTools } from '@canvas/utils/selectedShapes'
 export { getSelectedLeaves, getSelectionStyle } from '@canvas/utils/selection'
 export { canGroupShapes, flattenShapes, getParentGroup, getShapeLeaves } from '@canvas/utils/shapes/tree'

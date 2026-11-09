@@ -1,6 +1,7 @@
 import { PICTURE_DROP_GAP, PICTURE_MIME_TYPES } from '@canvas/constants/picture'
 import type { PaintStore } from '@canvas/store/paintStore'
 import type { Point } from '@canvas/types/Shapes'
+import { ReactPaintError } from '@canvas/utils/error'
 import { getCursorPositionInTransformedCanvas } from '@canvas/utils/intersect'
 import { useEffect } from 'react'
 
@@ -44,7 +45,12 @@ const useDropPicture = (store: PaintStore, canvas: HTMLCanvasElement | null) => 
       const files = Array.from(e.dataTransfer?.files ?? [])
       const pictures = files.filter(file => PICTURE_MIME_TYPES.includes(file.type))
       for (const file of files) {
-        if (!pictures.includes(file)) store.emit('pictureDropFailed', file, new Error(`Unsupported file type: ${file.type || file.name}`))
+        if (!pictures.includes(file))
+          store.emit(
+            'pictureDropFailed',
+            file,
+            new ReactPaintError('fileTypeUnsupported', `Unsupported file type: ${file.type || file.name}`, { type: file.type || file.name })
+          )
       }
       await addPicturesAt(store, pictures, getCursorPositionInTransformedCanvas(e, canvas, store.getSettings()))
     }

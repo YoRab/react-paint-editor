@@ -1,4 +1,5 @@
 import { STYLE_ZINDEX } from '@editor/constants/style'
+import useEditorLocale from '@editor/hooks/useEditorLocale'
 import type React from 'react'
 import './Panel.css'
 import { type CSSProperties, useId } from 'react'
@@ -19,6 +20,7 @@ type PanelType = {
 
 const Panel = ({ children, title = '', className = '', position, fitContainer = false, alignment, style, panelRef, ...props }: PanelType) => {
   const titleId = useId()
+  const { lang } = useEditorLocale()
   // a panel with a title is a group of fields named by it
   const group = title ? { role: 'group', 'aria-labelledby': titleId } : {}
   return (
@@ -29,6 +31,7 @@ const Panel = ({ children, title = '', className = '', position, fitContainer = 
       data-alignment={alignment ?? 'unset'}
       style={{ ...style, '--react-paint-editor-panel-zindex': STYLE_ZINDEX.PANEL }}
       ref={panelRef}
+      lang={lang}
       {...group}
       {...props}
     >

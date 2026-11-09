@@ -87,7 +87,7 @@ export const Commands: Story = {
     // =====================================================================
 
     // --- Change fill color to red (pasted shape is selected) ---
-    await setColorSetting(view, 'Couleur de fond', 'red')
+    await setColorSetting(view, 'Fill color', 'red')
 
     // --- Copy (CTRL+C) ---
     dispatchClipboardEvent('copy')
@@ -105,7 +105,7 @@ export const Commands: Story = {
     // =====================================================================
 
     // --- Change fill color to yellow (2nd pasted shape is selected) ---
-    await setColorSetting(view, 'Couleur de fond', 'yellow')
+    await setColorSetting(view, 'Fill color', 'yellow')
 
     // --- Right-click on the yellow shape (center at canvas (340, 340)) ---
     await openContextMenuAndClick(user, drawCanvas, view, toClientX(340), toClientY(340), 'Duplicate')

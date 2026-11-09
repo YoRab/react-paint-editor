@@ -105,11 +105,11 @@ export const ToolbarGroupOfCustomShapes: Story = {
     }
 
     // the 3 tools of the lines are in a single row
-    await userEvent.click(await view.findByRole('button', { name: 'lines' }))
+    await userEvent.click(await view.findByRole('button', { name: 'Lines' }))
     expect(countToolsByRow(canvasElement.querySelector('.react-paint-editor-toolbargroup-panel-content')!)).toEqual([3])
 
     // the 4 shapes and the 4 stars: a row of 6, then a row of 2 (the press on the button closes the other panel)
-    await userEvent.click(await view.findByRole('button', { name: 'shapes' }))
+    await userEvent.click(await view.findByRole('button', { name: 'Shapes' }))
     expect(canvasElement.querySelectorAll('.react-paint-editor-toolbargroup-panel-content')).toHaveLength(1)
     expect(countToolsByRow(canvasElement.querySelector('.react-paint-editor-toolbargroup-panel-content')!)).toEqual([6, 2])
 

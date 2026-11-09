@@ -130,7 +130,7 @@ export const Layers: Story = {
     // Step 3: Toggle circle visibility (hide) and lock the rect
     // Layer items have been re-rendered in new order: [0]=circle, [1]=rect.
     // shape.visible is undefined by default → title='Hide'; clicking sets visible=false.
-    // shape.locked is undefined by default → title='Unlocked'; clicking sets locked=true.
+    // shape.locked is undefined by default → title='Lock'; clicking sets locked=true.
     // =====================================================================
     const updatedLayerItems = canvasElement.querySelectorAll('.react-paint-editor-layout')
     const circleLayerItemUpdated = updatedLayerItems[0] as HTMLElement
@@ -221,7 +221,7 @@ export const LayersPanelActions: Story = {
     const [, backId] = getPaint()
       .getState()
       .shapes.map(shape => shape.id) as [string, string]
-    expect(getLayers().map(layer => layer.textContent)).toEqual(['Carré 2', 'Carré 1'])
+    expect(getLayers().map(layer => layer.textContent)).toEqual(['Square 2', 'Square 1'])
 
     // --- A click on a layer selects its shape ---
     await userEvent.click(getLayers()[1]!)
@@ -229,7 +229,7 @@ export const LayersPanelActions: Story = {
     expect(getPaint().getState().selectedShapeIds).toEqual([backId])
 
     // --- The remove button of a layer removes its shape only ---
-    await userEvent.click(within(getLayers()[0]!).getByRole('button', { name: 'Remove' }))
+    await userEvent.click(within(getLayers()[0]!).getByRole('button', { name: 'Delete' }))
     await new Promise(res => setTimeout(res, 50))
     expect(
       getPaint()
@@ -283,12 +283,12 @@ export const LayersOfGroups: Story = {
     // numbered from the background
     // =====================================================================
 
-    expect(getLabels()).toEqual(['Outer', 'Rectangle 4', 'Groupe 1', 'Rectangle 3', 'Rectangle 2', 'Rectangle 1'])
+    expect(getLabels()).toEqual(['Outer', 'Rectangle 4', 'Group 1', 'Rectangle 3', 'Rectangle 2', 'Rectangle 1'])
     expect(getLayers().map(layer => layer.style.getPropertyValue('--react-paint-editor-layout-depth'))).toEqual(['0', '1', '1', '2', '2', '0'])
 
     // a collapsed group hides its shapes, at any depth
     await user.click(within(getLayer('inner')).getByRole('button', { name: 'Collapse' }))
-    expect(getLabels()).toEqual(['Outer', 'Rectangle 4', 'Groupe 1', 'Rectangle 1'])
+    expect(getLabels()).toEqual(['Outer', 'Rectangle 4', 'Group 1', 'Rectangle 1'])
     await user.click(within(getLayer('outer')).getByRole('button', { name: 'Collapse' }))
     expect(getLabels()).toEqual(['Outer', 'Rectangle 1'])
     expect(getSelectedIds()).toEqual([])
@@ -296,7 +296,7 @@ export const LayersOfGroups: Story = {
     // the groups holding a shape selected are expanded again, to show it
     getPaint().actions.selectShapes(['b'])
     await wait()
-    expect(getLabels()).toEqual(['Outer', 'Rectangle 4', 'Groupe 1', 'Rectangle 3', 'Rectangle 2', 'Rectangle 1'])
+    expect(getLabels()).toEqual(['Outer', 'Rectangle 4', 'Group 1', 'Rectangle 3', 'Rectangle 2', 'Rectangle 1'])
     expect(getLayer('b').dataset.selected).toBe('1')
     expect(getLayerButton('b')).toHaveAccessibleName('Rectangle 3')
 
@@ -336,7 +336,7 @@ export const LayersOfGroups: Story = {
     expect(getRootIds()).toEqual([groupId])
     expect(getChildIds(groupId!)).toEqual(['outer', 'd'])
     expect(getSelectedIds()).toEqual([groupId])
-    expect(getLabels()).toEqual(['Groupe 2', 'Outer', 'Rectangle 4', 'Groupe 1', 'Rectangle 3', 'Rectangle 2', 'Rectangle 1'])
+    expect(getLabels()).toEqual(['Group 2', 'Outer', 'Rectangle 4', 'Group 1', 'Rectangle 3', 'Rectangle 2', 'Rectangle 1'])
 
     await user.click(ungroupButton)
     expect(getRootIds()).toEqual(['outer', 'd'])
@@ -371,12 +371,12 @@ export const LayersOfGroups: Story = {
     await user.clear(getNameField()!)
     await user.keyboard('{Enter}')
     expect(getPaint().getShape('outer')).not.toHaveProperty('name')
-    expect(getLabels()[0]).toBe('Groupe 2')
+    expect(getLabels()[0]).toBe('Group 2')
 
     // a double click on a button of the layer does not rename it
     await user.dblClick(within(getLayer('inner')).getByRole('button', { name: 'Collapse' }))
     expect(getNameField()).toBeNull()
-    expect(getLabels()).toEqual(['Groupe 2', 'Rectangle 4', 'Groupe 1', 'Rectangle 3', 'Rectangle 2', 'Rectangle 1'])
+    expect(getLabels()).toEqual(['Group 2', 'Rectangle 4', 'Group 1', 'Rectangle 3', 'Rectangle 2', 'Rectangle 1'])
 
     // =====================================================================
     // A layer is dragged by its handle, with a finger too, and dropped among the shapes of its group only: a line shows

@@ -1,6 +1,9 @@
-import type { DataChanges, ExportedShape, ReactPaint, ShapeEntity, ToolsType } from '@canvas/index'
-import { ERASER_TOOL_DISPLAY, LASER_TOOL_DISPLAY, MOVE_TOOL_DISPLAY, SELECTION_TOOL_DISPLAY, TOOL_LABELS } from '@editor/constants/tools'
+import { type DataChanges, type ExportedShape, formatNumber, type ReactPaint, type ShapeEntity, type ToolsType } from '@canvas/index'
+import { ZOOM_FORMAT } from '@editor/constants/locale'
+import type { EditorLocaleValue } from '@editor/hooks/useEditorLocale'
+import useLatest from '@editor/hooks/useLatest'
 import { getPaintShapeNames } from '@editor/utils/layers'
+import { getToolLabel } from '@editor/utils/style'
 import { useEffect, useState } from 'react'
 
 /** The changes are gathered during this delay, then announced together: a zoom of the wheel is announced once */
@@ -8,41 +11,43 @@ const ANNOUNCE_DELAY_MS = 200
 
 type AnnouncedChange = 'tool' | 'selection' | 'shapes' | 'zoom'
 
-/** Labels of the action tools shown by the editor */
-const ACTION_TOOL_LABELS = new Map(
-  [SELECTION_TOOL_DISPLAY, MOVE_TOOL_DISPLAY, ERASER_TOOL_DISPLAY, LASER_TOOL_DISPLAY].map(tool => [tool.id, tool.label])
-)
-
-const getToolMessage = (tool: ToolsType) =>
-  `Outil ${ACTION_TOOL_LABELS.get(tool.id) ?? tool.label ?? (tool.type in TOOL_LABELS ? TOOL_LABELS[tool.type as keyof typeof TOOL_LABELS] : tool.type)}`
+/** The tool chosen, by its name: the label it is given, or else the one of its type */
+const getToolMessage = (tool: ToolsType, { editor, format }: EditorLocaleValue) =>
+  format(editor.announcements.tool, { name: getToolLabel(tool, editor) })
 
 /** The names of the shapes are only read when a single shape is selected */
-const getSelectionMessage = (shapes: ShapeEntity[], getNames: () => ReadonlyMap<string, string>) => {
-  if (!shapes.length) return 'Aucune forme sélectionnée'
-  if (shapes.length > 1) return `Sélection : ${shapes.length} formes`
+const getSelectionMessage = (shapes: ShapeEntity[], getNames: () => ReadonlyMap<string, string>, { canvas, editor, format }: EditorLocaleValue) => {
+  const { announcements } = editor
+  if (!shapes.length) return format(announcements.noSelection)
+  if (shapes.length > 1) return format(announcements.selectionCount, { count: shapes.length })
   const [shape] = shapes as [ShapeEntity]
-  return `Sélection : ${getNames().get(shape.id) ?? TOOL_LABELS[shape.type]}`
+  return format(announcements.selection, { name: getNames().get(shape.id) ?? canvas.shapeTypes[shape.type] })
 }
 
 /** The removed shapes are no longer in the drawing: they are named by their own name or by their type */
-const getExportedName = (shape: ExportedShape) => shape.name ?? TOOL_LABELS[shape.type]
+const getExportedName = (shape: ExportedShape, { canvas }: EditorLocaleValue) => shape.name ?? canvas.shapeTypes[shape.type]
 
 /** The names of the shapes are only read when a single shape is added */
-const getShapesMessage = ({ added, removed }: DataChanges, getNames: () => ReadonlyMap<string, string>) => {
+const getShapesMessage = ({ added, removed }: DataChanges, getNames: () => ReadonlyMap<string, string>, locale: EditorLocaleValue) => {
+  const { announcements } = locale.editor
   const messages: string[] = []
-  if (added.length === 1) messages.push(`Ajout : ${getNames().get(added[0]!.id) ?? getExportedName(added[0]!)}`)
-  else if (added.length > 1) messages.push(`${added.length} formes ajoutées`)
-  if (removed.length === 1) messages.push(`Suppression : ${getExportedName(removed[0]!)}`)
-  else if (removed.length > 1) messages.push(`${removed.length} formes supprimées`)
+  if (added.length === 1)
+    messages.push(locale.format(announcements.added, { name: getNames().get(added[0]!.id) ?? getExportedName(added[0]!, locale) }))
+  else if (added.length > 1) messages.push(locale.format(announcements.addedCount, { count: added.length }))
+  if (removed.length === 1) messages.push(locale.format(announcements.removed, { name: getExportedName(removed[0]!, locale) }))
+  else if (removed.length > 1) messages.push(locale.format(announcements.removedCount, { count: removed.length }))
   return messages.join('. ')
 }
 
 /**
  * Message of the changes made by the user, read by the assistive technologies from a live region: the tool chosen, the
- * selection, the shapes added or removed and the zoom. The changes received from elsewhere are not announced
+ * selection, the shapes added or removed and the zoom, in the language of the locale. The changes received from elsewhere
+ * are not announced
  */
-const useAnnouncements = (paint: ReactPaint) => {
+const useAnnouncements = (paint: ReactPaint, locale: EditorLocaleValue) => {
   const [message, setMessage] = useState('')
+  // the listeners are set once: they read the locale of the last render
+  const localeRef = useLatest(locale)
 
   useEffect(() => {
     const pending = new Map<AnnouncedChange, string>()
@@ -65,7 +70,7 @@ const useAnnouncements = (paint: ReactPaint) => {
 
     const getNames = () => {
       const { shapes, tools } = paint.getState()
-      return getPaintShapeNames(paint, shapes, tools)
+      return getPaintShapeNames(paint, shapes, tools, localeRef.current)
     }
 
     let zoom = paint.getState().view.zoom
@@ -73,12 +78,15 @@ const useAnnouncements = (paint: ReactPaint) => {
       const newZoom = paint.getState().view.zoom
       if (newZoom === zoom) return
       zoom = newZoom
-      announce('zoom', `Zoom ${Math.round(newZoom * 100)} %`)
+      const { lang, editor, format } = localeRef.current
+      announce('zoom', format(editor.announcements.zoom, { value: formatNumber(newZoom, lang, ZOOM_FORMAT) }))
     })
-    const unregisterTool = paint.registerEvent('toolChanged', tool => announce('tool', getToolMessage(tool)))
-    const unregisterSelection = paint.registerEvent('selectionChanged', shapes => announce('selection', getSelectionMessage(shapes, getNames)))
+    const unregisterTool = paint.registerEvent('toolChanged', tool => announce('tool', getToolMessage(tool, localeRef.current)))
+    const unregisterSelection = paint.registerEvent('selectionChanged', shapes =>
+      announce('selection', getSelectionMessage(shapes, getNames, localeRef.current))
+    )
     const unregisterData = paint.registerEvent('dataChanged', (_data, source, changes) => {
-      if (source !== 'remote') announce('shapes', getShapesMessage(changes, getNames))
+      if (source !== 'remote') announce('shapes', getShapesMessage(changes, getNames, localeRef.current))
     })
 
     return () => {
@@ -88,7 +96,7 @@ const useAnnouncements = (paint: ReactPaint) => {
       unregisterSelection()
       unregisterData()
     }
-  }, [paint])
+  }, [paint, localeRef])
 
   return message
 }

@@ -126,9 +126,9 @@ export const ZoomAndPan: Story = {
 
     // its sub menus open while they are hovered
     await user.hover(view.getByRole('menuitem', { name: 'Organize' }))
-    expect(await view.findByRole('menuitem', { name: 'Move forward' })).toBeInTheDocument()
+    expect(await view.findByRole('menuitem', { name: 'Bring forward' })).toBeInTheDocument()
     await user.unhover(view.getByRole('menuitem', { name: 'Organize' }))
-    await waitFor(() => expect(view.queryByRole('menuitem', { name: 'Move forward' })).toBeNull())
+    await waitFor(() => expect(view.queryByRole('menuitem', { name: 'Bring forward' })).toBeNull())
     await user.hover(view.getByRole('menuitem', { name: 'Transform' }))
     expect(await view.findByRole('menuitem', { name: 'Flip horizontally' })).toBeInTheDocument()
 

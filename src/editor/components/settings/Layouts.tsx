@@ -26,7 +26,9 @@ import {
   visibilityIcon,
   visibilityOffIcon
 } from '@editor/constants/icons'
+import type { EditorLocale } from '@editor/constants/locale'
 import useArrowNavigation from '@editor/hooks/useArrowNavigation'
+import useEditorLocale from '@editor/hooks/useEditorLocale'
 import useEscape from '@editor/hooks/useEscape'
 import useLayerDrag from '@editor/hooks/useLayerDrag'
 import { mergeRefs } from '@editor/utils/dom'
@@ -47,6 +49,7 @@ type LayoutNameInputType = {
 /** Field of the name of a shape: Enter or the loss of the focus renames the shape, Escape cancels */
 const LayoutNameInput = ({ name, finishRenaming }: LayoutNameInputType) => {
   const ref = useRef<HTMLInputElement>(null)
+  const { editor } = useEditorLocale()
   // the field also loses the focus when the edition is done
   const isDone = useRef(false)
 
@@ -84,7 +87,7 @@ const LayoutNameInput = ({ name, finishRenaming }: LayoutNameInputType) => {
     <input
       ref={ref}
       className='react-paint-editor-layout-name'
-      aria-label='Layer name'
+      aria-label={editor.layers.layerName}
       defaultValue={name ?? ''}
       onKeyDown={onKeyDown}
       onBlur={e => finish(e.currentTarget.value)}
@@ -134,6 +137,8 @@ const Layout = memo(function Layout({
   toggleCollapsed
 }: LayoutType) {
   const isGroup = shape.type === 'group'
+  const { editor } = useEditorLocale()
+  const messages = editor.layers
 
   // the clicks of the buttons of the layer do not select it. A disabled button is not clicked
   const onButtonClick = (action: () => void) => (e: React.MouseEvent<HTMLElement>) => {
@@ -157,12 +162,13 @@ const Layout = memo(function Layout({
     setRenamingId(shape.id)
   }
 
-  // an empty name removes the name of the shape, which shows its default name again
+  // An empty name removes the name of the shape, which shows its default name again. The default name kept as it is gives
+  // no name either: it is written in the language of the editor, and follows the shape
   const finishRenaming = (newName?: string) => {
     setRenamingId(undefined)
     focusLayer(shape.id)
     if (newName === undefined) return
-    const name = newName.trim() ? newName : undefined
+    const name = newName.trim() && !(shape.name === undefined && newName === shape.label) ? newName : undefined
     if (name !== shape.name) handleUpdate([{ id: shape.id, name }])
   }
 
@@ -189,14 +195,14 @@ const Layout = memo(function Layout({
       style={{ '--react-paint-editor-layout-depth': shape.depth } as React.CSSProperties}
     >
       {/* the pointer only: the keyboard and the assistive technologies move the layer with its buttons, or Alt and the arrows */}
-      <span className='react-paint-editor-layout-handle' aria-hidden='true' title='Drag to reorder'>
+      <span className='react-paint-editor-layout-handle' aria-hidden='true' title={messages.dragHandle}>
         {dragHandleIcon}
       </span>
       {isGroup ? (
         // out of the order of Tab: ArrowRight and ArrowLeft expand and collapse the group, see handleLayerKeyDown
         <Button
           className='react-paint-editor-layout-chevron'
-          title={collapsed ? 'Expand' : 'Collapse'}
+          title={collapsed ? messages.expand : messages.collapse}
           tabIndex={-1}
           aria-expanded={!collapsed}
           selected={selected}
@@ -230,7 +236,7 @@ const Layout = memo(function Layout({
 
       <Button
         className='react-paint-editor-layouts-move-button'
-        title='Move forward'
+        title={messages.bringForward}
         data-move='forward'
         disabled={disabled || shape.isFirst}
         selected={selected}
@@ -239,7 +245,7 @@ const Layout = memo(function Layout({
       />
       <Button
         className='react-paint-editor-layouts-move-button'
-        title='Move backward'
+        title={messages.sendBackward}
         data-move='backward'
         disabled={disabled || shape.isLast}
         selected={selected}
@@ -249,7 +255,7 @@ const Layout = memo(function Layout({
 
       <Button
         className='react-paint-editor-layouts-visible-button'
-        title={shape.visible !== false ? 'Hide' : 'Show'}
+        title={shape.visible !== false ? messages.hide : messages.show}
         data-visible={shape.visible !== false}
         disabled={disabled}
         selected={selected}
@@ -259,7 +265,7 @@ const Layout = memo(function Layout({
 
       <Button
         className='react-paint-editor-layouts-locked-button'
-        title={shape.locked ? 'Locked' : 'Unlocked'}
+        title={shape.locked ? messages.unlock : messages.lock}
         data-locked={!!shape.locked}
         disabled={disabled}
         selected={selected}
@@ -268,7 +274,7 @@ const Layout = memo(function Layout({
       />
       <Button
         className='react-paint-editor-layouts-remove-button'
-        title='Remove'
+        title={messages.remove}
         disabled={disabled}
         onClick={onButtonClick(() => handleRemove([shape.id]))}
         icon={trashIcon}
@@ -277,19 +283,17 @@ const Layout = memo(function Layout({
   )
 })
 
-const GRID_LABELS = { small: 'Small grid', medium: 'Medium grid', large: 'Large grid' }
-
 const getGridFormat = (gridGap: number): GridLabelType =>
   gridGap >= GRID_PRESETS.large ? 'large' : gridGap >= GRID_PRESETS.medium ? 'medium' : gridGap >= GRID_PRESETS.small ? 'small' : 'none'
 
 /** The layers keep their identity while their shape is only moved or resized, and their names while it is reordered */
-const createLayersSelector = (paint: ReactPaint) => {
+const createLayersSelector = (paint: ReactPaint, locale: EditorLocale) => {
   let lastShapes: ShapeEntity[] | undefined
   let lastTools: EditorState['tools'] | undefined
   let lastLayers: LayerItem[] = []
   return ({ shapes, tools }: EditorState) => {
     if (shapes === lastShapes && tools === lastTools) return lastLayers
-    lastLayers = buildLayers(shapes, new Map(lastLayers.map(layer => [layer.id, layer])), getPaintShapeNames(paint, shapes, tools))
+    lastLayers = buildLayers(shapes, new Map(lastLayers.map(layer => [layer.id, layer])), getPaintShapeNames(paint, shapes, tools, locale))
     lastShapes = shapes
     lastTools = tools
     return lastLayers
@@ -324,7 +328,10 @@ type LayoutsPanelType = {
 const LayoutsPanel = ({ disabled, id, panelRef }: LayoutsPanelType) => {
   const paint = usePaint()
   const { actions } = paint
-  const [selectLayers] = useState(() => createLayersSelector(paint))
+  const locale = useEditorLocale()
+  const messages = locale.editor.layers
+  // the names of the layers are the ones of the language
+  const selectLayers = useMemo(() => createLayersSelector(paint, locale), [paint, locale])
   const layers = usePaintState(paint, selectLayers, shallowEqual)
   const selectedShapeIds = usePaintState(paint, selectSelectedShapeIds)
   const [selectGroupActions] = useState(createGroupActionsSelector)
@@ -386,10 +393,10 @@ const LayoutsPanel = ({ disabled, id, panelRef }: LayoutsPanelType) => {
   const announceMove = useCallback(
     (id: string) => {
       const { shapes, tools } = paint.getState()
-      const message = getLayerMoveMessage(shapes, id, getPaintShapeNames(paint, shapes, tools))
+      const message = getLayerMoveMessage(shapes, id, getPaintShapeNames(paint, shapes, tools, locale), locale)
       setAnnouncement(previous => (previous === message ? `${message} ` : message))
     },
-    [paint]
+    [paint, locale]
   )
 
   const moveLayer = useCallback(
@@ -483,40 +490,43 @@ const LayoutsPanel = ({ disabled, id, panelRef }: LayoutsPanelType) => {
       <div className='react-paint-editor-layouts-panel-content'>
         <div className='react-paint-editor-layouts-scrolling-content'>
           <div className='react-paint-editor-layouts-row' ref={gridNavigationRef}>
-            <span className='react-paint-editor-layouts-subtitle'>Grid</span>
+            <span className='react-paint-editor-layouts-subtitle'>{messages.grid}</span>
             <Button
-              title='No grid'
+              title={messages.noGrid}
               icon={gridOffIcon}
               className='react-paint-editor-layouts-grid-button'
               pressed={gridFormat === 'none'}
               disabled={disabled}
               onClick={() => setGridFormat('none')}
             />
-            {(['small', 'medium', 'large'] as const).map(value => (
-              <Button
-                key={value}
-                className='react-paint-editor-layouts-grid-button'
-                title={GRID_LABELS[value]}
-                aria-label={`${value.charAt(0).toUpperCase()}, ${GRID_LABELS[value]}`}
-                pressed={gridFormat === value}
-                disabled={disabled}
-                onClick={() => setGridFormat(value)}
-              >
-                {value.charAt(0).toUpperCase()}
-              </Button>
-            ))}
+            {(['small', 'medium', 'large'] as const).map(value => {
+              const size = messages.gridSizes[value]
+              return (
+                <Button
+                  key={value}
+                  className='react-paint-editor-layouts-grid-button'
+                  title={size.name}
+                  aria-label={locale.format(messages.gridSize, { letter: size.letter, name: size.name })}
+                  pressed={gridFormat === value}
+                  disabled={disabled}
+                  onClick={() => setGridFormat(value)}
+                >
+                  {size.letter}
+                </Button>
+              )
+            })}
           </div>
           <hr />
           <div className='react-paint-editor-layouts-row'>
-            <span className='react-paint-editor-layouts-subtitle'>Layers</span>
+            <span className='react-paint-editor-layouts-subtitle'>{messages.layers}</span>
             <Button
-              title='Group shapes'
+              title={messages.groupShapes}
               icon={groupShapesIcon}
               disabled={disabled || !canGroup}
               onClick={() => actions.groupShapes(selectedShapeIds)}
             />
             <Button
-              title='Ungroup shapes'
+              title={messages.ungroupShapes}
               icon={ungroupShapesIcon}
               disabled={disabled || !canUngroup}
               onClick={() => actions.ungroupShapes(selectedShapeIds)}
@@ -524,9 +534,9 @@ const LayoutsPanel = ({ disabled, id, panelRef }: LayoutsPanelType) => {
           </div>
           <div className='react-paint-editor-layouts' data-with-groups={+hasGroups}>
             {layers.length === 0 ? (
-              <div className='react-paint-editor-layouts-placeholder'>No layer yet</div>
+              <div className='react-paint-editor-layouts-placeholder'>{messages.empty}</div>
             ) : (
-              <ul className='react-paint-editor-layouts-list' aria-label='Layers' ref={setListRefs}>
+              <ul className='react-paint-editor-layouts-list' aria-label={messages.layers} ref={setListRefs}>
                 {shownLayers.map(layer => (
                   <Layout
                     key={layer.id}

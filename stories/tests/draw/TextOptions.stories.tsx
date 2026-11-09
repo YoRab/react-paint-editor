@@ -30,8 +30,8 @@ export const TextOptions: Story = {
     const view = within(canvasElement)
     const user = userEvent.setup()
     await selectTool(view, 'text')
-    await setNumberSetting(view, 'Taille du texte', 20)
-    await setSelectSetting(view, 'Alignement du texte', 'Centré')
+    await setNumberSetting(view, 'Text size', 20)
+    await setSelectSetting(view, 'Text alignment', 'Center')
 
     const drawCanvas = await view.findByTestId('draw-canvas')
     const rect = drawCanvas.getBoundingClientRect()
@@ -57,7 +57,7 @@ export const TextOptions: Story = {
     // in the field, like the backspace, do not remove the selected text
     getPaint().actions.selectShapes([text!.id!])
     await wait()
-    await setNumberSetting(view, 'Taille du texte', 300)
+    await setNumberSetting(view, 'Text size', 300)
     await wait(100)
     const shapes = getCurrentDataRef.current!().shapes!
     expect(shapes).toHaveLength(1)
@@ -82,8 +82,8 @@ export const TextOptions: Story = {
     // the shortcuts leave the keys to the field: an arrow does not move the selected text, a backspace does not remove it
     getPaint().actions.selectShapes([text!.id!])
     await wait()
-    await userEvent.click(view.getByRole('button', { name: 'Taille du texte' }))
-    await userEvent.click(view.getByRole('spinbutton', { name: 'Taille du texte' }))
+    await userEvent.click(view.getByRole('button', { name: 'Text size' }))
+    await userEvent.click(view.getByRole('spinbutton', { name: 'Text size' }))
     await userEvent.keyboard('{ArrowLeft}')
     expect(getCurrentDataRef.current!().shapes!).toMatchObject([{ x: (restored as { x: number }).x }])
     await userEvent.keyboard('{Backspace}')

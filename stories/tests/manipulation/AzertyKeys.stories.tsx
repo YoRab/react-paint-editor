@@ -93,6 +93,6 @@ export const AzertyKeys: Story = {
     drawCanvas.focus()
     await press('Shift', 'ShiftLeft', SHIFT, 16)
     expect(await press('?', 'Comma', SHIFT, 188)).toEqual([true])
-    await waitFor(() => expect(view.getByRole('dialog', { name: 'Raccourcis clavier' })).toBeInTheDocument())
+    await waitFor(() => expect(view.getByRole('dialog', { name: 'Keyboard shortcuts' })).toBeInTheDocument())
   }
 }

@@ -11,7 +11,7 @@ type SelectFieldType = {
   }>
   selectedSettings: string | undefined
   setSelectedSettings: React.Dispatch<React.SetStateAction<string | undefined>>
-  title?: string
+  title: string
   disabled?: boolean
   icon: React.ReactNode
   field: string
@@ -26,7 +26,7 @@ const SelectField = ({
   CustomOption,
   selectedSettings,
   setSelectedSettings,
-  title = "Choisissez l'option",
+  title,
   disabled = false,
   field,
   icon,

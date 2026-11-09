@@ -1,4 +1,5 @@
 import type { ReactPaint, ShapeEntity } from '@canvas/index'
+import { DEFAULT_EDITOR_LOCALE, type EditorLocale } from '@editor/constants/locale'
 import {
   buildLayers,
   getLayerAncestorIds,
@@ -27,6 +28,21 @@ const rect = (id: string, fields: Partial<ShapeFields> = {}): ShapeFields => ({ 
 const group = (id: string, shapes: ShapeFields[], fields: Partial<ShapeFields> = {}): ShapeFields => ({ id, type: 'group', shapes, ...fields })
 
 const asShapes = (shapes: ShapeFields[]) => shapes as unknown as ShapeEntity[]
+
+/** The texts of the layers in French, the other ones in English */
+const FRENCH: EditorLocale = {
+  lang: 'fr',
+  canvas: { ...DEFAULT_EDITOR_LOCALE.canvas, shapeTypes: { ...DEFAULT_EDITOR_LOCALE.canvas.shapeTypes, rect: 'Rectangle', group: 'Groupe' } },
+  editor: {
+    ...DEFAULT_EDITOR_LOCALE.editor,
+    layers: {
+      ...DEFAULT_EDITOR_LOCALE.editor.layers,
+      defaultName: '{type} n° {number}',
+      position: '{name} : position {position} sur {count}',
+      positionInGroup: '{name} : position {position} sur {count} dans {group}'
+    }
+  }
+}
 
 /** outer holds a and inner, inner holds b and c, d is alone */
 const TREE = asShapes([group('outer', [rect('a'), group('inner', [rect('b'), rect('c')])], { name: 'Outer', locked: true }), rect('d')])
@@ -83,8 +99,8 @@ describe('editor/utils/layers', () => {
     expect(Object.fromEntries(names)).toEqual({
       front: 'Rectangle 2',
       long: 'A title much longer than the …',
-      empty: 'Texte 1',
-      g: 'Groupe 1',
+      empty: 'Text 1',
+      g: 'Group 1',
       inner: 'Inside',
       // the label of its tool, counted apart
       star: 'Étoile 1',
@@ -100,7 +116,7 @@ describe('editor/utils/layers', () => {
     expect(getNames([rect('a'), rect('b'), rect('c')])).toEqual({ a: 'Rectangle 3', b: 'Rectangle 2', c: 'Rectangle 1' })
     // a goes to the background, b and c into a group: they keep their numbers
     expect(getNames([group('g', [rect('c'), rect('b')]), rect('a')])).toEqual({
-      g: 'Groupe 1',
+      g: 'Group 1',
       a: 'Rectangle 3',
       b: 'Rectangle 2',
       c: 'Rectangle 1'
@@ -133,7 +149,7 @@ describe('editor/utils/layers', () => {
     const shapes = asShapes([rect('a'), group('g', [rect('b')])])
     const tools: never[] = []
     const names = getPaintShapeNames(paint, shapes, tools)
-    expect(Object.fromEntries(names)).toEqual({ a: 'Rectangle 2', g: 'Groupe 1', b: 'Rectangle 1' })
+    expect(Object.fromEntries(names)).toEqual({ a: 'Rectangle 2', g: 'Group 1', b: 'Rectangle 1' })
     // new objects with the same fields, like shapes hidden or locked: the names are the same ones
     expect(getPaintShapeNames(paint, asShapes([{ ...rect('a'), visible: false }, group('g', [{ ...rect('b'), locked: true }])]), tools)).toBe(names)
     // a name given, or a shape added, names the shapes again
@@ -217,10 +233,29 @@ describe('editor/utils/layers', () => {
   })
 
   it('tells the place of a shape among the shapes of its group, from the foreground', () => {
-    expect(getLayerMoveMessage(TREE, 'd')).toBe('Rectangle 1 : position 2 sur 2')
-    expect(getLayerMoveMessage(TREE, 'outer')).toBe('Outer : position 1 sur 2')
-    expect(getLayerMoveMessage(TREE, 'c')).toBe('Rectangle 2 : position 2 sur 2 dans Groupe 1')
+    expect(getLayerMoveMessage(TREE, 'd')).toBe('Rectangle 1: position 2 of 2')
+    expect(getLayerMoveMessage(TREE, 'outer')).toBe('Outer: position 1 of 2')
+    expect(getLayerMoveMessage(TREE, 'c')).toBe('Rectangle 2: position 2 of 2 in Group 1')
     expect(getLayerMoveMessage(TREE, 'unknown')).toBe('')
+    expect(getLayerMoveMessage(TREE, 'c', undefined, FRENCH)).toBe('Rectangle 2 : position 2 sur 2 dans Group 1')
+  })
+
+  it('names the shapes in the language of the locale, keeping their numbers when it changes', () => {
+    const numbers: ShapeNumbers = new Map()
+    const shapes = asShapes([rect('a'), group('g', [rect('b')])])
+    expect(Object.fromEntries(getShapeNames(shapes, [], numbers))).toEqual({ a: 'Rectangle 2', g: 'Group 1', b: 'Rectangle 1' })
+    expect(Object.fromEntries(getShapeNames(shapes, [], numbers, FRENCH))).toEqual({ a: 'Rectangle n° 2', g: 'Groupe n° 1', b: 'Rectangle n° 1' })
+    // the shapes reordered meanwhile keep their numbers in the other language
+    const reordered = asShapes([group('g', [rect('b')]), rect('a')])
+    expect(Object.fromEntries(getShapeNames(reordered, [], numbers))).toEqual({ a: 'Rectangle 2', g: 'Group 1', b: 'Rectangle 1' })
+  })
+
+  it('names the shapes of a canvas again when the locale changes', () => {
+    const paint = {} as ReactPaint
+    const shapes = asShapes([rect('a')])
+    const names = getPaintShapeNames(paint, shapes, [])
+    expect(names.get('a')).toBe('Rectangle 1')
+    expect(getPaintShapeNames(paint, shapes, [], FRENCH).get('a')).toBe('Rectangle n° 1')
   })
 
   it('gives the groups holding shapes, to expand them', () => {

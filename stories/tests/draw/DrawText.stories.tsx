@@ -34,11 +34,11 @@ export const DrawText: Story = {
     await selectTool(view, 'text')
 
     // --- Shape 1 settings ---
-    await setColorSetting(view, 'Couleur du trait', 'red')
-    await setSelectSetting(view, 'Police', 'monospace')
-    await setToggleSetting(view, 'Gras')
-    await setToggleSetting(view, 'Italique')
-    await setRangeSetting(view, 'Opacité', 50)
+    await setColorSetting(view, 'Stroke color', 'red')
+    await setSelectSetting(view, 'Font', 'monospace')
+    await setToggleSetting(view, 'Bold')
+    await setToggleSetting(view, 'Italic')
+    await setRangeSetting(view, 'Opacity', 50)
 
     const drawCanvas = await view.findByTestId('draw-canvas')
     const rect = drawCanvas.getBoundingClientRect()
@@ -64,11 +64,11 @@ export const DrawText: Story = {
     await new Promise(res => setTimeout(res, 50))
 
     // --- Shape 2 settings (clicking settings blurs the textbox, saving "World") ---
-    await setColorSetting(view, 'Couleur du trait', 'green')
-    await setSelectSetting(view, 'Police', 'arial')
-    await setToggleSetting(view, 'Gras') // toggle back to false
-    await setToggleSetting(view, 'Italique') // toggle back to false
-    await setRangeSetting(view, 'Opacité', 75)
+    await setColorSetting(view, 'Stroke color', 'green')
+    await setSelectSetting(view, 'Font', 'arial')
+    await setToggleSetting(view, 'Bold') // toggle back to false
+    await setToggleSetting(view, 'Italic') // toggle back to false
+    await setRangeSetting(view, 'Opacity', 75)
 
     // --- Assertions ---
     expect(getCurrentDataRef.current).not.toBeNull()

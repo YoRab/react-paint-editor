@@ -69,7 +69,7 @@ export const EditorShortcuts: Story = {
 
     // the group of the tool chosen shows it, and keeps its icon once another tool is chosen
     await user.keyboard('{Shift>}O{/Shift}')
-    const shapesGroup = view.getByRole('button', { name: 'shapes' })
+    const shapesGroup = view.getByRole('button', { name: 'Shapes' })
     expect(shapesGroup).toHaveAttribute('data-selected', '1')
     const circleIcon = shapesGroup.innerHTML
     await user.keyboard('r')
@@ -108,8 +108,8 @@ export const EditorShortcuts: Story = {
     // =====================================================================
 
     await user.keyboard('?')
-    const help = await view.findByRole('dialog', { name: 'Raccourcis clavier' })
-    expect(within(help).getByText('Dupliquer')).toBeInTheDocument()
+    const help = await view.findByRole('dialog', { name: 'Keyboard shortcuts' })
+    expect(within(help).getByText('Duplicate')).toBeInTheDocument()
     expect(within(help).getByText('Rectangle')).toBeInTheDocument()
     await user.keyboard('r')
     expect(getState().activeTool.id).toBe('react-paint-selection')
@@ -119,10 +119,10 @@ export const EditorShortcuts: Story = {
 
     // the menu opens it too, and tells its key
     await user.click(view.getByRole('button', { name: 'Menu' }))
-    const helpItem = await view.findByRole('menuitem', { name: 'Raccourcis clavier' })
+    const helpItem = await view.findByRole('menuitem', { name: 'Keyboard shortcuts' })
     expect(helpItem).toHaveAttribute('aria-keyshortcuts', '?')
     await user.click(helpItem)
-    await view.findByRole('dialog', { name: 'Raccourcis clavier' })
+    await view.findByRole('dialog', { name: 'Keyboard shortcuts' })
     await user.keyboard('{Escape}')
     await waitFor(() => expect(view.queryByRole('dialog')).not.toBeInTheDocument())
 

@@ -49,10 +49,10 @@ export const FillOptions: Story = {
     }
 
     await selectTool(view, 'rect')
-    await setColorSetting(view, 'Couleur du trait', 'Aucune couleur')
-    await setColorSetting(view, 'Couleur de fond', 'blue')
-    await setRangeSetting(view, 'Epaisseur du trait', 10)
-    await setSelectSetting(view, 'Motif du fond', 'Hachures')
+    await setColorSetting(view, 'Stroke color', 'No color')
+    await setColorSetting(view, 'Fill color', 'blue')
+    await setRangeSetting(view, 'Stroke width', 10)
+    await setSelectSetting(view, 'Fill pattern', 'Hatching')
     await drawRect([100, 100], [300, 300])
 
     const [hatched] = getCurrentDataRef.current!().shapes!
@@ -70,12 +70,12 @@ export const FillOptions: Story = {
     expect(getState().selectedShapeIds).toEqual([hatched!.id])
 
     // the lines across the first ones: x - y = 171.72, 115.15, 58.58, 2.01…
-    await setSelectSetting(view, 'Motif du fond', 'Hachures croisées')
+    await setSelectSetting(view, 'Fill pattern', 'Cross hatching')
     await wait(100)
     expect(getPixel(drawCanvas, [128.28, 128.28])).toEqual([0, 0, 255, 255])
 
     // half transparent, the crossing of two lines is not darker than a single line
-    await setRangeSetting(view, 'Opacité', 50)
+    await setRangeSetting(view, 'Opacity', 50)
     await wait(100)
     const crossing = getPixel(drawCanvas, [171.72, 169.71])
     const single = getPixel(drawCanvas, [185.86, 155.57])
@@ -86,14 +86,14 @@ export const FillOptions: Story = {
     await user.keyboard('{Escape}')
     // the tool keeps the values given to its shapes
     await selectTool(view, 'rect')
-    await setRangeSetting(view, 'Opacité', 100)
-    await setSelectSetting(view, 'Motif du fond', 'Plein')
-    await setColorSetting(view, 'Couleur de fond', 'red')
+    await setRangeSetting(view, 'Opacity', 100)
+    await setSelectSetting(view, 'Fill pattern', 'Solid')
+    await setColorSetting(view, 'Fill color', 'red')
     await inMoreOptions(view, async () => {
-      expect(view.queryByRole('button', { name: 'Deuxième couleur du dégradé' })).toBeNull()
-      await setSelectSetting(view, 'Dégradé du fond', 'Linéaire')
-      await setColorSetting(view, 'Deuxième couleur du dégradé', 'blue')
-      expect(view.getByRole('button', { name: 'Angle du dégradé' })).toBeInTheDocument()
+      expect(view.queryByRole('button', { name: 'Second color of the gradient' })).toBeNull()
+      await setSelectSetting(view, 'Fill gradient', 'Linear')
+      await setColorSetting(view, 'Second color of the gradient', 'blue')
+      expect(view.getByRole('button', { name: 'Angle of the gradient' })).toBeInTheDocument()
     })
     await drawRect([500, 100], [800, 300])
 
@@ -110,7 +110,7 @@ export const FillOptions: Story = {
 
     // turned by 90°, from the top to the bottom: the new shape is selected, the tool draws the next one
     await selectTool(view, 'rect')
-    await setAdvancedRangeSetting(view, 'Angle du dégradé', 90)
+    await setAdvancedRangeSetting(view, 'Angle of the gradient', 90)
     await drawRect([500, 350], [800, 550])
     expect(getPixel(drawCanvas, [650, 352])[0]).toBeGreaterThan(240)
     expect(getPixel(drawCanvas, [650, 548])[2]).toBeGreaterThan(240)
@@ -118,9 +118,9 @@ export const FillOptions: Story = {
     // a radial gradient has no angle, and fades out to a transparent second color
     await selectTool(view, 'rect')
     await inMoreOptions(view, async () => {
-      await setSelectSetting(view, 'Dégradé du fond', 'Radial')
-      expect(view.queryByRole('button', { name: 'Angle du dégradé' })).toBeNull()
-      await setColorSetting(view, 'Deuxième couleur du dégradé', 'Aucune couleur')
+      await setSelectSetting(view, 'Fill gradient', 'Radial')
+      expect(view.queryByRole('button', { name: 'Angle of the gradient' })).toBeNull()
+      await setColorSetting(view, 'Second color of the gradient', 'No color')
     })
     await drawRect([100, 350], [300, 550])
     const [centerRed, centerGreen, , centerAlpha] = getPixel(drawCanvas, [200, 450])

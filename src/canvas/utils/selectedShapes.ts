@@ -63,7 +63,7 @@ export const getSelectedShapesTools = (selection: SelectionType | undefined, ava
   return {
     id: tools.map(tool => tool.id).join('-'),
     icon: '',
-    label: 'group',
+    // no label: an editor names it in its language
     type: 'group',
     settings: settings as ToolsGroupSettings
   }

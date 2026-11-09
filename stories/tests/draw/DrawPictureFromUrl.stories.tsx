@@ -22,7 +22,7 @@ export const DrawPictureFromUrl: Story = {
     await addPictureFromUrl(view, SVG_DATA_URI)
 
     // --- Change opacity on the selected picture ---
-    await setRangeSetting(view, 'Opacité', 60)
+    await setRangeSetting(view, 'Opacity', 60)
 
     // --- Assertions ---
     expect(getCurrentDataRef.current).not.toBeNull()

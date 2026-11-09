@@ -40,34 +40,34 @@ export const EditorOverlays: Story = {
     await wait()
     expect(view.getByTestId('tool-selection')).toHaveAttribute('aria-pressed', 'false')
     // the change is announced
-    await waitFor(() => expect(getAnnouncement(canvasElement)).toBe('Outil Rectangle'))
+    await waitFor(() => expect(getAnnouncement(canvasElement)).toBe('Rectangle tool'))
 
     // =====================================================================
     // A field opens its panel: the button tells it, Escape closes it and gives the focus back to the button
     // =====================================================================
 
     getPaint().actions.selectShapes(['a'])
-    await waitFor(() => expect(getAnnouncement(canvasElement)).toContain('Sélection : Rectangle 2'))
-    const strokeButton = await view.findByRole('button', { name: 'Couleur du trait' })
+    await waitFor(() => expect(getAnnouncement(canvasElement)).toContain('Rectangle 2 selected'))
+    const strokeButton = await view.findByRole('button', { name: 'Stroke color' })
     expect(strokeButton).toHaveAttribute('aria-expanded', 'false')
     await user.click(strokeButton)
     expect(strokeButton).toHaveAttribute('aria-expanded', 'true')
-    const panel = view.getByRole('group', { name: 'Couleur du trait' })
+    const panel = view.getByRole('group', { name: 'Stroke color' })
     expect(panel.id).toBe(strokeButton.getAttribute('aria-controls'))
     // the colors tell the one chosen
     expect(within(panel).getAllByRole('button', { pressed: true })).toHaveLength(1)
     within(panel).getAllByRole('button')[0]!.focus()
     await user.keyboard('{Escape}')
-    expect(view.queryByRole('group', { name: 'Couleur du trait' })).toBeNull()
+    expect(view.queryByRole('group', { name: 'Stroke color' })).toBeNull()
     expect(strokeButton).toHaveFocus()
     // Escape in the panel does not change the selection
     expect(getSelectedIds()).toEqual(['a'])
 
     // the slider is named by its field, and tells its value
-    await user.click(view.getByRole('button', { name: 'Opacité' }))
-    const slider = view.getByRole('slider', { name: 'Opacité' })
+    await user.click(view.getByRole('button', { name: 'Opacity' }))
+    const slider = view.getByRole('slider', { name: 'Opacity' })
     expect(slider).toHaveAttribute('aria-valuetext', '100%')
-    await user.click(view.getByRole('button', { name: 'Opacité' }))
+    await user.click(view.getByRole('button', { name: 'Opacity' }))
 
     // =====================================================================
     // The position, the size and the angle of the selection are typed in fields of a modal opened by the context menu
@@ -78,16 +78,16 @@ export const EditorOverlays: Story = {
     drawCanvas.focus()
     await wait(600)
     drawCanvas.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true }))
-    await user.click(await view.findByRole('menuitem', { name: 'Propriétés' }))
-    const properties = await view.findByRole('dialog', { name: 'Propriétés' })
+    await user.click(await view.findByRole('menuitem', { name: 'Properties' }))
+    const properties = await view.findByRole('dialog', { name: 'Properties' })
     const getField = (name: string) => within(properties).getByRole('spinbutton', { name })
     const { x, y, width } = getPaint().getBounds(['a'])!
     expect(getField('X')).toHaveValue(Math.round(x))
     await user.clear(getField('X'))
     await user.type(getField('X'), '300')
     expect(getPaint().getBounds(['a'])).toMatchObject({ x: 300, y })
-    await user.clear(getField('Largeur'))
-    await user.type(getField('Largeur'), '150')
+    await user.clear(getField('Width'))
+    await user.type(getField('Width'), '150')
     expect(getPaint().getBounds(['a'])!.width).toBeCloseTo(150, 0)
     expect(width).not.toBe(150)
     await user.clear(getField('Rotation'))
@@ -98,7 +98,7 @@ export const EditorOverlays: Story = {
     expect(getState().history.canUndo).toBe(true)
     getPaint().actions.undo()
     expect(getPaint().getBounds(['a'])!.rotation).toBe(0)
-    await user.click(within(properties).getByRole('button', { name: 'Fermer' }))
+    await user.click(within(properties).getByRole('button', { name: 'Close' }))
     expect(view.queryByRole('dialog')).toBeNull()
 
     // =====================================================================
@@ -117,7 +117,7 @@ export const EditorOverlays: Story = {
       'Load project',
       'Save project',
       'Export PNG',
-      'Raccourcis clavier'
+      'Keyboard shortcuts'
     ])
     await waitFor(() => expect(items[0]).toHaveFocus())
     await user.keyboard('{ArrowDown}')
@@ -159,18 +159,18 @@ export const EditorOverlays: Story = {
     await user.upload(await findFileInput(view, 'Upload picture'), new File(['not an image'], 'broken.png', { type: 'image/png' }))
     const status = canvasElement.querySelector('.react-paint-editor-snackbar-container')!
     expect(status).toHaveAttribute('role', 'status')
-    const message = await within(status as HTMLElement).findByText('Le chargement a échoué')
-    await user.click(within(message).getByRole('button', { name: 'Fermer' }))
-    await waitFor(() => expect(within(status as HTMLElement).queryByText('Le chargement a échoué')).toBeNull())
+    const message = await within(status as HTMLElement).findByText('The picture could not be loaded')
+    await user.click(within(message).getByRole('button', { name: 'Close' }))
+    await waitFor(() => expect(within(status as HTMLElement).queryByText('The picture could not be loaded')).toBeNull())
 
     // =====================================================================
     // The shapes removed and the zoom are announced
     // =====================================================================
 
     getPaint().actions.removeShapes(['b'])
-    await waitFor(() => expect(getAnnouncement(canvasElement)).toContain('Suppression : Rectangle'))
+    await waitFor(() => expect(getAnnouncement(canvasElement)).toContain('Rectangle removed'))
     getPaint().actions.zoomTo(2)
-    await waitFor(() => expect(getAnnouncement(canvasElement)).toBe('Zoom 200 %'))
+    await waitFor(() => expect(getAnnouncement(canvasElement)).toBe('Zoom 200%'))
   }
 }
 
@@ -185,7 +185,7 @@ export const OpenContextMenu: Story = {
     getPaint().actions.selectShapes(['a'])
     drawCanvas.focus()
     drawCanvas.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true }))
-    const menu = await view.findByRole('menu', { name: 'Menu contextuel' })
+    const menu = await view.findByRole('menu', { name: 'Context menu' })
     await userEvent.keyboard('{ArrowRight}')
     expect(await within(menu).findByRole('menu', { name: 'Organize' })).toBeInTheDocument()
   }
@@ -200,8 +200,8 @@ export const OpenModalAndPanel: Story = {
     const view = within(canvasElement)
     await view.findByTestId('draw-canvas')
     getPaint().actions.selectShapes(['a'])
-    await userEvent.click(await view.findByRole('button', { name: 'Type de traits' }))
-    expect(view.getByRole('button', { name: 'Tirets' })).toHaveAttribute('aria-pressed', 'false')
+    await userEvent.click(await view.findByRole('button', { name: 'Stroke type' }))
+    expect(view.getByRole('button', { name: 'Dashed' })).toHaveAttribute('aria-pressed', 'false')
     await userEvent.click(view.getByRole('button', { name: 'Menu' }))
     await userEvent.click(await view.findByRole('menuitem', { name: 'Export PNG' }))
     expect(await view.findByRole('dialog', { name: 'Choose export settings' })).toBeInTheDocument()

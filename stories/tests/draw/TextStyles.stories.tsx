@@ -39,12 +39,12 @@ export const TextStyles: Story = {
     const drawCanvas = (await view.findByTestId('draw-canvas')) as HTMLCanvasElement
 
     await selectTool(view, 'text')
-    await setColorSetting(view, 'Couleur de fond', 'yellow')
-    await setToggleSetting(view, 'Souligné')
+    await setColorSetting(view, 'Fill color', 'yellow')
+    await setToggleSetting(view, 'Underline')
     await inMoreOptions(view, async () => {
-      await setToggleSetting(view, 'Barré')
-      await setColorSetting(view, 'Couleur du contour', 'white')
-      await setRangeSetting(view, 'Epaisseur du contour', 4)
+      await setToggleSetting(view, 'Strikethrough')
+      await setColorSetting(view, 'Outline color', 'white')
+      await setRangeSetting(view, 'Outline width', 4)
     })
 
     const rect = drawCanvas.getBoundingClientRect()
@@ -88,9 +88,9 @@ export const TextStyles: Story = {
     getPaint().actions.addShapes([{ type: 'rect', x: 50, y: 50, width: 100, height: 60 }])
     getPaint().actions.selectAllShapes()
     await wait()
-    await setColorSetting(view, 'Couleur de fond', 'green')
+    await setColorSetting(view, 'Fill color', 'green')
     expect(getCurrentDataRef.current!().shapes!).toMatchObject([{ style: { fillColor: 'green' } }, { style: { fillColor: 'green' } }])
-    expect(view.queryByRole('button', { name: 'Souligné' })).toBeNull()
+    expect(view.queryByRole('button', { name: 'Underline' })).toBeNull()
     expect(view.queryByRole('button', { name: MORE_OPTIONS })).toBeNull()
   }
 }

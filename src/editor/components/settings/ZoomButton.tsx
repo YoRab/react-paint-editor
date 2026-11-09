@@ -1,6 +1,7 @@
 import Button from '@editor/components/common/Button'
 import { zoomIn } from '@editor/constants/icons'
 import type { Disclosure } from '@editor/hooks/useDisclosure'
+import useEditorLocale from '@editor/hooks/useEditorLocale'
 import './ZoomButton.css'
 
 type ZoomButtonType = {
@@ -12,9 +13,10 @@ type ZoomButtonType = {
 }
 
 const ZoomButton = ({ disabled = false, panel, className, toggleZoomPanel }: ZoomButtonType) => {
+  const { editor } = useEditorLocale()
   return (
     <Button
-      title='Toggle zoom panel'
+      title={editor.zoom.togglePanel}
       disabled={disabled}
       onClick={toggleZoomPanel}
       icon={zoomIn}
