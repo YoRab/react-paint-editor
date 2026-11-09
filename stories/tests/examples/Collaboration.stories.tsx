@@ -1,11 +1,11 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import { expect, fn, userEvent, waitFor, within } from 'storybook/test'
 import type { ReactPaint } from '../../../src/index'
-import { Collaboration, collaborationPaints } from '../../collaboration/Collaboration'
-import { findFileInput, makeCoordConverters, selectTool, wait } from './../helpers'
+import { Collaboration, collaborationPaints } from '../../examples/use-cases/Collaboration'
+import { findFileInput, makeCoordConverters, selectTool, wait } from '../helpers'
 
 const meta = {
-  title: 'Tests/Manipulation',
+  title: 'Tests/Examples/Collaboration',
   component: Collaboration,
   parameters: {
     layout: 'centered'

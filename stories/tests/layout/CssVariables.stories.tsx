@@ -3,7 +3,7 @@ import { expect, userEvent, within } from 'storybook/test'
 import { ReactPaintWrapper, selectTool } from './../helpers'
 
 const meta = {
-  title: 'Tests/Layout',
+  title: 'Tests/Layout/CssVariables',
   component: ReactPaintWrapper,
   parameters: {
     layout: 'centered'

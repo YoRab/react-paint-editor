@@ -1,0 +1,20 @@
+/* the width of the container follows the user, the height of the drawing follows its width */
+.resizable-width {
+  width: 700px;
+  min-width: 300px;
+  max-width: 100%;
+  resize: horizontal;
+  /* a drawing wider than its container is scrolled instead of cut, to see whether it is scaled */
+  overflow: auto;
+  border: 1px dashed gray;
+}
+
+/* with resize 'extend', the canvas fills its container, which needs a width and a height */
+.resizable-box {
+  width: 700px;
+  height: 450px;
+  max-width: 100%;
+  resize: both;
+  overflow: hidden;
+  border: 1px dashed gray;
+}

@@ -15,7 +15,7 @@ import {
 } from './../helpers'
 
 const meta = {
-  title: 'Tests/Draw',
+  title: 'Tests/Draw/TextLineHeight',
   component: ReactPaintWrapper,
   parameters: {
     layout: 'centered'

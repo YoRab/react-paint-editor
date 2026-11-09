@@ -66,7 +66,7 @@ const ContractHarness = (props: UseReactPaintProps) => {
 }
 
 const meta = {
-  title: 'Tests/Manipulation',
+  title: 'Tests/Manipulation/EditorContract',
   component: ContractHarness,
   parameters: {
     layout: 'centered'

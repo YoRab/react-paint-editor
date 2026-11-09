@@ -4,7 +4,7 @@ import { type CustomToolInput, DEFAULT_TOOLS, type Point } from '../../../src/in
 import { assertNoInternalFields, getCurrentDataRef, getPixel, ReactPaintWrapper, selectTool, toClient, wait } from './../helpers'
 
 const meta = {
-  title: 'Tests/Draw',
+  title: 'Tests/Draw/DrawSticker',
   component: ReactPaintWrapper,
   parameters: {
     layout: 'centered'

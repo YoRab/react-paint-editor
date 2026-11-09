@@ -96,7 +96,7 @@ function AdvancedPaintApp() {
       
       <h3>useReactPaint Hook</h3>
       <p>
-        The <code>useReactPaint</code> hook is the core of React Paint. It returns a handle, <code>paint</code>, to give to the <code>Editor</code> and <code>Canvas</code> components, or to <LinkTo title='React Paint/Custom editor' story='docs'>your own editor</LinkTo>.
+        The <code>useReactPaint</code> hook is the core of React Paint. It returns a handle, <code>paint</code>, to give to the <code>Editor</code> and <code>Canvas</code> components, or to <LinkTo title='Custom UI/Custom editor' story='docs'>your own editor</LinkTo>.
         It keeps the same identity for the whole life of the component, and the component calling the hook does not render again when the drawing changes. The handle gives:
       </p>
       <ul>
@@ -146,7 +146,7 @@ import { Editor } from '@yorab/react-paint/editor'
 import '@yorab/react-paint/editor/editor.css'`} />
       <p>
         To build your own editor, read the state with <code>usePaintState</code>, act on the canvas with <code>paint.actions</code>, and set <code>paint.scopeRef</code> on its root element. Used alone, the <code>Canvas</code> needs nothing more.
-        See the <LinkTo title='React Paint/Custom editor' story='docs'>Custom editor</LinkTo>, <LinkTo title='React Paint/Canvas only' story='docs'>Canvas only</LinkTo> and <LinkTo title='React Paint/External toolbar' story='docs'>External toolbar</LinkTo> examples.
+        See the <LinkTo title='Custom UI/Custom editor' story='docs'>Custom editor</LinkTo> and <LinkTo title='Custom UI/Programmatic API' story='docs'>Programmatic API</LinkTo> examples (the latter uses the canvas alone).
       </p>
       
       <h2>Configuration Options</h2>
@@ -241,7 +241,7 @@ link.click()`} />
       
       <h2>Next Steps</h2>
       <ul>
-        <li>Explore the <LinkTo title='React Paint/Playground' story='docs'>Playground</LinkTo> story to see all configuration options in action</li>
+        <li>Explore the <LinkTo title='Playground' story='Playground'>Playground</LinkTo> story to see all configuration options in action</li>
         <li>Review the <LinkTo title='API Reference' story='docs'>API documentation</LinkTo> for detailed type definitions and advanced features</li>
         <li>Visit the <a href="https://github.com/YoRab/react-paint-editor" target="_blank">GitHub repository</a> for more examples and contributions</li>
       </ul>

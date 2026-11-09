@@ -3,7 +3,7 @@ import { expect, userEvent, waitFor, within } from 'storybook/test'
 import { assertNoInternalFields, findFileInput, getCurrentDataRef, ReactPaintWrapper, setRangeSetting } from './../helpers'
 
 const meta = {
-  title: 'Tests/Draw',
+  title: 'Tests/Draw/DrawPictureFromUpload',
   component: ReactPaintWrapper,
   parameters: {
     layout: 'centered'

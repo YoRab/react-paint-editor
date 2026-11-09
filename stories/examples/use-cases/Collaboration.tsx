@@ -1,14 +1,14 @@
 import { type CSSProperties, useEffect } from 'react'
-import { Canvas, type DataChanges, Editor, type ReactPaint, type ShapeInput, useReactPaint } from '../../src/index'
+import { Canvas, type DataChanges, Editor, type ReactPaint, type ShapeInput, useReactPaint } from '../../../src/index'
 
 /** Handles of the last rendered instances, driven by the tests */
 export const collaborationPaints: { alice: ReactPaint | null; bob: ReactPaint | null } = { alice: null, bob: null }
 
 /** An infinite drawing, which each user can zoom and scroll on their own */
-export const COLLABORATION_OPTIONS = { size: 'infinite', canZoom: 'always' } as const
+const COLLABORATION_OPTIONS = { size: 'infinite', canZoom: 'always' } as const
 
 /** The drawing both users start from: the same shapes, with the same ids */
-export const SHARED_SHAPES: ShapeInput[] = [
+const SHARED_SHAPES: ShapeInput[] = [
   { type: 'rect', id: 'box', x: 120, y: 120, width: 220, height: 140, style: { fillColor: '#ffd166', strokeColor: '#073b4c', lineWidth: 3 } },
   { type: 'circle', id: 'sun', x: 620, y: 220, radius: 90, style: { fillColor: '#ef476f', strokeColor: '#073b4c', lineWidth: 3 } },
   { type: 'text', id: 'title', x: 360, y: 420, value: ['Draw on either side'], fontSize: 36 }
@@ -26,7 +26,7 @@ const receivingGrid = new WeakSet<ReactPaint>()
  * there too, without being steps of the other user: each one undoes their own. The changes received are remote: they are
  * not sent back. The grid is shared too
  */
-export const useSendChanges = (from: ReactPaint, to: ReactPaint, latency: number) => {
+const useSendChanges = (from: ReactPaint, to: ReactPaint, latency: number) => {
   useEffect(() => {
     const send = <T,>(message: T, receive: (message: T) => void) => {
       const json = JSON.stringify(message)
@@ -60,9 +60,10 @@ export const useSendChanges = (from: ReactPaint, to: ReactPaint, latency: number
   }, [from, to, latency])
 }
 
-const LAYOUT_STYLE: CSSProperties = { display: 'flex', flexWrap: 'wrap', gap: 16, width: 'min(1600px, 96vw)' }
+// the two users stay side by side, to see them at the same time: the columns share the width of their container
+const LAYOUT_STYLE: CSSProperties = { display: 'flex', gap: 16, width: 'min(1600px, 96vw)' }
 
-const COLUMN_STYLE: CSSProperties = { flex: '1 1 480px', minWidth: 0, display: 'flex', flexDirection: 'column', gap: 8 }
+const COLUMN_STYLE: CSSProperties = { flex: '1 1 0', minWidth: 0, display: 'flex', flexDirection: 'column', gap: 8 }
 
 const TITLE_STYLE: CSSProperties = { margin: 0, font: '600 16px system-ui, sans-serif', display: 'flex', alignItems: 'center', gap: 8 }
 
@@ -78,7 +79,7 @@ const User = ({ name, color, paint }: { name: string; color: string; paint: Reac
   </section>
 )
 
-export type CollaborationProps = {
+type CollaborationProps = {
   /** Delay of the fake network, in milliseconds */
   latency: number
 }

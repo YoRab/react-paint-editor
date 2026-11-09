@@ -22,7 +22,7 @@ const LocaleSwitch = ({ locales }: { locales: (PartialLocale<EditorLocale> | und
 }
 
 const meta = {
-  title: 'Tests/Accessibility',
+  title: 'Tests/Accessibility/Languages',
   component: LocaleSwitch,
   parameters: {
     layout: 'centered'

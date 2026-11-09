@@ -3,7 +3,7 @@ import { expect, waitFor, within } from 'storybook/test'
 import { assertNoInternalFields, getCurrentDataRef, makeCoordConverters, ReactPaintWrapper } from './../helpers'
 
 const meta = {
-  title: 'Tests/Draw',
+  title: 'Tests/Draw/DropPicture',
   component: ReactPaintWrapper,
   parameters: {
     layout: 'centered'

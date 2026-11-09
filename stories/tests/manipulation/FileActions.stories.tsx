@@ -4,7 +4,7 @@ import type { DrawableShape } from '../../../src/index'
 import { findFileInput, getPaint, getState, ReactPaintWrapper, wait } from './../helpers'
 
 const meta = {
-  title: 'Tests/Manipulation',
+  title: 'Tests/Manipulation/FileActions',
   component: ReactPaintWrapper,
   parameters: {
     layout: 'centered'

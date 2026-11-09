@@ -1,4 +1,4 @@
-.dynamic-button {
+.example-button {
   padding: 10px 20px;
   font-size: 14px;
   font-weight: 500;
@@ -11,26 +11,40 @@
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
-.dynamic-button:hover {
+.example-button:hover {
   background: #f0f0f0;
   border-color: #007bff;
   transform: translateY(-1px);
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
-.dynamic-button:active {
+.example-button:active {
   transform: translateY(0);
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-.dynamic-button.active {
+.example-button.active {
   background: #0056b3;
   color: #ffffff;
   border-color: #0056b3;
   box-shadow: 0 2px 8px rgba(0, 123, 255, 0.3);
 }
 
-.dynamic-button.active:hover {
+.example-button.active:hover {
   background: #0056b3;
   border-color: #0056b3;
+}
+
+.example-buttons {
+  display: inline-flex;
+  gap: 12px;
+  margin: 0 auto;
+  padding: 16px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.example-title {
+  display: inline-block;
+  padding: 12px 0;
 }

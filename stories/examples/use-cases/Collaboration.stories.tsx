@@ -1,24 +1,22 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
-import { Collaboration } from './collaboration/Collaboration'
+import { Collaboration } from './Collaboration'
 
 const meta = {
-  title: 'React Paint/Collaboration',
+  title: 'Use cases/Collaboration',
   component: Collaboration,
   parameters: {
     layout: 'centered',
     docs: {
+      // in its own frame, the width of the two users follows the one of the page: inline, they overflow it
+      story: { inline: false, iframeHeight: 450 },
       description: {
-        component: [
-          'Two users draw together in real time: each one has an instance of their own, with its selection, its tool, its view and its history, and applies the changes of the other one.',
-          'The drawing is infinite: each user zooms and scrolls on their own, and sees the shapes of the other one wherever they are drawn. The zoom and the offset are not sent: an application which wants a shared view can send what `viewChanged` gives.',
-          '`shapesChanged` gives the changes of a gesture as they come, `dataChanged` the steps of the history: both are sent, written in JSON like through a network, and applied with `actions.applyChanges`. The changes received are remote, so they are not sent back.',
-          'The grid is shared too: `gridChanged` gives it, and `actions.setGridGap` applies it. This event gives no source, so the grid received is not sent back thanks to a flag set while it is applied.',
-          'Each user undoes their own changes: the changes received are not steps of the history, and an undo replays the last step of the user on the drawing, keeping the changes of the other user since. The other user receives the undo like any change. When both users change the same shape, the last change of each field wins. Showing where the other user is (their selection, their pointer) is up to the application.'
-        ].join('\n\n')
+        component:
+          'Two users draw together in real time: each one has an instance of their own, with its selection, its tool, its zoom and its history, and applies the changes of the other one with `actions.applyChanges`, sent in JSON through a fake network. Each user undoes their own changes only. See Real-time collaboration in the API Reference for the details.'
       }
     }
   },
-  tags: ['autodocs'],
+  // the same component is tested in Tests/Examples/Collaboration
+  tags: ['autodocs', '!dev', '!test'],
   argTypes: {
     latency: { control: { type: 'range', min: 0, max: 2000, step: 50 }, description: 'Delay of the fake network, in milliseconds' }
   }

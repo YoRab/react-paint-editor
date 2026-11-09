@@ -5,7 +5,7 @@ import { starPath } from '../../fixture'
 import { assertNoInternalFields, getCurrentDataRef, getPixel, ReactPaintWrapper, selectTool, setRangeSetting, toClient, wait } from './../helpers'
 
 const meta = {
-  title: 'Tests/Draw',
+  title: 'Tests/Draw/DrawCustomShape',
   component: ReactPaintWrapper,
   parameters: {
     layout: 'centered'

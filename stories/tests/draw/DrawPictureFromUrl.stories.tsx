@@ -3,7 +3,7 @@ import { expect, within } from 'storybook/test'
 import { addPictureFromUrl, assertNoInternalFields, getCurrentDataRef, ReactPaintWrapper, SVG_DATA_URI, setRangeSetting } from './../helpers'
 
 const meta = {
-  title: 'Tests/Draw',
+  title: 'Tests/Draw/DrawPictureFromUrl',
   component: ReactPaintWrapper,
   parameters: {
     layout: 'centered'

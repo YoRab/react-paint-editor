@@ -16,9 +16,13 @@ type PlaygroundProps = {
   withLoadAndSave?: boolean
   withUploadPicture?: boolean
   withUrlPicture?: boolean
+  withEraser?: boolean
+  withLaser?: boolean
+  withMinimap?: boolean
   withFrameSelection?: boolean
   withSkeleton?: boolean
   withContextMenu?: boolean
+  withDropPicture?: boolean
   debug?: boolean
   brushAlgo?: 'simple' | 'quadratic'
   isBrushShapeDoneOnMouseUp?: boolean
@@ -42,9 +46,11 @@ type PlaygroundProps = {
   canvasBackgroundColor?: string
   canvasSelectionColor?: string
   canvasSelectionWidth?: number
+  canvasLaserColor?: string
+  canvasLaserWidth?: number
 }
 
-const Playground = (args: PlaygroundProps) => {
+const PlaygroundEditor = (args: PlaygroundProps) => {
   const {
     width,
     height,
@@ -57,9 +63,13 @@ const Playground = (args: PlaygroundProps) => {
     withLoadAndSave,
     withUploadPicture,
     withUrlPicture,
+    withEraser,
+    withLaser,
+    withMinimap,
     withFrameSelection,
     withSkeleton,
     withContextMenu,
+    withDropPicture,
     debug,
     brushAlgo,
     isBrushShapeDoneOnMouseUp,
@@ -80,7 +90,9 @@ const Playground = (args: PlaygroundProps) => {
     fontHoverBackgroundColor,
     canvasBackgroundColor,
     canvasSelectionColor,
-    canvasSelectionWidth
+    canvasSelectionWidth,
+    canvasLaserColor,
+    canvasLaserWidth
   } = args
 
   const options: OptionalOptions = {
@@ -89,6 +101,7 @@ const Playground = (args: PlaygroundProps) => {
     withFrameSelection,
     withSkeleton,
     withContextMenu,
+    withDropPicture,
     debug,
     brushAlgo,
     isBrushShapeDoneOnMouseUp,
@@ -104,6 +117,9 @@ const Playground = (args: PlaygroundProps) => {
     withLoadAndSave,
     withUploadPicture,
     withUrlPicture,
+    withEraser,
+    withLaser,
+    withMinimap,
     toolbarBackgroundColor,
     dividerColor,
     fontRadius,
@@ -120,7 +136,9 @@ const Playground = (args: PlaygroundProps) => {
   const canvasOptions = {
     canvasBackgroundColor,
     canvasSelectionColor,
-    canvasSelectionWidth
+    canvasSelectionWidth,
+    canvasLaserColor,
+    canvasLaserWidth
   }
 
   const paint = useReactPaint({
@@ -142,12 +160,11 @@ const Playground = (args: PlaygroundProps) => {
 }
 
 const meta = {
-  title: 'React Paint/Playground',
-  component: Playground,
+  title: 'Playground',
+  component: PlaygroundEditor,
   parameters: {
     layout: 'centered'
   },
-  tags: ['autodocs'],
   args: {
     // Canvas dimensions
     width: 1000,
@@ -170,9 +187,13 @@ const meta = {
     withLoadAndSave: true,
     withUploadPicture: true,
     withUrlPicture: false,
+    withEraser: false,
+    withLaser: false,
+    withMinimap: true,
     withFrameSelection: true,
     withSkeleton: true,
     withContextMenu: true,
+    withDropPicture: true,
     debug: false,
     clearCallback: 'empty',
     // Editor styling
@@ -190,7 +211,9 @@ const meta = {
     // Canvas styling
     canvasBackgroundColor: 'white',
     canvasSelectionColor: 'blue',
-    canvasSelectionWidth: 2
+    canvasSelectionWidth: 2,
+    canvasLaserColor: '#ff2d2d',
+    canvasLaserWidth: 6
   },
   argTypes: {
     // Canvas dimensions
@@ -288,6 +311,21 @@ const meta = {
       description: 'Show button to add picture shape with URL (requires connectivity)',
       table: { category: 'Editor Features', defaultValue: { summary: 'false' }, type: { summary: 'boolean' } }
     },
+    withEraser: {
+      control: { type: 'boolean' },
+      description: 'Show the eraser, which removes the shapes it crosses',
+      table: { category: 'Editor Features', defaultValue: { summary: 'false' }, type: { summary: 'boolean' } }
+    },
+    withLaser: {
+      control: { type: 'boolean' },
+      description: 'Show the laser pointer, whose trail fades out without changing the drawing',
+      table: { category: 'Editor Features', defaultValue: { summary: 'false' }, type: { summary: 'boolean' } }
+    },
+    withMinimap: {
+      control: { type: 'boolean' },
+      description: 'Show the map of the drawing under the buttons of the zoom panel',
+      table: { category: 'Editor Features', defaultValue: { summary: 'true' }, type: { summary: 'boolean' } }
+    },
     withFrameSelection: {
       control: { type: 'boolean' },
       description: 'Enable frame selection',
@@ -301,6 +339,11 @@ const meta = {
     withContextMenu: {
       control: { type: 'boolean' },
       description: 'Enable the editor and canvas context menu (right-click on canvas or selection)',
+      table: { category: 'Feature Toggles', defaultValue: { summary: 'true' }, type: { summary: 'boolean' } }
+    },
+    withDropPicture: {
+      control: { type: 'boolean' },
+      description: 'Add the image files dropped on the canvas, or pasted from the clipboard of the system, as pictures',
       table: { category: 'Feature Toggles', defaultValue: { summary: 'true' }, type: { summary: 'boolean' } }
     },
     debug: {
@@ -385,74 +428,21 @@ const meta = {
       control: { type: 'number', min: 1, max: 10, step: 1 },
       description: 'Selection frame width in pixels',
       table: { category: 'Canvas Styling', defaultValue: { summary: '2' }, type: { summary: 'number' } }
+    },
+    canvasLaserColor: {
+      control: { type: 'color' },
+      description: 'Color of the trail of the laser pointer',
+      table: { category: 'Canvas Styling', defaultValue: { summary: "'#ff2d2d'" }, type: { summary: 'string' } }
+    },
+    canvasLaserWidth: {
+      control: { type: 'number', min: 1, max: 30, step: 1 },
+      description: 'Width of the trail of the laser pointer at its newest point, in pixels of the screen',
+      table: { category: 'Canvas Styling', defaultValue: { summary: '6' }, type: { summary: 'number' } }
     }
   }
-} satisfies Meta<typeof Playground>
+} satisfies Meta<typeof PlaygroundEditor>
 
 export default meta
 type Story = StoryObj<typeof meta>
 
-export const Default: Story = {
-  args: {},
-  parameters: {
-    docs: {
-      source: {
-        code: `
-    const options: OptionalOptions = {
-      grid,
-      resize,
-      withFrameSelection,
-      withSkeleton,
-      withContextMenu,
-      debug,
-      brushAlgo,
-      isBrushShapeDoneOnMouseUp,
-      canvasSelectionPadding,
-      size,
-      canZoom,
-      clearCallback
-    }
-
-    const editorOptions = {
-      layersManipulation,
-      withExport,
-      withLoadAndSave,
-      withUploadPicture,
-      withUrlPicture,
-      toolbarBackgroundColor,
-      dividerColor,
-      fontRadius,
-      fontDisabledColor,
-      fontDisabledBackgroundColor,
-      fontColor,
-      fontBackgroundColor,
-      fontSelectedColor,
-      fontSelectedBackgroundColor,
-      fontHoverColor,
-      fontHoverBackgroundColor
-    }
-
-    const canvasOptions = {
-      canvasBackgroundColor,
-      canvasSelectionColor,
-      canvasSelectionWidth
-    }
-
-    const paint = useReactPaint({
-      width,
-      height,
-      mode,
-      disabled,
-      options
-    })
-
-    return (
-      <Editor paint={paint} options={editorOptions}>
-        <Canvas paint={paint} options={canvasOptions} />
-      </Editor>
-    )       
-        `
-      }
-    }
-  }
-}
+export const Playground: Story = {}

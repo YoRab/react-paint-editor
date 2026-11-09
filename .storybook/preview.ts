@@ -17,16 +17,21 @@ const preview: Preview = {
         order: [
           'Welcome',
           'Getting Started',
+          'Playground',
           'API Reference',
-          'React Paint',
-          ['Playground', 'Canvas', 'Dynamic updates', ['Default', 'LoadedFromJSON', 'ViewerMode'], 'Whiteboard', 'Picture annotation'],
-          'Main'
+          'Features',
+          ['Drawing data', 'Custom tools', 'Resize', 'Languages'],
+          'Use cases',
+          ['Whiteboard', 'Picture annotation', 'Collaboration'],
+          'Custom UI',
+          ['Custom editor', 'Programmatic API'],
+          'Tests',
+          ['Draw', 'Manipulation', 'Layout', 'Accessibility', 'Examples']
         ]
       }
     }
-  },
-
-  tags: ['autodocs']
+  }
+  // no global autodocs: the examples declare it, the tests have no docs page
 }
 
 export default preview

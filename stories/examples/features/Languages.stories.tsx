@@ -1,8 +1,9 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import { useState } from 'react'
-import { Canvas, type CanvasLocale, Editor, type EditorLocale, type PartialLocale, useReactPaint } from '../src/index'
-import { TREE_AND_CLOUDS } from './fixture'
-import { FR_LOCALE } from './locales/fr'
+import { Canvas, type CanvasLocale, Editor, type EditorLocale, type PartialLocale, useReactPaint } from '../../../src/index'
+import { TREE_AND_CLOUDS } from '../../fixture'
+import { FR_LOCALE } from '../../locales/fr'
+import { EditorExample } from '../EditorExample'
 
 const LANGUAGES = {
   en: { label: 'English', locale: undefined },
@@ -42,15 +43,6 @@ const PIRATE_TEXTS: PartialLocale<EditorLocale> = {
   }
 }
 
-const PartialTexts = () => {
-  const paint = useReactPaint({ shapes: TREE_AND_CLOUDS })
-  return (
-    <Editor paint={paint} options={{ locale: PIRATE_TEXTS }}>
-      <Canvas paint={paint} />
-    </Editor>
-  )
-}
-
 // a canvas without editor takes its own locale
 const CANVAS_FR: CanvasLocale = { lang: FR_LOCALE.lang, canvas: FR_LOCALE.canvas }
 
@@ -60,12 +52,18 @@ const CanvasAlone = () => {
 }
 
 const meta = {
-  title: 'React Paint/Languages',
+  title: 'Features/Languages',
   component: Languages,
   parameters: {
-    layout: 'centered'
+    layout: 'centered',
+    docs: {
+      description: {
+        component:
+          'The canvas and the editor are in English, and every one of their texts can be translated with the `locale` option: a complete translation, some texts to replace, or the texts of a canvas used without the editor.'
+      }
+    }
   },
-  tags: ['autodocs'],
+  tags: ['autodocs', '!dev'],
   argTypes: {
     language: { control: 'radio', options: Object.keys(LANGUAGES) }
   }
@@ -74,10 +72,14 @@ const meta = {
 export default meta
 type Story = StoryObj<typeof meta>
 
-export const French: Story = {
+export const CompleteTranslation: Story = {
   args: { language: 'fr' },
   parameters: {
     docs: {
+      description: {
+        story:
+          'A complete translation, here in French: every text of the editor and of the canvas inside it is replaced, from the buttons to the announcements read by the screen readers. Switch between English and French with the radio buttons. TypeScript lists the texts a translation misses when it is typed `EditorLocale`.'
+      },
       source: {
         code: `import { Canvas, Editor, type EditorLocale, useReactPaint } from '@yorab/react-paint'
 
@@ -104,10 +106,14 @@ const App = () => {
   }
 }
 
-export const Partial: StoryObj<typeof PartialTexts> = {
-  render: () => <PartialTexts />,
+export const SomeTextsReplaced: StoryObj<typeof EditorExample> = {
+  render: () => <EditorExample shapes={TREE_AND_CLOUDS} editorOptions={{ locale: PIRATE_TEXTS }} />,
   parameters: {
     docs: {
+      description: {
+        story:
+          'No need to translate everything to change a few texts: a partial `locale` is merged into the English ones. Here, the rectangle tool becomes "Treasure chest" and the brush "Quill": hover over them in the toolbar, then draw a rectangle and open the layers panel to see its new name. The announcement read when a shape is added is changed too, with its singular and plural forms.'
+      },
       source: {
         code: `import { Canvas, Editor, type EditorLocale, type PartialLocale, useReactPaint } from '@yorab/react-paint'
 
@@ -135,10 +141,14 @@ const App = () => {
   }
 }
 
-export const CanvasWithoutEditor: StoryObj<typeof CanvasAlone> = {
+export const CanvasAloneTranslated: StoryObj<typeof CanvasAlone> = {
   render: () => <CanvasAlone />,
   parameters: {
     docs: {
+      description: {
+        story:
+          'The canvas has texts of its own, apart from the editor: its accessible name and description, the names of the shapes, the hint to move the focus onto it. Used without the `Editor`, it takes them from its own `locale` option, which needs only the `canvas` part of a translation. Press Tab to reach the canvas: its hint appears in French. The rest of the translation is for the assistive technologies, which read the drawing in French.'
+      },
       source: {
         code: `import { Canvas, type CanvasLocale, useReactPaint } from '@yorab/react-paint'
 

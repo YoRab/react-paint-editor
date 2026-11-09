@@ -13,7 +13,7 @@ import {
 } from './../helpers'
 
 const meta = {
-  title: 'Tests/Draw',
+  title: 'Tests/Draw/DrawBrushShape',
   component: ReactPaintWrapper,
   parameters: {
     layout: 'centered'

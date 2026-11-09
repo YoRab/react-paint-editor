@@ -57,7 +57,7 @@ const getFirstPixel = async (dataUrl: string) => {
 }
 
 const meta = {
-  title: 'Tests/Manipulation/API',
+  title: 'Tests/Manipulation/ProgrammaticApi',
   component: ApiHarness,
   parameters: {
     layout: 'centered'

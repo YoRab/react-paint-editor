@@ -4,7 +4,7 @@ import type { DrawableShape } from '../../../src/index'
 import { getPaint, getRootIds, getState, makeCoordConverters, ReactPaintWrapper } from './../helpers'
 
 const meta = {
-  title: 'Tests/Manipulation',
+  title: 'Tests/Manipulation/EditorShortcuts',
   component: ReactPaintWrapper,
   parameters: {
     layout: 'centered'

@@ -4,7 +4,7 @@ import type { DrawableShape, Point } from '../../../src/index'
 import { getPaint, getState, makeCoordConverters, ReactPaintWrapper, selectTool } from './../helpers'
 
 const meta = {
-  title: 'Tests/Manipulation',
+  title: 'Tests/Manipulation/Modifiers',
   component: ReactPaintWrapper,
   parameters: {
     layout: 'centered'

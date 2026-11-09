@@ -184,7 +184,7 @@ import LinkTo from '@storybook/addon-links/react';
         <li><code>setOptions(options)</code>, <code>resetOptions()</code>, <code>resetSettings()</code></li>
       </ul>
       <p>
-        See the <LinkTo title='React Paint/Custom editor' story='docs'>Custom editor</LinkTo> story for a complete example.
+        See the <LinkTo title='Custom UI/Custom editor' story='docs'>Custom editor</LinkTo> story for a complete example.
       </p>
 
       <h2 id="usePaintState">usePaintState Hook</h2>
@@ -230,9 +230,6 @@ const App = () => {
     </PaintProvider>
   )
 }`} />
-      <p>
-        See the <LinkTo title='React Paint/External toolbar' story='docs'>External toolbar</LinkTo> story.
-      </p>
 
       <h2 id="useAnnotationsStyle">useAnnotationsStyle Hook</h2>
       <p>
@@ -243,7 +240,7 @@ const annotationsStyle = useAnnotationsStyle(paint)
 
 <img src={src} style={annotationsStyle} />`} />
       <p>
-        See the <LinkTo title='React Paint/Picture annotation' story='docs'>Picture annotation</LinkTo> story.
+        See the <LinkTo title='Use cases/Picture annotation' story='docs'>Picture annotation</LinkTo> story.
       </p>
 
 
@@ -1066,7 +1063,7 @@ const box = paint.getBounds([rectId])`} />
       </ul>
       <p>
         Each user keeps their selection, their tool, their zoom and their history. The changes received are not steps of the history: an undo replays the last step of the user, backwards, on the drawing, keeping the changes received since, and is sent to the others like any change. A step left without effect, like a move of a shape removed by another user since, is passed.
-        The last change of each field wins when two users change the same shape at once. Two shapes added at once in the same list are both kept, but each instance may order them its own way until the next change of this list. See the Collaboration story.
+        The last change of each field wins when two users change the same shape at once. Two shapes added at once in the same list are both kept, but each instance may order them its own way until the next change of this list. See the <LinkTo title='Use cases/Collaboration' story='docs'>Collaboration</LinkTo> example.
         The changes hold only the shapes: to share a setting, like the grid, send its event (<code>gridChanged</code>) and apply it (<code>actions.setGridGap</code>). These events give no source, but they are emitted while the setting is set: ignore the one emitted while you apply a setting received, otherwise it is sent back.
       </p>
       <Source language='typescript' code={`// sends the changes of the user
@@ -1738,8 +1735,8 @@ const { selectedShapes } = paint.getState()`} />
 
       <h2>Next Steps</h2>
       <ul>
-        <li>Explore the <LinkTo title='React Paint/Getting Started' story='docs'>Getting Started</LinkTo> guide for basic usage</li>
-        <li>Check out the <LinkTo title='React Paint/Playground' story='docs'>Playground</LinkTo> to see all features in action</li>
+        <li>Explore the <LinkTo title='Getting Started' story='docs'>Getting Started</LinkTo> guide for basic usage</li>
+        <li>Check out the <LinkTo title='Playground' story='Playground'>Playground</LinkTo> to see all features in action</li>
         <li>Visit the <a href="https://github.com/YoRab/react-paint-editor" target="_blank">GitHub repository</a> for more examples</li>
       </ul>
     </div>

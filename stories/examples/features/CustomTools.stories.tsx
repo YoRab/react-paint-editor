@@ -1,132 +1,25 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
-import { Canvas, DEFAULT_TOOLS, Editor, type EditorOptions, SETTINGS_DEFAULT_CUSTOM, type UseReactPaintProps, useReactPaint } from '../src/index'
-import { HEART_PATH, starPath, TREE_AND_CLOUDS } from './fixture'
-
-const ReactPaintWrapper = ({ editorOptions, ...args }: UseReactPaintProps & { editorOptions?: EditorOptions }) => {
-  const paint = useReactPaint(args)
-
-  return (
-    <Editor paint={paint} options={editorOptions}>
-      <Canvas paint={paint} />
-    </Editor>
-  )
-}
+import { DEFAULT_TOOLS, SETTINGS_DEFAULT_CUSTOM } from '../../../src/index'
+import { HEART_PATH, starPath } from '../../fixture'
+import { EditorExample } from '../EditorExample'
 
 const meta = {
-  title: 'React Paint/Canvas',
-  component: ReactPaintWrapper,
+  title: 'Features/Custom tools',
+  component: EditorExample,
   parameters: {
-    layout: 'centered'
+    layout: 'centered',
+    docs: {
+      description: {
+        component:
+          'The tools of the editor chosen by the application with the `availableTools` option: presets of the default tools with their own settings, and shapes of its own, of type `custom`.'
+      }
+    }
   },
-  // This component will have an automatically generated Autodocs entry: https://storybook.js.org/docs/react/writing-docs/autodocs
-  tags: ['autodocs'],
-  // More on argTypes: https://storybook.js.org/docs/react/api/argtypes
-  argTypes: {}
-} satisfies Meta<typeof ReactPaintWrapper>
+  tags: ['autodocs', '!dev']
+} satisfies Meta<typeof EditorExample>
 
 export default meta
 type Story = StoryObj<typeof meta>
-
-export const Default: Story = {
-  args: {},
-  parameters: {
-    docs: {
-      source: {
-        code: `const paint = useReactPaint()
-
-return (
-  <Editor paint={paint}>
-    <Canvas paint={paint} />
-  </Editor>
-)`,
-        language: 'tsx'
-      }
-    }
-  }
-}
-
-/** A page of a fixed size in a resizable container: it is shown at the scale 1, centered when the container is larger */
-export const FixedPageInResizableContainer: Story = {
-  args: {
-    shapes: TREE_AND_CLOUDS,
-    options: {
-      size: 'fixed',
-      resize: 'extend',
-      canZoom: 'always'
-    }
-  },
-  decorators: [
-    Story => (
-      <div style={{ width: 700, height: 450, resize: 'both', overflow: 'hidden', border: '1px dashed gray' }}>
-        <Story />
-      </div>
-    )
-  ],
-  parameters: {
-    docs: {
-      source: {
-        code: `const paint = useReactPaint({ shapes: TREE_AND_CLOUDS, options: { size: 'fixed', resize: 'extend', canZoom: 'always' } })
-
-return (
-  <div style={{ width: 700, height: 450, resize: 'both', overflow: 'hidden' }}>
-    <Editor paint={paint}>
-      <Canvas paint={paint} />
-    </Editor>
-  </div>
-)`,
-        language: 'tsx'
-      }
-    }
-  }
-}
-
-export const LoadedFromJSON: Story = {
-  args: {
-    shapes: TREE_AND_CLOUDS,
-    options: {
-      clearCallback: 'defaultShapes',
-      canZoom: 'always'
-    }
-  },
-  parameters: {
-    docs: {
-      source: {
-        code: `const paint = useReactPaint({shapes: TREE_AND_CLOUDS, options : {clearCallback: 'defaultShapes',   canZoom: 'always'}})
-
-return (
-  <Editor paint={paint}>
-    <Canvas paint={paint} />
-  </Editor>
-)`,
-        language: 'tsx'
-      }
-    }
-  }
-}
-
-export const ViewerMode: Story = {
-  args: {
-    shapes: TREE_AND_CLOUDS,
-    mode: 'viewer',
-    options: {
-      canZoom: 'always'
-    }
-  },
-  parameters: {
-    docs: {
-      source: {
-        code: `const paint = useReactPaint({ shapes: TREE_AND_CLOUDS, mode: 'viewer'})
-
-return (
-  <Editor paint={paint}>
-    <Canvas paint={paint} />
-  </Editor>
-)`,
-        language: 'tsx'
-      }
-    }
-  }
-}
 
 const CUSTOM_BRUSH_TOOLS = [
   {
@@ -160,7 +53,7 @@ const CUSTOM_BRUSH_TOOLS = [
   }
 ]
 
-export const CustomTool: Story = {
+export const BrushPresets: Story = {
   args: {
     options: {
       availableTools: CUSTOM_BRUSH_TOOLS
@@ -303,40 +196,6 @@ const CUSTOM_SHAPE_TOOLS: CustomToolInput[] = [
 ]
 
 const paint = useReactPaint({ options: { availableTools: CUSTOM_SHAPE_TOOLS } })
-
-return (
-  <Editor paint={paint}>
-    <Canvas paint={paint} />
-  </Editor>
-)`,
-        language: 'tsx'
-      }
-    }
-  }
-}
-
-export const DebugMode: Story = {
-  args: {
-    shapes: TREE_AND_CLOUDS,
-    options: {
-      canZoom: 'always',
-      debug: true
-    }
-  },
-  parameters: {
-    docs: {
-      description: {
-        story:
-          'With `options.debug: true`, shape selection and hit-testing are logged to the browser console. Open DevTools to see debug output when selecting or hovering shapes.'
-      },
-      source: {
-        code: `const paint = useReactPaint({
-  shapes: TREE_AND_CLOUDS,
-  options: {
-    canZoom: 'always',
-    debug: true
-  }
-})
 
 return (
   <Editor paint={paint}>

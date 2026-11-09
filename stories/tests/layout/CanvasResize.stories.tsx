@@ -60,7 +60,7 @@ const readPixelAfterResize = (
 const RED_PIXEL = [255, 0, 0, 255]
 
 const meta = {
-  title: 'Tests/Layout',
+  title: 'Tests/Layout/CanvasResize',
   component: ReactPaintWrapper,
   parameters: {
     layout: 'centered'

@@ -14,7 +14,7 @@ import {
 } from './../helpers'
 
 const meta = {
-  title: 'Tests/Draw',
+  title: 'Tests/Draw/DrawPolygon',
   component: ReactPaintWrapper,
   parameters: {
     layout: 'centered'

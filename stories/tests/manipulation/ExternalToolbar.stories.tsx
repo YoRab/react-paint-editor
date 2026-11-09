@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import { expect, userEvent, within } from 'storybook/test'
-import { Canvas, Editor, PaintProvider, usePaint, usePaintState, useReactPaint } from '../src/index'
+import { Canvas, Editor, PaintProvider, usePaint, usePaintState, useReactPaint } from '../../../src/index'
+import { wait } from '../helpers'
 
 /** A toolbar of the app, outside of the editor: it gets the canvas handle from the PaintProvider */
 const AppToolbar = () => {
@@ -25,7 +26,7 @@ const AppToolbar = () => {
   )
 }
 
-const ExternalToolbar = () => {
+const ExternalToolbarApp = () => {
   const paint = useReactPaint()
 
   return (
@@ -39,57 +40,17 @@ const ExternalToolbar = () => {
 }
 
 const meta = {
-  title: 'React Paint/External toolbar',
-  component: ExternalToolbar,
+  title: 'Tests/Manipulation/ExternalToolbar',
+  component: ExternalToolbarApp,
   parameters: {
     layout: 'centered'
-  },
-  tags: ['autodocs']
-} satisfies Meta<typeof ExternalToolbar>
+  }
+} satisfies Meta<typeof ExternalToolbarApp>
 
 export default meta
 type Story = StoryObj<typeof meta>
 
-export const Default: Story = {
-  args: {},
-  parameters: {
-    docs: {
-      description: {
-        story:
-          'A toolbar placed outside of the editor, anywhere under a `PaintProvider`. It reads the handle with `usePaint`, and the state with `usePaintState`: it renders again only when what it shows changes, and the component calling `useReactPaint` never renders again.'
-      },
-      source: {
-        code: `const AppToolbar = () => {
-  const paint = usePaint()
-  const history = usePaintState(paint, state => state.history)
-  const shapesCount = usePaintState(paint, state => state.shapes.length)
-
-  return (
-    <div>
-      <button onClick={() => paint.actions.selectTool('react-paint-rect')}>Rectangle</button>
-      <button disabled={!history.canUndo} onClick={paint.actions.undo}>Undo</button>
-      <button disabled={!history.canRedo} onClick={paint.actions.redo}>Redo</button>
-      <output>{shapesCount} shape(s)</output>
-    </div>
-  )
-}
-
-const App = () => {
-  const paint = useReactPaint()
-
-  return (
-    <PaintProvider paint={paint}>
-      <AppToolbar />
-      <Editor paint={paint}>
-        <Canvas paint={paint} />
-      </Editor>
-    </PaintProvider>
-  )
-}`,
-        language: 'tsx'
-      }
-    }
-  },
+export const ExternalToolbar: Story = {
   play: async ({ canvasElement }) => {
     const view = within(canvasElement)
     const user = userEvent.setup()
@@ -107,11 +68,11 @@ const App = () => {
     await userEvent.click(toolbar.getByRole('button', { name: 'Rectangle' }))
     expect(toolbar.getByRole('button', { name: 'Rectangle' })).toHaveAttribute('aria-pressed', 'true')
     await user.pointer({ target: drawCanvas, keys: '[MouseLeft>]', coords: { x: cx - 60, y: cy - 40 } })
-    await new Promise(res => setTimeout(res, 50))
+    await wait(50)
     await user.pointer({ target: drawCanvas, coords: { x: cx + 60, y: cy + 40 } })
-    await new Promise(res => setTimeout(res, 50))
+    await wait(50)
     await user.pointer({ target: drawCanvas, keys: '[/MouseLeft]', coords: { x: cx + 60, y: cy + 40 } })
-    await new Promise(res => setTimeout(res, 100))
+    await wait(100)
 
     expect(shapesCount).toHaveTextContent('1 shape(s)')
     expect(toolbar.getByRole('button', { name: 'Rectangle' })).toHaveAttribute('aria-pressed', 'false')
