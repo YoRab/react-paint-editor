@@ -562,6 +562,14 @@ describe('dedicated actions', () => {
     expect(getIds(store)).toHaveLength(2)
     expect(store.getEditorState().history.canUndo).toBe(true)
   })
+
+  it('rejects loadData, and keeps the drawing, when a shape cannot be built', async () => {
+    const store = await createLoadedStore()
+    const ids = getIds(store)
+    // a polygon without its points
+    await expect(store.actions.loadData({ shapes: [{ type: 'polygon' }] as unknown as ShapeInput[] })).rejects.toThrow()
+    expect(getIds(store)).toEqual(ids)
+  })
 })
 
 describe('options and settings', () => {

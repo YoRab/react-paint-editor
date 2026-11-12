@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import { useEffect } from 'react'
-import { expect, userEvent, waitFor, within } from 'storybook/test'
+import { expect, fn, spyOn, userEvent, waitFor, within } from 'storybook/test'
 import { Canvas, type ShapeEntity, type UseReactPaintProps, useReactPaint } from '../../../src/index'
 import { getPaint, getPixel, makeCoordConverters, paintRef, wait } from './../helpers'
 
@@ -212,6 +212,35 @@ export const GroupOpacity: Story = {
     paint.actions.setShapesVisibility([groupId!], false)
     await wait(100)
     expect(getPixel(drawCanvas, [250, 150])[3]).toBe(0)
+  }
+}
+
+/** A picture whose image cannot be loaded stays in the drawing: the shapes in front of it are still drawn */
+export const BrokenPicture: Story = {
+  // confirmed defect, fixed by the step 1 of the plan: drawImage throws on the image at each draw, which stops there. Left
+  // out of the tests until then
+  tags: ['!test'],
+  play: async ({ canvasElement }) => {
+    const drawCanvas = (await within(canvasElement).findByTestId('draw-canvas')) as HTMLCanvasElement
+    const paint = getPaint()
+    // the canvas warns about the picture which cannot be loaded
+    const warn = spyOn(console, 'warn').mockImplementation(() => undefined)
+    try {
+      const failed = fn()
+      paint.registerEvent('pictureLoadFailed', failed)
+      // an image data URL which is not an image
+      paint.actions.addShapes([{ type: 'picture', x: 100, y: 100, width: 300, height: 200, src: 'data:image/png;base64,AAAA' }])
+      const [rectId] = paint.actions.addShapes([
+        { type: 'rect', x: 150, y: 150, width: 100, height: 100, style: { fillColor: 'red', strokeColor: 'transparent' } }
+      ])
+      await waitFor(() => expect(failed).toHaveBeenCalledTimes(1))
+
+      // the drawing is drawn again with the image which failed: the rect is drawn where it is moved, 10 pixels to the right
+      paint.actions.translateShapes([rectId!], [10, 0])
+      await waitFor(() => expect(getPixel(drawCanvas, [255, 200])).toEqual([255, 0, 0, 255]))
+    } finally {
+      warn.mockRestore()
+    }
   }
 }
 

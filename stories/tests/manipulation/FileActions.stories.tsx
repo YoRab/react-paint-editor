@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import { expect, spyOn, userEvent, waitFor, within } from 'storybook/test'
-import type { DrawableShape } from '../../../src/index'
+import { type DrawableShape, ReactPaintError } from '../../../src/index'
 import { findFileInput, getPaint, getState, ReactPaintWrapper, wait } from './../helpers'
 
 const meta = {
@@ -169,5 +169,22 @@ export const FileActions: Story = {
       click.mockRestore()
       warn.mockRestore()
     }
+  }
+}
+
+/** Shapes too far apart to fit in a canvas of the browser: their export fails with an error, instead of giving an empty image */
+export const ExportTooLarge: Story = {
+  // confirmed defect, to fix at the step 6 of the plan: the export gives the empty image 'data:,'. Left out of the tests until then
+  tags: ['!test'],
+  args: {
+    // wider than the 65 535 pixels of the largest canvas of a browser, on a single row: nothing heavy is allocated
+    shapes: [SQUARE, { ...SQUARE, x: 70000 }],
+    options: { size: 'infinite' }
+  },
+  play: async ({ canvasElement }) => {
+    await within(canvasElement).findByTestId('draw-canvas')
+    await waitFor(() => expect(getState().shapes).toHaveLength(2))
+
+    expect(() => getPaint().getCurrentImage({ view: 'fitToShapes' })).toThrow(ReactPaintError)
   }
 }

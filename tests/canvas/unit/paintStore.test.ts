@@ -1,6 +1,6 @@
 import { ERASER_TOOL, LASER_TOOL } from '@canvas/constants/tools'
 import { createPaintStore, type PaintStore } from '@canvas/store/paintStore'
-import type { Point, ShapeEntity } from '@canvas/types/Shapes'
+import type { Point, ShapeEntity, ShapeInput } from '@canvas/types/Shapes'
 import { removePolygonPoint } from '@canvas/utils/shapes/polygon'
 import { describe, expect, it, vi } from 'vitest'
 import { createLoadedStore, RECTS, stubPath2D } from './helpers'
@@ -43,6 +43,26 @@ describe('createPaintStore', () => {
       expect.objectContaining({ added: expect.arrayContaining([expect.objectContaining({ type: 'rect' })]) })
     )
     expect(store.getEditorState().history.canUndo).toBe(false)
+  })
+
+  // confirmed defect, fixed by the step 1 of the plan: the load of the shapes of the props is not awaited, its failure is lost
+  it.fails('leaves no rejected promise without a handler when the shapes of the props cannot be built', async () => {
+    // a polygon without its points
+    const store = createPaintStore({ shapes: [{ type: 'polygon' }] as unknown as ShapeInput[] })
+    // Vitest fails a run on such a promise: its listeners are set aside
+    const listeners = process.listeners('unhandledRejection')
+    const rejections: unknown[] = []
+    process.removeAllListeners('unhandledRejection')
+    process.on('unhandledRejection', reason => rejections.push(reason))
+    try {
+      store.init()
+      // Node reports the promise once the microtasks are done
+      await new Promise(resolve => setImmediate(resolve))
+    } finally {
+      process.removeAllListeners('unhandledRejection')
+      for (const listener of listeners) process.on('unhandledRejection', listener)
+    }
+    expect(rejections).toEqual([])
   })
 
   it('emits no event before any change', () => {
