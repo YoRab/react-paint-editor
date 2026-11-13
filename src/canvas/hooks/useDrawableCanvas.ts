@@ -81,7 +81,8 @@ const useDrawableCanvas = (store: PaintStore, canvas: HTMLCanvasElement | null) 
     let longPressTimeout: { timeout: ReturnType<typeof setTimeout>; startPosition: { clientX: number; clientY: number } } | null = null
     // the double clicks open a group, edit a text and add a point to a polygon or a curve
     const clicks = createClickTracker()
-    // the pointers down on the canvas: more than one is a pinch, handled by useZoom
+    // the pointers down on the canvas: more than one is a pinch, which never edits the drawing. useZoom zooms the view
+    // with it when the zoom is enabled
     const activePointers = new Set<number>()
     // the pointer which started the current gesture
     let gesturePointerId: number | undefined

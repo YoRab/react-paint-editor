@@ -196,10 +196,8 @@ export const TouchAction: Story = {
   }
 }
 
-/** A drawing of a fixed size which cannot be zoomed is not zoomed by a pinch either */
+/** A drawing of a fixed size which cannot be zoomed is not zoomed by a pinch either, nor are its shapes moved by the fingers */
 export const PinchWithoutZoom: Story = {
-  // confirmed defect, fixed by the step 2 of the plan: the pinch zooms to 2. Left out of the tests until then
-  tags: ['!test'],
   args: {
     shapes: [SQUARE],
     options: { size: 'fixed', canZoom: 'never' }
@@ -208,14 +206,17 @@ export const PinchWithoutZoom: Story = {
     const drawCanvas = await within(canvasElement).findByTestId('draw-canvas')
     const touch = getTouch(drawCanvas)
 
-    touch('pointerdown', 1, [400, 300])
+    // the first finger is pressed on the square, then both fingers move apart
+    touch('pointerdown', 1, [300, 300])
     touch('pointerdown', 2, [600, 300])
+    touch('pointermove', 1, [250, 300])
     touch('pointermove', 2, [700, 300], document)
     touch('pointermove', 2, [800, 300], document)
     touch('pointerup', 2, [800, 300])
-    touch('pointerup', 1, [400, 300])
+    touch('pointerup', 1, [250, 300])
     expect(getView().zoom).toBe(1)
     expect(getView().offset).toEqual([0, 0])
+    expect(getState().shapes[0]).toMatchObject({ x: 250, y: 250 })
   }
 }
 

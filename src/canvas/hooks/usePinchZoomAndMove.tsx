@@ -72,14 +72,16 @@ const getCanvasTransformation = ({
 type UsePinchZoomProps = {
   store: PaintStore
   canvasElt: HTMLElement | null
+  zoomEnabled: boolean
 }
 
 /** Events of the document which end the press of a pointer */
 const POINTER_END_EVENTS = ['pointerup', 'pointerout', 'pointercancel', 'pointerleave'] as const
 
-const usePinchZoomAndMove = ({ store, canvasElt }: UsePinchZoomProps) => {
+/** Zooms and moves the view with two fingers, when the canvas can be zoomed */
+const usePinchZoomAndMove = ({ store, canvasElt, zoomEnabled }: UsePinchZoomProps) => {
   useEffect(() => {
-    if (!canvasElt) return
+    if (!zoomEnabled || !canvasElt) return
 
     // the pointers pressed on the canvas, and the start of the pinch when there are two
     let evCache: PointerEvent[] = []
@@ -148,7 +150,7 @@ const usePinchZoomAndMove = ({ store, canvasElt }: UsePinchZoomProps) => {
       canvasElt.removeEventListener('pointerdown', handleDown)
       listenDocument(false)
     }
-  }, [canvasElt, store])
+  }, [canvasElt, zoomEnabled, store])
 }
 
 export default usePinchZoomAndMove
