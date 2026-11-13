@@ -134,6 +134,15 @@ export const getBase64Image = (img: HTMLImageElement): string | undefined => {
 export const isSourceEncodedOnExport = (src: string) => /^blob:/i.test(src)
 
 /**
+ * Images whose loading failed. Their element cannot tell it: an image being fetched has no source yet, like one whose fetch
+ * failed, and an image too large or too slow may be loaded all the same
+ */
+const failedImages = new WeakSet<HTMLImageElement>()
+
+/** Whether the loading of the image of a picture failed: it is drawn as a frame on the screen, and not at all elsewhere */
+export const hasPictureFailed = (img: HTMLImageElement) => failedImages.has(img)
+
+/**
  * Loads the source of a picture in its image: a URL of the web is fetched first, so that the canvas can still be exported.
  * Fails after a delay, or when the image is too large. The blob URL of the image is revoked once it is loaded or has failed
  */
@@ -142,6 +151,7 @@ export const loadPicture = (img: HTMLImageElement, src: string, resolvePictureSr
   const controller = new AbortController()
   let url: string | undefined
   let timeoutId: ReturnType<typeof setTimeout> | undefined
+  failedImages.delete(img)
   return new Promise<void>((resolve, reject) => {
     timeoutId = setTimeout(() => reject(new ReactPaintError('pictureTimeout', 'Timeout while loading the picture')), PICTURE_LOAD_TIMEOUT)
     img.onload = () => {
@@ -160,14 +170,19 @@ export const loadPicture = (img: HTMLImageElement, src: string, resolvePictureSr
         img.src = pictureUrl
       }
     }, reject)
-  }).finally(() => {
-    controller.abort()
-    clearTimeout(timeoutId)
-    // the image lives with the picture: its handlers would keep the loading alive
-    img.onload = null
-    img.onerror = null
-    revokeBlobUrl(url)
   })
+    .catch((error: unknown) => {
+      failedImages.add(img)
+      throw error
+    })
+    .finally(() => {
+      controller.abort()
+      clearTimeout(timeoutId)
+      // the image lives with the picture: its handlers would keep the loading alive
+      img.onload = null
+      img.onerror = null
+      revokeBlobUrl(url)
+    })
 }
 
 const encodeObjectToString = (objectToEncode: unknown) => {

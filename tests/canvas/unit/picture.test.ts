@@ -302,11 +302,16 @@ describe('picture load events', () => {
     const store = createPaintStore()
     const { loaded, failed } = listen(store)
     const [id] = store.actions.addShapes([picture(PNG_DATA_URL)])
+    const added = store.getShape(id!)
+    const historyLength = store.getState().document.history.states.length
 
     await vi.waitFor(() => expect(failed).toHaveBeenCalledTimes(1))
     expect(failed).toHaveBeenCalledWith(store.getShape(id!), expect.any(Error))
     expect(store.getCurrentData().shapes).toHaveLength(1)
     expect(loaded).not.toHaveBeenCalled()
+    // replaced by a copy, so that it is drawn again with its frame, without a step in the history
+    expect(store.getShape(id!)).not.toBe(added)
+    expect(store.getState().document.history.states).toHaveLength(historyLength)
   })
 
   it('emits nothing for a picture removed, or given another source, before its image is loaded', async () => {

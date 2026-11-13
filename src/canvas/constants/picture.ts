@@ -6,6 +6,12 @@ export const PICTURE_LOAD_TIMEOUT = 4000
 /** Largest width or height of the image of a picture, in pixels: the usual limit of a canvas, where it is drawn and encoded */
 export const PICTURE_MAX_SIZE = 16384
 
+/**
+ * Frame drawn on the screen in place of a picture whose image could not be loaded, crossed from corner to corner: its fill,
+ * and the color and the width in pixels of the screen of its lines
+ */
+export const PICTURE_PLACEHOLDER = { fillColor: '#eeeeee', strokeColor: '#999999', lineWidth: 1 }
+
 /** Types of the image files accepted as a picture: the file input of the editor (MenuGroup) lists the same ones */
 export const PICTURE_MIME_TYPES = ['image/png', 'image/gif', 'image/jpeg', 'image/svg+xml', 'image/webp']
 

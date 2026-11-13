@@ -153,9 +153,14 @@ const useCanvasRenderer = ({
       keepDrawnShapes(getDrawnShapes(shapes, selectedShape))
     )
     const selectDrawnShapes = ({ document }: InternalState) => computeDrawnShapes(document.shapes, document.selectedShape)
-    // the text being edited is hidden under its text box, and the shapes crossed by the eraser are faded until it is released
+    // the text being edited is hidden under its text box, and the shapes crossed by the eraser are faded until it is released.
+    // A picture whose image could not be loaded is shown as a frame
     const buildDrawOptions = memoizeLast(
-      (hiddenId: string | undefined, erasedShapeIds: string[]): DrawShapesOptions => ({ hiddenId, fadedIds: new Set(erasedShapeIds) })
+      (hiddenId: string | undefined, erasedShapeIds: string[]): DrawShapesOptions => ({
+        hiddenId,
+        fadedIds: new Set(erasedShapeIds),
+        withPlaceholders: true
+      })
     )
     const selectDrawOptions = ({ document, interaction: { selectionMode } }: InternalState) =>
       buildDrawOptions(

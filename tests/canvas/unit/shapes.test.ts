@@ -1,6 +1,7 @@
 import type { UtilsSettings } from '@canvas/constants/app'
 import type { Point, ShapeEntity, StyleShape } from '@canvas/types/Shapes'
 import type { CustomTool } from '@canvas/types/tools'
+import { loadPicture } from '@canvas/utils/file'
 import { canRemoveShapePoint, createShape, isStyleFieldOfShape, sizeShapeOnClick } from '@canvas/utils/shapes'
 import { addNewPointGroupToShape, addNewPointToShape, getBrushBorder, refreshBrush } from '@canvas/utils/shapes/brush'
 import { refreshCurve } from '@canvas/utils/shapes/curve'
@@ -9,7 +10,7 @@ import { drawPicture } from '@canvas/utils/shapes/picture'
 import { buildAvailableTools } from '@canvas/utils/tools'
 import { type Bounds, getPointsBounds } from '@canvas/utils/trigo'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { createShape as createEntity, MEASURE_CONTEXT, stubPath2D, UTILS_SETTINGS } from './helpers'
+import { createShape as createEntity, FakeImage, MEASURE_CONTEXT, stubPath2D, UTILS_SETTINGS } from './helpers'
 
 stubPath2D()
 
@@ -488,10 +489,14 @@ describe('drawPicture', () => {
         d: scale * Math.cos(rotation)
       }),
       beginPath: () => {},
+      moveTo: () => {},
+      lineTo: () => {},
       scale: () => {},
+      setLineDash: () => {},
       save: record('save'),
       restore: record('restore'),
       clip: record('clip'),
+      fill: record('fill'),
       stroke: record('stroke'),
       drawImage: record('drawImage')
     }
@@ -566,6 +571,31 @@ describe('drawPicture', () => {
       throw new TypeError('wrong source')
     })
     expect(draw).toThrow(TypeError)
+  })
+
+  it('draws a grey crossed frame in place of an image which could not be loaded, only when asked, then the border', async () => {
+    vi.stubGlobal('Image', FakeImage)
+    FakeImage.fails = () => true
+    const img = new Image()
+    await expect(loadPicture(img, 'data:image/png;base64,AAAA')).rejects.toThrow()
+    const picture = createEntity<ShapeEntity<'picture'>>({
+      type: 'picture',
+      x: 0,
+      y: 0,
+      width: 300,
+      height: 200,
+      src: '',
+      style: { strokeColor: 'red', cornerRadius: 20 }
+    })
+    const drawnCalls = (withPlaceholder: boolean) => {
+      const { ctx, calls } = createPictureContext()
+      drawPicture(ctx as unknown as CanvasRenderingContext2D, { ...picture, img }, withPlaceholder)
+      return calls
+    }
+    // the frame and its cross, cut at the rounded corners, before the border
+    expect(drawnCalls(true)).toEqual(['save', 'fill', 'stroke', 'clip', 'stroke', 'restore', 'stroke'])
+    // the exports and the eyedropper draw nothing in its place
+    expect(drawnCalls(false)).toEqual(['stroke'])
   })
 })
 

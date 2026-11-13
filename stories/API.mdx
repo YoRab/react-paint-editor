@@ -833,7 +833,7 @@ paint.registerEvent('canvasDoubleClicked', (shape: ShapeEntity | undefined) => s
       </p>
       <p>
         <code>pictureLoadFailed</code> is fired when the image of a picture cannot be loaded, for instance when <code>resolvePictureSrc</code> refuses it. A picture of loaded data is left out of the drawing, and the event is fired once the other shapes are loaded.
-        A picture added by <code>addShapes</code> or <code>updateShapes</code> stays in the drawing, without being drawn: <code>paint.getShape(shape.id)</code> tells which. The Editor shows an error message for it.
+        A picture added by <code>addShapes</code> or <code>updateShapes</code> stays in the drawing: <code>paint.getShape(shape.id)</code> tells which. It is drawn as a grey crossed frame on the canvas, and not at all in the exported images. The Editor shows an error message for it.
       </p>
       <Source language='typescript' code={`paint.registerEvent('pictureLoaded', () => upload(paint.getCurrentImage()))
 paint.registerEvent('pictureLoadFailed', (shape: ShapeEntity<'picture'>, error: unknown) => {

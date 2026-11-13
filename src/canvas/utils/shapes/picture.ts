@@ -1,10 +1,11 @@
 import type { PictureSrcResolver, UtilsSettings } from '@canvas/constants/app'
+import { PICTURE_PLACEHOLDER } from '@canvas/constants/picture'
 import { PICTURE_TOOL_ID } from '@canvas/constants/tools'
 import type { SelectionModeResize } from '@canvas/types/Mode'
 import type { DrawableShape, Point, ShapeEntity } from '@canvas/types/Shapes'
 import type { CustomTool } from '@canvas/types/tools'
 import { createDetachedContext, isVisibleColor } from '@canvas/utils/canvas'
-import { addSizeAndConvertSvgToObjectUrl, isSvg, loadPicture, readFileAsDataUrl } from '@canvas/utils/file'
+import { addSizeAndConvertSvgToObjectUrl, hasPictureFailed, isSvg, loadPicture, readFileAsDataUrl } from '@canvas/utils/file'
 import { resizeRectSelection } from '@canvas/utils/selection/rectSelection'
 import { getToolDefaultStyle } from '@canvas/utils/tools'
 import { fitContentInsideContainer } from '@canvas/utils/transform'
@@ -185,13 +186,32 @@ const getReducedImage = (img: HTMLImageElement, level: number): CanvasImageSourc
 /** The border of a picture is drawn only with a stroke color: the pictures had no border before */
 export const hasPictureBorder = (picture: Pick<ShapeEntity<'picture'>, 'style'>) => isVisibleColor(picture.style?.strokeColor)
 
-/** Draws the image of a picture, cut at its rounded corners, then its border. A broken image is not drawn, its border is */
-export const drawPicture = (ctx: CanvasRenderingContext2D, picture: ShapeEntity<'picture'>): void => {
-  if (ctx.globalAlpha === 0) return
+/** Frame in place of the image of a picture, crossed from corner to corner and cut at its rounded corners */
+const drawPicturePlaceholder = (ctx: CanvasRenderingContext2D, { x, y, width, height, path }: ShapeEntity<'picture'>): void => {
+  const { a, b } = ctx.getTransform()
+  ctx.save()
+  ctx.fillStyle = PICTURE_PLACEHOLDER.fillColor
+  ctx.strokeStyle = PICTURE_PLACEHOLDER.strokeColor
+  // in pixels of the screen, whatever the zoom
+  ctx.lineWidth = PICTURE_PLACEHOLDER.lineWidth / Math.hypot(a, b)
+  ctx.setLineDash([])
+  ctx.fill(path)
+  ctx.stroke(path)
+  ctx.clip(path)
+  ctx.beginPath()
+  ctx.moveTo(x, y)
+  ctx.lineTo(x + width, y + height)
+  ctx.moveTo(x + width, y)
+  ctx.lineTo(x, y + height)
+  ctx.stroke()
+  ctx.restore()
+}
+
+/** The image of a picture, cut at its rounded corners and flipped. The clip and the flip are undone for its border */
+const drawPictureImage = (ctx: CanvasRenderingContext2D, picture: ShapeEntity<'picture'>, hasBorder: boolean): void => {
   const image = getReducedImage(picture.img, getReductionLevel(ctx, picture))
   const isRounded = getCornerRadius(picture) > 0
-  const hasBorder = hasPictureBorder(picture)
-  // the clip and the flip are undone before the border, the caller restores the context after the shape
+  // without a border, the caller restores the context after the shape
   const restoresBeforeBorder = hasBorder && (isRounded || !!picture.flipX || !!picture.flipY)
   if (restoresBeforeBorder) ctx.save()
   if (isRounded) ctx.clip(picture.path)
@@ -206,10 +226,22 @@ export const drawPicture = (ctx: CanvasRenderingContext2D, picture: ShapeEntity<
       picture.height
     )
   } catch (error) {
-    // an image which could not be loaded is broken: the element tells it only by this error, the shapes in front are drawn
+    // the image of a failed loading is broken before loadPicture knows it: Chromium breaks it before its error event. The
+    // shapes in front are still drawn
     if (!(error instanceof DOMException && error.name === 'InvalidStateError')) throw error
   }
   if (restoresBeforeBorder) ctx.restore()
+}
+
+/**
+ * Draws the image of a picture, then its border. An image which could not be loaded is not drawn: a frame takes its place
+ * with withPlaceholder, on the screen
+ */
+export const drawPicture = (ctx: CanvasRenderingContext2D, picture: ShapeEntity<'picture'>, withPlaceholder = false): void => {
+  if (ctx.globalAlpha === 0) return
+  const hasBorder = hasPictureBorder(picture)
+  if (!hasPictureFailed(picture.img)) drawPictureImage(ctx, picture, hasBorder)
+  else if (withPlaceholder) drawPicturePlaceholder(ctx, picture)
   if (hasBorder) ctx.stroke(picture.path)
 }
 

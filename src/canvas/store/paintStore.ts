@@ -1224,9 +1224,9 @@ export const createPaintStore = (props: UseReactPaintProps = {}) => {
   }
 
   /**
-   * Redraws a picture once its image is loaded: the shape is replaced by a copy, fitted to the proportions of the image
-   * when it has none of its own, without a step in the history. The events are only emitted while the picture is still in
-   * the drawing with this image: it may have been removed or given another source
+   * Redraws a picture once its image is loaded, or as a frame once it has failed: the shape is replaced by a copy, fitted
+   * to the proportions of the image when it has none of its own, without a step in the history. The events are only emitted
+   * while the picture is still in the drawing with this image: it may have been removed or given another source
    */
   const loadPictureOf = (shape: ShapeEntity) => {
     if (shape.type !== 'picture') return
@@ -1249,7 +1249,10 @@ export const createPaintStore = (props: UseReactPaintProps = {}) => {
       (error: unknown) => {
         console.warn(`react-paint: the picture ${shape.id} could not be loaded`, error)
         const current = findCurrent()
-        if (current) emit('pictureLoadFailed', current, error)
+        if (!current) return
+        const failed = { ...current }
+        updateShapes([failed])
+        emit('pictureLoadFailed', failed, error)
       }
     )
   }
