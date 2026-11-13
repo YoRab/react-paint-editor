@@ -18,7 +18,6 @@ const PresetsEditor = () => {
   const paint = useReactPaint({
     shapes,
     options: {
-      canZoom: 'always',
       clearCallback: () => {
         return PRESETS[preset]!.shapes
       }
@@ -179,9 +178,7 @@ export const ViewerMode: Story = {
   args: {
     shapes: TREE_AND_CLOUDS,
     mode: 'viewer',
-    options: {
-      canZoom: 'always'
-    }
+    options: {}
   },
   parameters: {
     docs: {
