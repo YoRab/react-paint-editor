@@ -1,6 +1,7 @@
 import { createPaintStore, type PaintStore } from '@canvas/store/paintStore'
 import type { ShapeEntity, ShapeInput } from '@canvas/types/Shapes'
 import { getScaledCanvasSize } from '@canvas/utils/canvas'
+import { ReactPaintError } from '@canvas/utils/error'
 import { describe, expect, it, vi } from 'vitest'
 import { createLoadedStore, extendTo, RECTS, stubPath2D } from './helpers'
 
@@ -561,6 +562,25 @@ describe('dedicated actions', () => {
     await store.actions.loadData({ shapes: [RECTS[0]!, RECTS[1]!] }, { clearHistory: false })
     expect(getIds(store)).toHaveLength(2)
     expect(store.getEditorState().history.canUndo).toBe(true)
+  })
+
+  it('rejects loadData with fileInvalidJson, like loadFile, and keeps the drawing, when its string is not JSON', async () => {
+    const store = await createLoadedStore()
+    const ids = getIds(store)
+    const loading = store.actions.loadData('not a project')
+    await expect(loading).rejects.toBeInstanceOf(ReactPaintError)
+    await expect(loading).rejects.toMatchObject({ code: 'fileInvalidJson', cause: expect.any(SyntaxError) })
+    expect(getIds(store)).toEqual(ids)
+  })
+
+  it('rejects loadData with the index of a shape which cannot be built, and keeps the drawing', async () => {
+    const store = await createLoadedStore()
+    const ids = getIds(store)
+    // a polygon without its points
+    const loading = store.actions.loadData({ shapes: [RECTS[0], { type: 'polygon' }] as unknown as ShapeInput[] })
+    await expect(loading).rejects.toBeInstanceOf(ReactPaintError)
+    await expect(loading).rejects.toMatchObject({ code: 'dataInvalid', details: { index: 1 }, cause: expect.any(TypeError) })
+    expect(getIds(store)).toEqual(ids)
   })
 })
 

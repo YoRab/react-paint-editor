@@ -27,6 +27,13 @@ const SQUARE: DrawableShape = {
 
 const getView = () => getState().view
 
+/** Dispatches the events of fingers at points of the draw canvas, which do not follow the zoom: they are positions of the page */
+const getTouch = (drawCanvas: HTMLElement) => {
+  const { toClientX, toClientY } = makeCoordConverters(drawCanvas.getBoundingClientRect())
+  return (type: string, pointerId: number, [x, y]: Point, target: EventTarget = drawCanvas) =>
+    dispatchTouch(target, type, pointerId, { x: toClientX(x), y: toClientY(y) })
+}
+
 export const ZoomAndPan: Story = {
   args: {
     shapes: [SQUARE],
@@ -46,9 +53,7 @@ export const ZoomAndPan: Story = {
       return event.defaultPrevented
     }
 
-    /** Dispatches an event of a finger at a point of the canvas */
-    const touch = (type: string, pointerId: number, [x, y]: Point, target: EventTarget = drawCanvas) =>
-      dispatchTouch(target, type, pointerId, { x: toClientX(x), y: toClientY(y) })
+    const touch = getTouch(drawCanvas)
 
     const resetView = () => getPaint().actions.resetZoom()
 
@@ -142,5 +147,53 @@ export const ZoomAndPan: Story = {
     expect(view.queryByRole('menuitem', { name: 'Duplicate' })).toBeNull()
     // the finger moved the square
     expect(getState().shapes[0]).toMatchObject({ x: 280, y: 250 })
+  }
+}
+
+/** A drawing of a fixed size which cannot be zoomed is not zoomed by a pinch either */
+export const PinchWithoutZoom: Story = {
+  // confirmed defect, fixed by the step 2 of the plan: the pinch zooms to 2. Left out of the tests until then
+  tags: ['!test'],
+  args: {
+    shapes: [SQUARE],
+    options: { size: 'fixed', canZoom: 'never' }
+  },
+  play: async ({ canvasElement }) => {
+    const drawCanvas = await within(canvasElement).findByTestId('draw-canvas')
+    const touch = getTouch(drawCanvas)
+
+    touch('pointerdown', 1, [400, 300])
+    touch('pointerdown', 2, [600, 300])
+    touch('pointermove', 2, [700, 300], document)
+    touch('pointermove', 2, [800, 300], document)
+    touch('pointerup', 2, [800, 300])
+    touch('pointerup', 1, [400, 300])
+    expect(getView().zoom).toBe(1)
+    expect(getView().offset).toEqual([0, 0])
+  }
+}
+
+/** A finger never stays still: a tap on the selected shape, moving by 2 pixels, is a click, not a drag */
+export const TouchTap: Story = {
+  // confirmed defect, fixed by the step 2 of the plan: the square moves by the 2 pixels. Left out of the tests until then
+  tags: ['!test'],
+  args: {
+    shapes: [SQUARE]
+  },
+  play: async ({ canvasElement }) => {
+    const drawCanvas = await within(canvasElement).findByTestId('draw-canvas')
+    const touch = getTouch(drawCanvas)
+
+    // a first tap selects the square
+    touch('pointerdown', 1, [300, 300])
+    touch('pointerup', 1, [300, 300])
+    expect(getState().selectedShapeIds).toHaveLength(1)
+
+    touch('pointerdown', 1, [300, 300])
+    touch('pointermove', 1, [302, 301])
+    touch('pointerup', 1, [302, 301])
+    // the square has not moved, and no step is added to the history
+    expect(getState().shapes[0]).toMatchObject({ x: 250, y: 250 })
+    expect(getState().history.canUndo).toBe(false)
   }
 }

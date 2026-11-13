@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import { useEffect } from 'react'
-import { expect, userEvent, waitFor, within } from 'storybook/test'
-import { Canvas, type ShapeEntity, type UseReactPaintProps, useReactPaint } from '../../../src/index'
+import { expect, fn, spyOn, userEvent, waitFor, within } from 'storybook/test'
+import { Canvas, type Point, type ShapeEntity, type UseReactPaintProps, useReactPaint } from '../../../src/index'
 import { getPaint, getPixel, makeCoordConverters, paintRef, wait } from './../helpers'
 
 const SHAPE_EVENTS = ['shapeClicked', 'shapeHovered', 'canvasClicked', 'canvasDoubleClicked'] as const
@@ -40,8 +40,8 @@ const ApiHarness = ({
   )
 }
 
-/** Color of the top left pixel of an exported image */
-const getFirstPixel = async (dataUrl: string) => {
+/** Color of a pixel of an exported image, near its top left corner by default */
+const getExportedPixel = async (dataUrl: string, [x, y]: Point = [1, 1]) => {
   const img = new Image()
   await new Promise((resolve, reject) => {
     img.onload = resolve
@@ -53,7 +53,7 @@ const getFirstPixel = async (dataUrl: string) => {
   canvas.height = img.height
   const ctx = canvas.getContext('2d')!
   ctx.drawImage(img, 0, 0)
-  return Array.from(ctx.getImageData(1, 1, 1, 1).data)
+  return Array.from(ctx.getImageData(x, y, 1, 1).data)
 }
 
 const meta = {
@@ -143,7 +143,7 @@ export const ActionsWithCanvas: Story = {
 
     const jpeg = paint.getCurrentImage({ format: 'jpeg', quality: 0.9, backgroundColor: 'rgb(255, 0, 0)' })
     expect(jpeg.startsWith('data:image/jpeg')).toBe(true)
-    const [red, green] = await getFirstPixel(jpeg)
+    const [red, green] = await getExportedPixel(jpeg)
     expect(red).toBeGreaterThan(200)
     expect(green).toBeLessThan(60)
 
@@ -153,7 +153,7 @@ export const ActionsWithCanvas: Story = {
     const backgroundCtx = background.getContext('2d')!
     backgroundCtx.fillStyle = 'rgb(0, 0, 255)'
     backgroundCtx.fillRect(0, 0, 10, 10)
-    const [r, g, b, alpha] = await getFirstPixel(paint.getCurrentImage({ backgroundImage: background }))
+    const [r, g, b, alpha] = await getExportedPixel(paint.getCurrentImage({ backgroundImage: background }))
     expect([r, g, b, alpha]).toEqual([0, 0, 255, 255])
   }
 }
@@ -212,6 +212,38 @@ export const GroupOpacity: Story = {
     paint.actions.setShapesVisibility([groupId!], false)
     await wait(100)
     expect(getPixel(drawCanvas, [250, 150])[3]).toBe(0)
+  }
+}
+
+/**
+ * A picture whose image cannot be loaded stays in the drawing: the shapes in front of it are still drawn, and it is drawn as
+ * a grey crossed frame on the screen, not in the exports
+ */
+export const BrokenPicture: Story = {
+  play: async ({ canvasElement }) => {
+    const drawCanvas = (await within(canvasElement).findByTestId('draw-canvas')) as HTMLCanvasElement
+    const paint = getPaint()
+    // the canvas warns about the picture which cannot be loaded
+    const warn = spyOn(console, 'warn').mockImplementation(() => undefined)
+    try {
+      const failed = fn()
+      paint.registerEvent('pictureLoadFailed', failed)
+      // an image data URL which is not an image
+      paint.actions.addShapes([{ type: 'picture', x: 100, y: 100, width: 300, height: 200, src: 'data:image/png;base64,AAAA' }])
+      const [rectId] = paint.actions.addShapes([
+        { type: 'rect', x: 150, y: 150, width: 100, height: 100, style: { fillColor: 'red', strokeColor: 'transparent' } }
+      ])
+      await waitFor(() => expect(failed).toHaveBeenCalledTimes(1))
+
+      // the drawing is drawn again with the image which failed: the rect is drawn where it is moved, 10 pixels to the right
+      paint.actions.translateShapes([rectId!], [10, 0])
+      await waitFor(() => expect(getPixel(drawCanvas, [255, 200])).toEqual([255, 0, 0, 255]))
+      // the frame of the picture, away from its cross
+      expect(getPixel(drawCanvas, [300, 280])).toEqual([238, 238, 238, 255])
+      expect(await getExportedPixel(paint.getCurrentImage(), [300, 280])).toEqual([0, 0, 0, 0])
+    } finally {
+      warn.mockRestore()
+    }
   }
 }
 

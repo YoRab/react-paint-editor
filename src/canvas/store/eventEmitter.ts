@@ -30,6 +30,7 @@ export const createEventEmitter = (): EventEmitter => {
     pictureDropFailed: [],
     pictureLoaded: [],
     pictureLoadFailed: [],
+    dataLoadFailed: [],
     customShapeLoadFailed: []
   }
 

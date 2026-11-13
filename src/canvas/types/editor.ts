@@ -303,7 +303,13 @@ export type EditorActions = {
   clearCanvas: () => void
   /** Loads a data file, like loadData: the file is chosen by the user, so the change is 'user' by default */
   loadFile: (file: File, options?: LoadDataOptions) => Promise<void>
-  /** Loads exported data, or their JSON string. The history is cleared by default, and the change is 'remote' by default */
+  /**
+   * Loads exported data, or their JSON string, at once: the last data loaded are the ones kept. Their pictures are drawn
+   * once loaded, and the promise is resolved once they are loaded or have failed. A shape which cannot be built, like a
+   * polygon without its points, rejects it with the ReactPaintError 'dataInvalid', and a string which is not JSON with
+   * 'fileInvalidJson', like loadFile, the drawing unchanged. The history is cleared by default, and the change is 'remote'
+   * by default
+   */
   loadData: (data: StateData | { shapes?: ShapeInput[] } | string, options?: LoadDataOptions) => Promise<void>
   exportPicture: (options?: ExportImageOptions & { fileName?: string }) => void
   exportData: (options?: { fileName?: string }) => void
@@ -400,13 +406,19 @@ export type ReactPaintEventArgs = {
   canvasDoubleClicked: [shape: ShapeEntity | undefined, info: ShapePointerInfo]
   /** A file dropped on the canvas or pasted is not added as a picture: its type is not an accepted image, or the image could not be loaded */
   pictureDropFailed: [file: File, error: unknown]
-  /** A picture added by addShapes, or whose source is changed by updateShapes, is loaded and drawn */
+  /** A picture added by addShapes or loaded data, or whose source is changed by updateShapes, is loaded and drawn */
   pictureLoaded: [shape: ShapeEntity<'picture'>]
   /**
-   * The image of a picture cannot be loaded. The picture is left out of loaded data, and stays in the drawing, not drawn,
-   * when it was added by addShapes or updateShapes: getShape(shape.id) tells which
+   * The image of a picture cannot be loaded. The picture stays in the drawing, with its source: it is drawn as a grey
+   * crossed frame on the canvas, and not at all in the exported images. For loaded data, it is emitted once the drawing
+   * is loaded
    */
   pictureLoadFailed: [shape: ShapeEntity<'picture'>, error: unknown]
+  /**
+   * The shapes of the props of useReactPaint, or the ones given by clearCallback, cannot be loaded, like a polygon without
+   * its points (the ReactPaintError 'dataInvalid'): the drawing is unchanged. loadData and loadFile reject instead
+   */
+  dataLoadFailed: [error: unknown]
   /**
    * A custom shape of loaded data is left out: no custom tool of its toolId is available to draw it. Give the same
    * custom tools in availableTools before loading data which holds their shapes

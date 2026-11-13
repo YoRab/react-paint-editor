@@ -105,7 +105,7 @@ describe('ReactPaintError', () => {
   it('tells the code of what went wrong, and the values it depends on', async () => {
     const error = await decodeJson(new File(['{ shapes'], 'broken.json')).catch((e: unknown) => e)
     expect(error).toBeInstanceOf(ReactPaintError)
-    expect(error).toMatchObject({ code: 'fileInvalidJson', name: 'ReactPaintError', message: 'Invalid JSON file' })
+    expect(error).toMatchObject({ code: 'fileInvalidJson', name: 'ReactPaintError', message: 'Invalid JSON' })
 
     const large = new File(['{}'], 'large.json')
     Object.defineProperty(large, 'size', { value: 200 * 1024 * 1024 })

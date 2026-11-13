@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import { expect, spyOn, userEvent, waitFor, within } from 'storybook/test'
-import type { DrawableShape } from '../../../src/index'
+import { type DrawableShape, ReactPaintError } from '../../../src/index'
 import { findFileInput, getPaint, getState, ReactPaintWrapper, wait } from './../helpers'
 
 const meta = {
@@ -137,19 +137,25 @@ export const FileActions: Story = {
       expect(await view.findByText('The file is not a project')).toBeInTheDocument()
       expect(getState().shapes).toHaveLength(2)
 
+      // a project holding a shape which cannot be built fails as a whole: a polygon without its points
+      const withInvalidShape = { shapes: [{ ...SQUARE, id: 'valid' }, { type: 'polygon' }] }
+      await loadProject(new File([JSON.stringify(withInvalidShape)], 'drawing.json', { type: 'application/json' }))
+      expect(await view.findByText('The drawing holds a shape which cannot be loaded')).toBeInTheDocument()
+      expect(getState().shapes.map(shape => shape.id)).toEqual(['first', 'second'])
+
       // a picture which cannot be read fails too
       await openMenu()
       await userEvent.upload(await findFileInput(view, 'Upload picture'), new File(['not an image'], 'broken.png', { type: 'image/png' }))
       expect(await view.findByText('The picture could not be loaded')).toBeInTheDocument()
       expect(getState().shapes).toHaveLength(2)
 
-      // the pictures of a project which cannot be loaded are left out, with a single message
+      // the pictures of a project which cannot be loaded are kept, drawn as frames, with a single message
       const refusedPicture = (id: string) => ({ type: 'picture', id, x: 0, y: 0, width: 100, height: 100, src: 'javascript:void(0)' })
       const withRefusedPictures = { shapes: [{ ...SQUARE, id: 'kept' }, refusedPicture('first-picture'), refusedPicture('second-picture')] }
       await loadProject(new File([JSON.stringify(withRefusedPictures)], 'drawing.json', { type: 'application/json' }))
       // findByText fails when several messages are shown
       expect(await view.findByText('Some pictures could not be loaded')).toBeInTheDocument()
-      expect(getState().shapes.map(shape => shape.id)).toEqual(['kept'])
+      expect(getState().shapes.map(shape => shape.id)).toEqual(['kept', 'first-picture', 'second-picture'])
 
       // =====================================================================
       // The export of an empty drawing fails with a message
@@ -160,8 +166,8 @@ export const FileActions: Story = {
       await exportView('Export the whole drawing')
       expect(downloads).toHaveLength(0)
       expect(await view.findByText('There is no shape to export')).toBeInTheDocument()
-      // the 3 failures of the editor, and the canvas about each picture left out
-      expect(warn).toHaveBeenCalledTimes(5)
+      // the 4 failures of the editor, and the canvas about each picture which cannot be loaded
+      expect(warn).toHaveBeenCalledTimes(6)
 
       // the messages go away after a few seconds
       await waitFor(() => expect(view.queryByText('File loaded')).toBeNull(), { timeout: 5000 })
@@ -169,5 +175,39 @@ export const FileActions: Story = {
       click.mockRestore()
       warn.mockRestore()
     }
+  }
+}
+
+/** Shapes of the props which cannot be built: the drawing stays empty, and the editor tells it */
+export const InvalidShapes: Story = {
+  args: {
+    // a polygon without its points
+    shapes: [SQUARE, { type: 'polygon' } as unknown as DrawableShape]
+  },
+  // the canvas warns about the shapes it cannot load, as soon as it is mounted
+  beforeEach: () => {
+    const warn = spyOn(console, 'warn').mockImplementation(() => undefined)
+    return () => warn.mockRestore()
+  },
+  play: async ({ canvasElement }) => {
+    expect(await within(canvasElement).findByText('The drawing holds a shape which cannot be loaded')).toBeInTheDocument()
+    expect(getState().shapes).toEqual([])
+  }
+}
+
+/** Shapes too far apart to fit in a canvas of the browser: their export fails with an error, instead of giving an empty image */
+export const ExportTooLarge: Story = {
+  // confirmed defect, to fix at the step 6 of the plan: the export gives the empty image 'data:,'. Left out of the tests until then
+  tags: ['!test'],
+  args: {
+    // wider than the 65 535 pixels of the largest canvas of a browser, on a single row: nothing heavy is allocated
+    shapes: [SQUARE, { ...SQUARE, x: 70000 }],
+    options: { size: 'infinite' }
+  },
+  play: async ({ canvasElement }) => {
+    await within(canvasElement).findByTestId('draw-canvas')
+    await waitFor(() => expect(getState().shapes).toHaveLength(2))
+
+    expect(() => getPaint().getCurrentImage({ view: 'fitToShapes' })).toThrow(ReactPaintError)
   }
 }

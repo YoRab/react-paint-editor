@@ -156,16 +156,17 @@ const Editor = ({ paint, className, style, options, children }: EditorComponentP
     [actions, reportError, snackbars]
   )
 
-  useEffect(
-    () =>
-      paint.registerEvent('pictureDropFailed', (_file, error) =>
-        addSnackbar({ type: 'error', text: getErrorText(error, snackbars.loadFailed, locale) })
-      ),
-    [paint, addSnackbar, snackbars, locale]
+  // the snackbar of a failure the canvas warns about, or which needs no warning
+  const showLoadFailed = useCallback(
+    (error: unknown) => addSnackbar({ type: 'error', text: getErrorText(error, snackbars.loadFailed, locale) }),
+    [addSnackbar, snackbars, locale]
   )
+  useEffect(() => paint.registerEvent('pictureDropFailed', (_file, error) => showLoadFailed(error)), [paint, showLoadFailed])
+  // the shapes of the props or of clearCallback
+  useEffect(() => paint.registerEvent('dataLoadFailed', showLoadFailed), [paint, showLoadFailed])
 
   const showPictureLoadFailed = useCallback(() => addSnackbar({ type: 'error', text: snackbars.picturesNotLoaded }), [addSnackbar, snackbars])
-  // the pictures left out of the same loaded data give a single message
+  // the pictures of the same loaded data which cannot be loaded give a single message
   const reportPictureLoadFailed = useDebounce(showPictureLoadFailed, 0)
   useEffect(() => paint.registerEvent('pictureLoadFailed', reportPictureLoadFailed), [paint, reportPictureLoadFailed])
 

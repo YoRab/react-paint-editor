@@ -277,6 +277,7 @@ export const FR_LOCALE: EditorLocale = {
       fileReadFailed: "Le fichier n'a pas pu être lu",
       fileTooLarge: 'Le fichier dépasse {max} Mo',
       fileInvalidJson: "Le fichier n'est pas un projet",
+      dataInvalid: 'Le dessin contient une forme qui ne peut pas être chargée',
       fileTypeUnsupported: "Ce type de fichier n'est pas pris en charge : {type}",
       pictureInvalidSvg: "L'image SVG n'est pas valide",
       pictureFetchFailed: "L'image n'a pas pu être téléchargée ({status})",

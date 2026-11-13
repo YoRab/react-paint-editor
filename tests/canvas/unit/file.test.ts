@@ -36,7 +36,7 @@ describe('decodeJson', () => {
 
   it('refuses an empty file, or a file which is not JSON', async () => {
     await expect(decodeJson(new File([''], 'empty.json'))).rejects.toThrow()
-    await expect(decodeJson(new File(['{ shapes'], 'broken.json'))).rejects.toThrow('Invalid JSON file')
+    await expect(decodeJson(new File(['{ shapes'], 'broken.json'))).rejects.toThrow('Invalid JSON')
   })
 })
 
@@ -66,7 +66,7 @@ describe('project files', () => {
 
   it('keeps the drawing when the file is not a project', async () => {
     const store = await createLoadedStore()
-    await expect(store.actions.loadFile(new File(['not json'], 'drawing.json'))).rejects.toThrow('Invalid JSON file')
+    await expect(store.actions.loadFile(new File(['not json'], 'drawing.json'))).rejects.toThrow('Invalid JSON')
     expect(store.getState().document.shapes).toHaveLength(3)
   })
 

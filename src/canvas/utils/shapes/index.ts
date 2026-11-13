@@ -74,7 +74,7 @@ export const createShape = (
   }
 }
 
-const drawShapeByType = (ctx: CanvasRenderingContext2D, shape: ShapeEntity): void => {
+const drawShapeByType = (ctx: CanvasRenderingContext2D, shape: ShapeEntity, options: DrawShapesOptions): void => {
   switch (shape.type) {
     case 'brush':
       drawBrush(ctx, shape)
@@ -104,7 +104,7 @@ const drawShapeByType = (ctx: CanvasRenderingContext2D, shape: ShapeEntity): voi
       drawRect(ctx, shape)
       break
     case 'picture':
-      drawPicture(ctx, shape)
+      drawPicture(ctx, shape, options.withPlaceholders)
       break
     case 'custom':
       drawCustomShape(ctx, shape)
@@ -224,14 +224,14 @@ const paintOnLayer = (
  * Draws a shape painted several times, with its opacity: it is painted opaque on a shared layer, at the resolution of the
  * canvas, then the layer is copied with the opacity
  */
-const drawShapeOnLayer = (ctx: CanvasRenderingContext2D, shape: ShapeEntity): void => {
+const drawShapeOnLayer = (ctx: CanvasRenderingContext2D, shape: ShapeEntity, options: DrawShapesOptions): void => {
   const matrix = ctx.getTransform()
   const box = getPixelBox(ctx.canvas, matrix, expandRect(shape.computed.outerBorders, getLayerMargin(shape)))
   paintOnLayer(ctx, matrix, box, layerCtx => {
     updateCanvasContext(layerCtx, { ...shape.style, opacity: 100 })
     // the shared layer keeps no state of the shape, like a clip, for the next ones
     layerCtx.save()
-    drawShapeByType(layerCtx, shape)
+    drawShapeByType(layerCtx, shape, options)
     layerCtx.restore()
   })
 }
@@ -242,6 +242,8 @@ export type DrawShapesOptions = {
   hiddenId?: string | undefined
   /** Shapes drawn with a part of their opacity, like the shapes crossed by the eraser */
   fadedIds?: ReadonlySet<string> | undefined
+  /** Draws a frame in place of the pictures whose image could not be loaded: on the screen, not in an export */
+  withPlaceholders?: boolean | undefined
 }
 
 /** Part of their opacity kept by the faded shapes */
@@ -317,8 +319,8 @@ const drawShape = (
   if (options.fadedIds?.has(shape.id)) ctx.globalAlpha *= FADED_OPACITY_RATIO
 
   if (ctx.globalAlpha > 0) {
-    if (needsLayer(shape, ctx.globalAlpha, settings.canvasSize.scaleRatio)) drawShapeOnLayer(ctx, shape)
-    else drawShapeByType(ctx, shape)
+    if (needsLayer(shape, ctx.globalAlpha, settings.canvasSize.scaleRatio)) drawShapeOnLayer(ctx, shape, options)
+    else drawShapeByType(ctx, shape, options)
   }
 
   ctx.restore()

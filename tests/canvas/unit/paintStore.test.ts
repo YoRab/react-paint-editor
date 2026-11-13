@@ -1,6 +1,6 @@
 import { ERASER_TOOL, LASER_TOOL } from '@canvas/constants/tools'
 import { createPaintStore, type PaintStore } from '@canvas/store/paintStore'
-import type { Point, ShapeEntity } from '@canvas/types/Shapes'
+import type { Point, ShapeEntity, ShapeInput } from '@canvas/types/Shapes'
 import { removePolygonPoint } from '@canvas/utils/shapes/polygon'
 import { describe, expect, it, vi } from 'vitest'
 import { createLoadedStore, RECTS, stubPath2D } from './helpers'
@@ -43,6 +43,45 @@ describe('createPaintStore', () => {
       expect.objectContaining({ added: expect.arrayContaining([expect.objectContaining({ type: 'rect' })]) })
     )
     expect(store.getEditorState().history.canUndo).toBe(false)
+  })
+
+  it('emits dataLoadFailed, without a rejected promise left without a handler, when the shapes of the props cannot be built', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
+    // a polygon without its points
+    const store = createPaintStore({ shapes: [{ type: 'polygon' }] as unknown as ShapeInput[] })
+    const failed = vi.fn()
+    store.registerEvent('dataLoadFailed', failed)
+    // Vitest fails a run on such a promise: its listeners are set aside
+    const listeners = process.listeners('unhandledRejection')
+    const rejections: unknown[] = []
+    process.removeAllListeners('unhandledRejection')
+    process.on('unhandledRejection', reason => rejections.push(reason))
+    try {
+      store.init()
+      // Node reports the promise once the microtasks are done
+      await new Promise(resolve => setImmediate(resolve))
+    } finally {
+      process.removeAllListeners('unhandledRejection')
+      for (const listener of listeners) process.on('unhandledRejection', listener)
+      warn.mockRestore()
+    }
+    expect(rejections).toEqual([])
+    expect(failed).toHaveBeenCalledWith(expect.objectContaining({ code: 'dataInvalid', details: { index: 0 } }))
+  })
+
+  it('emits dataLoadFailed, and keeps the drawing, when the shapes of clearCallback cannot be built', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
+    const store = await createLoadedStore({ options: { clearCallback: () => [RECTS[0]!, { type: 'polygon' }] as unknown as ShapeInput[] } })
+    const failed = vi.fn()
+    store.registerEvent('dataLoadFailed', failed)
+    try {
+      store.actions.clearCanvas()
+      await vi.waitFor(() => expect(failed).toHaveBeenCalledTimes(1))
+    } finally {
+      warn.mockRestore()
+    }
+    expect(failed).toHaveBeenCalledWith(expect.objectContaining({ code: 'dataInvalid', details: { index: 1 } }))
+    expect(getIds(store)).toHaveLength(RECTS.length)
   })
 
   it('emits no event before any change', () => {

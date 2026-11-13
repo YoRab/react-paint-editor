@@ -134,6 +134,15 @@ export const getBase64Image = (img: HTMLImageElement): string | undefined => {
 export const isSourceEncodedOnExport = (src: string) => /^blob:/i.test(src)
 
 /**
+ * Images whose loading failed. Their element cannot tell it: an image being fetched has no source yet, like one whose fetch
+ * failed, and an image too large or too slow may be loaded all the same
+ */
+const failedImages = new WeakSet<HTMLImageElement>()
+
+/** Whether the loading of the image of a picture failed: it is drawn as a frame on the screen, and not at all elsewhere */
+export const hasPictureFailed = (img: HTMLImageElement) => failedImages.has(img)
+
+/**
  * Loads the source of a picture in its image: a URL of the web is fetched first, so that the canvas can still be exported.
  * Fails after a delay, or when the image is too large. The blob URL of the image is revoked once it is loaded or has failed
  */
@@ -142,6 +151,7 @@ export const loadPicture = (img: HTMLImageElement, src: string, resolvePictureSr
   const controller = new AbortController()
   let url: string | undefined
   let timeoutId: ReturnType<typeof setTimeout> | undefined
+  failedImages.delete(img)
   return new Promise<void>((resolve, reject) => {
     timeoutId = setTimeout(() => reject(new ReactPaintError('pictureTimeout', 'Timeout while loading the picture')), PICTURE_LOAD_TIMEOUT)
     img.onload = () => {
@@ -160,14 +170,19 @@ export const loadPicture = (img: HTMLImageElement, src: string, resolvePictureSr
         img.src = pictureUrl
       }
     }, reject)
-  }).finally(() => {
-    controller.abort()
-    clearTimeout(timeoutId)
-    // the image lives with the picture: its handlers would keep the loading alive
-    img.onload = null
-    img.onerror = null
-    revokeBlobUrl(url)
   })
+    .catch((error: unknown) => {
+      failedImages.add(img)
+      throw error
+    })
+    .finally(() => {
+      controller.abort()
+      clearTimeout(timeoutId)
+      // the image lives with the picture: its handlers would keep the loading alive
+      img.onload = null
+      img.onerror = null
+      revokeBlobUrl(url)
+    })
 }
 
 const encodeObjectToString = (objectToEncode: unknown) => {
@@ -275,6 +290,15 @@ export const readFileAsDataUrl = (file: Blob) =>
     reader.readAsDataURL(file)
   })
 
+/** The value of the JSON of loaded data, from a file or a string */
+export const parseDataJson = (text: string): unknown => {
+  try {
+    return JSON.parse(text)
+  } catch (error) {
+    throw new ReactPaintError('fileInvalidJson', 'Invalid JSON', {}, { cause: error })
+  }
+}
+
 export const decodeJson = async (file: File) => {
   if (file.size > DATA_FILE_MAX_SIZE)
     throw new ReactPaintError('fileTooLarge', `The file is larger than ${DATA_FILE_MAX_SIZE / 1024 / 1024} MB`, {
@@ -286,10 +310,9 @@ export const decodeJson = async (file: File) => {
       const result = event.target?.result
       if (!result) return reject(new ReactPaintError('fileInvalidJson', 'The file is empty'))
       try {
-        const json = JSON.parse(result as string)
-        resolve(json)
-      } catch {
-        reject(new ReactPaintError('fileInvalidJson', 'Invalid JSON file'))
+        resolve(parseDataJson(result as string))
+      } catch (error) {
+        reject(error)
       }
     }
     reader.onerror = () => reject(new ReactPaintError('fileReadFailed', 'Failed to read file', {}, { cause: reader.error }))

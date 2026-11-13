@@ -36,7 +36,7 @@ import { getDrawingColorAt } from '@canvas/utils/colorPicker'
 import { buildDataToExport, getDataChanges, isSameExport } from '@canvas/utils/data'
 import { shallowEqual } from '@canvas/utils/equality'
 import { ReactPaintError } from '@canvas/utils/error'
-import { decodeJson, downloadFile, encodeShapesInString, getCanvasImage, loadPicture } from '@canvas/utils/file'
+import { decodeJson, downloadFile, encodeShapesInString, getCanvasImage, loadPicture, parseDataJson } from '@canvas/utils/file'
 import { canvasToClientPosition, checkSelectionFrameCollision, clientToCanvasPosition, findShapeAt, findShapesAt } from '@canvas/utils/intersect'
 import { addLaserTrailPoint } from '@canvas/utils/laser'
 import { isEqual, isRecord, mergeWith, omitUndefined, replaceArrays, set, withDefaults } from '@canvas/utils/object'
@@ -1058,26 +1058,39 @@ export const createPaintStore = (props: UseReactPaintProps = {}) => {
   /** The image of a sticker tool, loaded or not: the shape it draws takes it, and is drawn once it is loaded */
   const getStickerImage = (src: string) => loadStickerImage(src).img
 
+  /**
+   * Replaces the drawing by loaded data at once, so that the last data loaded are the ones kept: their pictures are drawn
+   * once loaded, like the ones of addShapes. Resolved once the pictures are loaded or have failed
+   */
   const resetCanvas = async (json: ShapeInput[], options: ResetOptions) => {
     const state = get()
-    const { shapes, failedPictures, droppedCustomShapes } = await decodeImportedData(json, {
+    const { shapes, droppedCustomShapes } = decodeImportedData(json, {
       ctx: getMeasureContext(),
       settings: getSettings(state),
       tools: state.tools.available,
-      usedIds: new Set(),
-      resolvePictureSrc: getPictureSrcResolver()
+      usedIds: new Set()
     })
     resetCanvasWithShapeEntity(shapes, options)
-    // once the other shapes are loaded, so that the listeners read the new drawing
-    for (const { shape, error } of failedPictures) emit('pictureLoadFailed', shape, error)
+    // once the drawing is applied, so that the listeners read it
     for (const shape of droppedCustomShapes) emit('customShapeLoadFailed', shape)
+    await Promise.all(getShapeLeaves(shapes).map(shape => loadPictureOf(shape, options.source)))
   }
+
+  /**
+   * Loads shapes of the config, the ones of the props or of clearCallback: no promise gives their failure back to the
+   * consumer, dataLoadFailed tells it
+   */
+  const resetCanvasFromConfig = (json: ShapeInput[], options: ResetOptions) =>
+    resetCanvas(json, options).catch((error: unknown) => {
+      console.warn('react-paint: the shapes could not be loaded', error)
+      emit('dataLoadFailed', error)
+    })
 
   /** Loads the shapes given in the props of the hook, once */
   const init = () => {
     if (initialized) return
     initialized = true
-    if (latest.props.shapes) void resetCanvas(latest.props.shapes, { clearHistory: true, source: 'remote' })
+    if (latest.props.shapes) void resetCanvasFromConfig(latest.props.shapes, { clearHistory: true, source: 'remote' })
   }
 
   const getCurrentImage = (options?: ExportImageOptions) => getCanvasImage({ shapes: get().document.shapes, settings: getSettings(), options })
@@ -1224,11 +1237,12 @@ export const createPaintStore = (props: UseReactPaintProps = {}) => {
   }
 
   /**
-   * Redraws a picture once its image is loaded: the shape is replaced by a copy, fitted to the proportions of the image
-   * when it has none of its own, without a step in the history. The events are only emitted while the picture is still in
-   * the drawing with this image: it may have been removed or given another source
+   * Redraws a picture once its image is loaded, or as a frame once it has failed: the shape is replaced by a copy, fitted
+   * to the proportions of the image when it has none of its own, without a step in the history. The events are only emitted
+   * while the picture is still in the drawing with this image: it may have been removed or given another source. Resolved
+   * once the picture is redrawn, the copy having the source given, 'user' by default
    */
-  const loadPictureOf = (shape: ShapeEntity) => {
+  const loadPictureOf = async (shape: ShapeEntity, source?: ChangeSource): Promise<void> => {
     if (shape.type !== 'picture') return
     const findCurrent = () => {
       const current = indexShapeTree(get().document.shapes).byId.get(shape.id)
@@ -1243,15 +1257,20 @@ export const createPaintStore = (props: UseReactPaintProps = {}) => {
         const current = findCurrent()
         if (!current) return
         const loaded = fitPictureToImage(current, getSettings())
-        updateShapes([loaded])
+        updateShapes([loaded], false, source)
         emit('pictureLoaded', loaded)
       },
       (error: unknown) => {
         console.warn(`react-paint: the picture ${shape.id} could not be loaded`, error)
         const current = findCurrent()
-        if (current) emit('pictureLoadFailed', current, error)
+        if (!current) return
+        const failed = { ...current }
+        updateShapes([failed], false, source)
+        emit('pictureLoadFailed', failed, error)
       }
     )
+    // after the redraw: the reactions run in turn, and the error of a listener does not reject it
+    await loading.catch(() => undefined)
   }
 
   /** Creates shapes given by the consumer, and returns their ids */
@@ -1532,9 +1551,9 @@ export const createPaintStore = (props: UseReactPaintProps = {}) => {
       const { clearCallback: callback } = resolveConfig(latest.props, latest.overrides)
       const defaultShapes = latest.props.shapes
       if (typeof callback !== 'string') {
-        void resetCanvas(callback(), { clearHistory: false, source: 'user' })
+        void resetCanvasFromConfig(callback(), { clearHistory: false, source: 'user' })
       } else if (callback === 'defaultShapes' && defaultShapes !== undefined) {
-        void resetCanvas(defaultShapes, { clearHistory: false, source: 'user' })
+        void resetCanvasFromConfig(defaultShapes, { clearHistory: false, source: 'user' })
       } else {
         resetCanvasWithShapeEntity([], { clearHistory: false, source: 'user' })
       }
@@ -1542,7 +1561,7 @@ export const createPaintStore = (props: UseReactPaintProps = {}) => {
     // the file is chosen by the user, while data given by the code come from elsewhere
     loadFile: async (file, { source = 'user', ...options } = {}) => actions.loadData((await decodeJson(file)) as StateData, { ...options, source }),
     loadData: async (data, { clearHistory = true, source = 'remote' } = {}) => {
-      const parsed: unknown = typeof data === 'string' ? JSON.parse(data) : data
+      const parsed = typeof data === 'string' ? parseDataJson(data) : data
       const shapes = isRecord(parsed) && Array.isArray(parsed.shapes) ? (parsed.shapes as ShapeInput[]) : []
       await resetCanvas(shapes, { clearHistory, source })
     },
