@@ -42,6 +42,7 @@ For more details and links to Pull requests, see [Releases](https://github.com/Y
 - fix two loads which overlap, where the data whose pictures were the slowest to load were kept instead of the last ones: loadData, loadFile, clearCanvas and the shapes of the hook show the drawing at once, instead of waiting up to 4 seconds for its pictures, which are drawn once loaded like the ones of addShapes, pictureLoaded included. The promise of loadData and loadFile is still resolved once the pictures are loaded or have failed
 - a shape of loaded data which cannot be built, like a polygon without its points, rejects loadData and loadFile with the ReactPaintError 'dataInvalid', whose details give its index in the shapes, instead of a TypeError, the drawing unchanged. The Editor tells it with its errors.dataInvalid text
 - add the dataLoadFailed event: the shapes of the props of useReactPaint, or the ones of clearCallback, which cannot be loaded no longer leave a rejected promise without a handler. The canvas warns in the console, and the Editor shows the error message
+- fix loadData given a string which is not JSON, which rejected with a SyntaxError: it rejects with the ReactPaintError 'fileInvalidJson', like loadFile. The message of this error is 'Invalid JSON', for a file too
 
 ## V1.0.0-beta.2
 - target es2022 instead of es2020. The supported browsers are Chrome and Edge 99+, Firefox 113+ and Safari 17.2+, see the README

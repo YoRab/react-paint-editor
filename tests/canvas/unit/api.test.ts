@@ -564,6 +564,15 @@ describe('dedicated actions', () => {
     expect(store.getEditorState().history.canUndo).toBe(true)
   })
 
+  it('rejects loadData with fileInvalidJson, like loadFile, and keeps the drawing, when its string is not JSON', async () => {
+    const store = await createLoadedStore()
+    const ids = getIds(store)
+    const loading = store.actions.loadData('not a project')
+    await expect(loading).rejects.toBeInstanceOf(ReactPaintError)
+    await expect(loading).rejects.toMatchObject({ code: 'fileInvalidJson', cause: expect.any(SyntaxError) })
+    expect(getIds(store)).toEqual(ids)
+  })
+
   it('rejects loadData with the index of a shape which cannot be built, and keeps the drawing', async () => {
     const store = await createLoadedStore()
     const ids = getIds(store)

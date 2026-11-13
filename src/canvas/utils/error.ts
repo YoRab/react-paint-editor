@@ -7,7 +7,7 @@ export type ReactPaintErrorCode =
   | 'fileReadFailed'
   /** The data file is larger than the largest one loadFile reads: details.max, in MB */
   | 'fileTooLarge'
-  /** The data file is not JSON */
+  /** The data file, or the string given to loadData, is not JSON */
   | 'fileInvalidJson'
   /**
    * A shape of loaded data cannot be built, like a polygon without its points: details.index, its place in the shapes of

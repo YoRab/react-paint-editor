@@ -36,7 +36,7 @@ import { getDrawingColorAt } from '@canvas/utils/colorPicker'
 import { buildDataToExport, getDataChanges, isSameExport } from '@canvas/utils/data'
 import { shallowEqual } from '@canvas/utils/equality'
 import { ReactPaintError } from '@canvas/utils/error'
-import { decodeJson, downloadFile, encodeShapesInString, getCanvasImage, loadPicture } from '@canvas/utils/file'
+import { decodeJson, downloadFile, encodeShapesInString, getCanvasImage, loadPicture, parseDataJson } from '@canvas/utils/file'
 import { canvasToClientPosition, checkSelectionFrameCollision, clientToCanvasPosition, findShapeAt, findShapesAt } from '@canvas/utils/intersect'
 import { addLaserTrailPoint } from '@canvas/utils/laser'
 import { isEqual, isRecord, mergeWith, omitUndefined, replaceArrays, set, withDefaults } from '@canvas/utils/object'
@@ -1561,7 +1561,7 @@ export const createPaintStore = (props: UseReactPaintProps = {}) => {
     // the file is chosen by the user, while data given by the code come from elsewhere
     loadFile: async (file, { source = 'user', ...options } = {}) => actions.loadData((await decodeJson(file)) as StateData, { ...options, source }),
     loadData: async (data, { clearHistory = true, source = 'remote' } = {}) => {
-      const parsed: unknown = typeof data === 'string' ? JSON.parse(data) : data
+      const parsed = typeof data === 'string' ? parseDataJson(data) : data
       const shapes = isRecord(parsed) && Array.isArray(parsed.shapes) ? (parsed.shapes as ShapeInput[]) : []
       await resetCanvas(shapes, { clearHistory, source })
     },

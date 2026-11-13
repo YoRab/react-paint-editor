@@ -306,8 +306,9 @@ export type EditorActions = {
   /**
    * Loads exported data, or their JSON string, at once: the last data loaded are the ones kept. Their pictures are drawn
    * once loaded, and the promise is resolved once they are loaded or have failed. A shape which cannot be built, like a
-   * polygon without its points, rejects it with the ReactPaintError 'dataInvalid', the drawing unchanged. The history is
-   * cleared by default, and the change is 'remote' by default
+   * polygon without its points, rejects it with the ReactPaintError 'dataInvalid', and a string which is not JSON with
+   * 'fileInvalidJson', like loadFile, the drawing unchanged. The history is cleared by default, and the change is 'remote'
+   * by default
    */
   loadData: (data: StateData | { shapes?: ShapeInput[] } | string, options?: LoadDataOptions) => Promise<void>
   exportPicture: (options?: ExportImageOptions & { fileName?: string }) => void

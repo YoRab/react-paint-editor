@@ -290,6 +290,15 @@ export const readFileAsDataUrl = (file: Blob) =>
     reader.readAsDataURL(file)
   })
 
+/** The value of the JSON of loaded data, from a file or a string */
+export const parseDataJson = (text: string): unknown => {
+  try {
+    return JSON.parse(text)
+  } catch (error) {
+    throw new ReactPaintError('fileInvalidJson', 'Invalid JSON', {}, { cause: error })
+  }
+}
+
 export const decodeJson = async (file: File) => {
   if (file.size > DATA_FILE_MAX_SIZE)
     throw new ReactPaintError('fileTooLarge', `The file is larger than ${DATA_FILE_MAX_SIZE / 1024 / 1024} MB`, {
@@ -301,10 +310,9 @@ export const decodeJson = async (file: File) => {
       const result = event.target?.result
       if (!result) return reject(new ReactPaintError('fileInvalidJson', 'The file is empty'))
       try {
-        const json = JSON.parse(result as string)
-        resolve(json)
-      } catch {
-        reject(new ReactPaintError('fileInvalidJson', 'Invalid JSON file'))
+        resolve(parseDataJson(result as string))
+      } catch (error) {
+        reject(error)
       }
     }
     reader.onerror = () => reject(new ReactPaintError('fileReadFailed', 'Failed to read file', {}, { cause: reader.error }))
