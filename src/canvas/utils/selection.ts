@@ -25,6 +25,9 @@ import { checkPositionIntersection, checkSelectionIntersection } from './interse
 export const isIdleSelectionMode = ({ mode }: SelectionModeData<Point | number>) =>
   mode === 'default' || mode === 'contextMenu' || mode === 'textedition'
 
+/** Whether the gesture moves, resizes or rotates the selected shapes, from the position of its press */
+export const isSelectionTransform = ({ mode }: SelectionModeData<Point | number>) => mode === 'translate' || mode === 'resize' || mode === 'rotate'
+
 export const getNewSelectionData = (
   hoverMode: HoverModeData,
   selectedShape: SelectionType,

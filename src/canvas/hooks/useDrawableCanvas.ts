@@ -12,11 +12,13 @@ import {
   findLeavesAtPoints,
   getCursorPositionInElement,
   getCursorPositionInTransformedCanvas,
+  hasPointerMoved,
   isTouchGesture,
+  isUnsteadyPointer,
   shouldCancelLongPress
 } from '@canvas/utils/intersect'
 import { getSelectedShapes } from '@canvas/utils/selectedShapes'
-import { buildShapesSelection, findShapeInGroup, isIdleSelectionMode, selectShape } from '@canvas/utils/selection'
+import { buildShapesSelection, findShapeInGroup, isIdleSelectionMode, isSelectionTransform, selectShape } from '@canvas/utils/selection'
 import { createShape, sizeShapeOnClick } from '@canvas/utils/shapes'
 import { addNewPointGroupToShape } from '@canvas/utils/shapes/brush'
 import { addCurveLine, addCurvePoint } from '@canvas/utils/shapes/curve'
@@ -86,6 +88,14 @@ const useDrawableCanvas = (store: PaintStore, canvas: HTMLCanvasElement | null) 
     const activePointers = new Set<number>()
     // the pointer which started the current gesture
     let gesturePointerId: number | undefined
+    // a finger or a pen never stays still: their press moves, resizes or rotates the selection once it has left a dead zone
+    // of a few pixels around its position. The mouse does so from its first move
+    let deadZoneCenter: PointerEvent | undefined
+    /** Whether the pointer of the gesture is still in its dead zone: once left, the zone is gone */
+    const isInDeadZone = (e: PointerEvent) => {
+      if (deadZoneCenter && hasPointerMoved(e, deadZoneCenter)) deadZoneCenter = undefined
+      return deadZoneCenter !== undefined
+    }
     // the last position of a stroke of the eraser, from which it goes on
     let eraserPosition: Point = [0, 0]
 
@@ -182,6 +192,8 @@ const useDrawableCanvas = (store: PaintStore, canvas: HTMLCanvasElement | null) 
         }
       }
 
+      if (isSelectionTransform(selectionMode) && isInDeadZone(e)) return
+
       const isInsideMask = isCursorInsideMask(cursorPosition, settings)
       // the selected shapes are transformed, or a brush stroke is drawn
       const isTransforming = !isIdleSelectionMode(selectionMode)
@@ -254,8 +266,8 @@ const useDrawableCanvas = (store: PaintStore, canvas: HTMLCanvasElement | null) 
       if (
         selectionMode.mode === 'translate' &&
         Date.now() - selectionMode.dateStart <= 500 &&
-        cursorPosition[0] === selectionMode.cursorStartPosition[0] &&
-        cursorPosition[1] === selectionMode.cursorStartPosition[1]
+        (isInDeadZone(e) ||
+          (cursorPosition[0] === selectionMode.cursorStartPosition[0] && cursorPosition[1] === selectionMode.cursorStartPosition[1]))
       ) {
         const isGroupMode = e.ctrlKey || e.shiftKey || e.metaKey
         // the press kept the selection for a drag: a click selects the shape in front, even over a selected shape it covers,
@@ -314,6 +326,7 @@ const useDrawableCanvas = (store: PaintStore, canvas: HTMLCanvasElement | null) 
       }
 
       gesturePointerId = e.pointerId
+      deadZoneCenter = isUnsteadyPointer(e) ? e : undefined
       clicks.press(e)
       try {
         canvas.setPointerCapture(e.pointerId)

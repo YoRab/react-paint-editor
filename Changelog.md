@@ -45,6 +45,7 @@ For more details and links to Pull requests, see [Releases](https://github.com/Y
 - fix loadData given a string which is not JSON, which rejected with a SyntaxError: it rejects with the ReactPaintError 'fileInvalidJson', like loadFile. The message of this error is 'Invalid JSON', for a file too
 - fix a canvas which can neither be edited nor zoomed, like a canvas in the viewer mode, which kept the fingers from scrolling the page: the draw canvas, and the style of useAnnotationsStyle, set touch-action: none only when the canvas can be edited or zoomed
 - fix the pinch of two fingers, which zoomed and moved a canvas of a fixed size whose canZoom is 'never': like the wheel, it zooms only when the zoom is enabled
+- fix a tap of a finger on the selection, which moved it by the few pixels the finger shakes and added a step to the history: a finger or a pen moves, resizes or rotates the selection once it has moved by more than 5 pixels of the screen, from the position of its press, and a tap trembling less is a click. A tap of a drawing tool draws its shape of the default size, like a click. The mouse still moves the selection from its first pixel
 
 ## V1.0.0-beta.2
 - target es2022 instead of es2020. The supported browsers are Chrome and Edge 99+, Firefox 113+ and Safari 17.2+, see the README

@@ -50,6 +50,9 @@ export const isTouchGesture = (e: PointerEvent): boolean => {
   return e.pointerType === 'touch'
 }
 
+/** A finger or a pen, which never stays still during a press, unlike a mouse */
+export const isUnsteadyPointer = (e: PointerEvent): boolean => e.pointerType === 'touch' || e.pointerType === 'pen'
+
 export const getPointPositionAfterCanvasTransformation = (point: Point, shapeRotation: number, [originX, originY]: Point): Point =>
   rotatePoint({
     origin: [originX, originY],

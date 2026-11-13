@@ -172,7 +172,7 @@ export const toClient = (point: Point) => getPaint().toClientPosition(point)!
 export const dispatchPointer = (
   target: EventTarget,
   type: string,
-  pointerType: 'mouse' | 'touch',
+  pointerType: 'mouse' | 'touch' | 'pen',
   pointerId: number,
   { x, y }: { x: number; y: number }
 ) => {
