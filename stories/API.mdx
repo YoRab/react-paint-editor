@@ -841,6 +841,15 @@ paint.registerEvent('pictureLoadFailed', (shape: ShapeEntity<'picture'>, error: 
   console.warn('Cannot load', shape.src, error)
 })`} />
 
+      <h3>dataLoadFailed</h3>
+      <p>
+        Fired when the <code>shapes</code> of <code>useReactPaint</code>, or the ones given by the <code>clearCallback</code> option, cannot be loaded: a shape cannot be built, like a polygon without its
+        points (the <code>dataInvalid</code> error). The drawing is unchanged, and the canvas warns in the console. <code>loadData</code> and <code>loadFile</code> reject instead. The Editor shows an error message for it.
+      </p>
+      <Source language='typescript' code={`paint.registerEvent('dataLoadFailed', (error: unknown) => {
+  if (error instanceof ReactPaintError) report(error.code, error.details)
+})`} />
+
       <h3>customShapeLoadFailed</h3>
       <p>
         Fired for each custom shape of loaded data which is left out: no custom tool of its <code>toolId</code> is available to draw it, so its
@@ -1427,7 +1436,7 @@ useReactPaint({ options: { availableTools: [...DEFAULT_TOOLS, STAR, HEART, STICK
         <li><code>CanvasLocaleProvider</code>, <code>useCanvasLocale()</code> - Give and read the locale of the canvases, for a custom editor</li>
         <li>
           <code>ReactPaintError</code> - The errors of the canvas a user may meet, with a <code>code</code> (<code>ReactPaintErrorCode</code>) and the values it depends on (<code>details</code>): the editor tells them
-          with its <code>errors</code> texts. Rejected by <code>loadData</code>, <code>loadFile</code>, <code>addPicture</code>, <code>exportPicture</code> and <code>exportData</code>, and given by <code>pictureLoadFailed</code> and{' '}
+          with its <code>errors</code> texts. Rejected by <code>loadData</code>, <code>loadFile</code>, <code>addPicture</code>, <code>exportPicture</code> and <code>exportData</code>, and given by <code>pictureLoadFailed</code>, <code>dataLoadFailed</code> and{' '}
           <code>pictureDropFailed</code>. Their messages, like the other errors and the warnings, are written in English for the developers
         </li>
       </ul>

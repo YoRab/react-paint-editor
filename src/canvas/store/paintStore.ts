@@ -1076,11 +1076,21 @@ export const createPaintStore = (props: UseReactPaintProps = {}) => {
     await Promise.all(getShapeLeaves(shapes).map(shape => loadPictureOf(shape, options.source)))
   }
 
+  /**
+   * Loads shapes of the config, the ones of the props or of clearCallback: no promise gives their failure back to the
+   * consumer, dataLoadFailed tells it
+   */
+  const resetCanvasFromConfig = (json: ShapeInput[], options: ResetOptions) =>
+    resetCanvas(json, options).catch((error: unknown) => {
+      console.warn('react-paint: the shapes could not be loaded', error)
+      emit('dataLoadFailed', error)
+    })
+
   /** Loads the shapes given in the props of the hook, once */
   const init = () => {
     if (initialized) return
     initialized = true
-    if (latest.props.shapes) void resetCanvas(latest.props.shapes, { clearHistory: true, source: 'remote' })
+    if (latest.props.shapes) void resetCanvasFromConfig(latest.props.shapes, { clearHistory: true, source: 'remote' })
   }
 
   const getCurrentImage = (options?: ExportImageOptions) => getCanvasImage({ shapes: get().document.shapes, settings: getSettings(), options })
@@ -1541,9 +1551,9 @@ export const createPaintStore = (props: UseReactPaintProps = {}) => {
       const { clearCallback: callback } = resolveConfig(latest.props, latest.overrides)
       const defaultShapes = latest.props.shapes
       if (typeof callback !== 'string') {
-        void resetCanvas(callback(), { clearHistory: false, source: 'user' })
+        void resetCanvasFromConfig(callback(), { clearHistory: false, source: 'user' })
       } else if (callback === 'defaultShapes' && defaultShapes !== undefined) {
-        void resetCanvas(defaultShapes, { clearHistory: false, source: 'user' })
+        void resetCanvasFromConfig(defaultShapes, { clearHistory: false, source: 'user' })
       } else {
         resetCanvasWithShapeEntity([], { clearHistory: false, source: 'user' })
       }

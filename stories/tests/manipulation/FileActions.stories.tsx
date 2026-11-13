@@ -178,6 +178,23 @@ export const FileActions: Story = {
   }
 }
 
+/** Shapes of the props which cannot be built: the drawing stays empty, and the editor tells it */
+export const InvalidShapes: Story = {
+  args: {
+    // a polygon without its points
+    shapes: [SQUARE, { type: 'polygon' } as unknown as DrawableShape]
+  },
+  // the canvas warns about the shapes it cannot load, as soon as it is mounted
+  beforeEach: () => {
+    const warn = spyOn(console, 'warn').mockImplementation(() => undefined)
+    return () => warn.mockRestore()
+  },
+  play: async ({ canvasElement }) => {
+    expect(await within(canvasElement).findByText('The drawing holds a shape which cannot be loaded')).toBeInTheDocument()
+    expect(getState().shapes).toEqual([])
+  }
+}
+
 /** Shapes too far apart to fit in a canvas of the browser: their export fails with an error, instead of giving an empty image */
 export const ExportTooLarge: Story = {
   // confirmed defect, to fix at the step 6 of the plan: the export gives the empty image 'data:,'. Left out of the tests until then

@@ -414,6 +414,11 @@ export type ReactPaintEventArgs = {
    */
   pictureLoadFailed: [shape: ShapeEntity<'picture'>, error: unknown]
   /**
+   * The shapes of the props of useReactPaint, or the ones given by clearCallback, cannot be loaded, like a polygon without
+   * its points (the ReactPaintError 'dataInvalid'): the drawing is unchanged. loadData and loadFile reject instead
+   */
+  dataLoadFailed: [error: unknown]
+  /**
    * A custom shape of loaded data is left out: no custom tool of its toolId is available to draw it. Give the same
    * custom tools in availableTools before loading data which holds their shapes
    */

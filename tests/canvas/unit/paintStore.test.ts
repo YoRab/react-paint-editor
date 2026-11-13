@@ -45,10 +45,12 @@ describe('createPaintStore', () => {
     expect(store.getEditorState().history.canUndo).toBe(false)
   })
 
-  // confirmed defect, fixed by the step 1 of the plan: the load of the shapes of the props is not awaited, its failure is lost
-  it.fails('leaves no rejected promise without a handler when the shapes of the props cannot be built', async () => {
+  it('emits dataLoadFailed, without a rejected promise left without a handler, when the shapes of the props cannot be built', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
     // a polygon without its points
     const store = createPaintStore({ shapes: [{ type: 'polygon' }] as unknown as ShapeInput[] })
+    const failed = vi.fn()
+    store.registerEvent('dataLoadFailed', failed)
     // Vitest fails a run on such a promise: its listeners are set aside
     const listeners = process.listeners('unhandledRejection')
     const rejections: unknown[] = []
@@ -61,8 +63,25 @@ describe('createPaintStore', () => {
     } finally {
       process.removeAllListeners('unhandledRejection')
       for (const listener of listeners) process.on('unhandledRejection', listener)
+      warn.mockRestore()
     }
     expect(rejections).toEqual([])
+    expect(failed).toHaveBeenCalledWith(expect.objectContaining({ code: 'dataInvalid', details: { index: 0 } }))
+  })
+
+  it('emits dataLoadFailed, and keeps the drawing, when the shapes of clearCallback cannot be built', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
+    const store = await createLoadedStore({ options: { clearCallback: () => [RECTS[0]!, { type: 'polygon' }] as unknown as ShapeInput[] } })
+    const failed = vi.fn()
+    store.registerEvent('dataLoadFailed', failed)
+    try {
+      store.actions.clearCanvas()
+      await vi.waitFor(() => expect(failed).toHaveBeenCalledTimes(1))
+    } finally {
+      warn.mockRestore()
+    }
+    expect(failed).toHaveBeenCalledWith(expect.objectContaining({ code: 'dataInvalid', details: { index: 1 } }))
+    expect(getIds(store)).toHaveLength(RECTS.length)
   })
 
   it('emits no event before any change', () => {
