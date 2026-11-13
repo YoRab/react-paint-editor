@@ -303,7 +303,11 @@ export type EditorActions = {
   clearCanvas: () => void
   /** Loads a data file, like loadData: the file is chosen by the user, so the change is 'user' by default */
   loadFile: (file: File, options?: LoadDataOptions) => Promise<void>
-  /** Loads exported data, or their JSON string. The history is cleared by default, and the change is 'remote' by default */
+  /**
+   * Loads exported data, or their JSON string, at once: the last data loaded are the ones kept. Their pictures are drawn
+   * once loaded, and the promise is resolved once they are loaded or have failed. The history is cleared by default, and
+   * the change is 'remote' by default
+   */
   loadData: (data: StateData | { shapes?: ShapeInput[] } | string, options?: LoadDataOptions) => Promise<void>
   exportPicture: (options?: ExportImageOptions & { fileName?: string }) => void
   exportData: (options?: { fileName?: string }) => void
@@ -400,7 +404,7 @@ export type ReactPaintEventArgs = {
   canvasDoubleClicked: [shape: ShapeEntity | undefined, info: ShapePointerInfo]
   /** A file dropped on the canvas or pasted is not added as a picture: its type is not an accepted image, or the image could not be loaded */
   pictureDropFailed: [file: File, error: unknown]
-  /** A picture added by addShapes, or whose source is changed by updateShapes, is loaded and drawn */
+  /** A picture added by addShapes or loaded data, or whose source is changed by updateShapes, is loaded and drawn */
   pictureLoaded: [shape: ShapeEntity<'picture'>]
   /**
    * The image of a picture cannot be loaded. The picture stays in the drawing, with its source: it is drawn as a grey

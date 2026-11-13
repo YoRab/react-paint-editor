@@ -799,45 +799,50 @@ describe('data of a group', () => {
     expect(buildDataToExport([original], 1000, 600).shapes[0]).not.toBe(exported)
   })
 
-  it('loads a group exported, with its shapes, its rotation and its name', async () => {
+  it('loads a group exported, with its shapes, its rotation and its name', () => {
     const original = group('outer', [group('inner', [rect('a', 0), rect('b', 200)], { name: 'Inner' }), rect('c', 400)], { rotation: 0.5 })
-    const { shapes } = await decodeImportedData(buildDataToExport([original], 1000, 600).shapes, { ...buildOptions(), resolvePictureSrc: undefined })
+    const { shapes } = decodeImportedData(buildDataToExport([original], 1000, 600).shapes, buildOptions())
     expect(getIds(flattenShapes(shapes))).toEqual(['outer', 'inner', 'a', 'b', 'c'])
     expect(shapes[0]).toMatchObject({ rotation: 0.5, shapes: [{ name: 'Inner' }, { id: 'c' }] })
     expect(shapes[0]?.computed).toEqual(original.computed)
   })
 
-  it('dissolves the loaded groups left with a single shape, and leaves out the empty ones', async () => {
-    const { shapes } = await decodeImportedData(
+  it('dissolves the loaded groups left with a single shape, and leaves out the empty ones', () => {
+    const { shapes } = decodeImportedData(
       [
         { type: 'group', visible: false, shapes: [{ ...RECT, id: 'kept' }, { type: 'star' }] },
         { type: 'group', shapes: [] },
         { type: 'group' }
       ] as unknown as ShapeInput[],
-      { ...buildOptions(), resolvePictureSrc: undefined }
+      buildOptions()
     )
     expect(shapes).toHaveLength(1)
     expect(shapes[0]).toMatchObject({ id: 'kept', visible: false })
   })
 
   it('keeps the pictures of the groups which cannot be loaded in their groups', async () => {
-    FakeImage.fails = src => src === 'broken.png'
-    const { shapes, failedPictures } = await decodeImportedData(
-      [
+    const broken = 'data:image/png;base64,YnJva2Vu'
+    FakeImage.fails = src => src === broken
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
+    const store = createPaintStore()
+    const failed = vi.fn()
+    store.registerEvent('pictureLoadFailed', failed)
+    await store.actions.loadData({
+      shapes: [
         {
           type: 'group',
           id: 'g',
           shapes: [
             { ...RECT, id: 'kept' },
-            { type: 'picture', id: 'broken', x: 0, y: 0, width: 10, height: 10, src: 'broken.png' }
+            { type: 'picture', id: 'broken', x: 0, y: 0, width: 10, height: 10, src: broken }
           ]
         }
-      ],
-      { ...buildOptions(), resolvePictureSrc: undefined }
-    )
+      ]
+    })
     FakeImage.fails = () => false
-    expect(getIds(flattenShapes(shapes))).toEqual(['g', 'kept', 'broken'])
-    expect(failedPictures.map(({ shape }) => shape.id)).toEqual(['broken'])
+    warn.mockRestore()
+    expect(getIds(flattenShapes(store.getState().document.shapes))).toEqual(['g', 'kept', 'broken'])
+    expect(failed).toHaveBeenCalledWith(store.getShape('broken'), expect.any(Error))
   })
 
   it('updates the flags, the data, the name and the opacity of a group, and refuses its other fields', () => {

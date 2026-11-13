@@ -1058,19 +1058,22 @@ export const createPaintStore = (props: UseReactPaintProps = {}) => {
   /** The image of a sticker tool, loaded or not: the shape it draws takes it, and is drawn once it is loaded */
   const getStickerImage = (src: string) => loadStickerImage(src).img
 
+  /**
+   * Replaces the drawing by loaded data at once, so that the last data loaded are the ones kept: their pictures are drawn
+   * once loaded, like the ones of addShapes. Resolved once the pictures are loaded or have failed
+   */
   const resetCanvas = async (json: ShapeInput[], options: ResetOptions) => {
     const state = get()
-    const { shapes, failedPictures, droppedCustomShapes } = await decodeImportedData(json, {
+    const { shapes, droppedCustomShapes } = decodeImportedData(json, {
       ctx: getMeasureContext(),
       settings: getSettings(state),
       tools: state.tools.available,
-      usedIds: new Set(),
-      resolvePictureSrc: getPictureSrcResolver()
+      usedIds: new Set()
     })
     resetCanvasWithShapeEntity(shapes, options)
-    // once the drawing is loaded, so that the listeners read it
-    for (const { shape, error } of failedPictures) emit('pictureLoadFailed', shape, error)
+    // once the drawing is applied, so that the listeners read it
     for (const shape of droppedCustomShapes) emit('customShapeLoadFailed', shape)
+    await Promise.all(getShapeLeaves(shapes).map(shape => loadPictureOf(shape, options.source)))
   }
 
   /** Loads the shapes given in the props of the hook, once */
@@ -1226,9 +1229,10 @@ export const createPaintStore = (props: UseReactPaintProps = {}) => {
   /**
    * Redraws a picture once its image is loaded, or as a frame once it has failed: the shape is replaced by a copy, fitted
    * to the proportions of the image when it has none of its own, without a step in the history. The events are only emitted
-   * while the picture is still in the drawing with this image: it may have been removed or given another source
+   * while the picture is still in the drawing with this image: it may have been removed or given another source. Resolved
+   * once the picture is redrawn, the copy having the source given, 'user' by default
    */
-  const loadPictureOf = (shape: ShapeEntity) => {
+  const loadPictureOf = async (shape: ShapeEntity, source?: ChangeSource): Promise<void> => {
     if (shape.type !== 'picture') return
     const findCurrent = () => {
       const current = indexShapeTree(get().document.shapes).byId.get(shape.id)
@@ -1243,7 +1247,7 @@ export const createPaintStore = (props: UseReactPaintProps = {}) => {
         const current = findCurrent()
         if (!current) return
         const loaded = fitPictureToImage(current, getSettings())
-        updateShapes([loaded])
+        updateShapes([loaded], false, source)
         emit('pictureLoaded', loaded)
       },
       (error: unknown) => {
@@ -1251,10 +1255,12 @@ export const createPaintStore = (props: UseReactPaintProps = {}) => {
         const current = findCurrent()
         if (!current) return
         const failed = { ...current }
-        updateShapes([failed])
+        updateShapes([failed], false, source)
         emit('pictureLoadFailed', failed, error)
       }
     )
+    // after the redraw: the reactions run in turn, and the error of a listener does not reject it
+    await loading.catch(() => undefined)
   }
 
   /** Creates shapes given by the consumer, and returns their ids */

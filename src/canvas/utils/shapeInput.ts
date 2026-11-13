@@ -1,13 +1,12 @@
-import type { PictureSrcResolver, UtilsSettings } from '@canvas/constants/app'
+import type { UtilsSettings } from '@canvas/constants/app'
 import type { DrawableShape, EditableShapeType, ExportedDrawableShape, GroupShapeInput, Point, ShapeEntity, ShapeInput } from '@canvas/types/Shapes'
 import type { CustomTool } from '@canvas/types/tools'
 import { compact } from '@canvas/utils/array'
-import { loadPicture } from '@canvas/utils/file'
 import { isRecord } from '@canvas/utils/object'
 import { refreshShape } from '@canvas/utils/shapes'
 import { findCustomShapeTool, getCustomToolError, MISSING_CUSTOM_DEFINITION } from '@canvas/utils/shapes/custom'
 import { sizeText } from '@canvas/utils/shapes/text'
-import { foldGroupInto, GROUP_MIN_SHAPES, getCommonRotation, getShapeLeaves, refreshGroup } from '@canvas/utils/shapes/tree'
+import { foldGroupInto, GROUP_MIN_SHAPES, getCommonRotation, refreshGroup } from '@canvas/utils/shapes/tree'
 import { findShapeTool, getToolDefaultStyle } from '@canvas/utils/tools'
 import { createShapeId } from '@canvas/utils/util'
 
@@ -241,11 +240,6 @@ export const buildShapeEntity = (input: ShapeInput, options: BuildShapeOptions):
   }
 }
 
-type DecodeOptions = Omit<BuildShapeOptions, 'completeStyle'> & { resolvePictureSrc: PictureSrcResolver | undefined }
-
-/** A picture of loaded data whose image cannot be loaded, and the reason */
-type FailedPicture = { shape: ShapeEntity<'picture'>; error: unknown }
-
 /**
  * A shape of loaded data, a group with the shapes it can load: a group left with a single shape is dissolved, and an
  * empty one is left out, like a shape of an unknown type and a custom shape whose tool is not available
@@ -267,27 +261,16 @@ const decodeShape = (input: unknown, options: BuildShapeOptions): ShapeEntity | 
 }
 
 /**
- * Builds the shapes of loaded data and waits for their pictures. The shapes of an unknown type are left out, like the
- * custom shapes whose tool is not available, with a warning: these custom shapes are returned apart, and their groups are
- * dissolved when a single shape is left. The pictures which cannot be loaded are kept, drawn as a frame, and returned apart
- * too. The shapes keep their style.
+ * Builds the shapes of loaded data, with the empty images of their pictures, loaded afterwards. The shapes of an unknown
+ * type are left out, like the custom shapes whose tool is not available, with a warning: these custom shapes are returned
+ * apart, and their groups are dissolved when a single shape is left. The shapes keep their style.
  */
-export const decodeImportedData = async (
+export const decodeImportedData = (
   inputs: ShapeInput[],
-  { resolvePictureSrc, ...options }: DecodeOptions
-): Promise<{ shapes: ShapeEntity[]; failedPictures: FailedPicture[]; droppedCustomShapes: ExportedDrawableShape<'custom'>[] }> => {
-  if (!inputs) return { shapes: [], failedPictures: [], droppedCustomShapes: [] }
+  options: Omit<BuildShapeOptions, 'completeStyle'>
+): { shapes: ShapeEntity[]; droppedCustomShapes: ExportedDrawableShape<'custom'>[] } => {
+  if (!inputs) return { shapes: [], droppedCustomShapes: [] }
   const droppedCustomShapes: ExportedDrawableShape<'custom'>[] = []
   const buildOptions = { ...options, completeStyle: false, droppedCustomShapes }
-  const shapes = compact(inputs.map(input => decodeShape(input, buildOptions)))
-  const pictures = getShapeLeaves(shapes).filter((shape): shape is ShapeEntity<'picture'> => shape.type === 'picture')
-  const loadings = await Promise.allSettled(pictures.map(picture => loadPicture(picture.img, picture.src, resolvePictureSrc)))
-  const failedPictures: FailedPicture[] = []
-  loadings.forEach((loading, index) => {
-    if (loading.status === 'fulfilled') return
-    const shape = pictures[index]!
-    failedPictures.push({ shape, error: loading.reason })
-    console.warn(`react-paint: the picture ${shape.id} could not be loaded`, loading.reason)
-  })
-  return { shapes, failedPictures, droppedCustomShapes }
+  return { shapes: compact(inputs.map(input => decodeShape(input, buildOptions))), droppedCustomShapes }
 }

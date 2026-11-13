@@ -829,7 +829,8 @@ paint.registerEvent('canvasDoubleClicked', (shape: ShapeEntity | undefined) => s
       <h3>pictureLoaded and pictureLoadFailed</h3>
       <p>
         <code>pictureLoaded</code> is fired when a picture added by <code>addShapes</code>, or whose source is changed by <code>updateShapes</code>, is loaded and drawn: the actions return before the image is loaded.
-        The pictures of loaded data (<code>loadData</code>, <code>loadFile</code>, <code>resetCanvas</code>, the <code>shapes</code> of the hook) are loaded before the drawing is shown.
+        Loaded data (<code>loadData</code>, <code>loadFile</code>, <code>resetCanvas</code>, the <code>shapes</code> of the hook) are shown at once, and their pictures are drawn once loaded, with <code>pictureLoaded</code> too:
+        the promise of <code>loadData</code> and <code>loadFile</code> is resolved once they are loaded or have failed.
       </p>
       <p>
         <code>pictureLoadFailed</code> is fired when the image of a picture cannot be loaded, for instance when <code>resolvePictureSrc</code> refuses it. The picture stays in the drawing with its source, also in loaded data:
