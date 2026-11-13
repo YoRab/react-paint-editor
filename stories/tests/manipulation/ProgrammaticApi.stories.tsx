@@ -217,9 +217,6 @@ export const GroupOpacity: Story = {
 
 /** A picture whose image cannot be loaded stays in the drawing: the shapes in front of it are still drawn */
 export const BrokenPicture: Story = {
-  // confirmed defect, fixed by the step 1 of the plan: drawImage throws on the image at each draw, which stops there. Left
-  // out of the tests until then
-  tags: ['!test'],
   play: async ({ canvasElement }) => {
     const drawCanvas = (await within(canvasElement).findByTestId('draw-canvas')) as HTMLCanvasElement
     const paint = getPaint()

@@ -543,6 +543,30 @@ describe('drawPicture', () => {
     expect(drawnCalls({ strokeColor: 'red' }, true)).toEqual(['save', 'drawImage', 'restore', 'stroke'])
     expect(drawnCalls({ cornerRadius: 20, strokeColor: 'red' })).toEqual(['save', 'clip', 'drawImage', 'restore', 'stroke'])
   })
+
+  it('draws the border of a picture whose image is broken, without throwing like drawImage', () => {
+    const { ctx, calls } = createPictureContext()
+    ctx.drawImage.mockImplementation(() => {
+      throw new DOMException("The HTMLImageElement provided is in the 'broken' state.", 'InvalidStateError')
+    })
+    const picture = createEntity<ShapeEntity<'picture'>>({
+      type: 'picture',
+      x: 0,
+      y: 0,
+      width: 300,
+      height: 200,
+      src: '',
+      style: { strokeColor: 'red' }
+    })
+    const draw = () => drawPicture(ctx as unknown as CanvasRenderingContext2D, { ...picture, img: photo(0, 0), flipX: true })
+    expect(draw).not.toThrow()
+    expect(calls).toEqual(['save', 'restore', 'stroke'])
+    // another error is not hidden
+    ctx.drawImage.mockImplementation(() => {
+      throw new TypeError('wrong source')
+    })
+    expect(draw).toThrow(TypeError)
+  })
 })
 
 describe('bounds of the curves', () => {

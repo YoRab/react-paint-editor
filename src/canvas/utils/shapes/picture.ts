@@ -185,7 +185,7 @@ const getReducedImage = (img: HTMLImageElement, level: number): CanvasImageSourc
 /** The border of a picture is drawn only with a stroke color: the pictures had no border before */
 export const hasPictureBorder = (picture: Pick<ShapeEntity<'picture'>, 'style'>) => isVisibleColor(picture.style?.strokeColor)
 
-/** Draws the image of a picture, cut at its rounded corners, then its border */
+/** Draws the image of a picture, cut at its rounded corners, then its border. A broken image is not drawn, its border is */
 export const drawPicture = (ctx: CanvasRenderingContext2D, picture: ShapeEntity<'picture'>): void => {
   if (ctx.globalAlpha === 0) return
   const image = getReducedImage(picture.img, getReductionLevel(ctx, picture))
@@ -197,13 +197,18 @@ export const drawPicture = (ctx: CanvasRenderingContext2D, picture: ShapeEntity<
   if (isRounded) ctx.clip(picture.path)
   ctx.beginPath()
   ctx.scale(picture.flipX ? -1 : 1, picture.flipY ? -1 : 1)
-  ctx.drawImage(
-    image,
-    picture.flipX ? -picture.x - picture.width : picture.x,
-    picture.flipY ? -picture.y - picture.height : picture.y,
-    picture.width,
-    picture.height
-  )
+  try {
+    ctx.drawImage(
+      image,
+      picture.flipX ? -picture.x - picture.width : picture.x,
+      picture.flipY ? -picture.y - picture.height : picture.y,
+      picture.width,
+      picture.height
+    )
+  } catch (error) {
+    // an image which could not be loaded is broken: the element tells it only by this error, the shapes in front are drawn
+    if (!(error instanceof DOMException && error.name === 'InvalidStateError')) throw error
+  }
   if (restoresBeforeBorder) ctx.restore()
   if (hasBorder) ctx.stroke(picture.path)
 }
