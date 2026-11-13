@@ -387,7 +387,7 @@ The styles of the canvas are inline. Some of its properties read a CSS variable:
 | `--react-paint-canvas-edittextbox-transform`, `-fontsize`, `-padding` | text edition box | `transform`, `font-size`, `padding`: they follow the edited text, overriding them moves the box away from it |
 | `--react-paint-canvas-keyboard-hint-bg`, `-color` | hint of the keyboard | `background`, `color` of the hint shown when the canvas takes the focus from the keyboard |
 
-The other properties of the canvas elements are not set inline, or keep the canvas working (stacked canvases, touch): style the root with the `className` and `style` props of `Canvas`.
+The other properties of the canvas elements are not set inline, or keep the canvas working (stacked canvases, touch): style the root with the `className` and `style` props of `Canvas`. The draw canvas sets `touch-action: none` only when it can be edited or zoomed, `features.edition` or `features.zoom` of the state: from any other canvas, the fingers scroll and zoom the page.
 
 ### Languages
 

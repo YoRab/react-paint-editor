@@ -234,6 +234,7 @@ const App = () => {
       <h2 id="useAnnotationsStyle">useAnnotationsStyle Hook</h2>
       <p>
         Returns the style of an element laid over the canvas, like a picture to annotate, so that it follows the zoom and the moves of the view.
+        Like the draw canvas, it sets <code>touch-action: none</code> only when the canvas can be edited or zoomed: the fingers scroll the page from it otherwise.
       </p>
       <Source language='typescript' code={`const paint = useReactPaint({ width: pictureWidth, height: pictureHeight })
 const annotationsStyle = useAnnotationsStyle(paint)

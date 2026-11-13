@@ -7,7 +7,7 @@ import useDropPicture from '@canvas/hooks/useDropPicture'
 import useShapeEvents from '@canvas/hooks/useShapeEvents'
 import useZoom from '@canvas/hooks/useZoom'
 import type { PaintStore } from '@canvas/store/paintStore'
-import { type CanvasView, memoizeLast } from '@canvas/store/selectors'
+import { type CanvasView, getTouchAction, memoizeLast } from '@canvas/store/selectors'
 import { createShapesDescriber, type ShapeDescription } from '@canvas/utils/description'
 import { formatMessage } from '@canvas/utils/locale'
 import { getSelectedShapes } from '@canvas/utils/selectedShapes'
@@ -34,9 +34,7 @@ const CONTAINER_STYLE: CSSProperties = {
 }
 
 const CANVAS_BASE_STYLE: CSSProperties = {
-  userSelect: 'none',
-  // prevent scroll on touch
-  touchAction: 'none'
+  userSelect: 'none'
 }
 
 // over the top of the canvas, without catching the pointer
@@ -130,6 +128,8 @@ const Canvas = ({ store, view, locale, backgroundColor, selectionColor, selectio
   const withSelectionCanvas = isEditMode
   const tabIndex = isEditMode ? 0 : -1
   const styles = resize === 'extend' ? EXTEND_STYLES : SCALED_STYLES
+  const touchAction = getTouchAction(features)
+  const drawCanvasStyle = useMemo(() => ({ ...styles.canvas, touchAction }), [styles, touchAction])
 
   // the element is kept in a state, so that the listeners are set once it is mounted
   const [drawCanvas, setDrawCanvas] = useState<HTMLCanvasElement | null>(null)
@@ -261,7 +261,7 @@ const Canvas = ({ store, view, locale, backgroundColor, selectionColor, selectio
         <canvas
           className={DRAWCANVAS_CLASSNAME}
           ref={drawCanvasRef}
-          style={styles.canvas}
+          style={drawCanvasStyle}
           data-testid='draw-canvas'
           lang={lang}
           width={canvasSize.width}

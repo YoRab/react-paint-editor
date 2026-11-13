@@ -43,6 +43,7 @@ For more details and links to Pull requests, see [Releases](https://github.com/Y
 - a shape of loaded data which cannot be built, like a polygon without its points, rejects loadData and loadFile with the ReactPaintError 'dataInvalid', whose details give its index in the shapes, instead of a TypeError, the drawing unchanged. The Editor tells it with its errors.dataInvalid text
 - add the dataLoadFailed event: the shapes of the props of useReactPaint, or the ones of clearCallback, which cannot be loaded no longer leave a rejected promise without a handler. The canvas warns in the console, and the Editor shows the error message
 - fix loadData given a string which is not JSON, which rejected with a SyntaxError: it rejects with the ReactPaintError 'fileInvalidJson', like loadFile. The message of this error is 'Invalid JSON', for a file too
+- fix a canvas which can neither be edited nor zoomed, like a canvas in the viewer mode, which kept the fingers from scrolling the page: the draw canvas, and the style of useAnnotationsStyle, set touch-action: none only when the canvas can be edited or zoomed
 
 ## V1.0.0-beta.2
 - target es2022 instead of es2020. The supported browsers are Chrome and Edge 99+, Firefox 113+ and Safari 17.2+, see the README

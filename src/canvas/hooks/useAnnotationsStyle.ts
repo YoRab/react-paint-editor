@@ -1,4 +1,5 @@
 import usePaintState from '@canvas/hooks/usePaintState'
+import { getTouchAction } from '@canvas/store/selectors'
 import type { ReactPaint } from '@canvas/types/editor'
 import { type CSSProperties, useMemo } from 'react'
 
@@ -7,11 +8,13 @@ const useAnnotationsStyle = (paint: ReactPaint): CSSProperties => {
   const { zoom, offset } = usePaintState(paint, state => state.view)
   const width = usePaintState(paint, state => state.width)
   const height = usePaintState(paint, state => state.height)
+  // like the canvas, the element keeps the touch gestures only when the canvas uses them
+  const touchAction = usePaintState(paint, state => getTouchAction(state.features))
 
   return useMemo(
     () => ({
       userSelect: 'none',
-      touchAction: 'none',
+      touchAction,
       transformOrigin: 'left top',
       transform:
         'scale(var(--react-paint-canvas-zoom)) translate(calc(var(--react-paint-canvas-offset-x) * 100% / var(--react-paint-app-canvaswidth)), calc(var(--react-paint-canvas-offset-y) * 100% / var(--react-paint-app-canvasheight)))',
@@ -21,7 +24,7 @@ const useAnnotationsStyle = (paint: ReactPaint): CSSProperties => {
       '--react-paint-app-canvaswidth': width,
       '--react-paint-app-canvasheight': height
     }),
-    [zoom, offset, width, height]
+    [touchAction, zoom, offset, width, height]
   )
 }
 

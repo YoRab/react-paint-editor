@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import { expect, userEvent, waitFor, within } from 'storybook/test'
-import type { DrawableShape, Point } from '../../../src/index'
+import { Canvas, type DrawableShape, type Point, type UseReactPaintProps, useAnnotationsStyle, useReactPaint } from '../../../src/index'
 import { dispatchTouch, getPaint, getState, makeCoordConverters, ReactPaintWrapper, wait } from './../helpers'
 
 const meta = {
@@ -147,6 +147,52 @@ export const ZoomAndPan: Story = {
     expect(view.queryByRole('menuitem', { name: 'Duplicate' })).toBeNull()
     // the finger moved the square
     expect(getState().shapes[0]).toMatchObject({ x: 280, y: 250 })
+  }
+}
+
+/** A canvas, with an element laid under it which is given the style of useAnnotationsStyle */
+const AnnotatedCanvas = ({ name, ...props }: UseReactPaintProps & { name: string }) => {
+  const paint = useReactPaint(props)
+  const annotationsStyle = useAnnotationsStyle(paint)
+  return (
+    <section aria-label={name} style={{ position: 'relative', width: 200 }}>
+      <div data-testid='annotations' style={{ ...annotationsStyle, position: 'absolute', inset: 0 }} />
+      <Canvas paint={paint} />
+    </section>
+  )
+}
+
+const TOUCH_ACTION_CANVASES: Record<string, UseReactPaintProps> = {
+  viewer: { mode: 'viewer' },
+  zoomableViewer: { mode: 'viewer', options: { canZoom: 'always' } },
+  editor: {},
+  disabledEditor: { disabled: true }
+}
+
+/**
+ * A canvas keeps the touch gestures only when it uses them, to edit or to zoom the drawing: from any other canvas, the
+ * fingers scroll the page. The element laid under the canvas follows the same rule
+ */
+export const TouchAction: Story = {
+  render: () => (
+    <div style={{ display: 'flex', gap: 16 }}>
+      {Object.entries(TOUCH_ACTION_CANVASES).map(([name, props]) => (
+        <AnnotatedCanvas key={name} name={name} shapes={[SQUARE]} {...props} />
+      ))}
+    </div>
+  ),
+  play: async ({ canvasElement }) => {
+    const view = within(canvasElement)
+    const getTouchActions = async (name: string) => {
+      const section = within(view.getByRole('region', { name }))
+      const drawCanvas = await section.findByTestId('draw-canvas')
+      return [getComputedStyle(drawCanvas).touchAction, getComputedStyle(section.getByTestId('annotations')).touchAction]
+    }
+
+    expect(await getTouchActions('viewer')).toEqual(['auto', 'auto'])
+    expect(await getTouchActions('zoomableViewer')).toEqual(['none', 'none'])
+    expect(await getTouchActions('editor')).toEqual(['none', 'none'])
+    expect(await getTouchActions('disabledEditor')).toEqual(['auto', 'auto'])
   }
 }
 
