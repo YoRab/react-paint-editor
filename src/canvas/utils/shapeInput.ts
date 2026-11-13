@@ -7,7 +7,7 @@ import { isRecord } from '@canvas/utils/object'
 import { refreshShape } from '@canvas/utils/shapes'
 import { findCustomShapeTool, getCustomToolError, MISSING_CUSTOM_DEFINITION } from '@canvas/utils/shapes/custom'
 import { sizeText } from '@canvas/utils/shapes/text'
-import { foldGroupInto, GROUP_MIN_SHAPES, getCommonRotation, getShapeLeaves, refreshGroup, removeShapesFromTree } from '@canvas/utils/shapes/tree'
+import { foldGroupInto, GROUP_MIN_SHAPES, getCommonRotation, getShapeLeaves, refreshGroup } from '@canvas/utils/shapes/tree'
 import { findShapeTool, getToolDefaultStyle } from '@canvas/utils/tools'
 import { createShapeId } from '@canvas/utils/util'
 
@@ -268,9 +268,9 @@ const decodeShape = (input: unknown, options: BuildShapeOptions): ShapeEntity | 
 
 /**
  * Builds the shapes of loaded data and waits for their pictures. The shapes of an unknown type are left out, like the
- * pictures which cannot be loaded and the custom shapes whose tool is not available, with a warning: these pictures and
- * these custom shapes are returned apart, and their groups are dissolved when a single shape is left. The others keep
- * their style.
+ * custom shapes whose tool is not available, with a warning: these custom shapes are returned apart, and their groups are
+ * dissolved when a single shape is left. The pictures which cannot be loaded are kept, drawn as a frame, and returned apart
+ * too. The shapes keep their style.
  */
 export const decodeImportedData = async (
   inputs: ShapeInput[],
@@ -287,8 +287,7 @@ export const decodeImportedData = async (
     if (loading.status === 'fulfilled') return
     const shape = pictures[index]!
     failedPictures.push({ shape, error: loading.reason })
-    console.warn(`react-paint: the picture ${shape.id} is left out, it could not be loaded`, loading.reason)
+    console.warn(`react-paint: the picture ${shape.id} could not be loaded`, loading.reason)
   })
-  const failedIds = new Set(failedPictures.map(({ shape }) => shape.id))
-  return { shapes: removeShapesFromTree(shapes, failedIds, options.settings), failedPictures, droppedCustomShapes }
+  return { shapes, failedPictures, droppedCustomShapes }
 }

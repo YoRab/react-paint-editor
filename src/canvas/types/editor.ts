@@ -403,9 +403,9 @@ export type ReactPaintEventArgs = {
   /** A picture added by addShapes, or whose source is changed by updateShapes, is loaded and drawn */
   pictureLoaded: [shape: ShapeEntity<'picture'>]
   /**
-   * The image of a picture cannot be loaded. The picture is left out of loaded data, and stays in the drawing when it was
-   * added by addShapes or updateShapes: getShape(shape.id) tells which. It is then drawn as a grey crossed frame on the
-   * canvas, and not at all in the exported images
+   * The image of a picture cannot be loaded. The picture stays in the drawing, with its source: it is drawn as a grey
+   * crossed frame on the canvas, and not at all in the exported images. For loaded data, it is emitted once the drawing
+   * is loaded
    */
   pictureLoadFailed: [shape: ShapeEntity<'picture'>, error: unknown]
   /**

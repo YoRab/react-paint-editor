@@ -832,8 +832,8 @@ paint.registerEvent('canvasDoubleClicked', (shape: ShapeEntity | undefined) => s
         The pictures of loaded data (<code>loadData</code>, <code>loadFile</code>, <code>resetCanvas</code>, the <code>shapes</code> of the hook) are loaded before the drawing is shown.
       </p>
       <p>
-        <code>pictureLoadFailed</code> is fired when the image of a picture cannot be loaded, for instance when <code>resolvePictureSrc</code> refuses it. A picture of loaded data is left out of the drawing, and the event is fired once the other shapes are loaded.
-        A picture added by <code>addShapes</code> or <code>updateShapes</code> stays in the drawing: <code>paint.getShape(shape.id)</code> tells which. It is drawn as a grey crossed frame on the canvas, and not at all in the exported images. The Editor shows an error message for it.
+        <code>pictureLoadFailed</code> is fired when the image of a picture cannot be loaded, for instance when <code>resolvePictureSrc</code> refuses it. The picture stays in the drawing with its source, also in loaded data:
+        it is drawn as a grey crossed frame on the canvas, and not at all in the exported images. For loaded data, the event is fired once the drawing is loaded. The Editor shows an error message for it.
       </p>
       <Source language='typescript' code={`paint.registerEvent('pictureLoaded', () => upload(paint.getCurrentImage()))
 paint.registerEvent('pictureLoadFailed', (shape: ShapeEntity<'picture'>, error: unknown) => {
@@ -1038,7 +1038,7 @@ paint.actions.panBy([50, 0]) // scrolls the view, in the units of the drawing`} 
         <li>
           The source of a picture is an image data URL, a blob URL, SVG markup or a URL of the web, relative ones included. Other sources are refused. A URL of the web
           goes through the <code>resolvePictureSrc</code> option, then is fetched without the cookies nor the address of the page. An image larger than 16384 pixels is refused.
-          A picture which cannot be loaded within 4 seconds is left out of <code>loadData</code> and <code>loadFile</code> with a warning, the other shapes are loaded.
+          A picture which cannot be loaded within 4 seconds is kept by <code>loadData</code> and <code>loadFile</code> with a warning, drawn as a grey crossed frame.
           <code>loadFile</code> refuses files larger than 100 MB
         </li>
       </ul>

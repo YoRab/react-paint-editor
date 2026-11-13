@@ -165,7 +165,7 @@ const Editor = ({ paint, className, style, options, children }: EditorComponentP
   )
 
   const showPictureLoadFailed = useCallback(() => addSnackbar({ type: 'error', text: snackbars.picturesNotLoaded }), [addSnackbar, snackbars])
-  // the pictures left out of the same loaded data give a single message
+  // the pictures of the same loaded data which cannot be loaded give a single message
   const reportPictureLoadFailed = useDebounce(showPictureLoadFailed, 0)
   useEffect(() => paint.registerEvent('pictureLoadFailed', reportPictureLoadFailed), [paint, reportPictureLoadFailed])
 

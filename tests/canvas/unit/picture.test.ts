@@ -3,7 +3,7 @@ import { PICTURE_DEFAULT_SIZE, PICTURE_LOAD_TIMEOUT, PICTURE_MAX_SIZE } from '@c
 import { createPaintStore, type PaintStore } from '@canvas/store/paintStore'
 import type { DrawableShape, Point, ShapeEntity, ShapeInput } from '@canvas/types/Shapes'
 import type { CustomTool, CustomToolInput } from '@canvas/types/tools'
-import { decodeJson, getPictureSource, loadPicture } from '@canvas/utils/file'
+import { decodeJson, getPictureSource, hasPictureFailed, loadPicture } from '@canvas/utils/file'
 import { createShape, refreshShape, sizeShapeOnClick } from '@canvas/utils/shapes'
 import { fitPictureToImage, resizePicture } from '@canvas/utils/shapes/picture'
 import { buildAvailableTools } from '@canvas/utils/tools'
@@ -177,21 +177,25 @@ describe('loadPicture', () => {
 })
 
 describe('loaded data', () => {
-  it('leaves out the pictures which cannot be loaded, with a warning, and loads the other shapes', async () => {
-    const store = await createLoadedStore({}, [RECTS[0]!, picture('javascript:alert(1)'), picture(PNG_DATA_URL)])
-    expect(store.getState().document.shapes.map(shape => shape.type)).toEqual(['rect', 'picture'])
+  it('keeps the pictures which cannot be loaded, with a warning, drawn as a frame', async () => {
+    const store = await createLoadedStore({}, [RECTS[0]!, { ...picture('javascript:alert(1)'), id: 'bad' }, picture(PNG_DATA_URL)])
+    expect(store.getState().document.shapes.map(shape => shape.type)).toEqual(['rect', 'picture', 'picture'])
+    expect(hasPictureFailed((store.getShape('bad') as ShapeEntity<'picture'>).img)).toBe(true)
     expect(console.warn).toHaveBeenCalledTimes(1)
     expect(fetchMock).not.toHaveBeenCalled()
   })
 
-  it('goes through resolvePictureSrc and keeps the source of the shape', async () => {
+  it('goes through resolvePictureSrc and keeps the source of the shapes, the refused ones too', async () => {
     const resolvePictureSrc = vi.fn((url: string) => (url.startsWith('https://allowed.example/') ? url : null))
     const store = await createLoadedStore({ options: { resolvePictureSrc } }, [
       picture('https://allowed.example/a.png'),
       picture('https://tracker.example/pixel.png')
     ])
     expect(fetchMock).toHaveBeenCalledTimes(1)
-    expect(store.getCurrentData().shapes?.map(shape => (shape as { src: string }).src)).toEqual(['https://allowed.example/a.png'])
+    expect(store.getCurrentData().shapes?.map(shape => (shape as { src: string }).src)).toEqual([
+      'https://allowed.example/a.png',
+      'https://tracker.example/pixel.png'
+    ])
   })
 
   it('is used by addPicture, which fails when the picture is refused', async () => {
@@ -331,7 +335,7 @@ describe('picture load events', () => {
     expect(failed).not.toHaveBeenCalled()
   })
 
-  it('emits pictureLoadFailed for each picture left out of loaded data, once the other shapes are loaded', async () => {
+  it('emits pictureLoadFailed for each picture of loaded data which cannot be loaded, once the drawing is loaded', async () => {
     const store = createPaintStore()
     const { loaded, failed } = listen(store)
     const seen: { id: string; types: string[]; found: unknown }[] = []
@@ -342,7 +346,7 @@ describe('picture load events', () => {
     await store.actions.loadData({
       shapes: [{ ...RECTS[0]!, id: 'rect' }, { ...picture('javascript:alert(1)'), id: 'bad' }, picture(PNG_DATA_URL)]
     })
-    expect(seen).toEqual([{ id: 'bad', types: ['rect', 'picture'], found: undefined }])
+    expect(seen).toEqual([{ id: 'bad', types: ['rect', 'picture', 'picture'], found: store.getShape('bad') }])
     // the pictures of loaded data are loaded before the promise is resolved
     expect(loaded).not.toHaveBeenCalled()
   })

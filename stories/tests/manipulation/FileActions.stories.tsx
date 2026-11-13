@@ -143,13 +143,13 @@ export const FileActions: Story = {
       expect(await view.findByText('The picture could not be loaded')).toBeInTheDocument()
       expect(getState().shapes).toHaveLength(2)
 
-      // the pictures of a project which cannot be loaded are left out, with a single message
+      // the pictures of a project which cannot be loaded are kept, drawn as frames, with a single message
       const refusedPicture = (id: string) => ({ type: 'picture', id, x: 0, y: 0, width: 100, height: 100, src: 'javascript:void(0)' })
       const withRefusedPictures = { shapes: [{ ...SQUARE, id: 'kept' }, refusedPicture('first-picture'), refusedPicture('second-picture')] }
       await loadProject(new File([JSON.stringify(withRefusedPictures)], 'drawing.json', { type: 'application/json' }))
       // findByText fails when several messages are shown
       expect(await view.findByText('Some pictures could not be loaded')).toBeInTheDocument()
-      expect(getState().shapes.map(shape => shape.id)).toEqual(['kept'])
+      expect(getState().shapes.map(shape => shape.id)).toEqual(['kept', 'first-picture', 'second-picture'])
 
       // =====================================================================
       // The export of an empty drawing fails with a message
@@ -160,7 +160,7 @@ export const FileActions: Story = {
       await exportView('Export the whole drawing')
       expect(downloads).toHaveLength(0)
       expect(await view.findByText('There is no shape to export')).toBeInTheDocument()
-      // the 3 failures of the editor, and the canvas about each picture left out
+      // the 3 failures of the editor, and the canvas about each picture which cannot be loaded
       expect(warn).toHaveBeenCalledTimes(5)
 
       // the messages go away after a few seconds

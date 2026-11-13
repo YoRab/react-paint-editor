@@ -820,12 +820,13 @@ describe('data of a group', () => {
     expect(shapes[0]).toMatchObject({ id: 'kept', visible: false })
   })
 
-  it('leaves out the pictures of the groups which cannot be loaded, and dissolves their groups', async () => {
+  it('keeps the pictures of the groups which cannot be loaded in their groups', async () => {
     FakeImage.fails = src => src === 'broken.png'
     const { shapes, failedPictures } = await decodeImportedData(
       [
         {
           type: 'group',
+          id: 'g',
           shapes: [
             { ...RECT, id: 'kept' },
             { type: 'picture', id: 'broken', x: 0, y: 0, width: 10, height: 10, src: 'broken.png' }
@@ -835,7 +836,7 @@ describe('data of a group', () => {
       { ...buildOptions(), resolvePictureSrc: undefined }
     )
     FakeImage.fails = () => false
-    expect(getIds(shapes)).toEqual(['kept'])
+    expect(getIds(flattenShapes(shapes))).toEqual(['g', 'kept', 'broken'])
     expect(failedPictures.map(({ shape }) => shape.id)).toEqual(['broken'])
   })
 

@@ -38,6 +38,7 @@ For more details and links to Pull requests, see [Releases](https://github.com/Y
 - actions.applyChanges merges the changes received with the ones made here meanwhile: a shape updated gets only the fields changed from its previous version (the fields of the style one by one), so that two users changing two fields of a shape at once both keep them, a shape updated which was removed here stays removed instead of coming back in the foreground, a list received keeps the shapes added here which it does not hold, instead of dropping them, and a group left with a single shape is dissolved
 - fix a picture whose image cannot be loaded, which stopped the drawing of the canvas: drawImage threw on its broken image at each draw, so the shapes in front of it were no longer drawn. Its broken image is left out, its border is still drawn
 - a picture whose image cannot be loaded is drawn as a grey crossed frame on the canvas, instead of nothing, so that it can be seen, selected and removed: it is drawn again once pictureLoadFailed is emitted. The exported images and the eyedropper still leave it out
+- a picture of loaded data (loadData, loadFile, the shapes of the hook) whose image cannot be loaded is kept in the drawing, drawn as a grey crossed frame, instead of being left out: its source stays in the exported data, and pictureLoadFailed gives the picture of the drawing
 
 ## V1.0.0-beta.2
 - target es2022 instead of es2020. The supported browsers are Chrome and Edge 99+, Firefox 113+ and Safari 17.2+, see the README

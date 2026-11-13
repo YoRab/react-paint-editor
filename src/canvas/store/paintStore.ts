@@ -1068,7 +1068,7 @@ export const createPaintStore = (props: UseReactPaintProps = {}) => {
       resolvePictureSrc: getPictureSrcResolver()
     })
     resetCanvasWithShapeEntity(shapes, options)
-    // once the other shapes are loaded, so that the listeners read the new drawing
+    // once the drawing is loaded, so that the listeners read it
     for (const { shape, error } of failedPictures) emit('pictureLoadFailed', shape, error)
     for (const shape of droppedCustomShapes) emit('customShapeLoadFailed', shape)
   }
