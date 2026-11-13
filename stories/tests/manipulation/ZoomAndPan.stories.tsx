@@ -9,7 +9,7 @@ import {
   useAnnotationsStyle,
   useReactPaint
 } from '../../../src/index'
-import { dispatchPointer, dispatchTouch, getPaint, getState, makeCoordConverters, ReactPaintWrapper, wait } from './../helpers'
+import { dispatchPointer, dispatchTouch, getLoggedValues, getPaint, getState, makeCoordConverters, ReactPaintWrapper, wait } from './../helpers'
 
 const meta = {
   title: 'Tests/Manipulation/ZoomAndPan',
@@ -302,5 +302,76 @@ export const TouchTap: Story = {
     getPaint().actions.selectTool('react-paint-rect')
     press('touch', [600, 300], [2, 1], 'resize')
     expect(getState().shapes[0]).toMatchObject({ type: 'rect', width: 100, height: 100 })
+  }
+}
+
+/**
+ * Two pointers never edit the drawing: the second one cancels what the first one started, also once it has drawn, while
+ * the pinch zooms. The shapes, the selection and the tool are given back as they were at the press, and nothing is saved.
+ * A polygon being drawn only loses the point added by the press, and its drawing goes on
+ */
+export const PinchCancelsGesture: Story = {
+  args: {
+    shapes: [SQUARE],
+    options: { canZoom: 'always' }
+  },
+  play: async ({ canvasElement }) => {
+    const drawCanvas = await within(canvasElement).findByTestId('draw-canvas')
+    const touch = getTouch(drawCanvas)
+    const { selectTool, resetZoom } = getPaint().actions
+    const getSaves = () => getLoggedValues('dataChanged').length
+
+    /** The first finger is pressed and moved, then the second one comes down and moves away: both are released */
+    const pinch = (from: Point, to: Point = from) => {
+      touch('pointerdown', 1, from)
+      touch('pointermove', 1, to)
+      touch('pointerdown', 2, [to[0] + 100, to[1]])
+      touch('pointermove', 2, [to[0] + 200, to[1]], document)
+      expect(getView().zoom).not.toBe(1)
+      touch('pointerup', 2, [to[0] + 200, to[1]])
+      touch('pointerup', 1, to)
+      resetZoom()
+    }
+    const tap = (point: Point) => {
+      touch('pointerdown', 1, point)
+      touch('pointerup', 1, point)
+    }
+    const saves = getSaves()
+
+    // a tool drawing a shape: the shape is removed, before or after the first finger has drawn it, and the tool stays chosen
+    for (const toolId of ['react-paint-rect', 'react-paint-text', 'react-paint-brush']) {
+      selectTool(toolId)
+      pinch([500, 300])
+      pinch([500, 300], [600, 400])
+      expect(getState().shapes).toHaveLength(1)
+      expect(getState().activeTool.id).toBe(toolId)
+      expect(getState().interaction.mode).toBe('default')
+    }
+
+    // the eraser removes nothing
+    selectTool('react-paint-eraser')
+    pinch([300, 300], [320, 300])
+    expect(getState().shapes).toHaveLength(1)
+
+    // the square selected and moved by the first finger is back in place, and not selected
+    selectTool('react-paint-selection')
+    pinch([300, 300], [350, 300])
+    expect(getState().shapes[0]).toMatchObject({ x: 250, y: 250 })
+    expect(getState().selectedShapeIds).toEqual([])
+    expect(getState().history.canUndo).toBe(false)
+    expect(getSaves()).toBe(saves)
+
+    // a polygon being drawn loses only the point of the press, from its first point on, and its drawing goes on
+    selectTool('react-paint-polygon')
+    const getPoints = () => (getState().shapes[0] as ShapeEntity<'polygon'>).points
+    tap([500, 100])
+    pinch([700, 100])
+    expect(getPoints()).toHaveLength(1)
+    tap([700, 100])
+    pinch([700, 300], [650, 350])
+    expect(getPoints()).toHaveLength(2)
+    expect(getState().interaction.mode).toBe('preview')
+    // only its second point was saved
+    expect(getSaves()).toBe(saves + 1)
   }
 }

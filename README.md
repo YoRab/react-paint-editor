@@ -446,7 +446,7 @@ Version 1 replaces `editorProps` and `canvasProps` with a single handle and move
 ## Compatibility
 
 - **React**: 18 or 19, the only (peer) dependencies.
-- **Browsers**: Chrome and Edge 99+, Firefox 113+, Safari 17.2+, with a mouse, a pen or touch (pinch to zoom). A finger or a pen moves, resizes or rotates the selection once it has moved by more than 5 pixels, so that a tap stays a click. The automated tests run in Chromium.
+- **Browsers**: Chrome and Edge 99+, Firefox 113+, Safari 17.2+, with a mouse, a pen or touch (pinch to zoom). A finger or a pen moves, resizes or rotates the selection once it has moved by more than 5 pixels, so that a tap stays a click. A second finger cancels what the first one has started, so that a pinch never draws. The automated tests run in Chromium.
 - **Server-side rendering**: the components can be rendered on the server, the canvas draws once hydrated. The package has no `'use client'` directive: with the Next.js App Router, import it from a `'use client'` file.
 
 ## Documentation

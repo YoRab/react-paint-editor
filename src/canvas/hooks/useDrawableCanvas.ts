@@ -2,6 +2,7 @@ import type { UtilsSettings } from '@canvas/constants/app'
 import { ShapeTypeArray } from '@canvas/constants/shapes'
 import { SELECTION_TOOL } from '@canvas/constants/tools'
 import type { PaintStore } from '@canvas/store/paintStore'
+import type { InternalState } from '@canvas/store/types'
 import type { Point, ShapeEntity } from '@canvas/types/Shapes'
 import type { CustomTool } from '@canvas/types/tools'
 import { createClickTracker } from '@canvas/utils/click'
@@ -88,6 +89,10 @@ const useDrawableCanvas = (store: PaintStore, canvas: HTMLCanvasElement | null) 
     const activePointers = new Set<number>()
     // the pointer which started the current gesture
     let gesturePointerId: number | undefined
+    // the press of the gesture: the state it started from, given back when a second pointer comes down since two pointers never
+    // edit the drawing, and whether it added a point to a polygon or a curve being drawn, saved once released so that it can
+    // be cancelled
+    let press: { state: InternalState; isPointUnsaved: boolean } | undefined
     // a finger or a pen never stays still: their press moves, resizes or rotates the selection once it has left a dead zone
     // of a few pixels around its position. The mouse does so from its first move
     let deadZoneCenter: PointerEvent | undefined
@@ -233,6 +238,9 @@ const useDrawableCanvas = (store: PaintStore, canvas: HTMLCanvasElement | null) 
       const { state, settings, ctx } = read()
       if (!ctx) return
 
+      // the point added by the press is saved, also when a long press has ended the drawing with the context menu
+      if (press?.isPointUnsaved) store.actions.saveShapes()
+
       if (e.button === 2) {
         handleContextMenu(e)
         return
@@ -319,14 +327,15 @@ const useDrawableCanvas = (store: PaintStore, canvas: HTMLCanvasElement | null) 
         if (longPressTimeout) clearTimeout(longPressTimeout.timeout)
         // a pinch is not a click, as for the click events
         clicks.reset()
-        // and it cancels a stroke of the eraser or of the laser
-        const { mode } = state.interaction.selectionMode
-        if (mode === 'eraser' || mode === 'laser') store.setSelectionMode({ mode: 'default' })
+        // and it cancels the gesture of the first pointer, a stroke of the eraser or of the laser too
+        if (press) store.cancelPress(press.state)
+        press = undefined
         return
       }
 
       gesturePointerId = e.pointerId
       deadZoneCenter = isUnsteadyPointer(e) ? e : undefined
+      press = features.edition ? { state, isPointUnsaved: false } : undefined
       clicks.press(e)
       try {
         canvas.setPointerCapture(e.pointerId)
@@ -437,8 +446,9 @@ const useDrawableCanvas = (store: PaintStore, canvas: HTMLCanvasElement | null) 
               : addCurvePoint(firstShape, cursorPosition, settings, false, state.interaction.modifiers.shift)
           store.batch(() => {
             store.setSelectedShape(buildShapesSelection([newShape], settings))
-            store.updateShapes([newShape], true)
+            store.updateShapes([newShape])
           })
+          if (press) press.isPointUnsaved = true
         } else {
           // a picture tool only draws a shape when it gives the source of a sticker, with the image loaded for its tool
           const stickerImage = isStickerTool(activeTool) ? store.getStickerImage(activeTool.src) : undefined
@@ -525,6 +535,7 @@ const useDrawableCanvas = (store: PaintStore, canvas: HTMLCanvasElement | null) 
       // read before handleUp, whose renders would force a layout
       const isReleasedOverCanvas = e.type === 'pointerup' && e.button === 0 && isOverElement(e, canvas)
       handleUp(e)
+      press = undefined
       if (!isReleasedOverCanvas) clicks.reset()
       else if (clicks.release(e) === 'doubleClick') handleDoubleClick(e)
     }

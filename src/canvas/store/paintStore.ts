@@ -679,6 +679,28 @@ export const createPaintStore = (props: UseReactPaintProps = {}) => {
   }
 
   /**
+   * A second pointer down during a gesture: two pointers never edit the drawing, so the gesture of the first one is
+   * cancelled, also once it has drawn. Nothing being saved before its release, the shapes go back to those of the state of
+   * its press, with the changes received since, and so do the selection and the tool. A polygon or a curve being drawn
+   * keeps its points but the one added by the press, and its drawing goes on
+   */
+  const cancelPress = (press: InternalState) => {
+    const state = get()
+    const { base } = state.document
+    // the changes not saved at the press, like a polygon being drawn, are replayed on the base
+    const { shapes } = replayChanges(state, { ...state.document, shapes: base }, ['shapes'], press.document.base, press.document.shapes)
+    const { selectionMode } = press.interaction
+    // the selection of the press follows the changes received since
+    const selection = reselect(press.document.selectedShape, press.document.shapes, shapes, getSettings(state))
+    batch(() => {
+      dispatch({ type: 'SET_SHAPES', shapes, newSelectedShape: selection, save: false })
+      setSelectionMode(selectionMode.mode === 'preview' ? selectionMode : { mode: 'default' })
+      setActiveTool(selectors.selectActiveTool(press))
+      setSelectionFrame(undefined)
+    })
+  }
+
+  /**
    * Undoes or redoes steps of the user: the trees of the document get each step undone or redone on the changes received
    * since, which are kept. A step left without effect, like a change of shapes removed by another instance since, is passed.
    * The selection of the step reached follows the shapes
@@ -1692,6 +1714,7 @@ export const createPaintStore = (props: UseReactPaintProps = {}) => {
     updateShapes,
     removeShapes,
     cancelGesture,
+    cancelPress,
     refreshSelectedShapes,
     setSelectionFrame,
     setActiveTool,

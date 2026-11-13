@@ -46,6 +46,7 @@ For more details and links to Pull requests, see [Releases](https://github.com/Y
 - fix a canvas which can neither be edited nor zoomed, like a canvas in the viewer mode, which kept the fingers from scrolling the page: the draw canvas, and the style of useAnnotationsStyle, set touch-action: none only when the canvas can be edited or zoomed
 - fix the pinch of two fingers, which zoomed and moved a canvas of a fixed size whose canZoom is 'never': like the wheel, it zooms only when the zoom is enabled
 - fix a tap of a finger on the selection, which moved it by the few pixels the finger shakes and added a step to the history: a finger or a pen moves, resizes or rotates the selection once it has moved by more than 5 pixels of the screen, from the position of its press, and a tap trembling less is a click. A tap of a drawing tool draws its shape of the default size, like a click. The mouse still moves the selection from its first pixel
+- fix a pinch which drew with its first finger, before the second one came down: a shape, a stroke of the brush, a point of a polygon, or a move of the shape under it. A second pointer cancels the gesture of the first one, also once it has drawn: the shapes, the selection and the tool are given back as they were at its press, without any step of the history. The point added to a polygon or a curve being drawn is saved once released, instead of at its press
 
 ## V1.0.0-beta.2
 - target es2022 instead of es2020. The supported browsers are Chrome and Edge 99+, Firefox 113+ and Safari 17.2+, see the README
