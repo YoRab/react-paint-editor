@@ -1040,6 +1040,7 @@ paint.actions.panBy([50, 0]) // scrolls the view, in the units of the drawing`} 
           The source of a picture is an image data URL, a blob URL, SVG markup or a URL of the web, relative ones included. Other sources are refused. A URL of the web
           goes through the <code>resolvePictureSrc</code> option, then is fetched without the cookies nor the address of the page. An image larger than 16384 pixels is refused.
           A picture which cannot be loaded within 4 seconds is kept by <code>loadData</code> and <code>loadFile</code> with a warning, drawn as a grey crossed frame.
+          A shape which cannot be built, like a polygon without its points, rejects them with the <code>dataInvalid</code> error, the drawing unchanged.
           <code>loadFile</code> refuses files larger than 100 MB
         </li>
       </ul>
@@ -1426,7 +1427,7 @@ useReactPaint({ options: { availableTools: [...DEFAULT_TOOLS, STAR, HEART, STICK
         <li><code>CanvasLocaleProvider</code>, <code>useCanvasLocale()</code> - Give and read the locale of the canvases, for a custom editor</li>
         <li>
           <code>ReactPaintError</code> - The errors of the canvas a user may meet, with a <code>code</code> (<code>ReactPaintErrorCode</code>) and the values it depends on (<code>details</code>): the editor tells them
-          with its <code>errors</code> texts. Rejected by <code>loadFile</code>, <code>addPicture</code>, <code>exportPicture</code> and <code>exportData</code>, and given by <code>pictureLoadFailed</code> and{' '}
+          with its <code>errors</code> texts. Rejected by <code>loadData</code>, <code>loadFile</code>, <code>addPicture</code>, <code>exportPicture</code> and <code>exportData</code>, and given by <code>pictureLoadFailed</code> and{' '}
           <code>pictureDropFailed</code>. Their messages, like the other errors and the warnings, are written in English for the developers
         </li>
       </ul>

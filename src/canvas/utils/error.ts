@@ -9,6 +9,11 @@ export type ReactPaintErrorCode =
   | 'fileTooLarge'
   /** The data file is not JSON */
   | 'fileInvalidJson'
+  /**
+   * A shape of loaded data cannot be built, like a polygon without its points: details.index, its place in the shapes of
+   * the data, the one of its outer group for a shape of a group
+   */
+  | 'dataInvalid'
   /** The file dropped or pasted is not a picture: details.type */
   | 'fileTypeUnsupported'
   /** The SVG of a picture has no <svg> element */

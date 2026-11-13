@@ -40,6 +40,7 @@ For more details and links to Pull requests, see [Releases](https://github.com/Y
 - a picture whose image cannot be loaded is drawn as a grey crossed frame on the canvas, instead of nothing, so that it can be seen, selected and removed: it is drawn again once pictureLoadFailed is emitted. The exported images and the eyedropper still leave it out
 - a picture of loaded data (loadData, loadFile, the shapes of the hook) whose image cannot be loaded is kept in the drawing, drawn as a grey crossed frame, instead of being left out: its source stays in the exported data, and pictureLoadFailed gives the picture of the drawing
 - fix two loads which overlap, where the data whose pictures were the slowest to load were kept instead of the last ones: loadData, loadFile, clearCanvas and the shapes of the hook show the drawing at once, instead of waiting up to 4 seconds for its pictures, which are drawn once loaded like the ones of addShapes, pictureLoaded included. The promise of loadData and loadFile is still resolved once the pictures are loaded or have failed
+- a shape of loaded data which cannot be built, like a polygon without its points, rejects loadData and loadFile with the ReactPaintError 'dataInvalid', whose details give its index in the shapes, instead of a TypeError, the drawing unchanged. The Editor tells it with its errors.dataInvalid text
 
 ## V1.0.0-beta.2
 - target es2022 instead of es2020. The supported browsers are Chrome and Edge 99+, Firefox 113+ and Safari 17.2+, see the README

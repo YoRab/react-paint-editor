@@ -137,6 +137,12 @@ export const FileActions: Story = {
       expect(await view.findByText('The file is not a project')).toBeInTheDocument()
       expect(getState().shapes).toHaveLength(2)
 
+      // a project holding a shape which cannot be built fails as a whole: a polygon without its points
+      const withInvalidShape = { shapes: [{ ...SQUARE, id: 'valid' }, { type: 'polygon' }] }
+      await loadProject(new File([JSON.stringify(withInvalidShape)], 'drawing.json', { type: 'application/json' }))
+      expect(await view.findByText('The drawing holds a shape which cannot be loaded')).toBeInTheDocument()
+      expect(getState().shapes.map(shape => shape.id)).toEqual(['first', 'second'])
+
       // a picture which cannot be read fails too
       await openMenu()
       await userEvent.upload(await findFileInput(view, 'Upload picture'), new File(['not an image'], 'broken.png', { type: 'image/png' }))
@@ -160,8 +166,8 @@ export const FileActions: Story = {
       await exportView('Export the whole drawing')
       expect(downloads).toHaveLength(0)
       expect(await view.findByText('There is no shape to export')).toBeInTheDocument()
-      // the 3 failures of the editor, and the canvas about each picture which cannot be loaded
-      expect(warn).toHaveBeenCalledTimes(5)
+      // the 4 failures of the editor, and the canvas about each picture which cannot be loaded
+      expect(warn).toHaveBeenCalledTimes(6)
 
       // the messages go away after a few seconds
       await waitFor(() => expect(view.queryByText('File loaded')).toBeNull(), { timeout: 5000 })

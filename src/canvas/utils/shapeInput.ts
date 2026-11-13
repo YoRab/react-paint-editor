@@ -2,6 +2,7 @@ import type { UtilsSettings } from '@canvas/constants/app'
 import type { DrawableShape, EditableShapeType, ExportedDrawableShape, GroupShapeInput, Point, ShapeEntity, ShapeInput } from '@canvas/types/Shapes'
 import type { CustomTool } from '@canvas/types/tools'
 import { compact } from '@canvas/utils/array'
+import { ReactPaintError } from '@canvas/utils/error'
 import { isRecord } from '@canvas/utils/object'
 import { refreshShape } from '@canvas/utils/shapes'
 import { findCustomShapeTool, getCustomToolError, MISSING_CUSTOM_DEFINITION } from '@canvas/utils/shapes/custom'
@@ -260,10 +261,20 @@ const decodeShape = (input: unknown, options: BuildShapeOptions): ShapeEntity | 
   return isEditableShapeType(input.type) ? buildShapeEntity(input as unknown as ShapeInput, options) : undefined
 }
 
+/** A shape of loaded data, or else the error telling which one cannot be built */
+const decodeShapeAt = (input: unknown, index: number, options: BuildShapeOptions): ShapeEntity | undefined => {
+  try {
+    return decodeShape(input, options)
+  } catch (error) {
+    throw new ReactPaintError('dataInvalid', `The shape ${index} of the data cannot be built`, { index }, { cause: error })
+  }
+}
+
 /**
  * Builds the shapes of loaded data, with the empty images of their pictures, loaded afterwards. The shapes of an unknown
  * type are left out, like the custom shapes whose tool is not available, with a warning: these custom shapes are returned
- * apart, and their groups are dissolved when a single shape is left. The shapes keep their style.
+ * apart, and their groups are dissolved when a single shape is left. The shapes keep their style. A shape which cannot be
+ * built fails the whole data
  */
 export const decodeImportedData = (
   inputs: ShapeInput[],
@@ -272,5 +283,5 @@ export const decodeImportedData = (
   if (!inputs) return { shapes: [], droppedCustomShapes: [] }
   const droppedCustomShapes: ExportedDrawableShape<'custom'>[] = []
   const buildOptions = { ...options, completeStyle: false, droppedCustomShapes }
-  return { shapes: compact(inputs.map(input => decodeShape(input, buildOptions))), droppedCustomShapes }
+  return { shapes: compact(inputs.map((input, index) => decodeShapeAt(input, index, buildOptions))), droppedCustomShapes }
 }
