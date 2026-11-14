@@ -277,6 +277,8 @@ export const FR_LOCALE: EditorLocale = {
       fileReadFailed: "Le fichier n'a pas pu être lu",
       fileTooLarge: 'Le fichier dépasse {max} Mo',
       fileInvalidJson: "Le fichier n'est pas un projet",
+      dataInvalid: 'Le dessin contient une forme qui ne peut pas être chargée',
+      dataVersionUnsupported: "Le dessin vient d'une version plus récente et ne peut pas être chargé",
       fileTypeUnsupported: "Ce type de fichier n'est pas pris en charge : {type}",
       pictureInvalidSvg: "L'image SVG n'est pas valide",
       pictureFetchFailed: "L'image n'a pas pu être téléchargée ({status})",
@@ -288,6 +290,7 @@ export const FR_LOCALE: EditorLocale = {
       pictureLoadFailed: "L'image n'a pas pu être chargée",
       exportEmpty: "Il n'y a aucune forme à exporter",
       exportContextUnavailable: "Le navigateur n'a pas pu dessiner l'image",
+      exportTooLarge: "L'image est trop grande pour le navigateur",
       exportEncodingFailed: "Le dessin n'a pas pu être encodé"
     },
     common: {

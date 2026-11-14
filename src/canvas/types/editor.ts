@@ -35,6 +35,12 @@ export type ShapeStyleField = keyof StyleShape
 export type ToolSettingValue = string | number | boolean
 
 /**
+ * Default values of the settings of a tool, used by the next shapes drawn with it: the fields of the style, the font size
+ * of the text tool, and each parameter of a custom tool, named params.<parameter>
+ */
+export type ToolSettingValues = StyleShape & { fontSize?: number } & { [param: `params.${string}`]: number }
+
+/**
  * Options of useReactPaint with the overrides of setOptions and their defaults. The functions are kept out of the state,
  * so that options can be compared by value
  */
@@ -183,10 +189,11 @@ export type ExportImageOptions = {
 export type EditorActions = {
   /** Selects one of the selection tool, the move tool or the tools, found by id. An unknown tool is ignored */
   selectTool: (toolOrId: ToolsType | string) => void
-  /** Sets the default value of a setting of a tool. A field the tool has not is ignored */
-  updateToolSettings: (toolId: string, field: string, value: ToolSettingValue) => void
-  /** Sets several default values of a tool, used by the next shapes drawn with it. The fields the tool has not are ignored */
-  setToolStyle: (toolId: string, style: StyleShape) => void
+  /**
+   * Sets default values of the settings of a tool, one or several, used by the next shapes drawn with it:
+   * setToolSettings('react-paint-rect', { strokeColor: 'red' }). The fields the tool has not are ignored
+   */
+  setToolSettings: (toolId: string, values: ToolSettingValues) => void
 
   /**
    * Selects the shapes, adds them to the selection or removes them from it ('replace' by default). A shape of a group
@@ -245,14 +252,15 @@ export type EditorActions = {
   /** Flips or turns by a quarter the shapes, around their center */
   transformShapes: (ids: string[], action: ShapesTransformAction) => void
 
+  /**
+   * Sets fields of the style of the shapes, a single one too: setShapesStyle(ids, { strokeColor: 'red' }). With save false,
+   * the change is not added to the history, like while a slider moves. With updateTool, the tools of the shapes keep the
+   * new values for the next shapes
+   */
   setShapesStyle: (ids: string[], style: StyleShape, options?: ShapesActionOptions & { updateTool?: boolean }) => void
-  /** Sets one field of the style. With save false, the change is not added to the history, like while a slider moves */
-  updateShapesStyle: (ids: string[], field: ShapeStyleField, value: ToolSettingValue, options?: { save?: boolean }) => void
 
   /** Moves the shapes in the order of their group, or of the drawing: a shape never leaves its group */
   moveShapes: (ids: string[], action: ShapesOrderAction) => void
-  /** Swaps two shapes of the same group, or of the drawing */
-  swapShapes: (firstId: string, secondId: string) => void
   /** Moves a shape at an index of the shapes of its group, or of the drawing, 0 being the foreground */
   setShapeIndex: (id: string, index: number) => void
   /**
@@ -261,9 +269,9 @@ export type EditorActions = {
    */
   reorderShapes: (orderedIds: string[]) => void
 
-  toggleShapesVisibility: (ids: string[]) => void
-  toggleShapesLock: (ids: string[]) => void
+  /** Shows or hides the shapes. To toggle a shape, give the opposite of its value: setShapesVisibility([id], shape.visible === false) */
   setShapesVisibility: (ids: string[], visible: boolean) => void
+  /** Locks or unlocks the shapes. To toggle a shape, give the opposite of its value: setShapesLocked([id], !shape.locked) */
   setShapesLocked: (ids: string[], locked: boolean) => void
 
   /** Inserts a point in a polygon or a curve, before the point at this index (at the end when the index is the length) */
@@ -303,8 +311,16 @@ export type EditorActions = {
   clearCanvas: () => void
   /** Loads a data file, like loadData: the file is chosen by the user, so the change is 'user' by default */
   loadFile: (file: File, options?: LoadDataOptions) => Promise<void>
-  /** Loads exported data, or their JSON string. The history is cleared by default, and the change is 'remote' by default */
-  loadData: (data: StateData | { shapes?: ShapeInput[] } | string, options?: LoadDataOptions) => Promise<void>
+  /**
+   * Loads exported data, or their JSON string, at once: the last data loaded are the ones kept. Data of an older version
+   * of the format are converted to DATA_VERSION, and data without version, like the ones of the betas, are of version 0:
+   * give version: DATA_VERSION with the shapes written by the code. Their pictures are drawn once loaded, and the promise
+   * is resolved once they are loaded or have failed. A shape which cannot be built, like a polygon without its points,
+   * rejects it with the ReactPaintError 'dataInvalid', data of a newer version with 'dataVersionUnsupported', and a string
+   * which is not JSON with 'fileInvalidJson', like loadFile, the drawing unchanged. The history is cleared by default, and
+   * the change is 'remote' by default
+   */
+  loadData: (data: StateData | { version?: number; shapes?: ShapeInput[] } | string, options?: LoadDataOptions) => Promise<void>
   exportPicture: (options?: ExportImageOptions & { fileName?: string }) => void
   exportData: (options?: { fileName?: string }) => void
 
@@ -400,13 +416,19 @@ export type ReactPaintEventArgs = {
   canvasDoubleClicked: [shape: ShapeEntity | undefined, info: ShapePointerInfo]
   /** A file dropped on the canvas or pasted is not added as a picture: its type is not an accepted image, or the image could not be loaded */
   pictureDropFailed: [file: File, error: unknown]
-  /** A picture added by addShapes, or whose source is changed by updateShapes, is loaded and drawn */
+  /** A picture added by addShapes or loaded data, or whose source is changed by updateShapes, is loaded and drawn */
   pictureLoaded: [shape: ShapeEntity<'picture'>]
   /**
-   * The image of a picture cannot be loaded. The picture is left out of loaded data, and stays in the drawing, not drawn,
-   * when it was added by addShapes or updateShapes: getShape(shape.id) tells which
+   * The image of a picture cannot be loaded. The picture stays in the drawing, with its source: it is drawn as a grey
+   * crossed frame on the canvas, and not at all in the exported images. For loaded data, it is emitted once the drawing
+   * is loaded
    */
   pictureLoadFailed: [shape: ShapeEntity<'picture'>, error: unknown]
+  /**
+   * The shapes of the props of useReactPaint, or the ones given by clearCallback, cannot be loaded, like a polygon without
+   * its points (the ReactPaintError 'dataInvalid'): the drawing is unchanged. loadData and loadFile reject instead
+   */
+  dataLoadFailed: [error: unknown]
   /**
    * A custom shape of loaded data is left out: no custom tool of its toolId is available to draw it. Give the same
    * custom tools in availableTools before loading data which holds their shapes
@@ -428,10 +450,8 @@ export type ReactPaint = {
   getState: () => EditorState
   /** Calls the listener after each change of the state. Returns the function that unsubscribes it */
   subscribe: (listener: () => void) => () => void
-  /** Returns the function that unregisters the listener */
+  /** Registers a listener of the event, and returns the function that unregisters it */
   registerEvent: <E extends ReactPaintEventName>(event: E, fn: ReactPaintEvents[E]) => () => void
-  /** Unregisters the listener, or all the listeners of the event when none is given */
-  unregisterEvent: <E extends ReactPaintEventName>(event: E, fn?: ReactPaintEvents[E]) => void
   /**
    * Runs the function: the changes it makes give a single step of the history, a single dataChanged event and a single
    * render. The changes made before an error are kept
@@ -447,7 +467,6 @@ export type ReactPaint = {
   toCanvasPosition: (clientPosition: { x: number; y: number }) => Point | undefined
   /** Position in the viewport of a point of the drawing, to place an element over it. Undefined while the Canvas is not mounted or not displayed */
   toClientPosition: (point: Point) => { x: number; y: number } | undefined
-  resetCanvas: (shapes?: ShapeInput[], clearHistory?: boolean) => void
   getCurrentImage: (options?: ExportImageOptions) => string
   getCurrentData: () => StateData
   /**

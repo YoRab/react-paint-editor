@@ -14,6 +14,7 @@ pnpm bench
 | `PERF_SHAPES` | `50,500` | Numbers of shapes to measure, separated by commas                                                                                                            |
 | `PERF_CPU`    | `1`      | Slows the CPU down by this rate (Chrome DevTools Protocol), like a slower machine: `4` stands for a mid-range phone                                          |
 | `PERF_EVENTS` | `1`      | Pointer and wheel events sent in each frame: `1` stands for a 60 Hz mouse, `4` for a faster mouse in a browser which does not align the events on the frames |
+| `PERF_DPR`    | `1`      | Pixels of the screen in a CSS pixel (`devicePixelRatio`): `2` stands for a HiDPI screen, like a Retina display, whose canvases have 4 times more pixels      |
 
 ```bash
 PERF_LABEL=baseline pnpm bench          # bash
@@ -21,9 +22,10 @@ $env:PERF_LABEL='baseline'; pnpm bench  # PowerShell
 pnpm bench --browser.headless=false     # to watch the browser
 pnpm bench -t "pan with"                # one scenario
 PERF_LABEL=slow-cpu PERF_CPU=4 pnpm bench
+PERF_LABEL=hidpi PERF_DPR=2 pnpm bench
 ```
 
-The results are ignored by git. When `results/baseline.json` exists, the report shows the gap of each metric to it, in %: compare only reports made with the same `PERF_CPU` and `PERF_EVENTS`.
+The results are ignored by git. When `results/baseline.json` exists, the report shows the gap of each metric to it, in %: compare only reports made with the same `PERF_CPU`, `PERF_EVENTS` and `PERF_DPR`.
 
 A full run takes about 20 minutes: 23 scenarios, 2 sizes, 1 warm-up run and 5 measured runs each, on a new mount every time. The median of the measured runs is kept.
 

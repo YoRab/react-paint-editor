@@ -114,8 +114,8 @@ type LayoutType = {
   handleSelect: EditorActions['selectShapes']
   handleUpdate: EditorActions['updateShapes']
   toggleCollapsed: (id: string) => void
-  toggleShapeVisibility: (ids: string[]) => void
-  toggleShapeLock: (ids: string[]) => void
+  setShapesVisibility: EditorActions['setShapesVisibility']
+  setShapesLocked: EditorActions['setShapesLocked']
 }
 
 // the props are stable: only the changed layers render again
@@ -129,8 +129,8 @@ const Layout = memo(function Layout({
   setRenamingId,
   focusLayer,
   moveLayer,
-  toggleShapeVisibility,
-  toggleShapeLock,
+  setShapesVisibility,
+  setShapesLocked,
   handleRemove,
   handleSelect,
   handleUpdate,
@@ -259,7 +259,7 @@ const Layout = memo(function Layout({
         data-visible={shape.visible !== false}
         disabled={disabled}
         selected={selected}
-        onClick={onButtonClick(() => toggleShapeVisibility([shape.id]))}
+        onClick={onButtonClick(() => setShapesVisibility([shape.id], shape.visible === false))}
         icon={shape.visible === false ? visibilityOffIcon : visibilityIcon}
       />
 
@@ -269,7 +269,7 @@ const Layout = memo(function Layout({
         data-locked={!!shape.locked}
         disabled={disabled}
         selected={selected}
-        onClick={onButtonClick(() => toggleShapeLock([shape.id]))}
+        onClick={onButtonClick(() => setShapesLocked([shape.id], !shape.locked))}
         icon={shape.locked ? lockedIcon : unlockedIcon}
       />
       <Button
@@ -553,8 +553,8 @@ const LayoutsPanel = ({ disabled, id, panelRef }: LayoutsPanelType) => {
                     handleRemove={actions.removeShapes}
                     handleUpdate={actions.updateShapes}
                     toggleCollapsed={toggleCollapsed}
-                    toggleShapeVisibility={actions.toggleShapesVisibility}
-                    toggleShapeLock={actions.toggleShapesLock}
+                    setShapesVisibility={actions.setShapesVisibility}
+                    setShapesLocked={actions.setShapesLocked}
                   />
                 ))}
               </ul>

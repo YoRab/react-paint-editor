@@ -479,6 +479,8 @@ export const DEFAULT_EDITOR_LOCALE: EditorLocale = {
       fileReadFailed: 'The file could not be read',
       fileTooLarge: 'The file is larger than {max} MB',
       fileInvalidJson: 'The file is not a project',
+      dataInvalid: 'The drawing holds a shape which cannot be loaded',
+      dataVersionUnsupported: 'The drawing comes from a newer version and cannot be loaded',
       fileTypeUnsupported: 'This type of file is not supported: {type}',
       pictureInvalidSvg: 'The SVG picture is invalid',
       pictureFetchFailed: 'The picture could not be downloaded ({status})',
@@ -490,6 +492,7 @@ export const DEFAULT_EDITOR_LOCALE: EditorLocale = {
       pictureLoadFailed: 'The picture could not be loaded',
       exportEmpty: 'There is no shape to export',
       exportContextUnavailable: 'The browser could not draw the picture',
+      exportTooLarge: 'The picture is too large for the browser',
       exportEncodingFailed: 'The drawing could not be encoded'
     },
     common: {

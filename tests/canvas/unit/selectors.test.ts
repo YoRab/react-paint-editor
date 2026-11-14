@@ -160,4 +160,16 @@ describe('selectors', () => {
     expect(store.getSettings()).not.toBe(settings)
     expect(store.getSettings().gridGap).toBe(20)
   })
+
+  it('keeps the density of the screen given by the Canvas out of the settings and of the view of the editor', async () => {
+    const store = await createLoadedStore()
+    const settings = store.getSettings()
+    const { view } = store.getEditorState()
+    expect(store.getState().view.pixelRatio).toBe(1)
+
+    store.setPixelRatio(2)
+    expect(store.getState().view.pixelRatio).toBe(2)
+    expect(store.getSettings()).toBe(settings)
+    expect(store.getEditorState().view).toBe(view)
+  })
 })

@@ -37,7 +37,7 @@ const Canvas = ({ paint, options, className, style }: CanvasComponentProps) => {
   const view = useSyncExternalStore(store.subscribe, getView, getView)
   const { width, canvasSize, resize } = view
 
-  const { canvasBackgroundColor, canvasSelectionColor, canvasSelectionWidth, canvasLaserColor, canvasLaserWidth } = withDefaults(
+  const { canvasBackgroundColor, canvasSelectionColor, canvasSelectionWidth, canvasLaserColor, canvasLaserWidth, canvasMaxPixelRatio } = withDefaults(
     DEFAULT_CANVAS_OPTIONS,
     options
   )
@@ -108,6 +108,7 @@ const Canvas = ({ paint, options, className, style }: CanvasComponentProps) => {
         selectionWidth={canvasSelectionWidth}
         laserColor={canvasLaserColor}
         laserWidth={canvasLaserWidth}
+        maxPixelRatio={canvasMaxPixelRatio}
       />
     </div>
   )
@@ -137,7 +138,7 @@ export { CanvasLocaleProvider, useCanvasLocale, useMergedLocale } from '@canvas/
 export { PaintProvider, usePaint } from '@canvas/context/PaintContext'
 export { default as useAnnotationsStyle } from '@canvas/hooks/useAnnotationsStyle'
 export { default as usePaintState } from '@canvas/hooks/usePaintState'
-export { default as useReactPaint, type UseReactPaintProps, type UseReactPaintReturnType } from '@canvas/hooks/useReactPaint'
+export { default as useReactPaint, type UseReactPaintProps } from '@canvas/hooks/useReactPaint'
 export type {
   ChangeSource,
   ContextMenuState,
@@ -164,6 +165,7 @@ export type {
   ShapesOrderAction,
   ShapesTransformAction,
   ToolSettingValue,
+  ToolSettingValues,
   ZoomAction
 } from '@canvas/types/editor'
 export type {
@@ -193,6 +195,7 @@ export type { ActionsTool, CustomTool, CustomToolInput, ToolsType } from '@canva
 export { shallowEqual } from '@canvas/utils/equality'
 export { ReactPaintError, type ReactPaintErrorCode } from '@canvas/utils/error'
 export { formatMessage, formatNumber, type MessageParams, mergeLocale } from '@canvas/utils/locale'
+export { DATA_VERSION } from '@canvas/utils/migrations'
 export { getSelectedShapes, getSelectedShapesTools } from '@canvas/utils/selectedShapes'
 export { getSelectedLeaves, getSelectionStyle } from '@canvas/utils/selection'
 export { canGroupShapes, flattenShapes, getParentGroup, getShapeLeaves } from '@canvas/utils/shapes/tree'

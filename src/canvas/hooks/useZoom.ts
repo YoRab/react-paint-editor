@@ -14,7 +14,7 @@ type UseZoomProps = {
 const useZoom = ({ store, zoomEnabled, canvasElt }: UseZoomProps) => {
   const lastTimeWheelEvent = useRef(0)
 
-  usePinchZoomAndMove({ store, canvasElt })
+  usePinchZoomAndMove({ store, canvasElt, zoomEnabled })
 
   useEffect(() => {
     if (!zoomEnabled || !canvasElt) return

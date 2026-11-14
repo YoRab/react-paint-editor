@@ -48,6 +48,7 @@ type PlaygroundProps = {
   canvasSelectionWidth?: number
   canvasLaserColor?: string
   canvasLaserWidth?: number
+  canvasMaxPixelRatio?: number
 }
 
 const PlaygroundEditor = (args: PlaygroundProps) => {
@@ -92,7 +93,8 @@ const PlaygroundEditor = (args: PlaygroundProps) => {
     canvasSelectionColor,
     canvasSelectionWidth,
     canvasLaserColor,
-    canvasLaserWidth
+    canvasLaserWidth,
+    canvasMaxPixelRatio
   } = args
 
   const options: OptionalOptions = {
@@ -138,7 +140,8 @@ const PlaygroundEditor = (args: PlaygroundProps) => {
     canvasSelectionColor,
     canvasSelectionWidth,
     canvasLaserColor,
-    canvasLaserWidth
+    canvasLaserWidth,
+    canvasMaxPixelRatio
   }
 
   const paint = useReactPaint({
@@ -213,7 +216,8 @@ const meta = {
     canvasSelectionColor: 'blue',
     canvasSelectionWidth: 2,
     canvasLaserColor: '#ff2d2d',
-    canvasLaserWidth: 6
+    canvasLaserWidth: 6,
+    canvasMaxPixelRatio: 2
   },
   argTypes: {
     // Canvas dimensions
@@ -438,6 +442,11 @@ const meta = {
       control: { type: 'number', min: 1, max: 30, step: 1 },
       description: 'Width of the trail of the laser pointer at its newest point, in pixels of the screen',
       table: { category: 'Canvas Styling', defaultValue: { summary: '6' }, type: { summary: 'number' } }
+    },
+    canvasMaxPixelRatio: {
+      control: { type: 'number', min: 1, max: 4, step: 0.5 },
+      description: 'Largest density of the canvas, in pixels of the canvas in a pixel of the screen: 1 keeps the scale of the page',
+      table: { category: 'Canvas Styling', defaultValue: { summary: '2' }, type: { summary: 'number' } }
     }
   }
 } satisfies Meta<typeof PlaygroundEditor>

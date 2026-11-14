@@ -6,9 +6,6 @@ import { useEffect, useLayoutEffect, useState } from 'react'
 
 export type { UseReactPaintProps } from '@canvas/store/types'
 
-/** Alias of ReactPaint */
-export type UseReactPaintReturnType = ReactPaint
-
 /**
  * Creates a canvas and returns its handle, to give to the Canvas and Editor components.
  * The handle keeps its identity, and the component calling the hook does not render again when the state changes:

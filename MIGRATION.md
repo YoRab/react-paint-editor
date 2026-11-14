@@ -21,8 +21,8 @@ The functions returned next to `editorProps` move to the handle:
 
 | 0.x | 1.0 |
 | --- | --- |
-| `registerEvent`, `unregisterEvent` | `paint.registerEvent`, `paint.unregisterEvent`. `registerEvent` returns the function that unregisters the listener |
-| `resetCanvas`, `getCurrentImage(view)`, `getCurrentData` | `paint.resetCanvas`, `paint.getCurrentImage({ view })`, `paint.getCurrentData`, see [exported data](#exported-data-and-images) |
+| `registerEvent`, `unregisterEvent` | `paint.registerEvent`, which returns the function that unregisters the listener, instead of `unregisterEvent` |
+| `resetCanvas(shapes, clearHistory)`, `getCurrentImage(view)`, `getCurrentData` | `paint.actions.loadData({ version: DATA_VERSION, shapes }, { clearHistory })`, `paint.getCurrentImage({ view })`, `paint.getCurrentData`, see [exported data](#exported-data-and-images) |
 | `resetZoom()`, `setCanvasZoom(action)`, `setCanvasOffset(offset)` | `paint.actions.resetZoom()`, `paint.actions.setZoom(action)`, `paint.actions.setOffset(offset)` |
 | `annotationsProps.style` | `useAnnotationsStyle(paint)`, see [below](#annotationsprops) |
 
@@ -128,13 +128,13 @@ In the table below, `state.x` stands for `usePaintState(paint, state => state.x)
 | `refs.canvas` | removed: use `paint.actions` |
 | `backwardShape`, `forwardShape`, `saveShapes` | `paint.actions.undo`, `paint.actions.redo`, `paint.actions.saveShapes` |
 | `selectTool(tool)`, `setActiveTool` | `paint.actions.selectTool(toolOrId)`: only the selection tool, the move tool and the tools can be selected |
-| `setAvailableTools` | `paint.actions.updateToolSettings(toolId, field, value)` |
+| `setAvailableTools` | `paint.actions.setToolSettings(toolId, { [field]: value })` |
 | `selectShapes(shapes)`, `selectAllShapes` | `paint.actions.selectShapes(ids)`, `paint.actions.selectAllShapes` |
 | `removeShape(shapes)` | `paint.actions.removeShapes(ids)` |
 | `duplicateShapes(shapes, translate, select)` | `paint.actions.duplicateShapes(ids, { translate, select })` |
-| `moveShapes(shapes, action)`, `swapShapes(id, id)` | `paint.actions.moveShapes(ids, action)`, `paint.actions.swapShapes(id, id)` |
-| `toggleShapeVisibility(shapes)`, `toggleShapeLock(shapes)` | `paint.actions.toggleShapesVisibility(ids)`, `paint.actions.toggleShapesLock(ids)`, or `paint.actions.setShapesVisibility(ids, visible)`, `paint.actions.setShapesLocked(ids, locked)` |
-| `updateShape` + `refreshShape` + `calculateTextFontSize` | `paint.actions.updateShapesStyle(ids, field, value, { save })` |
+| `moveShapes(shapes, action)`, `swapShapes(id, id)` | `paint.actions.moveShapes(ids, action)`, `paint.actions.setShapeIndex(id, index)`: `swapShapes` moved the first shape to the place of the second one |
+| `toggleShapeVisibility(shapes)`, `toggleShapeLock(shapes)` | `paint.actions.setShapesVisibility(ids, visible)`, `paint.actions.setShapesLocked(ids, locked)`: to toggle a shape, give the opposite of its value, `setShapesLocked([id], !shape.locked)` |
+| `updateShape` + `refreshShape` + `calculateTextFontSize` | `paint.actions.setShapesStyle(ids, { [field]: value }, { save })` |
 | `transformShape(ctx, shapes, center, action)` | `paint.actions.transformShapes(ids, action)` |
 | `removeShapePoint(shape, index)` | `paint.actions.removeShapePoint(id, index)`, and `state.contextMenu.canRemoveAnchor` to know if the point can be removed |
 | `addPictureShape(fileOrUrl, maxWidth, maxHeight)` | `paint.actions.addPicture(fileOrUrl, { maxWidth, maxHeight, select })` |
@@ -145,11 +145,11 @@ In the table below, `state.x` stands for `usePaintState(paint, state => state.x)
 
 `paint` and `paint.actions` keep the same identity for the whole life of the component, so they can safely be used in hooks dependencies.
 
-The `EditorProps` type is replaced by `ReactPaint`, the type of the handle. `UseReactPaintReturnType` is an alias of `ReactPaint`.
+The `EditorProps` and `UseReactPaintReturnType` types are replaced by `ReactPaint`, the type of the handle.
 
 ## Events
 
-`registerEvent` and `unregisterEvent` are typed by event, and two events are added:
+`registerEvent` is typed by event, and two events are added:
 
 ```ts
 paint.registerEvent('selectionChanged', (selectedShapes: ShapeEntity[]) => {})
@@ -180,6 +180,8 @@ The events are emitted right after the change of the state, before React renders
 
 The shapes keep their `id` in the exported data (`getCurrentData`, `dataChanged`, `exportData`), and when they are loaded again: an application can store data linked to a shape by its id. A missing or already used id is replaced by a new one. The ids of new shapes are random, like `rect_0b6c…`, instead of a counter.
 
+The exported data give the version of their format, `version`: `DATA_VERSION`, 1 for this release. The data of 0.x, without version, are still loaded, the fields removed since, like `lineArrow`, not being converted.
+
 `getCurrentImage` and `exportPicture` take an object of options instead of the view:
 
 ```diff
@@ -193,7 +195,7 @@ The options also give a `backgroundColor`, and a `backgroundImage` drawn under t
 
 ## Other changes
 
-- `updateToolSettings` ignores a field the tool has not, instead of adding it.
+- `setToolSettings` ignores a field the tool has not, instead of adding it.
 - `transformShapes` no longer selects the transformed shapes.
 - The grid follows a change of the `grid` option after the creation.
 - `style.lineArrow` (0 to 3) is replaced by `style.arrowStart` and `style.arrowEnd`, which take a head (`'none'`, `'triangle'`, `'open'`, `'circle'`...), and `style.arrowSize`: `lineArrow: 1` becomes `arrowStart: 'triangle'`, `lineArrow: 2` becomes `arrowEnd: 'triangle'`, and `lineArrow: 3` both. `lineArrow` is no longer read: a shape loaded with it has no arrows. The `lineArrow` setting of the tools is replaced the same way.

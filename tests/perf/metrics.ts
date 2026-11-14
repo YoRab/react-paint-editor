@@ -163,6 +163,8 @@ export type Report = {
   cpuRate: number
   /** Pointer and wheel events sent in each frame */
   eventsPerFrame: number
+  /** Pixels of the screen in a CSS pixel (devicePixelRatio) */
+  pixelRatio: number
   /** Metrics by "scenario@shapes" */
   results: Record<string, Metrics>
 }

@@ -74,7 +74,7 @@ export const createShape = (
   }
 }
 
-const drawShapeByType = (ctx: CanvasRenderingContext2D, shape: ShapeEntity): void => {
+const drawShapeByType = (ctx: CanvasRenderingContext2D, shape: ShapeEntity, options: DrawShapesOptions): void => {
   switch (shape.type) {
     case 'brush':
       drawBrush(ctx, shape)
@@ -104,7 +104,7 @@ const drawShapeByType = (ctx: CanvasRenderingContext2D, shape: ShapeEntity): voi
       drawRect(ctx, shape)
       break
     case 'picture':
-      drawPicture(ctx, shape)
+      drawPicture(ctx, shape, options)
       break
     case 'custom':
       drawCustomShape(ctx, shape)
@@ -116,18 +116,20 @@ const drawShapeByType = (ctx: CanvasRenderingContext2D, shape: ShapeEntity): voi
  * Whether the shape must be drawn alone on a layer, then copied with its opacity:
  * - a gradient masked by dots composites over what is under it, which must be empty
  * - drawn with an opacity, the overlaps of several operations would be darker: a fill and a stroke, a stroke thinner
- *   than a pixel, drawn segment by segment, a stroke and its heads, an image and its border, or the lines of a text and
- *   its background, its outline or its decorations. A single operation (a stroke, even of several lines like a hatch, a
- *   fill, an image) is drawn directly
+ *   than a pixel of the canvas, drawn segment by segment, a stroke and its heads, an image and its border, or the lines
+ *   of a text and its background, its outline or its decorations. A single operation (a stroke, even of several lines
+ *   like a hatch, a fill, an image) is drawn directly
+ *
+ * A unit of the drawing is pixelScale pixels of the canvas
  */
-const needsLayer = (shape: ShapeEntity, opacity: number, scaleRatio: number): boolean => {
+const needsLayer = (shape: ShapeEntity, opacity: number, pixelScale: number): boolean => {
   if (isFillMasked(shape.style)) return true
   if (opacity === 1) return false
   if (shape.type === 'picture') return hasPictureBorder(shape)
   if (shape.type === 'text') return isTextPaintedSeveralTimes(shape)
   // an undefined stroke color is drawn with the default color
   const hasStroke = shape.style?.strokeColor !== 'transparent'
-  if (hasStroke && (shape.style?.lineWidth ?? SELECTION_DEFAULT_WIDTH) * scaleRatio <= 1) return true
+  if (hasStroke && (shape.style?.lineWidth ?? SELECTION_DEFAULT_WIDTH) * pixelScale <= 1) return true
   if (hasStroke && 'arrows' in shape && shape.arrows?.length) return true
   if (shape.type === 'line' || shape.type === 'brush') return false
   return hasStroke && hasVisibleFill(shape.style)
@@ -224,14 +226,14 @@ const paintOnLayer = (
  * Draws a shape painted several times, with its opacity: it is painted opaque on a shared layer, at the resolution of the
  * canvas, then the layer is copied with the opacity
  */
-const drawShapeOnLayer = (ctx: CanvasRenderingContext2D, shape: ShapeEntity): void => {
+const drawShapeOnLayer = (ctx: CanvasRenderingContext2D, shape: ShapeEntity, options: DrawShapesOptions): void => {
   const matrix = ctx.getTransform()
   const box = getPixelBox(ctx.canvas, matrix, expandRect(shape.computed.outerBorders, getLayerMargin(shape)))
   paintOnLayer(ctx, matrix, box, layerCtx => {
     updateCanvasContext(layerCtx, { ...shape.style, opacity: 100 })
     // the shared layer keeps no state of the shape, like a clip, for the next ones
     layerCtx.save()
-    drawShapeByType(layerCtx, shape)
+    drawShapeByType(layerCtx, shape, options)
     layerCtx.restore()
   })
 }
@@ -242,6 +244,13 @@ export type DrawShapesOptions = {
   hiddenId?: string | undefined
   /** Shapes drawn with a part of their opacity, like the shapes crossed by the eraser */
   fadedIds?: ReadonlySet<string> | undefined
+  /** Draws a frame in place of the pictures whose image could not be loaded: on the screen, not in an export */
+  withPlaceholders?: boolean | undefined
+  /**
+   * Pixels of the canvas in a pixel of the screen, 1 by default: the canvas of the page has the density of the screen,
+   * by a scale of its context. It gives the strokes thinner than a pixel and the lines in pixels of the screen
+   */
+  pixelRatio?: number | undefined
 }
 
 /** Part of their opacity kept by the faded shapes */
@@ -317,8 +326,8 @@ const drawShape = (
   if (options.fadedIds?.has(shape.id)) ctx.globalAlpha *= FADED_OPACITY_RATIO
 
   if (ctx.globalAlpha > 0) {
-    if (needsLayer(shape, ctx.globalAlpha, settings.canvasSize.scaleRatio)) drawShapeOnLayer(ctx, shape)
-    else drawShapeByType(ctx, shape)
+    if (needsLayer(shape, ctx.globalAlpha, settings.canvasSize.scaleRatio * (options.pixelRatio ?? 1))) drawShapeOnLayer(ctx, shape, options)
+    else drawShapeByType(ctx, shape, options)
   }
 
   ctx.restore()

@@ -43,7 +43,16 @@ export type InternalState = {
   document: ShapesState
   clipboard: SelectionType | undefined
   tools: { available: CustomTool[]; activeToolId: string }
-  view: { canvasSize: CanvasSize; transformation: CanvasTransformation; gridGap: number }
+  view: {
+    canvasSize: CanvasSize
+    transformation: CanvasTransformation
+    gridGap: number
+    /**
+     * Pixels of the canvases of the page in a pixel of the screen, given by the Canvas: 1 until it is mounted. Only they
+     * are drawn at this density, the sizes of the view staying in pixels of the screen
+     */
+    pixelRatio: number
+  }
   interaction: {
     selectionMode: SelectionModeData<Point | number>
     /** The hovered shape is read from the drawing by its id: it follows the changes of its shape, and goes with it */

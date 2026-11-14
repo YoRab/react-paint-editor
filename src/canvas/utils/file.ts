@@ -104,10 +104,16 @@ export const downloadFile = (content: string, fileName: string) => {
   document.body.removeChild(a)
 }
 
+/** What toDataURL gives for a canvas without pixels: 0 wide, or larger than the browser allows, a limit which depends on it */
+const EMPTY_DATA_URL = 'data:,'
+
 /** Encoded images, computed once per image: the data are exported on each change of the drawing */
 const base64Images = new WeakMap<HTMLImageElement, string>()
 
-/** The image encoded in a data URL, or undefined when it cannot be encoded: it is not loaded, or comes from another origin */
+/**
+ * The image encoded in a data URL, or undefined when it cannot be encoded: it is not loaded, comes from another origin, or is
+ * larger than a canvas of the browser
+ */
 export const getBase64Image = (img: HTMLImageElement): string | undefined => {
   // an image which is not loaded yet is encoded later
   if (!img.complete || img.width === 0) return undefined
@@ -120,6 +126,7 @@ export const getBase64Image = (img: HTMLImageElement): string | undefined => {
   try {
     ctx.drawImage(img, 0, 0)
     const dataURL = ctx.canvas.toDataURL('image/png')
+    if (dataURL === EMPTY_DATA_URL) return undefined
     base64Images.set(img, dataURL)
     return dataURL
   } catch {
@@ -134,6 +141,15 @@ export const getBase64Image = (img: HTMLImageElement): string | undefined => {
 export const isSourceEncodedOnExport = (src: string) => /^blob:/i.test(src)
 
 /**
+ * Images whose loading failed. Their element cannot tell it: an image being fetched has no source yet, like one whose fetch
+ * failed, and an image too large or too slow may be loaded all the same
+ */
+const failedImages = new WeakSet<HTMLImageElement>()
+
+/** Whether the loading of the image of a picture failed: it is drawn as a frame on the screen, and not at all elsewhere */
+export const hasPictureFailed = (img: HTMLImageElement) => failedImages.has(img)
+
+/**
  * Loads the source of a picture in its image: a URL of the web is fetched first, so that the canvas can still be exported.
  * Fails after a delay, or when the image is too large. The blob URL of the image is revoked once it is loaded or has failed
  */
@@ -142,6 +158,7 @@ export const loadPicture = (img: HTMLImageElement, src: string, resolvePictureSr
   const controller = new AbortController()
   let url: string | undefined
   let timeoutId: ReturnType<typeof setTimeout> | undefined
+  failedImages.delete(img)
   return new Promise<void>((resolve, reject) => {
     timeoutId = setTimeout(() => reject(new ReactPaintError('pictureTimeout', 'Timeout while loading the picture')), PICTURE_LOAD_TIMEOUT)
     img.onload = () => {
@@ -160,14 +177,19 @@ export const loadPicture = (img: HTMLImageElement, src: string, resolvePictureSr
         img.src = pictureUrl
       }
     }, reject)
-  }).finally(() => {
-    controller.abort()
-    clearTimeout(timeoutId)
-    // the image lives with the picture: its handlers would keep the loading alive
-    img.onload = null
-    img.onerror = null
-    revokeBlobUrl(url)
   })
+    .catch((error: unknown) => {
+      failedImages.add(img)
+      throw error
+    })
+    .finally(() => {
+      controller.abort()
+      clearTimeout(timeoutId)
+      // the image lives with the picture: its handlers would keep the loading alive
+      img.onload = null
+      img.onerror = null
+      revokeBlobUrl(url)
+    })
 }
 
 const encodeObjectToString = (objectToEncode: unknown) => {
@@ -213,7 +235,12 @@ const getShapesDataUrl = ({
     ctx.restore()
   }
   drawShapes(ctx, shapes, settings)
-  return newCanvas.toDataURL(MIME_TYPES[format], options.quality)
+  const dataUrl = newCanvas.toDataURL(MIME_TYPES[format], options.quality)
+  // a canvas 0 wide is not an error
+  if (dataUrl === EMPTY_DATA_URL && newCanvas.width > 0 && newCanvas.height > 0) {
+    throw new ReactPaintError('exportTooLarge', `The image of ${width}×${height} pixels is too large for the browser`, { width, height })
+  }
+  return dataUrl
 }
 
 /** Settings printing an area of the drawing at the scale 1, from the point at the given offset */
@@ -275,6 +302,15 @@ export const readFileAsDataUrl = (file: Blob) =>
     reader.readAsDataURL(file)
   })
 
+/** The value of the JSON of loaded data, from a file or a string */
+export const parseDataJson = (text: string): unknown => {
+  try {
+    return JSON.parse(text)
+  } catch (error) {
+    throw new ReactPaintError('fileInvalidJson', 'Invalid JSON', {}, { cause: error })
+  }
+}
+
 export const decodeJson = async (file: File) => {
   if (file.size > DATA_FILE_MAX_SIZE)
     throw new ReactPaintError('fileTooLarge', `The file is larger than ${DATA_FILE_MAX_SIZE / 1024 / 1024} MB`, {
@@ -286,10 +322,9 @@ export const decodeJson = async (file: File) => {
       const result = event.target?.result
       if (!result) return reject(new ReactPaintError('fileInvalidJson', 'The file is empty'))
       try {
-        const json = JSON.parse(result as string)
-        resolve(json)
-      } catch {
-        reject(new ReactPaintError('fileInvalidJson', 'Invalid JSON file'))
+        resolve(parseDataJson(result as string))
+      } catch (error) {
+        reject(error)
       }
     }
     reader.onerror = () => reject(new ReactPaintError('fileReadFailed', 'Failed to read file', {}, { cause: reader.error }))

@@ -82,19 +82,22 @@ beforeAll(async () => {
 afterAll(async () => {
   if (CPU_RATE > 1) await setCpuThrottling(1)
   if (!Object.keys(results).length) return
+  const pixelRatio = window.devicePixelRatio
   const report: Report = {
     label: LABEL,
     date: new Date().toISOString(),
     userAgent: navigator.userAgent,
     cpuRate: CPU_RATE,
     eventsPerFrame: EVENTS_PER_FRAME,
+    pixelRatio,
     results
   }
   await commands.writeFile(`tests/perf/results/${LABEL}.json`, `${JSON.stringify(report, null, 2)}\n`)
 
   const cpu = CPU_RATE > 1 ? `, CPU slowed down ${CPU_RATE}×` : ''
   const events = EVENTS_PER_FRAME > 1 ? `, ${EVENTS_PER_FRAME} events per frame` : ''
-  const header = `Benchmark "${LABEL}"${cpu}${events}${baseline && LABEL !== 'baseline' ? ', compared to baseline.json' : ''}`
+  const density = pixelRatio !== 1 ? `, pixel ratio ${pixelRatio}` : ''
+  const header = `Benchmark "${LABEL}"${cpu}${events}${density}${baseline && LABEL !== 'baseline' ? ', compared to baseline.json' : ''}`
   const tables = SCENARIOS.map(scenario => {
     const scenarioResults = Object.fromEntries(Object.entries(results).filter(([key]) => key.startsWith(`${scenario.id}@`)))
     return Object.keys(scenarioResults).length ? formatTable(scenario.id, scenarioResults, LABEL !== 'baseline' ? baseline : undefined) : ''

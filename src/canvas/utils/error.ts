@@ -7,8 +7,18 @@ export type ReactPaintErrorCode =
   | 'fileReadFailed'
   /** The data file is larger than the largest one loadFile reads: details.max, in MB */
   | 'fileTooLarge'
-  /** The data file is not JSON */
+  /** The data file, or the string given to loadData, is not JSON */
   | 'fileInvalidJson'
+  /**
+   * A shape of loaded data cannot be built, like a polygon without its points: details.index, its place in the shapes of
+   * the data, the one of its outer group for a shape of a group
+   */
+  | 'dataInvalid'
+  /**
+   * The loaded data are of a newer version of the format than DATA_VERSION, the last one this release reads:
+   * details.version, the one of the data, and details.max, DATA_VERSION
+   */
+  | 'dataVersionUnsupported'
   /** The file dropped or pasted is not a picture: details.type */
   | 'fileTypeUnsupported'
   /** The SVG of a picture has no <svg> element */
@@ -31,6 +41,11 @@ export type ReactPaintErrorCode =
   | 'exportEmpty'
   /** The browser gave no canvas to draw the export in */
   | 'exportContextUnavailable'
+  /**
+   * The exported image is larger than the largest canvas of the browser, which depends on the browser:
+   * details.width and details.height, in pixels
+   */
+  | 'exportTooLarge'
   /** The data of the drawing could not be encoded */
   | 'exportEncodingFailed'
 

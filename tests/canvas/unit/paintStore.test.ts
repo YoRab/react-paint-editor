@@ -1,6 +1,6 @@
 import { ERASER_TOOL, LASER_TOOL } from '@canvas/constants/tools'
 import { createPaintStore, type PaintStore } from '@canvas/store/paintStore'
-import type { Point, ShapeEntity } from '@canvas/types/Shapes'
+import type { Point, ShapeEntity, ShapeInput } from '@canvas/types/Shapes'
 import { removePolygonPoint } from '@canvas/utils/shapes/polygon'
 import { describe, expect, it, vi } from 'vitest'
 import { createLoadedStore, RECTS, stubPath2D } from './helpers'
@@ -43,6 +43,45 @@ describe('createPaintStore', () => {
       expect.objectContaining({ added: expect.arrayContaining([expect.objectContaining({ type: 'rect' })]) })
     )
     expect(store.getEditorState().history.canUndo).toBe(false)
+  })
+
+  it('emits dataLoadFailed, without a rejected promise left without a handler, when the shapes of the props cannot be built', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
+    // a polygon without its points
+    const store = createPaintStore({ shapes: [{ type: 'polygon' }] as unknown as ShapeInput[] })
+    const failed = vi.fn()
+    store.registerEvent('dataLoadFailed', failed)
+    // Vitest fails a run on such a promise: its listeners are set aside
+    const listeners = process.listeners('unhandledRejection')
+    const rejections: unknown[] = []
+    process.removeAllListeners('unhandledRejection')
+    process.on('unhandledRejection', reason => rejections.push(reason))
+    try {
+      store.init()
+      // Node reports the promise once the microtasks are done
+      await new Promise(resolve => setImmediate(resolve))
+    } finally {
+      process.removeAllListeners('unhandledRejection')
+      for (const listener of listeners) process.on('unhandledRejection', listener)
+      warn.mockRestore()
+    }
+    expect(rejections).toEqual([])
+    expect(failed).toHaveBeenCalledWith(expect.objectContaining({ code: 'dataInvalid', details: { index: 0 } }))
+  })
+
+  it('emits dataLoadFailed, and keeps the drawing, when the shapes of clearCallback cannot be built', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
+    const store = await createLoadedStore({ options: { clearCallback: () => [RECTS[0]!, { type: 'polygon' }] as unknown as ShapeInput[] } })
+    const failed = vi.fn()
+    store.registerEvent('dataLoadFailed', failed)
+    try {
+      store.actions.clearCanvas()
+      await vi.waitFor(() => expect(failed).toHaveBeenCalledTimes(1))
+    } finally {
+      warn.mockRestore()
+    }
+    expect(failed).toHaveBeenCalledWith(expect.objectContaining({ code: 'dataInvalid', details: { index: 1 } }))
+    expect(getIds(store)).toHaveLength(RECTS.length)
   })
 
   it('emits no event before any change', () => {
@@ -102,7 +141,7 @@ describe('actions', () => {
     expect(getIds(store)).toEqual([third, first, second])
     store.actions.moveShapes([third!], 'backward')
     expect(getIds(store)).toEqual([first, third, second])
-    store.actions.swapShapes(first!, second!)
+    store.actions.setShapeIndex(first!, 2)
     expect(getIds(store)).toEqual([third, second, first])
   })
 
@@ -125,7 +164,7 @@ describe('actions', () => {
     store.actions.setShapesVisibility(ids, false)
     expect(getFlags()).toEqual(['false/false', 'false/false', 'false/false'])
 
-    store.actions.toggleShapesLock([ids[0]!])
+    store.actions.setShapesLocked([ids[0]!], true)
     store.actions.setShapesLocked(ids, true)
     expect(getFlags()).toEqual(['false/true', 'false/true', 'false/true'])
   })
@@ -220,14 +259,14 @@ describe('actions', () => {
 
   it('updates the settings of a tool', () => {
     const store = createPaintStore()
-    store.actions.updateToolSettings('react-paint-rect', 'strokeColor', 'blue')
+    store.actions.setToolSettings('react-paint-rect', { strokeColor: 'blue' })
     const rectTool = store.getEditorState().tools.find(tool => tool.id === 'react-paint-rect')
     expect(rectTool?.type === 'rect' && rectTool.settings.strokeColor.default).toBe('blue')
 
     // same value, or unknown tool, like the group tool of a selection
     const { tools } = store.getEditorState()
-    store.actions.updateToolSettings('react-paint-rect', 'strokeColor', 'blue')
-    store.actions.updateToolSettings('react-paint-rect-react-paint-circle', 'strokeColor', 'red')
+    store.actions.setToolSettings('react-paint-rect', { strokeColor: 'blue' })
+    store.actions.setToolSettings('react-paint-rect-react-paint-circle', { strokeColor: 'red' })
     expect(store.getEditorState().tools).toBe(tools)
   })
 
@@ -319,7 +358,7 @@ describe('events', () => {
 
     // The selection object is rebuilt, with the same shapes
     store.actions.selectShapes([first!, second!])
-    store.actions.updateShapesStyle([first!], 'strokeColor', 'blue')
+    store.actions.setShapesStyle([first!], { strokeColor: 'blue' })
     expect(events.selectionChanged).toHaveBeenCalledTimes(1)
 
     store.actions.clearSelection()
@@ -349,6 +388,17 @@ describe('events', () => {
     store.actions.selectTool('react-paint-rect')
     expect(listener).not.toHaveBeenCalled()
   })
+
+  it('keeps the other listeners when an unregister function is called twice', () => {
+    const store = createPaintStore()
+    const listener = vi.fn()
+    const unregister = store.registerEvent('toolChanged', vi.fn())
+    store.registerEvent('toolChanged', listener)
+    unregister()
+    unregister()
+    store.actions.selectTool('react-paint-rect')
+    expect(listener).toHaveBeenCalledTimes(1)
+  })
 })
 
 describe('setConfig', () => {
@@ -365,7 +415,7 @@ describe('setConfig', () => {
 
   it('keeps the tool settings when the tools are unchanged', () => {
     const store = createPaintStore({ options: { availableTools: [{ type: 'rect', id: 'react-paint-rect' }] } })
-    store.actions.updateToolSettings('react-paint-rect', 'strokeColor', 'blue')
+    store.actions.setToolSettings('react-paint-rect', { strokeColor: 'blue' })
     store.setConfig({ options: { availableTools: [{ type: 'rect', id: 'react-paint-rect' }], canZoom: 'always' } })
     const [rectTool] = store.getEditorState().tools
     expect(rectTool?.type === 'rect' && rectTool.settings.strokeColor.default).toBe('blue')
@@ -374,7 +424,7 @@ describe('setConfig', () => {
 
   it('resets the tools when they change in value', () => {
     const store = createPaintStore({ options: { availableTools: [{ type: 'rect', id: 'react-paint-rect' }] } })
-    store.actions.updateToolSettings('react-paint-rect', 'strokeColor', 'blue')
+    store.actions.setToolSettings('react-paint-rect', { strokeColor: 'blue' })
     store.setConfig({ options: { availableTools: [{ type: 'rect', id: 'react-paint-rect', settings: { strokeColor: { default: 'red' } } }] } })
     const [rectTool] = store.getEditorState().tools
     expect(rectTool?.type === 'rect' && rectTool.settings.strokeColor.default).toBe('red')

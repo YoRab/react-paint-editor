@@ -15,7 +15,7 @@ const InlineOptionsHarness = () => {
       <Editor paint={paint}>
         <Canvas paint={paint} />
       </Editor>
-      <button type='button' onClick={() => paint.actions.updateToolSettings('react-paint-rect', 'strokeColor', 'blue')}>
+      <button type='button' onClick={() => paint.actions.setToolSettings('react-paint-rect', { strokeColor: 'blue' })}>
         Blue stroke
       </button>
       <button type='button' onClick={() => setRenders(count => count + 1)}>

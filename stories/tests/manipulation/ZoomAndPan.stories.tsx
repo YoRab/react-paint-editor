@@ -1,7 +1,15 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import { expect, userEvent, waitFor, within } from 'storybook/test'
-import type { DrawableShape, Point } from '../../../src/index'
-import { dispatchTouch, getPaint, getState, makeCoordConverters, ReactPaintWrapper, wait } from './../helpers'
+import {
+  Canvas,
+  type DrawableShape,
+  type Point,
+  type ShapeEntity,
+  type UseReactPaintProps,
+  useAnnotationsStyle,
+  useReactPaint
+} from '../../../src/index'
+import { dispatchPointer, dispatchTouch, getLoggedValues, getPaint, getState, makeCoordConverters, ReactPaintWrapper, wait } from './../helpers'
 
 const meta = {
   title: 'Tests/Manipulation/ZoomAndPan',
@@ -27,6 +35,13 @@ const SQUARE: DrawableShape = {
 
 const getView = () => getState().view
 
+/** Dispatches the events of fingers at points of the draw canvas, which do not follow the zoom: they are positions of the page */
+const getTouch = (drawCanvas: HTMLElement) => {
+  const { toClientX, toClientY } = makeCoordConverters(drawCanvas.getBoundingClientRect())
+  return (type: string, pointerId: number, [x, y]: Point, target: EventTarget = drawCanvas) =>
+    dispatchTouch(target, type, pointerId, { x: toClientX(x), y: toClientY(y) })
+}
+
 export const ZoomAndPan: Story = {
   args: {
     shapes: [SQUARE],
@@ -46,9 +61,7 @@ export const ZoomAndPan: Story = {
       return event.defaultPrevented
     }
 
-    /** Dispatches an event of a finger at a point of the canvas */
-    const touch = (type: string, pointerId: number, [x, y]: Point, target: EventTarget = drawCanvas) =>
-      dispatchTouch(target, type, pointerId, { x: toClientX(x), y: toClientY(y) })
+    const touch = getTouch(drawCanvas)
 
     const resetView = () => getPaint().actions.resetZoom()
 
@@ -142,5 +155,223 @@ export const ZoomAndPan: Story = {
     expect(view.queryByRole('menuitem', { name: 'Duplicate' })).toBeNull()
     // the finger moved the square
     expect(getState().shapes[0]).toMatchObject({ x: 280, y: 250 })
+  }
+}
+
+/** A canvas, with an element laid under it which is given the style of useAnnotationsStyle */
+const AnnotatedCanvas = ({ name, ...props }: UseReactPaintProps & { name: string }) => {
+  const paint = useReactPaint(props)
+  const annotationsStyle = useAnnotationsStyle(paint)
+  return (
+    <section aria-label={name} style={{ position: 'relative', width: 200 }}>
+      <div data-testid='annotations' style={{ ...annotationsStyle, position: 'absolute', inset: 0 }} />
+      <Canvas paint={paint} />
+    </section>
+  )
+}
+
+const TOUCH_ACTION_CANVASES: Record<string, UseReactPaintProps> = {
+  viewer: { mode: 'viewer' },
+  zoomableViewer: { mode: 'viewer', options: { canZoom: 'always' } },
+  editor: {},
+  disabledEditor: { disabled: true }
+}
+
+/**
+ * A canvas keeps the touch gestures only when it uses them, to edit or to zoom the drawing: from any other canvas, the
+ * fingers scroll the page. The element laid under the canvas follows the same rule
+ */
+export const TouchAction: Story = {
+  render: () => (
+    <div style={{ display: 'flex', gap: 16 }}>
+      {Object.entries(TOUCH_ACTION_CANVASES).map(([name, props]) => (
+        <AnnotatedCanvas key={name} name={name} shapes={[SQUARE]} {...props} />
+      ))}
+    </div>
+  ),
+  play: async ({ canvasElement }) => {
+    const view = within(canvasElement)
+    const getTouchActions = async (name: string) => {
+      const section = within(view.getByRole('region', { name }))
+      const drawCanvas = await section.findByTestId('draw-canvas')
+      return [getComputedStyle(drawCanvas).touchAction, getComputedStyle(section.getByTestId('annotations')).touchAction]
+    }
+
+    expect(await getTouchActions('viewer')).toEqual(['auto', 'auto'])
+    expect(await getTouchActions('zoomableViewer')).toEqual(['none', 'none'])
+    expect(await getTouchActions('editor')).toEqual(['none', 'none'])
+    expect(await getTouchActions('disabledEditor')).toEqual(['auto', 'auto'])
+  }
+}
+
+/** A drawing of a fixed size which cannot be zoomed is not zoomed by a pinch either, nor are its shapes moved by the fingers */
+export const PinchWithoutZoom: Story = {
+  args: {
+    shapes: [SQUARE],
+    options: { size: 'fixed', canZoom: 'never' }
+  },
+  play: async ({ canvasElement }) => {
+    const drawCanvas = await within(canvasElement).findByTestId('draw-canvas')
+    const touch = getTouch(drawCanvas)
+
+    // the first finger is pressed on the square, then both fingers move apart
+    touch('pointerdown', 1, [300, 300])
+    touch('pointerdown', 2, [600, 300])
+    touch('pointermove', 1, [250, 300])
+    touch('pointermove', 2, [700, 300], document)
+    touch('pointermove', 2, [800, 300], document)
+    touch('pointerup', 2, [800, 300])
+    touch('pointerup', 1, [250, 300])
+    expect(getView().zoom).toBe(1)
+    expect(getView().offset).toEqual([0, 0])
+    expect(getState().shapes[0]).toMatchObject({ x: 250, y: 250 })
+  }
+}
+
+/**
+ * A finger or a pen never stays still: their press moves, resizes or rotates the selection once they have moved by more
+ * than 5 pixels of the screen. A tap on the selected shape, moving by 2 pixels, is a click, not a drag. The mouse moves
+ * the selection from its first pixel
+ */
+export const TouchTap: Story = {
+  args: {
+    shapes: [SQUARE]
+  },
+  play: async ({ canvasElement }) => {
+    const drawCanvas = await within(canvasElement).findByTestId('draw-canvas')
+    const rect = drawCanvas.getBoundingClientRect()
+    const { toClientX, toClientY } = makeCoordConverters(rect)
+    /** Pixels of the screen in the units of the drawing */
+    const toDrawing = (pixels: number) => (pixels * 1000) / rect.width
+
+    /** Presses a pointer at a point of the drawing, moves it by pixels of the screen, and releases it */
+    const press = (pointerType: 'mouse' | 'touch' | 'pen', [x, y]: Point, [dx, dy]: Point, expectedGesture = 'translate') => {
+      const start = { x: toClientX(x), y: toClientY(y) }
+      const end = { x: start.x + dx, y: start.y + dy }
+      dispatchPointer(drawCanvas, 'pointerdown', pointerType, 1, start)
+      expect(getState().interaction.mode).toBe(expectedGesture)
+      dispatchPointer(drawCanvas, 'pointermove', pointerType, 1, end)
+      dispatchPointer(drawCanvas, 'pointerup', pointerType, 1, end)
+    }
+    const getSquare = () => getState().shapes[0] as ShapeEntity<'square'>
+    // the undo clears the selection: the square is selected again, for its anchors
+    const undo = () => {
+      getPaint().actions.undo()
+      getPaint().actions.selectShapes([getSquare().id])
+    }
+    // the anchors of the selection: its bottom right corner, and the rotation above its middle
+    const resizeAnchor: Point = [357, 357]
+    const rotationAnchor: Point = [300, 212]
+
+    // a first tap selects the square
+    press('touch', [300, 300], [0, 0])
+    expect(getState().selectedShapeIds).toHaveLength(1)
+
+    // a finger and a pen trembling by 2 pixels on the square or on its anchors neither move, resize nor rotate it: no step is
+    // added to the history, and the square stays selected
+    press('touch', [300, 300], [2, 1])
+    press('pen', [300, 300], [2, 1])
+    press('touch', resizeAnchor, [2, 1], 'resize')
+    press('touch', rotationAnchor, [2, 1], 'rotate')
+    expect(getSquare()).toMatchObject({ x: 250, y: 250, width: 100, height: 100, rotation: 0 })
+    expect(getState().history.canUndo).toBe(false)
+    expect(getState().selectedShapeIds).toHaveLength(1)
+
+    // beyond 5 pixels, they do, from the position of the press: the square stays under the finger
+    press('touch', [300, 300], [6, 0])
+    expect(getSquare().x).toBeCloseTo(250 + toDrawing(6))
+    undo()
+    press('pen', [300, 300], [6, 0])
+    expect(getSquare().x).toBeCloseTo(250 + toDrawing(6))
+    undo()
+    press('touch', resizeAnchor, [6, 6], 'resize')
+    expect(getSquare().width).toBeGreaterThan(100)
+    undo()
+    press('touch', rotationAnchor, [6, 0], 'rotate')
+    expect(getSquare().rotation).not.toBe(0)
+    undo()
+
+    // the mouse moves the square by 2 pixels
+    press('mouse', [300, 300], [2, 0])
+    expect(getSquare().x).toBeCloseTo(250 + toDrawing(2))
+    undo()
+    expect(getSquare()).toMatchObject({ x: 250, y: 250, width: 100, height: 100, rotation: 0 })
+
+    // a tap of the rectangle tool trembling by 2 pixels draws a rectangle of the default size, like a click: a shape is drawn
+    // by the resize of its box from the press
+    getPaint().actions.selectTool('react-paint-rect')
+    press('touch', [600, 300], [2, 1], 'resize')
+    expect(getState().shapes[0]).toMatchObject({ type: 'rect', width: 100, height: 100 })
+  }
+}
+
+/**
+ * Two pointers never edit the drawing: the second one cancels what the first one started, also once it has drawn, while
+ * the pinch zooms. The shapes, the selection and the tool are given back as they were at the press, and nothing is saved.
+ * A polygon being drawn only loses the point added by the press, and its drawing goes on
+ */
+export const PinchCancelsGesture: Story = {
+  args: {
+    shapes: [SQUARE],
+    options: { canZoom: 'always' }
+  },
+  play: async ({ canvasElement }) => {
+    const drawCanvas = await within(canvasElement).findByTestId('draw-canvas')
+    const touch = getTouch(drawCanvas)
+    const { selectTool, resetZoom } = getPaint().actions
+    const getSaves = () => getLoggedValues('dataChanged').length
+
+    /** The first finger is pressed and moved, then the second one comes down and moves away: both are released */
+    const pinch = (from: Point, to: Point = from) => {
+      touch('pointerdown', 1, from)
+      touch('pointermove', 1, to)
+      touch('pointerdown', 2, [to[0] + 100, to[1]])
+      touch('pointermove', 2, [to[0] + 200, to[1]], document)
+      expect(getView().zoom).not.toBe(1)
+      touch('pointerup', 2, [to[0] + 200, to[1]])
+      touch('pointerup', 1, to)
+      resetZoom()
+    }
+    const tap = (point: Point) => {
+      touch('pointerdown', 1, point)
+      touch('pointerup', 1, point)
+    }
+    const saves = getSaves()
+
+    // a tool drawing a shape: the shape is removed, before or after the first finger has drawn it, and the tool stays chosen
+    for (const toolId of ['react-paint-rect', 'react-paint-text', 'react-paint-brush']) {
+      selectTool(toolId)
+      pinch([500, 300])
+      pinch([500, 300], [600, 400])
+      expect(getState().shapes).toHaveLength(1)
+      expect(getState().activeTool.id).toBe(toolId)
+      expect(getState().interaction.mode).toBe('default')
+    }
+
+    // the eraser removes nothing
+    selectTool('react-paint-eraser')
+    pinch([300, 300], [320, 300])
+    expect(getState().shapes).toHaveLength(1)
+
+    // the square selected and moved by the first finger is back in place, and not selected
+    selectTool('react-paint-selection')
+    pinch([300, 300], [350, 300])
+    expect(getState().shapes[0]).toMatchObject({ x: 250, y: 250 })
+    expect(getState().selectedShapeIds).toEqual([])
+    expect(getState().history.canUndo).toBe(false)
+    expect(getSaves()).toBe(saves)
+
+    // a polygon being drawn loses only the point of the press, from its first point on, and its drawing goes on
+    selectTool('react-paint-polygon')
+    const getPoints = () => (getState().shapes[0] as ShapeEntity<'polygon'>).points
+    tap([500, 100])
+    pinch([700, 100])
+    expect(getPoints()).toHaveLength(1)
+    tap([700, 100])
+    pinch([700, 300], [650, 350])
+    expect(getPoints()).toHaveLength(2)
+    expect(getState().interaction.mode).toBe('preview')
+    // only its second point was saved
+    expect(getSaves()).toBe(saves + 1)
   }
 }

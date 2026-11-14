@@ -63,7 +63,8 @@ export default defineConfig({
           browser: {
             enabled: true,
             headless: true,
-            provider: playwright({}),
+            // the density of the screen: 2 stands for a HiDPI screen, whose canvases have 4 times more pixels
+            provider: playwright({ contextOptions: { deviceScaleFactor: Number(process.env.PERF_DPR) || 1 } }),
             instances: [{ browser: 'chromium' }],
             viewport: { width: 1280, height: 900 }
           }

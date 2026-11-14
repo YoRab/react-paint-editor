@@ -196,7 +196,7 @@ const zoom = usePaintState(paint, state => state.view.zoom)
 const { shapes, selectedShapes } = usePaintState(paint, state => ({ shapes: state.shapes, selectedShapes: state.selectedShapes }), shallowEqual)
 ```
 
-The handle also gives `actions` (the commands), `registerEvent` / `unregisterEvent`, `batch`, `getShape`, `getBounds`, `getShapesAt`, `toCanvasPosition` / `toClientPosition`, `resetCanvas`, `getCurrentImage` and `getCurrentData`. See [Driving the canvas from the code](#driving-the-canvas-from-the-code).
+The handle also gives `actions` (the commands), `registerEvent` (which returns the function that unregisters the listener), `batch`, `getShape`, `getBounds`, `getShapesAt`, `toCanvasPosition` / `toClientPosition`, `getCurrentImage` and `getCurrentData`. See [Driving the canvas from the code](#driving-the-canvas-from-the-code).
 
 Besides the drawing, the state gives the options in effect (`state.options`), whether dropped images are added (`state.withDropPicture`) and the part of the drawing displayed (`state.view.visibleArea`). The zoom stays between the first and the last of the `ZOOM_LEVELS`, the levels of `actions.setZoom`.
 
@@ -226,7 +226,7 @@ const MyToolbar = () => {
         </button>
       ))}
       <button disabled={!canUndo} onClick={paint.actions.undo}>Undo</button>
-      <button disabled={!selectedIds.length} onClick={() => paint.actions.updateShapesStyle(selectedIds, 'strokeColor', 'red')}>Red</button>
+      <button disabled={!selectedIds.length} onClick={() => paint.actions.setShapesStyle(selectedIds, { strokeColor: 'red' })}>Red</button>
     </div>
   )
 }
@@ -287,7 +287,7 @@ const popoverPosition = box && paint.toClientPosition([box.x + box.width, box.y]
 | --- | --- |
 | Create, update, remove shapes | `actions.addShapes(shapes, { select, index })`, `actions.updateShapes(patches)`, `actions.removeShapes(ids)` |
 | Move, turn, resize, flip | `actions.translateShapes(ids, [dx, dy])`, `actions.rotateShapes(ids, angle, { center })`, `actions.resizeShapes(ids, box)`, `actions.transformShapes(ids, action)` |
-| Style of shapes, default style of tools | `actions.setShapesStyle(ids, style, { updateTool })`, `actions.setToolStyle(toolId, style)` |
+| Style of shapes, default style of tools | `actions.setShapesStyle(ids, style, { updateTool })`, `actions.setToolSettings(toolId, values)` |
 | Order | `actions.moveShapes(ids, 'first' \| 'last' \| 'forward' \| 'backward')`, `actions.setShapeIndex(id, index)`, `actions.reorderShapes(ids)` |
 | Groups | `actions.groupShapes(ids)`, `actions.ungroupShapes(ids)`, `actions.updateShapes([{ id, name, style: { opacity } }])` |
 | Points of lines, polygons and curves | `actions.insertShapePoint`, `actions.moveShapePoint`, `actions.removeShapePoint` |
@@ -305,10 +305,11 @@ const popoverPosition = box && paint.toClientPosition([box.x + box.width, box.y]
 - The actions changing shapes add a step to the history. Give `{ save: false }` for continuous changes, then call `actions.saveShapes()`, and `{ source: 'remote' }` to apply changes received from elsewhere: `dataChanged` gives this source.
 - `addShapes` and `updateShapes` check their input and throw an error, without changing anything, when a shape is invalid. The style of a new shape is completed with the default style of its tool.
 - The `data` field of a shape holds data of your application. It is not drawn, and is kept in the history, the copies and the exported data.
-- The exported data (`getCurrentData`, `dataChanged`, `exportData`) round the positions and the sizes to 3 decimals, and the angles and the factors (`rotation`, `scaleX`, `scaleY`, `ratio`) to 6, which changes nothing visible. The shapes keep their full precision while drawing, and `data` and `style` are exported as they are.
+- The exported data (`getCurrentData`, `dataChanged`, `exportData`) give the version of their format, `version`: `DATA_VERSION`, 1 for this release. They round the positions and the sizes to 3 decimals, and the angles and the factors (`rotation`, `scaleX`, `scaleY`, `ratio`) to 6, which changes nothing visible. The shapes keep their full precision while drawing, and `data` and `style` are exported as they are.
 - Coordinates are in the units of the drawing, angles are in radians, clockwise. The actions work in every mode: `viewer` and `disabled` only restrict the user.
 - `shapeClicked` and `shapeHovered` are also emitted in viewer mode, to make the shapes clickable. `canvasClicked` and `canvasDoubleClicked` are emitted for any click on the drawing, with the shape under the pointer or `undefined`, for instance to add a pin to an empty area.
-- `addShapes` returns before the pictures are loaded: `pictureLoaded` tells when one is drawn. `pictureLoadFailed` tells that the image of a picture cannot be loaded: a picture of loaded data is then left out.
+- `addShapes` returns before the pictures are loaded: `pictureLoaded` tells when one is drawn. `loadData` and `loadFile` show the drawing at once, the last data loaded being the ones kept, and resolve once its pictures are loaded or have failed. They convert the data of an older version of the format to the current one, data without version included, like the ones of 0.x and of the betas: give the shapes written by the code with the current version, `loadData({ version: DATA_VERSION, shapes })`, so that they are not converted. A shape which cannot be built, like a polygon without its points, rejects them with the `dataInvalid` error, data of a newer version of the format with `dataVersionUnsupported`, and JSON which cannot be read with `fileInvalidJson`, the drawing unchanged. The `shapes` of `useReactPaint` and the ones of `clearCallback` emit `dataLoadFailed` with this error instead. `pictureLoadFailed` tells that the image of a picture cannot be loaded: the picture stays in the drawing with its source, also in loaded data, drawn as a grey crossed frame on the canvas and not at all in the exported images.
+- `getCurrentImage` and `exportPicture` throw the `exportTooLarge` error when the image is larger than the largest canvas of the browser, like the `fitToShapes` view of shapes far apart on an infinite canvas: its `details` give the `width` and the `height` of the image. The limit depends on the browser.
 - A group holds its shapes in its `shapes` field, from the foreground: `state.shapes` and the exported data are a tree. `flattenShapes(shapes)` lists all the shapes, each group before its shapes, and `getShapeLeaves(shapes)` the shapes drawn. The actions find the shapes of the groups by their ids, and the order actions never take a shape out of its group. A group left with a single shape is dissolved: the shape takes its place.
 - `dataChanged(data, source, changes)` gives the shapes added, updated (with their previous version) and removed since the previous state, to send only what changed: `changes.added`, `changes.updated`, `changes.removed`, and `changes.reordered`. An undo gives the reverse changes. The shapes of the groups are listed too: a group is updated when its own fields or the ids of its shapes change. `changes.reordered` tells that shapes still there changed their order or their group: build the drawing again from `data.shapes` then.
 - `shapesChanged(shapes, source, changes)` gives the changes as they come, also at each move of a gesture, before it saves its step. With `changes.order`, which tells where each shape goes, `actions.applyChanges(changes, { save })` applies the changes of another instance, for real-time collaboration: send the changes whose source is `'user'`, the changes applied being `'remote'`. They are not steps of the history: each user undoes their own changes. See the Collaboration story.
@@ -387,7 +388,7 @@ The styles of the canvas are inline. Some of its properties read a CSS variable:
 | `--react-paint-canvas-edittextbox-transform`, `-fontsize`, `-padding` | text edition box | `transform`, `font-size`, `padding`: they follow the edited text, overriding them moves the box away from it |
 | `--react-paint-canvas-keyboard-hint-bg`, `-color` | hint of the keyboard | `background`, `color` of the hint shown when the canvas takes the focus from the keyboard |
 
-The other properties of the canvas elements are not set inline, or keep the canvas working (stacked canvases, touch): style the root with the `className` and `style` props of `Canvas`.
+The other properties of the canvas elements are not set inline, or keep the canvas working (stacked canvases, touch): style the root with the `className` and `style` props of `Canvas`. The draw canvas sets `touch-action: none` only when it can be edited or zoomed, `features.edition` or `features.zoom` of the state: from any other canvas, the fingers scroll and zoom the page.
 
 ### Languages
 
@@ -446,8 +447,8 @@ Version 1 replaces `editorProps` and `canvasProps` with a single handle and move
 ## Compatibility
 
 - **React**: 18 or 19, the only (peer) dependencies.
-- **Browsers**: Chrome and Edge 99+, Firefox 113+, Safari 17.2+, with a mouse, a pen or touch (pinch to zoom). The automated tests run in Chromium.
-- **Server-side rendering**: the components can be rendered on the server, the canvas draws once hydrated. The package has no `'use client'` directive: with the Next.js App Router, import it from a `'use client'` file.
+- **Browsers**: Chrome and Edge 99+, Firefox 113+, Safari 17.2+, with a mouse, a pen or touch (pinch to zoom). A finger or a pen moves, resizes or rotates the selection once it has moved by more than 5 pixels, so that a tap stays a click. A second finger cancels what the first one has started, so that a pinch never draws. The canvas is drawn at the density of the screen, up to 2 pixels in a pixel of the screen (the `canvasMaxPixelRatio` option of `Canvas`), so that it stays sharp on a HiDPI screen, and follows it when the window goes to another screen or when the page is zoomed. The automated tests run in Chromium.
+- **Server-side rendering**: the components can be rendered on the server, the canvas draws once hydrated. On a Mac, the canvas and the editor give the keys of their shortcuts (⌘D rather than Ctrl+D) once hydrated. The package has no `'use client'` directive: with the Next.js App Router, import it from a `'use client'` file.
 
 ## Documentation
 

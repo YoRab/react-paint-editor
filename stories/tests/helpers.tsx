@@ -172,7 +172,7 @@ export const toClient = (point: Point) => getPaint().toClientPosition(point)!
 export const dispatchPointer = (
   target: EventTarget,
   type: string,
-  pointerType: 'mouse' | 'touch',
+  pointerType: 'mouse' | 'touch' | 'pen',
   pointerId: number,
   { x, y }: { x: number; y: number }
 ) => {
@@ -196,6 +196,15 @@ export const getPixel = (drawCanvas: HTMLCanvasElement, point: Point) => {
   const y = Math.round(((position.y - rect.top) * drawCanvas.height) / rect.height)
   return [...drawCanvas.getContext('2d')!.getImageData(x, y, 1, 1).data]
 }
+
+/** Width and height in pixels of an image, like an exported one */
+export const getImageSize = (src: string) =>
+  new Promise<[number, number]>((resolve, reject) => {
+    const img = new Image()
+    img.onload = () => resolve([img.naturalWidth, img.naturalHeight])
+    img.onerror = reject
+    img.src = src
+  })
 
 /** The input of a button opening a file chooser, found by the title of the button: the files are given to it */
 export const findFileInput = async (view: ReturnType<typeof within>, title: string) =>

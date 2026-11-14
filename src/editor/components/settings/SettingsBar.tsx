@@ -11,6 +11,7 @@ import {
   type StyleShape,
   shallowEqual,
   type ToolSettingValue,
+  type ToolSettingValues,
   type ToolsType,
   usePaint,
   usePaintState
@@ -538,7 +539,8 @@ const SettingsBar = ({
 
   const handleShapeStyleChange = (field: string, value: ToolSettingValue, needHistorySave = true) => {
     if (!selectedShapeIds.length) {
-      actions.updateToolSettings(activeTool.id, field, value)
+      // a field of the settings bar: a field of the style, the font size or a parameter of a custom tool
+      actions.setToolSettings(activeTool.id, { [field]: value } as ToolSettingValues)
     } else if (field.startsWith(PARAM_FIELD_PREFIX)) {
       // the parameter is changed on the selected custom shapes, and their tools keep the value for the next shapes
       const param = field.slice(PARAM_FIELD_PREFIX.length)

@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import { useEffect, useState } from 'react'
-import { Canvas, type DrawableShape, Editor, type StateData, useReactPaint } from '../../../src/index'
+import { Canvas, DATA_VERSION, type DrawableShape, Editor, type StateData, useReactPaint } from '../../../src/index'
 import { HELLO_THERE, TREE_AND_CLOUDS, WITH_PICTURE } from '../../fixture'
 import { EditorExample } from '../EditorExample'
 import '../buttons.css'
@@ -18,7 +18,6 @@ const PresetsEditor = () => {
   const paint = useReactPaint({
     shapes,
     options: {
-      canZoom: 'always',
       clearCallback: () => {
         return PRESETS[preset]!.shapes
       }
@@ -27,7 +26,7 @@ const PresetsEditor = () => {
 
   const choosePreset = (preset: number) => {
     setPreset(preset)
-    paint.resetCanvas(PRESETS[preset]?.shapes)
+    void paint.actions.loadData({ version: DATA_VERSION, shapes: PRESETS[preset]!.shapes })
   }
 
   useEffect(() => {
@@ -66,7 +65,7 @@ const meta = {
     docs: {
       description: {
         component:
-          'The shapes of the drawing given by the application: when the canvas is created with the `shapes` of `useReactPaint`, later with `resetCanvas`, and read back with the `dataChanged` event. The `viewer` mode shows them without letting the user change them.'
+          'The shapes of the drawing given by the application: when the canvas is created with the `shapes` of `useReactPaint`, later with `actions.loadData`, and read back with the `dataChanged` event. The `viewer` mode shows them without letting the user change them.'
       }
     }
   },
@@ -110,7 +109,7 @@ export const ResetFromTheApp: Story = {
     docs: {
       description: {
         story:
-          'The application replaces the drawing with `resetCanvas`, and keeps its shapes up to date with the `dataChanged` event. `clearCallback` can also be a function returning the shapes the Clear button brings back.'
+          'The application replaces the drawing with `actions.loadData`, and keeps its shapes up to date with the `dataChanged` event. `clearCallback` can also be a function returning the shapes the Clear button brings back.'
       },
       source: {
         code: ` const [preset, setPreset] = useState(0)
@@ -127,7 +126,7 @@ export const ResetFromTheApp: Story = {
 
   const choosePreset = (preset: number) => {
     setPreset(preset)
-    paint.resetCanvas([WITH_PICTURE, TREE_AND_CLOUDS, HELLO_THERE][preset])
+    void paint.actions.loadData({ version: DATA_VERSION, shapes: [WITH_PICTURE, TREE_AND_CLOUDS, HELLO_THERE][preset] })
   }
 
   useEffect(() => {
@@ -179,9 +178,7 @@ export const ViewerMode: Story = {
   args: {
     shapes: TREE_AND_CLOUDS,
     mode: 'viewer',
-    options: {
-      canZoom: 'always'
-    }
+    options: {}
   },
   parameters: {
     docs: {

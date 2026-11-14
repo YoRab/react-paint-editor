@@ -2,7 +2,6 @@ import type { UtilsSettings } from '@canvas/constants/app'
 import type { PaintStore } from '@canvas/store/paintStore'
 import { keepIfSame, memoizeLast } from '@canvas/store/selectors'
 import type { InternalState } from '@canvas/store/types'
-import type { CanvasSize } from '@canvas/types/Canvas'
 import type { SelectionType, ShapeEntity } from '@canvas/types/Shapes'
 import { initCanvasContext } from '@canvas/utils/canvas'
 import { shallowEqual } from '@canvas/utils/equality'
@@ -30,9 +29,16 @@ const getDrawnShapes = (shapes: ShapeEntity[], selectedShape: SelectionType | un
 
 const renderDrawCanvas = (drawCtx: CanvasRenderingContext2D, shapes: ShapeEntity[], settings: UtilsSettings, options: DrawShapesOptions) => {
   initCanvasContext(drawCtx)
+  // drawn in pixels of the screen, each one being pixelRatio pixels of the canvas. The context is given back without
+  // transformation: the shapes under a point are found in it. It is left alone at 1: a change of its transformation,
+  // even to the same one, slows the painting of the canvas down in Chromium (bench)
+  const pixelRatio = options.pixelRatio ?? 1
+  const isScaled = pixelRatio !== 1
+  if (isScaled) drawCtx.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0)
   drawMask(drawCtx, settings)
   drawGrid(drawCtx, settings)
   drawShapes(drawCtx, shapes, settings, options)
+  if (isScaled) drawCtx.resetTransform()
 }
 
 const renderSelectionCanvas = (
@@ -47,7 +53,10 @@ const renderSelectionCanvas = (
 ): boolean => {
   const { selectedShape } = state.document
   const { selectionMode, hoverMode, selectionFrame, laserTrail } = state.interaction
+  const { pixelRatio } = state.view
   selectionCtx.reset()
+  // in pixels of the screen, like the drawing, and left alone at 1 too
+  if (pixelRatio !== 1) selectionCtx.scale(pixelRatio, pixelRatio)
   clipMask(selectionCtx, settings)
 
   state.config.options.withSkeleton &&
@@ -98,7 +107,9 @@ type UseCanvasRendererProps = {
   selectionWidth: number
   laserColor: string
   laserWidth: number
-  canvasSize: CanvasSize
+  /** Size of the canvases in their own pixels */
+  pixelWidth: number
+  pixelHeight: number
 }
 
 type Layer = { drawNow: () => void; stop: () => void }
@@ -115,7 +126,8 @@ const useCanvasRenderer = ({
   selectionWidth,
   laserColor,
   laserWidth,
-  canvasSize
+  pixelWidth,
+  pixelHeight
 }: UseCanvasRendererProps) => {
   const layersRef = useRef<Layer[]>([])
 
@@ -153,14 +165,21 @@ const useCanvasRenderer = ({
       keepDrawnShapes(getDrawnShapes(shapes, selectedShape))
     )
     const selectDrawnShapes = ({ document }: InternalState) => computeDrawnShapes(document.shapes, document.selectedShape)
-    // the text being edited is hidden under its text box, and the shapes crossed by the eraser are faded until it is released
+    // the text being edited is hidden under its text box, and the shapes crossed by the eraser are faded until it is released.
+    // A picture whose image could not be loaded is shown as a frame. The canvas has the density of the screen
     const buildDrawOptions = memoizeLast(
-      (hiddenId: string | undefined, erasedShapeIds: string[]): DrawShapesOptions => ({ hiddenId, fadedIds: new Set(erasedShapeIds) })
+      (hiddenId: string | undefined, erasedShapeIds: string[], pixelRatio: number): DrawShapesOptions => ({
+        hiddenId,
+        fadedIds: new Set(erasedShapeIds),
+        withPlaceholders: true,
+        pixelRatio
+      })
     )
-    const selectDrawOptions = ({ document, interaction: { selectionMode } }: InternalState) =>
+    const selectDrawOptions = ({ document, interaction: { selectionMode }, view }: InternalState) =>
       buildDrawOptions(
         selectionMode.mode === 'textedition' ? document.selectedShape?.id : undefined,
-        selectionMode.mode === 'eraser' ? selectionMode.erasedShapeIds : NO_ERASED_SHAPES
+        selectionMode.mode === 'eraser' ? selectionMode.erasedShapeIds : NO_ERASED_SHAPES,
+        view.pixelRatio
       )
 
     const drawLayer = watchLayer(
@@ -182,7 +201,8 @@ const useCanvasRenderer = ({
         state.interaction.selectionFrame,
         store.selectors.selectActiveTool(state),
         state.config.options.withSkeleton,
-        state.interaction.laserTrail
+        state.interaction.laserTrail,
+        state.view.pixelRatio
       ],
       state => {
         const selectionCtx = selectionCanvasRef.current?.getContext('2d')
@@ -209,12 +229,12 @@ const useCanvasRenderer = ({
     }
   }, [store, drawCanvas, selectionCanvasRef, selectionColor, selectionWidth, laserColor, laserWidth])
 
-  // A new size of a canvas clears it when React sets it: both layers are drawn again before the next paint, the frame
-  // painted after a resize is not empty
+  // A new size of a canvas clears it when React sets it, after a resize or a new density of the screen: both layers are
+  // drawn again before the next paint, the frame painted after it is not empty
   // biome-ignore lint/correctness/useExhaustiveDependencies: the size is the trigger, read from the state by the layers
   useLayoutEffect(() => {
     for (const layer of layersRef.current) layer.drawNow()
-  }, [canvasSize.width, canvasSize.height])
+  }, [pixelWidth, pixelHeight])
 }
 
 export default useCanvasRenderer

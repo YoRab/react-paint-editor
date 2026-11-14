@@ -21,6 +21,8 @@ export type CanvasView = {
   width: number
   height: number
   canvasSize: CanvasSize
+  /** Pixels of the canvas in a pixel of the screen */
+  pixelRatio: number
   resize: Resize
   isEditMode: boolean
   features: UtilsSettings['features']
@@ -50,6 +52,12 @@ export const keepIfSame = <T extends object>() => {
   }
 }
 
+/** Whether the canvas reacts to the user: it can be edited or zoomed */
+const isInteractive = ({ edition, zoom }: UtilsSettings['features']): boolean => edition || zoom
+
+/** The canvas keeps the touch gestures only when it uses them: from a canvas which neither edits nor zooms, the fingers scroll the page */
+export const getTouchAction = (features: UtilsSettings['features']): 'none' | 'auto' => (isInteractive(features) ? 'none' : 'auto')
+
 /** One of the action tools (selection, move, eraser, laser) or of the available tools, found by id */
 export const findSelectableTool = (available: CustomTool[], id: string): ToolsType | undefined =>
   [SELECTION_TOOL, MOVE_TOOL, ERASER_TOOL, LASER_TOOL, ...available].find(tool => tool.id === id)
@@ -66,11 +74,7 @@ export const createSelectors = () => {
 
   const selectFeatures = ({ config }: InternalState) => buildFeatures(config.mode !== 'viewer', config.disabled, config.options.canZoom)
 
-  /** Whether the canvas reacts to the user: it can be edited or zoomed */
-  const selectIsInteractive = (state: InternalState) => {
-    const { edition, zoom } = selectFeatures(state)
-    return edition || zoom
-  }
+  const selectIsInteractive = (state: InternalState) => isInteractive(selectFeatures(state))
 
   const buildSettings = memoizeLast(
     (
@@ -270,6 +274,7 @@ export const createSelectors = () => {
       width: config.width,
       height: config.height,
       canvasSize: view.canvasSize,
+      pixelRatio: view.pixelRatio,
       resize: config.options.resize,
       isEditMode: config.mode !== 'viewer',
       features: selectFeatures(state),

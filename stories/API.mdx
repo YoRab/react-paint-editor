@@ -103,14 +103,12 @@ import LinkTo from '@storybook/addon-links/react';
   getState: () => EditorState
   subscribe: (listener: () => void) => () => void
   registerEvent: <E extends ReactPaintEventName>(event: E, fn: ReactPaintEvents[E]) => () => void
-  unregisterEvent: <E extends ReactPaintEventName>(event: E, fn?: ReactPaintEvents[E]) => void
   batch: <R>(fn: () => R) => R
   getShape: (id: string) => ShapeEntity | undefined
   getBounds: (ids: string[]) => ShapesBounds | undefined
   getShapesAt: (point: Point) => ShapeEntity[]
   toCanvasPosition: (clientPosition: { x: number; y: number }) => Point | undefined
   toClientPosition: (point: Point) => { x: number; y: number } | undefined
-  resetCanvas: (shapes?: ShapeInput[], clearHistory?: boolean) => void
   getCurrentImage: (options?: ExportImageOptions) => string
   getCurrentData: () => StateData
   scopeRef: (element: HTMLElement | null) => void
@@ -119,7 +117,7 @@ import LinkTo from '@storybook/addon-links/react';
         <li><code>actions</code> - Commands to act on the canvas (see below). Their identity never changes</li>
         <li><code>getState()</code> - The current state (see below), without subscription: to read in event handlers. The same object is returned as long as nothing changes</li>
         <li><code>subscribe(listener)</code> - Calls the listener after each change of the state, and returns the function that unsubscribes it</li>
-        <li><code>registerEvent</code>, <code>unregisterEvent</code>, <code>batch</code>, <code>getShape</code>, <code>getBounds</code>, <code>getShapesAt</code>, <code>toCanvasPosition</code>, <code>toClientPosition</code>, <code>resetCanvas</code>, <code>getCurrentImage</code>, <code>getCurrentData</code> - See <a href="#Methods" target="_self">Methods</a></li>
+        <li><code>registerEvent</code>, <code>batch</code>, <code>getShape</code>, <code>getBounds</code>, <code>getShapesAt</code>, <code>toCanvasPosition</code>, <code>toClientPosition</code>, <code>getCurrentImage</code>, <code>getCurrentData</code> - See <a href="#Methods" target="_self">Methods</a></li>
         <li><code>scopeRef</code> - Callback ref defining the area where keyboard shortcuts are active, the canvas by default. The pointer always works over the canvas. Set it on the root element of a custom editor so that the shortcuts also work while its toolbar is focused. The <code>Editor</code> component sets it</li>
       </ul>
 
@@ -156,17 +154,16 @@ import LinkTo from '@storybook/addon-links/react';
       <h4>Actions</h4>
       <ul>
         <li><code>selectTool(toolOrId)</code> - Selects the selection tool, the move tool or one of the tools, found by id. An unknown tool is ignored</li>
-        <li><code>updateToolSettings(toolId, field, value)</code>, <code>setToolStyle(toolId, style)</code> - Default values of a tool, a field the tool has not is ignored</li>
+        <li><code>setToolSettings(toolId, values)</code> - Default values of a tool, one or several: the fields of the style, the font size of the text tool and the parameters of a custom tool (<code>{"{ 'params.branches': 9 }"}</code>). A field the tool has not is ignored</li>
         <li><code>selectShapes(ids, {"{ mode? }"})</code>, <code>selectAllShapes()</code>, <code>clearSelection()</code> - <code>mode</code> is <code>'replace'</code>, <code>'add'</code> or <code>'remove'</code>. A shape of a group selected too is left out, and a shape of a locked group is replaced by the group</li>
         <li><code>addShapes(shapes, {'{ select?, index?, save?, source? }'})</code>, <code>updateShapes(patches, {'{ updateTool?, save?, source? }'})</code> - See <a href="#Actions" target="_self">Driving the canvas from the code</a></li>
         <li><code>removeShapes(ids)</code>, <code>duplicateShapes(ids, {'{ translate?, select? }'})</code> - A group with its shapes. A copy is inserted in front of its shape, in its group</li>
         <li><code>groupShapes(ids)</code> - Groups the shapes in a new group, in the place of the shape in front, and returns its id. Returns <code>undefined</code>, without changing anything, for less than 2 shapes or for all the shapes of a group</li>
         <li><code>ungroupShapes(ids)</code> - Puts the shapes of the groups among the shapes in their places, hidden, locked and faded with them, and returns their ids. The names, the rotations and the data of the groups are lost</li>
         <li><code>translateShapes(ids, [dx, dy])</code>, <code>rotateShapes(ids, angle, {'{ center? }'})</code>, <code>resizeShapes(ids, box)</code></li>
-        <li><code>moveShapes(ids, 'first' | 'last' | 'forward' | 'backward')</code>, <code>swapShapes(firstId, secondId)</code>, <code>setShapeIndex(id, index)</code>, <code>reorderShapes(ids)</code> - Each shape among the shapes of its group, which it never leaves: <code>swapShapes</code> only swaps shapes of the same group</li>
-        <li><code>toggleShapesVisibility(ids)</code>, <code>toggleShapesLock(ids)</code> - Toggle each shape</li>
-        <li><code>setShapesVisibility(ids, visible)</code>, <code>setShapesLocked(ids, locked)</code> - Set the same value on all shapes</li>
-        <li><code>setShapesStyle(ids, style, {'{ updateTool?, save? }'})</code>, <code>updateShapesStyle(ids, field, value, {'{ save? }'})</code> - Updates style fields. Text size is recomputed when changing the font</li>
+        <li><code>moveShapes(ids, 'first' | 'last' | 'forward' | 'backward')</code>, <code>setShapeIndex(id, index)</code>, <code>reorderShapes(ids)</code> - Each shape among the shapes of its group, which it never leaves</li>
+        <li><code>setShapesVisibility(ids, visible)</code>, <code>setShapesLocked(ids, locked)</code> - Set the same value on all shapes. To toggle a shape, give the opposite of its value: <code>setShapesLocked([id], !shape.locked)</code></li>
+        <li><code>setShapesStyle(ids, style, {'{ updateTool?, save? }'})</code> - Updates style fields, a single one too: <code>setShapesStyle(ids, {"{ strokeColor: 'red' }"})</code>. Text size is recomputed when changing the font</li>
         <li><code>transformShapes(ids, 'flipHorizontally' | 'flipVertically' | 'rotateClockwise' | 'rotateCounterclockwise')</code></li>
         <li><code>insertShapePoint(id, index, point)</code>, <code>moveShapePoint(id, index, point)</code>, <code>removeShapePoint(id, pointIndex)</code> - Points of a line, a polygon or a curve, which keep at least 2 points</li>
         <li><code>applyChanges(changes, {'{ save?, source? }'})</code> - Applies the changes of <code>dataChanged</code> or <code>shapesChanged</code> received from another instance, see <a href="#Collaboration" target="_self">Real-time collaboration</a></li>
@@ -234,6 +231,7 @@ const App = () => {
       <h2 id="useAnnotationsStyle">useAnnotationsStyle Hook</h2>
       <p>
         Returns the style of an element laid over the canvas, like a picture to annotate, so that it follows the zoom and the moves of the view.
+        Like the draw canvas, it sets <code>touch-action: none</code> only when the canvas can be edited or zoomed: the fingers scroll the page from it otherwise.
       </p>
       <Source language='typescript' code={`const paint = useReactPaint({ width: pictureWidth, height: pictureHeight })
 const annotationsStyle = useAnnotationsStyle(paint)
@@ -521,6 +519,15 @@ const annotationsStyle = useAnnotationsStyle(paint)
             <td><code>6</code></td>
           </tr>
           <tr>
+            <td><code>canvasMaxPixelRatio</code></td>
+            <td><code>number</code></td>
+            <td>
+              Largest density of the canvas, in pixels of the canvas in a pixel of the screen: the canvas follows the density of the screen (<code>devicePixelRatio</code>) up to it, from 1, so
+              that it stays sharp on a HiDPI screen. <code>1</code> draws it at the scale of the page, faster but blurred on a HiDPI screen, like for a drawing with many shapes at half opacity
+            </td>
+            <td><code>2</code></td>
+          </tr>
+          <tr>
             <td><code>locale</code></td>
             <td><code>PartialLocale&lt;CanvasLocale&gt;</code></td>
             <td>
@@ -648,7 +655,7 @@ const annotationsStyle = useAnnotationsStyle(paint)
             <td><code>'never' | 'always'</code></td>
             <td>
               Zoom availability: <code>'never'</code> disables zoom, <code>'always'</code> enables zoom. An <code>'infinite'</code> size always enables
-              it
+              it. The wheel and the pinch of two fingers zoom only when it is enabled
             </td>
             <td><code>'never'</code></td>
           </tr>
@@ -663,7 +670,7 @@ const annotationsStyle = useAnnotationsStyle(paint)
 
       <h2 id="Events">Events</h2>
       <p>
-        React Paint emits events that you can listen to using <code>paint.registerEvent</code> and <code>paint.unregisterEvent</code>.
+        React Paint emits events that you can listen to using <code>paint.registerEvent</code>, which returns the function that stops listening.
         They are emitted right after the change of the state, before React renders it.
       </p>
 
@@ -829,15 +836,25 @@ paint.registerEvent('canvasDoubleClicked', (shape: ShapeEntity | undefined) => s
       <h3>pictureLoaded and pictureLoadFailed</h3>
       <p>
         <code>pictureLoaded</code> is fired when a picture added by <code>addShapes</code>, or whose source is changed by <code>updateShapes</code>, is loaded and drawn: the actions return before the image is loaded.
-        The pictures of loaded data (<code>loadData</code>, <code>loadFile</code>, <code>resetCanvas</code>, the <code>shapes</code> of the hook) are loaded before the drawing is shown.
+        Loaded data (<code>loadData</code>, <code>loadFile</code>, the <code>shapes</code> of the hook) are shown at once, and their pictures are drawn once loaded, with <code>pictureLoaded</code> too:
+        the promise of <code>loadData</code> and <code>loadFile</code> is resolved once they are loaded or have failed.
       </p>
       <p>
-        <code>pictureLoadFailed</code> is fired when the image of a picture cannot be loaded, for instance when <code>resolvePictureSrc</code> refuses it. A picture of loaded data is left out of the drawing, and the event is fired once the other shapes are loaded.
-        A picture added by <code>addShapes</code> or <code>updateShapes</code> stays in the drawing, without being drawn: <code>paint.getShape(shape.id)</code> tells which. The Editor shows an error message for it.
+        <code>pictureLoadFailed</code> is fired when the image of a picture cannot be loaded, for instance when <code>resolvePictureSrc</code> refuses it. The picture stays in the drawing with its source, also in loaded data:
+        it is drawn as a grey crossed frame on the canvas, and not at all in the exported images. For loaded data, the event is fired once the drawing is loaded. The Editor shows an error message for it.
       </p>
       <Source language='typescript' code={`paint.registerEvent('pictureLoaded', () => upload(paint.getCurrentImage()))
 paint.registerEvent('pictureLoadFailed', (shape: ShapeEntity<'picture'>, error: unknown) => {
   console.warn('Cannot load', shape.src, error)
+})`} />
+
+      <h3>dataLoadFailed</h3>
+      <p>
+        Fired when the <code>shapes</code> of <code>useReactPaint</code>, or the ones given by the <code>clearCallback</code> option, cannot be loaded: a shape cannot be built, like a polygon without its
+        points (the <code>dataInvalid</code> error). The drawing is unchanged, and the canvas warns in the console. <code>loadData</code> and <code>loadFile</code> reject instead. The Editor shows an error message for it.
+      </p>
+      <Source language='typescript' code={`paint.registerEvent('dataLoadFailed', (error: unknown) => {
+  if (error instanceof ReactPaintError) report(error.code, error.details)
 })`} />
 
       <h3>customShapeLoadFailed</h3>
@@ -862,13 +879,6 @@ paint.registerEvent('pictureLoadFailed', (shape: ShapeEntity<'picture'>, error: 
   listener: ReactPaintEvents[E]
 ): () => void`} />
       <Source language='typescript' code={`useEffect(() => paint.registerEvent('dataChanged', data => save(data)), [paint])`} />
-
-      <h3>unregisterEvent</h3>
-      <p>Unregister an event listener. If listener is omitted, all listeners for the event are removed.</p>
-      <Source language='typescript' code={`unregisterEvent<E extends ReactPaintEventName>(
-  event: E,
-  listener?: ReactPaintEvents[E]
-): void`} />
 
       <h3>batch</h3>
       <p>Runs a function: the changes it makes give a single step of the history, a single <code>dataChanged</code> event and a single render. Returns what the function returns. The changes made before an error are kept.</p>
@@ -895,17 +905,6 @@ toClientPosition(point: Point): { x: number; y: number } | undefined`} />
 const box = paint.getBounds([id])
 const position = box && paint.toClientPosition([box.x + box.width, box.y])`} />
 
-      <h3>resetCanvas</h3>
-      <p>Reset the canvas with new shapes. The shapes keep their ids when they are free.</p>
-      <Source language='typescript' code={`resetCanvas(
-  shapes: ShapeInput[],
-  clearHistory?: boolean
-): void`} />
-      <ul>
-        <li><code>shapes</code> - Array of shapes to set on canvas</li>
-        <li><code>clearHistory</code> - If <code>true</code>, clears undo/redo history (default: <code>true</code>)</li>
-      </ul>
-
       <h3>getCurrentImage</h3>
       <p>Export the current canvas as an image data URL.</p>
       <Source language='typescript' code={`getCurrentImage(options?: {
@@ -928,11 +927,12 @@ const position = box && paint.toClientPosition([box.x + box.width, box.y])`} />
         <li><code>backgroundImage</code> - For instance the picture laid under the canvas with <code>useAnnotationsStyle</code>. An image from another origin without CORS headers makes the export fail with a <code>SecurityError</code></li>
       </ul>
       <p>Returns a data URL string that can be used as an image source or downloaded. <code>actions.exportPicture</code> takes the same options and a <code>fileName</code>, and downloads the image.</p>
+      <p>An image larger than the largest canvas of the browser, like the <code>fitToShapes</code> view of shapes far apart on an infinite canvas, throws the <code>exportTooLarge</code> error, whose <code>details</code> give its <code>width</code> and its <code>height</code>: the limit depends on the browser. Nothing is downloaded.</p>
 
       <h3>getCurrentData</h3>
       <p>Get the current canvas state as a data object.</p>
       <Source language='typescript' code={`getCurrentData(): StateData`} />
-      <p>Returns a <code>StateData</code> object containing shapes and canvas configuration.</p>
+      <p>Returns a <code>StateData</code> object containing the version of its format (<code>DATA_VERSION</code>), the shapes and the canvas configuration.</p>
 
       <h3>Zoom and view</h3>
       <p>The zoom and the view are controlled with the actions:</p>
@@ -967,11 +967,11 @@ paint.actions.panBy([50, 0]) // scrolls the view, in the units of the drawing`} 
           </tr>
           <tr>
             <td>Style</td>
-            <td><code>setShapesStyle(ids, style, {`{ updateTool }`})</code>, <code>updateShapesStyle(ids, field, value)</code>, <code>setToolStyle(toolId, style)</code>, <code>updateToolSettings(toolId, field, value)</code></td>
+            <td><code>setShapesStyle(ids, style, {`{ updateTool }`})</code>, <code>setToolSettings(toolId, values)</code></td>
           </tr>
           <tr>
             <td>Order</td>
-            <td><code>moveShapes(ids, action)</code>, <code>setShapeIndex(id, index)</code> (0 is the foreground), <code>reorderShapes(ids)</code>, <code>swapShapes(id, id)</code></td>
+            <td><code>moveShapes(ids, action)</code>, <code>setShapeIndex(id, index)</code> (0 is the foreground), <code>reorderShapes(ids)</code></td>
           </tr>
           <tr>
             <td>Groups</td>
@@ -983,7 +983,7 @@ paint.actions.panBy([50, 0]) // scrolls the view, in the units of the drawing`} 
           </tr>
           <tr>
             <td>Visibility, lock</td>
-            <td><code>setShapesVisibility(ids, visible)</code>, <code>setShapesLocked(ids, locked)</code>, <code>toggleShapesVisibility(ids)</code>, <code>toggleShapesLock(ids)</code></td>
+            <td><code>setShapesVisibility(ids, visible)</code>, <code>setShapesLocked(ids, locked)</code></td>
           </tr>
           <tr>
             <td>Selection</td>
@@ -1036,9 +1036,12 @@ paint.actions.panBy([50, 0]) // scrolls the view, in the units of the drawing`} 
         </li>
         <li><code>setOptions</code> overrides options of <code>useReactPaint</code> until <code>resetOptions</code>: objects are merged, arrays like <code>availableTools</code> are replaced. <code>resetSettings</code> restores the default styles of the tools, the grid, the zoom and the active tool</li>
         <li>
-          The source of a picture is an image data URL, a blob URL, SVG markup or a URL of the web, relative ones included. Other sources are refused. A URL of the web
+          The source of a picture is an image data URL, a blob URL, SVG markup or a URL of the web, relative ones included. Other sources are refused. A blob URL, which does not
+          outlive the page, is exported encoded in a data URL, or kept when the browser cannot encode the image, like an image larger than its largest canvas under Safari. A URL of the web
           goes through the <code>resolvePictureSrc</code> option, then is fetched without the cookies nor the address of the page. An image larger than 16384 pixels is refused.
-          A picture which cannot be loaded within 4 seconds is left out of <code>loadData</code> and <code>loadFile</code> with a warning, the other shapes are loaded.
+          A picture which cannot be loaded within 4 seconds is kept by <code>loadData</code> and <code>loadFile</code> with a warning, drawn as a grey crossed frame.
+          They convert the data of an older version of the format to the current one, <code>DATA_VERSION</code>, data without version included, like the ones of 0.x and of the betas: give the shapes written by the code with the current version, <code>{`loadData({ version: DATA_VERSION, shapes })`}</code>, so that they are not converted.
+          A shape which cannot be built, like a polygon without its points, rejects them with the <code>dataInvalid</code> error, data of a newer version of the format with <code>dataVersionUnsupported</code>, and JSON which cannot be read with <code>fileInvalidJson</code>, the drawing unchanged.
           <code>loadFile</code> refuses files larger than 100 MB
         </li>
       </ul>
@@ -1191,6 +1194,7 @@ type ArrowHead = 'none' | 'triangle' | 'triangleOutline' | 'open' | 'circle' | '
       <h3>StateData</h3>
       <p>Complete canvas state data structure.</p>
       <Source language='typescript' code={`type StateData = {
+  version?: number // version of the format of the data: DATA_VERSION in the exported data
   shapes?: ExportedShape[] // ExportedDrawableShape with its id, a group holding its shapes (ExportedGroup)
   config?: {
     width: number
@@ -1205,7 +1209,7 @@ type ArrowHead = 'none' | 'triangle' | 'triangleOutline' | 'open' | 'circle' | '
 
       <h3>ShapeInput and ShapePatch</h3>
       <p>
-        <code>ShapeInput</code> is a shape given to <code>addShapes</code>, <code>resetCanvas</code> or <code>useReactPaint</code>: an <code>ExportedDrawableShape</code>, whose text can be given without its size, or a group of shapes given the same way (<code>GroupShapeInput</code>), holding 2 shapes at least.
+        <code>ShapeInput</code> is a shape given to <code>addShapes</code>, <code>loadData</code> or <code>useReactPaint</code>: an <code>ExportedDrawableShape</code>, whose text can be given without its size, or a group of shapes given the same way (<code>GroupShapeInput</code>), holding 2 shapes at least.
         Without rotation, a group is turned like its shapes when they are all turned the same way.
         <code>ShapePatch</code> is given to <code>updateShapes</code>: the id of a shape and the fields to change, its type excepted. A <code>name</code> set to <code>undefined</code> is removed. The patch of a group (<code>GroupPatch</code>) only changes its <code>visible</code>, <code>locked</code>, <code>data</code> and <code>name</code> fields, and its opacity.
       </p>
@@ -1261,8 +1265,8 @@ const groupPatch: ShapePatch = { id: 'group_1', name: 'Header', style: { opacity
       <p>
         The <code>params</code> setting of the tool declares the parameters of its path: each of them is kept on every shape it draws, stays
         editable once the shape is drawn, and the Editor shows it as a slider (the first two in its settings bar, the others in its
-        &quot;Plus d&apos;options&quot; panel). <code>actions.updateShapes</code> changes one of them, and <code>actions.updateToolSettings</code>
-        sets its default under the name <code>params.&lt;parameter&gt;</code>.
+        &quot;Plus d&apos;options&quot; panel). <code>actions.updateShapes</code> changes one of them, and <code>actions.setToolSettings</code>
+        sets its default under the name <code>params.&lt;parameter&gt;</code>: <code>{"setToolSettings('star', { 'params.branches': 9 })"}</code>.
       </p>
       <p>
         The path is written by your application: the library ships none. In the example below, the path of the star is built from its
@@ -1355,7 +1359,6 @@ useReactPaint({ options: { availableTools: [...DEFAULT_TOOLS, STAR, HEART, STICK
       <h3>ReactPaint, EditorState, EditorActions</h3>
       <p>
         Types of the handle returned by <code>useReactPaint</code>, of its state and of its <code>actions</code> (see <a href="#useReactPaint" target="_self">useReactPaint</a>).
-        <code>UseReactPaintReturnType</code> is an alias of <code>ReactPaint</code>.
       </p>
 
       <h3>ReactPaintEvents</h3>
@@ -1387,6 +1390,7 @@ useReactPaint({ options: { availableTools: [...DEFAULT_TOOLS, STAR, HEART, STICK
           and <code>canvasLaserWidth</code> options of the Canvas component. It is not part of the drawing, of its history nor of its exports
         </li>
         <li><code>ZOOM_LEVELS</code> - Levels of <code>actions.setZoom</code>, from <code>0.05</code> to <code>8</code>: every zoom stays between the first and the last one, to disable a button or to build a zoom menu</li>
+        <li><code>DATA_VERSION</code> - Version of the format of the exported data, <code>1</code>, given in their <code>version</code> field: <code>loadData</code> converts the data of an older version to it, and refuses the data of a newer one</li>
         <li>
           <code>CANVAS_SHORTCUTS</code> - The keys of the commands of the canvas (see the keyboard shortcuts), as <code>Shortcut</code> objects <code>{'{ key, ctrl?, shift?, otherKeys?, codes? }'}</code> where <code>ctrl</code> is <code>⌘</code> on macOS.
           To show them in a custom editor, to avoid them for its own, or to listen the same keys: <code>matchesShortcut(event, shortcut, isShiftPressed)</code> tells whether a key event is a shortcut (a letter whatever Caps Lock, the digits and the signs
@@ -1425,7 +1429,7 @@ useReactPaint({ options: { availableTools: [...DEFAULT_TOOLS, STAR, HEART, STICK
         <li><code>CanvasLocaleProvider</code>, <code>useCanvasLocale()</code> - Give and read the locale of the canvases, for a custom editor</li>
         <li>
           <code>ReactPaintError</code> - The errors of the canvas a user may meet, with a <code>code</code> (<code>ReactPaintErrorCode</code>) and the values it depends on (<code>details</code>): the editor tells them
-          with its <code>errors</code> texts. Rejected by <code>loadFile</code>, <code>addPicture</code>, <code>exportPicture</code> and <code>exportData</code>, and given by <code>pictureLoadFailed</code> and{' '}
+          with its <code>errors</code> texts. Rejected by <code>loadData</code>, <code>loadFile</code>, <code>addPicture</code>, <code>exportPicture</code> and <code>exportData</code>, and given by <code>pictureLoadFailed</code>, <code>dataLoadFailed</code> and{' '}
           <code>pictureDropFailed</code>. Their messages, like the other errors and the warnings, are written in English for the developers
         </li>
       </ul>
@@ -1712,8 +1716,8 @@ link.click()`} />
       <h3>Programmatic Control</h3>
       <Source language='typescript' code={`const paint = useReactPaint()
 
-// Reset canvas
-paint.resetCanvas([/* shapes */], true)
+// Replace the drawing, written in the current format of the data
+await paint.actions.loadData({ version: DATA_VERSION, shapes: [/* shapes */] })
 
 // Create and change shapes, in a single step of the history
 paint.batch(() => {

@@ -9,6 +9,7 @@ import {
   findLeavesAtPoints,
   getCursorPositionInTransformedCanvas,
   hasPointerMoved,
+  isUnsteadyPointer,
   shouldCancelLongPress
 } from '@canvas/utils/intersect'
 import { indexShapeTree } from '@canvas/utils/shapes/tree'
@@ -267,5 +268,11 @@ describe('pointer moves', () => {
     expect(shouldCancelLongPress(pointer(102, 102), start)).toBe(false)
     expect(shouldCancelLongPress(pointer(110, 100), start)).toBe(true)
     expect(shouldCancelLongPress(pointer(100, 100, 'mouse'), start)).toBe(true)
+  })
+
+  it('tells the finger and the pen, which have a dead zone, from the mouse', () => {
+    expect(isUnsteadyPointer(pointer(100, 100, 'touch'))).toBe(true)
+    expect(isUnsteadyPointer(pointer(100, 100, 'pen'))).toBe(true)
+    expect(isUnsteadyPointer(pointer(100, 100, 'mouse'))).toBe(false)
   })
 })

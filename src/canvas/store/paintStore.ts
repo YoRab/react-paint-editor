@@ -27,7 +27,7 @@ import type {
   ZoomAction
 } from '@canvas/types/editor'
 import type { HoverModeData, SelectionModeContextMenu, SelectionModeData } from '@canvas/types/Mode'
-import type { Point, SelectionType, ShapeEntity, ShapeInput, ShapePatch, StateData, StyleShape } from '@canvas/types/Shapes'
+import type { Point, SelectionType, ShapeEntity, ShapeInput, ShapePatch, StateData } from '@canvas/types/Shapes'
 import type { ToolsType } from '@canvas/types/tools'
 import { applyDataChanges, type BuildReceivedShape } from '@canvas/utils/applyChanges'
 import { compact, insertAt, moveItemPosition } from '@canvas/utils/array'
@@ -36,9 +36,10 @@ import { getDrawingColorAt } from '@canvas/utils/colorPicker'
 import { buildDataToExport, getDataChanges, isSameExport } from '@canvas/utils/data'
 import { shallowEqual } from '@canvas/utils/equality'
 import { ReactPaintError } from '@canvas/utils/error'
-import { decodeJson, downloadFile, encodeShapesInString, getCanvasImage, loadPicture } from '@canvas/utils/file'
+import { decodeJson, downloadFile, encodeShapesInString, getCanvasImage, loadPicture, parseDataJson } from '@canvas/utils/file'
 import { canvasToClientPosition, checkSelectionFrameCollision, clientToCanvasPosition, findShapeAt, findShapesAt } from '@canvas/utils/intersect'
 import { addLaserTrailPoint } from '@canvas/utils/laser'
+import { migrateData } from '@canvas/utils/migrations'
 import { isEqual, isRecord, mergeWith, omitUndefined, replaceArrays, set, withDefaults } from '@canvas/utils/object'
 import { getSelectedShapes } from '@canvas/utils/selectedShapes'
 import { addToSelectedShapes, buildShapesSelection, findHoveredShape, omitFromSelectedShapes, reselect } from '@canvas/utils/selection'
@@ -119,7 +120,8 @@ const createInitialState = (config: PaintConfig): InternalState => ({
   view: {
     canvasSize: getUnscaledCanvasSize(config.width, config.height),
     transformation: DEFAULT_TRANSFORMATION,
-    gridGap: config.options.grid
+    gridGap: config.options.grid,
+    pixelRatio: 1
   },
   interaction: {
     selectionMode: { mode: 'default' },
@@ -183,11 +185,11 @@ const toolValuesOfChange = (values: Record<string, unknown>): Record<string, unk
  * Sets default values of the settings of a tool. The fields the tool has not, and unchanged values, are ignored. A
  * parameter of a custom shape is named params.<parameter>, and its own default is set
  */
-const setToolDefaults = (state: InternalState, toolId: string, style: Record<string, unknown>): InternalState => {
+const setToolDefaults = (state: InternalState, toolId: string, values: Record<string, unknown>): InternalState => {
   let hasChanged = false
   const available = state.tools.available.map(tool => {
     if (tool.id !== toolId) return tool
-    return Object.entries(style).reduce((newTool, [field, value]) => {
+    return Object.entries(values).reduce((newTool, [field, value]) => {
       const path = field.split('.')
       const setting = path.reduce<unknown>((node, key) => (isRecord(node) ? node[key] : undefined), newTool.settings) as
         | { default?: unknown }
@@ -283,7 +285,7 @@ export const createPaintStore = (props: UseReactPaintProps = {}) => {
 
   const store = createStore(createInitialState(resolveConfig(props, latest.overrides).config))
   const selectors = createSelectors()
-  const { registerEvent, unregisterEvent, emit, hasListeners } = createEventEmitter()
+  const { registerEvent, emit, hasListeners } = createEventEmitter()
   const { getState: get, batch } = store
 
   let canvasElement: HTMLCanvasElement | null = null
@@ -679,6 +681,28 @@ export const createPaintStore = (props: UseReactPaintProps = {}) => {
   }
 
   /**
+   * A second pointer down during a gesture: two pointers never edit the drawing, so the gesture of the first one is
+   * cancelled, also once it has drawn. Nothing being saved before its release, the shapes go back to those of the state of
+   * its press, with the changes received since, and so do the selection and the tool. A polygon or a curve being drawn
+   * keeps its points but the one added by the press, and its drawing goes on
+   */
+  const cancelPress = (press: InternalState) => {
+    const state = get()
+    const { base } = state.document
+    // the changes not saved at the press, like a polygon being drawn, are replayed on the base
+    const { shapes } = replayChanges(state, { ...state.document, shapes: base }, ['shapes'], press.document.base, press.document.shapes)
+    const { selectionMode } = press.interaction
+    // the selection of the press follows the changes received since
+    const selection = reselect(press.document.selectedShape, press.document.shapes, shapes, getSettings(state))
+    batch(() => {
+      dispatch({ type: 'SET_SHAPES', shapes, newSelectedShape: selection, save: false })
+      setSelectionMode(selectionMode.mode === 'preview' ? selectionMode : { mode: 'default' })
+      setActiveTool(selectors.selectActiveTool(press))
+      setSelectionFrame(undefined)
+    })
+  }
+
+  /**
    * Undoes or redoes steps of the user: the trees of the document get each step undone or redone on the changes received
    * since, which are kept. A step left without effect, like a change of shapes removed by another instance since, is passed.
    * The selection of the step reached follows the shapes
@@ -787,16 +811,6 @@ export const createPaintStore = (props: UseReactPaintProps = {}) => {
     if (newShapes !== shapes) resetShapes(newShapes)
   }
 
-  /** Swaps two shapes of the same group, or of the drawing itself */
-  const swapShapes = (firstId: string, secondId: string) => {
-    const { shapes } = get().document
-    const { parentId, list } = getSiblingList(shapes, firstId)
-    if (getParentGroup(shapes, secondId)?.id !== parentId) return
-    const from = list.findIndex(shape => shape.id === firstId)
-    const to = list.findIndex(shape => shape.id === secondId)
-    if (from !== -1 && to !== -1) setLists(new Map([[parentId, moveItemPosition(list, from, to)]]))
-  }
-
   /** Moves shapes in the order of their group: the shapes of each group are moved among their sibling shapes */
   const moveShapes = (shapesToMove: ShapeEntity[], action: ShapesOrderAction) => {
     const byParent = groupByParent(
@@ -808,21 +822,20 @@ export const createPaintStore = (props: UseReactPaintProps = {}) => {
     )
   }
 
-  const toggleShapesField = (shapesToToggle: ShapeEntity[], field: 'visible' | 'locked') => {
+  /** Shows or hides, locks or unlocks shapes: the ones which already have the value are left as they are */
+  const setShapesField = (ids: string[], field: 'visible' | 'locked', value: boolean) => {
     const { shapes } = get().document
     const { byId } = indexShapeTree(shapes)
-    const toggled = new Map<string, ShapeEntity>()
-    for (const { id } of shapesToToggle) {
+    const changed = new Map<string, ShapeEntity>()
+    for (const { id } of resolveShapes(ids)) {
       const shape = byId.get(id)
-      if (shape) toggled.set(id, field === 'visible' ? set('visible', shape.visible === false, shape) : set('locked', !shape.locked, shape))
+      const current = field === 'visible' ? shape?.visible !== false : !!shape?.locked
+      if (shape && current !== value) changed.set(id, set(field, value, shape))
     }
+    if (!changed.size) return
     // the selection follows: a shape of a group which is locked is replaced by the group
-    resetShapes(replaceShapesInTree(shapes, toggled, getSettings()))
+    resetShapes(replaceShapesInTree(shapes, changed, getSettings()))
   }
-
-  const toggleShapesVisibility = (shapesToToggle: ShapeEntity[]) => toggleShapesField(shapesToToggle, 'visible')
-
-  const toggleShapesLock = (shapesToToggle: ShapeEntity[]) => toggleShapesField(shapesToToggle, 'locked')
 
   /** Selects the shapes crossed by the selection frame, which ends at the cursor */
   const refreshSelectedShapes = (ctx: CanvasRenderingContext2D, cursorPosition: Point) =>
@@ -909,6 +922,10 @@ export const createPaintStore = (props: UseReactPaintProps = {}) => {
 
   const setCanvasSize = (canvasSize: CanvasSize) =>
     update(state => (isEqual(canvasSize, state.view.canvasSize) ? state : { ...state, view: { ...state.view, canvasSize } }))
+
+  /** The canvas has the density of the screen: it is drawn in more pixels, the sizes in pixels of the screen do not change */
+  const setPixelRatio = (pixelRatio: number) =>
+    update(state => (state.view.pixelRatio === pixelRatio ? state : { ...state, view: { ...state.view, pixelRatio } }))
 
   const updateTransformation = (compute: (transformation: CanvasTransformation, state: InternalState) => CanvasTransformation) =>
     update(state => withTransformation(state, compute(state.view.transformation, state)))
@@ -1058,26 +1075,39 @@ export const createPaintStore = (props: UseReactPaintProps = {}) => {
   /** The image of a sticker tool, loaded or not: the shape it draws takes it, and is drawn once it is loaded */
   const getStickerImage = (src: string) => loadStickerImage(src).img
 
+  /**
+   * Replaces the drawing by loaded data at once, so that the last data loaded are the ones kept: their pictures are drawn
+   * once loaded, like the ones of addShapes. Resolved once the pictures are loaded or have failed
+   */
   const resetCanvas = async (json: ShapeInput[], options: ResetOptions) => {
     const state = get()
-    const { shapes, failedPictures, droppedCustomShapes } = await decodeImportedData(json, {
+    const { shapes, droppedCustomShapes } = decodeImportedData(json, {
       ctx: getMeasureContext(),
       settings: getSettings(state),
       tools: state.tools.available,
-      usedIds: new Set(),
-      resolvePictureSrc: getPictureSrcResolver()
+      usedIds: new Set()
     })
     resetCanvasWithShapeEntity(shapes, options)
-    // once the other shapes are loaded, so that the listeners read the new drawing
-    for (const { shape, error } of failedPictures) emit('pictureLoadFailed', shape, error)
+    // once the drawing is applied, so that the listeners read it
     for (const shape of droppedCustomShapes) emit('customShapeLoadFailed', shape)
+    await Promise.all(getShapeLeaves(shapes).map(shape => loadPictureOf(shape, options.source)))
   }
+
+  /**
+   * Loads shapes of the config, the ones of the props or of clearCallback: no promise gives their failure back to the
+   * consumer, dataLoadFailed tells it
+   */
+  const resetCanvasFromConfig = (json: ShapeInput[], options: ResetOptions) =>
+    resetCanvas(json, options).catch((error: unknown) => {
+      console.warn('react-paint: the shapes could not be loaded', error)
+      emit('dataLoadFailed', error)
+    })
 
   /** Loads the shapes given in the props of the hook, once */
   const init = () => {
     if (initialized) return
     initialized = true
-    if (latest.props.shapes) void resetCanvas(latest.props.shapes, { clearHistory: true, source: 'remote' })
+    if (latest.props.shapes) void resetCanvasFromConfig(latest.props.shapes, { clearHistory: true, source: 'remote' })
   }
 
   const getCurrentImage = (options?: ExportImageOptions) => getCanvasImage({ shapes: get().document.shapes, settings: getSettings(), options })
@@ -1224,11 +1254,12 @@ export const createPaintStore = (props: UseReactPaintProps = {}) => {
   }
 
   /**
-   * Redraws a picture once its image is loaded: the shape is replaced by a copy, fitted to the proportions of the image
-   * when it has none of its own, without a step in the history. The events are only emitted while the picture is still in
-   * the drawing with this image: it may have been removed or given another source
+   * Redraws a picture once its image is loaded, or as a frame once it has failed: the shape is replaced by a copy, fitted
+   * to the proportions of the image when it has none of its own, without a step in the history. The events are only emitted
+   * while the picture is still in the drawing with this image: it may have been removed or given another source. Resolved
+   * once the picture is redrawn, the copy having the source given, 'user' by default
    */
-  const loadPictureOf = (shape: ShapeEntity) => {
+  const loadPictureOf = async (shape: ShapeEntity, source?: ChangeSource): Promise<void> => {
     if (shape.type !== 'picture') return
     const findCurrent = () => {
       const current = indexShapeTree(get().document.shapes).byId.get(shape.id)
@@ -1243,15 +1274,20 @@ export const createPaintStore = (props: UseReactPaintProps = {}) => {
         const current = findCurrent()
         if (!current) return
         const loaded = fitPictureToImage(current, getSettings())
-        updateShapes([loaded])
+        updateShapes([loaded], false, source)
         emit('pictureLoaded', loaded)
       },
       (error: unknown) => {
         console.warn(`react-paint: the picture ${shape.id} could not be loaded`, error)
         const current = findCurrent()
-        if (current) emit('pictureLoadFailed', current, error)
+        if (!current) return
+        const failed = { ...current }
+        updateShapes([failed], false, source)
+        emit('pictureLoadFailed', failed, error)
       }
     )
+    // after the redraw: the reactions run in turn, and the error of a listener does not reject it
+    await loading.catch(() => undefined)
   }
 
   /** Creates shapes given by the consumer, and returns their ids */
@@ -1390,8 +1426,7 @@ export const createPaintStore = (props: UseReactPaintProps = {}) => {
       const tool = findSelectableTool(get().tools.available, typeof toolOrId === 'string' ? toolOrId : toolOrId.id)
       if (tool) selectTool(tool)
     },
-    updateToolSettings: (toolId, field, value) => update(state => setToolDefaults(state, toolId, { [field]: value })),
-    setToolStyle: (toolId, style) => update(state => setToolDefaults(state, toolId, style)),
+    setToolSettings: (toolId, values) => update(state => setToolDefaults(state, toolId, values)),
 
     selectShapes: (ids, { mode = 'replace' } = {}) => {
       const shapes = resolveShapes(ids)
@@ -1438,10 +1473,8 @@ export const createPaintStore = (props: UseReactPaintProps = {}) => {
         changeShapes(shapes, (shapesToChange, settings) => shapesToChange.map(shape => updateShapeStyle(ctx, shape, style, settings)), options)
         if (updateTool) keepToolDefaults(shapes.map(shape => [shape, style]))
       }),
-    updateShapesStyle: (ids, field, value, { save = true } = {}) => actions.setShapesStyle(ids, { [field]: value } as StyleShape, { save }),
 
     moveShapes: (ids, action) => moveShapes(resolveShapes(ids), action),
-    swapShapes,
     setShapeIndex: (id, index) => {
       const { parentId, list } = getSiblingList(get().document.shapes, id)
       const from = list.findIndex(shape => shape.id === id)
@@ -1461,16 +1494,8 @@ export const createPaintStore = (props: UseReactPaintProps = {}) => {
       )
     },
 
-    toggleShapesVisibility: ids => toggleShapesVisibility(resolveShapes(ids)),
-    toggleShapesLock: ids => toggleShapesLock(resolveShapes(ids)),
-    setShapesVisibility: (ids, visible) => {
-      const shapesToToggle = resolveShapes(ids).filter(shape => (shape.visible !== false) !== visible)
-      if (shapesToToggle.length) toggleShapesVisibility(shapesToToggle)
-    },
-    setShapesLocked: (ids, locked) => {
-      const shapesToToggle = resolveShapes(ids).filter(shape => !!shape.locked !== locked)
-      if (shapesToToggle.length) toggleShapesLock(shapesToToggle)
-    },
+    setShapesVisibility: (ids, visible) => setShapesField(ids, 'visible', visible),
+    setShapesLocked: (ids, locked) => setShapesField(ids, 'locked', locked),
 
     insertShapePoint: (id, index, point) => {
       const shape = getPointShape(id, ['polygon', 'curve'])
@@ -1532,9 +1557,9 @@ export const createPaintStore = (props: UseReactPaintProps = {}) => {
       const { clearCallback: callback } = resolveConfig(latest.props, latest.overrides)
       const defaultShapes = latest.props.shapes
       if (typeof callback !== 'string') {
-        void resetCanvas(callback(), { clearHistory: false, source: 'user' })
+        void resetCanvasFromConfig(callback(), { clearHistory: false, source: 'user' })
       } else if (callback === 'defaultShapes' && defaultShapes !== undefined) {
-        void resetCanvas(defaultShapes, { clearHistory: false, source: 'user' })
+        void resetCanvasFromConfig(defaultShapes, { clearHistory: false, source: 'user' })
       } else {
         resetCanvasWithShapeEntity([], { clearHistory: false, source: 'user' })
       }
@@ -1542,8 +1567,9 @@ export const createPaintStore = (props: UseReactPaintProps = {}) => {
     // the file is chosen by the user, while data given by the code come from elsewhere
     loadFile: async (file, { source = 'user', ...options } = {}) => actions.loadData((await decodeJson(file)) as StateData, { ...options, source }),
     loadData: async (data, { clearHistory = true, source = 'remote' } = {}) => {
-      const parsed: unknown = typeof data === 'string' ? JSON.parse(data) : data
-      const shapes = isRecord(parsed) && Array.isArray(parsed.shapes) ? (parsed.shapes as ShapeInput[]) : []
+      const parsed = typeof data === 'string' ? parseDataJson(data) : data
+      const migrated = isRecord(parsed) ? migrateData(parsed) : {}
+      const shapes = Array.isArray(migrated.shapes) ? (migrated.shapes as ShapeInput[]) : []
       await resetCanvas(shapes, { clearHistory, source })
     },
     exportPicture: ({ fileName, ...options } = {}) => downloadFile(getCurrentImage(options), fileName ?? getPictureFileName(options.format)),
@@ -1636,13 +1662,10 @@ export const createPaintStore = (props: UseReactPaintProps = {}) => {
     getEditorState: () => selectors.selectEditorState(get()),
     actions,
     registerEvent,
-    unregisterEvent,
     emit,
     hasListeners,
     setConfig,
     init,
-    /** Resets the shapes from data given by the consumer */
-    resetCanvas: (json: ShapeInput[] = [], clearHistory = true) => resetCanvas(json, { clearHistory, source: 'remote' }),
     getCurrentImage,
     getCurrentData,
     getShape: (id: string): ShapeEntity | undefined => getShapesById().get(id),
@@ -1673,6 +1696,7 @@ export const createPaintStore = (props: UseReactPaintProps = {}) => {
     updateShapes,
     removeShapes,
     cancelGesture,
+    cancelPress,
     refreshSelectedShapes,
     setSelectionFrame,
     setActiveTool,
@@ -1686,6 +1710,7 @@ export const createPaintStore = (props: UseReactPaintProps = {}) => {
     addLaserPoint,
     pickColorAt,
     setCanvasSize,
+    setPixelRatio,
     setTransformation,
     getViewBounds,
     zoomBy,

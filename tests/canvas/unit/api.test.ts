@@ -1,12 +1,19 @@
 import { createPaintStore, type PaintStore } from '@canvas/store/paintStore'
 import type { ShapeEntity, ShapeInput } from '@canvas/types/Shapes'
 import { getScaledCanvasSize } from '@canvas/utils/canvas'
+import { ReactPaintError } from '@canvas/utils/error'
+import { DATA_VERSION } from '@canvas/utils/migrations'
 import { describe, expect, it, vi } from 'vitest'
 import { createLoadedStore, extendTo, RECTS, stubPath2D } from './helpers'
 
 vi.mock('@canvas/utils/data', async importOriginal => {
   const actual = await importOriginal<typeof import('@canvas/utils/data')>()
   return { ...actual, buildDataToExport: vi.fn(actual.buildDataToExport) }
+})
+
+vi.mock('@canvas/utils/migrations', async importOriginal => {
+  const actual = await importOriginal<typeof import('@canvas/utils/migrations')>()
+  return { ...actual, migrateData: vi.fn(actual.migrateData) }
 })
 
 stubPath2D()
@@ -27,7 +34,7 @@ describe('stable ids', () => {
     expect(data.shapes?.map(shape => shape.id)).toEqual(ids)
 
     const otherStore = createPaintStore()
-    await otherStore.resetCanvas(data.shapes)
+    await otherStore.actions.loadData(data)
     expect(getIds(otherStore)).toEqual(ids)
   })
 
@@ -100,7 +107,7 @@ describe('addShapes', () => {
 
   it('gives the font size of its tool to a text without size', () => {
     const store = createPaintStore()
-    store.actions.updateToolSettings('react-paint-text', 'fontSize', 50)
+    store.actions.setToolSettings('react-paint-text', { fontSize: 50 })
     const [bySize, byFontSize] = store.actions.addShapes([
       { type: 'text', x: 0, y: 0, value: ['Hello'] },
       { type: 'text', x: 0, y: 0, value: ['Hello'], fontSize: 20 }
@@ -428,7 +435,7 @@ describe('dedicated actions', () => {
 
   it('sets the default style of a tool, ignoring the fields it has not', () => {
     const store = createPaintStore()
-    store.actions.setToolStyle('react-paint-rect', { fillColor: 'blue', fontBold: true })
+    store.actions.setToolSettings('react-paint-rect', { fillColor: 'blue', fontBold: true })
     const rectTool = store.getEditorState().tools.find(tool => tool.id === 'react-paint-rect')
     expect(rectTool?.type === 'rect' && rectTool.settings.fillColor.default).toBe('blue')
     expect(rectTool?.settings).not.toHaveProperty('fontBold')
@@ -562,6 +569,71 @@ describe('dedicated actions', () => {
     expect(getIds(store)).toHaveLength(2)
     expect(store.getEditorState().history.canUndo).toBe(true)
   })
+
+  it('loads the data once converted to the current version of their format', async () => {
+    const { migrateData } = await import('@canvas/utils/migrations')
+    const store = createPaintStore()
+    // a migration which would replace the shapes of the data
+    vi.mocked(migrateData).mockImplementationOnce(data => ({ ...data, shapes: [{ ...RECT, id: 'migrated' }] }))
+    await store.actions.loadData(JSON.stringify({ version: 0, shapes: [] }))
+    expect(migrateData).toHaveBeenLastCalledWith({ version: 0, shapes: [] })
+    expect(getIds(store)).toEqual(['migrated'])
+  })
+
+  it('gives the version of the shapes written by the code to the migrations, which leave the current one as it is', async () => {
+    const { migrateData } = await import('@canvas/utils/migrations')
+    const store = createPaintStore()
+    const shapes: ShapeInput[] = [{ ...RECT, id: 'written' }]
+    await store.actions.loadData({ version: DATA_VERSION, shapes })
+    expect(migrateData).toHaveBeenLastCalledWith({ version: DATA_VERSION, shapes })
+    expect(getIds(store)).toEqual(['written'])
+  })
+
+  it('loads the data of the betas, which have no version, as before: the fields removed then are not converted', async () => {
+    const line = {
+      id: 'line',
+      type: 'line',
+      points: [
+        [0, 0],
+        [100, 100]
+      ],
+      style: { lineArrow: 3 }
+    } as unknown as ShapeInput
+    const store = createPaintStore()
+    await store.actions.loadData({ shapes: [line] })
+    const [loaded] = store.getCurrentData().shapes ?? []
+    expect(loaded).toMatchObject({ id: 'line', style: { lineArrow: 3 } })
+    expect(loaded?.style).not.toHaveProperty('arrowStart')
+    expect(loaded?.style).not.toHaveProperty('arrowEnd')
+  })
+
+  it('rejects loadData with dataVersionUnsupported, and keeps the drawing, when the data are of a newer version', async () => {
+    const store = await createLoadedStore()
+    const ids = getIds(store)
+    const loading = store.actions.loadData({ version: DATA_VERSION + 1, shapes: [{ ...RECT, id: 'newer' }] })
+    await expect(loading).rejects.toBeInstanceOf(ReactPaintError)
+    await expect(loading).rejects.toMatchObject({ code: 'dataVersionUnsupported', details: { version: DATA_VERSION + 1, max: DATA_VERSION } })
+    expect(getIds(store)).toEqual(ids)
+  })
+
+  it('rejects loadData with fileInvalidJson, like loadFile, and keeps the drawing, when its string is not JSON', async () => {
+    const store = await createLoadedStore()
+    const ids = getIds(store)
+    const loading = store.actions.loadData('not a project')
+    await expect(loading).rejects.toBeInstanceOf(ReactPaintError)
+    await expect(loading).rejects.toMatchObject({ code: 'fileInvalidJson', cause: expect.any(SyntaxError) })
+    expect(getIds(store)).toEqual(ids)
+  })
+
+  it('rejects loadData with the index of a shape which cannot be built, and keeps the drawing', async () => {
+    const store = await createLoadedStore()
+    const ids = getIds(store)
+    // a polygon without its points
+    const loading = store.actions.loadData({ shapes: [RECTS[0], { type: 'polygon' }] as unknown as ShapeInput[] })
+    await expect(loading).rejects.toBeInstanceOf(ReactPaintError)
+    await expect(loading).rejects.toMatchObject({ code: 'dataInvalid', details: { index: 1 }, cause: expect.any(TypeError) })
+    expect(getIds(store)).toEqual(ids)
+  })
 })
 
 describe('options and settings', () => {
@@ -642,7 +714,7 @@ describe('options and settings', () => {
 
   it('restores the settings changed while editing', () => {
     const store = createPaintStore({ options: { grid: 10, size: 'infinite' } })
-    store.actions.setToolStyle('react-paint-rect', { strokeColor: 'red' })
+    store.actions.setToolSettings('react-paint-rect', { strokeColor: 'red' })
     store.actions.setGridGap(40)
     store.actions.zoomTo(2)
     store.actions.selectTool('react-paint-rect')
@@ -828,6 +900,15 @@ describe('dataChanged', () => {
     store.actions.addShapes([RECT])
     expect(buildDataToExport).toHaveBeenCalledTimes(1)
     expect(listener).toHaveBeenCalledTimes(1)
+  })
+
+  it('gives the version of the format of the data, like getCurrentData', () => {
+    const store = createPaintStore()
+    const listener = vi.fn()
+    store.registerEvent('dataChanged', listener)
+    store.actions.addShapes([RECT])
+    expect(listener.mock.lastCall?.[0]).toMatchObject({ version: DATA_VERSION, shapes: [RECT] })
+    expect(store.getCurrentData()).toMatchObject({ version: DATA_VERSION, config: { width: 1000, height: 600 } })
   })
 
   it('gives new objects on each change: the data received can be changed without changing the next ones', () => {

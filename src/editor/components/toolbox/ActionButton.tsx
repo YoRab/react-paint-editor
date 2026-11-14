@@ -1,5 +1,5 @@
 import Button from '@editor/components/common/Button'
-import { getShortcutProps, ShortcutLabel } from '@editor/components/common/ShortcutHint'
+import { ShortcutLabel, useShortcutProps } from '@editor/components/common/ShortcutHint'
 import { ACTION_SHORTCUTS } from '@editor/constants/shortcuts'
 import useEditorLocale from '@editor/hooks/useEditorLocale'
 import type { EditorActionTool } from '@editor/types/tools'
@@ -19,18 +19,11 @@ const ActionButton = ({ type, withText = false, disabled = false, role, onClick 
     onClick()
   }
   const shortcut = ACTION_SHORTCUTS[type.type]
-  const locale = useEditorLocale()
-  const label = locale.editor.actions[type.type]
+  const label = useEditorLocale().editor.actions[type.type]
+  const shortcutProps = useShortcutProps(label, shortcut)
 
   return (
-    <Button
-      disabled={disabled}
-      onClick={handleClick}
-      {...getShortcutProps(label, shortcut, locale)}
-      icon={type.icon}
-      role={role}
-      data-testid={`tool-${type.type}`}
-    >
+    <Button disabled={disabled} onClick={handleClick} {...shortcutProps} icon={type.icon} role={role} data-testid={`tool-${type.type}`}>
       {withText ? <ShortcutLabel label={label} shortcut={shortcut} /> : undefined}
     </Button>
   )

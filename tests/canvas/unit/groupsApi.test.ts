@@ -163,9 +163,10 @@ describe('shapes of the groups', () => {
     expect(getChildIds(store, 'outer')).toEqual(['inner', 'c'])
 
     const length = getHistoryLength(store)
-    store.actions.swapShapes('a', 'd')
+    // a shape left at its place saves no step
+    store.actions.setShapeIndex('a', 0)
     expect(getHistoryLength(store)).toBe(length)
-    store.actions.swapShapes('a', 'b')
+    store.actions.setShapeIndex('a', 1)
     expect(getChildIds(store, 'inner')).toEqual(['b', 'a'])
   })
 })
