@@ -163,7 +163,7 @@ import LinkTo from '@storybook/addon-links/react';
         <li><code>groupShapes(ids)</code> - Groups the shapes in a new group, in the place of the shape in front, and returns its id. Returns <code>undefined</code>, without changing anything, for less than 2 shapes or for all the shapes of a group</li>
         <li><code>ungroupShapes(ids)</code> - Puts the shapes of the groups among the shapes in their places, hidden, locked and faded with them, and returns their ids. The names, the rotations and the data of the groups are lost</li>
         <li><code>translateShapes(ids, [dx, dy])</code>, <code>rotateShapes(ids, angle, {'{ center? }'})</code>, <code>resizeShapes(ids, box)</code></li>
-        <li><code>moveShapes(ids, 'first' | 'last' | 'forward' | 'backward')</code>, <code>swapShapes(firstId, secondId)</code>, <code>setShapeIndex(id, index)</code>, <code>reorderShapes(ids)</code> - Each shape among the shapes of its group, which it never leaves: <code>swapShapes</code> only swaps shapes of the same group</li>
+        <li><code>moveShapes(ids, 'first' | 'last' | 'forward' | 'backward')</code>, <code>setShapeIndex(id, index)</code>, <code>reorderShapes(ids)</code> - Each shape among the shapes of its group, which it never leaves</li>
         <li><code>setShapesVisibility(ids, visible)</code>, <code>setShapesLocked(ids, locked)</code> - Set the same value on all shapes. To toggle a shape, give the opposite of its value: <code>setShapesLocked([id], !shape.locked)</code></li>
         <li><code>setShapesStyle(ids, style, {'{ updateTool?, save? }'})</code> - Updates style fields, a single one too: <code>setShapesStyle(ids, {"{ strokeColor: 'red' }"})</code>. Text size is recomputed when changing the font</li>
         <li><code>transformShapes(ids, 'flipHorizontally' | 'flipVertically' | 'rotateClockwise' | 'rotateCounterclockwise')</code></li>
@@ -990,7 +990,7 @@ paint.actions.panBy([50, 0]) // scrolls the view, in the units of the drawing`} 
           </tr>
           <tr>
             <td>Order</td>
-            <td><code>moveShapes(ids, action)</code>, <code>setShapeIndex(id, index)</code> (0 is the foreground), <code>reorderShapes(ids)</code>, <code>swapShapes(id, id)</code></td>
+            <td><code>moveShapes(ids, action)</code>, <code>setShapeIndex(id, index)</code> (0 is the foreground), <code>reorderShapes(ids)</code></td>
           </tr>
           <tr>
             <td>Groups</td>

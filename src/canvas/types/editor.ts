@@ -254,8 +254,6 @@ export type EditorActions = {
 
   /** Moves the shapes in the order of their group, or of the drawing: a shape never leaves its group */
   moveShapes: (ids: string[], action: ShapesOrderAction) => void
-  /** Swaps two shapes of the same group, or of the drawing */
-  swapShapes: (firstId: string, secondId: string) => void
   /** Moves a shape at an index of the shapes of its group, or of the drawing, 0 being the foreground */
   setShapeIndex: (id: string, index: number) => void
   /**

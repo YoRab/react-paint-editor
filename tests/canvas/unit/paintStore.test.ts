@@ -141,7 +141,7 @@ describe('actions', () => {
     expect(getIds(store)).toEqual([third, first, second])
     store.actions.moveShapes([third!], 'backward')
     expect(getIds(store)).toEqual([first, third, second])
-    store.actions.swapShapes(first!, second!)
+    store.actions.setShapeIndex(first!, 2)
     expect(getIds(store)).toEqual([third, second, first])
   })
 

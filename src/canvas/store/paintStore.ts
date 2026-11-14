@@ -811,16 +811,6 @@ export const createPaintStore = (props: UseReactPaintProps = {}) => {
     if (newShapes !== shapes) resetShapes(newShapes)
   }
 
-  /** Swaps two shapes of the same group, or of the drawing itself */
-  const swapShapes = (firstId: string, secondId: string) => {
-    const { shapes } = get().document
-    const { parentId, list } = getSiblingList(shapes, firstId)
-    if (getParentGroup(shapes, secondId)?.id !== parentId) return
-    const from = list.findIndex(shape => shape.id === firstId)
-    const to = list.findIndex(shape => shape.id === secondId)
-    if (from !== -1 && to !== -1) setLists(new Map([[parentId, moveItemPosition(list, from, to)]]))
-  }
-
   /** Moves shapes in the order of their group: the shapes of each group are moved among their sibling shapes */
   const moveShapes = (shapesToMove: ShapeEntity[], action: ShapesOrderAction) => {
     const byParent = groupByParent(
@@ -1486,7 +1476,6 @@ export const createPaintStore = (props: UseReactPaintProps = {}) => {
       }),
 
     moveShapes: (ids, action) => moveShapes(resolveShapes(ids), action),
-    swapShapes,
     setShapeIndex: (id, index) => {
       const { parentId, list } = getSiblingList(get().document.shapes, id)
       const from = list.findIndex(shape => shape.id === id)

@@ -12,4 +12,8 @@ describe('removed duplicates', () => {
     expect(actions).not.toHaveProperty('toggleShapesVisibility')
     expect(actions).not.toHaveProperty('toggleShapesLock')
   })
+
+  it('has no swapShapes: setShapeIndex moves a shape to the place of another one', () => {
+    expect(createPaintStore().actions).not.toHaveProperty('swapShapes')
+  })
 })
