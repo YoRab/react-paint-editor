@@ -2,8 +2,8 @@ import { CANVAS_SHORTCUTS, formatShortcut, type Shortcut, type ToolsType } from 
 import Modal from '@editor/components/common/Modal'
 import { ACTION_SHORTCUTS, HELP_SHORTCUT, TOOL_SHORTCUTS } from '@editor/constants/shortcuts'
 import useEditorLocale, { type EditorLocaleValue } from '@editor/hooks/useEditorLocale'
+import useIsMacOs from '@editor/hooks/useIsMacOs'
 import { getToolLabel } from '@editor/utils/style'
-import { isMacOs } from '@editor/utils/util'
 import './ShortcutsModal.css'
 
 /** A line of the list: its keys, or a gesture told by a text */
@@ -97,7 +97,7 @@ type ShortcutsModalProps = {
 
 /** List of the shortcuts of the editor and of the canvas, opened by ? and by the menu */
 const ShortcutsModal = ({ onClose, tools, withLoadAndSave, withExport, withZoom }: ShortcutsModalProps) => {
-  const isMac = isMacOs()
+  const isMac = useIsMacOs()
   const locale = useEditorLocale()
   const { title } = locale.editor.shortcuts
   return (

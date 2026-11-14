@@ -1,6 +1,6 @@
 import Button from '@editor/components/common/Button'
 import Menu from '@editor/components/common/Menu'
-import { getShortcutProps, ShortcutLabel } from '@editor/components/common/ShortcutHint'
+import { ShortcutLabel, useShortcutProps } from '@editor/components/common/ShortcutHint'
 import { menuIcon, publicIcon } from '@editor/constants/icons'
 import { HELP_SHORTCUT } from '@editor/constants/shortcuts'
 import {
@@ -63,8 +63,8 @@ const MenuGroup = ({
 }: MenuGroupType) => {
   // the disclosure closes the menu with Escape and Tab, giving the focus back to the button
   const { containerRef, isOpen, setIsOpen, close: closeMenu, triggerRef, panelRef, panelId, triggerProps } = usePopup()
-  const locale = useEditorLocale()
-  const messages = locale.editor
+  const messages = useEditorLocale().editor
+  const shortcutsProps = useShortcutProps(messages.shortcuts.title, HELP_SHORTCUT)
   // The menu closes in the render of a modal opened by its item: the focus goes back to the button of the menu first, where
   // the modal gives it back
   const triggerAndCloseMenu =
@@ -162,7 +162,7 @@ const MenuGroup = ({
             <ActionButton withText={true} role='menuitem' disabled={disabled} type={EXPORT_TOOL} onClick={triggerAndCloseMenu(toggleExportModal)} />
           )}
           {(withActionsInMenu || withUploadPicture || withUrlPicture || withLoadAndSave || withExport) && <hr />}
-          <Button role='menuitem' onClick={triggerAndCloseMenu(openShortcuts)} {...getShortcutProps(messages.shortcuts.title, HELP_SHORTCUT, locale)}>
+          <Button role='menuitem' onClick={triggerAndCloseMenu(openShortcuts)} {...shortcutsProps}>
             <ShortcutLabel label={messages.shortcuts.title} shortcut={HELP_SHORTCUT} />
           </Button>
         </Menu>

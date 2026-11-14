@@ -75,9 +75,7 @@ describe('server-side rendering of the editor', () => {
     expect(getUndoButton()?.getAttribute('aria-keyshortcuts')).toBe('Control+Z')
   })
 
-  // confirmed defect, to fix at the sub-step 6.4b of the plan: the shortcuts of the buttons are written for the platform
-  // read during the render, so their title and aria-keyshortcuts differ on a Mac, and React 18 keeps those of the server
-  it.fails('hydrates in a browser of a Mac what the server rendered, then gives the keys of a Mac', async () => {
+  it('hydrates in a browser of a Mac what the server rendered, then gives the keys of a Mac', async () => {
     expect(await hydrate(MAC_USER_AGENT)).toEqual([])
     expect(getUndoButton()?.getAttribute('title')).toContain('⌘Z')
     expect(getUndoButton()?.getAttribute('aria-keyshortcuts')).toBe('Meta+Z')

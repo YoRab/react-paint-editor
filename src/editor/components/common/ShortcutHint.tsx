@@ -1,13 +1,14 @@
 import { formatShortcut, getAriaKeyShortcut, type Shortcut } from '@canvas/index'
-import useEditorLocale, { type EditorLocaleValue } from '@editor/hooks/useEditorLocale'
-import { isMacOs } from '@editor/utils/util'
+import useEditorLocale from '@editor/hooks/useEditorLocale'
+import useIsMacOs from '@editor/hooks/useIsMacOs'
 
 /** Text of a shortcut at the end of an item of a menu: the assistive technologies read aria-keyshortcuts instead */
 const ShortcutHint = ({ shortcut }: { shortcut: Shortcut }) => {
   const { canvas } = useEditorLocale()
+  const isMac = useIsMacOs()
   return (
     <span className='react-paint-editor-shortcut' aria-hidden='true'>
-      {formatShortcut(shortcut, isMacOs(), canvas.keys)}
+      {formatShortcut(shortcut, isMac, canvas.keys)}
     </span>
   )
 }
@@ -24,9 +25,10 @@ export const ShortcutLabel = ({ label, shortcut }: { label: string; shortcut?: S
  * Props of a button with a shortcut: its name stays its label, its title adds the shortcut, shown by the pointer and by the
  * tooltip of the keyboard
  */
-export const getShortcutProps = (label: string, shortcut: Shortcut | undefined, { canvas, editor, format }: EditorLocaleValue) => {
+export const useShortcutProps = (label: string, shortcut: Shortcut | undefined) => {
+  const { canvas, editor, format } = useEditorLocale()
+  const isMac = useIsMacOs()
   if (!shortcut) return { title: label }
-  const isMac = isMacOs()
   return {
     title: format(editor.common.shortcutTitle, { label, shortcut: formatShortcut(shortcut, isMac, canvas.keys) }),
     'aria-label': label,

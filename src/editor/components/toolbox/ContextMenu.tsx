@@ -9,13 +9,14 @@ import {
   usePaint,
   usePaintState
 } from '@canvas/index'
-import { clamp, isMacOs } from '@editor/utils/util'
+import { clamp } from '@editor/utils/util'
 import './ContextMenu.css'
 import Button from '@editor/components/common/Button'
 import Menu from '@editor/components/common/Menu'
 import ShortcutHint from '@editor/components/common/ShortcutHint'
 import { rightChevronIcon } from '@editor/constants/icons'
 import useEditorLocale from '@editor/hooks/useEditorLocale'
+import useIsMacOs from '@editor/hooks/useIsMacOs'
 import useMenu from '@editor/hooks/useMenu'
 import usePressOutside from '@editor/hooks/usePressOutside'
 import { type ReactNode, type RefObject, useEffect, useRef, useState } from 'react'
@@ -32,12 +33,15 @@ const SUB_MENU_WIDTH = 260
 
 type ItemType = { onClick: () => void; disabled?: boolean; shortcut?: Shortcut; children: ReactNode }
 
-const Item = ({ onClick, disabled, shortcut, children }: ItemType) => (
-  <Button role='menuitem' onClick={onClick} disabled={disabled} aria-keyshortcuts={shortcut ? getAriaKeyShortcut(shortcut, isMacOs()) : undefined}>
-    {children}
-    {shortcut && <ShortcutHint shortcut={shortcut} />}
-  </Button>
-)
+const Item = ({ onClick, disabled, shortcut, children }: ItemType) => {
+  const isMac = useIsMacOs()
+  return (
+    <Button role='menuitem' onClick={onClick} disabled={disabled} aria-keyshortcuts={shortcut ? getAriaKeyShortcut(shortcut, isMac) : undefined}>
+      {children}
+      {shortcut && <ShortcutHint shortcut={shortcut} />}
+    </Button>
+  )
+}
 
 type SubmenuItemType = {
   menu: ReturnType<typeof useMenu>
