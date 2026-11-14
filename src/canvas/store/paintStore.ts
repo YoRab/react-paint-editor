@@ -27,7 +27,7 @@ import type {
   ZoomAction
 } from '@canvas/types/editor'
 import type { HoverModeData, SelectionModeContextMenu, SelectionModeData } from '@canvas/types/Mode'
-import type { Point, SelectionType, ShapeEntity, ShapeInput, ShapePatch, StateData, StyleShape } from '@canvas/types/Shapes'
+import type { Point, SelectionType, ShapeEntity, ShapeInput, ShapePatch, StateData } from '@canvas/types/Shapes'
 import type { ToolsType } from '@canvas/types/tools'
 import { applyDataChanges, type BuildReceivedShape } from '@canvas/utils/applyChanges'
 import { compact, insertAt, moveItemPosition } from '@canvas/utils/array'
@@ -1485,7 +1485,6 @@ export const createPaintStore = (props: UseReactPaintProps = {}) => {
         changeShapes(shapes, (shapesToChange, settings) => shapesToChange.map(shape => updateShapeStyle(ctx, shape, style, settings)), options)
         if (updateTool) keepToolDefaults(shapes.map(shape => [shape, style]))
       }),
-    updateShapesStyle: (ids, field, value, { save = true } = {}) => actions.setShapesStyle(ids, { [field]: value } as StyleShape, { save }),
 
     moveShapes: (ids, action) => moveShapes(resolveShapes(ids), action),
     swapShapes,

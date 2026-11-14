@@ -226,7 +226,7 @@ const MyToolbar = () => {
         </button>
       ))}
       <button disabled={!canUndo} onClick={paint.actions.undo}>Undo</button>
-      <button disabled={!selectedIds.length} onClick={() => paint.actions.updateShapesStyle(selectedIds, 'strokeColor', 'red')}>Red</button>
+      <button disabled={!selectedIds.length} onClick={() => paint.actions.setShapesStyle(selectedIds, { strokeColor: 'red' })}>Red</button>
     </div>
   )
 }

@@ -358,7 +358,7 @@ describe('events', () => {
 
     // The selection object is rebuilt, with the same shapes
     store.actions.selectShapes([first!, second!])
-    store.actions.updateShapesStyle([first!], 'strokeColor', 'blue')
+    store.actions.setShapesStyle([first!], { strokeColor: 'blue' })
     expect(events.selectionChanged).toHaveBeenCalledTimes(1)
 
     store.actions.clearSelection()

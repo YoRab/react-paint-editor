@@ -245,9 +245,12 @@ export type EditorActions = {
   /** Flips or turns by a quarter the shapes, around their center */
   transformShapes: (ids: string[], action: ShapesTransformAction) => void
 
+  /**
+   * Sets fields of the style of the shapes, a single one too: setShapesStyle(ids, { strokeColor: 'red' }). With save false,
+   * the change is not added to the history, like while a slider moves. With updateTool, the tools of the shapes keep the
+   * new values for the next shapes
+   */
   setShapesStyle: (ids: string[], style: StyleShape, options?: ShapesActionOptions & { updateTool?: boolean }) => void
-  /** Sets one field of the style. With save false, the change is not added to the history, like while a slider moves */
-  updateShapesStyle: (ids: string[], field: ShapeStyleField, value: ToolSettingValue, options?: { save?: boolean }) => void
 
   /** Moves the shapes in the order of their group, or of the drawing: a shape never leaves its group */
   moveShapes: (ids: string[], action: ShapesOrderAction) => void

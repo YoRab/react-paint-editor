@@ -67,7 +67,7 @@ const MyStrokeColors = () => {
           aria-label={color}
           className='custom-editor-color'
           style={{ background: color }}
-          onClick={() => paint.actions.updateShapesStyle(selectedIds, 'strokeColor', color)}
+          onClick={() => paint.actions.setShapesStyle(selectedIds, { strokeColor: color })}
         />
       ))}
     </fieldset>

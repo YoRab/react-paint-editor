@@ -134,7 +134,7 @@ In the table below, `state.x` stands for `usePaintState(paint, state => state.x)
 | `duplicateShapes(shapes, translate, select)` | `paint.actions.duplicateShapes(ids, { translate, select })` |
 | `moveShapes(shapes, action)`, `swapShapes(id, id)` | `paint.actions.moveShapes(ids, action)`, `paint.actions.swapShapes(id, id)` |
 | `toggleShapeVisibility(shapes)`, `toggleShapeLock(shapes)` | `paint.actions.toggleShapesVisibility(ids)`, `paint.actions.toggleShapesLock(ids)`, or `paint.actions.setShapesVisibility(ids, visible)`, `paint.actions.setShapesLocked(ids, locked)` |
-| `updateShape` + `refreshShape` + `calculateTextFontSize` | `paint.actions.updateShapesStyle(ids, field, value, { save })` |
+| `updateShape` + `refreshShape` + `calculateTextFontSize` | `paint.actions.setShapesStyle(ids, { [field]: value }, { save })` |
 | `transformShape(ctx, shapes, center, action)` | `paint.actions.transformShapes(ids, action)` |
 | `removeShapePoint(shape, index)` | `paint.actions.removeShapePoint(id, index)`, and `state.contextMenu.canRemoveAnchor` to know if the point can be removed |
 | `addPictureShape(fileOrUrl, maxWidth, maxHeight)` | `paint.actions.addPicture(fileOrUrl, { maxWidth, maxHeight, select })` |
