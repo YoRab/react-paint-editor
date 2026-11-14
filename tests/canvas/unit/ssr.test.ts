@@ -62,13 +62,19 @@ describe('server-side rendering', () => {
     return [...recoverableErrors, ...getErrors()]
   }
 
+  /** Text of the instructions of the canvas, which give the keys of the shortcuts */
+  const getInstructions = () => {
+    const id = document.querySelector(`.${DRAWCANVAS_CLASSNAME}`)?.getAttribute('aria-describedby')
+    return id ? document.getElementById(id)?.textContent : undefined
+  }
+
   it('hydrates what the server rendered', async () => {
     expect(await hydrate()).toEqual([])
+    expect(getInstructions()).toContain('Ctrl+D')
   })
 
-  // confirmed defect, to fix at the step 6 of the plan: the keys of the instructions are written for the platform read
-  // during the render, so their text differs on a Mac and the whole root is rendered again
-  it.fails('hydrates in a browser of a Mac what the server rendered', async () => {
+  it('hydrates in a browser of a Mac what the server rendered, then gives the keys of a Mac', async () => {
     expect(await hydrate(MAC_USER_AGENT)).toEqual([])
+    expect(getInstructions()).toContain('⌘D')
   })
 })

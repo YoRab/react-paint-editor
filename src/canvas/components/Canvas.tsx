@@ -4,6 +4,7 @@ import { CANVAS_SHORTCUTS, formatShortcut, getShortcutParams } from '@canvas/con
 import useCanvasRenderer from '@canvas/hooks/useCanvasRenderer'
 import useDrawableCanvas from '@canvas/hooks/useDrawableCanvas'
 import useDropPicture from '@canvas/hooks/useDropPicture'
+import useIsMacOs from '@canvas/hooks/useIsMacOs'
 import usePixelRatio from '@canvas/hooks/usePixelRatio'
 import useShapeEvents from '@canvas/hooks/useShapeEvents'
 import useZoom from '@canvas/hooks/useZoom'
@@ -13,7 +14,7 @@ import { createShapesDescriber, type ShapeDescription } from '@canvas/utils/desc
 import { formatMessage } from '@canvas/utils/locale'
 import { getSelectedShapes } from '@canvas/utils/selectedShapes'
 import { applyShapePatch } from '@canvas/utils/shapePatch'
-import { cssVar, isMacOs } from '@canvas/utils/util'
+import { cssVar } from '@canvas/utils/util'
 import type React from 'react'
 import { type CSSProperties, useCallback, useEffect, useId, useMemo, useRef, useState } from 'react'
 import EditTextBox from './EditTextBox'
@@ -249,7 +250,7 @@ const Canvas = ({
   const withKeyboardHint = isEditMode && features.edition && !isKeyboardNavigation && !textEdition
 
   const { lang, canvas: messages } = locale
-  const isMac = isMacOs()
+  const isMac = useIsMacOs()
   const instructions = useMemo(() => formatMessage(messages.instructions, getShortcutParams(isMac, messages.keys), lang), [messages, isMac, lang])
 
   const updateSelectedShapeText = useCallback(
