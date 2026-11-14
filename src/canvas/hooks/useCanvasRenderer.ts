@@ -2,7 +2,6 @@ import type { UtilsSettings } from '@canvas/constants/app'
 import type { PaintStore } from '@canvas/store/paintStore'
 import { keepIfSame, memoizeLast } from '@canvas/store/selectors'
 import type { InternalState } from '@canvas/store/types'
-import type { CanvasSize } from '@canvas/types/Canvas'
 import type { SelectionType, ShapeEntity } from '@canvas/types/Shapes'
 import { initCanvasContext } from '@canvas/utils/canvas'
 import { shallowEqual } from '@canvas/utils/equality'
@@ -108,7 +107,9 @@ type UseCanvasRendererProps = {
   selectionWidth: number
   laserColor: string
   laserWidth: number
-  canvasSize: CanvasSize
+  /** Size of the canvases in their own pixels */
+  pixelWidth: number
+  pixelHeight: number
 }
 
 type Layer = { drawNow: () => void; stop: () => void }
@@ -125,7 +126,8 @@ const useCanvasRenderer = ({
   selectionWidth,
   laserColor,
   laserWidth,
-  canvasSize
+  pixelWidth,
+  pixelHeight
 }: UseCanvasRendererProps) => {
   const layersRef = useRef<Layer[]>([])
 
@@ -227,12 +229,12 @@ const useCanvasRenderer = ({
     }
   }, [store, drawCanvas, selectionCanvasRef, selectionColor, selectionWidth, laserColor, laserWidth])
 
-  // A new size of a canvas clears it when React sets it: both layers are drawn again before the next paint, the frame
-  // painted after a resize is not empty
+  // A new size of a canvas clears it when React sets it, after a resize or a new density of the screen: both layers are
+  // drawn again before the next paint, the frame painted after it is not empty
   // biome-ignore lint/correctness/useExhaustiveDependencies: the size is the trigger, read from the state by the layers
   useLayoutEffect(() => {
     for (const layer of layersRef.current) layer.drawNow()
-  }, [canvasSize.width, canvasSize.height])
+  }, [pixelWidth, pixelHeight])
 }
 
 export default useCanvasRenderer

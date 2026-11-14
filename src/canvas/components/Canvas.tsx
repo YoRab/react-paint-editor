@@ -4,6 +4,7 @@ import { CANVAS_SHORTCUTS, formatShortcut, getShortcutParams } from '@canvas/con
 import useCanvasRenderer from '@canvas/hooks/useCanvasRenderer'
 import useDrawableCanvas from '@canvas/hooks/useDrawableCanvas'
 import useDropPicture from '@canvas/hooks/useDropPicture'
+import usePixelRatio from '@canvas/hooks/usePixelRatio'
 import useShapeEvents from '@canvas/hooks/useShapeEvents'
 import useZoom from '@canvas/hooks/useZoom'
 import type { PaintStore } from '@canvas/store/paintStore'
@@ -68,7 +69,7 @@ const SCALED_STYLES: LayoutStyles = {
 }
 
 // When the canvas follows its container, the box and the container fill the root, and both canvases are stacked at the
-// top left with the size of their pixels: they are never stretched, even before they are resized
+// top left with their size in pixels of the screen (canvasSize): they are never stretched, even before they are resized
 const EXTEND_STYLES: LayoutStyles = {
   box: { position: 'absolute', inset: 0 },
   container: { ...CONTAINER_STYLE, position: 'absolute', inset: 0 },
@@ -121,15 +122,24 @@ type CanvasElementProps = {
  * the gestures update the store, which draws the canvases and sets the cursor directly.
  */
 const Canvas = ({ store, view, locale, backgroundColor, selectionColor, selectionWidth, laserColor, laserWidth }: CanvasElementProps) => {
-  const { canvasSize, resize, isEditMode, features, textEdition, isKeyboardNavigation } = view
+  const { canvasSize, pixelRatio, resize, isEditMode, features, textEdition, isKeyboardNavigation } = view
   const instructionsId = useId()
   const containerRef = useRef<HTMLDivElement | null>(null)
   const selectionCanvasRef = useRef<HTMLCanvasElement | null>(null)
   const withSelectionCanvas = isEditMode
   const tabIndex = isEditMode ? 0 : -1
-  const styles = resize === 'extend' ? EXTEND_STYLES : SCALED_STYLES
+  const isExtended = resize === 'extend'
+  const styles = isExtended ? EXTEND_STYLES : SCALED_STYLES
   const touchAction = getTouchAction(features)
-  const drawCanvasStyle = useMemo(() => ({ ...styles.canvas, touchAction }), [styles, touchAction])
+  // The canvases have pixelRatio pixels in a pixel of the screen, the fraction of a pixel being left out like the browser
+  // does. A scaled canvas is as wide as its container, the other one is given its size on the screen
+  const pixelWidth = Math.floor(canvasSize.width * pixelRatio)
+  const pixelHeight = Math.floor(canvasSize.height * pixelRatio)
+  const canvasStyle = useMemo(
+    () => (isExtended ? { ...EXTEND_STYLES.canvas, width: canvasSize.width, height: canvasSize.height } : SCALED_STYLES.canvas),
+    [isExtended, canvasSize.width, canvasSize.height]
+  )
+  const drawCanvasStyle = useMemo(() => ({ ...canvasStyle, touchAction }), [canvasStyle, touchAction])
 
   // the element is kept in a state, so that the listeners are set once it is mounted
   const [drawCanvas, setDrawCanvas] = useState<HTMLCanvasElement | null>(null)
@@ -145,7 +155,8 @@ const Canvas = ({ store, view, locale, backgroundColor, selectionColor, selectio
   useShapeEvents(store, drawCanvas)
   useDropPicture(store, drawCanvas)
   useZoom({ store, canvasElt: drawCanvas, zoomEnabled: features.zoom })
-  useCanvasRenderer({ store, drawCanvas, selectionCanvasRef, selectionColor, selectionWidth, laserColor, laserWidth, canvasSize })
+  usePixelRatio(store)
+  useCanvasRenderer({ store, drawCanvas, selectionCanvasRef, selectionColor, selectionWidth, laserColor, laserWidth, pixelWidth, pixelHeight })
 
   // The cursor follows the gestures: it is set without rendering, and the style given by React does not hold it
   useEffect(() => {
@@ -264,8 +275,8 @@ const Canvas = ({ store, view, locale, backgroundColor, selectionColor, selectio
           style={drawCanvasStyle}
           data-testid='draw-canvas'
           lang={lang}
-          width={canvasSize.width}
-          height={canvasSize.height}
+          width={pixelWidth}
+          height={pixelHeight}
           onContextMenu={preventRightClick}
           tabIndex={tabIndex}
           // edited, the canvas takes the keys. Its fallback content describes the drawing
@@ -282,9 +293,9 @@ const Canvas = ({ store, view, locale, backgroundColor, selectionColor, selectio
           <canvas
             className={SELECTIONCANVAS_CLASSNAME}
             ref={selectionCanvasRef}
-            style={{ ...styles.canvas, pointerEvents: 'none' }}
-            width={canvasSize.width}
-            height={canvasSize.height}
+            style={{ ...canvasStyle, pointerEvents: 'none' }}
+            width={pixelWidth}
+            height={pixelHeight}
             onContextMenu={preventRightClick}
           />
         )}

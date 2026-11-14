@@ -21,6 +21,8 @@ export type CanvasView = {
   width: number
   height: number
   canvasSize: CanvasSize
+  /** Pixels of the canvas in a pixel of the screen */
+  pixelRatio: number
   resize: Resize
   isEditMode: boolean
   features: UtilsSettings['features']
@@ -272,6 +274,7 @@ export const createSelectors = () => {
       width: config.width,
       height: config.height,
       canvasSize: view.canvasSize,
+      pixelRatio: view.pixelRatio,
       resize: config.options.resize,
       isEditMode: config.mode !== 'viewer',
       features: selectFeatures(state),

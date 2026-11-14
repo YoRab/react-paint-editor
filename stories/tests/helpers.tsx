@@ -197,6 +197,15 @@ export const getPixel = (drawCanvas: HTMLCanvasElement, point: Point) => {
   return [...drawCanvas.getContext('2d')!.getImageData(x, y, 1, 1).data]
 }
 
+/** Width and height in pixels of an image, like an exported one */
+export const getImageSize = (src: string) =>
+  new Promise<[number, number]>((resolve, reject) => {
+    const img = new Image()
+    img.onload = () => resolve([img.naturalWidth, img.naturalHeight])
+    img.onerror = reject
+    img.src = src
+  })
+
 /** The input of a button opening a file chooser, found by the title of the button: the files are given to it */
 export const findFileInput = async (view: ReturnType<typeof within>, title: string) =>
   // the title of the button may end with its shortcut: 'Load project (Ctrl+O)'

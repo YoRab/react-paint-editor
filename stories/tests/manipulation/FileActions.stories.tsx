@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import { expect, spyOn, userEvent, waitFor, within } from 'storybook/test'
 import { type DrawableShape, ReactPaintError } from '../../../src/index'
-import { findFileInput, getPaint, getState, ReactPaintWrapper, wait } from './../helpers'
+import { findFileInput, getImageSize, getPaint, getState, ReactPaintWrapper, wait } from './../helpers'
 
 const meta = {
   title: 'Tests/Manipulation/FileActions',
@@ -26,14 +26,6 @@ const SQUARE: DrawableShape = {
 }
 
 const JSON_PREFIX = 'data:text/plain;charset=utf-8,'
-
-const getImageSize = (src: string) =>
-  new Promise<[number, number]>((resolve, reject) => {
-    const img = new Image()
-    img.onload = () => resolve([img.naturalWidth, img.naturalHeight])
-    img.onerror = reject
-    img.src = src
-  })
 
 export const FileActions: Story = {
   args: {
