@@ -34,7 +34,7 @@ describe('stable ids', () => {
     expect(data.shapes?.map(shape => shape.id)).toEqual(ids)
 
     const otherStore = createPaintStore()
-    await otherStore.resetCanvas(data.shapes)
+    await otherStore.actions.loadData(data)
     expect(getIds(otherStore)).toEqual(ids)
   })
 

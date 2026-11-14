@@ -22,7 +22,7 @@ The functions returned next to `editorProps` move to the handle:
 | 0.x | 1.0 |
 | --- | --- |
 | `registerEvent`, `unregisterEvent` | `paint.registerEvent`, `paint.unregisterEvent`. `registerEvent` returns the function that unregisters the listener |
-| `resetCanvas`, `getCurrentImage(view)`, `getCurrentData` | `paint.resetCanvas`, `paint.getCurrentImage({ view })`, `paint.getCurrentData`, see [exported data](#exported-data-and-images) |
+| `resetCanvas(shapes, clearHistory)`, `getCurrentImage(view)`, `getCurrentData` | `paint.actions.loadData({ version: DATA_VERSION, shapes }, { clearHistory })`, `paint.getCurrentImage({ view })`, `paint.getCurrentData`, see [exported data](#exported-data-and-images) |
 | `resetZoom()`, `setCanvasZoom(action)`, `setCanvasOffset(offset)` | `paint.actions.resetZoom()`, `paint.actions.setZoom(action)`, `paint.actions.setOffset(offset)` |
 | `annotationsProps.style` | `useAnnotationsStyle(paint)`, see [below](#annotationsprops) |
 

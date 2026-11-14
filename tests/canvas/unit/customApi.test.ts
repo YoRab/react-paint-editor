@@ -2,6 +2,7 @@ import { SETTINGS_DEFAULT_CUSTOM } from '@canvas/constants/tools'
 import { createPaintStore } from '@canvas/store/paintStore'
 import type { CustomShapeParams, ShapeEntity, ShapeInput } from '@canvas/types/Shapes'
 import type { CustomToolInput } from '@canvas/types/tools'
+import { DATA_VERSION } from '@canvas/utils/migrations'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { createLoadedStore, stubPath2D } from './helpers'
 
@@ -110,7 +111,7 @@ describe('the data of a custom shape', () => {
     const store = createPaintStore({ options: { availableTools: [{ type: 'rect', id: 'rect' }] } })
     const loadFailed = vi.fn()
     store.registerEvent('customShapeLoadFailed', loadFailed)
-    await store.resetCanvas([STAR, { type: 'rect', id: 'rect_1', x: 0, y: 0, width: 10, height: 10 }])
+    await store.actions.loadData({ version: DATA_VERSION, shapes: [STAR, { type: 'rect', id: 'rect_1', x: 0, y: 0, width: 10, height: 10 }] })
     expect(store.getState().document.shapes.map(({ id }) => id)).toEqual(['rect_1'])
     expect(loadFailed).toHaveBeenCalledWith(expect.objectContaining({ type: 'custom', toolId: 'star' }))
     expect(warn).toHaveBeenCalledOnce()

@@ -3,6 +3,7 @@ import { createPaintStore, type PaintStore } from '@canvas/store/paintStore'
 import type { UseReactPaintProps } from '@canvas/store/types'
 import type { DrawableShape, ExportedDrawableShape, ShapeEntity, ShapeInput } from '@canvas/types/Shapes'
 import { getUnscaledCanvasSize } from '@canvas/utils/canvas'
+import { DATA_VERSION } from '@canvas/utils/migrations'
 import { refreshShape } from '@canvas/utils/shapes'
 import { vi } from 'vitest'
 
@@ -84,7 +85,7 @@ export const getRootIds = (store: PaintStore) => store.getState().document.shape
 /** A store holding the shapes, RECTS by default */
 export const createLoadedStore = async (props: UseReactPaintProps = {}, shapes: ShapeInput[] = RECTS) => {
   const store = createPaintStore(props)
-  await store.resetCanvas(shapes)
+  await store.actions.loadData({ version: DATA_VERSION, shapes })
   return store
 }
 

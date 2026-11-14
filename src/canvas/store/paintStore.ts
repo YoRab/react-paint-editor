@@ -1668,8 +1668,6 @@ export const createPaintStore = (props: UseReactPaintProps = {}) => {
     hasListeners,
     setConfig,
     init,
-    /** Resets the shapes from data given by the consumer */
-    resetCanvas: (json: ShapeInput[] = [], clearHistory = true) => resetCanvas(json, { clearHistory, source: 'remote' }),
     getCurrentImage,
     getCurrentData,
     getShape: (id: string): ShapeEntity | undefined => getShapesById().get(id),

@@ -110,7 +110,6 @@ import LinkTo from '@storybook/addon-links/react';
   getShapesAt: (point: Point) => ShapeEntity[]
   toCanvasPosition: (clientPosition: { x: number; y: number }) => Point | undefined
   toClientPosition: (point: Point) => { x: number; y: number } | undefined
-  resetCanvas: (shapes?: ShapeInput[], clearHistory?: boolean) => void
   getCurrentImage: (options?: ExportImageOptions) => string
   getCurrentData: () => StateData
   scopeRef: (element: HTMLElement | null) => void
@@ -119,7 +118,7 @@ import LinkTo from '@storybook/addon-links/react';
         <li><code>actions</code> - Commands to act on the canvas (see below). Their identity never changes</li>
         <li><code>getState()</code> - The current state (see below), without subscription: to read in event handlers. The same object is returned as long as nothing changes</li>
         <li><code>subscribe(listener)</code> - Calls the listener after each change of the state, and returns the function that unsubscribes it</li>
-        <li><code>registerEvent</code>, <code>unregisterEvent</code>, <code>batch</code>, <code>getShape</code>, <code>getBounds</code>, <code>getShapesAt</code>, <code>toCanvasPosition</code>, <code>toClientPosition</code>, <code>resetCanvas</code>, <code>getCurrentImage</code>, <code>getCurrentData</code> - See <a href="#Methods" target="_self">Methods</a></li>
+        <li><code>registerEvent</code>, <code>unregisterEvent</code>, <code>batch</code>, <code>getShape</code>, <code>getBounds</code>, <code>getShapesAt</code>, <code>toCanvasPosition</code>, <code>toClientPosition</code>, <code>getCurrentImage</code>, <code>getCurrentData</code> - See <a href="#Methods" target="_self">Methods</a></li>
         <li><code>scopeRef</code> - Callback ref defining the area where keyboard shortcuts are active, the canvas by default. The pointer always works over the canvas. Set it on the root element of a custom editor so that the shortcuts also work while its toolbar is focused. The <code>Editor</code> component sets it</li>
       </ul>
 
@@ -838,7 +837,7 @@ paint.registerEvent('canvasDoubleClicked', (shape: ShapeEntity | undefined) => s
       <h3>pictureLoaded and pictureLoadFailed</h3>
       <p>
         <code>pictureLoaded</code> is fired when a picture added by <code>addShapes</code>, or whose source is changed by <code>updateShapes</code>, is loaded and drawn: the actions return before the image is loaded.
-        Loaded data (<code>loadData</code>, <code>loadFile</code>, <code>resetCanvas</code>, the <code>shapes</code> of the hook) are shown at once, and their pictures are drawn once loaded, with <code>pictureLoaded</code> too:
+        Loaded data (<code>loadData</code>, <code>loadFile</code>, the <code>shapes</code> of the hook) are shown at once, and their pictures are drawn once loaded, with <code>pictureLoaded</code> too:
         the promise of <code>loadData</code> and <code>loadFile</code> is resolved once they are loaded or have failed.
       </p>
       <p>
@@ -913,17 +912,6 @@ toClientPosition(point: Point): { x: number; y: number } | undefined`} />
       <Source language='typescript' code={`// a popover with position: fixed, at the top right corner of a shape
 const box = paint.getBounds([id])
 const position = box && paint.toClientPosition([box.x + box.width, box.y])`} />
-
-      <h3>resetCanvas</h3>
-      <p>Reset the canvas with new shapes. The shapes keep their ids when they are free.</p>
-      <Source language='typescript' code={`resetCanvas(
-  shapes: ShapeInput[],
-  clearHistory?: boolean
-): void`} />
-      <ul>
-        <li><code>shapes</code> - Array of shapes to set on canvas</li>
-        <li><code>clearHistory</code> - If <code>true</code>, clears undo/redo history (default: <code>true</code>)</li>
-      </ul>
 
       <h3>getCurrentImage</h3>
       <p>Export the current canvas as an image data URL.</p>
@@ -1227,7 +1215,7 @@ type ArrowHead = 'none' | 'triangle' | 'triangleOutline' | 'open' | 'circle' | '
 
       <h3>ShapeInput and ShapePatch</h3>
       <p>
-        <code>ShapeInput</code> is a shape given to <code>addShapes</code>, <code>resetCanvas</code> or <code>useReactPaint</code>: an <code>ExportedDrawableShape</code>, whose text can be given without its size, or a group of shapes given the same way (<code>GroupShapeInput</code>), holding 2 shapes at least.
+        <code>ShapeInput</code> is a shape given to <code>addShapes</code>, <code>loadData</code> or <code>useReactPaint</code>: an <code>ExportedDrawableShape</code>, whose text can be given without its size, or a group of shapes given the same way (<code>GroupShapeInput</code>), holding 2 shapes at least.
         Without rotation, a group is turned like its shapes when they are all turned the same way.
         <code>ShapePatch</code> is given to <code>updateShapes</code>: the id of a shape and the fields to change, its type excepted. A <code>name</code> set to <code>undefined</code> is removed. The patch of a group (<code>GroupPatch</code>) only changes its <code>visible</code>, <code>locked</code>, <code>data</code> and <code>name</code> fields, and its opacity.
       </p>
@@ -1735,8 +1723,8 @@ link.click()`} />
       <h3>Programmatic Control</h3>
       <Source language='typescript' code={`const paint = useReactPaint()
 
-// Reset canvas
-paint.resetCanvas([/* shapes */], true)
+// Replace the drawing, written in the current format of the data
+await paint.actions.loadData({ version: DATA_VERSION, shapes: [/* shapes */] })
 
 // Create and change shapes, in a single step of the history
 paint.batch(() => {

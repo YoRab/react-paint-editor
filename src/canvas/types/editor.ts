@@ -462,7 +462,6 @@ export type ReactPaint = {
   toCanvasPosition: (clientPosition: { x: number; y: number }) => Point | undefined
   /** Position in the viewport of a point of the drawing, to place an element over it. Undefined while the Canvas is not mounted or not displayed */
   toClientPosition: (point: Point) => { x: number; y: number } | undefined
-  resetCanvas: (shapes?: ShapeInput[], clearHistory?: boolean) => void
   getCurrentImage: (options?: ExportImageOptions) => string
   getCurrentData: () => StateData
   /**

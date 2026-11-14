@@ -1,3 +1,4 @@
+import { createReactPaint } from '@canvas/store/internal'
 import { createPaintStore } from '@canvas/store/paintStore'
 import { describe, expect, it } from 'vitest'
 
@@ -15,5 +16,9 @@ describe('removed duplicates', () => {
 
   it('has no swapShapes: setShapeIndex moves a shape to the place of another one', () => {
     expect(createPaintStore().actions).not.toHaveProperty('swapShapes')
+  })
+
+  it('has no resetCanvas: actions.loadData loads the shapes written by the code', () => {
+    expect(createReactPaint(createPaintStore())).not.toHaveProperty('resetCanvas')
   })
 })
