@@ -1059,6 +1059,7 @@ paint.actions.panBy([50, 0]) // scrolls the view, in the units of the drawing`} 
           The source of a picture is an image data URL, a blob URL, SVG markup or a URL of the web, relative ones included. Other sources are refused. A URL of the web
           goes through the <code>resolvePictureSrc</code> option, then is fetched without the cookies nor the address of the page. An image larger than 16384 pixels is refused.
           A picture which cannot be loaded within 4 seconds is kept by <code>loadData</code> and <code>loadFile</code> with a warning, drawn as a grey crossed frame.
+          They convert the data of an older version of the format to the current one, <code>DATA_VERSION</code>, data without version included, like the ones of 0.x and of the betas.
           A shape which cannot be built, like a polygon without its points, rejects them with the <code>dataInvalid</code> error, and JSON which cannot be read with <code>fileInvalidJson</code>, the drawing unchanged.
           <code>loadFile</code> refuses files larger than 100 MB
         </li>
@@ -1409,7 +1410,7 @@ useReactPaint({ options: { availableTools: [...DEFAULT_TOOLS, STAR, HEART, STICK
           and <code>canvasLaserWidth</code> options of the Canvas component. It is not part of the drawing, of its history nor of its exports
         </li>
         <li><code>ZOOM_LEVELS</code> - Levels of <code>actions.setZoom</code>, from <code>0.05</code> to <code>8</code>: every zoom stays between the first and the last one, to disable a button or to build a zoom menu</li>
-        <li><code>DATA_VERSION</code> - Version of the format of the exported data, <code>1</code>, given in their <code>version</code> field</li>
+        <li><code>DATA_VERSION</code> - Version of the format of the exported data, <code>1</code>, given in their <code>version</code> field: <code>loadData</code> converts the data of an older version to it</li>
         <li>
           <code>CANVAS_SHORTCUTS</code> - The keys of the commands of the canvas (see the keyboard shortcuts), as <code>Shortcut</code> objects <code>{'{ key, ctrl?, shift?, otherKeys?, codes? }'}</code> where <code>ctrl</code> is <code>⌘</code> on macOS.
           To show them in a custom editor, to avoid them for its own, or to listen the same keys: <code>matchesShortcut(event, shortcut, isShiftPressed)</code> tells whether a key event is a shortcut (a letter whatever Caps Lock, the digits and the signs

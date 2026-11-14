@@ -1,6 +1,6 @@
-import { DATA_VERSION } from '@canvas/constants/app'
 import { createPaintStore } from '@canvas/store/paintStore'
 import { decodeJson } from '@canvas/utils/file'
+import { DATA_VERSION } from '@canvas/utils/migrations'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { createLoadedStore, RECTS, stubPath2D } from './helpers'
 

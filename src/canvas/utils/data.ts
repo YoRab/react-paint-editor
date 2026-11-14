@@ -1,7 +1,7 @@
-import { DATA_VERSION } from '@canvas/constants/app'
 import type { DataChanges, ShapesOrder } from '@canvas/types/editor'
 import type { ExportedShape, ShapeEntity, StateData } from '@canvas/types/Shapes'
 import { shallowEqual } from '@canvas/utils/equality'
+import { DATA_VERSION } from '@canvas/utils/migrations'
 import { isEqual, isRecord } from '@canvas/utils/object'
 import { flattenShapes, indexShapeTree, isGroup, type ShapeTreeIndex } from '@canvas/utils/shapes/tree'
 import { roundValues } from '@canvas/utils/transform'

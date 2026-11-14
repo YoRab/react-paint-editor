@@ -116,7 +116,6 @@ const Canvas = ({ paint, options, className, style }: CanvasComponentProps) => {
 
 export {
   type CanvasOptions,
-  DATA_VERSION,
   DEFAULT_OPTIONS,
   type OptionalOptions,
   type OptionalOptions as UseReactPaintOptions,
@@ -195,6 +194,7 @@ export type { ActionsTool, CustomTool, CustomToolInput, ToolsType } from '@canva
 export { shallowEqual } from '@canvas/utils/equality'
 export { ReactPaintError, type ReactPaintErrorCode } from '@canvas/utils/error'
 export { formatMessage, formatNumber, type MessageParams, mergeLocale } from '@canvas/utils/locale'
+export { DATA_VERSION } from '@canvas/utils/migrations'
 export { getSelectedShapes, getSelectedShapesTools } from '@canvas/utils/selectedShapes'
 export { getSelectedLeaves, getSelectionStyle } from '@canvas/utils/selection'
 export { canGroupShapes, flattenShapes, getParentGroup, getShapeLeaves } from '@canvas/utils/shapes/tree'

@@ -51,6 +51,7 @@ For more details and links to Pull requests, see [Releases](https://github.com/Y
 - the canvases follow the density of the screen when it changes, like when the window goes to another screen or when the page is zoomed, and are drawn again before the next paint
 - add the canvasMaxPixelRatio option of the Canvas component: the largest density of the canvas, 2 by default. 1 keeps the canvas at the scale of the page on a HiDPI screen, faster but blurred, a larger value follows denser screens
 - the exported data (getCurrentData, dataChanged, exportData) give the version of their format, version: 1, exported as DATA_VERSION, so that the data of an older version can be told apart
+- loadData and loadFile convert the data of an older version of the format to the current one, one version after the other. Data without version, like the ones of 0.x and of the betas, are of version 0, loaded as before: the fields removed then, like lineArrow, are not converted
 
 ## V1.0.0-beta.2
 - target es2022 instead of es2020. The supported browsers are Chrome and Edge 99+, Firefox 113+ and Safari 17.2+, see the README

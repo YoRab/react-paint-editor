@@ -180,7 +180,7 @@ The events are emitted right after the change of the state, before React renders
 
 The shapes keep their `id` in the exported data (`getCurrentData`, `dataChanged`, `exportData`), and when they are loaded again: an application can store data linked to a shape by its id. A missing or already used id is replaced by a new one. The ids of new shapes are random, like `rect_0b6c…`, instead of a counter.
 
-The exported data give the version of their format, `version`: `DATA_VERSION`, 1 for this release.
+The exported data give the version of their format, `version`: `DATA_VERSION`, 1 for this release. The data of 0.x, without version, are still loaded, the fields removed since, like `lineArrow`, not being converted.
 
 `getCurrentImage` and `exportPicture` take an object of options instead of the view:
 

@@ -39,6 +39,7 @@ import { ReactPaintError } from '@canvas/utils/error'
 import { decodeJson, downloadFile, encodeShapesInString, getCanvasImage, loadPicture, parseDataJson } from '@canvas/utils/file'
 import { canvasToClientPosition, checkSelectionFrameCollision, clientToCanvasPosition, findShapeAt, findShapesAt } from '@canvas/utils/intersect'
 import { addLaserTrailPoint } from '@canvas/utils/laser'
+import { migrateData } from '@canvas/utils/migrations'
 import { isEqual, isRecord, mergeWith, omitUndefined, replaceArrays, set, withDefaults } from '@canvas/utils/object'
 import { getSelectedShapes } from '@canvas/utils/selectedShapes'
 import { addToSelectedShapes, buildShapesSelection, findHoveredShape, omitFromSelectedShapes, reselect } from '@canvas/utils/selection'
@@ -1589,7 +1590,8 @@ export const createPaintStore = (props: UseReactPaintProps = {}) => {
     loadFile: async (file, { source = 'user', ...options } = {}) => actions.loadData((await decodeJson(file)) as StateData, { ...options, source }),
     loadData: async (data, { clearHistory = true, source = 'remote' } = {}) => {
       const parsed = typeof data === 'string' ? parseDataJson(data) : data
-      const shapes = isRecord(parsed) && Array.isArray(parsed.shapes) ? (parsed.shapes as ShapeInput[]) : []
+      const migrated = isRecord(parsed) ? migrateData(parsed) : {}
+      const shapes = Array.isArray(migrated.shapes) ? (migrated.shapes as ShapeInput[]) : []
       await resetCanvas(shapes, { clearHistory, source })
     },
     exportPicture: ({ fileName, ...options } = {}) => downloadFile(getCurrentImage(options), fileName ?? getPictureFileName(options.format)),

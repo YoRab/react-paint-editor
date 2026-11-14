@@ -1,14 +1,19 @@
-import { DATA_VERSION } from '@canvas/constants/app'
 import { createPaintStore, type PaintStore } from '@canvas/store/paintStore'
 import type { ShapeEntity, ShapeInput } from '@canvas/types/Shapes'
 import { getScaledCanvasSize } from '@canvas/utils/canvas'
 import { ReactPaintError } from '@canvas/utils/error'
+import { DATA_VERSION } from '@canvas/utils/migrations'
 import { describe, expect, it, vi } from 'vitest'
 import { createLoadedStore, extendTo, RECTS, stubPath2D } from './helpers'
 
 vi.mock('@canvas/utils/data', async importOriginal => {
   const actual = await importOriginal<typeof import('@canvas/utils/data')>()
   return { ...actual, buildDataToExport: vi.fn(actual.buildDataToExport) }
+})
+
+vi.mock('@canvas/utils/migrations', async importOriginal => {
+  const actual = await importOriginal<typeof import('@canvas/utils/migrations')>()
+  return { ...actual, migrateData: vi.fn(actual.migrateData) }
 })
 
 stubPath2D()
@@ -563,6 +568,34 @@ describe('dedicated actions', () => {
     await store.actions.loadData({ shapes: [RECTS[0]!, RECTS[1]!] }, { clearHistory: false })
     expect(getIds(store)).toHaveLength(2)
     expect(store.getEditorState().history.canUndo).toBe(true)
+  })
+
+  it('loads the data once converted to the current version of their format', async () => {
+    const { migrateData } = await import('@canvas/utils/migrations')
+    const store = createPaintStore()
+    // a migration which would replace the shapes of the data
+    vi.mocked(migrateData).mockImplementationOnce(data => ({ ...data, shapes: [{ ...RECT, id: 'migrated' }] }))
+    await store.actions.loadData(JSON.stringify({ version: 0, shapes: [] }))
+    expect(migrateData).toHaveBeenLastCalledWith({ version: 0, shapes: [] })
+    expect(getIds(store)).toEqual(['migrated'])
+  })
+
+  it('loads the data of the betas, which have no version, as before: the fields removed then are not converted', async () => {
+    const line = {
+      id: 'line',
+      type: 'line',
+      points: [
+        [0, 0],
+        [100, 100]
+      ],
+      style: { lineArrow: 3 }
+    } as unknown as ShapeInput
+    const store = createPaintStore()
+    await store.actions.loadData({ shapes: [line] })
+    const [loaded] = store.getCurrentData().shapes ?? []
+    expect(loaded).toMatchObject({ id: 'line', style: { lineArrow: 3 } })
+    expect(loaded?.style).not.toHaveProperty('arrowStart')
+    expect(loaded?.style).not.toHaveProperty('arrowEnd')
   })
 
   it('rejects loadData with fileInvalidJson, like loadFile, and keeps the drawing, when its string is not JSON', async () => {
