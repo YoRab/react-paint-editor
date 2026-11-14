@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import { expect, spyOn, userEvent, waitFor, within } from 'storybook/test'
-import { DATA_VERSION, type DrawableShape, ReactPaintError } from '../../../src/index'
+import { DATA_VERSION, type DrawableShape } from '../../../src/index'
 import { findFileInput, getImageSize, getPaint, getState, ReactPaintWrapper, wait } from './../helpers'
 
 const meta = {
@@ -195,17 +195,34 @@ export const InvalidShapes: Story = {
 
 /** Shapes too far apart to fit in a canvas of the browser: their export fails with an error, instead of giving an empty image */
 export const ExportTooLarge: Story = {
-  // confirmed defect, to fix at the step 6 of the plan: the export gives the empty image 'data:,'. Left out of the tests until then
-  tags: ['!test'],
   args: {
     // wider than the 65 535 pixels of the largest canvas of a browser, on a single row: nothing heavy is allocated
     shapes: [SQUARE, { ...SQUARE, x: 70000 }],
     options: { size: 'infinite' }
   },
+  // the editor warns about the export which fails
+  beforeEach: () => {
+    const warn = spyOn(console, 'warn').mockImplementation(() => undefined)
+    return () => warn.mockRestore()
+  },
   play: async ({ canvasElement }) => {
-    await within(canvasElement).findByTestId('draw-canvas')
+    const view = within(canvasElement)
+    await view.findByTestId('draw-canvas')
     await waitFor(() => expect(getState().shapes).toHaveLength(2))
 
-    expect(() => getPaint().getCurrentImage({ view: 'fitToShapes' })).toThrow(ReactPaintError)
+    // the expect of Storybook does not match an asymmetric matcher in toThrow
+    let error: unknown
+    try {
+      getPaint().getCurrentImage({ view: 'fitToShapes' })
+    } catch (thrown) {
+      error = thrown
+    }
+    expect(error).toMatchObject({ code: 'exportTooLarge', details: { width: expect.any(Number), height: expect.any(Number) } })
+
+    // the editor tells it
+    await userEvent.click(await view.findByTitle('Menu'))
+    await userEvent.click(await view.findByRole('menuitem', { name: 'Export PNG' }))
+    await userEvent.click(await view.findByRole('button', { name: 'Export the whole drawing' }))
+    expect(await view.findByText('The picture is too large for the browser')).toBeInTheDocument()
   }
 }

@@ -228,7 +228,13 @@ const getShapesDataUrl = ({
     ctx.restore()
   }
   drawShapes(ctx, shapes, settings)
-  return newCanvas.toDataURL(MIME_TYPES[format], options.quality)
+  const dataUrl = newCanvas.toDataURL(MIME_TYPES[format], options.quality)
+  // the image is 'data:,' for a canvas larger than the browser allows, a limit which depends on the browser, and for a
+  // canvas 0 wide, which is not an error
+  if (dataUrl === 'data:,' && newCanvas.width > 0 && newCanvas.height > 0) {
+    throw new ReactPaintError('exportTooLarge', `The image of ${width}×${height} pixels is too large for the browser`, { width, height })
+  }
+  return dataUrl
 }
 
 /** Settings printing an area of the drawing at the scale 1, from the point at the given offset */

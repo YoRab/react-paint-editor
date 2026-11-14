@@ -290,6 +290,7 @@ export const FR_LOCALE: EditorLocale = {
       pictureLoadFailed: "L'image n'a pas pu être chargée",
       exportEmpty: "Il n'y a aucune forme à exporter",
       exportContextUnavailable: "Le navigateur n'a pas pu dessiner l'image",
+      exportTooLarge: "L'image est trop grande pour le navigateur",
       exportEncodingFailed: "Le dessin n'a pas pu être encodé"
     },
     common: {

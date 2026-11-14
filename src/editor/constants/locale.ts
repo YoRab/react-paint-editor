@@ -492,6 +492,7 @@ export const DEFAULT_EDITOR_LOCALE: EditorLocale = {
       pictureLoadFailed: 'The picture could not be loaded',
       exportEmpty: 'There is no shape to export',
       exportContextUnavailable: 'The browser could not draw the picture',
+      exportTooLarge: 'The picture is too large for the browser',
       exportEncodingFailed: 'The drawing could not be encoded'
     },
     common: {

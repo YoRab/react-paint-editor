@@ -2,7 +2,7 @@ import { createPaintStore } from '@canvas/store/paintStore'
 import { decodeJson } from '@canvas/utils/file'
 import { DATA_VERSION } from '@canvas/utils/migrations'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { createLoadedStore, RECTS, stubPath2D } from './helpers'
+import { createLoadedStore, extendTo, RECTS, stubPath2D } from './helpers'
 
 /**
  * @vitest-environment jsdom
@@ -89,5 +89,30 @@ describe('project files', () => {
     expect(otherStore.getCurrentData().shapes).toEqual(store.getCurrentData().shapes)
     // the link does not stay in the page
     expect(document.querySelector('a')).toBeNull()
+  })
+})
+
+describe('exported images', () => {
+  /** A canvas which draws nothing and gives this image, like a canvas larger than the browser allows */
+  const stubCanvasImage = (dataUrl: string) => {
+    vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockImplementation(function (this: HTMLCanvasElement) {
+      const context: Record<PropertyKey, unknown> = { canvas: this }
+      return new Proxy(context, { get: (target, key) => (key in target ? target[key] : () => undefined) }) as unknown as RenderingContext
+    })
+    vi.spyOn(HTMLCanvasElement.prototype, 'toDataURL').mockReturnValue(dataUrl)
+  }
+
+  it('fails with exportTooLarge when the browser gives an empty image, with the size of the image, and downloads nothing', () => {
+    const store = createPaintStore({ width: 800, height: 400 })
+    stubCanvasImage('data:,')
+    expect(() => store.actions.exportPicture()).toThrow(expect.objectContaining({ code: 'exportTooLarge', details: { width: 800, height: 400 } }))
+    expect(downloads).toEqual([])
+  })
+
+  it('gives the empty image of a canvas 0 wide, which is not too large', () => {
+    const store = createPaintStore()
+    extendTo(store, 0, 400)
+    stubCanvasImage('data:,')
+    expect(store.getCurrentImage({ view: 'currentZoom' })).toBe('data:,')
   })
 })

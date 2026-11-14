@@ -41,6 +41,11 @@ export type ReactPaintErrorCode =
   | 'exportEmpty'
   /** The browser gave no canvas to draw the export in */
   | 'exportContextUnavailable'
+  /**
+   * The exported image is larger than the largest canvas of the browser, which depends on the browser:
+   * details.width and details.height, in pixels
+   */
+  | 'exportTooLarge'
   /** The data of the drawing could not be encoded */
   | 'exportEncodingFailed'
 

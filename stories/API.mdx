@@ -927,6 +927,7 @@ const position = box && paint.toClientPosition([box.x + box.width, box.y])`} />
         <li><code>backgroundImage</code> - For instance the picture laid under the canvas with <code>useAnnotationsStyle</code>. An image from another origin without CORS headers makes the export fail with a <code>SecurityError</code></li>
       </ul>
       <p>Returns a data URL string that can be used as an image source or downloaded. <code>actions.exportPicture</code> takes the same options and a <code>fileName</code>, and downloads the image.</p>
+      <p>An image larger than the largest canvas of the browser, like the <code>fitToShapes</code> view of shapes far apart on an infinite canvas, throws the <code>exportTooLarge</code> error, whose <code>details</code> give its <code>width</code> and its <code>height</code>: the limit depends on the browser. Nothing is downloaded.</p>
 
       <h3>getCurrentData</h3>
       <p>Get the current canvas state as a data object.</p>
