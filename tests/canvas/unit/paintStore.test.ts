@@ -164,7 +164,7 @@ describe('actions', () => {
     store.actions.setShapesVisibility(ids, false)
     expect(getFlags()).toEqual(['false/false', 'false/false', 'false/false'])
 
-    store.actions.toggleShapesLock([ids[0]!])
+    store.actions.setShapesLocked([ids[0]!], true)
     store.actions.setShapesLocked(ids, true)
     expect(getFlags()).toEqual(['false/true', 'false/true', 'false/true'])
   })

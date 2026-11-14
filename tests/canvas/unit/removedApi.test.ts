@@ -6,4 +6,10 @@ describe('removed duplicates', () => {
   it('has no updateShapesStyle: setShapesStyle sets a single field too', () => {
     expect(createPaintStore().actions).not.toHaveProperty('updateShapesStyle')
   })
+
+  it('has no toggleShapesVisibility nor toggleShapesLock: setShapesVisibility and setShapesLocked take the value', () => {
+    const { actions } = createPaintStore()
+    expect(actions).not.toHaveProperty('toggleShapesVisibility')
+    expect(actions).not.toHaveProperty('toggleShapesLock')
+  })
 })

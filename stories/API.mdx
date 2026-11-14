@@ -164,8 +164,7 @@ import LinkTo from '@storybook/addon-links/react';
         <li><code>ungroupShapes(ids)</code> - Puts the shapes of the groups among the shapes in their places, hidden, locked and faded with them, and returns their ids. The names, the rotations and the data of the groups are lost</li>
         <li><code>translateShapes(ids, [dx, dy])</code>, <code>rotateShapes(ids, angle, {'{ center? }'})</code>, <code>resizeShapes(ids, box)</code></li>
         <li><code>moveShapes(ids, 'first' | 'last' | 'forward' | 'backward')</code>, <code>swapShapes(firstId, secondId)</code>, <code>setShapeIndex(id, index)</code>, <code>reorderShapes(ids)</code> - Each shape among the shapes of its group, which it never leaves: <code>swapShapes</code> only swaps shapes of the same group</li>
-        <li><code>toggleShapesVisibility(ids)</code>, <code>toggleShapesLock(ids)</code> - Toggle each shape</li>
-        <li><code>setShapesVisibility(ids, visible)</code>, <code>setShapesLocked(ids, locked)</code> - Set the same value on all shapes</li>
+        <li><code>setShapesVisibility(ids, visible)</code>, <code>setShapesLocked(ids, locked)</code> - Set the same value on all shapes. To toggle a shape, give the opposite of its value: <code>setShapesLocked([id], !shape.locked)</code></li>
         <li><code>setShapesStyle(ids, style, {'{ updateTool?, save? }'})</code> - Updates style fields, a single one too: <code>setShapesStyle(ids, {"{ strokeColor: 'red' }"})</code>. Text size is recomputed when changing the font</li>
         <li><code>transformShapes(ids, 'flipHorizontally' | 'flipVertically' | 'rotateClockwise' | 'rotateCounterclockwise')</code></li>
         <li><code>insertShapePoint(id, index, point)</code>, <code>moveShapePoint(id, index, point)</code>, <code>removeShapePoint(id, pointIndex)</code> - Points of a line, a polygon or a curve, which keep at least 2 points</li>
@@ -1003,7 +1002,7 @@ paint.actions.panBy([50, 0]) // scrolls the view, in the units of the drawing`} 
           </tr>
           <tr>
             <td>Visibility, lock</td>
-            <td><code>setShapesVisibility(ids, visible)</code>, <code>setShapesLocked(ids, locked)</code>, <code>toggleShapesVisibility(ids)</code>, <code>toggleShapesLock(ids)</code></td>
+            <td><code>setShapesVisibility(ids, visible)</code>, <code>setShapesLocked(ids, locked)</code></td>
           </tr>
           <tr>
             <td>Selection</td>

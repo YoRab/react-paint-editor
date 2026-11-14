@@ -264,9 +264,9 @@ export type EditorActions = {
    */
   reorderShapes: (orderedIds: string[]) => void
 
-  toggleShapesVisibility: (ids: string[]) => void
-  toggleShapesLock: (ids: string[]) => void
+  /** Shows or hides the shapes. To toggle a shape, give the opposite of its value: setShapesVisibility([id], shape.visible === false) */
   setShapesVisibility: (ids: string[], visible: boolean) => void
+  /** Locks or unlocks the shapes. To toggle a shape, give the opposite of its value: setShapesLocked([id], !shape.locked) */
   setShapesLocked: (ids: string[], locked: boolean) => void
 
   /** Inserts a point in a polygon or a curve, before the point at this index (at the end when the index is the length) */

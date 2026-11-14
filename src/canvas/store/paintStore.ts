@@ -832,21 +832,20 @@ export const createPaintStore = (props: UseReactPaintProps = {}) => {
     )
   }
 
-  const toggleShapesField = (shapesToToggle: ShapeEntity[], field: 'visible' | 'locked') => {
+  /** Shows or hides, locks or unlocks shapes: the ones which already have the value are left as they are */
+  const setShapesField = (ids: string[], field: 'visible' | 'locked', value: boolean) => {
     const { shapes } = get().document
     const { byId } = indexShapeTree(shapes)
-    const toggled = new Map<string, ShapeEntity>()
-    for (const { id } of shapesToToggle) {
+    const changed = new Map<string, ShapeEntity>()
+    for (const { id } of resolveShapes(ids)) {
       const shape = byId.get(id)
-      if (shape) toggled.set(id, field === 'visible' ? set('visible', shape.visible === false, shape) : set('locked', !shape.locked, shape))
+      const current = field === 'visible' ? shape?.visible !== false : !!shape?.locked
+      if (shape && current !== value) changed.set(id, set(field, value, shape))
     }
+    if (!changed.size) return
     // the selection follows: a shape of a group which is locked is replaced by the group
-    resetShapes(replaceShapesInTree(shapes, toggled, getSettings()))
+    resetShapes(replaceShapesInTree(shapes, changed, getSettings()))
   }
-
-  const toggleShapesVisibility = (shapesToToggle: ShapeEntity[]) => toggleShapesField(shapesToToggle, 'visible')
-
-  const toggleShapesLock = (shapesToToggle: ShapeEntity[]) => toggleShapesField(shapesToToggle, 'locked')
 
   /** Selects the shapes crossed by the selection frame, which ends at the cursor */
   const refreshSelectedShapes = (ctx: CanvasRenderingContext2D, cursorPosition: Point) =>
@@ -1507,16 +1506,8 @@ export const createPaintStore = (props: UseReactPaintProps = {}) => {
       )
     },
 
-    toggleShapesVisibility: ids => toggleShapesVisibility(resolveShapes(ids)),
-    toggleShapesLock: ids => toggleShapesLock(resolveShapes(ids)),
-    setShapesVisibility: (ids, visible) => {
-      const shapesToToggle = resolveShapes(ids).filter(shape => (shape.visible !== false) !== visible)
-      if (shapesToToggle.length) toggleShapesVisibility(shapesToToggle)
-    },
-    setShapesLocked: (ids, locked) => {
-      const shapesToToggle = resolveShapes(ids).filter(shape => !!shape.locked !== locked)
-      if (shapesToToggle.length) toggleShapesLock(shapesToToggle)
-    },
+    setShapesVisibility: (ids, visible) => setShapesField(ids, 'visible', visible),
+    setShapesLocked: (ids, locked) => setShapesField(ids, 'locked', locked),
 
     insertShapePoint: (id, index, point) => {
       const shape = getPointShape(id, ['polygon', 'curve'])
