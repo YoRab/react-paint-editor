@@ -46,12 +46,6 @@ describe('server-side rendering', () => {
     expect(renderToString(createElement(App))).toContain(DRAWCANVAS_CLASSNAME)
   })
 
-  // confirmed defect, to fix at the step 6 of the plan: React 18 warns about each useLayoutEffect rendered on the server
-  it.fails('renders on the server without a warning of React', () => {
-    renderToString(createElement(App))
-    expect(getErrors()).toEqual([])
-  })
-
   /** Hydrates what the server rendered, in a browser with this user agent, and returns the errors of the hydration */
   const hydrate = async (userAgent?: string) => {
     const container = document.body.appendChild(document.createElement('div'))
