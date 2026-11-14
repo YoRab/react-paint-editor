@@ -104,10 +104,16 @@ export const downloadFile = (content: string, fileName: string) => {
   document.body.removeChild(a)
 }
 
+/** What toDataURL gives for a canvas without pixels: 0 wide, or larger than the browser allows, a limit which depends on it */
+const EMPTY_DATA_URL = 'data:,'
+
 /** Encoded images, computed once per image: the data are exported on each change of the drawing */
 const base64Images = new WeakMap<HTMLImageElement, string>()
 
-/** The image encoded in a data URL, or undefined when it cannot be encoded: it is not loaded, or comes from another origin */
+/**
+ * The image encoded in a data URL, or undefined when it cannot be encoded: it is not loaded, comes from another origin, or is
+ * larger than a canvas of the browser
+ */
 export const getBase64Image = (img: HTMLImageElement): string | undefined => {
   // an image which is not loaded yet is encoded later
   if (!img.complete || img.width === 0) return undefined
@@ -120,6 +126,7 @@ export const getBase64Image = (img: HTMLImageElement): string | undefined => {
   try {
     ctx.drawImage(img, 0, 0)
     const dataURL = ctx.canvas.toDataURL('image/png')
+    if (dataURL === EMPTY_DATA_URL) return undefined
     base64Images.set(img, dataURL)
     return dataURL
   } catch {
@@ -229,9 +236,8 @@ const getShapesDataUrl = ({
   }
   drawShapes(ctx, shapes, settings)
   const dataUrl = newCanvas.toDataURL(MIME_TYPES[format], options.quality)
-  // the image is 'data:,' for a canvas larger than the browser allows, a limit which depends on the browser, and for a
-  // canvas 0 wide, which is not an error
-  if (dataUrl === 'data:,' && newCanvas.width > 0 && newCanvas.height > 0) {
+  // a canvas 0 wide is not an error
+  if (dataUrl === EMPTY_DATA_URL && newCanvas.width > 0 && newCanvas.height > 0) {
     throw new ReactPaintError('exportTooLarge', `The image of ${width}×${height} pixels is too large for the browser`, { width, height })
   }
   return dataUrl

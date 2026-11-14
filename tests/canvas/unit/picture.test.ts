@@ -220,6 +220,19 @@ describe('loaded data', () => {
     expect(listener.mock.lastCall?.[0].shapes[1]).toMatchObject({ type: 'picture', src })
   })
 
+  it('keeps the source of a picture larger than a canvas of the browser in the exported data, without keeping its empty image', async () => {
+    const src = 'blob:http://localhost/1'
+    const store = await createLoadedStore({}, [picture(src)])
+    const canvas = document.createElement('canvas')
+    vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue({ canvas, drawImage: vi.fn() } as unknown as RenderingContext)
+    // a canvas larger than the browser allows, like a large picture under Safari, gives the empty image
+    const toDataURL = vi.spyOn(HTMLCanvasElement.prototype, 'toDataURL').mockReturnValue('data:,')
+    expect(store.getCurrentData().shapes?.[0]).toMatchObject({ type: 'picture', src })
+    // the empty image is not the encoded image of the picture for the next exports
+    toDataURL.mockReturnValue(PNG_DATA_URL)
+    expect(store.getCurrentData().shapes?.[0]).toMatchObject({ type: 'picture', src: PNG_DATA_URL })
+  })
+
   it('redraws a picture added by the consumer once its image is loaded, without a step in the history', async () => {
     const store = createPaintStore()
     const [id] = store.actions.addShapes([picture(PNG_DATA_URL)])
