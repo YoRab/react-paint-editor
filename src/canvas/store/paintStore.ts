@@ -285,7 +285,7 @@ export const createPaintStore = (props: UseReactPaintProps = {}) => {
 
   const store = createStore(createInitialState(resolveConfig(props, latest.overrides).config))
   const selectors = createSelectors()
-  const { registerEvent, unregisterEvent, emit, hasListeners } = createEventEmitter()
+  const { registerEvent, emit, hasListeners } = createEventEmitter()
   const { getState: get, batch } = store
 
   let canvasElement: HTMLCanvasElement | null = null
@@ -1663,7 +1663,6 @@ export const createPaintStore = (props: UseReactPaintProps = {}) => {
     getEditorState: () => selectors.selectEditorState(get()),
     actions,
     registerEvent,
-    unregisterEvent,
     emit,
     hasListeners,
     setConfig,

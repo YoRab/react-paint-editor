@@ -21,4 +21,8 @@ describe('removed duplicates', () => {
   it('has no resetCanvas: actions.loadData loads the shapes written by the code', () => {
     expect(createReactPaint(createPaintStore())).not.toHaveProperty('resetCanvas')
   })
+
+  it('has no unregisterEvent: registerEvent returns the function that unregisters the listener', () => {
+    expect(createReactPaint(createPaintStore())).not.toHaveProperty('unregisterEvent')
+  })
 })

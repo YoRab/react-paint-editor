@@ -38,11 +38,10 @@ type SliceWithEvent = { [K in keyof EditorState]: (typeof STATE_EVENTS)[K] exten
 
 const RECT_TOOL_ID = 'react-paint-rect'
 
-/** Listens to the event of a slice of the state: its first argument is the slice */
+/** Listens to the event of a slice of the state, whose first argument is the slice, until listener.unregister() */
 const listenSlice = (store: PaintStore, slice: SliceWithEvent) => {
   const listener = vi.fn()
-  store.registerEvent(STATE_EVENTS[slice] as ReactPaintEventName, listener)
-  return listener
+  return Object.assign(listener, { unregister: store.registerEvent(STATE_EVENTS[slice] as ReactPaintEventName, listener) })
 }
 
 /** Runs the change and checks that the event of the slice is emitted once, with the new slice */
@@ -53,7 +52,7 @@ const expectSliceEvent = (store: PaintStore, slice: SliceWithEvent, change: () =
   expect(store.getEditorState()[slice]).not.toBe(previous)
   expect(listener).toHaveBeenCalledTimes(1)
   expect(listener.mock.calls[0]![0]).toBe(store.getEditorState()[slice])
-  store.unregisterEvent(STATE_EVENTS[slice] as ReactPaintEventName, listener)
+  listener.unregister()
 }
 
 describe('events of the slices of the state', () => {

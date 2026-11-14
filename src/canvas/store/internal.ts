@@ -16,7 +16,6 @@ export const createReactPaint = (store: PaintStore): ReactPaint => {
     getState: store.getEditorState,
     subscribe: store.subscribe,
     registerEvent: store.registerEvent,
-    unregisterEvent: store.unregisterEvent,
     batch: store.transaction,
     getShape: store.getShape,
     getBounds: store.getBounds,

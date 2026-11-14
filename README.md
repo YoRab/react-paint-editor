@@ -196,7 +196,7 @@ const zoom = usePaintState(paint, state => state.view.zoom)
 const { shapes, selectedShapes } = usePaintState(paint, state => ({ shapes: state.shapes, selectedShapes: state.selectedShapes }), shallowEqual)
 ```
 
-The handle also gives `actions` (the commands), `registerEvent` / `unregisterEvent`, `batch`, `getShape`, `getBounds`, `getShapesAt`, `toCanvasPosition` / `toClientPosition`, `getCurrentImage` and `getCurrentData`. See [Driving the canvas from the code](#driving-the-canvas-from-the-code).
+The handle also gives `actions` (the commands), `registerEvent` (which returns the function that unregisters the listener), `batch`, `getShape`, `getBounds`, `getShapesAt`, `toCanvasPosition` / `toClientPosition`, `getCurrentImage` and `getCurrentData`. See [Driving the canvas from the code](#driving-the-canvas-from-the-code).
 
 Besides the drawing, the state gives the options in effect (`state.options`), whether dropped images are added (`state.withDropPicture`) and the part of the drawing displayed (`state.view.visibleArea`). The zoom stays between the first and the last of the `ZOOM_LEVELS`, the levels of `actions.setZoom`.
 

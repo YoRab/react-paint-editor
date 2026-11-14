@@ -21,7 +21,7 @@ The functions returned next to `editorProps` move to the handle:
 
 | 0.x | 1.0 |
 | --- | --- |
-| `registerEvent`, `unregisterEvent` | `paint.registerEvent`, `paint.unregisterEvent`. `registerEvent` returns the function that unregisters the listener |
+| `registerEvent`, `unregisterEvent` | `paint.registerEvent`, which returns the function that unregisters the listener, instead of `unregisterEvent` |
 | `resetCanvas(shapes, clearHistory)`, `getCurrentImage(view)`, `getCurrentData` | `paint.actions.loadData({ version: DATA_VERSION, shapes }, { clearHistory })`, `paint.getCurrentImage({ view })`, `paint.getCurrentData`, see [exported data](#exported-data-and-images) |
 | `resetZoom()`, `setCanvasZoom(action)`, `setCanvasOffset(offset)` | `paint.actions.resetZoom()`, `paint.actions.setZoom(action)`, `paint.actions.setOffset(offset)` |
 | `annotationsProps.style` | `useAnnotationsStyle(paint)`, see [below](#annotationsprops) |
@@ -149,7 +149,7 @@ The `EditorProps` type is replaced by `ReactPaint`, the type of the handle. `Use
 
 ## Events
 
-`registerEvent` and `unregisterEvent` are typed by event, and two events are added:
+`registerEvent` is typed by event, and two events are added:
 
 ```ts
 paint.registerEvent('selectionChanged', (selectedShapes: ShapeEntity[]) => {})

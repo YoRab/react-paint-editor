@@ -103,7 +103,6 @@ import LinkTo from '@storybook/addon-links/react';
   getState: () => EditorState
   subscribe: (listener: () => void) => () => void
   registerEvent: <E extends ReactPaintEventName>(event: E, fn: ReactPaintEvents[E]) => () => void
-  unregisterEvent: <E extends ReactPaintEventName>(event: E, fn?: ReactPaintEvents[E]) => void
   batch: <R>(fn: () => R) => R
   getShape: (id: string) => ShapeEntity | undefined
   getBounds: (ids: string[]) => ShapesBounds | undefined
@@ -118,7 +117,7 @@ import LinkTo from '@storybook/addon-links/react';
         <li><code>actions</code> - Commands to act on the canvas (see below). Their identity never changes</li>
         <li><code>getState()</code> - The current state (see below), without subscription: to read in event handlers. The same object is returned as long as nothing changes</li>
         <li><code>subscribe(listener)</code> - Calls the listener after each change of the state, and returns the function that unsubscribes it</li>
-        <li><code>registerEvent</code>, <code>unregisterEvent</code>, <code>batch</code>, <code>getShape</code>, <code>getBounds</code>, <code>getShapesAt</code>, <code>toCanvasPosition</code>, <code>toClientPosition</code>, <code>getCurrentImage</code>, <code>getCurrentData</code> - See <a href="#Methods" target="_self">Methods</a></li>
+        <li><code>registerEvent</code>, <code>batch</code>, <code>getShape</code>, <code>getBounds</code>, <code>getShapesAt</code>, <code>toCanvasPosition</code>, <code>toClientPosition</code>, <code>getCurrentImage</code>, <code>getCurrentData</code> - See <a href="#Methods" target="_self">Methods</a></li>
         <li><code>scopeRef</code> - Callback ref defining the area where keyboard shortcuts are active, the canvas by default. The pointer always works over the canvas. Set it on the root element of a custom editor so that the shortcuts also work while its toolbar is focused. The <code>Editor</code> component sets it</li>
       </ul>
 
@@ -671,7 +670,7 @@ const annotationsStyle = useAnnotationsStyle(paint)
 
       <h2 id="Events">Events</h2>
       <p>
-        React Paint emits events that you can listen to using <code>paint.registerEvent</code> and <code>paint.unregisterEvent</code>.
+        React Paint emits events that you can listen to using <code>paint.registerEvent</code>, which returns the function that stops listening.
         They are emitted right after the change of the state, before React renders it.
       </p>
 
@@ -880,13 +879,6 @@ paint.registerEvent('pictureLoadFailed', (shape: ShapeEntity<'picture'>, error: 
   listener: ReactPaintEvents[E]
 ): () => void`} />
       <Source language='typescript' code={`useEffect(() => paint.registerEvent('dataChanged', data => save(data)), [paint])`} />
-
-      <h3>unregisterEvent</h3>
-      <p>Unregister an event listener. If listener is omitted, all listeners for the event are removed.</p>
-      <Source language='typescript' code={`unregisterEvent<E extends ReactPaintEventName>(
-  event: E,
-  listener?: ReactPaintEvents[E]
-): void`} />
 
       <h3>batch</h3>
       <p>Runs a function: the changes it makes give a single step of the history, a single <code>dataChanged</code> event and a single render. Returns what the function returns. The changes made before an error are kept.</p>

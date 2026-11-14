@@ -443,10 +443,8 @@ export type ReactPaint = {
   getState: () => EditorState
   /** Calls the listener after each change of the state. Returns the function that unsubscribes it */
   subscribe: (listener: () => void) => () => void
-  /** Returns the function that unregisters the listener */
+  /** Registers a listener of the event, and returns the function that unregisters it */
   registerEvent: <E extends ReactPaintEventName>(event: E, fn: ReactPaintEvents[E]) => () => void
-  /** Unregisters the listener, or all the listeners of the event when none is given */
-  unregisterEvent: <E extends ReactPaintEventName>(event: E, fn?: ReactPaintEvents[E]) => void
   /**
    * Runs the function: the changes it makes give a single step of the history, a single dataChanged event and a single
    * render. The changes made before an error are kept

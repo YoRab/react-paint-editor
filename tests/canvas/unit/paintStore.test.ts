@@ -388,6 +388,17 @@ describe('events', () => {
     store.actions.selectTool('react-paint-rect')
     expect(listener).not.toHaveBeenCalled()
   })
+
+  it('keeps the other listeners when an unregister function is called twice', () => {
+    const store = createPaintStore()
+    const listener = vi.fn()
+    const unregister = store.registerEvent('toolChanged', vi.fn())
+    store.registerEvent('toolChanged', listener)
+    unregister()
+    unregister()
+    store.actions.selectTool('react-paint-rect')
+    expect(listener).toHaveBeenCalledTimes(1)
+  })
 })
 
 describe('setConfig', () => {
