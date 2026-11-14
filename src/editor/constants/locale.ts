@@ -480,6 +480,7 @@ export const DEFAULT_EDITOR_LOCALE: EditorLocale = {
       fileTooLarge: 'The file is larger than {max} MB',
       fileInvalidJson: 'The file is not a project',
       dataInvalid: 'The drawing holds a shape which cannot be loaded',
+      dataVersionUnsupported: 'The drawing comes from a newer version and cannot be loaded',
       fileTypeUnsupported: 'This type of file is not supported: {type}',
       pictureInvalidSvg: 'The SVG picture is invalid',
       pictureFetchFailed: 'The picture could not be downloaded ({status})',

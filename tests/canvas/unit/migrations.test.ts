@@ -1,3 +1,4 @@
+import { ReactPaintError } from '@canvas/utils/error'
 import { type DataMigration, migrateData } from '@canvas/utils/migrations'
 import { describe, expect, it } from 'vitest'
 
@@ -13,5 +14,11 @@ describe('migrateData', () => {
 
   it('takes data without version as data of version 0', () => {
     expect(migrateData({ size: 10 }, MIGRATIONS)).toEqual({ version: 2, width: 20 })
+  })
+
+  it('refuses data of a newer version, which it cannot read, with dataVersionUnsupported', () => {
+    const migrate = () => migrateData({ version: 3, width: 10 }, MIGRATIONS)
+    expect(migrate).toThrow(ReactPaintError)
+    expect(migrate).toThrow(expect.objectContaining({ code: 'dataVersionUnsupported', details: { version: 3, max: 2 } }))
   })
 })

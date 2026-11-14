@@ -598,6 +598,15 @@ describe('dedicated actions', () => {
     expect(loaded?.style).not.toHaveProperty('arrowEnd')
   })
 
+  it('rejects loadData with dataVersionUnsupported, and keeps the drawing, when the data are of a newer version', async () => {
+    const store = await createLoadedStore()
+    const ids = getIds(store)
+    const loading = store.actions.loadData({ version: DATA_VERSION + 1, shapes: [{ ...RECT, id: 'newer' }] })
+    await expect(loading).rejects.toBeInstanceOf(ReactPaintError)
+    await expect(loading).rejects.toMatchObject({ code: 'dataVersionUnsupported', details: { version: DATA_VERSION + 1, max: DATA_VERSION } })
+    expect(getIds(store)).toEqual(ids)
+  })
+
   it('rejects loadData with fileInvalidJson, like loadFile, and keeps the drawing, when its string is not JSON', async () => {
     const store = await createLoadedStore()
     const ids = getIds(store)

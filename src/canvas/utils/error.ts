@@ -14,6 +14,11 @@ export type ReactPaintErrorCode =
    * the data, the one of its outer group for a shape of a group
    */
   | 'dataInvalid'
+  /**
+   * The loaded data are of a newer version of the format than DATA_VERSION, the last one this release reads:
+   * details.version, the one of the data, and details.max, DATA_VERSION
+   */
+  | 'dataVersionUnsupported'
   /** The file dropped or pasted is not a picture: details.type */
   | 'fileTypeUnsupported'
   /** The SVG of a picture has no <svg> element */

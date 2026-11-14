@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import { expect, spyOn, userEvent, waitFor, within } from 'storybook/test'
-import { type DrawableShape, ReactPaintError } from '../../../src/index'
+import { DATA_VERSION, type DrawableShape, ReactPaintError } from '../../../src/index'
 import { findFileInput, getImageSize, getPaint, getState, ReactPaintWrapper, wait } from './../helpers'
 
 const meta = {
@@ -135,6 +135,12 @@ export const FileActions: Story = {
       expect(await view.findByText('The drawing holds a shape which cannot be loaded')).toBeInTheDocument()
       expect(getState().shapes.map(shape => shape.id)).toEqual(['first', 'second'])
 
+      // a project of a newer version of the format, which this one cannot read
+      const newerProject = { ...project, version: DATA_VERSION + 1 }
+      await loadProject(new File([JSON.stringify(newerProject)], 'drawing.json', { type: 'application/json' }))
+      expect(await view.findByText('The drawing comes from a newer version and cannot be loaded')).toBeInTheDocument()
+      expect(getState().shapes.map(shape => shape.id)).toEqual(['first', 'second'])
+
       // a picture which cannot be read fails too
       await openMenu()
       await userEvent.upload(await findFileInput(view, 'Upload picture'), new File(['not an image'], 'broken.png', { type: 'image/png' }))
@@ -158,8 +164,8 @@ export const FileActions: Story = {
       await exportView('Export the whole drawing')
       expect(downloads).toHaveLength(0)
       expect(await view.findByText('There is no shape to export')).toBeInTheDocument()
-      // the 4 failures of the editor, and the canvas about each picture which cannot be loaded
-      expect(warn).toHaveBeenCalledTimes(6)
+      // the 5 failures of the editor, and the canvas about each picture which cannot be loaded
+      expect(warn).toHaveBeenCalledTimes(7)
 
       // the messages go away after a few seconds
       await waitFor(() => expect(view.queryByText('File loaded')).toBeNull(), { timeout: 5000 })
