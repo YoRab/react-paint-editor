@@ -186,14 +186,17 @@ const getReducedImage = (img: HTMLImageElement, level: number): CanvasImageSourc
 /** The border of a picture is drawn only with a stroke color: the pictures had no border before */
 export const hasPictureBorder = (picture: Pick<ShapeEntity<'picture'>, 'style'>) => isVisibleColor(picture.style?.strokeColor)
 
-/** Frame in place of the image of a picture, crossed from corner to corner and cut at its rounded corners */
-const drawPicturePlaceholder = (ctx: CanvasRenderingContext2D, { x, y, width, height, path }: ShapeEntity<'picture'>): void => {
+/**
+ * Frame in place of the image of a picture, crossed from corner to corner and cut at its rounded corners. The canvas has
+ * pixelRatio pixels in a pixel of the screen
+ */
+const drawPicturePlaceholder = (ctx: CanvasRenderingContext2D, { x, y, width, height, path }: ShapeEntity<'picture'>, pixelRatio: number): void => {
   const { a, b } = ctx.getTransform()
   ctx.save()
   ctx.fillStyle = PICTURE_PLACEHOLDER.fillColor
   ctx.strokeStyle = PICTURE_PLACEHOLDER.strokeColor
-  // in pixels of the screen, whatever the zoom
-  ctx.lineWidth = PICTURE_PLACEHOLDER.lineWidth / Math.hypot(a, b)
+  // in pixels of the screen, whatever the zoom and the density of the screen
+  ctx.lineWidth = (PICTURE_PLACEHOLDER.lineWidth * pixelRatio) / Math.hypot(a, b)
   ctx.setLineDash([])
   ctx.fill(path)
   ctx.stroke(path)
@@ -235,13 +238,17 @@ const drawPictureImage = (ctx: CanvasRenderingContext2D, picture: ShapeEntity<'p
 
 /**
  * Draws the image of a picture, then its border. An image which could not be loaded is not drawn: a frame takes its place
- * with withPlaceholder, on the screen
+ * with withPlaceholders, on the screen, the canvas having pixelRatio pixels in a pixel of the screen
  */
-export const drawPicture = (ctx: CanvasRenderingContext2D, picture: ShapeEntity<'picture'>, withPlaceholder = false): void => {
+export const drawPicture = (
+  ctx: CanvasRenderingContext2D,
+  picture: ShapeEntity<'picture'>,
+  { withPlaceholders = false, pixelRatio = 1 }: { withPlaceholders?: boolean | undefined; pixelRatio?: number | undefined } = {}
+): void => {
   if (ctx.globalAlpha === 0) return
   const hasBorder = hasPictureBorder(picture)
   if (!hasPictureFailed(picture.img)) drawPictureImage(ctx, picture, hasBorder)
-  else if (withPlaceholder) drawPicturePlaceholder(ctx, picture)
+  else if (withPlaceholders) drawPicturePlaceholder(ctx, picture, pixelRatio)
   if (hasBorder) ctx.stroke(picture.path)
 }
 

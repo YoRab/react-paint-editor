@@ -587,15 +587,33 @@ describe('drawPicture', () => {
       src: '',
       style: { strokeColor: 'red', cornerRadius: 20 }
     })
-    const drawnCalls = (withPlaceholder: boolean) => {
+    const drawnCalls = (withPlaceholders: boolean) => {
       const { ctx, calls } = createPictureContext()
-      drawPicture(ctx as unknown as CanvasRenderingContext2D, { ...picture, img }, withPlaceholder)
+      drawPicture(ctx as unknown as CanvasRenderingContext2D, { ...picture, img }, { withPlaceholders })
       return calls
     }
     // the frame and its cross, cut at the rounded corners, before the border
     expect(drawnCalls(true)).toEqual(['save', 'fill', 'stroke', 'clip', 'stroke', 'restore', 'stroke'])
     // the exports and the eyedropper draw nothing in its place
     expect(drawnCalls(false)).toEqual(['stroke'])
+  })
+
+  it('draws the lines of the frame one pixel of the screen wide, whatever the zoom and the density of the screen', async () => {
+    vi.stubGlobal('Image', FakeImage)
+    FakeImage.fails = () => true
+    const img = new Image()
+    await expect(loadPicture(img, 'data:image/png;base64,AAAA')).rejects.toThrow()
+    const picture = createEntity<ShapeEntity<'picture'>>({ type: 'picture', x: 0, y: 0, width: 300, height: 200, src: '' })
+    /** Width of the lines in pixels of the canvas, drawn at the zoom on a canvas of the density */
+    const drawnLineWidth = (zoom: number, pixelRatio: number) => {
+      const { ctx } = createPictureContext(zoom * pixelRatio)
+      drawPicture(ctx as unknown as CanvasRenderingContext2D, { ...picture, img }, { withPlaceholders: true, pixelRatio })
+      return (ctx as unknown as CanvasRenderingContext2D).lineWidth * zoom * pixelRatio
+    }
+    expect(drawnLineWidth(1, 1)).toBeCloseTo(1)
+    expect(drawnLineWidth(3, 1)).toBeCloseTo(1)
+    expect(drawnLineWidth(1, 2)).toBeCloseTo(2)
+    expect(drawnLineWidth(3, 2)).toBeCloseTo(2)
   })
 })
 

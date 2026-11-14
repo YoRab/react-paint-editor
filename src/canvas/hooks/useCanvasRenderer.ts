@@ -30,9 +30,16 @@ const getDrawnShapes = (shapes: ShapeEntity[], selectedShape: SelectionType | un
 
 const renderDrawCanvas = (drawCtx: CanvasRenderingContext2D, shapes: ShapeEntity[], settings: UtilsSettings, options: DrawShapesOptions) => {
   initCanvasContext(drawCtx)
+  // drawn in pixels of the screen, each one being pixelRatio pixels of the canvas. The context is given back without
+  // transformation: the shapes under a point are found in it. It is left alone at 1: a change of its transformation,
+  // even to the same one, slows the painting of the canvas down in Chromium (bench)
+  const pixelRatio = options.pixelRatio ?? 1
+  const isScaled = pixelRatio !== 1
+  if (isScaled) drawCtx.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0)
   drawMask(drawCtx, settings)
   drawGrid(drawCtx, settings)
   drawShapes(drawCtx, shapes, settings, options)
+  if (isScaled) drawCtx.resetTransform()
 }
 
 const renderSelectionCanvas = (
@@ -47,7 +54,10 @@ const renderSelectionCanvas = (
 ): boolean => {
   const { selectedShape } = state.document
   const { selectionMode, hoverMode, selectionFrame, laserTrail } = state.interaction
+  const { pixelRatio } = state.view
   selectionCtx.reset()
+  // in pixels of the screen, like the drawing, and left alone at 1 too
+  if (pixelRatio !== 1) selectionCtx.scale(pixelRatio, pixelRatio)
   clipMask(selectionCtx, settings)
 
   state.config.options.withSkeleton &&
@@ -154,18 +164,20 @@ const useCanvasRenderer = ({
     )
     const selectDrawnShapes = ({ document }: InternalState) => computeDrawnShapes(document.shapes, document.selectedShape)
     // the text being edited is hidden under its text box, and the shapes crossed by the eraser are faded until it is released.
-    // A picture whose image could not be loaded is shown as a frame
+    // A picture whose image could not be loaded is shown as a frame. The canvas has the density of the screen
     const buildDrawOptions = memoizeLast(
-      (hiddenId: string | undefined, erasedShapeIds: string[]): DrawShapesOptions => ({
+      (hiddenId: string | undefined, erasedShapeIds: string[], pixelRatio: number): DrawShapesOptions => ({
         hiddenId,
         fadedIds: new Set(erasedShapeIds),
-        withPlaceholders: true
+        withPlaceholders: true,
+        pixelRatio
       })
     )
-    const selectDrawOptions = ({ document, interaction: { selectionMode } }: InternalState) =>
+    const selectDrawOptions = ({ document, interaction: { selectionMode }, view }: InternalState) =>
       buildDrawOptions(
         selectionMode.mode === 'textedition' ? document.selectedShape?.id : undefined,
-        selectionMode.mode === 'eraser' ? selectionMode.erasedShapeIds : NO_ERASED_SHAPES
+        selectionMode.mode === 'eraser' ? selectionMode.erasedShapeIds : NO_ERASED_SHAPES,
+        view.pixelRatio
       )
 
     const drawLayer = watchLayer(
@@ -187,7 +199,8 @@ const useCanvasRenderer = ({
         state.interaction.selectionFrame,
         store.selectors.selectActiveTool(state),
         state.config.options.withSkeleton,
-        state.interaction.laserTrail
+        state.interaction.laserTrail,
+        state.view.pixelRatio
       ],
       state => {
         const selectionCtx = selectionCanvasRef.current?.getContext('2d')

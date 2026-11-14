@@ -119,7 +119,8 @@ const createInitialState = (config: PaintConfig): InternalState => ({
   view: {
     canvasSize: getUnscaledCanvasSize(config.width, config.height),
     transformation: DEFAULT_TRANSFORMATION,
-    gridGap: config.options.grid
+    gridGap: config.options.grid,
+    pixelRatio: 1
   },
   interaction: {
     selectionMode: { mode: 'default' },
@@ -932,6 +933,10 @@ export const createPaintStore = (props: UseReactPaintProps = {}) => {
   const setCanvasSize = (canvasSize: CanvasSize) =>
     update(state => (isEqual(canvasSize, state.view.canvasSize) ? state : { ...state, view: { ...state.view, canvasSize } }))
 
+  /** The canvas has the density of the screen: it is drawn in more pixels, the sizes in pixels of the screen do not change */
+  const setPixelRatio = (pixelRatio: number) =>
+    update(state => (state.view.pixelRatio === pixelRatio ? state : { ...state, view: { ...state.view, pixelRatio } }))
+
   const updateTransformation = (compute: (transformation: CanvasTransformation, state: InternalState) => CanvasTransformation) =>
     update(state => withTransformation(state, compute(state.view.transformation, state)))
 
@@ -1728,6 +1733,7 @@ export const createPaintStore = (props: UseReactPaintProps = {}) => {
     addLaserPoint,
     pickColorAt,
     setCanvasSize,
+    setPixelRatio,
     setTransformation,
     getViewBounds,
     zoomBy,

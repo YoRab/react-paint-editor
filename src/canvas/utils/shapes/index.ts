@@ -104,7 +104,7 @@ const drawShapeByType = (ctx: CanvasRenderingContext2D, shape: ShapeEntity, opti
       drawRect(ctx, shape)
       break
     case 'picture':
-      drawPicture(ctx, shape, options.withPlaceholders)
+      drawPicture(ctx, shape, options)
       break
     case 'custom':
       drawCustomShape(ctx, shape)
@@ -116,18 +116,20 @@ const drawShapeByType = (ctx: CanvasRenderingContext2D, shape: ShapeEntity, opti
  * Whether the shape must be drawn alone on a layer, then copied with its opacity:
  * - a gradient masked by dots composites over what is under it, which must be empty
  * - drawn with an opacity, the overlaps of several operations would be darker: a fill and a stroke, a stroke thinner
- *   than a pixel, drawn segment by segment, a stroke and its heads, an image and its border, or the lines of a text and
- *   its background, its outline or its decorations. A single operation (a stroke, even of several lines like a hatch, a
- *   fill, an image) is drawn directly
+ *   than a pixel of the canvas, drawn segment by segment, a stroke and its heads, an image and its border, or the lines
+ *   of a text and its background, its outline or its decorations. A single operation (a stroke, even of several lines
+ *   like a hatch, a fill, an image) is drawn directly
+ *
+ * A unit of the drawing is pixelScale pixels of the canvas
  */
-const needsLayer = (shape: ShapeEntity, opacity: number, scaleRatio: number): boolean => {
+const needsLayer = (shape: ShapeEntity, opacity: number, pixelScale: number): boolean => {
   if (isFillMasked(shape.style)) return true
   if (opacity === 1) return false
   if (shape.type === 'picture') return hasPictureBorder(shape)
   if (shape.type === 'text') return isTextPaintedSeveralTimes(shape)
   // an undefined stroke color is drawn with the default color
   const hasStroke = shape.style?.strokeColor !== 'transparent'
-  if (hasStroke && (shape.style?.lineWidth ?? SELECTION_DEFAULT_WIDTH) * scaleRatio <= 1) return true
+  if (hasStroke && (shape.style?.lineWidth ?? SELECTION_DEFAULT_WIDTH) * pixelScale <= 1) return true
   if (hasStroke && 'arrows' in shape && shape.arrows?.length) return true
   if (shape.type === 'line' || shape.type === 'brush') return false
   return hasStroke && hasVisibleFill(shape.style)
@@ -244,6 +246,11 @@ export type DrawShapesOptions = {
   fadedIds?: ReadonlySet<string> | undefined
   /** Draws a frame in place of the pictures whose image could not be loaded: on the screen, not in an export */
   withPlaceholders?: boolean | undefined
+  /**
+   * Pixels of the canvas in a pixel of the screen, 1 by default: the canvas of the page has the density of the screen,
+   * by a scale of its context. It gives the strokes thinner than a pixel and the lines in pixels of the screen
+   */
+  pixelRatio?: number | undefined
 }
 
 /** Part of their opacity kept by the faded shapes */
@@ -319,7 +326,7 @@ const drawShape = (
   if (options.fadedIds?.has(shape.id)) ctx.globalAlpha *= FADED_OPACITY_RATIO
 
   if (ctx.globalAlpha > 0) {
-    if (needsLayer(shape, ctx.globalAlpha, settings.canvasSize.scaleRatio)) drawShapeOnLayer(ctx, shape, options)
+    if (needsLayer(shape, ctx.globalAlpha, settings.canvasSize.scaleRatio * (options.pixelRatio ?? 1))) drawShapeOnLayer(ctx, shape, options)
     else drawShapeByType(ctx, shape, options)
   }
 

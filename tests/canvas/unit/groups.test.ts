@@ -751,6 +751,15 @@ describe('drawing of a group', () => {
     expect(draw([group('g', [e, f])], { fadedIds: new Set(['e']) }).alphas).toEqual([1, 0.3])
     expect(layers).toEqual([])
   })
+
+  it('draws a stroke with an opacity on a layer while it is thinner than a pixel of the canvas, which has the density of the screen', () => {
+    const thin = rect('thin', 0, 0, { style: { lineWidth: 0.75, opacity: 50 } })
+    expect(draw([thin]).copies).toEqual([{ alpha: 0.5, source: expect.anything() }])
+    // 1.5 pixels of a canvas of density 2
+    const { copies, alphas } = draw([thin], { pixelRatio: 2 })
+    expect(copies).toEqual([])
+    expect(alphas).toEqual([0.5])
+  })
 })
 
 describe('data of a group', () => {
