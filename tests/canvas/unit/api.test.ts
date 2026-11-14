@@ -580,6 +580,15 @@ describe('dedicated actions', () => {
     expect(getIds(store)).toEqual(['migrated'])
   })
 
+  it('gives the version of the shapes written by the code to the migrations, which leave the current one as it is', async () => {
+    const { migrateData } = await import('@canvas/utils/migrations')
+    const store = createPaintStore()
+    const shapes: ShapeInput[] = [{ ...RECT, id: 'written' }]
+    await store.actions.loadData({ version: DATA_VERSION, shapes })
+    expect(migrateData).toHaveBeenLastCalledWith({ version: DATA_VERSION, shapes })
+    expect(getIds(store)).toEqual(['written'])
+  })
+
   it('loads the data of the betas, which have no version, as before: the fields removed then are not converted', async () => {
     const line = {
       id: 'line',

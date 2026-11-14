@@ -53,6 +53,7 @@ For more details and links to Pull requests, see [Releases](https://github.com/Y
 - the exported data (getCurrentData, dataChanged, exportData) give the version of their format, version: 1, exported as DATA_VERSION, so that the data of an older version can be told apart
 - loadData and loadFile convert the data of an older version of the format to the current one, one version after the other. Data without version, like the ones of 0.x and of the betas, are of version 0, loaded as before: the fields removed then, like lineArrow, are not converted
 - data of a newer version of the format than DATA_VERSION reject loadData and loadFile with the ReactPaintError 'dataVersionUnsupported', whose details give their version and the last one read (max), the drawing unchanged, instead of being loaded with the fields this version does not know. The Editor tells it with its errors.dataVersionUnsupported text
+- the data given to loadData with shapes written by the code (ShapeInput) take a version too: the shapes written in the current format are given with version: DATA_VERSION, so that the migrations of a later version do not convert them, data without version being of version 0
 
 ## V1.0.0-beta.2
 - target es2022 instead of es2020. The supported browsers are Chrome and Edge 99+, Firefox 113+ and Safari 17.2+, see the README

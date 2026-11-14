@@ -305,13 +305,14 @@ export type EditorActions = {
   loadFile: (file: File, options?: LoadDataOptions) => Promise<void>
   /**
    * Loads exported data, or their JSON string, at once: the last data loaded are the ones kept. Data of an older version
-   * of the format are converted to DATA_VERSION, and data without version, like the ones of the betas, are of version 0.
-   * Their pictures are drawn once loaded, and the promise is resolved once they are loaded or have failed. A shape which
-   * cannot be built, like a polygon without its points, rejects it with the ReactPaintError 'dataInvalid', data of a newer
-   * version with 'dataVersionUnsupported', and a string which is not JSON with 'fileInvalidJson', like loadFile, the
-   * drawing unchanged. The history is cleared by default, and the change is 'remote' by default
+   * of the format are converted to DATA_VERSION, and data without version, like the ones of the betas, are of version 0:
+   * give version: DATA_VERSION with the shapes written by the code. Their pictures are drawn once loaded, and the promise
+   * is resolved once they are loaded or have failed. A shape which cannot be built, like a polygon without its points,
+   * rejects it with the ReactPaintError 'dataInvalid', data of a newer version with 'dataVersionUnsupported', and a string
+   * which is not JSON with 'fileInvalidJson', like loadFile, the drawing unchanged. The history is cleared by default, and
+   * the change is 'remote' by default
    */
-  loadData: (data: StateData | { shapes?: ShapeInput[] } | string, options?: LoadDataOptions) => Promise<void>
+  loadData: (data: StateData | { version?: number; shapes?: ShapeInput[] } | string, options?: LoadDataOptions) => Promise<void>
   exportPicture: (options?: ExportImageOptions & { fileName?: string }) => void
   exportData: (options?: { fileName?: string }) => void
 
