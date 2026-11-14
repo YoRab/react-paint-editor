@@ -71,14 +71,14 @@ describe('the parameters of a custom shape', () => {
 
   it('sets the default of a single parameter of a tool, without touching the shapes', async () => {
     const store = await createStarStore()
-    store.actions.updateToolSettings('star', 'params.branches', 9)
+    store.actions.setToolSettings('star', { 'params.branches': 9 })
     expect(getToolParams(store)?.branches?.default).toBe(9)
     expect(getParams(store)).toEqual({ branches: 5, depth: 50 })
   })
 
   it('ignores the default of a parameter the tool does not declare', async () => {
     const store = await createStarStore()
-    store.actions.updateToolSettings('star', 'params.spikes', 3)
+    store.actions.setToolSettings('star', { 'params.spikes': 3 })
     expect(getToolParams(store)).toEqual(STAR_TOOL.type === 'custom' ? STAR_TOOL.settings.params : undefined)
   })
 })

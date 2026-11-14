@@ -25,4 +25,10 @@ describe('removed duplicates', () => {
   it('has no unregisterEvent: registerEvent returns the function that unregisters the listener', () => {
     expect(createReactPaint(createPaintStore())).not.toHaveProperty('unregisterEvent')
   })
+
+  it('has no updateToolSettings nor setToolStyle: setToolSettings sets one or several default values of a tool', () => {
+    const { actions } = createPaintStore()
+    expect(actions).not.toHaveProperty('updateToolSettings')
+    expect(actions).not.toHaveProperty('setToolStyle')
+  })
 })

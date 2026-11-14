@@ -107,7 +107,7 @@ describe('addShapes', () => {
 
   it('gives the font size of its tool to a text without size', () => {
     const store = createPaintStore()
-    store.actions.updateToolSettings('react-paint-text', 'fontSize', 50)
+    store.actions.setToolSettings('react-paint-text', { fontSize: 50 })
     const [bySize, byFontSize] = store.actions.addShapes([
       { type: 'text', x: 0, y: 0, value: ['Hello'] },
       { type: 'text', x: 0, y: 0, value: ['Hello'], fontSize: 20 }
@@ -435,7 +435,7 @@ describe('dedicated actions', () => {
 
   it('sets the default style of a tool, ignoring the fields it has not', () => {
     const store = createPaintStore()
-    store.actions.setToolStyle('react-paint-rect', { fillColor: 'blue', fontBold: true })
+    store.actions.setToolSettings('react-paint-rect', { fillColor: 'blue', fontBold: true })
     const rectTool = store.getEditorState().tools.find(tool => tool.id === 'react-paint-rect')
     expect(rectTool?.type === 'rect' && rectTool.settings.fillColor.default).toBe('blue')
     expect(rectTool?.settings).not.toHaveProperty('fontBold')
@@ -714,7 +714,7 @@ describe('options and settings', () => {
 
   it('restores the settings changed while editing', () => {
     const store = createPaintStore({ options: { grid: 10, size: 'infinite' } })
-    store.actions.setToolStyle('react-paint-rect', { strokeColor: 'red' })
+    store.actions.setToolSettings('react-paint-rect', { strokeColor: 'red' })
     store.actions.setGridGap(40)
     store.actions.zoomTo(2)
     store.actions.selectTool('react-paint-rect')

@@ -154,7 +154,7 @@ import LinkTo from '@storybook/addon-links/react';
       <h4>Actions</h4>
       <ul>
         <li><code>selectTool(toolOrId)</code> - Selects the selection tool, the move tool or one of the tools, found by id. An unknown tool is ignored</li>
-        <li><code>updateToolSettings(toolId, field, value)</code>, <code>setToolStyle(toolId, style)</code> - Default values of a tool, a field the tool has not is ignored</li>
+        <li><code>setToolSettings(toolId, values)</code> - Default values of a tool, one or several: the fields of the style, the font size of the text tool and the parameters of a custom tool (<code>{"{ 'params.branches': 9 }"}</code>). A field the tool has not is ignored</li>
         <li><code>selectShapes(ids, {"{ mode? }"})</code>, <code>selectAllShapes()</code>, <code>clearSelection()</code> - <code>mode</code> is <code>'replace'</code>, <code>'add'</code> or <code>'remove'</code>. A shape of a group selected too is left out, and a shape of a locked group is replaced by the group</li>
         <li><code>addShapes(shapes, {'{ select?, index?, save?, source? }'})</code>, <code>updateShapes(patches, {'{ updateTool?, save?, source? }'})</code> - See <a href="#Actions" target="_self">Driving the canvas from the code</a></li>
         <li><code>removeShapes(ids)</code>, <code>duplicateShapes(ids, {'{ translate?, select? }'})</code> - A group with its shapes. A copy is inserted in front of its shape, in its group</li>
@@ -966,7 +966,7 @@ paint.actions.panBy([50, 0]) // scrolls the view, in the units of the drawing`} 
           </tr>
           <tr>
             <td>Style</td>
-            <td><code>setShapesStyle(ids, style, {`{ updateTool }`})</code>, <code>setToolStyle(toolId, style)</code>, <code>updateToolSettings(toolId, field, value)</code></td>
+            <td><code>setShapesStyle(ids, style, {`{ updateTool }`})</code>, <code>setToolSettings(toolId, values)</code></td>
           </tr>
           <tr>
             <td>Order</td>
@@ -1263,8 +1263,8 @@ const groupPatch: ShapePatch = { id: 'group_1', name: 'Header', style: { opacity
       <p>
         The <code>params</code> setting of the tool declares the parameters of its path: each of them is kept on every shape it draws, stays
         editable once the shape is drawn, and the Editor shows it as a slider (the first two in its settings bar, the others in its
-        &quot;Plus d&apos;options&quot; panel). <code>actions.updateShapes</code> changes one of them, and <code>actions.updateToolSettings</code>
-        sets its default under the name <code>params.&lt;parameter&gt;</code>.
+        &quot;Plus d&apos;options&quot; panel). <code>actions.updateShapes</code> changes one of them, and <code>actions.setToolSettings</code>
+        sets its default under the name <code>params.&lt;parameter&gt;</code>: <code>{"setToolSettings('star', { 'params.branches': 9 })"}</code>.
       </p>
       <p>
         The path is written by your application: the library ships none. In the example below, the path of the star is built from its

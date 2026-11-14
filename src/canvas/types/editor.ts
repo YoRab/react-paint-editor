@@ -35,6 +35,12 @@ export type ShapeStyleField = keyof StyleShape
 export type ToolSettingValue = string | number | boolean
 
 /**
+ * Default values of the settings of a tool, used by the next shapes drawn with it: the fields of the style, the font size
+ * of the text tool, and each parameter of a custom tool, named params.<parameter>
+ */
+export type ToolSettingValues = StyleShape & { fontSize?: number } & { [param: `params.${string}`]: number }
+
+/**
  * Options of useReactPaint with the overrides of setOptions and their defaults. The functions are kept out of the state,
  * so that options can be compared by value
  */
@@ -183,10 +189,11 @@ export type ExportImageOptions = {
 export type EditorActions = {
   /** Selects one of the selection tool, the move tool or the tools, found by id. An unknown tool is ignored */
   selectTool: (toolOrId: ToolsType | string) => void
-  /** Sets the default value of a setting of a tool. A field the tool has not is ignored */
-  updateToolSettings: (toolId: string, field: string, value: ToolSettingValue) => void
-  /** Sets several default values of a tool, used by the next shapes drawn with it. The fields the tool has not are ignored */
-  setToolStyle: (toolId: string, style: StyleShape) => void
+  /**
+   * Sets default values of the settings of a tool, one or several, used by the next shapes drawn with it:
+   * setToolSettings('react-paint-rect', { strokeColor: 'red' }). The fields the tool has not are ignored
+   */
+  setToolSettings: (toolId: string, values: ToolSettingValues) => void
 
   /**
    * Selects the shapes, adds them to the selection or removes them from it ('replace' by default). A shape of a group

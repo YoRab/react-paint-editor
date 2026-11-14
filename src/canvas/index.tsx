@@ -165,6 +165,7 @@ export type {
   ShapesOrderAction,
   ShapesTransformAction,
   ToolSettingValue,
+  ToolSettingValues,
   ZoomAction
 } from '@canvas/types/editor'
 export type {

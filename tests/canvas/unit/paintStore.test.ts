@@ -259,14 +259,14 @@ describe('actions', () => {
 
   it('updates the settings of a tool', () => {
     const store = createPaintStore()
-    store.actions.updateToolSettings('react-paint-rect', 'strokeColor', 'blue')
+    store.actions.setToolSettings('react-paint-rect', { strokeColor: 'blue' })
     const rectTool = store.getEditorState().tools.find(tool => tool.id === 'react-paint-rect')
     expect(rectTool?.type === 'rect' && rectTool.settings.strokeColor.default).toBe('blue')
 
     // same value, or unknown tool, like the group tool of a selection
     const { tools } = store.getEditorState()
-    store.actions.updateToolSettings('react-paint-rect', 'strokeColor', 'blue')
-    store.actions.updateToolSettings('react-paint-rect-react-paint-circle', 'strokeColor', 'red')
+    store.actions.setToolSettings('react-paint-rect', { strokeColor: 'blue' })
+    store.actions.setToolSettings('react-paint-rect-react-paint-circle', { strokeColor: 'red' })
     expect(store.getEditorState().tools).toBe(tools)
   })
 
@@ -415,7 +415,7 @@ describe('setConfig', () => {
 
   it('keeps the tool settings when the tools are unchanged', () => {
     const store = createPaintStore({ options: { availableTools: [{ type: 'rect', id: 'react-paint-rect' }] } })
-    store.actions.updateToolSettings('react-paint-rect', 'strokeColor', 'blue')
+    store.actions.setToolSettings('react-paint-rect', { strokeColor: 'blue' })
     store.setConfig({ options: { availableTools: [{ type: 'rect', id: 'react-paint-rect' }], canZoom: 'always' } })
     const [rectTool] = store.getEditorState().tools
     expect(rectTool?.type === 'rect' && rectTool.settings.strokeColor.default).toBe('blue')
@@ -424,7 +424,7 @@ describe('setConfig', () => {
 
   it('resets the tools when they change in value', () => {
     const store = createPaintStore({ options: { availableTools: [{ type: 'rect', id: 'react-paint-rect' }] } })
-    store.actions.updateToolSettings('react-paint-rect', 'strokeColor', 'blue')
+    store.actions.setToolSettings('react-paint-rect', { strokeColor: 'blue' })
     store.setConfig({ options: { availableTools: [{ type: 'rect', id: 'react-paint-rect', settings: { strokeColor: { default: 'red' } } }] } })
     const [rectTool] = store.getEditorState().tools
     expect(rectTool?.type === 'rect' && rectTool.settings.strokeColor.default).toBe('red')

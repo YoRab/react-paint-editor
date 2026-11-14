@@ -71,8 +71,8 @@ describe('events of the slices of the state', () => {
 
   it('emits the event of the tools when their default values change', async () => {
     const store = await createLoadedStore()
-    expectSliceEvent(store, 'tools', () => store.actions.updateToolSettings(RECT_TOOL_ID, 'strokeColor', '#ff0000'))
-    expectSliceEvent(store, 'tools', () => store.actions.setToolStyle(RECT_TOOL_ID, { lineWidth: 7 }))
+    expectSliceEvent(store, 'tools', () => store.actions.setToolSettings(RECT_TOOL_ID, { strokeColor: '#ff0000' }))
+    expectSliceEvent(store, 'tools', () => store.actions.setToolSettings(RECT_TOOL_ID, { lineWidth: 7 }))
     expectSliceEvent(store, 'tools', () => store.actions.setShapesStyle([getRootIds(store)[0]!], { fillColor: '#00ff00' }, { updateTool: true }))
   })
 
@@ -140,7 +140,7 @@ describe('events of the slices of the state', () => {
     const store = await createLoadedStore({ options: { canZoom: 'always' } })
     store.actions.setGridGap(40)
     store.actions.zoomTo(2)
-    store.actions.updateToolSettings(RECT_TOOL_ID, 'strokeColor', '#ff0000')
+    store.actions.setToolSettings(RECT_TOOL_ID, { strokeColor: '#ff0000' })
     const listeners = (['view', 'gridGap', 'tools'] as const).map(slice => listenSlice(store, slice))
     store.actions.resetSettings()
     for (const listener of listeners) expect(listener).toHaveBeenCalledTimes(1)

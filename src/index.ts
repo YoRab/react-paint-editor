@@ -94,6 +94,7 @@ export {
   shallowEqual,
   type TextShapeInput,
   type ToolSettingValue,
+  type ToolSettingValues,
   type ToolsType,
   type UseReactPaintOptions,
   type UseReactPaintProps,

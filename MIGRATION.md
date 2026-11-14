@@ -128,7 +128,7 @@ In the table below, `state.x` stands for `usePaintState(paint, state => state.x)
 | `refs.canvas` | removed: use `paint.actions` |
 | `backwardShape`, `forwardShape`, `saveShapes` | `paint.actions.undo`, `paint.actions.redo`, `paint.actions.saveShapes` |
 | `selectTool(tool)`, `setActiveTool` | `paint.actions.selectTool(toolOrId)`: only the selection tool, the move tool and the tools can be selected |
-| `setAvailableTools` | `paint.actions.updateToolSettings(toolId, field, value)` |
+| `setAvailableTools` | `paint.actions.setToolSettings(toolId, { [field]: value })` |
 | `selectShapes(shapes)`, `selectAllShapes` | `paint.actions.selectShapes(ids)`, `paint.actions.selectAllShapes` |
 | `removeShape(shapes)` | `paint.actions.removeShapes(ids)` |
 | `duplicateShapes(shapes, translate, select)` | `paint.actions.duplicateShapes(ids, { translate, select })` |
@@ -195,7 +195,7 @@ The options also give a `backgroundColor`, and a `backgroundImage` drawn under t
 
 ## Other changes
 
-- `updateToolSettings` ignores a field the tool has not, instead of adding it.
+- `setToolSettings` ignores a field the tool has not, instead of adding it.
 - `transformShapes` no longer selects the transformed shapes.
 - The grid follows a change of the `grid` option after the creation.
 - `style.lineArrow` (0 to 3) is replaced by `style.arrowStart` and `style.arrowEnd`, which take a head (`'none'`, `'triangle'`, `'open'`, `'circle'`...), and `style.arrowSize`: `lineArrow: 1` becomes `arrowStart: 'triangle'`, `lineArrow: 2` becomes `arrowEnd: 'triangle'`, and `lineArrow: 3` both. `lineArrow` is no longer read: a shape loaded with it has no arrows. The `lineArrow` setting of the tools is replaced the same way.

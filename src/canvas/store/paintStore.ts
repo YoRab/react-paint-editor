@@ -185,11 +185,11 @@ const toolValuesOfChange = (values: Record<string, unknown>): Record<string, unk
  * Sets default values of the settings of a tool. The fields the tool has not, and unchanged values, are ignored. A
  * parameter of a custom shape is named params.<parameter>, and its own default is set
  */
-const setToolDefaults = (state: InternalState, toolId: string, style: Record<string, unknown>): InternalState => {
+const setToolDefaults = (state: InternalState, toolId: string, values: Record<string, unknown>): InternalState => {
   let hasChanged = false
   const available = state.tools.available.map(tool => {
     if (tool.id !== toolId) return tool
-    return Object.entries(style).reduce((newTool, [field, value]) => {
+    return Object.entries(values).reduce((newTool, [field, value]) => {
       const path = field.split('.')
       const setting = path.reduce<unknown>((node, key) => (isRecord(node) ? node[key] : undefined), newTool.settings) as
         | { default?: unknown }
@@ -1426,8 +1426,7 @@ export const createPaintStore = (props: UseReactPaintProps = {}) => {
       const tool = findSelectableTool(get().tools.available, typeof toolOrId === 'string' ? toolOrId : toolOrId.id)
       if (tool) selectTool(tool)
     },
-    updateToolSettings: (toolId, field, value) => update(state => setToolDefaults(state, toolId, { [field]: value })),
-    setToolStyle: (toolId, style) => update(state => setToolDefaults(state, toolId, style)),
+    setToolSettings: (toolId, values) => update(state => setToolDefaults(state, toolId, values)),
 
     selectShapes: (ids, { mode = 'replace' } = {}) => {
       const shapes = resolveShapes(ids)

@@ -287,7 +287,7 @@ const popoverPosition = box && paint.toClientPosition([box.x + box.width, box.y]
 | --- | --- |
 | Create, update, remove shapes | `actions.addShapes(shapes, { select, index })`, `actions.updateShapes(patches)`, `actions.removeShapes(ids)` |
 | Move, turn, resize, flip | `actions.translateShapes(ids, [dx, dy])`, `actions.rotateShapes(ids, angle, { center })`, `actions.resizeShapes(ids, box)`, `actions.transformShapes(ids, action)` |
-| Style of shapes, default style of tools | `actions.setShapesStyle(ids, style, { updateTool })`, `actions.setToolStyle(toolId, style)` |
+| Style of shapes, default style of tools | `actions.setShapesStyle(ids, style, { updateTool })`, `actions.setToolSettings(toolId, values)` |
 | Order | `actions.moveShapes(ids, 'first' \| 'last' \| 'forward' \| 'backward')`, `actions.setShapeIndex(id, index)`, `actions.reorderShapes(ids)` |
 | Groups | `actions.groupShapes(ids)`, `actions.ungroupShapes(ids)`, `actions.updateShapes([{ id, name, style: { opacity } }])` |
 | Points of lines, polygons and curves | `actions.insertShapePoint`, `actions.moveShapePoint`, `actions.removeShapePoint` |
