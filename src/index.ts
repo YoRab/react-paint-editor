@@ -17,6 +17,7 @@ export {
   type CustomTool,
   type CustomToolInput,
   canGroupShapes,
+  DATA_VERSION,
   type DataChanges,
   DEFAULT_CANVAS_LOCALE,
   DEFAULT_OPTIONS,

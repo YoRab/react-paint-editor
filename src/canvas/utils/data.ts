@@ -1,3 +1,4 @@
+import { DATA_VERSION } from '@canvas/constants/app'
 import type { DataChanges, ShapesOrder } from '@canvas/types/editor'
 import type { ExportedShape, ShapeEntity, StateData } from '@canvas/types/Shapes'
 import { shallowEqual } from '@canvas/utils/equality'
@@ -121,6 +122,7 @@ export const cleanShapesBeforeExport = (shapes: ShapeEntity[]): ExportedShape[] 
 
 export const buildDataToExport = (shapes: ShapeEntity[], width: number, height: number): Required<StateData> => {
   return {
+    version: DATA_VERSION,
     shapes: cleanShapesBeforeExport(shapes),
     config: {
       width,

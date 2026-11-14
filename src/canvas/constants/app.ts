@@ -15,6 +15,9 @@ import type { BrushAlgo } from '@canvas/types/Settings'
 
 export type { BrushAlgo, UtilsSettings } from '@canvas/types/Settings'
 
+/** Version of the format of the exported data (getCurrentData, dataChanged, exportData), given in their version field */
+export const DATA_VERSION = 1
+
 /** Largest data file read by loadFile, in bytes */
 export const DATA_FILE_MAX_SIZE = 100 * 1024 * 1024
 

@@ -116,6 +116,7 @@ const Canvas = ({ paint, options, className, style }: CanvasComponentProps) => {
 
 export {
   type CanvasOptions,
+  DATA_VERSION,
   DEFAULT_OPTIONS,
   type OptionalOptions,
   type OptionalOptions as UseReactPaintOptions,

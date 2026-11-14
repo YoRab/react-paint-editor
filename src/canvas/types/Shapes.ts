@@ -307,6 +307,8 @@ export type GroupPatch = { id: string } & Partial<Pick<DrawableShape<'group'>, '
 export type ShapePatch = DistributivePatch<ExportedDrawableShape<EditableShapeType>> | GroupPatch
 
 export type StateData = {
+  /** Version of the format of the data: DATA_VERSION in the exported data */
+  version?: number
   shapes?: ExportedShape[]
   config?: {
     width: number

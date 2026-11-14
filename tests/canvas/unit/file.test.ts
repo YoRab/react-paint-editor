@@ -1,3 +1,4 @@
+import { DATA_VERSION } from '@canvas/constants/app'
 import { createPaintStore } from '@canvas/store/paintStore'
 import { decodeJson } from '@canvas/utils/file'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
@@ -79,6 +80,7 @@ describe('project files', () => {
     const { href } = downloads[0]!
     expect(href.startsWith(DATA_URL_PREFIX)).toBe(true)
     const content = JSON.parse(decodeURIComponent(href.slice(DATA_URL_PREFIX.length)))
+    expect(content.version).toBe(DATA_VERSION)
     expect(content.config).toEqual({ width: 800, height: 400 })
     expect(content.shapes).toEqual(store.getCurrentData().shapes)
 

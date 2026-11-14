@@ -1,3 +1,4 @@
+import { DATA_VERSION } from '@canvas/constants/app'
 import { createPaintStore, type PaintStore } from '@canvas/store/paintStore'
 import type { ShapeEntity, ShapeInput } from '@canvas/types/Shapes'
 import { getScaledCanvasSize } from '@canvas/utils/canvas'
@@ -848,6 +849,15 @@ describe('dataChanged', () => {
     store.actions.addShapes([RECT])
     expect(buildDataToExport).toHaveBeenCalledTimes(1)
     expect(listener).toHaveBeenCalledTimes(1)
+  })
+
+  it('gives the version of the format of the data, like getCurrentData', () => {
+    const store = createPaintStore()
+    const listener = vi.fn()
+    store.registerEvent('dataChanged', listener)
+    store.actions.addShapes([RECT])
+    expect(listener.mock.lastCall?.[0]).toMatchObject({ version: DATA_VERSION, shapes: [RECT] })
+    expect(store.getCurrentData()).toMatchObject({ version: DATA_VERSION, config: { width: 1000, height: 600 } })
   })
 
   it('gives new objects on each change: the data received can be changed without changing the next ones', () => {

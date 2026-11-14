@@ -952,7 +952,7 @@ const position = box && paint.toClientPosition([box.x + box.width, box.y])`} />
       <h3>getCurrentData</h3>
       <p>Get the current canvas state as a data object.</p>
       <Source language='typescript' code={`getCurrentData(): StateData`} />
-      <p>Returns a <code>StateData</code> object containing shapes and canvas configuration.</p>
+      <p>Returns a <code>StateData</code> object containing the version of its format (<code>DATA_VERSION</code>), the shapes and the canvas configuration.</p>
 
       <h3>Zoom and view</h3>
       <p>The zoom and the view are controlled with the actions:</p>
@@ -1212,6 +1212,7 @@ type ArrowHead = 'none' | 'triangle' | 'triangleOutline' | 'open' | 'circle' | '
       <h3>StateData</h3>
       <p>Complete canvas state data structure.</p>
       <Source language='typescript' code={`type StateData = {
+  version?: number // version of the format of the data: DATA_VERSION in the exported data
   shapes?: ExportedShape[] // ExportedDrawableShape with its id, a group holding its shapes (ExportedGroup)
   config?: {
     width: number
@@ -1408,6 +1409,7 @@ useReactPaint({ options: { availableTools: [...DEFAULT_TOOLS, STAR, HEART, STICK
           and <code>canvasLaserWidth</code> options of the Canvas component. It is not part of the drawing, of its history nor of its exports
         </li>
         <li><code>ZOOM_LEVELS</code> - Levels of <code>actions.setZoom</code>, from <code>0.05</code> to <code>8</code>: every zoom stays between the first and the last one, to disable a button or to build a zoom menu</li>
+        <li><code>DATA_VERSION</code> - Version of the format of the exported data, <code>1</code>, given in their <code>version</code> field</li>
         <li>
           <code>CANVAS_SHORTCUTS</code> - The keys of the commands of the canvas (see the keyboard shortcuts), as <code>Shortcut</code> objects <code>{'{ key, ctrl?, shift?, otherKeys?, codes? }'}</code> where <code>ctrl</code> is <code>⌘</code> on macOS.
           To show them in a custom editor, to avoid them for its own, or to listen the same keys: <code>matchesShortcut(event, shortcut, isShiftPressed)</code> tells whether a key event is a shortcut (a letter whatever Caps Lock, the digits and the signs
