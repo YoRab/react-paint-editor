@@ -138,7 +138,7 @@ export { CanvasLocaleProvider, useCanvasLocale, useMergedLocale } from '@canvas/
 export { PaintProvider, usePaint } from '@canvas/context/PaintContext'
 export { default as useAnnotationsStyle } from '@canvas/hooks/useAnnotationsStyle'
 export { default as usePaintState } from '@canvas/hooks/usePaintState'
-export { default as useReactPaint, type UseReactPaintProps, type UseReactPaintReturnType } from '@canvas/hooks/useReactPaint'
+export { default as useReactPaint, type UseReactPaintProps } from '@canvas/hooks/useReactPaint'
 export type {
   ChangeSource,
   ContextMenuState,

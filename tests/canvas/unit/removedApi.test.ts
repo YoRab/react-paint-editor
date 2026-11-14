@@ -1,6 +1,8 @@
+import type * as canvas from '@canvas/index'
 import { createReactPaint } from '@canvas/store/internal'
 import { createPaintStore } from '@canvas/store/paintStore'
-import { describe, expect, it } from 'vitest'
+import type { ReactPaint } from '@canvas/types/editor'
+import { describe, expect, expectTypeOf, it } from 'vitest'
 
 // the duplicates removed from the API before 1.0, each one replaced by another member
 describe('removed duplicates', () => {
@@ -30,5 +32,11 @@ describe('removed duplicates', () => {
     const { actions } = createPaintStore()
     expect(actions).not.toHaveProperty('updateToolSettings')
     expect(actions).not.toHaveProperty('setToolStyle')
+  })
+
+  // checked by tsc, which fails on an unused @ts-expect-error
+  it('has no UseReactPaintReturnType: ReactPaint is the type of the handle', () => {
+    // @ts-expect-error the alias is removed
+    expectTypeOf<canvas.UseReactPaintReturnType>().toEqualTypeOf<ReactPaint>()
   })
 })

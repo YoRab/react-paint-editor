@@ -98,7 +98,6 @@ export {
   type ToolsType,
   type UseReactPaintOptions,
   type UseReactPaintProps,
-  type UseReactPaintReturnType,
   useAnnotationsStyle,
   useCanvasLocale,
   usePaint,

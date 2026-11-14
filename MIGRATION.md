@@ -145,7 +145,7 @@ In the table below, `state.x` stands for `usePaintState(paint, state => state.x)
 
 `paint` and `paint.actions` keep the same identity for the whole life of the component, so they can safely be used in hooks dependencies.
 
-The `EditorProps` type is replaced by `ReactPaint`, the type of the handle. `UseReactPaintReturnType` is an alias of `ReactPaint`.
+The `EditorProps` and `UseReactPaintReturnType` types are replaced by `ReactPaint`, the type of the handle.
 
 ## Events
 
