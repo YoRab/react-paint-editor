@@ -37,7 +37,7 @@ const Canvas = ({ paint, options, className, style }: CanvasComponentProps) => {
   const view = useSyncExternalStore(store.subscribe, getView, getView)
   const { width, canvasSize, resize } = view
 
-  const { canvasBackgroundColor, canvasSelectionColor, canvasSelectionWidth, canvasLaserColor, canvasLaserWidth } = withDefaults(
+  const { canvasBackgroundColor, canvasSelectionColor, canvasSelectionWidth, canvasLaserColor, canvasLaserWidth, canvasMaxPixelRatio } = withDefaults(
     DEFAULT_CANVAS_OPTIONS,
     options
   )
@@ -108,6 +108,7 @@ const Canvas = ({ paint, options, className, style }: CanvasComponentProps) => {
         selectionWidth={canvasSelectionWidth}
         laserColor={canvasLaserColor}
         laserWidth={canvasLaserWidth}
+        maxPixelRatio={canvasMaxPixelRatio}
       />
     </div>
   )

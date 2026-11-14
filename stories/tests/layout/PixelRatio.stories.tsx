@@ -135,24 +135,24 @@ export const HiDPIExtend: Story = {
 
 let emulatedScreen: ReturnType<typeof emulatePixelRatio> | undefined
 
+/** Emulates a screen of the density before the story, whose density the play changes */
+const emulateScreen = (density: number) => () => {
+  emulatedScreen = emulatePixelRatio(density)
+  return emulatedScreen.restore
+}
+
 /**
- * The canvases follow the density of the screen when it changes, like when the window goes to another screen or when the
- * browser is zoomed: they keep their size on the screen, and are drawn again at once. A density of 3 gives 2
+ * The canvases start at the expected density, then the density of the screen changes to each of the given ones, and the
+ * canvases take the expected density: they keep their size on the screen, and are drawn again before the next paint
  */
-export const PixelRatioChange: Story = {
-  args: { shapes: [RED_RECT] },
-  beforeEach: () => {
-    emulatedScreen = emulatePixelRatio(1)
-    return emulatedScreen.restore
-  },
-  play: async ({ canvasElement }) => {
+const playDensityChanges =
+  (initial: number, changes: [density: number, expected: number][]): NonNullable<Story['play']> =>
+  async ({ canvasElement }) => {
     const { drawCanvas, selectionCanvas } = await getCanvases(canvasElement)
     const rect = drawCanvas.getBoundingClientRect()
-    expectPixelRatio(drawCanvas, 1)
+    expectPixelRatio(drawCanvas, initial)
     await waitFor(() => expect(getPixel(drawCanvas, CENTER)).toEqual(RED_PIXEL))
-
-    /** The density of the screen becomes the given one, and the canvases the expected one, drawn before the next paint */
-    const changeDensity = async (density: number, expected: number) => {
+    for (const [density, expected] of changes) {
       emulatedScreen!.setRatio(density)
       await waitFor(() => expectPixelRatio(drawCanvas, expected))
       expectPixelRatio(selectionCanvas, expected)
@@ -160,9 +160,37 @@ export const PixelRatioChange: Story = {
       expect(getPixel(drawCanvas, CENTER)).toEqual(RED_PIXEL)
       expect(getPixel(drawCanvas, [90, 135])).not.toEqual(RED_PIXEL)
     }
-    await changeDensity(2, 2)
-    await changeDensity(1.5, 1.5)
-    await changeDensity(3, 2)
-    await changeDensity(1, 1)
   }
+
+/**
+ * The canvases follow the density of the screen when it changes, like when the window goes to another screen or when the
+ * browser is zoomed. A density of 3 gives 2
+ */
+export const PixelRatioChange: Story = {
+  args: { shapes: [RED_RECT] },
+  beforeEach: emulateScreen(1),
+  play: playDensityChanges(1, [
+    [2, 2],
+    [1.5, 1.5],
+    [3, 2],
+    [1, 1]
+  ])
+}
+
+/** canvasMaxPixelRatio raises or lowers the largest density: the canvases follow the screen up to it */
+export const MaxPixelRatio: Story = {
+  args: { shapes: [RED_RECT], canvasOptions: { canvasMaxPixelRatio: 2.5 } },
+  beforeEach: emulateScreen(3),
+  play: playDensityChanges(2.5, [
+    [1.5, 1.5],
+    [4, 2.5],
+    [2, 2]
+  ])
+}
+
+/** With canvasMaxPixelRatio 1, the canvases keep the scale of the page on a HiDPI screen */
+export const MaxPixelRatioOne: Story = {
+  args: { shapes: [RED_RECT], canvasOptions: { canvasMaxPixelRatio: 1 } },
+  beforeEach: emulateScreen(2),
+  play: playDensityChanges(1, [[3, 1]])
 }

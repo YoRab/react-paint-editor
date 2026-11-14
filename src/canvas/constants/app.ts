@@ -79,6 +79,11 @@ export type CanvasOptions = {
   /** Width of the trail of the laser pointer at its newest point, in pixels of the screen: it narrows as it fades out */
   canvasLaserWidth?: number | undefined
   /**
+   * Largest density of the canvas, in pixels of the canvas in a pixel of the screen, 2 by default: the canvas follows the
+   * density of the screen up to it, from 1. 1 draws it at the scale of the page, faster but blurred on a HiDPI screen
+   */
+  canvasMaxPixelRatio?: number | undefined
+  /**
    * Language and texts of the canvas, merged into the ones given by the closest CanvasLocaleProvider or Editor, in English
    * by default
    */
@@ -91,10 +96,13 @@ export const DEFAULT_CANVAS_OPTIONS: {
   canvasSelectionWidth: number
   canvasLaserColor: string
   canvasLaserWidth: number
+  canvasMaxPixelRatio: number
 } = {
   canvasBackgroundColor: 'white',
   canvasSelectionColor: SELECTION_DEFAULT_COLOR,
   canvasSelectionWidth: SELECTION_DEFAULT_WIDTH,
   canvasLaserColor: '#ff2d2d',
-  canvasLaserWidth: 6
+  canvasLaserWidth: 6,
+  // 3 would have more than twice the pixels of 2 to draw, for a gain hardly seen
+  canvasMaxPixelRatio: 2
 }

@@ -115,13 +115,25 @@ type CanvasElementProps = {
   selectionWidth: number
   laserColor: string
   laserWidth: number
+  /** Largest density of the canvases, in pixels of the canvas in a pixel of the screen */
+  maxPixelRatio: number
 }
 
 /**
  * Canvases of the drawing and of the selection. React only renders what changes the DOM (sizes, mode, text edition):
  * the gestures update the store, which draws the canvases and sets the cursor directly.
  */
-const Canvas = ({ store, view, locale, backgroundColor, selectionColor, selectionWidth, laserColor, laserWidth }: CanvasElementProps) => {
+const Canvas = ({
+  store,
+  view,
+  locale,
+  backgroundColor,
+  selectionColor,
+  selectionWidth,
+  laserColor,
+  laserWidth,
+  maxPixelRatio
+}: CanvasElementProps) => {
   const { canvasSize, pixelRatio, resize, isEditMode, features, textEdition, isKeyboardNavigation } = view
   const instructionsId = useId()
   const containerRef = useRef<HTMLDivElement | null>(null)
@@ -155,7 +167,7 @@ const Canvas = ({ store, view, locale, backgroundColor, selectionColor, selectio
   useShapeEvents(store, drawCanvas)
   useDropPicture(store, drawCanvas)
   useZoom({ store, canvasElt: drawCanvas, zoomEnabled: features.zoom })
-  usePixelRatio(store)
+  usePixelRatio(store, maxPixelRatio)
   useCanvasRenderer({ store, drawCanvas, selectionCanvasRef, selectionColor, selectionWidth, laserColor, laserWidth, pixelWidth, pixelHeight })
 
   // The cursor follows the gestures: it is set without rendering, and the style given by React does not hold it
