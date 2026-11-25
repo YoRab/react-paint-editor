@@ -3,7 +3,9 @@ import { commands } from 'vitest/browser'
 import { mountApp } from './fixture'
 import {
   buildMetrics,
+  countDrawCalls,
   createRecorder,
+  type DrawCounts,
   enableMainThreadTimes,
   formatTable,
   getReactBuild,
@@ -14,7 +16,7 @@ import {
   recordFrames,
   setCpuThrottling
 } from './metrics'
-import { type Criteria, focusCanvas, SCENARIOS, type Scenario } from './scenarios'
+import { type Criteria, focusCanvas, getLayerCanvases, SCENARIOS, type Scenario } from './scenarios'
 import { generateShapes } from './shapes'
 
 const LABEL = inject('perfLabel')
@@ -45,13 +47,21 @@ const runOnce = async (scenario: Scenario, size: number): Promise<Metrics> => {
     if (!recorder.profiles.root.commits) throw new Error('The <Profiler> reported no commit: react-dom is not its profiling build')
     recorder.reset()
     const mainThreadStart = await readMainThreadTimes()
+    const { shapesCanvas, selectionCanvas } = getLayerCanvases()
+    const stopCounting = countDrawCalls(shapesCanvas, selectionCanvas)
     const stopFrames = recordFrames()
     const start = performance.now()
-    await scenario.run(context)
+    let drawCounts: DrawCounts
+    try {
+      await scenario.run(context)
+    } finally {
+      // the methods of the 2D context are given back even when the gesture fails
+      drawCounts = stopCounting()
+    }
     const totalMs = performance.now() - start
     const frames = stopFrames()
     const mainThreadEnd = await readMainThreadTimes()
-    const metrics = buildMetrics(recorder, frames, totalMs, {
+    const metrics = buildMetrics(recorder, drawCounts, frames, totalMs, {
       scriptMs: mainThreadEnd.scriptMs - mainThreadStart.scriptMs,
       taskMs: mainThreadEnd.taskMs - mainThreadStart.taskMs
     })
@@ -64,13 +74,16 @@ const runOnce = async (scenario: Scenario, size: number): Promise<Metrics> => {
 }
 
 /** The counts are deterministic: they are the acceptance criteria */
-const checkCriteria = (metrics: Metrics, { hostRenders, probeCommits, canvasCommits }: Criteria = {}) => {
+const checkCriteria = (metrics: Metrics, { hostRenders, probeCommits, canvasCommits, shapesLayerDraws, selectionLayerDraws }: Criteria = {}) => {
   if (hostRenders !== undefined) {
     expect(metrics.hostRenders, 'host renders').toBeLessThanOrEqual(hostRenders)
     expect(metrics.siblingRenders, 'sibling renders').toBeLessThanOrEqual(hostRenders)
   }
   if (probeCommits !== undefined) expect(metrics.probeCommits, 'probe commits').toBeLessThanOrEqual(probeCommits)
   if (canvasCommits !== undefined) expect(metrics.canvasCommits, 'canvas commits').toBeLessThanOrEqual(canvasCommits)
+  if (shapesLayerDraws !== undefined) expect(metrics.shapesLayerDraws, 'draws of the layer of the shapes').toBeLessThanOrEqual(shapesLayerDraws)
+  if (selectionLayerDraws !== undefined)
+    expect(metrics.selectionLayerDraws, 'draws of the layer of the selection').toBeLessThanOrEqual(selectionLayerDraws)
 }
 
 beforeAll(async () => {

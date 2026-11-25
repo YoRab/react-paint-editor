@@ -95,9 +95,62 @@ export const enableMainThreadTimes = () => cdp().send('Performance.enable')
 /** Slows the CPU down by the rate, like a slower machine: 1 is the speed of the machine */
 export const setCpuThrottling = (rate: number) => cdp().send('Emulation.setCPUThrottlingRate', { rate })
 
+/** Calls of the 2D context which draw pixels */
+const DRAW_METHODS = ['fill', 'stroke', 'drawImage', 'fillText', 'strokeText'] as const
+
+type ContextMethod = 'reset' | (typeof DRAW_METHODS)[number]
+
+export type DrawCounts = {
+  /** Draws of the layer of the shapes, and of the layer of the selection: each one starts with `ctx.reset()` */
+  shapesLayerDraws: number
+  selectionLayerDraws: number
+  /** Calls drawing pixels in each layer, and in the canvases out of the page, like the layers of semi-transparent shapes */
+  shapesDrawCalls: number
+  selectionDrawCalls: number
+  offscreenDrawCalls: number
+}
+
+/**
+ * Counts the calls of the 2D contexts until the returned function is called, by wrapping the methods of their
+ * prototype, like the benchmark of Excalidraw. The layers are told apart by the context of their canvas element, not by
+ * the code which draws them: the library of an older git ref is counted the same way
+ */
+export const countDrawCalls = (shapesCanvas: HTMLCanvasElement, selectionCanvas: HTMLCanvasElement | null) => {
+  const counts: DrawCounts = { shapesLayerDraws: 0, selectionLayerDraws: 0, shapesDrawCalls: 0, selectionDrawCalls: 0, offscreenDrawCalls: 0 }
+  // the contexts the library draws with: getContext gives back the one of a canvas. Comparing them is cheaper than
+  // reading ctx.canvas on each of the hundreds of thousands of calls of a gesture, which lands in the measured times
+  const shapesContext = shapesCanvas.getContext('2d')
+  const selectionContext = selectionCanvas?.getContext('2d')
+  const prototype = CanvasRenderingContext2D.prototype as unknown as Record<ContextMethod, (...args: unknown[]) => unknown>
+  const originals = new Map<ContextMethod, (...args: unknown[]) => unknown>()
+  const wrap = (method: ContextMethod, count: (context: CanvasRenderingContext2D) => void) => {
+    const original = prototype[method]
+    originals.set(method, original)
+    prototype[method] = function (this: CanvasRenderingContext2D, ...args: unknown[]) {
+      count(this)
+      return original.apply(this, args)
+    }
+  }
+  wrap('reset', context => {
+    if (context === shapesContext) counts.shapesLayerDraws++
+    else if (context === selectionContext) counts.selectionLayerDraws++
+  })
+  for (const method of DRAW_METHODS) {
+    wrap(method, context => {
+      if (context === shapesContext) counts.shapesDrawCalls++
+      else if (context === selectionContext) counts.selectionDrawCalls++
+      else counts.offscreenDrawCalls++
+    })
+  }
+  return (): DrawCounts => {
+    for (const [method, original] of originals) prototype[method] = original
+    return counts
+  }
+}
+
 // ─── Metrics of a run ──────────────────────────────────────────────────────────
 
-export type Metrics = {
+export type Metrics = DrawCounts & {
   hostRenders: number
   siblingRenders: number
   rootCommits: number
@@ -128,7 +181,13 @@ const percentile = (values: number[], ratio: number) => {
 
 const round = (value: number) => Math.round(value * 100) / 100
 
-export const buildMetrics = (recorder: Recorder, frames: number[], totalMs: number, mainThread: { scriptMs: number; taskMs: number }): Metrics => {
+export const buildMetrics = (
+  recorder: Recorder,
+  drawCounts: DrawCounts,
+  frames: number[],
+  totalMs: number,
+  mainThread: { scriptMs: number; taskMs: number }
+): Metrics => {
   const { counters, profiles } = recorder
   return {
     hostRenders: counters.hostRenders,
@@ -141,6 +200,7 @@ export const buildMetrics = (recorder: Recorder, frames: number[], totalMs: numb
     canvasMs: round(profiles.canvas.actualDuration),
     editorUiMs: round(profiles.editor.actualDuration - profiles.canvas.actualDuration),
     probeCommits: profiles.probe.commits,
+    ...drawCounts,
     frameP50: round(percentile(frames, 0.5)),
     frameP95: round(percentile(frames, 0.95)),
     frameMax: round(Math.max(0, ...frames)),

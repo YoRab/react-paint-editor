@@ -36,6 +36,9 @@ export type Criteria = {
   hostRenders?: number
   probeCommits?: number
   canvasCommits?: number
+  /** Draws of the layer of the shapes, and of the layer of the selection */
+  shapesLayerDraws?: number
+  selectionLayerDraws?: number
 }
 
 export type Scenario = {
@@ -64,6 +67,12 @@ const getElement = <T extends Element>(selector: string): T => {
 }
 
 const getDrawCanvas = () => getElement<HTMLCanvasElement>('[data-testid="draw-canvas"]')
+
+/** The canvases of the two layers: the shapes are drawn in the draw canvas, the selection in the canvas over it, if any */
+export const getLayerCanvases = () => ({
+  shapesCanvas: getDrawCanvas(),
+  selectionCanvas: document.querySelector<HTMLCanvasElement>('.react-paint-canvas-selectioncanvas')
+})
 
 const toClient = ([x, y]: Point) => {
   const rect = getDrawCanvas().getBoundingClientRect()
@@ -151,8 +160,17 @@ const selectBrushTool = async (app: PerfApp) => {
 
 const MOVES = 300
 
-/** No render of the consumer nor of the canvas during a gesture, and a single save of the history at its end */
-const GESTURE_CRITERIA: Criteria = { hostRenders: 0, probeCommits: 1, canvasCommits: 0 }
+/**
+ * Each layer is drawn at most once per frame, and the events are sent at most one per frame: each layer is drawn at most
+ * once per event. A drag also draws the frames of its press and of its release
+ */
+const atMostOneDrawPerEvent = (events: number): Criteria => ({ shapesLayerDraws: events, selectionLayerDraws: events })
+
+/**
+ * No render of the consumer nor of the canvas during a gesture, a single save of the history at its end, and each layer
+ * drawn at most once per move, press and release
+ */
+const GESTURE_CRITERIA: Criteria = { hostRenders: 0, probeCommits: 1, canvasCommits: 0, ...atMostOneDrawPerEvent(MOVES + 2) }
 
 /** 300 moves from the first shape drawn to the last one, without button: the shape hovered at the end has this type */
 const createHoverScenario = ({ hoveredType, ...scenario }: Pick<Scenario, 'id' | 'generate'> & { hoveredType: StateShape['type'] }): Scenario => ({
@@ -166,7 +184,7 @@ const createHoverScenario = ({ hoveredType, ...scenario }: Pick<Scenario, 'id' |
     expect(app.getState().interaction.hoveredShape?.type).toBe(hoveredType)
     expect(app.getState().selectedShapes).toHaveLength(0)
   },
-  criteria: { ...GESTURE_CRITERIA, probeCommits: 0 }
+  criteria: { ...GESTURE_CRITERIA, probeCommits: 0, shapesLayerDraws: 0, selectionLayerDraws: MOVES }
 })
 
 const hover = createHoverScenario({ id: 'hover', hoveredType: 'rect' })
@@ -255,7 +273,7 @@ const frame: Scenario = {
     expect(app.getState().selectedShapes.length).toBeGreaterThan(shapes.length / 2)
     expect(app.getState().interaction.selectionFrame).toBeUndefined()
   },
-  criteria: { ...GESTURE_CRITERIA, probeCommits: 0 }
+  criteria: { ...GESTURE_CRITERIA, probeCommits: 0, shapesLayerDraws: 0 }
 }
 
 const frameInside: Scenario = {
@@ -271,7 +289,7 @@ const frameInside: Scenario = {
     expect(selectedIds.length).toBeGreaterThan(0)
     expect(selectedIds).not.toContain(OUTLINE_ID)
   },
-  criteria: { ...GESTURE_CRITERIA, probeCommits: 0 }
+  criteria: { ...GESTURE_CRITERIA, probeCommits: 0, ...atMostOneDrawPerEvent(MOVES / 2 + 2), shapesLayerDraws: 0 }
 }
 
 const WHEELS = 200
@@ -289,7 +307,7 @@ const pan: Scenario = {
     expect(x).toBeCloseTo(-2 * WHEELS, 0)
     expect(y).toBeCloseTo(-5 * WHEELS, 0)
   },
-  criteria: { hostRenders: 0, probeCommits: 0 }
+  criteria: { hostRenders: 0, probeCommits: 0, ...atMostOneDrawPerEvent(WHEELS) }
 }
 
 const ZOOM_IN_WHEELS = 150
@@ -307,7 +325,7 @@ const createZoomScenario = (scenario: Pick<Scenario, 'id' | 'generate'>): Scenar
     const expectedZoom = 1.005 ** ZOOM_IN_WHEELS * 0.995 ** (WHEELS - ZOOM_IN_WHEELS)
     expect(app.getState().view.zoom).toBeCloseTo(expectedZoom, 2)
   },
-  criteria: { hostRenders: 0, probeCommits: 0 }
+  criteria: { hostRenders: 0, probeCommits: 0, ...atMostOneDrawPerEvent(WHEELS) }
 })
 
 const zoom = createZoomScenario({ id: 'zoom' })
@@ -353,7 +371,7 @@ const longBrush: Scenario = {
     expect(brushShape?.type === 'brush' ? brushShape.points.length : 0).toBe(LONG_BRUSH_STROKES)
     expect(brushShape?.type === 'brush' ? brushShape.points.flat().length : 0).toBeGreaterThan((LONG_BRUSH_STROKES * MOVES) / 2)
   },
-  criteria: { ...GESTURE_CRITERIA, probeCommits: LONG_BRUSH_STROKES }
+  criteria: { ...GESTURE_CRITERIA, probeCommits: LONG_BRUSH_STROKES, ...atMostOneDrawPerEvent((MOVES + 2) * LONG_BRUSH_STROKES) }
 }
 
 const UNDO_CLICKS = 20
@@ -382,7 +400,8 @@ const createUndoScenario = ({ id, listenData = false, ...scenario }: Pick<Scenar
       expect(app.getState().history.canUndo).toBe(true)
       // one event for each click
       if (listenData) expect(app.getDataEvents() - dataEventsBefore).toBe(UNDO_CLICKS)
-    }
+    },
+    criteria: atMostOneDrawPerEvent(UNDO_CLICKS)
   }
 }
 
@@ -426,7 +445,7 @@ const createLayersScenario = ({ id, listenData = false }: Pick<Scenario, 'id' | 
       if (listenData) expect(app.getDataEvents() - dataEventsBefore).toBe(LAYER_CLICKS)
     },
     // the first click gives something to undo
-    criteria: GESTURE_CRITERIA
+    criteria: { ...GESTURE_CRITERIA, ...atMostOneDrawPerEvent(LAYER_CLICKS) }
   }
 }
 
@@ -477,7 +496,7 @@ const createAddPictureScenario = ({ id, listenData = false }: Pick<Scenario, 'id
       if (listenData) expect(app.getDataEvents() - dataEventsBefore).toBe(ADDED_PICTURES)
     },
     // the first picture gives something to undo
-    criteria: GESTURE_CRITERIA
+    criteria: { ...GESTURE_CRITERIA, ...atMostOneDrawPerEvent(ADDED_PICTURES) }
   }
 }
 
