@@ -752,6 +752,15 @@ describe('drawing of a group', () => {
     expect(layers).toEqual([])
   })
 
+  it('counts the shapes drawn, the ones out of the view and the ones painted on a layer, when it is given counters', () => {
+    const stats = { drawnShapes: 0, culledShapes: 0, layeredShapes: 0 }
+    const far = rect('far', 5000)
+    const thin = rect('thin', 400, 0, { style: { lineWidth: 0.75, opacity: 50 } })
+    draw([a, far, group('g', [b, rect('c', 600)], { style: { opacity: 50 } }), thin, rect('hidden', 0, 0, { visible: false })], { stats })
+    // the group is painted on a layer with its two shapes, which are drawn there. A hidden shape is not counted
+    expect(stats).toEqual({ drawnShapes: 4, culledShapes: 1, layeredShapes: 2 })
+  })
+
   it('draws a stroke with an opacity on a layer while it is thinner than a pixel of the canvas, which has the density of the screen', () => {
     const thin = rect('thin', 0, 0, { style: { lineWidth: 0.75, opacity: 50 } })
     expect(draw([thin]).copies).toEqual([{ alpha: 0.5, source: expect.anything() }])

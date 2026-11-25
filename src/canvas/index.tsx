@@ -168,6 +168,7 @@ export type {
   ToolSettingValues,
   ZoomAction
 } from '@canvas/types/editor'
+export type { CanvasLayer, FrameMeasure, GestureMeasure, GestureType, LayerMeasure } from '@canvas/types/performance'
 export type {
   CustomShapeDefinition,
   CustomShapeParams,

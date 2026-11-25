@@ -1,6 +1,7 @@
 import type { AppOptions, OptionalOptions } from '@canvas/constants/app'
 import type { Resize, Size } from '@canvas/types/Canvas'
 import type { SelectionModeData } from '@canvas/types/Mode'
+import type { FrameMeasure, GestureMeasure } from '@canvas/types/performance'
 import type {
   ExportedDrawableShape,
   ExportedShape,
@@ -434,6 +435,17 @@ export type ReactPaintEventArgs = {
    * custom tools in availableTools before loading data which holds their shapes
    */
   customShapeLoadFailed: [shape: ExportedDrawableShape<'custom'>]
+  /**
+   * A layer of the canvas is drawn: the duration of the draw, the shapes drawn and left out, and the size of the layer.
+   * Only measured while a listener is registered
+   */
+  frameDrawn: [frame: FrameMeasure]
+  /**
+   * A gesture ends: a drag of the pointer which changed the drawing or the view, or the changes of the view outside of a
+   * drag, like the wheel or the zoom actions, once they pause for 100 ms. It gives its duration, its frames per second
+   * and the draws of the layers. Only measured while a listener is registered
+   */
+  gestureMeasured: [gesture: GestureMeasure]
 }
 
 export type ReactPaintEvents = { [E in keyof ReactPaintEventArgs]: (...args: ReactPaintEventArgs[E]) => void }

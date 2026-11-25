@@ -867,6 +867,46 @@ paint.registerEvent('pictureLoadFailed', (shape: ShapeEntity<'picture'>, error: 
   console.warn('No custom tool draws', shape.toolId)
 })`} />
 
+      <h3>frameDrawn and gestureMeasured</h3>
+      <p>
+        They measure the canvas in your app, to find a slow drawing or check a change. They are only measured while a listener is registered: without one, the canvas reads no time and runs no loop of frames.
+        Measure with the production build of your app, the development build of React being slower.
+      </p>
+      <p>
+        <code>frameDrawn</code> is fired after each draw of a layer of the canvas, at most once per frame each: the <code>'shapes'</code>, or the <code>'selection'</code> drawn over them.
+        It gives the duration of the JavaScript of the draw (the browser paints the canvas later in the frame), the shapes drawn, the ones left out because they are out of the view, the ones painted on an offscreen layer first because of their opacity, and the size of the layer in pixels.
+      </p>
+      <p>
+        <code>gestureMeasured</code> is fired at the end of each gesture: a drag which moves, resizes or rotates shapes, draws a selection frame, a brush, an eraser or a laser stroke, or pans the view.
+        A press which changes nothing, like a click on a shape, is not measured. The changes of the view outside of a drag, by the wheel, a pinch or the zoom actions, are a <code>'pan'</code>, or a <code>'zoom'</code> once the zoom changes, which ends when they pause for 100 ms.
+        It gives the duration of the gesture, its frames per second, the intervals between its frames (a frame longer than 50 ms is seen as a stutter) and the draws of each layer.
+      </p>
+      <Source language='typescript' code={`paint.registerEvent('gestureMeasured', (gesture: GestureMeasure) => {
+  if (gesture.frameIntervals.p95 > 33) report(gesture.type, gesture.fps, gesture.shapeCount)
+})
+paint.registerEvent('frameDrawn', (frame: FrameMeasure) => {
+  if (frame.layer === 'shapes') console.log(frame.duration, frame.drawnShapes, frame.culledShapes)
+})`} />
+
+      <table>
+        <thead>
+          <tr>
+            <th>Field of GestureMeasure</th>
+            <th>Description</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td><code>type</code></td><td><code>'translate' | 'resize' | 'rotate' | 'selectionFrame' | 'brush' | 'eraser' | 'laser' | 'pan' | 'zoom'</code></td></tr>
+          <tr><td><code>startTime</code>, <code>duration</code></td><td>In milliseconds, in the time of <code>performance.now()</code></td></tr>
+          <tr><td><code>frames</code>, <code>fps</code></td><td>Animation frames of the browser during the gesture, and their number per second</td></tr>
+          <tr><td><code>frameIntervals</code></td><td><code>p50</code>, <code>p95</code> and <code>max</code> of the intervals between the frames, in milliseconds</td></tr>
+          <tr><td><code>longFrames</code></td><td>Intervals longer than 50 ms</td></tr>
+          <tr><td><code>shapesLayer</code>, <code>selectionLayer</code></td><td>The <code>draws</code> of each layer, their <code>totalDuration</code> and <code>maxDuration</code></td></tr>
+          <tr><td><code>shapeCount</code>, <code>selectedCount</code></td><td>Shapes of the drawing and selected shapes when the gesture starts, the shapes of the groups and not the groups</td></tr>
+          <tr><td><code>zoom</code>, <code>pixelRatio</code></td><td>Zoom of the view at the end of the gesture, and pixels of the canvas in a pixel of the screen</td></tr>
+        </tbody>
+      </table>
+
       <h2 id="Methods">Methods</h2>
       <p>
         Methods of the handle returned by <code>useReactPaint</code>. Like the handle, their identity never changes.

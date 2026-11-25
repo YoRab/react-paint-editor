@@ -1,5 +1,6 @@
 import type { UtilsSettings } from '@canvas/constants/app'
 import type { PaintStore } from '@canvas/store/paintStore'
+import { createPerformanceMonitor, type PerformanceMonitor } from '@canvas/store/performanceMonitor'
 import { keepIfSame, memoizeLast } from '@canvas/store/selectors'
 import type { InternalState } from '@canvas/store/types'
 import type { SelectionType, ShapeEntity } from '@canvas/types/Shapes'
@@ -130,6 +131,18 @@ const useCanvasRenderer = ({
   pixelHeight
 }: UseCanvasRendererProps) => {
   const layersRef = useRef<Layer[]>([])
+  const monitorRef = useRef<PerformanceMonitor | null>(null)
+
+  // the draws and the gestures are measured while frameDrawn or gestureMeasured is listened, by a monitor which lives
+  // with the store: a change of the layers, like their colors, does not lose the gesture running
+  useEffect(() => {
+    const monitor = createPerformanceMonitor(store)
+    monitorRef.current = monitor
+    return () => {
+      monitor.stop()
+      monitorRef.current = null
+    }
+  }, [store])
 
   useEffect(() => {
     /**
@@ -182,11 +195,18 @@ const useCanvasRenderer = ({
         view.pixelRatio
       )
 
+    const measureDraw: PerformanceMonitor['measureDraw'] = (layer, canvas, draw) =>
+      monitorRef.current ? monitorRef.current.measureDraw(layer, canvas, draw) : draw(undefined)
+
     const drawLayer = watchLayer(
       state => [selectDrawnShapes(state), store.getSettings(state), selectDrawOptions(state)],
       state => {
         const drawCtx = drawCanvas?.getContext('2d')
-        if (drawCtx) renderDrawCanvas(drawCtx, selectDrawnShapes(state), store.getSettings(state), selectDrawOptions(state))
+        if (!drawCtx) return
+        measureDraw('shapes', drawCtx.canvas, stats => {
+          const options = selectDrawOptions(state)
+          renderDrawCanvas(drawCtx, selectDrawnShapes(state), store.getSettings(state), stats ? { ...options, stats } : options)
+        })
       }
     )
 
@@ -206,8 +226,8 @@ const useCanvasRenderer = ({
       ],
       state => {
         const selectionCtx = selectionCanvasRef.current?.getContext('2d')
-        return (
-          !!selectionCtx &&
+        if (!selectionCtx) return false
+        return measureDraw('selection', selectionCtx.canvas, () =>
           renderSelectionCanvas(
             selectionCtx,
             state,

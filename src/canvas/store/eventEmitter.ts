@@ -30,7 +30,9 @@ export const createEventEmitter = (): EventEmitter => {
     pictureLoaded: [],
     pictureLoadFailed: [],
     dataLoadFailed: [],
-    customShapeLoadFailed: []
+    customShapeLoadFailed: [],
+    frameDrawn: [],
+    gestureMeasured: []
   }
 
   const registerEvent: EventEmitter['registerEvent'] = (event, fn) => {

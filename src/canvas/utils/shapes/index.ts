@@ -8,6 +8,7 @@ import {
   STYLE_FIELDS_SHAPE_TYPES
 } from '@canvas/constants/shapes'
 import type { HoverModeData, SelectionModeData, SelectionModeResize } from '@canvas/types/Mode'
+import type { FrameMeasure } from '@canvas/types/performance'
 import type { DrawableShape, Point, Rect, SelectionType, ShapeEntity, ShapeType, StyleShape } from '@canvas/types/Shapes'
 import type { CustomTool } from '@canvas/types/tools'
 import { createDetachedContext, initCanvasContext, transformCanvas, updateCanvasContext } from '@canvas/utils/canvas'
@@ -250,7 +251,11 @@ export type DrawShapesOptions = {
    * by a scale of its context. It gives the strokes thinner than a pixel and the lines in pixels of the screen
    */
   pixelRatio?: number | undefined
+  /** Counters of the shapes drawn, left out of the view and painted on a layer, given only while a draw is measured */
+  stats?: DrawStats | undefined
 }
+
+export type DrawStats = Pick<FrameMeasure, 'drawnShapes' | 'culledShapes' | 'layeredShapes'>
 
 /** Part of their opacity kept by the faded shapes */
 const FADED_OPACITY_RATIO = 0.3
@@ -288,6 +293,7 @@ const drawGroupOnLayer = (
     getBoundingRect(leaves.map(leaf => expandRect(leaf.computed.boundingBox, getLayerMargin(leaf))))
   )
   ctx.restore()
+  if (options.stats) options.stats.layeredShapes++
   // the transformation of the canvas: the shapes add the one of the view
   paintOnLayer(ctx, matrix, box, layerCtx => drawShapeList(layerCtx, group.shapes, settings, currentView, options), opacity)
 }
@@ -313,8 +319,12 @@ const drawShape = (
   currentView: Rect,
   options: DrawShapesOptions
 ): void => {
+  const { stats } = options
   if (shape.visible === false || shape.id === options.hiddenId) return
-  if (!getRectIntersection(shape.computed.boundingBox, currentView)) return
+  if (!getRectIntersection(shape.computed.boundingBox, currentView)) {
+    if (stats) stats.culledShapes++
+    return
+  }
   if (shape.type === 'group') {
     drawGroup(ctx, shape, settings, currentView, options)
     return
@@ -325,8 +335,11 @@ const drawShape = (
   if (options.fadedIds?.has(shape.id)) ctx.globalAlpha *= FADED_OPACITY_RATIO
 
   if (ctx.globalAlpha > 0) {
-    if (needsLayer(shape, ctx.globalAlpha, settings.canvasSize.scaleRatio * (options.pixelRatio ?? 1))) drawShapeOnLayer(ctx, shape, options)
-    else drawShapeByType(ctx, shape, options)
+    if (needsLayer(shape, ctx.globalAlpha, settings.canvasSize.scaleRatio * (options.pixelRatio ?? 1))) {
+      drawShapeOnLayer(ctx, shape, options)
+      if (stats) stats.layeredShapes++
+    } else drawShapeByType(ctx, shape, options)
+    if (stats) stats.drawnShapes++
   }
 
   ctx.restore()
