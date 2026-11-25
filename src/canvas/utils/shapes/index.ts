@@ -11,7 +11,7 @@ import type { HoverModeData, SelectionModeData, SelectionModeResize } from '@can
 import type { DrawableShape, Point, Rect, SelectionType, ShapeEntity, ShapeType, StyleShape } from '@canvas/types/Shapes'
 import type { CustomTool } from '@canvas/types/tools'
 import { createDetachedContext, initCanvasContext, transformCanvas, updateCanvasContext } from '@canvas/utils/canvas'
-import { hasVisibleFill, isFillMasked } from '@canvas/utils/fill'
+import { isFillMasked, shouldDrawFill } from '@canvas/utils/fill'
 import { getRectIntersection } from '@canvas/utils/intersect'
 import { getSelectedShapes } from '@canvas/utils/selectedShapes'
 import { buildShapesSelection } from '@canvas/utils/selection'
@@ -131,8 +131,7 @@ const needsLayer = (shape: ShapeEntity, opacity: number, pixelScale: number): bo
   const hasStroke = shape.style?.strokeColor !== 'transparent'
   if (hasStroke && (shape.style?.lineWidth ?? SELECTION_DEFAULT_WIDTH) * pixelScale <= 1) return true
   if (hasStroke && 'arrows' in shape && shape.arrows?.length) return true
-  if (shape.type === 'line' || shape.type === 'brush') return false
-  return hasStroke && hasVisibleFill(shape.style)
+  return hasStroke && shouldDrawFill(shape)
 }
 
 /**

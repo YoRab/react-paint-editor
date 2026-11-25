@@ -39,7 +39,8 @@ const TEXT_STYLE_FIELDS: (keyof StyleShape)[] = [
 /** Style fields of the fills drawn inside the path of a shape: the background of a text stays a solid color */
 const FILL_STYLE_FIELDS: (keyof StyleShape)[] = ['fillPattern', 'fillGradient', 'fillColor2', 'fillGradientAngle']
 
-const FILLED_SHAPE_TYPES: readonly ShapeType[] = ['rect', 'square', 'circle', 'ellipse', 'polygon', 'curve', 'custom']
+/** Types of the shapes which draw a fill inside their path: a line and a brush only draw their stroke */
+export const FILLED_SHAPE_TYPES: readonly ShapeType[] = ['rect', 'square', 'circle', 'ellipse', 'polygon', 'curve', 'custom']
 
 const withShapeTypes = (fields: (keyof StyleShape)[], types: readonly ShapeType[]) =>
   Object.fromEntries(fields.map((field): [keyof StyleShape, readonly ShapeType[]] => [field, types]))

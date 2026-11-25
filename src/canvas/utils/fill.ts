@@ -1,5 +1,5 @@
 import { STYLE_FILL_COLOR2_DEFAULT, STYLE_FILL_GRADIENT_ANGLE_DEFAULT } from '@canvas/constants/rendering'
-import { SELECTION_DEFAULT_WIDTH } from '@canvas/constants/shapes'
+import { FILLED_SHAPE_TYPES, SELECTION_DEFAULT_WIDTH } from '@canvas/constants/shapes'
 import type { FillGradient, FillPattern, Rect, ShapeEntity, StyleShape } from '@canvas/types/Shapes'
 import { createDetachedContext, isVisibleColor } from '@canvas/utils/canvas'
 import { degreesToRadians } from '@canvas/utils/trigo'
@@ -22,6 +22,10 @@ export const isFillMasked = (style: FillStyle | undefined) => getFillPattern(sty
 /** Whether a shape is filled: with its fill color, or with the second color of its gradient */
 export const hasVisibleFill = (style: FillStyle | undefined): boolean =>
   isVisibleColor(style?.fillColor) || (getFillGradient(style) !== undefined && isVisibleColor(style?.fillColor2 ?? STYLE_FILL_COLOR2_DEFAULT))
+
+/** Whether a shape draws a fill inside its path: a line and a brush only draw their stroke, whatever their fill color */
+export const shouldDrawFill = (shape: Pick<ShapeEntity, 'type' | 'style'>): boolean =>
+  FILLED_SHAPE_TYPES.includes(shape.type) && hasVisibleFill(shape.style)
 
 /**
  * The color of a gradient stop next to a transparent one: the colors of a canvas gradient are interpolated with their
