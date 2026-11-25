@@ -1,6 +1,6 @@
 # Performance benchmark
 
-Measures what React and the main thread do during the continuous interactions of the canvas. It runs in Chromium (Vitest browser mode, Playwright) with its own config, `vitest.perf.config.ts`, and is only run manually: it is not part of `pnpm test` nor of the CI.
+Measures what React and the main thread do during the continuous interactions of the canvas. It runs in Chromium (Vitest browser mode, Playwright) with its own config, `vitest.perf.config.ts`. The benchmark is only run manually: it is not part of `pnpm test`. Its counts, which do not depend on the speed of the machine, are checked by the CI on each pull request with `pnpm bench:counts`.
 
 It measures the production build of React, the one the users of the library run, with the profiling build of react-dom, whose `<Profiler>` still reports the commits. The run stops at once when another build runs, or when the `<Profiler>` reports nothing.
 
@@ -32,9 +32,26 @@ PERF_LABEL=hidpi PERF_DPR=2 pnpm bench
 PERF_BASELINE=before pnpm bench         # compared to results/before.json
 ```
 
-A full run takes about 20 minutes: 24 scenarios, 2 sizes, 1 warm-up run and 5 measured runs each, on a new mount every time. The report, ignored by git, holds the median of the measured runs (`results`) and each measured run (`samples`).
+A full run takes about 22 minutes: 24 scenarios, 2 sizes, 1 warm-up run and 5 measured runs each, on a new mount every time. The report, ignored by git, holds the median of the measured runs (`results`) and each measured run (`samples`).
 
 When the report of `PERF_BASELINE` exists, each cell shows the gap to it: a count which changed is marked with its own gap, `(+300 ▲)` for more and `(-300 ▼)` for fewer, and the output ends with the list of these counts. The gaps of time are only shown in %, never marked: two benches made at different times differ by the drift of the machine, which a test on the runs of each one cannot see. The same code measured twice in a row once came out 34 % faster on `undo@50 taskMs`, with a Mann-Whitney U test at p < 0.05. To compare the times of two versions, use `pnpm bench:compare`, which alternates them. Compare only reports made with the same `PERF_CPU`, `PERF_EVENTS`, `PERF_DPR` and `PERF_REACT`. Each report records them. The reports made before 2026-11-25 only hold medians.
+
+## Check the counts
+
+```bash
+pnpm bench:counts                           # checks the counts against counts-baseline.json
+pnpm bench:counts -u                        # writes the counts measured to counts-baseline.json
+PERF_SCENARIOS=hover,pan pnpm bench:counts  # two scenarios
+PERF_CPU=4 pnpm bench:counts                # checks that the counts do not depend on the speed of the machine
+```
+
+`counts.perf.test.tsx` runs each scenario once, without warm-up, at 50 and 500 shapes with one event per frame, in about 4 minutes. It checks the acceptance criteria of the scenario, then its counts, from `hostRenders` to `offscreenDrawCalls` (see the metrics), against `tests/perf/counts-baseline.json`. This baseline is versioned and reviewed with the code, like the one of the benchmark of react-konva. `PERF_SHAPES` and `PERF_EVENTS` do not apply, and the run stops at once with `PERF_REACT=development` or `PERF_DPR`: the baseline holds the counts of the production build of React at a pixel ratio of 1.
+
+- A count higher than the baseline, or missing from it, fails its scenario. Fix the regression, or update the baseline when the count is expected to rise, and explain why in the pull request.
+- A count lower than the baseline does not fail: the output lists it at the end. Update the baseline, so that it catches the count if it rises again.
+- `-u`, the flag of Vitest which updates the snapshots, writes the counts measured to the baseline. The results of the scenarios not run are kept, and the ones of the removed scenarios are dropped. The diff of the baseline shows each count which changed.
+- The counts measured are also written to `tests/perf/results/counts.json`, in the format of the baseline.
+- A count which changes with `PERF_CPU=4` depends on the speed of the machine: the CI, slower, would not measure the baseline. Such a count is left out of the comparison by the `variableCounts` of its scenario, with the reason. Only `rootCommits` and `editorCommits` of `add-picture` and `add-picture-autosave` are: the steps of the loading of a photo fall into one task of the browser or several, and React commits them together or apart.
 
 ## Compare two versions
 
@@ -56,8 +73,7 @@ The other variables apply to both variants. Each round takes as long as a `pnpm 
 
 ## Scenarios
 
-The scenarios are driven only by DOM events (`scenarios.ts`), sent one per frame like a 60 Hz mouse (`PERF_EVENTS` simulates faster mice). Each one ends with a functional check (the shape moved, the shapes are selected, the view moved...), so that a gesture broken by a change is never measured.
-
+The scenarios are driven only by DOM events (`scenarios.ts`), sent one per frame like a 60 Hz mouse (`PERF_EVENTS` simulates faster mice). Each one ends with a functional check (the shape moved, the shapes are selected, the view moved...), so that a gesture broken by a change is never measured. Between the setup of a scenario (selecting the brush tool, opening a panel...) and its gesture, the run waits 400 ms. That is longer than the timers the editor starts on a change, like the fade-out of the loader after the mount and the announcements of the live region. Without the wait, they fired during the gesture at a time which depended on the duration of the setup, and changed the number of commits from one run to the next.
 The drawing is a grid of opaque rectangles, unless another one is given (`shapes.ts`).
 
 | id                     | drawing                                                                                                | gesture                                                                                                      |
@@ -108,7 +124,7 @@ The counts are deterministic: they are the acceptance criteria. The ones checked
 
 ## Acceptance criteria
 
-Each scenario gives its own maximums (`criteria` in `scenarios.ts`). The test fails when a count goes over one:
+Each scenario gives its own maximums (`criteria` in `scenarios.ts`), checked by `pnpm bench` and `pnpm bench:counts`. The test fails when a count goes over one:
 
 - no render of the host nor of the sibling during all the gestures but `undo`, `undo-autosave` and `undo-groups-autosave`;
 - no commit of the probe during `hover`, `hover-groups`, `frame`, `frame-inside`, `pan`, `zoom` and `zoom-mixed`, and at most 1 (the save of the history on release) during `translate`, `translate-all`, `translate-group`, `translate-long-brush`, `opacity`, `mixed`, `pictures` and `brush`, at most 1 per stroke during `long-brush`, at most 1 (the first step to undo) during `layers`, `layers-autosave`, `add-picture` and `add-picture-autosave`;

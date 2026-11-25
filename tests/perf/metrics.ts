@@ -15,6 +15,7 @@ declare module 'vitest' {
     perfEvents: string
     perfReact: ReactBuild
     perfBaseline: string
+    perfUpdate: boolean
   }
 }
 
@@ -56,6 +57,21 @@ export const createRecorder = (): Recorder => {
 }
 
 export const nextFrame = () => new Promise<number>(resolve => requestAnimationFrame(resolve))
+
+/**
+ * Longer than the timers the editor starts on a change, like the fade-out of the loader once loaded (300 ms) and the
+ * announcement of the live region (200 ms)
+ */
+const SETTLE_MS = 400
+
+/**
+ * Waits for the timers started by the last changes to fire, then for a frame. Without it, they fire at a time which
+ * depends on the speed of the machine: before or during a gesture, alone or in the same commit as another change
+ */
+export const settle = async () => {
+  await new Promise(resolve => setTimeout(resolve, SETTLE_MS))
+  await nextFrame()
+}
 
 export const waitFor = async (condition: () => boolean, message: string, timeout = 10_000) => {
   const start = performance.now()
@@ -175,6 +191,26 @@ export type Metrics = DrawCounts & {
   /** All the work of the main thread: JavaScript, style, layout, paint... */
   taskMs: number
 }
+
+/** The metrics which do not depend on the speed of the machine: `pnpm bench:counts` checks them on each pull request */
+export const COUNT_NAMES = [
+  'hostRenders',
+  'siblingRenders',
+  'rootCommits',
+  'editorCommits',
+  'canvasCommits',
+  'probeCommits',
+  'shapesLayerDraws',
+  'selectionLayerDraws',
+  'shapesDrawCalls',
+  'selectionDrawCalls',
+  'offscreenDrawCalls'
+] as const satisfies readonly (keyof Metrics)[]
+
+export type CountName = (typeof COUNT_NAMES)[number]
+export type Counts = Pick<Metrics, CountName>
+
+export const pickCounts = (metrics: Metrics): Counts => Object.fromEntries(COUNT_NAMES.map(name => [name, metrics[name]])) as Counts
 
 const percentile = (values: number[], ratio: number) => {
   if (!values.length) return 0

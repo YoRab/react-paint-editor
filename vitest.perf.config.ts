@@ -4,7 +4,8 @@ import react from '@vitejs/plugin-react'
 import type { Plugin } from 'vite'
 import { defineConfig } from 'vitest/config'
 
-// Performance benchmark, only run manually with `pnpm bench` (see tests/perf/README.md)
+// Performance benchmark, run manually with `pnpm bench`, and check of its counts, `pnpm bench:counts`, also run by the
+// CI (see tests/perf/README.md)
 
 /**
  * The build of React measured. 'production' is the one the users of the library run, with the profiling build of
@@ -36,8 +37,19 @@ const measuredLibrary = (source: string): Plugin => {
   }
 }
 
+/**
+ * Gives the tests the flag `-u` of Vitest: `pnpm bench:counts -u` writes the counts measured to counts-baseline.json
+ * instead of checking them. Unlike a variable of the environment, it does not stay set in the shell
+ */
+const updateFlag = (): Plugin => ({
+  name: 'perf-update-flag',
+  configureVitest({ project }) {
+    project.provide('perfUpdate', project.config.snapshotOptions.updateSnapshot === 'all')
+  }
+})
+
 export default defineConfig({
-  plugins: [react(), ...(process.env.PERF_SOURCE ? [measuredLibrary(process.env.PERF_SOURCE)] : [])],
+  plugins: [react(), updateFlag(), ...(process.env.PERF_SOURCE ? [measuredLibrary(process.env.PERF_SOURCE)] : [])],
   resolve: {
     tsconfigPaths: true,
     // react-dom/client takes createRoot from react-dom: both are the profiling build
@@ -63,7 +75,9 @@ export default defineConfig({
       // the density of the screen: 2 stands for a HiDPI screen, whose canvases have 4 times more pixels
       provider: playwright({ contextOptions: { deviceScaleFactor: Number(process.env.PERF_DPR) || 1 } }),
       instances: [{ browser: 'chromium' }],
-      viewport: { width: 1280, height: 900 }
+      viewport: { width: 1280, height: 900 },
+      // a count over its maximum shows nothing on the page
+      screenshotFailures: false
     }
   }
 })

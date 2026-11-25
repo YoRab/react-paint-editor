@@ -166,6 +166,9 @@ export const listSignificant = (comparisons: ComparisonsByResult): string[] =>
       )
   )
 
+/** A report or a baseline, as written to disk */
+export const formatJson = (value: unknown) => `${JSON.stringify(value, null, 2)}\n`
+
 /** Text table under its title: the first row is the header */
 export const formatTextTable = (title: string, rows: string[][]): string => {
   const widths = rows[0]!.map((_, column) => Math.max(...rows.map(row => row[column]!.length)))

@@ -1,7 +1,7 @@
 import { expect } from 'vitest'
 import type { EditorState, Point, ShapeInput, UseReactPaintOptions } from '../../src/index'
 import type { PerfApp } from './fixture'
-import { nextFrame, waitFor } from './metrics'
+import { type CountName, nextFrame, waitFor } from './metrics'
 import {
   CANVAS_HEIGHT,
   CANVAS_WIDTH,
@@ -56,6 +56,8 @@ export type Scenario = {
   /** Checks that the gesture did its job, so that a gesture broken by an API change is never measured */
   verify: (context: ScenarioContext) => void
   criteria?: Criteria
+  /** Counts which depend on the speed of the machine, left out of the comparison with counts-baseline.json: say why */
+  variableCounts?: CountName[]
 }
 
 // ─── DOM helpers ───────────────────────────────────────────────────────────────
@@ -496,7 +498,11 @@ const createAddPictureScenario = ({ id, listenData = false }: Pick<Scenario, 'id
       if (listenData) expect(app.getDataEvents() - dataEventsBefore).toBe(ADDED_PICTURES)
     },
     // the first picture gives something to undo
-    criteria: { ...GESTURE_CRITERIA, ...atMostOneDrawPerEvent(ADDED_PICTURES) }
+    criteria: { ...GESTURE_CRITERIA, ...atMostOneDrawPerEvent(ADDED_PICTURES) },
+    // the steps of the loading of a photo (reading of the file, decoding, loading of the image, state of the loader) fall
+    // into one task of the browser or several, depending on the speed of the machine, and React commits them together
+    // or apart: 18 commits at full speed, 19 to 21 with PERF_CPU=4. Waiting after each photo did not help
+    variableCounts: ['rootCommits', 'editorCommits']
   }
 }
 
