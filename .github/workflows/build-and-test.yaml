@@ -70,3 +70,36 @@ jobs:
 
       - name: Run UI tests
         run: pnpm test-storybook
+
+  # The counts of the performance benchmark (renders, commits, draws of the canvas), checked against
+  # tests/perf/counts-baseline.json: they do not depend on the speed of the runner, unlike the times
+  perf-counts:
+    runs-on: ubuntu-latest
+    container:
+      image: mcr.microsoft.com/playwright:v1.64.0-noble
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v6
+
+      - name: Setup Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: "24.x"
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Check the counts of the benchmark
+        run: pnpm bench:counts
+
+      # the counts measured, in the format of the baseline, also when they fail
+      - name: Upload the counts
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v7
+        with:
+          path: tests/perf/results/counts.json
+          archive: false
+          if-no-files-found: ignore
