@@ -1,5 +1,5 @@
 import { expect } from 'vitest'
-import type { EditorState, Point, ShapeInput, UseReactPaintOptions } from '../../src/index'
+import type { EditorState, GestureType, Point, ShapeInput, UseReactPaintOptions } from '../../src/index'
 import type { PerfApp } from './fixture'
 import { type CountName, type Metrics, nextFrame, waitFor } from './metrics'
 import {
@@ -58,6 +58,8 @@ export type Scenario = {
   criteria?: Criteria
   /** Counts which depend on the speed of the machine, left out of the comparison with counts-baseline.json: say why */
   variableCounts?: CountName[]
+  /** A scenario whose counts this one must have, compared in the same run of pnpm bench:counts whatever the baseline */
+  sameCountsAs?: string
 }
 
 // ─── DOM helpers ───────────────────────────────────────────────────────────────
@@ -238,6 +240,42 @@ const createTranslateScenario = ({
 }
 
 const translate = createTranslateScenario({ id: 'translate' })
+
+/**
+ * The gesture of a scenario, measured by frameDrawn and gestureMeasured: its counts are the ones of the scenario, and the
+ * gap of its time with the scenario is the cost of the profiling. It checks that the events tell the draws counted by
+ * the benchmark
+ */
+const withProfiling = (scenario: Scenario, gestureType: GestureType): Scenario => {
+  let shapesFrames = 0
+  let gestureTypes: GestureType[] = []
+  return {
+    ...scenario,
+    id: `${scenario.id}-profiled`,
+    sameCountsAs: scenario.id,
+    setup: async context => {
+      await scenario.setup?.(context)
+      // the listeners are left to the app, unmounted after the run
+      context.app.paint.registerEvent('frameDrawn', frame => {
+        if (frame.layer === 'shapes') shapesFrames++
+      })
+      context.app.paint.registerEvent('gestureMeasured', gesture => gestureTypes.push(gesture.type))
+    },
+    run: async context => {
+      // the draws which end the setup, before the measure, are left out
+      shapesFrames = 0
+      gestureTypes = []
+      await scenario.run(context)
+    },
+    verify: (context, metrics) => {
+      scenario.verify(context, metrics)
+      expect(gestureTypes, 'gestures measured').toEqual([gestureType])
+      expect(shapesFrames, 'draws of the layer of the shapes given by frameDrawn').toBe(metrics.shapesLayerDraws)
+    }
+  }
+}
+
+const translateProfiled = withProfiling(translate, 'translate')
 
 /**
  * The shape closest to the center of the drawing. The middle one of the list may be on a border: with 5000 shapes, it is
@@ -589,6 +627,7 @@ export const OPERATIONS: Scenario[] = [createLoadScenario(), createExportDataSce
 export const SCENARIOS: Scenario[] = [
   hover,
   translate,
+  translateProfiled,
   frame,
   pan,
   brush,

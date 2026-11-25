@@ -82,6 +82,13 @@ describe('counts', () => {
         const counts = pickCounts(metrics)
         results[key] = counts
         checkCriteria(metrics, scenario.criteria)
+        // compared in the run, also by -u, which would take a change of these counts in the baseline
+        const twinCounts = scenario.sameCountsAs && results[getResultKey({ id: scenario.sameCountsAs }, size)]
+        if (twinCounts) {
+          const names = COUNT_NAMES.filter(name => !scenario.variableCounts?.includes(name))
+          const pick = (all: Counts) => Object.fromEntries(names.map(name => [name, all[name]]))
+          expect(pick(counts), `counts of ${scenario.sameCountsAs}, measured in this run`).toEqual(pick(twinCounts))
+        }
         if (UPDATE) return
 
         const expected = baseline[key]

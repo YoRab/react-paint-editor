@@ -82,7 +82,7 @@ export const selectSizes = (defaults: number[]) => {
 }
 
 /** The key of the result of a scenario at a size in the reports and the baseline: "scenario@shapes" */
-export const getResultKey = (scenario: Scenario, size: number) => `${scenario.id}@${size}`
+export const getResultKey = ({ id }: Pick<Scenario, 'id'>, size: number) => `${id}@${size}`
 
 /** Mounts the app with the drawing of the scenario, prepares it, then measures its gesture */
 export const runOnce = async (scenario: Scenario, size: number, eventsPerFrame: number): Promise<Metrics> => {

@@ -51,6 +51,32 @@
     "selectionDrawCalls": 6342,
     "offscreenDrawCalls": 0
   },
+  "translate-profiled@50": {
+    "hostRenders": 0,
+    "siblingRenders": 0,
+    "rootCommits": 3,
+    "editorCommits": 3,
+    "canvasCommits": 0,
+    "probeCommits": 1,
+    "shapesLayerDraws": 300,
+    "selectionLayerDraws": 302,
+    "shapesDrawCalls": 30000,
+    "selectionDrawCalls": 6342,
+    "offscreenDrawCalls": 0
+  },
+  "translate-profiled@500": {
+    "hostRenders": 0,
+    "siblingRenders": 0,
+    "rootCommits": 3,
+    "editorCommits": 3,
+    "canvasCommits": 0,
+    "probeCommits": 1,
+    "shapesLayerDraws": 300,
+    "selectionLayerDraws": 302,
+    "shapesDrawCalls": 300000,
+    "selectionDrawCalls": 6342,
+    "offscreenDrawCalls": 0
+  },
   "frame@50": {
     "hostRenders": 0,
     "siblingRenders": 0,
