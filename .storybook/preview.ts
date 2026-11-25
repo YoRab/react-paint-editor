@@ -20,7 +20,7 @@ const preview: Preview = {
           'Playground',
           'API Reference',
           'Features',
-          ['Drawing data', 'Custom tools', 'Resize', 'Languages'],
+          ['Drawing data', 'Custom tools', 'Resize', 'Languages', 'Performance'],
           'Use cases',
           ['Whiteboard', 'Picture annotation', 'Collaboration'],
           'Custom UI',

@@ -2,7 +2,10 @@
 
 For more details and links to Pull requests, see [Releases](https://github.com/YoRab/react-paint-editor/releases)
 
-## V1.0.0-beta.4 (unreleased)
+## V1.0.0-beta.5 (unreleased)
+- fix a line or a brush with a fill color, given by the code, loaded data or setShapesStyle, which could not be clicked, hovered, erased, moved once selected or caught by a selection frame: their stroke is tested, like without fill, as they draw no fill
+
+## V1.0.0-beta.4
 - fix a picture whose image cannot be loaded, which stopped the drawing of the canvas: drawImage threw on its broken image at each draw, so the shapes in front of it were no longer drawn. Its broken image is left out, its border is still drawn
 - a picture whose image cannot be loaded is drawn as a grey crossed frame on the canvas, instead of nothing, so that it can be seen, selected and removed: it is drawn again once pictureLoadFailed is emitted. The exported images and the eyedropper still leave it out
 - a picture of loaded data (loadData, loadFile, the shapes of the hook) whose image cannot be loaded is kept in the drawing, drawn as a grey crossed frame, instead of being left out: its source stays in the exported data, and pictureLoadFailed gives the picture of the drawing

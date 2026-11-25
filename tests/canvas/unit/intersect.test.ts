@@ -3,6 +3,7 @@ import { SELECTION_RESIZE_ANCHOR_POSITIONS } from '@canvas/constants/shapes'
 import type { Point, ShapeEntity, StyleShape } from '@canvas/types/Shapes'
 import {
   canvasToClientPosition,
+  checkPositionIntersection,
   checkSelectionFrameCollision,
   checkSelectionIntersection,
   clientToCanvasPosition,
@@ -194,6 +195,64 @@ describe('checkSelectionIntersection', () => {
     // between the points, the stroke of the shape is searched
     expect(check(line, [50, 50])).toBe(false)
     expect(ctx.isPointInStroke).toHaveBeenCalled()
+  })
+})
+
+describe('a line or a brush with a fill color', () => {
+  const settings = { selectionPadding: 0, canvasSize: { scaleRatio: 1 }, canvasZoom: 1 } as UtilsSettings
+  const FILLED: StyleShape = { ...OUTLINED, fillColor: 'red' }
+  const line = createShape({
+    type: 'line',
+    points: [
+      [0, 100],
+      [100, 0]
+    ],
+    style: FILLED
+  })
+  const brush = createShape({
+    type: 'brush',
+    points: [
+      [
+        [0, 50],
+        [100, 50]
+      ]
+    ],
+    style: FILLED
+  })
+
+  /** A context like the browser's for the path of a stroke without area: no point inside it, the points of its stroke on it */
+  const createStrokeContext = () => {
+    const ctx = createContext(true)
+    ctx.isPointInPath.mockReturnValue(false)
+    return ctx
+  }
+
+  it('is found under the cursor on its stroke, as it draws no fill', () => {
+    expect(checkPositionIntersection(createStrokeContext(), line, [50, 50], settings)).toEqual({ mode: 'translate' })
+    expect(checkPositionIntersection(createStrokeContext(), brush, [50, 50], settings)).toEqual({ mode: 'translate' })
+  })
+
+  it('is translated from its stroke once selected', () => {
+    expect(checkSelectionIntersection(createStrokeContext(), line, [50, 50], settings)).toEqual({ mode: 'translate' })
+  })
+
+  it('is crossed by a selection frame which reaches its stroke', () => {
+    expect(checkSelectionFrameCollision(createStrokeContext(), line, frame([40, 40], [200, 200]))).toBe(true)
+  })
+
+  it('unlike a polygon, whose fill is searched', () => {
+    const polygon = createShape({
+      type: 'polygon',
+      points: [
+        [0, 100],
+        [100, 0],
+        [100, 100]
+      ],
+      style: FILLED
+    })
+    const ctx = createStrokeContext()
+    expect(checkPositionIntersection(ctx, polygon, [50, 50], settings)).toBe(false)
+    expect(ctx.isPointInPath).toHaveBeenCalled()
   })
 })
 

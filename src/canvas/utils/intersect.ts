@@ -3,7 +3,7 @@ import { SELECTION_RESIZE_ANCHOR_POSITIONS } from '@canvas/constants/shapes'
 import type { CanvasSize } from '@canvas/types/Canvas'
 import type { HoverModeData } from '@canvas/types/Mode'
 import type { Point, Rect, SelectionType, ShapeEntity } from '@canvas/types/Shapes'
-import { hasVisibleFill } from '@canvas/utils/fill'
+import { shouldDrawFill } from '@canvas/utils/fill'
 import { getSelectedShapes } from '@canvas/utils/selectedShapes'
 import { getAnchorRadius, getResizeAnchorCenter, getRotationAnchorCenter, hasPointAnchors } from '@canvas/utils/selection/anchors'
 import { createLinePath, expandRect, getBrushPointScaler, getCornerRadius, getCurveSegments } from '@canvas/utils/shapes/path'
@@ -166,10 +166,9 @@ export const checkCurveLinesSelectionIntersection = (
   return false
 }
 
-const shouldCheckFillShape = (shape: ShapeEntity, isSelected = false) => {
-  if (isSelected && ['curve', 'polygon'].includes(shape.type)) return true
-  return hasVisibleFill(shape.style) || ['picture', 'text'].includes(shape.type)
-}
+/** Whether the inside of the shape is tested instead of its stroke: the stroke of a line or a brush, which draw no fill */
+const shouldCheckFillShape = (shape: ShapeEntity, isSelected = false) =>
+  shape.type === 'picture' || shape.type === 'text' || shouldDrawFill(shape) || (isSelected && (shape.type === 'polygon' || shape.type === 'curve'))
 
 /** Whether the point is on the shape, on one of the shapes of a group */
 export const checkPositionIntersection = (
