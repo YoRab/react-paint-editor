@@ -73,7 +73,10 @@ export const settle = async () => {
   await nextFrame()
 }
 
-export const waitFor = async (condition: () => boolean, message: string, timeout = 10_000) => {
+/** Long enough for the 20000 shapes of the stress test to load, or to be selected, on a slowed down CPU */
+const WAIT_TIMEOUT_MS = 60_000
+
+export const waitFor = async (condition: () => boolean, message: string, timeout = WAIT_TIMEOUT_MS) => {
   const start = performance.now()
   while (!condition()) {
     if (performance.now() - start > timeout) throw new Error(`Timeout: ${message}`)
@@ -81,21 +84,42 @@ export const waitFor = async (condition: () => boolean, message: string, timeout
   }
 }
 
-/** Records the intervals between two animation frames until stopped */
+export type Frames = {
+  /** Intervals between two animation frames */
+  intervals: number[]
+  /** Work of the main thread in each frame */
+  work: number[]
+}
+
+/**
+ * Records the frames until stopped: their intervals, and their work, like the benchmark of Excalidraw. The work of a
+ * frame goes from its animation frame callback to a message posted from it, which runs once the frame is rendered:
+ * after the other callbacks, like the draws of the library and the events sent by the scenarios, then the style, the
+ * layout and the paint, and the tasks run before the message, like the renders React schedules. Unlike the intervals,
+ * which stay at 16.7 ms on a fast machine, it shows how much of the frame is used. The callback asks for the next frame
+ * first, so that it runs before the callbacks asked during the frame
+ */
 export const recordFrames = () => {
-  const intervals: number[] = []
+  const frames: Frames = { intervals: [], work: [] }
+  // the start of each frame whose message has not come yet
+  const starts: number[] = []
+  const channel = new MessageChannel()
+  channel.port1.onmessage = () => frames.work.push(performance.now() - starts.shift()!)
   let last: number | undefined
   let running = true
   const loop = (time: number) => {
     if (!running) return
-    if (last !== undefined) intervals.push(time - last)
-    last = time
     requestAnimationFrame(loop)
+    starts.push(performance.now())
+    channel.port2.postMessage(null)
+    if (last !== undefined) frames.intervals.push(time - last)
+    last = time
   }
   requestAnimationFrame(loop)
-  return () => {
+  return (): Frames => {
     running = false
-    return intervals
+    channel.port1.close()
+    return frames
   }
 }
 
@@ -185,6 +209,9 @@ export type Metrics = DrawCounts & {
   frameP95: number
   frameMax: number
   slowFrames: number
+  /** Work of the main thread in a frame, from its animation frame callback until it is rendered */
+  frameWorkMean: number
+  frameWorkP95: number
   totalMs: number
   /** JavaScript run by the main thread */
   scriptMs: number
@@ -221,7 +248,7 @@ const percentile = (values: number[], ratio: number) => {
 export const buildMetrics = (
   recorder: Recorder,
   drawCounts: DrawCounts,
-  frames: number[],
+  { intervals, work }: Frames,
   totalMs: number,
   mainThread: { scriptMs: number; taskMs: number }
 ): Metrics => {
@@ -238,10 +265,12 @@ export const buildMetrics = (
     editorUiMs: round(profiles.editor.actualDuration - profiles.canvas.actualDuration),
     probeCommits: profiles.probe.commits,
     ...drawCounts,
-    frameP50: round(percentile(frames, 0.5)),
-    frameP95: round(percentile(frames, 0.95)),
-    frameMax: round(Math.max(0, ...frames)),
-    slowFrames: frames.filter(frame => frame > 33).length,
+    frameP50: round(percentile(intervals, 0.5)),
+    frameP95: round(percentile(intervals, 0.95)),
+    frameMax: round(Math.max(0, ...intervals)),
+    slowFrames: intervals.filter(interval => interval > 33).length,
+    frameWorkMean: round(work.reduce((sum, duration) => sum + duration, 0) / (work.length || 1)),
+    frameWorkP95: round(percentile(work, 0.95)),
     totalMs: round(totalMs),
     scriptMs: round(mainThread.scriptMs),
     taskMs: round(mainThread.taskMs)

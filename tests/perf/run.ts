@@ -1,5 +1,5 @@
-// Runs a scenario once and measures it: shared by the benchmark (interactions.perf.test.tsx) and the check of the
-// counts (counts.perf.test.tsx)
+// Runs a scenario once and measures it: shared by the benchmark (interactions.perf.test.tsx), the check of the counts
+// (counts.perf.test.tsx) and the stress test (stress.perf.test.tsx)
 
 import { expect, inject } from 'vitest'
 import { mountApp } from './fixture'
@@ -11,16 +11,38 @@ import {
   enableMainThreadTimes,
   getReactBuild,
   type Metrics,
+  type Report,
   readMainThreadTimes,
   recordFrames,
   setCpuThrottling,
   settle
 } from './metrics'
-import { type Criteria, focusCanvas, getLayerCanvases, SCENARIOS, type Scenario } from './scenarios'
+import { type Criteria, focusCanvas, getLayerCanvases, type Scenario } from './scenarios'
 import { generateShapes } from './shapes'
 
 export const REACT_BUILD = inject('perfReact')
-export const CPU_RATE = Math.max(1, Number(inject('perfCpu')) || 1)
+const CPU_RATE = Math.max(1, Number(inject('perfCpu')) || 1)
+const EVENTS_PER_FRAME = Math.max(1, Math.floor(Number(inject('perfEvents'))) || 1)
+
+/** The conditions of the runs, which a report records: compare only reports made in the same ones */
+export const getConditions = (label: string): Omit<Report, 'results' | 'samples'> => ({
+  label,
+  date: new Date().toISOString(),
+  userAgent: navigator.userAgent,
+  react: REACT_BUILD,
+  cpuRate: CPU_RATE,
+  eventsPerFrame: EVENTS_PER_FRAME,
+  pixelRatio: window.devicePixelRatio
+})
+
+/** The conditions of the runs for the header of the output, like "production build of React, CPU slowed down 4×" */
+export const describeConditions = () =>
+  [
+    `${REACT_BUILD} build of React`,
+    ...(CPU_RATE > 1 ? [`CPU slowed down ${CPU_RATE}×`] : []),
+    ...(EVENTS_PER_FRAME > 1 ? [`${EVENTS_PER_FRAME} events per frame`] : []),
+    ...(window.devicePixelRatio !== 1 ? [`pixel ratio ${window.devicePixelRatio}`] : [])
+  ].join(', ')
 
 /**
  * Prepares the page before the runs: checks the build of React, since a config which no longer gives the build asked
@@ -37,14 +59,27 @@ export const endRuns = async () => {
   if (CPU_RATE > 1) await setCpuThrottling(1)
 }
 
-/** The scenarios measured: the ones of PERF_SCENARIOS, all of them by default */
 const SCENARIO_IDS = inject('perfScenarios')
   .split(',')
   .map(id => id.trim())
   .filter(Boolean)
-const unknownIds = SCENARIO_IDS.filter(id => !SCENARIOS.some(scenario => scenario.id === id))
-if (unknownIds.length) throw new Error(`Unknown scenarios in PERF_SCENARIOS: ${unknownIds.join(', ')}`)
-export const MEASURED_SCENARIOS = SCENARIO_IDS.length ? SCENARIOS.filter(scenario => SCENARIO_IDS.includes(scenario.id)) : SCENARIOS
+
+/** The scenarios measured: the ones of PERF_SCENARIOS among the scenarios of a test file, its defaults when it is empty */
+export const selectScenarios = (scenarios: Scenario[], defaults = scenarios) => {
+  if (!SCENARIO_IDS.length) return defaults
+  const unknownIds = SCENARIO_IDS.filter(id => !scenarios.some(scenario => scenario.id === id))
+  if (unknownIds.length) throw new Error(`Unknown scenarios in PERF_SCENARIOS: ${unknownIds.join(', ')}`)
+  return scenarios.filter(scenario => SCENARIO_IDS.includes(scenario.id))
+}
+
+/** The numbers of shapes measured: the ones of PERF_SHAPES, the defaults of the test file when it is empty */
+export const selectSizes = (defaults: number[]) => {
+  const sizes = inject('perfShapes')
+    .split(',')
+    .map(Number)
+    .filter(size => size > 0)
+  return sizes.length ? sizes : defaults
+}
 
 /** The key of the result of a scenario at a size in the reports and the baseline: "scenario@shapes" */
 export const getResultKey = (scenario: Scenario, size: number) => `${scenario.id}@${size}`
@@ -91,6 +126,14 @@ export const runOnce = async (scenario: Scenario, size: number, eventsPerFrame: 
   } finally {
     app.unmount()
   }
+}
+
+/** Runs a scenario with the events of PERF_EVENTS: the warm-up runs, whose metrics are dropped, then the measured runs */
+export const measureRuns = async (scenario: Scenario, size: number, warmupRuns: number, measuredRuns: number) => {
+  for (let run = 0; run < warmupRuns; run++) await runOnce(scenario, size, EVENTS_PER_FRAME)
+  const runs: Metrics[] = []
+  for (let run = 0; run < measuredRuns; run++) runs.push(await runOnce(scenario, size, EVENTS_PER_FRAME))
+  return runs
 }
 
 /** The counts are deterministic: they are the acceptance criteria */

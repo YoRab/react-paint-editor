@@ -1,6 +1,6 @@
 # Performance benchmark
 
-Measures what React and the main thread do during the continuous interactions of the canvas. It runs in Chromium (Vitest browser mode, Playwright) with its own config, `vitest.perf.config.ts`. The benchmark is only run manually: it is not part of `pnpm test`. Its counts, which do not depend on the speed of the machine, are checked by the CI on each pull request with `pnpm bench:counts`.
+Measures what React and the main thread do during the continuous interactions of the canvas. It runs in Chromium (Vitest browser mode, Playwright) with its own config, `vitest.perf.config.ts`. The benchmark is only run manually: it is not part of `pnpm test`. Its counts, which do not depend on the speed of the machine, are checked by the CI on each pull request with `pnpm bench:counts`. The stress test, `pnpm bench:stress`, measures the main gestures on drawings of up to 20000 shapes.
 
 It measures the production build of React, the one the users of the library run, with the profiling build of react-dom, whose `<Profiler>` still reports the commits. The run stops at once when another build runs, or when the `<Profiler>` reports nothing.
 
@@ -12,8 +12,8 @@ pnpm bench
 
 | Variable         | Default      | Use                                                                                                                                                          |
 | ---------------- | ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `PERF_LABEL`     | `latest`     | Name of the report, written to `tests/perf/results/<label>.json`                                                                                             |
-| `PERF_SHAPES`    | `50,500`     | Numbers of shapes to measure, separated by commas                                                                                                            |
+| `PERF_LABEL`     | `latest`     | Name of the report, written to `tests/perf/results/<label>.json`, or `stress-<label>.json` for the stress test                                               |
+| `PERF_SHAPES`    | `50,500`     | Numbers of shapes to measure, separated by commas. The stress test goes from 100 to 20000 by default                                                         |
 | `PERF_SCENARIOS` | all          | Ids of the scenarios to measure, separated by commas                                                                                                         |
 | `PERF_CPU`       | `1`          | Slows the CPU down by this rate (Chrome DevTools Protocol), like a slower machine: `4` stands for a mid-range phone                                          |
 | `PERF_EVENTS`    | `1`          | Pointer and wheel events sent in each frame: `1` stands for a 60 Hz mouse, `4` for a faster mouse in a browser which does not align the events on the frames |
@@ -71,6 +71,26 @@ PERF_ROUNDS=4 pnpm bench:compare v1.0.0-beta.4 -t "zoom with"  # arguments after
 
 The other variables apply to both variants. Each round takes as long as a `pnpm bench` with the same variables: restrict the scenarios and the sizes. A scenario which fails for one variant, like one that the older version does not know, is left out of the comparison. When the library is the same at the ref, the comparison is an A/A control: it should show no significant gap, else the machine was too unstable during it.
 
+## Stress test
+
+```bash
+pnpm bench:stress                                 # 8 gestures, from 100 to 20000 shapes
+PERF_SCENARIOS=translate,pan pnpm bench:stress    # two gestures
+PERF_SHAPES=1000,5000 pnpm bench:stress           # two sizes
+PERF_LABEL=slow-cpu PERF_CPU=4 pnpm bench:stress
+PERF_LABEL=hidpi PERF_DPR=2 pnpm bench:stress
+```
+
+`stress.perf.test.tsx` measures the main gestures, `hover`, `translate`, `translate-all`, `pan`, `zoom`, `brush`, `mixed` and `opacity`, on larger and larger drawings: 100, 500, 1000, 2000, 5000, 10000 and 20000 shapes, 3 runs each, after a warm-up run on the first size. `PERF_SCENARIOS` takes any scenario of the benchmark. The acceptance criteria of the scenarios are checked at each size.
+
+- It measures the work of the frames, `frameWorkP95` and `frameWorkMean` (see the metrics). Unlike the frame intervals, they show the margin left in a frame on a fast machine.
+- A gesture whose frames take over 50 ms (p95) is not measured on the larger drawings: they would take minutes, and the gesture no longer keeps 30 fps. Neither is a gesture which fails, like a scenario whose check no longer passes: it would fail again on each of them.
+- The capacity of a gesture is the largest drawing measured whose frames take at most 16.7 ms (60 fps), or 33.3 ms (30 fps), at p95, the smaller drawings too. The real capacity lies between it and the next size. It counts the work of the main thread only, not the raster and the composite of the GPU.
+- The output gives the work of a frame by gesture and by size, then the capacities. The report, ignored by git, is written to `tests/perf/results/stress-<label>.json`, with each run.
+- The figures of the documentation are measured with `PERF_CPU=1` and `4`, and with `PERF_DPR=1` and `2`. Each report records them.
+
+A full run takes about 20 minutes.
+
 ## Scenarios
 
 The scenarios are driven only by DOM events (`scenarios.ts`), sent one per frame like a 60 Hz mouse (`PERF_EVENTS` simulates faster mice). Each one ends with a functional check (the shape moved, the shapes are selected, the view moved...), so that a gesture broken by a change is never measured. Between the setup of a scenario (selecting the brush tool, opening a panel...) and its gesture, the run waits 400 ms. That is longer than the timers the editor starts on a change, like the fade-out of the loader once a picture is loaded and the announcements of the live region. Without the wait, they fired during the gesture at a time which depended on the duration of the setup, and changed the number of commits from one run to the next.
@@ -115,12 +135,13 @@ The drawing is a grid of opaque rectangles, unless another one is given (`shapes
 | `shapesLayerDraws`, `selectionLayerDraws`                       | Draws of the layer of the shapes, and of the layer of the selection: each one starts with `ctx.reset()`                                                                                                                                                                                        |
 | `shapesDrawCalls`, `selectionDrawCalls`, `offscreenDrawCalls`   | Calls drawing pixels (`fill`, `stroke`, `drawImage`, `fillText`, `strokeText`) in each layer, and in the canvases out of the page, like the layers of the semi-transparent shapes and the copies of the pictures. A shape drawn for nothing, or a culling which no longer works, shows in them |
 | `frameP50`, `frameP95`, `frameMax`, `slowFrames`                | Intervals between two animation frames, and frames over 33 ms                                                                                                                                                                                                                                  |
+| `frameWorkMean`, `frameWorkP95`                                 | Work of the main thread in a frame, like the benchmark of Excalidraw: from the animation frame callback of the frame to a message posted from it, which runs once the frame is rendered (the draws of the canvas, the events, the style, the layout and the paint). Their sum is close to `taskMs` |
 | `totalMs`                                                       | Duration of the gesture                                                                                                                                                                                                                                                                        |
 | `scriptMs`, `taskMs`                                            | JavaScript, and all the work, of the main thread during the gesture (Chrome DevTools Protocol): event handlers, React, drawing of the canvas, style and layout                                                                                                                                 |
 
 The calls of the 2D context are counted by wrapping the methods of `CanvasRenderingContext2D.prototype` during the gesture, like the benchmark of Excalidraw. The layers are told apart by their canvas element, not by the code which draws them, so that the library of an older version is counted the same way by `pnpm bench:compare`.
 
-The counts are deterministic: they are the acceptance criteria. The ones checked are the same with both builds of React; `rootCommits` and `editorCommits` are one more with the development build during a brush stroke. The times depend on the machine and on the build of React: compare them only between runs on the same machine, with the same build. The frame intervals stay at 16.7 ms on a fast machine, whatever the work: `scriptMs` and `taskMs` show it.
+The counts are deterministic: they are the acceptance criteria. The ones checked are the same with both builds of React; `rootCommits` and `editorCommits` are one more with the development build during a brush stroke. The times depend on the machine and on the build of React: compare them only between runs on the same machine, with the same build. The frame intervals stay at 16.7 ms on a fast machine, whatever the work: `scriptMs`, `taskMs` and the work of the frames show it.
 
 ## Acceptance criteria
 

@@ -4,14 +4,22 @@ import { afterAll, beforeAll, describe, inject, it } from 'vitest'
 import { commands } from 'vitest/browser'
 import { compareWithBaseline, formatTable, type MetricComparisons, type Metrics, medianMetrics, type Report } from './metrics'
 import { formatJson, listSignificant } from './report'
-import { CPU_RATE, checkCriteria, endRuns, getResultKey, MEASURED_SCENARIOS, prepareRuns, REACT_BUILD, runOnce } from './run'
+import {
+  checkCriteria,
+  describeConditions,
+  endRuns,
+  getConditions,
+  getResultKey,
+  measureRuns,
+  prepareRuns,
+  selectScenarios,
+  selectSizes
+} from './run'
+import { SCENARIOS } from './scenarios'
 
 const LABEL = inject('perfLabel')
-const SIZES = inject('perfShapes')
-  .split(',')
-  .map(Number)
-  .filter(size => size > 0)
-const EVENTS_PER_FRAME = Math.max(1, Math.floor(Number(inject('perfEvents'))) || 1)
+const MEASURED_SCENARIOS = selectScenarios(SCENARIOS)
+const SIZES = selectSizes([50, 500])
 const BASELINE = inject('perfBaseline')
 
 const WARMUP_RUNS = 1
@@ -40,24 +48,10 @@ beforeAll(async () => {
 afterAll(async () => {
   await endRuns()
   if (!Object.keys(results).length) return
-  const pixelRatio = window.devicePixelRatio
-  const report: Report = {
-    label: LABEL,
-    date: new Date().toISOString(),
-    userAgent: navigator.userAgent,
-    react: REACT_BUILD,
-    cpuRate: CPU_RATE,
-    eventsPerFrame: EVENTS_PER_FRAME,
-    pixelRatio,
-    results,
-    samples
-  }
+  const report: Report = { ...getConditions(LABEL), results, samples }
   await commands.writeFile(`tests/perf/results/${LABEL}.json`, formatJson(report))
 
-  const cpu = CPU_RATE > 1 ? `, CPU slowed down ${CPU_RATE}×` : ''
-  const events = EVENTS_PER_FRAME > 1 ? `, ${EVENTS_PER_FRAME} events per frame` : ''
-  const density = pixelRatio !== 1 ? `, pixel ratio ${pixelRatio}` : ''
-  const header = `Benchmark "${LABEL}", ${REACT_BUILD} build of React${cpu}${events}${density}${baseline ? `, compared to ${BASELINE}.json` : ''}`
+  const header = `Benchmark "${LABEL}", ${describeConditions()}${baseline ? `, compared to ${BASELINE}.json` : ''}`
   const tables = MEASURED_SCENARIOS.map(scenario => {
     const scenarioResults = Object.fromEntries(Object.entries(results).filter(([key]) => SIZES.some(size => key === getResultKey(scenario, size))))
     return Object.keys(scenarioResults).length ? formatTable(scenario.id, scenarioResults, comparisons) : ''
@@ -77,10 +71,7 @@ describe('interactions', () => {
   for (const scenario of MEASURED_SCENARIOS) {
     for (const size of SIZES) {
       it(`${scenario.id} with ${size} shapes`, async () => {
-        for (let run = 0; run < WARMUP_RUNS; run++) await runOnce(scenario, size, EVENTS_PER_FRAME)
-        const runs: Metrics[] = []
-        for (let run = 0; run < MEASURED_RUNS; run++) runs.push(await runOnce(scenario, size, EVENTS_PER_FRAME))
-
+        const runs = await measureRuns(scenario, size, WARMUP_RUNS, MEASURED_RUNS)
         const key = getResultKey(scenario, size)
         const metrics = medianMetrics(runs)
         results[key] = metrics

@@ -5,9 +5,10 @@ import { afterAll, beforeAll, describe, expect, inject, it } from 'vitest'
 import { commands } from 'vitest/browser'
 import { COUNT_NAMES, type CountName, type Counts, pickCounts } from './metrics'
 import { type Comparison, compareSamples, formatJson, listSignificant } from './report'
-import { checkCriteria, endRuns, getResultKey, MEASURED_SCENARIOS, prepareRuns, REACT_BUILD, runOnce } from './run'
+import { checkCriteria, endRuns, getResultKey, prepareRuns, REACT_BUILD, runOnce, selectScenarios } from './run'
 import { SCENARIOS } from './scenarios'
 
+const MEASURED_SCENARIOS = selectScenarios(SCENARIOS)
 const BASELINE_PATH = 'tests/perf/counts-baseline.json'
 /** The counts measured, in the format of the baseline: the CI publishes them */
 const RESULTS_PATH = 'tests/perf/results/counts.json'

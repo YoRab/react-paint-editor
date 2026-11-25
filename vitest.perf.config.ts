@@ -4,8 +4,8 @@ import react from '@vitejs/plugin-react'
 import type { Plugin } from 'vite'
 import { defineConfig } from 'vitest/config'
 
-// Performance benchmark, run manually with `pnpm bench`, and check of its counts, `pnpm bench:counts`, also run by the
-// CI (see tests/perf/README.md)
+// Performance benchmark, run manually with `pnpm bench`, check of its counts, `pnpm bench:counts`, also run by the CI,
+// and stress test, `pnpm bench:stress` (see tests/perf/README.md)
 
 /**
  * The build of React measured. 'production' is the one the users of the library run, with the profiling build of
@@ -61,7 +61,8 @@ export default defineConfig({
     testTimeout: 600_000,
     provide: {
       perfLabel: process.env.PERF_LABEL ?? 'latest',
-      perfShapes: process.env.PERF_SHAPES ?? '50,500',
+      // empty for the sizes of each test file
+      perfShapes: process.env.PERF_SHAPES ?? '',
       perfScenarios: process.env.PERF_SCENARIOS ?? '',
       perfCpu: process.env.PERF_CPU ?? '1',
       perfEvents: process.env.PERF_EVENTS ?? '1',

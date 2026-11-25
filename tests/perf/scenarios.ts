@@ -239,7 +239,25 @@ const createTranslateScenario = ({
 
 const translate = createTranslateScenario({ id: 'translate' })
 
-const translateAll = createTranslateScenario({ id: 'translate-all', selectAll: true })
+/**
+ * The shape closest to the center of the drawing. The middle one of the list may be on a border: with 5000 shapes, it is
+ * on the anchor which resizes the selection of all the shapes from their left side
+ */
+const pickCentralShape = (shapes: ShapeInput[]) => {
+  let closest = 0
+  let closestDistance = Number.POSITIVE_INFINITY
+  for (const [index, shape] of shapes.entries()) {
+    const [x, y] = getGrabPoint(shape)
+    const distance = Math.hypot(x - SHAPES_AREA.width / 2, y - SHAPES_AREA.height / 2)
+    if (distance < closestDistance) {
+      closest = index
+      closestDistance = distance
+    }
+  }
+  return closest
+}
+
+const translateAll = createTranslateScenario({ id: 'translate-all', pick: pickCentralShape, selectAll: true })
 
 // the shapes of translate-all, in a single group of 3 levels
 const translateGroup = createTranslateScenario({ id: 'translate-group', generate: generateGroup, pick: () => 0 })
