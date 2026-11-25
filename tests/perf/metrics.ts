@@ -2,6 +2,7 @@
 import type {} from '@vitest/browser-playwright'
 import * as React from 'react'
 import { cdp } from 'vitest/browser'
+import { type Comparison, compareSamples, formatComparison, formatTextTable, median, round } from './report'
 
 export type ReactBuild = 'production' | 'development'
 
@@ -12,6 +13,7 @@ declare module 'vitest' {
     perfCpu: string
     perfEvents: string
     perfReact: ReactBuild
+    perfBaseline: string
   }
 }
 
@@ -179,8 +181,6 @@ const percentile = (values: number[], ratio: number) => {
   return sorted[Math.min(sorted.length - 1, Math.floor(ratio * sorted.length))]!
 }
 
-const round = (value: number) => Math.round(value * 100) / 100
-
 export const buildMetrics = (
   recorder: Recorder,
   drawCounts: DrawCounts,
@@ -213,15 +213,7 @@ export const buildMetrics = (
 
 /** Median of each metric over several runs */
 export const medianMetrics = (runs: Metrics[]): Metrics =>
-  Object.fromEntries(
-    Object.keys(runs[0]!).map(key => [
-      key,
-      percentile(
-        runs.map(run => run[key as keyof Metrics]),
-        0.5
-      )
-    ])
-  ) as Metrics
+  Object.fromEntries(Object.keys(runs[0]!).map(key => [key, round(median(runs.map(run => run[key as keyof Metrics])))])) as Metrics
 
 // ─── Report ────────────────────────────────────────────────────────────────────
 
@@ -237,27 +229,48 @@ export type Report = {
   eventsPerFrame: number
   /** Pixels of the screen in a CSS pixel (devicePixelRatio) */
   pixelRatio: number
-  /** Metrics by "scenario@shapes" */
+  /** Metrics by "scenario@shapes": the median of the measured runs */
   results: Record<string, Metrics>
+  /** Metrics of each measured run, by "scenario@shapes". The reports made before 2026-11-25 only hold the medians */
+  samples?: Record<string, Metrics[]>
 }
 
-const formatDiff = (value: number, reference: number | undefined) => {
-  if (reference === undefined) return ''
-  if (reference === value) return ' (=)'
-  if (reference === 0) return ' (new)'
-  const diff = Math.round(((value - reference) / reference) * 100)
-  return ` (${diff > 0 ? '+' : ''}${diff}%)`
+/** The comparison of each metric of a result with the baseline. A metric the baseline does not know is left out */
+export type MetricComparisons = Partial<Record<keyof Metrics, Comparison>>
+
+/**
+ * Compares the runs of a result with the ones of the baseline. Only the counts get a verdict: two benches made at
+ * different times differ by the drift of the machine, which the runs of each one do not show. The same code measured
+ * twice in a row once came out 34 % faster on undo@50, with p < 0.05. A report made before 2026-11-25 only holds
+ * medians: each one stands for a single run
+ */
+export const compareWithBaseline = (runs: Metrics[], baseline: Report, key: string): MetricComparisons | undefined => {
+  const baseRuns = baseline.samples?.[key] ?? (baseline.results[key] ? [baseline.results[key]] : undefined)
+  if (!baseRuns) return undefined
+  const metricNames = (Object.keys(runs[0]!) as (keyof Metrics)[]).filter(name => baseRuns[0]![name] !== undefined)
+  return Object.fromEntries(
+    metricNames.map(name => {
+      const comparison = compareSamples(
+        baseRuns.map(run => run[name]),
+        runs.map(run => run[name])
+      )
+      return [name, comparison.constant ? comparison : { ...comparison, verdict: 'unchanged' }]
+    })
+  )
 }
 
 /** Text table: one row per metric, one column per result, with the gap to the baseline if any */
-export const formatTable = (title: string, results: Record<string, Metrics>, baseline?: Record<string, Metrics>) => {
+export const formatTable = (title: string, results: Record<string, Metrics>, comparisons: Record<string, MetricComparisons | undefined>) => {
   const keys = Object.keys(results)
   const metricNames = Object.keys(results[keys[0]!]!) as (keyof Metrics)[]
-  const rows = [
+  return formatTextTable(title, [
     ['metric', ...keys],
-    ...metricNames.map(name => [name, ...keys.map(key => `${results[key]![name]}${formatDiff(results[key]![name], baseline?.[key]?.[name])}`)])
-  ]
-  const widths = rows[0]!.map((_, column) => Math.max(...rows.map(row => row[column]!.length)))
-  const lines = rows.map(row => row.map((cell, column) => cell.padEnd(widths[column]!)).join(' │ '))
-  return [`── ${title} ──`, lines[0], widths.map(width => '─'.repeat(width)).join('─┼─'), ...lines.slice(1)].join('\n')
+    ...metricNames.map(name => [
+      name,
+      ...keys.map(key => {
+        const comparison = comparisons[key]?.[name]
+        return comparison ? `${results[key]![name]} ${formatComparison(comparison)}` : `${results[key]![name]}`
+      })
+    ])
+  ])
 }

@@ -10,14 +10,15 @@ It measures the production build of React, the one the users of the library run,
 pnpm bench
 ```
 
-| Variable      | Default      | Use                                                                                                                                                          |
-| ------------- | ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `PERF_LABEL`  | `latest`     | Name of the report, written to `tests/perf/results/<label>.json`                                                                                             |
-| `PERF_SHAPES` | `50,500`     | Numbers of shapes to measure, separated by commas                                                                                                            |
-| `PERF_CPU`    | `1`          | Slows the CPU down by this rate (Chrome DevTools Protocol), like a slower machine: `4` stands for a mid-range phone                                          |
-| `PERF_EVENTS` | `1`          | Pointer and wheel events sent in each frame: `1` stands for a 60 Hz mouse, `4` for a faster mouse in a browser which does not align the events on the frames |
-| `PERF_DPR`    | `1`          | Pixels of the screen in a CSS pixel (`devicePixelRatio`): `2` stands for a HiDPI screen, like a Retina display, whose canvases have 4 times more pixels      |
-| `PERF_REACT`  | `production` | `development` measures the development build of React instead, slower, like the reports made before 2026-11-25                                               |
+| Variable        | Default      | Use                                                                                                                                                          |
+| --------------- | ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `PERF_LABEL`    | `latest`     | Name of the report, written to `tests/perf/results/<label>.json`                                                                                             |
+| `PERF_SHAPES`   | `50,500`     | Numbers of shapes to measure, separated by commas                                                                                                            |
+| `PERF_CPU`      | `1`          | Slows the CPU down by this rate (Chrome DevTools Protocol), like a slower machine: `4` stands for a mid-range phone                                          |
+| `PERF_EVENTS`   | `1`          | Pointer and wheel events sent in each frame: `1` stands for a 60 Hz mouse, `4` for a faster mouse in a browser which does not align the events on the frames |
+| `PERF_DPR`      | `1`          | Pixels of the screen in a CSS pixel (`devicePixelRatio`): `2` stands for a HiDPI screen, like a Retina display, whose canvases have 4 times more pixels      |
+| `PERF_REACT`    | `production` | `development` measures the development build of React instead, slower, like the reports made before 2026-11-25                                               |
+| `PERF_BASELINE` | `baseline`   | Report the results are compared to, `tests/perf/results/<name>.json`. Empty for none                                                                         |
 
 ```bash
 PERF_LABEL=baseline pnpm bench          # bash
@@ -26,11 +27,12 @@ pnpm bench --browser.headless=false     # to watch the browser
 pnpm bench -t "pan with"                # one scenario
 PERF_LABEL=slow-cpu PERF_CPU=4 pnpm bench
 PERF_LABEL=hidpi PERF_DPR=2 pnpm bench
+PERF_BASELINE=before pnpm bench         # compared to results/before.json
 ```
 
-The results are ignored by git. When `results/baseline.json` exists, the report shows the gap of each metric to it, in %: compare only reports made with the same `PERF_CPU`, `PERF_EVENTS`, `PERF_DPR` and `PERF_REACT`. Each report records them.
+A full run takes about 20 minutes: 24 scenarios, 2 sizes, 1 warm-up run and 5 measured runs each, on a new mount every time. The report, ignored by git, holds the median of the measured runs (`results`) and each measured run (`samples`).
 
-A full run takes about 20 minutes: 23 scenarios, 2 sizes, 1 warm-up run and 5 measured runs each, on a new mount every time. The median of the measured runs is kept.
+When the report of `PERF_BASELINE` exists, each cell shows the gap to it: a count which changed is marked with its own gap, `(+300 ▲)` for more and `(-300 ▼)` for fewer, and the output ends with the list of these counts. The gaps of time are only shown in %, never marked: two benches made at different times differ by the drift of the machine, which a test on the runs of each one cannot see. The same code measured twice in a row once came out 34 % faster on `undo@50 taskMs`, with a Mann-Whitney U test at p < 0.05. Compare only reports made with the same `PERF_CPU`, `PERF_EVENTS`, `PERF_DPR` and `PERF_REACT`. Each report records them. The reports made before 2026-11-25 only hold medians.
 
 ## Scenarios
 

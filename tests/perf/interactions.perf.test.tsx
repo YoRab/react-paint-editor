@@ -3,12 +3,14 @@ import { commands } from 'vitest/browser'
 import { mountApp } from './fixture'
 import {
   buildMetrics,
+  compareWithBaseline,
   countDrawCalls,
   createRecorder,
   type DrawCounts,
   enableMainThreadTimes,
   formatTable,
   getReactBuild,
+  type MetricComparisons,
   type Metrics,
   medianMetrics,
   type Report,
@@ -16,6 +18,7 @@ import {
   recordFrames,
   setCpuThrottling
 } from './metrics'
+import { listSignificant } from './report'
 import { type Criteria, focusCanvas, getLayerCanvases, SCENARIOS, type Scenario } from './scenarios'
 import { generateShapes } from './shapes'
 
@@ -27,12 +30,19 @@ const SIZES = inject('perfShapes')
 const CPU_RATE = Math.max(1, Number(inject('perfCpu')) || 1)
 const EVENTS_PER_FRAME = Math.max(1, Math.floor(Number(inject('perfEvents'))) || 1)
 const REACT_BUILD = inject('perfReact')
+const BASELINE = inject('perfBaseline')
 
 const WARMUP_RUNS = 1
 const MEASURED_RUNS = 5
 
+const COUNTS_LEGEND =
+  '▲ more, ▼ fewer: the counts which changed. The gaps of time are not marked: they may come from the drift of the machine between the two benches'
+
+/** Median of the runs, and the runs, by "scenario@shapes" */
 const results: Record<string, Metrics> = {}
-let baseline: Record<string, Metrics> | undefined
+const samples: Record<string, Metrics[]> = {}
+let baseline: Report | undefined
+const comparisons: Record<string, MetricComparisons | undefined> = {}
 
 const runOnce = async (scenario: Scenario, size: number): Promise<Metrics> => {
   const shapes = await (scenario.generate ?? generateShapes)(size)
@@ -91,8 +101,10 @@ beforeAll(async () => {
   if (getReactBuild() !== REACT_BUILD) throw new Error(`The ${REACT_BUILD} build of React was asked, the ${getReactBuild()} one runs`)
   await enableMainThreadTimes()
   if (CPU_RATE > 1) await setCpuThrottling(CPU_RATE)
+  // the baseline itself is compared to nothing
+  if (!BASELINE || BASELINE === LABEL) return
   try {
-    baseline = (JSON.parse(await commands.readFile('tests/perf/results/baseline.json')) as Report).results
+    baseline = JSON.parse(await commands.readFile(`tests/perf/results/${BASELINE}.json`)) as Report
   } catch {
     baseline = undefined
   }
@@ -110,19 +122,28 @@ afterAll(async () => {
     cpuRate: CPU_RATE,
     eventsPerFrame: EVENTS_PER_FRAME,
     pixelRatio,
-    results
+    results,
+    samples
   }
   await commands.writeFile(`tests/perf/results/${LABEL}.json`, `${JSON.stringify(report, null, 2)}\n`)
 
   const cpu = CPU_RATE > 1 ? `, CPU slowed down ${CPU_RATE}×` : ''
   const events = EVENTS_PER_FRAME > 1 ? `, ${EVENTS_PER_FRAME} events per frame` : ''
   const density = pixelRatio !== 1 ? `, pixel ratio ${pixelRatio}` : ''
-  const header = `Benchmark "${LABEL}", ${REACT_BUILD} build of React${cpu}${events}${density}${baseline && LABEL !== 'baseline' ? ', compared to baseline.json' : ''}`
+  const header = `Benchmark "${LABEL}", ${REACT_BUILD} build of React${cpu}${events}${density}${baseline ? `, compared to ${BASELINE}.json` : ''}`
   const tables = SCENARIOS.map(scenario => {
     const scenarioResults = Object.fromEntries(Object.entries(results).filter(([key]) => key.startsWith(`${scenario.id}@`)))
-    return Object.keys(scenarioResults).length ? formatTable(scenario.id, scenarioResults, LABEL !== 'baseline' ? baseline : undefined) : ''
+    return Object.keys(scenarioResults).length ? formatTable(scenario.id, scenarioResults, comparisons) : ''
   })
-  console.log([header, ...tables.filter(Boolean)].join('\n\n'))
+  // only the counts get a verdict: see compareWithBaseline
+  const changedCounts = listSignificant(comparisons)
+  const summary = baseline
+    ? [
+        COUNTS_LEGEND,
+        changedCounts.length ? `Counts changed since ${BASELINE}.json:\n${changedCounts.join('\n')}` : `No count changed since ${BASELINE}.json`
+      ]
+    : []
+  console.log([header, ...tables.filter(Boolean), ...summary].join('\n\n'))
 })
 
 describe('interactions', () => {
@@ -133,8 +154,11 @@ describe('interactions', () => {
         const runs: Metrics[] = []
         for (let run = 0; run < MEASURED_RUNS; run++) runs.push(await runOnce(scenario, size))
 
+        const key = `${scenario.id}@${size}`
         const metrics = medianMetrics(runs)
-        results[`${scenario.id}@${size}`] = metrics
+        results[key] = metrics
+        samples[key] = runs
+        if (baseline) comparisons[key] = compareWithBaseline(runs, baseline, key)
         checkCriteria(metrics, scenario.criteria)
       })
     }

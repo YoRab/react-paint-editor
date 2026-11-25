@@ -29,7 +29,9 @@ export default defineConfig({
       perfShapes: process.env.PERF_SHAPES ?? '50,500',
       perfCpu: process.env.PERF_CPU ?? '1',
       perfEvents: process.env.PERF_EVENTS ?? '1',
-      perfReact: reactBuild
+      perfReact: reactBuild,
+      // the report the results are compared to, results/<name>.json: empty for none
+      perfBaseline: process.env.PERF_BASELINE ?? 'baseline'
     },
     browser: {
       enabled: true,
