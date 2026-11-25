@@ -1,6 +1,6 @@
 # Performance benchmark
 
-Measures what React and the main thread do during the continuous interactions of the canvas. It runs in Chromium (Vitest browser mode, Playwright) with its own config, `vitest.perf.config.ts`. The benchmark is only run manually: it is not part of `pnpm test`. Its counts, which do not depend on the speed of the machine, are checked by the CI on each pull request with `pnpm bench:counts`. The stress test, `pnpm bench:stress`, measures the main gestures on drawings of up to 20000 shapes.
+Measures what React and the main thread do during the continuous interactions of the canvas. It runs in Chromium (Vitest browser mode, Playwright) with its own config, `vitest.perf.config.ts`. The benchmark is only run manually: it is not part of `pnpm test`. Its counts, which do not depend on the speed of the machine, are checked by the CI on each pull request with `pnpm bench:counts`. The stress test, `pnpm bench:stress`, measures the main gestures, the load and the exports on drawings of up to 20000 shapes.
 
 It measures the production build of React, the one the users of the library run, with the profiling build of react-dom, whose `<Profiler>` still reports the commits. The run stops at once when another build runs, or when the `<Profiler>` reports nothing.
 
@@ -81,13 +81,21 @@ PERF_LABEL=slow-cpu PERF_CPU=4 pnpm bench:stress
 PERF_LABEL=hidpi PERF_DPR=2 pnpm bench:stress
 ```
 
-`stress.perf.test.tsx` measures the main gestures, `hover`, `translate`, `translate-all`, `pan`, `zoom`, `brush`, `mixed` and `opacity`, on larger and larger drawings: 100, 500, 1000, 2000, 5000, 10000 and 20000 shapes, 3 runs each, after a warm-up run on the first size. `PERF_SCENARIOS` takes any scenario of the benchmark. The acceptance criteria of the scenarios are checked at each size.
+`stress.perf.test.tsx` measures the main gestures, `hover`, `translate`, `translate-all`, `pan`, `zoom`, `brush`, `mixed` and `opacity`, on larger and larger drawings: 100, 500, 1000, 2000, 5000, 10000 and 20000 shapes, 3 runs each, after a warm-up run on the first size. `PERF_SCENARIOS` takes any scenario of the benchmark, and the operations below. The acceptance criteria of the scenarios are checked at each size.
 
 - It measures the work of the frames, `frameWorkP95` and `frameWorkMean` (see the metrics). Unlike the frame intervals, they show the margin left in a frame on a fast machine.
 - A gesture whose frames take over 50 ms (p95) is not measured on the larger drawings: they would take minutes, and the gesture no longer keeps 30 fps. Neither is a gesture which fails, like a scenario whose check no longer passes: it would fail again on each of them.
 - The capacity of a gesture is the largest drawing measured whose frames take at most 16.7 ms (60 fps), or 33.3 ms (30 fps), at p95, the smaller drawings too. The real capacity lies between it and the next size. It counts the work of the main thread only, not the raster and the composite of the GPU.
-- The output gives the work of a frame by gesture and by size, then the capacities. The report, ignored by git, is written to `tests/perf/results/stress-<label>.json`, with each run.
+- The output gives the work of a frame by gesture and by size, then the capacities, and the duration of the operations. The report, ignored by git, is written to `tests/perf/results/stress-<label>.json`, with each run.
 - The figures of the documentation are measured with `PERF_CPU=1` and `4`, and with `PERF_DPR=1` and `2`. Each report records them.
+
+It also measures three operations, single calls of the API outside of the gestures, at every size: their duration (`totalMs`), and the work of the main thread (`taskMs`). The duration of `load` includes the wait for the frame which draws the shapes, up to 16.7 ms, which the small drawings mostly show. The benchmark and its counts do not run them.
+
+| id             | operation                                                                                                                                  |
+| -------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| `load`         | `loadData` of the JSON string of the drawing, as an automatic save keeps it, in the emptied canvas, until the frame which draws the shapes |
+| `export-data`  | a change of the style of a shape: `dataChanged` gives the data of the whole drawing, serialized with `JSON.stringify` as a save does        |
+| `export-image` | `getCurrentImage`: the PNG image of the drawing                                                                                            |
 
 A full run takes about 20 minutes.
 
@@ -123,7 +131,7 @@ The drawing is a grid of opaque rectangles, unless another one is given (`shapes
 | `undo-groups-autosave` | as `hover-groups`, with a listener of `dataChanged`                                                    | as `undo`, after the removal of a group of 25 rectangles: each click exports the groups                      |
 | `translate-custom`     | the grid as stars of a custom tool, their path built from their parameters                             | drag of a star, 300 moves: its path is built again on each move, compare it to `translate`                   |
 
-`fixture.tsx` mounts the measured app: a host calling `useReactPaint`, a heavy sibling standing for the UI of the consumer, the editor, the canvas, and a probe subscribed to `state.history`. It is the only file that depends on the public API.
+`fixture.tsx` mounts the measured app: a host calling `useReactPaint`, a heavy sibling standing for the UI of the consumer, the editor, the canvas, and a probe subscribed to `state.history`. It is the only file that mounts the library: the scenarios read its state with `getState`, and the operations of the stress test call its handle, `paint`.
 
 ## Metrics
 

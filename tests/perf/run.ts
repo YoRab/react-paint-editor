@@ -121,7 +121,7 @@ export const runOnce = async (scenario: Scenario, size: number, eventsPerFrame: 
       taskMs: mainThreadEnd.taskMs - mainThreadStart.taskMs
     })
 
-    scenario.verify(context)
+    scenario.verify(context, metrics)
     return metrics
   } finally {
     app.unmount()

@@ -1,7 +1,7 @@
 import { expect } from 'vitest'
 import type { EditorState, Point, ShapeInput, UseReactPaintOptions } from '../../src/index'
 import type { PerfApp } from './fixture'
-import { type CountName, nextFrame, waitFor } from './metrics'
+import { type CountName, type Metrics, nextFrame, waitFor } from './metrics'
 import {
   CANVAS_HEIGHT,
   CANVAS_WIDTH,
@@ -53,8 +53,8 @@ export type Scenario = {
   setup?: (context: ScenarioContext) => Promise<void>
   /** The measured gesture */
   run: (context: ScenarioContext) => Promise<void>
-  /** Checks that the gesture did its job, so that a gesture broken by an API change is never measured */
-  verify: (context: ScenarioContext) => void
+  /** Checks that the gesture did its job, from the state and the metrics, so that a gesture broken by an API change is never measured */
+  verify: (context: ScenarioContext, metrics: Metrics) => void
   criteria?: Criteria
   /** Counts which depend on the speed of the machine, left out of the comparison with counts-baseline.json: say why */
   variableCounts?: CountName[]
@@ -527,6 +527,64 @@ const createAddPictureScenario = ({ id, listenData = false }: Pick<Scenario, 'id
 const addPicture = createAddPictureScenario({ id: 'add-picture' })
 
 const addPictureAutosave = createAddPictureScenario({ id: 'add-picture-autosave', listenData: true })
+
+// ─── Operations ────────────────────────────────────────────────────────────────
+
+/** Loads the drawing again, in the emptied canvas, from its JSON string as an automatic save keeps it */
+const createLoadScenario = (): Scenario => {
+  let json = ''
+  return {
+    id: 'load',
+    setup: async ({ app }) => {
+      json = JSON.stringify(app.paint.getCurrentData())
+      await app.paint.actions.loadData({ shapes: [] })
+    },
+    run: async ({ app }) => {
+      await app.paint.actions.loadData(json)
+      // the layer of the shapes, asked by the load, is drawn in the next frame before this callback
+      await nextFrame()
+    },
+    verify: ({ app, shapes }, { shapesLayerDraws }) => {
+      expect(app.getState().shapes).toHaveLength(shapes.length)
+      expect(shapesLayerDraws, 'draws of the layer of the shapes during the measure').toBe(1)
+    }
+  }
+}
+
+/** A change of the style of a shape: dataChanged gives the data of the whole drawing, serialized as an automatic save does */
+const createExportDataScenario = (): Scenario => {
+  let saved = ''
+  return {
+    id: 'export-data',
+    setup: async ({ app }) => {
+      saved = ''
+      // the listener is left to the app, unmounted after the run
+      app.paint.registerEvent('dataChanged', data => {
+        saved = JSON.stringify(data)
+      })
+    },
+    run: async ({ app }) => app.paint.actions.setShapesStyle([app.getState().shapes[0]!.id], { strokeColor: '#ff0000' }),
+    verify: ({ shapes }) => {
+      expect((JSON.parse(saved) as { shapes: unknown[] }).shapes).toHaveLength(shapes.length)
+      expect(saved).toContain('#ff0000')
+    }
+  }
+}
+
+/** The PNG image of the drawing, as the export of the editor makes it */
+const createExportImageScenario = (): Scenario => {
+  let image = ''
+  return {
+    id: 'export-image',
+    run: async ({ app }) => {
+      image = app.paint.getCurrentImage()
+    },
+    verify: () => expect(image).toMatch(/^data:image\/png;base64,/)
+  }
+}
+
+/** Single calls of the API measured by the stress test, outside of the gestures: neither the benchmark nor its counts run them */
+export const OPERATIONS: Scenario[] = [createLoadScenario(), createExportDataScenario(), createExportImageScenario()]
 
 export const SCENARIOS: Scenario[] = [
   hover,
