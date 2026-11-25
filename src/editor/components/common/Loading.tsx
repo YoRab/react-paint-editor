@@ -9,19 +9,21 @@ export type LoadingType = {
 }
 
 const Loading = ({ isLoading = false }: LoadingType) => {
-  const [loadingState, setLoadingState] = useState<'hidden' | 'visible' | 'fadeOut'>('hidden')
+  const [loadingState, setLoadingState] = useState<'hidden' | 'visible' | 'fadeOut'>(isLoading ? 'visible' : 'hidden')
+  const [wasLoading, setWasLoading] = useState(isLoading)
   const { lang, editor } = useEditorLocale()
+
+  // the loader fades out when a loading ends, not at the mount. Set while rendering, it changes in the commit of isLoading
+  if (isLoading !== wasLoading) {
+    setWasLoading(isLoading)
+    setLoadingState(isLoading ? 'visible' : 'fadeOut')
+  }
+
   useEffect(() => {
-    if (isLoading) {
-      setLoadingState('visible')
-    } else {
-      setLoadingState('fadeOut')
-      const fadeOutTimeout = setTimeout(() => setLoadingState('hidden'), LOADING_TRANSITION_DURATION)
-      return () => {
-        clearTimeout(fadeOutTimeout)
-      }
-    }
-  }, [isLoading])
+    if (loadingState !== 'fadeOut') return
+    const fadeOutTimeout = setTimeout(() => setLoadingState('hidden'), LOADING_TRANSITION_DURATION)
+    return () => clearTimeout(fadeOutTimeout)
+  }, [loadingState])
 
   return loadingState === 'hidden' ? null : (
     <div

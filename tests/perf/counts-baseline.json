@@ -470,8 +470,8 @@
   "add-picture@50": {
     "hostRenders": 0,
     "siblingRenders": 0,
-    "rootCommits": 18,
-    "editorCommits": 18,
+    "rootCommits": 12,
+    "editorCommits": 12,
     "canvasCommits": 0,
     "probeCommits": 1,
     "shapesLayerDraws": 3,
@@ -483,8 +483,8 @@
   "add-picture@500": {
     "hostRenders": 0,
     "siblingRenders": 0,
-    "rootCommits": 18,
-    "editorCommits": 18,
+    "rootCommits": 12,
+    "editorCommits": 12,
     "canvasCommits": 0,
     "probeCommits": 1,
     "shapesLayerDraws": 3,
@@ -496,8 +496,8 @@
   "add-picture-autosave@50": {
     "hostRenders": 0,
     "siblingRenders": 0,
-    "rootCommits": 18,
-    "editorCommits": 18,
+    "rootCommits": 12,
+    "editorCommits": 12,
     "canvasCommits": 0,
     "probeCommits": 1,
     "shapesLayerDraws": 3,
@@ -509,8 +509,8 @@
   "add-picture-autosave@500": {
     "hostRenders": 0,
     "siblingRenders": 0,
-    "rootCommits": 18,
-    "editorCommits": 18,
+    "rootCommits": 12,
+    "editorCommits": 12,
     "canvasCommits": 0,
     "probeCommits": 1,
     "shapesLayerDraws": 3,

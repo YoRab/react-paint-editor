@@ -58,9 +58,9 @@ export const runOnce = async (scenario: Scenario, size: number, eventsPerFrame: 
     const context = { app, shapes, eventsPerFrame }
     await focusCanvas()
     await scenario.setup?.(context)
-    // the timers started by the mount and the setup fire before the measure. Without this wait, the fade-out of the
-    // loader and the announcement of the selection of the brush were rendered in one commit or in two, from one run to
-    // the next
+    // the timers started by the mount and the setup, like the announcement of the selection of the brush, fire before
+    // the measure. Without this wait, they fired during the gesture, in a commit of their own or in the commit of
+    // another change, from one run to the next
     await settle()
 
     // the production build of react-dom calls no onRender: the counts would all be 0

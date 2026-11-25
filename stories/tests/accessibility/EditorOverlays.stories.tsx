@@ -174,6 +174,35 @@ export const EditorOverlays: Story = {
   }
 }
 
+/** The loader covers the editor during a loading only: it is not shown at the mount, and its fade-out lets the pointer through */
+export const Loader: Story = {
+  args: {
+    shapes: [square('a', 100, 100)]
+  },
+  play: async ({ canvasElement }) => {
+    const view = within(canvasElement)
+    await view.findByTestId('draw-canvas')
+
+    // each state of the loader, with what the pointer does on it, read as soon as it is rendered
+    const getLoaderState = () => {
+      const loader = canvasElement.querySelector<HTMLElement>('.react-paint-editor-loading')
+      return loader ? `${loader.dataset.loading}, pointer-events: ${getComputedStyle(loader).pointerEvents}` : 'none'
+    }
+    const states = [getLoaderState()]
+    const observer = new MutationObserver(() => {
+      const state = getLoaderState()
+      if (state !== states.at(-1)) states.push(state)
+    })
+    observer.observe(canvasElement, { subtree: true, childList: true, attributes: true, attributeFilter: ['data-loading'] })
+
+    await userEvent.click(view.getByRole('button', { name: 'Menu' }))
+    const svg = "<svg xmlns='http://www.w3.org/2000/svg' width='120' height='80'><rect width='120' height='80' fill='green'/></svg>"
+    await userEvent.upload(await findFileInput(view, 'Upload picture'), new File([svg], 'picture.svg', { type: 'image/svg+xml' }))
+    await waitFor(() => expect(states).toEqual(['none', 'visible, pointer-events: auto', 'fadeOut, pointer-events: none', 'none']))
+    observer.disconnect()
+  }
+}
+
 /** The context menu stays open, for the checks of axe at the end of the story */
 export const OpenContextMenu: Story = {
   args: {

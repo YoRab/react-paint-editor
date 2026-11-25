@@ -501,7 +501,7 @@ const createAddPictureScenario = ({ id, listenData = false }: Pick<Scenario, 'id
     criteria: { ...GESTURE_CRITERIA, ...atMostOneDrawPerEvent(ADDED_PICTURES) },
     // the steps of the loading of a photo (reading of the file, decoding, loading of the image, state of the loader) fall
     // into one task of the browser or several, depending on the speed of the machine, and React commits them together
-    // or apart: 18 commits at full speed, 19 to 21 with PERF_CPU=4. Waiting after each photo did not help
+    // or apart: 12 commits at full speed, 12 to 15 with PERF_CPU=4. Waiting after each photo did not help
     variableCounts: ['rootCommits', 'editorCommits']
   }
 }

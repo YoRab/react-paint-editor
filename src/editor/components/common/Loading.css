@@ -17,6 +17,11 @@
   opacity: 1;
 }
 
+/* the loading is over: the pointer reaches the editor during the fade-out */
+.react-paint-editor-loading[data-loading='fadeOut'] {
+  pointer-events: none;
+}
+
 @keyframes react-paint-editor-loading-rotation {
   from {
     transform: rotate(0deg);
