@@ -92,6 +92,7 @@
   },
   "scripts": {
     "bench": "vitest run --config vitest.perf.config.ts --reporter=default",
+    "bench:compare": "node scripts/bench-compare.mjs",
     "build": "rm -rf dist && vite build --config vite.config.umd.ts && vite build",
     "build-storybook": "storybook build",
     "check-package": "publint && attw --pack . --ignore-rules cjs-resolves-to-esm false-esm --exclude-entrypoints react-paint.css editor/editor.css",

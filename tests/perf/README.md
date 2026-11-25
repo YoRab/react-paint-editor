@@ -10,21 +10,23 @@ It measures the production build of React, the one the users of the library run,
 pnpm bench
 ```
 
-| Variable        | Default      | Use                                                                                                                                                          |
-| --------------- | ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `PERF_LABEL`    | `latest`     | Name of the report, written to `tests/perf/results/<label>.json`                                                                                             |
-| `PERF_SHAPES`   | `50,500`     | Numbers of shapes to measure, separated by commas                                                                                                            |
-| `PERF_CPU`      | `1`          | Slows the CPU down by this rate (Chrome DevTools Protocol), like a slower machine: `4` stands for a mid-range phone                                          |
-| `PERF_EVENTS`   | `1`          | Pointer and wheel events sent in each frame: `1` stands for a 60 Hz mouse, `4` for a faster mouse in a browser which does not align the events on the frames |
-| `PERF_DPR`      | `1`          | Pixels of the screen in a CSS pixel (`devicePixelRatio`): `2` stands for a HiDPI screen, like a Retina display, whose canvases have 4 times more pixels      |
-| `PERF_REACT`    | `production` | `development` measures the development build of React instead, slower, like the reports made before 2026-11-25                                               |
-| `PERF_BASELINE` | `baseline`   | Report the results are compared to, `tests/perf/results/<name>.json`. Empty for none                                                                         |
+| Variable         | Default      | Use                                                                                                                                                          |
+| ---------------- | ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `PERF_LABEL`     | `latest`     | Name of the report, written to `tests/perf/results/<label>.json`                                                                                             |
+| `PERF_SHAPES`    | `50,500`     | Numbers of shapes to measure, separated by commas                                                                                                            |
+| `PERF_SCENARIOS` | all          | Ids of the scenarios to measure, separated by commas                                                                                                         |
+| `PERF_CPU`       | `1`          | Slows the CPU down by this rate (Chrome DevTools Protocol), like a slower machine: `4` stands for a mid-range phone                                          |
+| `PERF_EVENTS`    | `1`          | Pointer and wheel events sent in each frame: `1` stands for a 60 Hz mouse, `4` for a faster mouse in a browser which does not align the events on the frames |
+| `PERF_DPR`       | `1`          | Pixels of the screen in a CSS pixel (`devicePixelRatio`): `2` stands for a HiDPI screen, like a Retina display, whose canvases have 4 times more pixels      |
+| `PERF_REACT`     | `production` | `development` measures the development build of React instead, slower, like the reports made before 2026-11-25                                               |
+| `PERF_BASELINE`  | `baseline`   | Report the results are compared to, `tests/perf/results/<name>.json`. Empty for none                                                                         |
 
 ```bash
 PERF_LABEL=baseline pnpm bench          # bash
 $env:PERF_LABEL='baseline'; pnpm bench  # PowerShell
 pnpm bench --browser.headless=false     # to watch the browser
 pnpm bench -t "pan with"                # one scenario
+PERF_SCENARIOS=pan,zoom pnpm bench      # two scenarios
 PERF_LABEL=slow-cpu PERF_CPU=4 pnpm bench
 PERF_LABEL=hidpi PERF_DPR=2 pnpm bench
 PERF_BASELINE=before pnpm bench         # compared to results/before.json
@@ -32,7 +34,25 @@ PERF_BASELINE=before pnpm bench         # compared to results/before.json
 
 A full run takes about 20 minutes: 24 scenarios, 2 sizes, 1 warm-up run and 5 measured runs each, on a new mount every time. The report, ignored by git, holds the median of the measured runs (`results`) and each measured run (`samples`).
 
-When the report of `PERF_BASELINE` exists, each cell shows the gap to it: a count which changed is marked with its own gap, `(+300 ▲)` for more and `(-300 ▼)` for fewer, and the output ends with the list of these counts. The gaps of time are only shown in %, never marked: two benches made at different times differ by the drift of the machine, which a test on the runs of each one cannot see. The same code measured twice in a row once came out 34 % faster on `undo@50 taskMs`, with a Mann-Whitney U test at p < 0.05. Compare only reports made with the same `PERF_CPU`, `PERF_EVENTS`, `PERF_DPR` and `PERF_REACT`. Each report records them. The reports made before 2026-11-25 only hold medians.
+When the report of `PERF_BASELINE` exists, each cell shows the gap to it: a count which changed is marked with its own gap, `(+300 ▲)` for more and `(-300 ▼)` for fewer, and the output ends with the list of these counts. The gaps of time are only shown in %, never marked: two benches made at different times differ by the drift of the machine, which a test on the runs of each one cannot see. The same code measured twice in a row once came out 34 % faster on `undo@50 taskMs`, with a Mann-Whitney U test at p < 0.05. To compare the times of two versions, use `pnpm bench:compare`, which alternates them. Compare only reports made with the same `PERF_CPU`, `PERF_EVENTS`, `PERF_DPR` and `PERF_REACT`. Each report records them. The reports made before 2026-11-25 only hold medians.
+
+## Compare two versions
+
+```bash
+pnpm bench:compare HEAD                                       # the working tree against the last commit
+PERF_SCENARIOS=translate,pan PERF_SHAPES=500 pnpm bench:compare dev
+PERF_ROUNDS=4 pnpm bench:compare v1.0.0-beta.4 -t "zoom with"  # arguments after the ref go to Vitest
+```
+
+`scripts/bench-compare.mjs` measures the library at a git ref (`base`) and the one of the working tree (`current`), like the benchmark of react-konva:
+
+- it copies the library of both, `src` and the tsconfig files which give the paths of its imports, into `.bench-variants/`, ignored by git. A change made during the comparison does not reach it;
+- the code of the benchmark is the one of the working tree for both: `vitest.perf.config.ts` serves the modules of `src/` from the copy given by `PERF_SOURCE`, whatever the path which imports them. The imports of the copy itself are resolved with its own tsconfig files;
+- it runs the benchmark `PERF_ROUNDS` times on each (2 by default), alternating which one runs first, so that the drift of the machine during the comparison falls on both. An even number gives both the same positions;
+- it compares the samples of all the rounds, 10 per variant by default, and prints for each metric the median and the quartiles of both, the gap, and the p-value of a Mann-Whitney U test, adjusted by the Benjamini-Hochberg procedure for the number of times compared over all the scenarios: among hundreds of times, 5 % would pass p < 0.05 by chance. `▲` marks a gap significantly worse (adjusted p < 0.05), `▼` a gap significantly better, and the other gaps may be noise. A gap of time under 2 % is never marked: it does not matter, and the duration of a gesture, which hardly varies, would show its few milliseconds of drift. A count which changed is marked with its own gap, like `(+300 ▲)`. With 5 samples per variant (1 round), the test cannot mark a time among more than 6: keep 2 rounds at least;
+- the report, with all the samples and a hash of each library, is written to `results/compare-<ref>.json` (or `<PERF_LABEL>.json`).
+
+The other variables apply to both variants. Each round takes as long as a `pnpm bench` with the same variables: restrict the scenarios and the sizes. A scenario which fails for one variant, like one that the older version does not know, is left out of the comparison. When the library is the same at the ref, the comparison is an A/A control: it should show no significant gap, else the machine was too unstable during it.
 
 ## Scenarios
 
@@ -82,7 +102,7 @@ The drawing is a grid of opaque rectangles, unless another one is given (`shapes
 | `totalMs`                                                       | Duration of the gesture                                                                                                                                                                                                                                                                        |
 | `scriptMs`, `taskMs`                                            | JavaScript, and all the work, of the main thread during the gesture (Chrome DevTools Protocol): event handlers, React, drawing of the canvas, style and layout                                                                                                                                 |
 
-The calls of the 2D context are counted by wrapping the methods of `CanvasRenderingContext2D.prototype` during the gesture, like the benchmark of Excalidraw. The layers are told apart by their canvas element, not by the code which draws them, so that the library of an older version is counted the same way.
+The calls of the 2D context are counted by wrapping the methods of `CanvasRenderingContext2D.prototype` during the gesture, like the benchmark of Excalidraw. The layers are told apart by their canvas element, not by the code which draws them, so that the library of an older version is counted the same way by `pnpm bench:compare`.
 
 The counts are deterministic: they are the acceptance criteria. The ones checked are the same with both builds of React; `rootCommits` and `editorCommits` are one more with the development build during a brush stroke. The times depend on the machine and on the build of React: compare them only between runs on the same machine, with the same build. The frame intervals stay at 16.7 ms on a fast machine, whatever the work: `scriptMs` and `taskMs` show it.
 

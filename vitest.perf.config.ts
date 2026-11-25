@@ -1,5 +1,7 @@
+import { resolve } from 'node:path'
 import { playwright } from '@vitest/browser-playwright'
 import react from '@vitejs/plugin-react'
+import type { Plugin } from 'vite'
 import { defineConfig } from 'vitest/config'
 
 // Performance benchmark, only run manually with `pnpm bench` (see tests/perf/README.md)
@@ -13,8 +15,29 @@ const reactBuild = process.env.PERF_REACT === 'development' ? 'development' : 'p
 // React picks its build from it when its package is bundled, and the React plugin its JSX transform
 if (reactBuild === 'production') process.env.NODE_ENV = 'production'
 
+const toModulePath = (path: string) => `${resolve(path, 'src').replaceAll('\\', '/')}/`
+
+/**
+ * Serves the library measured: the copy of a version made by `pnpm bench:compare` in the folder PERF_SOURCE, in place of
+ * the library of the working tree, whatever the path which imports it. The imports of the copy itself are resolved with
+ * its own tsconfig files, the nearest ones
+ */
+const measuredLibrary = (source: string): Plugin => {
+  const workingTree = toModulePath('.').toLowerCase()
+  const copy = toModulePath(source)
+  return {
+    name: 'perf-measured-library',
+    enforce: 'pre',
+    async resolveId(id, importer, options) {
+      const resolved = await this.resolve(id, importer, { ...options, skipSelf: true })
+      const path = resolved?.id.replaceAll('\\', '/')
+      return path?.toLowerCase().startsWith(workingTree) ? copy + path.slice(workingTree.length) : null
+    }
+  }
+}
+
 export default defineConfig({
-  plugins: [react()],
+  plugins: [react(), ...(process.env.PERF_SOURCE ? [measuredLibrary(process.env.PERF_SOURCE)] : [])],
   resolve: {
     tsconfigPaths: true,
     // react-dom/client takes createRoot from react-dom: both are the profiling build
@@ -27,6 +50,7 @@ export default defineConfig({
     provide: {
       perfLabel: process.env.PERF_LABEL ?? 'latest',
       perfShapes: process.env.PERF_SHAPES ?? '50,500',
+      perfScenarios: process.env.PERF_SCENARIOS ?? '',
       perfCpu: process.env.PERF_CPU ?? '1',
       perfEvents: process.env.PERF_EVENTS ?? '1',
       perfReact: reactBuild,

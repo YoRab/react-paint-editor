@@ -1,5 +1,6 @@
 // The only file of the benchmark that depends on the public API of the library:
 // scenarios drive the app with DOM events and read its state through `getState`.
+// During `pnpm bench:compare`, vitest.perf.config.ts serves the modules of `src/` from the copy of an older version.
 
 import { Profiler, useEffect } from 'react'
 import { createRoot } from 'react-dom/client'

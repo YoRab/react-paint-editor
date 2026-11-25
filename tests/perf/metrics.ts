@@ -10,6 +10,7 @@ declare module 'vitest' {
   export interface ProvidedContext {
     perfLabel: string
     perfShapes: string
+    perfScenarios: string
     perfCpu: string
     perfEvents: string
     perfReact: ReactBuild

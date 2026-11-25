@@ -32,11 +32,20 @@ const EVENTS_PER_FRAME = Math.max(1, Math.floor(Number(inject('perfEvents'))) ||
 const REACT_BUILD = inject('perfReact')
 const BASELINE = inject('perfBaseline')
 
+/** The scenarios measured: the ones of PERF_SCENARIOS, all of them by default */
+const SCENARIO_IDS = inject('perfScenarios')
+  .split(',')
+  .map(id => id.trim())
+  .filter(Boolean)
+const unknownIds = SCENARIO_IDS.filter(id => !SCENARIOS.some(scenario => scenario.id === id))
+if (unknownIds.length) throw new Error(`Unknown scenarios in PERF_SCENARIOS: ${unknownIds.join(', ')}`)
+const MEASURED_SCENARIOS = SCENARIO_IDS.length ? SCENARIOS.filter(scenario => SCENARIO_IDS.includes(scenario.id)) : SCENARIOS
+
 const WARMUP_RUNS = 1
 const MEASURED_RUNS = 5
 
 const COUNTS_LEGEND =
-  '▲ more, ▼ fewer: the counts which changed. The gaps of time are not marked: they may come from the drift of the machine between the two benches'
+  '▲ more, ▼ fewer: the counts which changed. The gaps of time are not marked: they may come from the drift of the machine between the two benches. To compare two versions, use pnpm bench:compare'
 
 /** Median of the runs, and the runs, by "scenario@shapes" */
 const results: Record<string, Metrics> = {}
@@ -131,7 +140,7 @@ afterAll(async () => {
   const events = EVENTS_PER_FRAME > 1 ? `, ${EVENTS_PER_FRAME} events per frame` : ''
   const density = pixelRatio !== 1 ? `, pixel ratio ${pixelRatio}` : ''
   const header = `Benchmark "${LABEL}", ${REACT_BUILD} build of React${cpu}${events}${density}${baseline ? `, compared to ${BASELINE}.json` : ''}`
-  const tables = SCENARIOS.map(scenario => {
+  const tables = MEASURED_SCENARIOS.map(scenario => {
     const scenarioResults = Object.fromEntries(Object.entries(results).filter(([key]) => key.startsWith(`${scenario.id}@`)))
     return Object.keys(scenarioResults).length ? formatTable(scenario.id, scenarioResults, comparisons) : ''
   })
@@ -147,7 +156,7 @@ afterAll(async () => {
 })
 
 describe('interactions', () => {
-  for (const scenario of SCENARIOS) {
+  for (const scenario of MEASURED_SCENARIOS) {
     for (const size of SIZES) {
       it(`${scenario.id} with ${size} shapes`, async () => {
         for (let run = 0; run < WARMUP_RUNS; run++) await runOnce(scenario, size)
