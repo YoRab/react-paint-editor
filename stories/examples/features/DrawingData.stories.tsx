@@ -1,61 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
-import { useEffect, useState } from 'react'
-import { Canvas, DATA_VERSION, type DrawableShape, Editor, type StateData, useReactPaint } from '../../../src/index'
-import { HELLO_THERE, TREE_AND_CLOUDS, WITH_PICTURE } from '../../fixture'
+import { TREE_AND_CLOUDS } from '../../fixture'
 import { EditorExample } from '../EditorExample'
-import '../buttons.css'
-
-const PRESETS = [
-  { name: 'picture', shapes: WITH_PICTURE },
-  { name: 'trees', shapes: TREE_AND_CLOUDS },
-  { name: 'hello', shapes: HELLO_THERE }
-]
-
-const PresetsEditor = () => {
-  const [preset, setPreset] = useState(0)
-  const [shapes, setShapes] = useState<DrawableShape[] | undefined>(WITH_PICTURE)
-
-  const paint = useReactPaint({
-    shapes,
-    options: {
-      clearCallback: () => {
-        return PRESETS[preset]!.shapes
-      }
-    }
-  })
-
-  const choosePreset = (preset: number) => {
-    setPreset(preset)
-    void paint.actions.loadData({ version: DATA_VERSION, shapes: PRESETS[preset]!.shapes })
-  }
-
-  useEffect(() => {
-    const onDataChanged = (data: StateData, source: 'user' | 'remote') => {
-      console.log(`data changed from ${source}`)
-      setShapes(data.shapes)
-    }
-    // registerEvent returns the function that unregisters the listener
-    return paint.registerEvent('dataChanged', onDataChanged)
-  }, [paint])
-
-  return (
-    <>
-      <div>
-        <h3 className='example-title'>Choose a preset to reset the canvas</h3>
-        <div className='example-buttons'>
-          {PRESETS.map(({ name }, index) => (
-            <button key={name} type='button' className={`example-button ${preset === index ? 'active' : ''}`} onClick={() => choosePreset(index)}>
-              Preset {index + 1}
-            </button>
-          ))}
-        </div>
-      </div>
-      <Editor paint={paint}>
-        <Canvas paint={paint} />
-      </Editor>
-    </>
-  )
-}
 
 const meta = {
   title: 'Features/Drawing data',
@@ -65,7 +10,7 @@ const meta = {
     docs: {
       description: {
         component:
-          'The shapes of the drawing given by the application: when the canvas is created with the `shapes` of `useReactPaint`, later with `actions.loadData`, and read back with the `dataChanged` event. The `viewer` mode shows them without letting the user change them.'
+          'The shapes of the drawing given by the application, with the `shapes` of `useReactPaint` when the canvas is created. The `viewer` mode shows them without letting the user change them.'
       }
     }
   },
@@ -97,77 +42,6 @@ return (
     <Canvas paint={paint} />
   </Editor>
 )`,
-        language: 'tsx'
-      }
-    }
-  }
-}
-
-export const ResetFromTheApp: Story = {
-  render: () => <PresetsEditor />,
-  parameters: {
-    docs: {
-      description: {
-        story:
-          'The application replaces the drawing with `actions.loadData`, and keeps its shapes up to date with the `dataChanged` event. `clearCallback` can also be a function returning the shapes the Clear button brings back.'
-      },
-      source: {
-        code: ` const [preset, setPreset] = useState(0)
-  const [shapes, setShapes] = useState<DrawableShape[] | undefined>(WITH_PICTURE)
-
-  const paint = useReactPaint({
-    shapes,
-    options: {
-      clearCallback: () => {
-        return [WITH_PICTURE, TREE_AND_CLOUDS, HELLO_THERE][preset]
-      }
-    }
-  })
-
-  const choosePreset = (preset: number) => {
-    setPreset(preset)
-    void paint.actions.loadData({ version: DATA_VERSION, shapes: [WITH_PICTURE, TREE_AND_CLOUDS, HELLO_THERE][preset] })
-  }
-
-  useEffect(() => {
-    const onDataChanged = (data: StateData, source: 'user' | 'remote') => {
-      console.log(\`data changed from \${source}\`)
-      setShapes(data.shapes)
-    }
-    // registerEvent returns the function that unregisters the listener
-    return paint.registerEvent('dataChanged', onDataChanged)
-  }, [paint])
-
-  return (
-    <>
-      <div className="example-buttons">
-        <button
-          type="button"
-          className={\`example-button \${preset === 0 ? 'active' : ''}\`}
-          onClick={() => choosePreset(0)}
-        >
-          Preset 1
-        </button>
-        <button
-          type="button"
-          className={\`example-button \${preset === 1 ? 'active' : ''}\`}
-          onClick={() => choosePreset(1)}
-        >
-          Preset 2
-        </button>
-        <button
-          type="button"
-          className={\`example-button \${preset === 2 ? 'active' : ''}\`}
-          onClick={() => choosePreset(2)}
-        >
-          Preset 3
-        </button>
-      </div>
-      <Editor paint={paint}>
-        <Canvas paint={paint} />
-      </Editor>
-    </>
-  )`,
         language: 'tsx'
       }
     }
