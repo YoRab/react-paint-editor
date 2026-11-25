@@ -11,6 +11,7 @@ import useZoom from '@canvas/hooks/useZoom'
 import type { PaintStore } from '@canvas/store/paintStore'
 import { type CanvasView, getTouchAction, memoizeLast } from '@canvas/store/selectors'
 import { createShapesDescriber, type ShapeDescription } from '@canvas/utils/description'
+import { syncChildren } from '@canvas/utils/dom'
 import { formatMessage } from '@canvas/utils/locale'
 import { getSelectedShapes } from '@canvas/utils/selectedShapes'
 import { applyShapePatch } from '@canvas/utils/shapePatch'
@@ -75,16 +76,6 @@ const EXTEND_STYLES: LayoutStyles = {
   box: { position: 'absolute', inset: 0 },
   container: { ...CONTAINER_STYLE, position: 'absolute', inset: 0 },
   canvas: { ...CANVAS_BASE_STYLE, position: 'absolute', left: 0, top: 0 }
-}
-
-/** Gives its items to a list, moving only the ones which are not at their place: a change of one shape changes one item */
-const syncChildren = (list: HTMLElement, items: HTMLElement[]) => {
-  const kept = new Set<Element>(items)
-  for (const child of [...list.children]) if (!kept.has(child)) child.remove()
-  items.forEach((item, index) => {
-    const current = list.children[index]
-    if (current !== item) list.insertBefore(item, current ?? null)
-  })
 }
 
 /**

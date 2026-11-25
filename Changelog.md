@@ -5,6 +5,7 @@ For more details and links to Pull requests, see [Releases](https://github.com/Y
 ## V1.0.0-beta.5 (unreleased)
 - fix a line or a brush with a fill color, given by the code, loaded data or setShapesStyle, which could not be clicked, hovered, erased, moved once selected or caught by a selection frame: their stroke is tested, like without fill, as they draw no fill
 - fix the loader of the Editor, which covered it, invisible, for 300 ms after each mount and caught the clicks, as if a loading had just ended: it is shown during a loading only, and its fade-out, once the loading is over, lets the pointer reach the editor
+- fix the freeze of a load, of the selection of all the shapes and of its clearing on large drawings, whose time grew with the square of the number of shapes (2 s each with 20000 shapes): the list of the shapes given to the assistive technologies is now written in a time proportional to it. A load of 20000 shapes takes 220 ms instead of 2 s
 
 ## V1.0.0-beta.4
 - fix a picture whose image cannot be loaded, which stopped the drawing of the canvas: drawImage threw on its broken image at each draw, so the shapes in front of it were no longer drawn. Its broken image is left out, its border is still drawn
