@@ -1,7 +1,9 @@
 // types of the CDP session given by the playwright provider
 import type {} from '@vitest/browser-playwright'
-import type { ProfilerOnRenderCallback } from 'react'
+import * as React from 'react'
 import { cdp } from 'vitest/browser'
+
+export type ReactBuild = 'production' | 'development'
 
 declare module 'vitest' {
   export interface ProvidedContext {
@@ -9,7 +11,15 @@ declare module 'vitest' {
     perfShapes: string
     perfCpu: string
     perfEvents: string
+    perfReact: ReactBuild
   }
+}
+
+/** The build of React running in the page: only the development one shares its debug internals */
+export const getReactBuild = (): ReactBuild => {
+  const internals = (React as unknown as { __SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED: object })
+    .__SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED
+  return 'ReactDebugCurrentFrame' in internals ? 'development' : 'production'
 }
 
 // ─── Collected during a run ────────────────────────────────────────────────────
@@ -20,7 +30,7 @@ export type ProfilerId = (typeof PROFILER_IDS)[number]
 export type Recorder = {
   counters: { hostRenders: number; siblingRenders: number }
   profiles: Record<ProfilerId, { commits: number; actualDuration: number }>
-  onRender: ProfilerOnRenderCallback
+  onRender: React.ProfilerOnRenderCallback
   reset: () => void
 }
 
@@ -159,6 +169,8 @@ export type Report = {
   label: string
   date: string
   userAgent: string
+  /** Build of React measured: compare only reports made with the same one */
+  react: ReactBuild
   /** Slowdown of the CPU during the run */
   cpuRate: number
   /** Pointer and wheel events sent in each frame */

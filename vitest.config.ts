@@ -3,7 +3,6 @@ import { fileURLToPath } from 'node:url'
 import { defineConfig } from 'vitest/config'
 import { storybookTest } from '@storybook/addon-vitest/vitest-plugin'
 import { playwright } from '@vitest/browser-playwright'
-import react from '@vitejs/plugin-react'
 
 const dirname = typeof import.meta.dirname !== 'undefined' ? import.meta.dirname : path.dirname(fileURLToPath(import.meta.url))
 
@@ -27,7 +26,7 @@ export default defineConfig({
         extends: true,
         test: {
           name: 'unit',
-          // the benchmark (tests/perf/*.perf.test.tsx) is not matched
+          // the benchmark (tests/perf/*.perf.test.tsx) is not matched: it has its own config, vitest.perf.config.ts
           include: ['tests/**/*.test.ts']
         }
       },
@@ -43,30 +42,6 @@ export default defineConfig({
             headless: true,
             provider: playwright({}),
             instances: [{ browser: 'chromium' }]
-          }
-        }
-      },
-      // Performance benchmark, only run manually with `pnpm bench` (see tests/perf/README.md)
-      {
-        extends: true,
-        plugins: [react()],
-        test: {
-          name: 'perf',
-          include: ['tests/perf/**/*.perf.test.tsx'],
-          testTimeout: 600_000,
-          provide: {
-            perfLabel: process.env.PERF_LABEL ?? 'latest',
-            perfShapes: process.env.PERF_SHAPES ?? '50,500',
-            perfCpu: process.env.PERF_CPU ?? '1',
-            perfEvents: process.env.PERF_EVENTS ?? '1'
-          },
-          browser: {
-            enabled: true,
-            headless: true,
-            // the density of the screen: 2 stands for a HiDPI screen, whose canvases have 4 times more pixels
-            provider: playwright({ contextOptions: { deviceScaleFactor: Number(process.env.PERF_DPR) || 1 } }),
-            instances: [{ browser: 'chromium' }],
-            viewport: { width: 1280, height: 900 }
           }
         }
       }

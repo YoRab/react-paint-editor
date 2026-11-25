@@ -6,6 +6,7 @@ import {
   createRecorder,
   enableMainThreadTimes,
   formatTable,
+  getReactBuild,
   type Metrics,
   medianMetrics,
   type Report,
@@ -23,6 +24,7 @@ const SIZES = inject('perfShapes')
   .filter(size => size > 0)
 const CPU_RATE = Math.max(1, Number(inject('perfCpu')) || 1)
 const EVENTS_PER_FRAME = Math.max(1, Math.floor(Number(inject('perfEvents'))) || 1)
+const REACT_BUILD = inject('perfReact')
 
 const WARMUP_RUNS = 1
 const MEASURED_RUNS = 5
@@ -39,6 +41,8 @@ const runOnce = async (scenario: Scenario, size: number): Promise<Metrics> => {
     await focusCanvas()
     await scenario.setup?.(context)
 
+    // the production build of react-dom calls no onRender: the counts would all be 0
+    if (!recorder.profiles.root.commits) throw new Error('The <Profiler> reported no commit: react-dom is not its profiling build')
     recorder.reset()
     const mainThreadStart = await readMainThreadTimes()
     const stopFrames = recordFrames()
@@ -70,6 +74,8 @@ const checkCriteria = (metrics: Metrics, { hostRenders, probeCommits, canvasComm
 }
 
 beforeAll(async () => {
+  // a config which no longer gives the build asked would measure another React silently
+  if (getReactBuild() !== REACT_BUILD) throw new Error(`The ${REACT_BUILD} build of React was asked, the ${getReactBuild()} one runs`)
   await enableMainThreadTimes()
   if (CPU_RATE > 1) await setCpuThrottling(CPU_RATE)
   try {
@@ -87,6 +93,7 @@ afterAll(async () => {
     label: LABEL,
     date: new Date().toISOString(),
     userAgent: navigator.userAgent,
+    react: REACT_BUILD,
     cpuRate: CPU_RATE,
     eventsPerFrame: EVENTS_PER_FRAME,
     pixelRatio,
@@ -97,7 +104,7 @@ afterAll(async () => {
   const cpu = CPU_RATE > 1 ? `, CPU slowed down ${CPU_RATE}×` : ''
   const events = EVENTS_PER_FRAME > 1 ? `, ${EVENTS_PER_FRAME} events per frame` : ''
   const density = pixelRatio !== 1 ? `, pixel ratio ${pixelRatio}` : ''
-  const header = `Benchmark "${LABEL}"${cpu}${events}${density}${baseline && LABEL !== 'baseline' ? ', compared to baseline.json' : ''}`
+  const header = `Benchmark "${LABEL}", ${REACT_BUILD} build of React${cpu}${events}${density}${baseline && LABEL !== 'baseline' ? ', compared to baseline.json' : ''}`
   const tables = SCENARIOS.map(scenario => {
     const scenarioResults = Object.fromEntries(Object.entries(results).filter(([key]) => key.startsWith(`${scenario.id}@`)))
     return Object.keys(scenarioResults).length ? formatTable(scenario.id, scenarioResults, LABEL !== 'baseline' ? baseline : undefined) : ''

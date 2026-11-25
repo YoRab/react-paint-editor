@@ -91,7 +91,7 @@
     "react-dom": "18.x || 19.x"
   },
   "scripts": {
-    "bench": "vitest run --project=perf --reporter=default",
+    "bench": "vitest run --config vitest.perf.config.ts --reporter=default",
     "build": "rm -rf dist && vite build --config vite.config.umd.ts && vite build",
     "build-storybook": "storybook build",
     "check-package": "publint && attw --pack . --ignore-rules cjs-resolves-to-esm false-esm --exclude-entrypoints react-paint.css editor/editor.css",

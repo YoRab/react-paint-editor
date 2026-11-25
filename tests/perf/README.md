@@ -1,6 +1,8 @@
 # Performance benchmark
 
-Measures what React and the main thread do during the continuous interactions of the canvas. It runs in Chromium (Vitest browser mode, Playwright) and is only run manually: it is not part of `pnpm test` nor of the CI.
+Measures what React and the main thread do during the continuous interactions of the canvas. It runs in Chromium (Vitest browser mode, Playwright) with its own config, `vitest.perf.config.ts`, and is only run manually: it is not part of `pnpm test` nor of the CI.
+
+It measures the production build of React, the one the users of the library run, with the profiling build of react-dom, whose `<Profiler>` still reports the commits. The run stops at once when another build runs, or when the `<Profiler>` reports nothing.
 
 ## Run
 
@@ -8,13 +10,14 @@ Measures what React and the main thread do during the continuous interactions of
 pnpm bench
 ```
 
-| Variable      | Default  | Use                                                                                                                                                          |
-| ------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `PERF_LABEL`  | `latest` | Name of the report, written to `tests/perf/results/<label>.json`                                                                                             |
-| `PERF_SHAPES` | `50,500` | Numbers of shapes to measure, separated by commas                                                                                                            |
-| `PERF_CPU`    | `1`      | Slows the CPU down by this rate (Chrome DevTools Protocol), like a slower machine: `4` stands for a mid-range phone                                          |
-| `PERF_EVENTS` | `1`      | Pointer and wheel events sent in each frame: `1` stands for a 60 Hz mouse, `4` for a faster mouse in a browser which does not align the events on the frames |
-| `PERF_DPR`    | `1`      | Pixels of the screen in a CSS pixel (`devicePixelRatio`): `2` stands for a HiDPI screen, like a Retina display, whose canvases have 4 times more pixels      |
+| Variable      | Default      | Use                                                                                                                                                          |
+| ------------- | ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `PERF_LABEL`  | `latest`     | Name of the report, written to `tests/perf/results/<label>.json`                                                                                             |
+| `PERF_SHAPES` | `50,500`     | Numbers of shapes to measure, separated by commas                                                                                                            |
+| `PERF_CPU`    | `1`          | Slows the CPU down by this rate (Chrome DevTools Protocol), like a slower machine: `4` stands for a mid-range phone                                          |
+| `PERF_EVENTS` | `1`          | Pointer and wheel events sent in each frame: `1` stands for a 60 Hz mouse, `4` for a faster mouse in a browser which does not align the events on the frames |
+| `PERF_DPR`    | `1`          | Pixels of the screen in a CSS pixel (`devicePixelRatio`): `2` stands for a HiDPI screen, like a Retina display, whose canvases have 4 times more pixels      |
+| `PERF_REACT`  | `production` | `development` measures the development build of React instead, slower, like the reports made before 2026-11-25                                               |
 
 ```bash
 PERF_LABEL=baseline pnpm bench          # bash
@@ -25,7 +28,7 @@ PERF_LABEL=slow-cpu PERF_CPU=4 pnpm bench
 PERF_LABEL=hidpi PERF_DPR=2 pnpm bench
 ```
 
-The results are ignored by git. When `results/baseline.json` exists, the report shows the gap of each metric to it, in %: compare only reports made with the same `PERF_CPU`, `PERF_EVENTS` and `PERF_DPR`.
+The results are ignored by git. When `results/baseline.json` exists, the report shows the gap of each metric to it, in %: compare only reports made with the same `PERF_CPU`, `PERF_EVENTS`, `PERF_DPR` and `PERF_REACT`. Each report records them.
 
 A full run takes about 20 minutes: 23 scenarios, 2 sizes, 1 warm-up run and 5 measured runs each, on a new mount every time. The median of the measured runs is kept.
 
@@ -75,7 +78,7 @@ The drawing is a grid of opaque rectangles, unless another one is given (`shapes
 | `totalMs`                                                       | Duration of the gesture                                                                                                                                        |
 | `scriptMs`, `taskMs`                                            | JavaScript, and all the work, of the main thread during the gesture (Chrome DevTools Protocol): event handlers, React, drawing of the canvas, style and layout |
 
-The counts are deterministic: they are the acceptance criteria. The times depend on the machine and on the development build of React: compare them only between runs on the same machine. The frame intervals stay at 16.7 ms on a fast machine, whatever the work: `scriptMs` and `taskMs` show it.
+The counts are deterministic: they are the acceptance criteria. The ones checked are the same with both builds of React; `rootCommits` and `editorCommits` are one more with the development build during a brush stroke. The times depend on the machine and on the build of React: compare them only between runs on the same machine, with the same build. The frame intervals stay at 16.7 ms on a fast machine, whatever the work: `scriptMs` and `taskMs` show it.
 
 ## Acceptance criteria
 
