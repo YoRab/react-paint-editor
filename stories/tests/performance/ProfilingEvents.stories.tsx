@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import { expect, userEvent, waitFor, within } from 'storybook/test'
-import type { FrameMeasure, GestureMeasure } from '../../../src/index'
+import { connectPerformanceTimeline, type FrameMeasure, type GestureMeasure } from '../../../src/index'
 import { getPaint, ReactPaintWrapper, square, toClient, wait } from './../helpers'
 
 const meta = {
@@ -13,6 +13,17 @@ const meta = {
 
 export default meta
 type Story = StoryObj<typeof meta>
+
+/** Drags the shape under a point of the drawing to the right, by steps of 10 pixels of the page */
+const dragRight = async (user: ReturnType<typeof userEvent.setup>, target: HTMLElement, point: [number, number], steps: number) => {
+  const start = toClient(point)
+  await user.pointer({ target, keys: '[MouseLeft>]', coords: start })
+  for (let step = 1; step <= steps; step++) {
+    await user.pointer({ target, coords: { x: start.x + step * 10, y: start.y } })
+    await wait(20)
+  }
+  await user.pointer({ target, keys: '[/MouseLeft]', coords: { x: start.x + steps * 10, y: start.y } })
+}
 
 /** The measures of the canvas, while they are listened */
 const listenMeasures = () => {
@@ -46,13 +57,7 @@ export const ProfilingEvents: Story = {
     // A drag of a shape is a translate gesture, measured at its end with its frames and the draws of the layers
     // =====================================================================
 
-    const start = toClient([150, 150])
-    await user.pointer({ target: drawCanvas, keys: '[MouseLeft>]', coords: start })
-    for (let step = 1; step <= 5; step++) {
-      await user.pointer({ target: drawCanvas, coords: { x: start.x + step * 10, y: start.y } })
-      await wait(20)
-    }
-    await user.pointer({ target: drawCanvas, keys: '[/MouseLeft]', coords: { x: start.x + 50, y: start.y } })
+    await dragRight(user, drawCanvas, [150, 150], 5)
     await waitFor(() => expect(gestures).toHaveLength(1))
     const [translate] = gestures
     expect(translate).toMatchObject({ type: 'translate', shapeCount: 3, selectedCount: 1, zoom: 1 })
@@ -120,5 +125,40 @@ export const ProfilingEvents: Story = {
     await wait(200)
     expect(gestures).toHaveLength(3)
     expect(frames).toHaveLength(frameCount)
+  }
+}
+
+/** connectPerformanceTimeline adds the draws and the gestures to the performance timeline of the browser */
+export const PerformanceTimeline: Story = {
+  args: {
+    shapes: [square('a', 100, 100)]
+  },
+  play: async ({ canvasElement }) => {
+    const view = within(canvasElement)
+    const drawCanvas = await view.findByTestId('draw-canvas')
+    const user = userEvent.setup()
+    await wait(100)
+    performance.clearMeasures()
+    const disconnect = connectPerformanceTimeline(getPaint())
+
+    await dragRight(user, drawCanvas, [150, 150], 3)
+
+    const [gesture] = await waitFor(() => {
+      const gestures = performance.getEntriesByName('react-paint gesture translate', 'measure') as PerformanceMeasure[]
+      expect(gestures).toHaveLength(1)
+      return gestures
+    })
+    expect(gesture!.detail).toMatchObject({ type: 'translate', shapeCount: 1, devtools: { dataType: 'track-entry', track: 'Gestures' } })
+    expect(gesture!.duration).toBeCloseTo((gesture!.detail as GestureMeasure).duration)
+    const draws = performance.getEntriesByName('react-paint draw shapes', 'measure') as PerformanceMeasure[]
+    expect(draws.length).toBeGreaterThan(0)
+    expect(draws[0]!.detail).toMatchObject({ layer: 'shapes', drawnShapes: 1 })
+
+    // disconnected, the canvas adds no more measures
+    disconnect()
+    performance.clearMeasures()
+    getPaint().actions.selectShapes([])
+    await wait(100)
+    expect(performance.getEntriesByType('measure').filter(entry => entry.name.startsWith('react-paint'))).toEqual([])
   }
 }

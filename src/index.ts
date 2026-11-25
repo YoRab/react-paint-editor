@@ -18,6 +18,7 @@ export {
   type CustomTool,
   type CustomToolInput,
   canGroupShapes,
+  connectPerformanceTimeline,
   DATA_VERSION,
   type DataChanges,
   DEFAULT_CANVAS_LOCALE,
