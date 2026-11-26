@@ -168,6 +168,16 @@ export function assertNoInternalFields(shape: unknown) {
 /** Position in the page of a point of the drawing */
 export const toClient = (point: Point) => getPaint().toClientPosition(point)!
 
+/** Drags what is under a position of the page to the right, by steps of 10 pixels, one every 20 ms */
+export const dragRight = async (user: ReturnType<typeof userEvent.setup>, target: HTMLElement, start: { x: number; y: number }, steps: number) => {
+  await user.pointer({ target, keys: '[MouseLeft>]', coords: start })
+  for (let step = 1; step <= steps; step++) {
+    await user.pointer({ target, coords: { x: start.x + step * 10, y: start.y } })
+    await wait(20)
+  }
+  await user.pointer({ target, keys: '[/MouseLeft]', coords: { x: start.x + steps * 10, y: start.y } })
+}
+
 /** Dispatches an event of a pointer at a position in the page: the pointer 1 is the primary one */
 export const dispatchPointer = (
   target: EventTarget,

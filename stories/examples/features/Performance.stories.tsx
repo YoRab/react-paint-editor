@@ -1,141 +1,12 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
-import { useEffect, useState } from 'react'
-import { Canvas, Editor, type Point, type ShapeInput, useReactPaint } from '../../../src/index'
-import '../buttons.css'
+import { Performance } from './Performance'
+import panelSource from './PerformancePanel.tsx?raw'
 
-const WIDTH = 1000
-const HEIGHT = 600
-const COUNTS = [1000, 2000, 5000, 10000]
-const INITIAL_COUNT = 2000
-const COLORS = ['#e63946', '#f4a261', '#2a9d8f', '#457b9d', '#8338ec', '#ffbe0b']
-
-type Cell = { x: number; y: number; width: number; height: number }
-
-/** A shape of each type in turn, drawn in its cell of the grid */
-const createShape = (index: number, { x, y, width, height }: Cell): ShapeInput => {
-  const color = COLORS[index % COLORS.length]!
-  const style = { fillColor: color, strokeColor: '#1d3557', lineWidth: 1 }
-  switch (index % 8) {
-    case 0:
-      return { type: 'rect', x, y, width, height, style }
-    case 1:
-      return { type: 'ellipse', x: x + width / 2, y: y + height / 2, radiusX: width / 2, radiusY: height / 2, style }
-    case 2:
-      return { type: 'circle', x: x + width / 2, y: y + height / 2, radius: Math.min(width, height) / 2, style }
-    case 3:
-      return {
-        type: 'line',
-        points: [
-          [x, y + height],
-          [x + width, y]
-        ],
-        style
-      }
-    case 4:
-      return {
-        type: 'polygon',
-        points: [
-          [x + width / 2, y],
-          [x + width, y + height],
-          [x, y + height]
-        ],
-        style: { ...style, closedPoints: 1 }
-      }
-    case 5:
-      return {
-        type: 'curve',
-        points: [
-          [x, y + height],
-          [x + width / 3, y],
-          [x + (width * 2) / 3, y + height],
-          [x + width, y]
-        ],
-        style: { ...style, fillColor: 'transparent' }
-      }
-    case 6:
-      return { type: 'text', x, y, value: ['Text'], fontSize: height / 2, style: { strokeColor: color } }
-    default:
-      return {
-        type: 'brush',
-        points: [Array.from({ length: 12 }, (_, step): Point => [x + (width * step) / 11, y + height / 2 + (Math.sin(step) * height) / 2])],
-        style: { strokeColor: color, lineWidth: 1 }
-      }
-  }
-}
-
-/** `count` shapes of all the types, laid out on a grid which fills the drawing: always the same ones for a count */
-const generateShapes = (count: number): ShapeInput[] => {
-  const columns = Math.ceil(Math.sqrt((count * WIDTH) / HEIGHT))
-  const rows = Math.ceil(count / columns)
-  const cellWidth = WIDTH / columns
-  const cellHeight = HEIGHT / rows
-  return Array.from({ length: count }, (_, index) =>
-    createShape(index, {
-      x: (index % columns) * cellWidth + cellWidth * 0.1,
-      y: Math.floor(index / columns) * cellHeight + cellHeight * 0.1,
-      width: cellWidth * 0.8,
-      height: cellHeight * 0.8
-    })
-  )
-}
-
-/** Frames shown by the browser in the last second: they drop when the main thread is busy */
-const FrameRate = () => {
-  const [frameRate, setFrameRate] = useState<number>()
-
-  useEffect(() => {
-    let frames = 0
-    let start = performance.now()
-    let request = 0
-    const count = (now: number) => {
-      frames++
-      if (now - start >= 1000) {
-        setFrameRate(Math.round((frames * 1000) / (now - start)))
-        frames = 0
-        start = now
-      }
-      request = requestAnimationFrame(count)
-    }
-    request = requestAnimationFrame(count)
-    return () => cancelAnimationFrame(request)
-  }, [])
-
-  return <span className='example-title'>{frameRate ?? '-'} frames per second</span>
-}
-
-/** The editor with thousands of shapes, whose number is chosen with the buttons */
-const Performance = () => {
-  const [count, setCount] = useState(INITIAL_COUNT)
-  const [shapes] = useState(() => generateShapes(INITIAL_COUNT))
-  const paint = useReactPaint({ shapes, options: { canZoom: 'always' } })
-
-  const chooseCount = (newCount: number) => {
-    setCount(newCount)
-    void paint.actions.loadData({ shapes: generateShapes(newCount) })
-  }
-
-  return (
-    <div>
-      <div className='example-buttons'>
-        {COUNTS.map(choice => (
-          <button
-            key={choice}
-            type='button'
-            className={`example-button ${count === choice ? 'active' : ''}`}
-            aria-pressed={count === choice}
-            onClick={() => chooseCount(choice)}
-          >
-            {choice.toLocaleString('en')} shapes
-          </button>
-        ))}
-        <FrameRate />
-      </div>
-      <Editor paint={paint}>
-        <Canvas paint={paint} />
-      </Editor>
-    </div>
-  )
-}
+/**
+ * The code of the panel, importing the library like an application. Unlike the code of the other examples, written in
+ * their stories, it is read from its module: the code shown is always the one which runs
+ */
+const PANEL_CODE = panelSource.replace(/'(\.\.\/)+src\/index'/, "'@yorab/react-paint'")
 
 const meta = {
   title: 'Features/Performance',
@@ -145,11 +16,12 @@ const meta = {
     docs: {
       description: {
         component:
-          'The editor with thousands of shapes of all the types: rectangles, ellipses, circles, lines, polygons, curves, texts and brushes. Choose their number with the buttons, then select, move, zoom, undo or open the layers panel: the frames per second drop when the browser is busy.'
+          'The editor with thousands of shapes of all the types: rectangles, ellipses, circles, lines, polygons, curves, texts and brushes. Choose their number with the buttons, then select, move, zoom, undo or open the layers panel. The panel above the editor reads the events `frameDrawn` and `gestureMeasured`: the frames per second of the browser, which drop when it is busy, the time of each draw of the two layers of the canvas, the shapes drawn and the ones left out of the view, the size of the canvas in pixels, and the summary of the last gesture.'
       }
     }
   },
-  tags: ['autodocs', '!dev']
+  // the same component is tested in Tests/Examples/Performance
+  tags: ['autodocs', '!dev', '!test']
 } satisfies Meta<typeof Performance>
 
 export default meta
@@ -160,10 +32,11 @@ export const ThousandsOfShapes: Story = {
     docs: {
       description: {
         story:
-          'The shapes are laid out on a grid which fills the drawing, and replaced with `actions.loadData` when their number changes. Zoom in to see the smallest ones.'
+          'The shapes are laid out on a grid which fills the drawing, and replaced with `actions.loadData` when their number changes. Zoom in to see the smallest ones. The code of the panel follows the one of the application: it uses the public API only, copy it to measure your own application.'
       },
       source: {
         code: `import { Canvas, Editor, type ShapeInput, useReactPaint } from '@yorab/react-paint'
+import { PerformancePanel } from './PerformancePanel'
 
 // the shapes of the application: here, thousands of shapes laid out on a grid
 const SHAPES: ShapeInput[] = generateShapes(2000)
@@ -175,11 +48,17 @@ const App = () => {
   const chooseCount = (count: number) => paint.actions.loadData({ shapes: generateShapes(count) })
 
   return (
-    <Editor paint={paint}>
-      <Canvas paint={paint} />
-    </Editor>
+    <>
+      <PerformancePanel paint={paint} />
+      <Editor paint={paint}>
+        <Canvas paint={paint} />
+      </Editor>
+    </>
   )
-}`,
+}
+
+// PerformancePanel.tsx
+${PANEL_CODE}`,
         language: 'tsx'
       }
     }

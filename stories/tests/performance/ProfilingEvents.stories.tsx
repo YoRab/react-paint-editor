@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import { expect, userEvent, waitFor, within } from 'storybook/test'
 import { connectPerformanceTimeline, type FrameMeasure, type GestureMeasure } from '../../../src/index'
-import { getPaint, ReactPaintWrapper, square, toClient, wait } from './../helpers'
+import { dragRight, getPaint, ReactPaintWrapper, square, toClient, wait } from './../helpers'
 
 const meta = {
   title: 'Tests/Performance/ProfilingEvents',
@@ -13,17 +13,6 @@ const meta = {
 
 export default meta
 type Story = StoryObj<typeof meta>
-
-/** Drags the shape under a point of the drawing to the right, by steps of 10 pixels of the page */
-const dragRight = async (user: ReturnType<typeof userEvent.setup>, target: HTMLElement, point: [number, number], steps: number) => {
-  const start = toClient(point)
-  await user.pointer({ target, keys: '[MouseLeft>]', coords: start })
-  for (let step = 1; step <= steps; step++) {
-    await user.pointer({ target, coords: { x: start.x + step * 10, y: start.y } })
-    await wait(20)
-  }
-  await user.pointer({ target, keys: '[/MouseLeft]', coords: { x: start.x + steps * 10, y: start.y } })
-}
 
 /** The measures of the canvas, while they are listened */
 const listenMeasures = () => {
@@ -57,7 +46,7 @@ export const ProfilingEvents: Story = {
     // A drag of a shape is a translate gesture, measured at its end with its frames and the draws of the layers
     // =====================================================================
 
-    await dragRight(user, drawCanvas, [150, 150], 5)
+    await dragRight(user, drawCanvas, toClient([150, 150]), 5)
     await waitFor(() => expect(gestures).toHaveLength(1))
     const [translate] = gestures
     expect(translate).toMatchObject({ type: 'translate', shapeCount: 3, selectedCount: 1, zoom: 1 })
@@ -141,7 +130,7 @@ export const PerformanceTimeline: Story = {
     performance.clearMeasures()
     const disconnect = connectPerformanceTimeline(getPaint())
 
-    await dragRight(user, drawCanvas, [150, 150], 3)
+    await dragRight(user, drawCanvas, toClient([150, 150]), 3)
 
     const [gesture] = await waitFor(() => {
       const gestures = performance.getEntriesByName('react-paint gesture translate', 'measure') as PerformanceMeasure[]
