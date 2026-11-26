@@ -1,6 +1,6 @@
-// Statistics and text tables of the reports of the benchmark. Also imported by scripts/bench-compare.mjs, which Node runs
-// by stripping the types: this file imports nothing and holds only erasable TypeScript (no enum, no namespace, no
-// parameter property).
+// Statistics and text tables of the reports of the benchmark. Also imported by scripts/bench-compare.mjs and
+// scripts/bundle-size.mjs, which Node runs by stripping the types: this file imports nothing and holds only erasable
+// TypeScript (no enum, no namespace, no parameter property).
 
 /** Below it, a difference between two series of times is unlikely to be the noise of the runs */
 export const SIGNIFICANCE = 0.05

@@ -1,6 +1,6 @@
 # Performance benchmark
 
-Measures what React and the main thread do during the continuous interactions of the canvas. It runs in Chromium (Vitest browser mode, Playwright) with its own config, `vitest.perf.config.ts`. The benchmark is only run manually: it is not part of `pnpm test`. Its counts, which do not depend on the speed of the machine, are checked by the CI on each pull request with `pnpm bench:counts`. The stress test, `pnpm bench:stress`, measures the main gestures, the load and the exports on drawings of up to 20000 shapes. The micro-benchmarks, `pnpm bench:micro`, measure hot functions of the library in Node.
+Measures what React and the main thread do during the continuous interactions of the canvas. It runs in Chromium (Vitest browser mode, Playwright) with its own config, `vitest.perf.config.ts`. The benchmark is only run manually: it is not part of `pnpm test`. Its counts, which do not depend on the speed of the machine, are checked by the CI on each pull request with `pnpm bench:counts`. The stress test, `pnpm bench:stress`, measures the main gestures, the load and the exports on drawings of up to 20000 shapes. The micro-benchmarks, `pnpm bench:micro`, measure hot functions of the library in Node. `pnpm size` measures the size of the build, and checks it against a budget.
 
 It measures the production build of React, the one the users of the library run, with the profiling build of react-dom, whose `<Profiler>` still reports the commits. The run stops at once when another build runs, or when the `<Profiler>` reports nothing.
 
@@ -133,6 +133,24 @@ PERF_LABEL=before pnpm bench:micro  # written to results/micro-before.json
 | `shapesReducer`                        | a step saved by `SET_SHAPES`, after a move of the last shape, and after all the shapes rebuilt without change, which are compared one by one with the ones of the previous step          |
 | `migrateData` and `decodeImportedData` | the shapes of `loadData`, from the data of the drawing                                                                                                                                   |
 | a brush of 4 strokes of 1000 points    | its bounds, its move, and a point added to its last stroke: the brush of `long-brush` and `translate-long-brush`                                                                         |
+
+## Bundle size
+
+```bash
+pnpm build
+pnpm size
+```
+
+`scripts/bundle-size.mjs` measures the build in about 2 seconds, raw and compressed with gzip (level 9) and brotli (quality 11), in kB of 1000 bytes. The gzip sizes printed by Vite at the build are about 1 % larger: it compresses another way.
+
+- the files of the package, in `dist`, the chunks named without their hash;
+- the bundles of three apps, which import `Canvas` and `useReactPaint` from the root entry, then also `Editor`, then also `connectPerformanceTimeline`. Vite bundles them like the build of an app, minified, React left out (`scripts/lib/bundle.mjs`, shared with `pnpm check-treeshake`): they hold the code their imports need, and nothing else. That is what an app pays for the library.
+
+The sizes with gzip of the bundles of the apps, of the UMD build and of the stylesheets are checked against the budgets of `scripts/bundle-size-budget.json`, in kB. They were set on 2026-11-26 at the sizes measured plus 5 %.
+
+- A size over its budget fails the script. Reduce it, or raise the budget and explain why in the pull request, as for the counts.
+- A budget whose size no longer exists fails too.
+- When a size falls, lower its budget to keep the margin of 5 %, so that the budget catches the size if it rises again.
 
 ## Scenarios
 
