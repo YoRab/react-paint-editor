@@ -1,8 +1,8 @@
-import { resolve } from 'node:path'
 import { playwright } from '@vitest/browser-playwright'
 import react from '@vitejs/plugin-react'
 import type { Plugin } from 'vite'
 import { defineConfig } from 'vitest/config'
+import { measuredLibrary } from './scripts/lib/measured-library.mjs'
 
 // Performance benchmark, run manually with `pnpm bench`, check of its counts, `pnpm bench:counts`, also run by the CI,
 // and stress test, `pnpm bench:stress` (see tests/perf/README.md)
@@ -15,27 +15,6 @@ import { defineConfig } from 'vitest/config'
 const reactBuild = process.env.PERF_REACT === 'development' ? 'development' : 'production'
 // React picks its build from it when its package is bundled, and the React plugin its JSX transform
 if (reactBuild === 'production') process.env.NODE_ENV = 'production'
-
-const toModulePath = (path: string) => `${resolve(path, 'src').replaceAll('\\', '/')}/`
-
-/**
- * Serves the library measured: the copy of a version made by `pnpm bench:compare` in the folder PERF_SOURCE, in place of
- * the library of the working tree, whatever the path which imports it. The imports of the copy itself are resolved with
- * its own tsconfig files, the nearest ones
- */
-const measuredLibrary = (source: string): Plugin => {
-  const workingTree = toModulePath('.').toLowerCase()
-  const copy = toModulePath(source)
-  return {
-    name: 'perf-measured-library',
-    enforce: 'pre',
-    async resolveId(id, importer, options) {
-      const resolved = await this.resolve(id, importer, { ...options, skipSelf: true })
-      const path = resolved?.id.replaceAll('\\', '/')
-      return path?.toLowerCase().startsWith(workingTree) ? copy + path.slice(workingTree.length) : null
-    }
-  }
-}
 
 /**
  * Gives the tests the flag `-u` of Vitest: `pnpm bench:counts -u` writes the counts measured to counts-baseline.json

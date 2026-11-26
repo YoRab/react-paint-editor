@@ -1,6 +1,6 @@
 # Performance benchmark
 
-Measures what React and the main thread do during the continuous interactions of the canvas. It runs in Chromium (Vitest browser mode, Playwright) with its own config, `vitest.perf.config.ts`. The benchmark is only run manually: it is not part of `pnpm test`. Its counts, which do not depend on the speed of the machine, are checked by the CI on each pull request with `pnpm bench:counts`. The stress test, `pnpm bench:stress`, measures the main gestures, the load and the exports on drawings of up to 20000 shapes.
+Measures what React and the main thread do during the continuous interactions of the canvas. It runs in Chromium (Vitest browser mode, Playwright) with its own config, `vitest.perf.config.ts`. The benchmark is only run manually: it is not part of `pnpm test`. Its counts, which do not depend on the speed of the machine, are checked by the CI on each pull request with `pnpm bench:counts`. The stress test, `pnpm bench:stress`, measures the main gestures, the load and the exports on drawings of up to 20000 shapes. The micro-benchmarks, `pnpm bench:micro`, measure hot functions of the library in Node.
 
 It measures the production build of React, the one the users of the library run, with the profiling build of react-dom, whose `<Profiler>` still reports the commits. The run stops at once when another build runs, or when the `<Profiler>` reports nothing.
 
@@ -12,14 +12,14 @@ pnpm bench
 
 | Variable         | Default      | Use                                                                                                                                                          |
 | ---------------- | ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `PERF_LABEL`     | `latest`     | Name of the report, written to `tests/perf/results/<label>.json`, or `stress-<label>.json` for the stress test                                               |
+| `PERF_LABEL`     | `latest`     | Name of the report, written to `tests/perf/results/<label>.json`, `stress-<label>.json` for the stress test, `micro-<label>.json` for the micro-benchmarks   |
 | `PERF_SHAPES`    | `50,500`     | Numbers of shapes to measure, separated by commas. The stress test goes from 100 to 20000 by default                                                         |
 | `PERF_SCENARIOS` | all          | Ids of the scenarios to measure, separated by commas                                                                                                         |
 | `PERF_CPU`       | `1`          | Slows the CPU down by this rate (Chrome DevTools Protocol), like a slower machine: `4` stands for a mid-range phone                                          |
 | `PERF_EVENTS`    | `1`          | Pointer and wheel events sent in each frame: `1` stands for a 60 Hz mouse, `4` for a faster mouse in a browser which does not align the events on the frames |
 | `PERF_DPR`       | `1`          | Pixels of the screen in a CSS pixel (`devicePixelRatio`): `2` stands for a HiDPI screen, like a Retina display, whose canvases have 4 times more pixels      |
 | `PERF_REACT`     | `production` | `development` measures the development build of React instead, slower, like the reports made before 2026-11-25                                               |
-| `PERF_BASELINE`  | `baseline`   | Report the results are compared to, `tests/perf/results/<name>.json`. Empty for none                                                                         |
+| `PERF_BASELINE`  | `baseline`   | Report the results are compared to, `tests/perf/results/<name>.json`, `micro-<name>.json` for the micro-benchmarks. Empty for none                           |
 
 ```bash
 PERF_LABEL=baseline pnpm bench          # bash
@@ -65,12 +65,19 @@ PERF_ROUNDS=4 pnpm bench:compare v1.0.0-beta.4 -t "zoom with"  # arguments after
 `scripts/bench-compare.mjs` measures the library at a git ref (`base`) and the one of the working tree (`current`), like the benchmark of react-konva:
 
 - it copies the library of both, `src` and the tsconfig files which give the paths of its imports, into `.bench-variants/`, ignored by git. A change made during the comparison does not reach it;
-- the code of the benchmark is the one of the working tree for both: `vitest.perf.config.ts` serves the modules of `src/` from the copy given by `PERF_SOURCE`, whatever the path which imports them. The imports of the copy itself are resolved with its own tsconfig files;
+- the code of the benchmark is the one of the working tree for both: the plugin of `scripts/lib/measured-library.mjs` serves the modules of `src/` from the copy given by `PERF_SOURCE`, whatever the path which imports them. The imports of the copy itself are resolved with its own tsconfig files. Each copy keeps its own cache of the modules of Vitest, which keeps the files run in Node with their imports resolved: with a single cache, the micro-benchmarks of a variant imported the copy of the variant before;
 - it runs the benchmark `PERF_ROUNDS` times on each (2 by default), alternating which one runs first, so that the drift of the machine during the comparison falls on both. An even number gives both the same positions;
 - it compares the samples of all the rounds, 10 per variant by default, and prints for each metric the median and the quartiles of both, the gap, and the p-value of a Mann-Whitney U test, adjusted by the Benjamini-Hochberg procedure for the number of times compared over all the scenarios: among hundreds of times, 5 % would pass p < 0.05 by chance. `▲` marks a gap significantly worse (adjusted p < 0.05), `▼` a gap significantly better, and the other gaps may be noise. A gap of time under 2 % is never marked: it does not matter, and the duration of a gesture, which hardly varies, would show its few milliseconds of drift. A count which changed is marked with its own gap, like `(+300 ▲)`. With 5 samples per variant (1 round), the test cannot mark a time among more than 6: keep 2 rounds at least;
 - the report, with all the samples and a hash of each library, is written to `results/compare-<ref>.json` (or `<PERF_LABEL>.json`).
 
 The other variables apply to both variants. Each round takes as long as a `pnpm bench` with the same variables: restrict the scenarios and the sizes. A scenario which fails for one variant, like one that the older version does not know, is left out of the comparison. When the library is the same at the ref, the comparison is an A/A control: it should show no significant gap, else the machine was too unstable during it.
+
+`pnpm bench:compare --micro <ref>` compares the micro-benchmarks the same way. A run of the micro-benchmarks gives a single sample of each benchmark, its mean: the comparison runs 10 rounds by default, 20 runs of about 20 seconds, for 10 samples per variant. Its table has a row per benchmark, and its report is written to `results/micro-compare-<ref>.json`.
+
+```bash
+pnpm bench:compare --micro HEAD
+PERF_ROUNDS=6 pnpm bench:compare --micro dev -t getDataChanges
+```
 
 ## Stress test
 
@@ -99,6 +106,33 @@ It also measures three operations, single calls of the API outside of the gestur
 | `export-image` | `getCurrentImage`: the PNG image of the drawing                                                                                            |
 
 A full run takes about 20 minutes.
+
+## Micro-benchmarks
+
+```bash
+pnpm bench:micro                    # all the micro-benchmarks, in about 20 seconds
+pnpm bench:micro -t getDataChanges  # the benchmarks of a test
+PERF_LABEL=before pnpm bench:micro  # written to results/micro-before.json
+```
+
+`tests/perf/micro/*.bench.ts` measure hot functions of the library in Node, with the `bench` of the test context of Vitest 5, experimental, run by tinybench. Their config is `vitest.micro.config.ts`. They are only run manually: neither `pnpm test` nor the CI runs them.
+
+- The drawings are the ones of the `mixed` scenario, shapes of all the types, with 500 and 5000 shapes, loaded by a store. Path2D only exists in a browser: the paths are built with methods which do nothing, so the micro-benchmarks measure the JavaScript of the library, not the drawing.
+- Each benchmark runs for 500 ms after its warm-up, and 64 calls at least. Vitest prints a table per test (calls per second, mean, percentiles, error margin), then the mean of each benchmark, with its gap to the report of `PERF_BASELINE`, `results/micro-baseline.json` by default. Like the times of the benchmark, these gaps are never marked.
+- The report, ignored by git, is written to `tests/perf/results/micro-<label>.json`: the mean and the percentiles of each benchmark, and its number of calls.
+- A run of the same code differs from the next by up to 12 %, much more than the error margin of its calls, which only covers the calls of a run. To compare two versions, use `pnpm bench:compare --micro`, which alternates 10 runs of each one.
+- Vitest runs the code through its module runner, which turns the exports of the modules into getters: they cost about 3 % on `getDataChanges`, against a bundle of its module. The tracker of Vitest which counts their calls, to warn about them, is disabled (`suppressExportGetterWarnings`): it made the calls 6 to 10 % slower.
+- The micro-benchmarks call internal functions of the library: a version whose functions differ cannot be compared on them.
+- To compare two implementations during an optimization, like the micro-benchmarks of Fabric.js, keep the old one next to the new one in the same `bench.compare`, then remove it once done: Vitest ranks them in its table.
+
+| test                                   | benchmarks                                                                                                                                                                               |
+| -------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `getDataChanges`                       | the changes given by `shapesChanged` and `dataChanged`, after a move of the last shape, and of all the shapes: the shapes moved are new objects at each call, like the ones of each step |
+| `buildDataToExport`                    | the data given by `dataChanged`, after the same moves: the exports of the shapes which did not move are cached                                                                           |
+| `applyDataChanges`                     | the changes of the same moves, received by `applyChanges` through JSON                                                                                                                   |
+| `shapesReducer`                        | a step saved by `SET_SHAPES`, after a move of the last shape, and after all the shapes rebuilt without change, which are compared one by one with the ones of the previous step          |
+| `migrateData` and `decodeImportedData` | the shapes of `loadData`, from the data of the drawing                                                                                                                                   |
+| a brush of 4 strokes of 1000 points    | its bounds, its move, and a point added to its last stroke: the brush of `long-brush` and `translate-long-brush`                                                                         |
 
 ## Scenarios
 

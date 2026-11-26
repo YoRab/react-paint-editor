@@ -1,5 +1,6 @@
-// Compares the performance of the library at a git ref with the working tree: `pnpm bench:compare <ref> [vitest args]`.
-// The benchmark is the one of the working tree for both: only the library changes (see tests/perf/README.md).
+// Compares the performance of the library at a git ref with the working tree: `pnpm bench:compare [--micro] <ref> [vitest
+// args]`, with the benchmark, or with the micro-benchmarks. They are the ones of the working tree for both: only the
+// library changes (see tests/perf/README.md).
 import { execFileSync } from 'node:child_process'
 import { createHash } from 'node:crypto'
 import { cpSync, existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
@@ -13,7 +14,8 @@ import {
   formatJson,
   formatTextTable,
   listSignificant,
-  round
+  round,
+  roundSignificant
 } from '../tests/perf/report.ts'
 
 const ROOT = resolve(import.meta.dirname, '..')
@@ -21,13 +23,47 @@ const VARIANTS_DIR = join(ROOT, '.bench-variants')
 const RESULTS_DIR = join(ROOT, 'tests/perf/results')
 /** The library, and the configs which give the paths of its imports */
 const SOURCES = ['src', 'tsconfig.json', 'tsconfig.prod.json']
-/** The file of the benchmark, as `pnpm bench`: the config also holds the check of the counts */
-const BENCHMARK = 'tests/perf/interactions'
-/** Each round runs both variants, the first one alternating: an even number gives both the same positions */
-const ROUNDS = Math.max(1, Math.floor(Number(process.env.PERF_ROUNDS)) || 2)
 const VARIANTS = ['base', 'current']
 
-const [ref = 'HEAD', ...vitestArgs] = process.argv.slice(2)
+/**
+ * What a round runs: the benchmark, as `pnpm bench` (its config also holds the check of the counts), which measures 5 runs
+ * of each scenario, or the micro-benchmarks, as `pnpm bench:micro`, which give a single sample of each benchmark: a run
+ * of the same code differs from the next by more than the error margin of its calls. Both give 10 samples per variant by
+ * default
+ */
+const TARGETS = {
+  benchmark: {
+    args: ['--config', 'vitest.perf.config.ts', '--reporter=default', 'tests/perf/interactions'],
+    /** Of the reports, in tests/perf/results */
+    filePrefix: '',
+    rounds: 2,
+    describe: report => `${report.react} build of React`,
+    format: round,
+    /** A table per scenario and size, with a row per metric */
+    formatTables: (keys, comparisons, columns) =>
+      keys.map(key =>
+        formatTextTable(key, [['metric', ...columns], ...Object.entries(comparisons[key]).map(([metric, comparison]) => [metric, ...formatCells(comparison)])])
+      )
+  },
+  micro: {
+    args: ['--config', 'vitest.micro.config.ts'],
+    filePrefix: 'micro-',
+    rounds: 10,
+    describe: report => `Node ${report.node}`,
+    format: roundSignificant,
+    /** A single table: a micro-benchmark has a single metric, the mean of a call */
+    formatTables: (keys, comparisons, columns) => [
+      formatTextTable('mean of a call (ms)', [['benchmark', ...columns], ...keys.map(key => [key, ...formatCells(comparisons[key].meanMs)])])
+    ]
+  }
+}
+
+const args = process.argv.slice(2)
+const target = TARGETS[args.includes('--micro') ? 'micro' : 'benchmark']
+/** Each round runs both variants, the first one alternating: an even number gives both the same positions */
+const ROUNDS = Math.max(1, Math.floor(Number(process.env.PERF_ROUNDS)) || target.rounds)
+
+const [ref = 'HEAD', ...vitestArgs] = args.filter(arg => arg !== '--micro')
 const git = (...args) => execFileSync('git', args, { cwd: ROOT, maxBuffer: 64 * 1024 * 1024 })
 const sha = git('rev-parse', '--verify', `${ref}^{commit}`).toString().trim()
 const label = process.env.PERF_LABEL || `compare-${ref.replace(/[^\w.-]+/g, '-')}`
@@ -67,7 +103,7 @@ const runVariant = (variant, roundIndex) => {
   try {
     execFileSync(
       process.execPath,
-      [join(ROOT, 'node_modules/vitest/vitest.mjs'), 'run', '--config', 'vitest.perf.config.ts', '--reporter=default', BENCHMARK, ...vitestArgs],
+      [join(ROOT, 'node_modules/vitest/vitest.mjs'), 'run', ...target.args, ...vitestArgs],
       {
         cwd: ROOT,
         stdio: 'inherit',
@@ -79,14 +115,23 @@ const runVariant = (variant, roundIndex) => {
     // a scenario which fails, like one the base does not know, leaves the others in the report
     console.warn(`Round ${roundIndex + 1}, ${variant}: some scenarios failed, the report holds the others`)
   }
-  const file = join(RESULTS_DIR, `${runLabel}.json`)
+  const file = join(RESULTS_DIR, `${target.filePrefix}${runLabel}.json`)
   if (!existsSync(file)) return undefined
   const report = JSON.parse(readFileSync(file, 'utf8'))
   rmSync(file)
   return report
 }
 
-const formatSummary = ({ median, p25, p75 }) => (p25 === p75 ? `${round(median)}` : `${round(median)} [${round(p25)}–${round(p75)}]`)
+const { format } = target
+const formatSummary = ({ median, p25, p75 }) => (p25 === p75 ? `${format(median)}` : `${format(median)} [${format(p25)}–${format(p75)}]`)
+
+/** The cells of a metric compared: both variants, the gap, and the p-value, except for the counts, compared without test */
+const formatCells = comparison => [
+  formatSummary(comparison.base),
+  formatSummary(comparison.next),
+  formatComparison(comparison),
+  comparison.constant ? '' : comparison.p.toPrecision(2)
+]
 
 rmSync(VARIANTS_DIR, { recursive: true, force: true })
 try {
@@ -123,21 +168,9 @@ try {
     )
   )
 
-  const header = `Comparison "${label}": ${ref} (${sha.slice(0, 8)}) against the working tree, ${ROUNDS} rounds, ${lastReport.react} build of React`
-  const tables = keys.map(key =>
-    formatTextTable(key, [
-      ['metric', `base (${ref})`, 'current', 'gap', 'p adjusted'],
-      ...Object.entries(comparisons[key]).map(([metric, comparison]) => [
-        metric,
-        formatSummary(comparison.base),
-        formatSummary(comparison.next),
-        formatComparison(comparison),
-        // the counts are compared without test
-        comparison.constant ? '' : comparison.p.toPrecision(2)
-      ])
-    ])
-  )
-  const significant = listSignificant(comparisons)
+  const header = `Comparison "${label}": ${ref} (${sha.slice(0, 8)}) against the working tree, ${ROUNDS} rounds, ${target.describe(lastReport)}`
+  const tables = target.formatTables(keys, comparisons, [`base (${ref})`, 'current', 'gap', 'p adjusted'])
+  const significant = listSignificant(comparisons, format)
   console.log(
     [
       header,
@@ -168,7 +201,7 @@ try {
     comparisons,
     samples
   }
-  const output = join(RESULTS_DIR, `${label}.json`)
+  const output = join(RESULTS_DIR, `${target.filePrefix}${label}.json`)
   writeFileSync(output, formatJson(report))
   console.log(`\nWritten to ${relative(ROOT, output)}`)
 } finally {

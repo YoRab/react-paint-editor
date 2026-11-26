@@ -94,6 +94,7 @@
     "bench": "vitest run --config vitest.perf.config.ts --reporter=default tests/perf/interactions",
     "bench:counts": "vitest run --config vitest.perf.config.ts --reporter=default tests/perf/counts",
     "bench:compare": "node scripts/bench-compare.mjs",
+    "bench:micro": "vitest run --config vitest.micro.config.ts",
     "bench:stress": "vitest run --config vitest.perf.config.ts --reporter=default tests/perf/stress",
     "build": "rm -rf dist && vite build --config vite.config.umd.ts && vite build",
     "build-storybook": "storybook build",
