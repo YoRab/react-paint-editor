@@ -16,7 +16,7 @@ const meta = {
     docs: {
       description: {
         component:
-          'The editor with thousands of shapes of all the types: rectangles, ellipses, circles, lines, polygons, curves, texts and brushes. Choose their number with the buttons, then select, move, zoom, undo or open the layers panel. The panel above the editor reads the events `frameDrawn` and `gestureMeasured`: the frames per second of the browser, which drop when it is busy, the time of each draw of the two layers of the canvas, the shapes drawn and the ones left out of the view, the size of the canvas in pixels, and the summary of the last gesture.'
+          'A lab which measures the editor with up to 20,000 shapes. Choose their number and their mix (all the types, rectangles, brushes, texts, or all the types with photos), draw them at half opacity or in groups, bound the density of the canvas, then replay a drag, a pan, a zoom or a stroke of the brush, or select, move, zoom and undo yourself. A replay sends an event in each of 120 frames, 2 seconds at 60 frames per second, from the same view: its figures compare from one replay, or one machine, to another. The panel above the editor reads the events `frameDrawn` and `gestureMeasured`: the frames per second of the browser, which drop when it is busy, the time of each draw of the two layers of the canvas, the shapes drawn, left out of the view or painted on a layer for their opacity, the size of the canvas in pixels, and the summary of the last gesture.'
       }
     }
   },
@@ -32,7 +32,7 @@ export const ThousandsOfShapes: Story = {
     docs: {
       description: {
         story:
-          'The shapes are laid out on a grid which fills the drawing, and replaced with `actions.loadData` when their number changes. Zoom in to see the smallest ones. The code of the panel follows the one of the application: it uses the public API only, copy it to measure your own application.'
+          'The shapes are laid out on a grid in an infinite drawing, and replaced with `actions.loadData` when a choice changes. Zoom in to see the smallest ones. The code of the panel follows the one of the application: it uses the public API only, copy it to measure your own application.'
       },
       source: {
         code: `import { Canvas, Editor, type ShapeInput, useReactPaint } from '@yorab/react-paint'
@@ -42,7 +42,7 @@ import { PerformancePanel } from './PerformancePanel'
 const SHAPES: ShapeInput[] = generateShapes(2000)
 
 const App = () => {
-  const paint = useReactPaint({ shapes: SHAPES, options: { canZoom: 'always' } })
+  const paint = useReactPaint({ shapes: SHAPES, options: { size: 'infinite' } })
 
   // replaces the drawing, with its history
   const chooseCount = (count: number) => paint.actions.loadData({ shapes: generateShapes(count) })
