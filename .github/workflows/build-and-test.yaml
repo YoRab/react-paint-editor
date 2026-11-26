@@ -38,6 +38,10 @@ jobs:
       - name: Check editor tree-shaking
         run: pnpm check-treeshake
 
+      # the sizes of the build, written to the summary of the job, checked against scripts/bundle-size-budget.json
+      - name: Check the bundle size
+        run: pnpm size
+
       - name: Check package exports and types
         run: pnpm check-package
 

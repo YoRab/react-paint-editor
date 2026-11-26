@@ -146,7 +146,7 @@ pnpm size
 - the files of the package, in `dist`, the chunks named without their hash;
 - the bundles of three apps, which import `Canvas` and `useReactPaint` from the root entry, then also `Editor`, then also `connectPerformanceTimeline`. Vite bundles them like the build of an app, minified, React left out (`scripts/lib/bundle.mjs`, shared with `pnpm check-treeshake`): they hold the code their imports need, and nothing else. That is what an app pays for the library.
 
-The sizes with gzip of the bundles of the apps, of the UMD build and of the stylesheets are checked against the budgets of `scripts/bundle-size-budget.json`, in kB. They were set on 2026-11-26 at the sizes measured plus 5 %.
+The sizes with gzip of the bundles of the apps, of the UMD build and of the stylesheets are checked against the budgets of `scripts/bundle-size-budget.json`, in kB. They were set on 2026-11-26 at the sizes measured plus 5 %. The CI checks them on each pull request, after the build, and writes the tables to the summary of the job.
 
 - A size over its budget fails the script. Reduce it, or raise the budget and explain why in the pull request, as for the counts.
 - A budget whose size no longer exists fails too.

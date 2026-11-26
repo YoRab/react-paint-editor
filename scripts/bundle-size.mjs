@@ -1,7 +1,8 @@
 // Measures the size of the build (run `pnpm build` first): the files of the package, and the bundles of apps importing
 // parts of the library, minified, React left out. Their sizes compressed with gzip are checked against the budgets of
-// scripts/bundle-size-budget.json, in kB: a size over its budget fails the script.
-import { readdirSync, readFileSync } from 'node:fs'
+// scripts/bundle-size-budget.json, in kB: a size over its budget fails the script. In the CI, the tables also go to the
+// summary of the job.
+import { appendFileSync, readdirSync, readFileSync } from 'node:fs'
 import { join, resolve } from 'node:path'
 import { brotliCompressSync, gzipSync } from 'node:zlib'
 import { formatTextTable } from '../tests/perf/report.ts'
@@ -24,6 +25,16 @@ const measure = content => ({
 })
 
 const formatSize = bytes => `${(bytes / 1000).toFixed(1)} kB`
+
+/** Markdown table under its title: the first row is the header, the names of the first column are code */
+const formatMarkdownTable = (title, [header, ...rows]) =>
+  [
+    `#### ${title}`,
+    '',
+    `| ${header.join(' | ')} |`,
+    `| --- |${' ---: |'.repeat(header.length - 1)}`,
+    ...rows.map(([name, ...sizes]) => `| \`${name}\` | ${sizes.join(' | ')} |`)
+  ].join('\n')
 
 // Vite bundles the apps while the files are compressed
 const codes = bundleApps(APPS, { minify: true })
@@ -59,6 +70,12 @@ const failureText = failures.length
 
 console.log(tables.map(([title, rows]) => formatTextTable(title, rows)).join('\n\n'))
 console.log(`\n${NOTE}`)
+
+// the summary of the job in the CI, failures included
+if (process.env.GITHUB_STEP_SUMMARY) {
+  const summary = ['### Bundle size', ...tables.map(([title, rows]) => formatMarkdownTable(title, rows)), NOTE, failureText].filter(Boolean)
+  appendFileSync(process.env.GITHUB_STEP_SUMMARY, `${summary.join('\n\n')}\n`)
+}
 
 if (failureText) {
   console.error(`\n${failureText}`)
