@@ -12,6 +12,8 @@ export default defineConfig({
     emptyOutDir: false,
     lib: {
       entry: resolve(import.meta.dirname, 'src/index.ts'),
+      // a single output: the default formats would also write an ES build to the same file, then overwrite it
+      formats: ['umd'],
       fileName: () => 'react-paint.umd.cjs',
       name: 'ReactPaint',
     },
