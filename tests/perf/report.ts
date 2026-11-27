@@ -1,4 +1,4 @@
-// Statistics and text tables of the reports of the benchmark. Also imported by scripts/bench-compare.mjs and
+// Statistics, text tables and conditions of the reports of the benchmark. Also imported by scripts/bench-compare.mjs and
 // scripts/bundle-size.mjs, which Node runs by stripping the types: this file imports nothing and holds only erasable
 // TypeScript (no enum, no namespace, no parameter property).
 
@@ -184,6 +184,9 @@ export const listSignificant = (comparisons: ComparisonsByResult, format = round
 
 /** A report or a baseline, as written to disk */
 export const formatJson = (value: unknown) => `${JSON.stringify(value, null, 2)}\n`
+
+/** Whether the GPU recorded by a report is SwiftShader, the software GPU of headless Chromium: the CPU drew the canvases */
+export const isSoftwareGpu = (gpu: string) => gpu.includes('SwiftShader')
 
 /** Text table under its title: the first row is the header */
 export const formatTextTable = (title: string, rows: string[][]): string => {

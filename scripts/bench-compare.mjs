@@ -198,6 +198,7 @@ try {
     cpuRate: lastReport.cpuRate,
     eventsPerFrame: lastReport.eventsPerFrame,
     pixelRatio: lastReport.pixelRatio,
+    gpu: lastReport.gpu,
     comparisons,
     samples
   }

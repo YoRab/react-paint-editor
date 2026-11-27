@@ -9,6 +9,7 @@ import {
   createRecorder,
   type DrawCounts,
   enableMainThreadTimes,
+  getGpuRenderer,
   getReactBuild,
   type Metrics,
   type Report,
@@ -17,12 +18,14 @@ import {
   setCpuThrottling,
   settle
 } from './metrics'
+import { isSoftwareGpu } from './report'
 import { type Criteria, focusCanvas, getLayerCanvases, type Scenario } from './scenarios'
 import { generateShapes } from './shapes'
 
 export const REACT_BUILD = inject('perfReact')
 const CPU_RATE = Math.max(1, Number(inject('perfCpu')) || 1)
 const EVENTS_PER_FRAME = Math.max(1, Math.floor(Number(inject('perfEvents'))) || 1)
+const GPU = getGpuRenderer()
 
 /** The conditions of the runs, which a report records: compare only reports made in the same ones */
 export const getConditions = (label: string): Omit<Report, 'results' | 'samples'> => ({
@@ -32,7 +35,8 @@ export const getConditions = (label: string): Omit<Report, 'results' | 'samples'
   react: REACT_BUILD,
   cpuRate: CPU_RATE,
   eventsPerFrame: EVENTS_PER_FRAME,
-  pixelRatio: window.devicePixelRatio
+  pixelRatio: window.devicePixelRatio,
+  gpu: GPU
 })
 
 /** The conditions of the runs for the header of the output, like "production build of React, CPU slowed down 4×" */
@@ -41,7 +45,9 @@ export const describeConditions = () =>
     `${REACT_BUILD} build of React`,
     ...(CPU_RATE > 1 ? [`CPU slowed down ${CPU_RATE}×`] : []),
     ...(EVENTS_PER_FRAME > 1 ? [`${EVENTS_PER_FRAME} events per frame`] : []),
-    ...(window.devicePixelRatio !== 1 ? [`pixel ratio ${window.devicePixelRatio}`] : [])
+    ...(window.devicePixelRatio !== 1 ? [`pixel ratio ${window.devicePixelRatio}`] : []),
+    // the default one, SwiftShader, is not named
+    ...(isSoftwareGpu(GPU) ? [] : [`GPU ${GPU}`])
   ].join(', ')
 
 /**

@@ -1,0 +1,142 @@
+import { Canvas, Meta, Source } from '@storybook/addon-docs/blocks'
+import LinkTo from '@storybook/addon-links/react'
+import * as PerformanceStories from './Performance.stories'
+import { CapacityOf, CapacityTable, FrameWorkOf, FrameWorkTable, OperationsTable, ReferenceConditions } from './PerformanceFigures'
+
+<Meta of={PerformanceStories} />
+
+# Performance
+
+The canvas draws its shapes on two layers, the shapes and the selection over them, each one at most once per frame, and leaves out the shapes out of the view.
+During a gesture (a hover, a drag, a selection frame, a pan, a brush stroke), it draws without rendering any React component: the component calling `useReactPaint` never renders again because of the drawing.
+This page gives the figures we measure, tips backed by them, and the tools to measure your own application.
+
+## Stress lab
+
+Choose the number of shapes, up to 20,000, and their mix (all the types, rectangles, brushes, texts, or all the types with photos), draw them at half opacity or in groups, bound the density of the canvas, then replay a drag, a pan, a zoom or a stroke of the brush, or select, move, zoom and undo yourself.
+A replay sends an event in each of 120 frames, 2 seconds at 60 frames per second, from the same view: its figures compare from one replay, or one machine, to another.
+
+The panel above the editor reads the events `frameDrawn` and `gestureMeasured`: the frames per second of the browser, which drop when it is busy, the time of each draw of the two layers, the shapes drawn, left out of the view or painted on a layer for their opacity, the size of the canvas in pixels, and the summary of the last gesture.
+The shapes are laid out on a grid in an infinite drawing, and replaced with `actions.loadData` when a choice changes. Zoom in to see the smallest ones.
+
+<Canvas of={PerformanceStories.ThousandsOfShapes} />
+
+## Reference figures
+
+<ReferenceConditions />
+
+The figures come from the stress test of the repository: each gesture is replayed with one pointer or wheel event per frame, like a mouse at 60 Hz, on a drawing of 100 to 20,000 shapes laid out on a grid in a canvas of 1000 × 600, 3 times on each one.
+The drawing is made of opaque rectangles, filled and stroked, unless the gesture says otherwise. The density is the one of the screen: at 2, like a Retina display, the canvas has 4 times more pixels.
+"CPU 4× slower" is the same machine slowed down by Chrome DevTools, like a mid-range phone.
+The GPU draws the pixels of the canvas, like in the browsers of the users, except in "Software rendering": the same browser draws them with SwiftShader, its software GPU, like a browser without GPU acceleration (a graphics driver on the blocklist of the browser, a virtual machine, a remote desktop), and its CPU then draws them on the main thread.
+
+### Capacity
+
+The capacity of a gesture is the largest drawing whose frames take at most 16.7 ms (60 fps), or 33.3 ms (30 fps), for 95 % of them, the smaller drawings too.
+The real capacity lies between it and the next size: from one run to the next, it may come out one size lower or higher.
+The table gives the conditions drawn by the GPU: the software rendering is chosen above the tables of the next sections.
+
+<CapacityTable />
+
+### Work of a frame
+
+The work of the main thread in a frame, for 95 % of them: the drawing of the canvas, the events, the style, the layout and the paint of the page, not the raster of the GPU, except with the software rendering.
+A gesture whose frames take over 50 ms is not measured on the larger drawings (–).
+
+<FrameWorkTable />
+
+### Load and export
+
+- **Load the drawing**: `loadData` of the JSON string of the drawing, as an automatic save keeps it, until the frame which draws its shapes (up to 16.7 ms of wait).
+- **Export the data**: a change of the style of a shape, whose `dataChanged` gives the data of the whole drawing, serialized with `JSON.stringify` as a save does.
+- **Export the image**: `getCurrentImage`, the PNG image of the drawing.
+
+<OperationsTable />
+
+## Tips
+
+The other tips, on reading the state, are in the <LinkTo title='API Reference' story='docs'>API reference</LinkTo>. The figures below are measured at CPU 1× and density 1, drawn by the GPU, unless they say otherwise.
+
+### Opacity
+
+A semi-transparent shape painted several times, like a fill and a stroke, a stroke and its arrows, a text and its background, or a stroke of a pixel or thinner, drawn segment by segment, is painted on a layer first, then copied with its opacity: where its paints overlap, it would be darker otherwise.
+A shape painted once, with only a fill or only a stroke, is drawn directly.
+Dragging a shape among 1,000 rectangles filled and stroked at half opacity takes <FrameWorkOf gesture='opacity' shapes={1000} /> per frame, against <FrameWorkOf gesture='translate' shapes={1000} /> when they are opaque:
+it keeps 60 fps up to <CapacityOf gesture='opacity' /> shapes, against <CapacityOf gesture='translate' />.
+Beyond, the cost rises fast: 2,000 semi-transparent rectangles take <FrameWorkOf gesture='opacity' shapes={2000} />, against <FrameWorkOf gesture='translate' shapes={2000} /> when they are opaque.
+For the many shapes of a drawing, prefer an opaque color, or a semi-transparent fill without stroke.
+
+### Semi-transparent groups
+
+A group with an opacity is painted on a single layer, its shapes opaque, then copied with its opacity: its shapes seen through each other are not darker.
+Dragging a group of 1,000 rectangles at half opacity takes <FrameWorkOf gesture='translate-group-opacity' shapes={1000} /> per frame, against <FrameWorkOf gesture='translate-group' shapes={1000} /> when it is opaque,
+while dragging a single shape among 1,000 rectangles each at half opacity takes <FrameWorkOf gesture='opacity' shapes={1000} /> (above).
+To fade many shapes together, group them and give the opacity to the group.
+
+### Density of the screen
+
+On a HiDPI screen, the canvas has the density of the screen, up to the `canvasMaxPixelRatio` option of `Canvas` (2 by default): it stays sharp, with 4 times more pixels at a density of 2.
+The GPU draws these pixels: dragging a shape among 2,000 shapes takes <FrameWorkOf gesture='translate' shapes={2000} condition='cpu1-dpr2' /> of the main thread per frame at a density of 2, against <FrameWorkOf gesture='translate' shapes={2000} /> at a density of 1.
+Without GPU acceleration, the CPU draws them on the main thread: the same drag takes <FrameWorkOf gesture='translate' shapes={2000} condition='software-dpr2' /> at a density of 2, against <FrameWorkOf gesture='translate' shapes={2000} condition='software-dpr1' />,
+and a pan <FrameWorkOf gesture='pan' shapes={2000} condition='software-dpr2' />, against <FrameWorkOf gesture='pan' shapes={2000} condition='software-dpr1' />.
+For a drawing too large to stay fluid on such a machine, or on a weak GPU, `canvasMaxPixelRatio: 1` keeps the pixels of a density of 1, blurrier on a HiDPI screen.
+
+### Long brushes
+
+With `isBrushShapeDoneOnMouseUp: false`, the brush stays selected once a stroke is released, the next strokes are added to it, and the shape keeps growing.
+It stays fluid: 4 strokes in the same brush among 1,000 rectangles take <FrameWorkOf gesture='long-brush' shapes={1000} /> per frame, against <FrameWorkOf gesture='brush' shapes={1000} /> for a stroke in a new brush.
+Moving, resizing or rotating the brush builds its path again on each move, with all its points, and the GPU draws them: dragging a brush of 4 strokes of 1,000 points takes <FrameWorkOf gesture='translate-long-brush' shapes={1000} /> per frame, against <FrameWorkOf gesture='translate' shapes={1000} /> for a rectangle.
+
+### Photos
+
+A photo is drawn from a copy of its image halved as many times as it stays at least as large as it is drawn, made once: dragging a photo of 3000 × 2000 pixels among 1,000 rectangles takes <FrameWorkOf gesture='pictures' shapes={1000} /> per frame, against <FrameWorkOf gesture='translate' shapes={1000} /> for a rectangle.
+The size of its file counts elsewhere: at its loading, and in the data, which holds the content of a photo added from a file, encoded in base64 (a third larger than the file), given by `dataChanged` and saved with the drawing.
+Reduce the photos before adding them, or store them yourself and add them by their URL with `actions.addPicture`: the data then holds the URL.
+
+### Saving the drawing
+
+`dataChanged` is fired once per step of the history, with the data of the whole drawing: save the drawing there.
+`shapesChanged` is fired on each move of a gesture, to share it live: once it is listened, each move exports the shapes changed.
+Dragging all of 1,000 shapes takes <FrameWorkOf gesture='translate-all-shapes-changed' shapes={1000} /> per frame with a listener which serializes the changes, as a collaboration sends them, against <FrameWorkOf gesture='translate-all' shapes={1000} /> without,
+and all of 5,000 shapes <FrameWorkOf gesture='translate-all-shapes-changed' shapes={5000} />, against <FrameWorkOf gesture='translate-all' shapes={5000} />.
+Listen to it only to share the gestures live.
+
+### Custom shapes
+
+The path of a custom shape is built by the function of its tool, from its parameters, whenever the shape changes, like on each move of a drag.
+Dragging a star among 1,000 stars takes <FrameWorkOf gesture='translate-custom' shapes={1000} /> per frame, against <FrameWorkOf gesture='translate' shapes={1000} /> for a rectangle among rectangles: the stars have more points to draw, and the path of the moved star is built again.
+Keep the function quick: it runs for each shape of a drawing when it is loaded, and for each moved shape on each move.
+
+## Measuring your application
+
+Measure the production build of your application: the development build of React is slower.
+The events `frameDrawn` and `gestureMeasured` give the draws of the layers and the gestures, measured only while a listener is registered (see the <LinkTo title='API Reference' story='docs'>API reference</LinkTo>).
+The panel of the stress lab is built on them: its code, under "Show code" above, uses the public API only. Copy it to watch your own application.
+
+<Source
+  language='tsx'
+  code={`paint.registerEvent('gestureMeasured', gesture => {
+  // a gesture whose frames dropped under 30 fps
+  if (gesture.frameIntervals.p95 > 33) report(gesture.type, gesture.fps, gesture.shapeCount)
+})`}
+/>
+
+`connectPerformanceTimeline(paint)` adds each draw of a layer and each gesture to the performance timeline of the browser: the Performance panel of Chrome shows them in the tracks of a *React Paint* group, a gesture with a frame longer than 50 ms in red.
+Connect it while you record a profile, not in production: the browser keeps its measures.
+
+<Source
+  language='tsx'
+  code={`import { connectPerformanceTimeline } from '@yorab/react-paint'
+
+useEffect(() => connectPerformanceTimeline(paint), [paint])`}
+/>
+
+## Our method
+
+The figures above come from `pnpm bench:reference`, which runs the stress test of the repository in the 6 conditions.
+The work of a frame is measured from the animation frame callback of the frame to a message posted from it, which runs once the frame is rendered, like the benchmark of Excalidraw. It counts the main thread only: a machine with another GPU, or another browser, gives other figures.
+
+The repository also measures what does not depend on the machine. On each pull request, the CI checks the counts of each scenario of the benchmark against a baseline reviewed with the code: the renders and the commits of React, the draws of each layer and the calls drawing pixels.
+A component rendered during a drag, or a shape drawn for nothing, fails it. The CI also checks the size of the bundle against a budget.
+The times of two versions are compared on the same machine by `pnpm bench:compare`, which alternates them and keeps only the gaps significant by a Mann-Whitney U test.
+See [the README of the benchmark](https://github.com/YoRab/react-paint-editor/blob/main/tests/perf/README.md).

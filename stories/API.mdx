@@ -1126,6 +1126,7 @@ socket.onmessage = ({ data }) => {
       <p>
         The component calling <code>useReactPaint</code> never renders again because of the drawing: the components that read the state with <code>usePaintState</code> do, when the value they select changes.
         The gestures on the canvas (hover, drag, selection frame, pan, brush) are drawn without rendering the <code>Canvas</code> component.
+        The <LinkTo title='Features/Performance' story='docs'>Performance</LinkTo> page gives the figures we measure, up to 20,000 shapes, and tips on the drawing backed by them.
       </p>
       <ul>
         <li>Select precise slices of the state: a component reading <code>state.history.canUndo</code> does not render while a shape is dragged, one reading <code>state.shapes</code> does</li>

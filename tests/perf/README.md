@@ -1,6 +1,6 @@
 # Performance benchmark
 
-Measures what React and the main thread do during the continuous interactions of the canvas. It runs in Chromium (Vitest browser mode, Playwright) with its own config, `vitest.perf.config.ts`. The benchmark is only run manually: it is not part of `pnpm test`. Its counts, which do not depend on the speed of the machine, are checked by the CI on each pull request with `pnpm bench:counts`. The stress test, `pnpm bench:stress`, measures the main gestures, the load and the exports on drawings of up to 20000 shapes. The micro-benchmarks, `pnpm bench:micro`, measure hot functions of the library in Node. `pnpm size` measures the size of the build, and checks it against a budget.
+Measures what React and the main thread do during the continuous interactions of the canvas. It runs in Chromium (Vitest browser mode, Playwright) with its own config, `vitest.perf.config.ts`. The benchmark is only run manually: it is not part of `pnpm test`. Its counts, which do not depend on the speed of the machine, are checked by the CI on each pull request with `pnpm bench:counts`. The stress test, `pnpm bench:stress`, measures the main gestures, the load and the exports on drawings of up to 20000 shapes, and `pnpm bench:reference` the figures of the Performance page of the documentation with it. The micro-benchmarks, `pnpm bench:micro`, measure hot functions of the library in Node. `pnpm size` measures the size of the build, and checks it against a budget.
 
 It measures the production build of React, the one the users of the library run, with the profiling build of react-dom, whose `<Profiler>` still reports the commits. The run stops at once when another build runs, or when the `<Profiler>` reports nothing.
 
@@ -18,6 +18,7 @@ pnpm bench
 | `PERF_CPU`       | `1`          | Slows the CPU down by this rate (Chrome DevTools Protocol), like a slower machine: `4` stands for a mid-range phone                                          |
 | `PERF_EVENTS`    | `1`          | Pointer and wheel events sent in each frame: `1` stands for a 60 Hz mouse, `4` for a faster mouse in a browser which does not align the events on the frames |
 | `PERF_DPR`       | `1`          | Pixels of the screen in a CSS pixel (`devicePixelRatio`): `2` stands for a HiDPI screen, like a Retina display, whose canvases have 4 times more pixels      |
+| `PERF_GPU`       | unset        | `1` draws with the GPU of the machine, like the browsers of the users, instead of SwiftShader, the software GPU of headless Chromium, drawing with the CPU   |
 | `PERF_REACT`     | `production` | `development` measures the development build of React instead, slower, like the reports made before 2026-11-25                                               |
 | `PERF_BASELINE`  | `baseline`   | Report the results are compared to, `tests/perf/results/<name>.json`, `micro-<name>.json` for the micro-benchmarks. Empty for none                           |
 
@@ -32,9 +33,11 @@ PERF_LABEL=hidpi PERF_DPR=2 pnpm bench
 PERF_BASELINE=before pnpm bench         # compared to results/before.json
 ```
 
-A full run takes about 22 minutes: 24 scenarios, 2 sizes, 1 warm-up run and 5 measured runs each, on a new mount every time. The report, ignored by git, holds the median of the measured runs (`results`) and each measured run (`samples`).
+A full run takes about 24 minutes: 27 scenarios, 2 sizes, 1 warm-up run and 5 measured runs each, on a new mount every time. The report, ignored by git, holds the median of the measured runs (`results`) and each measured run (`samples`).
 
-When the report of `PERF_BASELINE` exists, each cell shows the gap to it: a count which changed is marked with its own gap, `(+300 ▲)` for more and `(-300 ▼)` for fewer, and the output ends with the list of these counts. The gaps of time are only shown in %, never marked: two benches made at different times differ by the drift of the machine, which a test on the runs of each one cannot see. The same code measured twice in a row once came out 34 % faster on `undo@50 taskMs`, with a Mann-Whitney U test at p < 0.05. To compare the times of two versions, use `pnpm bench:compare`, which alternates them. Compare only reports made with the same `PERF_CPU`, `PERF_EVENTS`, `PERF_DPR` and `PERF_REACT`. Each report records them. The reports made before 2026-11-25 only hold medians.
+When the report of `PERF_BASELINE` exists, each cell shows the gap to it: a count which changed is marked with its own gap, `(+300 ▲)` for more and `(-300 ▼)` for fewer, and the output ends with the list of these counts. The gaps of time are only shown in %, never marked: two benches made at different times differ by the drift of the machine, which a test on the runs of each one cannot see. The same code measured twice in a row once came out 34 % faster on `undo@50 taskMs`, with a Mann-Whitney U test at p < 0.05. To compare the times of two versions, use `pnpm bench:compare`, which alternates them. Compare only reports made with the same `PERF_CPU`, `PERF_EVENTS`, `PERF_DPR`, `PERF_GPU` and `PERF_REACT`. Each report records them, the GPU by the name WebGL gives it (`gpu`). The reports made before 2026-11-25 only hold medians, and the ones made before 2026-11-26 were all drawn by SwiftShader, without `gpu`.
+
+Without `PERF_GPU`, like in the CI, the CPU draws the pixels of the canvases on the main thread: the times count them, more at `PERF_DPR=2`, while the GPU of a browser draws them out of the main thread. The counts do not depend on it.
 
 ## Check the counts
 
@@ -87,15 +90,16 @@ PERF_SCENARIOS=translate,pan pnpm bench:stress    # two gestures
 PERF_SHAPES=1000,5000 pnpm bench:stress           # two sizes
 PERF_LABEL=slow-cpu PERF_CPU=4 pnpm bench:stress
 PERF_LABEL=hidpi PERF_DPR=2 pnpm bench:stress
+PERF_LABEL=gpu PERF_GPU=1 pnpm bench:stress       # drawn by the GPU of the machine
 ```
 
 `stress.perf.test.tsx` measures the main gestures, `hover`, `translate`, `translate-all`, `pan`, `zoom`, `brush`, `mixed` and `opacity`, on larger and larger drawings: 100, 500, 1000, 2000, 5000, 10000 and 20000 shapes, 3 runs each, after a warm-up run on the first size. `PERF_SCENARIOS` takes any scenario of the benchmark, and the operations below. The acceptance criteria of the scenarios are checked at each size.
 
 - It measures the work of the frames, `frameWorkP95` and `frameWorkMean` (see the metrics). Unlike the frame intervals, they show the margin left in a frame on a fast machine.
 - A gesture whose frames take over 50 ms (p95) is not measured on the larger drawings: they would take minutes, and the gesture no longer keeps 30 fps. Neither is a gesture which fails, like a scenario whose check no longer passes: it would fail again on each of them.
-- The capacity of a gesture is the largest drawing measured whose frames take at most 16.7 ms (60 fps), or 33.3 ms (30 fps), at p95, the smaller drawings too. The real capacity lies between it and the next size. It counts the work of the main thread only, not the raster and the composite of the GPU.
+- The capacity of a gesture is the largest drawing measured whose frames take at most 16.7 ms (60 fps), or 33.3 ms (30 fps), at p95, the smaller drawings too. The real capacity lies between it and the next size. It counts the work of the main thread only: with `PERF_GPU=1`, not the raster and the composite of the GPU.
 - The output gives the work of a frame by gesture and by size, then the capacities, and the duration of the operations. The report, ignored by git, is written to `tests/perf/results/stress-<label>.json`, with each run.
-- The figures of the documentation are measured with `PERF_CPU=1` and `4`, and with `PERF_DPR=1` and `2`. Each report records them.
+- The figures of the documentation are measured with `PERF_CPU=1` and `4`, with `PERF_DPR=1` and `2`, and with or without `PERF_GPU` (see below). Each report records them.
 
 It also measures three operations, single calls of the API outside of the gestures, at every size: their duration (`totalMs`), and the work of the main thread (`taskMs`). The duration of `load` includes the wait for the frame which draws the shapes, up to 16.7 ms, which the small drawings mostly show. The benchmark and its counts do not run them.
 
@@ -106,6 +110,22 @@ It also measures three operations, single calls of the API outside of the gestur
 | `export-image` | `getCurrentImage`: the PNG image of the drawing                                                                                            |
 
 A full run takes about 20 minutes.
+
+## Reference figures
+
+```bash
+pnpm bench:reference               # the 6 conditions, in about 2 hours and a half
+pnpm bench:reference cpu4-dpr2     # one condition again
+pnpm bench:reference --write-only  # the file from the reports already measured
+```
+
+`scripts/perf-reference.mjs` measures the figures of the Performance page of the documentation (`stories/examples/features/Performance.mdx`): it runs the stress test in 6 conditions, then writes `stories/assets/perf-reference.json`, versioned. The page renders its tables and the figures of its tips from this file.
+
+- The GPU of the machine draws the canvases (`PERF_GPU=1`), like in the browsers of the users, at CPU 1× and 4× and at pixel ratio 1 and 2: `cpu1-dpr1`, `cpu4-dpr1`, `cpu1-dpr2` and `cpu4-dpr2`. The software rendering, SwiftShader, draws them with the CPU at pixel ratio 1 and 2, like a browser without GPU acceleration: `software-dpr1` and `software-dpr2`. The GPU of each report is checked against its condition.
+- Each condition measures the 8 gestures of the stress test, listed in `tests/perf/stress-gestures.ts`, and its operations. The first one, CPU 1× and pixel ratio 1, also measures the scenarios of the tips (`translate-group`, `translate-group-opacity`, `translate-all-shapes-changed`, `long-brush`, `translate-long-brush`, `translate-custom`, `pictures`): a tip compares them with the gestures of the same run, never of another one.
+- The variables of the benchmark set in the shell are ignored: the conditions give theirs. A scenario which fails stops the script, and the file is not written. Its reports are written to `tests/perf/results/stress-reference-<condition>.json`, checked against their condition before being read.
+- The file keeps the capacities, the work of the frames (p95) and the duration of the operations, with the machine and its GPU, the browser, the date of each condition and the library measured (`git describe`, `-dirty` when `src` has changes).
+- Run it on an idle machine, plugged in, without another program: the figures are the ones of the machine. Measure them again when a change of the library moves them, and check the tips of the page against the new figures.
 
 ## Micro-benchmarks
 
@@ -157,33 +177,35 @@ The sizes with gzip of the bundles of the apps, of the UMD build and of the styl
 The scenarios are driven only by DOM events (`scenarios.ts`), sent one per frame like a 60 Hz mouse (`PERF_EVENTS` simulates faster mice). Each one ends with a functional check (the shape moved, the shapes are selected, the view moved...), so that a gesture broken by a change is never measured. Between the setup of a scenario (selecting the brush tool, opening a panel...) and its gesture, the run waits 400 ms. That is longer than the timers the editor starts on a change, like the fade-out of the loader once a picture is loaded and the announcements of the live region. Without the wait, they fired during the gesture at a time which depended on the duration of the setup, and changed the number of commits from one run to the next.
 The drawing is a grid of opaque rectangles, unless another one is given (`shapes.ts`).
 
-| id                     | drawing                                                                                                | gesture                                                                                                      |
-| ---------------------- | ------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------ |
-| `hover`                | rectangles                                                                                             | 300 moves over the shapes, without button                                                                    |
-| `translate`            | rectangles                                                                                             | drag of a shape, 300 moves                                                                                   |
-| `translate-profiled`   | rectangles                                                                                             | drag of `translate` with listeners of `frameDrawn` and `gestureMeasured`: same counts, cost in time          |
-| `frame`                | rectangles                                                                                             | selection frame from an empty area to a corner, 300 moves, which ends with the auto scroll                   |
-| `pan`                  | rectangles                                                                                             | 200 wheel events on an infinite canvas                                                                       |
-| `brush`                | rectangles                                                                                             | brush stroke, 300 moves                                                                                      |
-| `undo`                 | rectangles                                                                                             | 20 clicks alternating undo and redo in the toolbar                                                           |
-| `zoom`                 | rectangles                                                                                             | 200 ctrl + wheel events, each one changing the zoom                                                          |
-| `zoom-mixed`           | as `mixed`                                                                                             | as `zoom`                                                                                                    |
-| `opacity`              | rectangles filled and stroked at half opacity                                                          | drag of a shape, 300 moves                                                                                   |
-| `mixed`                | shapes of all the types (lines with arrows, curves, texts, brushes...), one out of two at half opacity | drag of a rectangle, 300 moves                                                                               |
-| `pictures`             | rectangles under 3 photos of 3000×2000 pixels, loaded from blob URLs                                   | drag of a photo, 300 moves                                                                                   |
-| `long-brush`           | rectangles, `isBrushShapeDoneOnMouseUp: false`                                                         | 4 brush strokes of 300 moves, added to the same shape                                                        |
-| `frame-inside`         | rectangles under a large rectangle which is only stroked                                               | selection frame inside the large rectangle, 150 moves: each point of the frame is checked against its stroke |
-| `undo-autosave`        | rectangles, with a listener of `dataChanged`                                                           | as `undo`: each click exports the data                                                                       |
-| `layers`               | rectangles, with the panel of the layers open                                                          | 20 clicks alternating hiding and showing a shape in the panel: each click saves the shapes again             |
-| `layers-autosave`      | as `layers`, with a listener of `dataChanged`                                                          | as `layers`: each click exports the data                                                                     |
-| `translate-all`        | rectangles, all selected with ctrl + A                                                                 | drag of all the shapes, 300 moves                                                                            |
-| `translate-long-brush` | rectangles under a brush of 4 strokes of 1000 points                                                   | drag of the brush, 300 moves                                                                                 |
-| `add-picture`          | rectangles                                                                                             | 3 photos of 3000×2000 pixels added from the menu of the toolbar, as files chosen by the user                 |
-| `add-picture-autosave` | as `add-picture`, with a listener of `dataChanged`                                                     | as `add-picture`: each photo is exported once added                                                          |
-| `hover-groups`         | rectangles in groups of 5, themselves in groups of 5                                                   | as `hover`: a move over a rectangle hovers its outer group                                                   |
-| `translate-group`      | the groups of `hover-groups` in a single group                                                         | drag of the group, 300 moves: compare it to `translate-all`, which moves the same rectangles                 |
-| `undo-groups-autosave` | as `hover-groups`, with a listener of `dataChanged`                                                    | as `undo`, after the removal of a group of 25 rectangles: each click exports the groups                      |
-| `translate-custom`     | the grid as stars of a custom tool, their path built from their parameters                             | drag of a star, 300 moves: its path is built again on each move, compare it to `translate`                   |
+| id                             | drawing                                                                                                           | gesture                                                                                                      |
+| ------------------------------ | ----------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| `hover`                        | rectangles                                                                                                        | 300 moves over the shapes, without button                                                                    |
+| `translate`                    | rectangles                                                                                                        | drag of a shape, 300 moves                                                                                   |
+| `translate-profiled`           | rectangles                                                                                                        | drag of `translate` with listeners of `frameDrawn` and `gestureMeasured`: same counts, cost in time          |
+| `frame`                        | rectangles                                                                                                        | selection frame from an empty area to a corner, 300 moves, which ends with the auto scroll                   |
+| `pan`                          | rectangles                                                                                                        | 200 wheel events on an infinite canvas                                                                       |
+| `brush`                        | rectangles                                                                                                        | brush stroke, 300 moves                                                                                      |
+| `undo`                         | rectangles                                                                                                        | 20 clicks alternating undo and redo in the toolbar                                                           |
+| `zoom`                         | rectangles                                                                                                        | 200 ctrl + wheel events, each one changing the zoom                                                          |
+| `zoom-mixed`                   | as `mixed`                                                                                                        | as `zoom`                                                                                                    |
+| `opacity`                      | rectangles filled and stroked at half opacity                                                                     | drag of a shape, 300 moves                                                                                   |
+| `mixed`                        | shapes of all the types (lines with arrows, curves, texts, brushes...), one out of two at half opacity            | drag of a rectangle, 300 moves                                                                               |
+| `pictures`                     | rectangles under 3 photos of 3000×2000 pixels, loaded from blob URLs                                              | drag of a photo, 300 moves                                                                                   |
+| `long-brush`                   | rectangles, `isBrushShapeDoneOnMouseUp: false`                                                                    | 4 brush strokes of 300 moves, added to the same shape                                                        |
+| `frame-inside`                 | rectangles under a large rectangle which is only stroked                                                          | selection frame inside the large rectangle, 150 moves: each point of the frame is checked against its stroke |
+| `undo-autosave`                | rectangles, with a listener of `dataChanged`                                                                      | as `undo`: each click exports the data                                                                       |
+| `layers`                       | rectangles, with the panel of the layers open                                                                     | 20 clicks alternating hiding and showing a shape in the panel: each click saves the shapes again             |
+| `layers-autosave`              | as `layers`, with a listener of `dataChanged`                                                                     | as `layers`: each click exports the data                                                                     |
+| `translate-all`                | rectangles, all selected with ctrl + A                                                                            | drag of all the shapes, 300 moves                                                                            |
+| `translate-all-shapes-changed` | as `translate-all`, with a listener of `shapesChanged` which serializes the changes as a collaboration sends them | as `translate-all`: same counts, cost in time of the changes exported on each move                           |
+| `translate-long-brush`         | rectangles under a brush of 4 strokes of 1000 points                                                              | drag of the brush, 300 moves                                                                                 |
+| `add-picture`                  | rectangles                                                                                                        | 3 photos of 3000×2000 pixels added from the menu of the toolbar, as files chosen by the user                 |
+| `add-picture-autosave`         | as `add-picture`, with a listener of `dataChanged`                                                                | as `add-picture`: each photo is exported once added                                                          |
+| `hover-groups`                 | rectangles in groups of 5, themselves in groups of 5                                                              | as `hover`: a move over a rectangle hovers its outer group                                                   |
+| `translate-group`              | the groups of `hover-groups` in a single group                                                                    | drag of the group, 300 moves: compare it to `translate-all`, which moves the same rectangles                 |
+| `translate-group-opacity`      | the group of `translate-group` at half opacity, painted on a single layer                                         | as `translate-group`: compare it to `translate-group`, and to `opacity`, whose rectangles each have a layer  |
+| `undo-groups-autosave`         | as `hover-groups`, with a listener of `dataChanged`                                                               | as `undo`, after the removal of a group of 25 rectangles: each click exports the groups                      |
+| `translate-custom`             | the grid as stars of a custom tool, their path built from their parameters                                        | drag of a star, 300 moves: its path is built again on each move, compare it to `translate`                   |
 
 `fixture.tsx` mounts the measured app: a host calling `useReactPaint`, a heavy sibling standing for the UI of the consumer, the editor, the canvas, and a probe subscribed to `state.history`. It is the only file that mounts the library: the scenarios read its state with `getState`, and the operations of the stress test call its handle, `paint`.
 
@@ -210,7 +232,7 @@ The counts are deterministic: they are the acceptance criteria. The ones checked
 Each scenario gives its own maximums (`criteria` in `scenarios.ts`), checked by `pnpm bench` and `pnpm bench:counts`. The test fails when a count goes over one:
 
 - no render of the host nor of the sibling during all the gestures but `undo`, `undo-autosave` and `undo-groups-autosave`;
-- no commit of the probe during `hover`, `hover-groups`, `frame`, `frame-inside`, `pan`, `zoom` and `zoom-mixed`, and at most 1 (the save of the history on release) during `translate`, `translate-profiled`, `translate-all`, `translate-group`, `translate-long-brush`, `opacity`, `mixed`, `pictures` and `brush`, at most 1 per stroke during `long-brush`, at most 1 (the first step to undo) during `layers`, `layers-autosave`, `add-picture` and `add-picture-autosave`;
+- no commit of the probe during `hover`, `hover-groups`, `frame`, `frame-inside`, `pan`, `zoom` and `zoom-mixed`, and at most 1 (the save of the history on release) during `translate`, `translate-profiled`, `translate-all`, `translate-all-shapes-changed`, `translate-group`, `translate-group-opacity`, `translate-long-brush`, `translate-custom`, `opacity`, `mixed`, `pictures` and `brush`, at most 1 per stroke during `long-brush`, at most 1 (the first step to undo) during `layers`, `layers-autosave`, `add-picture` and `add-picture-autosave`;
 - no commit of the canvas during all the scenarios but `pan`, `undo`, `undo-autosave`, `undo-groups-autosave`, `zoom` and `zoom-mixed`;
 - each layer drawn at most once per event, the events being sent at most one per frame: once per move, plus the press and the release, during the drags, once per wheel event during `pan`, `zoom` and `zoom-mixed`, once per click during `undo`, `layers` and their variants, once per picture added during `add-picture` and `add-picture-autosave`;
 - no draw of the layer of the shapes during `hover`, `hover-groups`, `frame` and `frame-inside`: only the outline of the hovered shape and the selection frame are drawn, in the layer of the selection.

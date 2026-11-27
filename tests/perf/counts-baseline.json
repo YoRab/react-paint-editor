@@ -467,6 +467,32 @@
     "selectionDrawCalls": 157040,
     "offscreenDrawCalls": 0
   },
+  "translate-all-shapes-changed@50": {
+    "hostRenders": 0,
+    "siblingRenders": 0,
+    "rootCommits": 1,
+    "editorCommits": 1,
+    "canvasCommits": 0,
+    "probeCommits": 1,
+    "shapesLayerDraws": 300,
+    "selectionLayerDraws": 302,
+    "shapesDrawCalls": 28700,
+    "selectionDrawCalls": 21140,
+    "offscreenDrawCalls": 0
+  },
+  "translate-all-shapes-changed@500": {
+    "hostRenders": 0,
+    "siblingRenders": 0,
+    "rootCommits": 1,
+    "editorCommits": 1,
+    "canvasCommits": 0,
+    "probeCommits": 1,
+    "shapesLayerDraws": 300,
+    "selectionLayerDraws": 302,
+    "shapesDrawCalls": 281640,
+    "selectionDrawCalls": 157040,
+    "offscreenDrawCalls": 0
+  },
   "translate-long-brush@50": {
     "hostRenders": 0,
     "siblingRenders": 0,
@@ -596,6 +622,32 @@
     "shapesDrawCalls": 281640,
     "selectionDrawCalls": 12080,
     "offscreenDrawCalls": 0
+  },
+  "translate-group-opacity@50": {
+    "hostRenders": 0,
+    "siblingRenders": 0,
+    "rootCommits": 3,
+    "editorCommits": 3,
+    "canvasCommits": 0,
+    "probeCommits": 1,
+    "shapesLayerDraws": 300,
+    "selectionLayerDraws": 302,
+    "shapesDrawCalls": 300,
+    "selectionDrawCalls": 6644,
+    "offscreenDrawCalls": 28700
+  },
+  "translate-group-opacity@500": {
+    "hostRenders": 0,
+    "siblingRenders": 0,
+    "rootCommits": 3,
+    "editorCommits": 3,
+    "canvasCommits": 0,
+    "probeCommits": 1,
+    "shapesLayerDraws": 300,
+    "selectionLayerDraws": 302,
+    "shapesDrawCalls": 300,
+    "selectionDrawCalls": 12080,
+    "offscreenDrawCalls": 281640
   },
   "undo-groups-autosave@50": {
     "hostRenders": 0,

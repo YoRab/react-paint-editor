@@ -13,6 +13,7 @@ import {
   generateNestedGroups,
   generateOutlinedShapes,
   generatePictures,
+  generateTransparentGroup,
   generateTransparentShapes,
   getGrabPoint,
   getLeaves,
@@ -297,8 +298,46 @@ const pickCentralShape = (shapes: ShapeInput[]) => {
 
 const translateAll = createTranslateScenario({ id: 'translate-all', pick: pickCentralShape, selectAll: true })
 
+/**
+ * The gesture of a scenario with a listener of shapesChanged, which serializes the changes of each move as a collaboration
+ * sends them: its counts are the ones of the scenario, and the gap of its time with the scenario is the cost of the changes,
+ * exported on each move once listened
+ */
+const withShapesChanged = (scenario: Scenario): Scenario => {
+  let lastUpdated = 0
+  return {
+    ...scenario,
+    id: `${scenario.id}-shapes-changed`,
+    sameCountsAs: scenario.id,
+    setup: async context => {
+      await scenario.setup?.(context)
+      // the listener is left to the app, unmounted after the run
+      context.app.paint.registerEvent('shapesChanged', (_shapes, _source, changes) => {
+        // the message a collaboration would send: its cost is the one measured
+        JSON.stringify({ changes, save: false })
+        lastUpdated = changes.updated.length
+      })
+    },
+    run: async context => {
+      lastUpdated = 0
+      await scenario.run(context)
+    },
+    verify: (context, metrics) => {
+      scenario.verify(context, metrics)
+      // the last move changed each selected shape
+      expect(lastUpdated, 'shapes updated by the last move').toBe(context.app.getState().selectedShapes.length)
+    }
+  }
+}
+
+const translateAllShapesChanged = withShapesChanged(translateAll)
+
 // the shapes of translate-all, in a single group of 3 levels
 const translateGroup = createTranslateScenario({ id: 'translate-group', generate: generateGroup, pick: () => 0 })
+
+// the group of translate-group at half opacity, painted on a single layer: compare it to translate-group, and to opacity,
+// whose shapes are each painted on a layer
+const translateGroupOpacity = createTranslateScenario({ id: 'translate-group-opacity', generate: generateTransparentGroup, pick: () => 0 })
 
 // the brush is in the foreground
 const translateLongBrush = createTranslateScenario({ id: 'translate-long-brush', generate: generateLongBrush, pick: () => 0 })
@@ -643,11 +682,13 @@ export const SCENARIOS: Scenario[] = [
   layers,
   layersAutosave,
   translateAll,
+  translateAllShapesChanged,
   translateLongBrush,
   addPicture,
   addPictureAutosave,
   hoverGroups,
   translateGroup,
+  translateGroupOpacity,
   undoGroupsAutosave,
   translateCustom
 ]

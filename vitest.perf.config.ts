@@ -53,7 +53,12 @@ export default defineConfig({
       enabled: true,
       headless: true,
       // the density of the screen: 2 stands for a HiDPI screen, whose canvases have 4 times more pixels
-      provider: playwright({ contextOptions: { deviceScaleFactor: Number(process.env.PERF_DPR) || 1 } }),
+      provider: playwright({
+        // PERF_GPU=1 draws with the GPU of the machine, like the browsers of the users. Headless Chromium draws with
+        // SwiftShader otherwise, its software GPU: the CPU draws the pixels of the canvases, on the main thread
+        launchOptions: process.env.PERF_GPU ? { args: ['--enable-gpu'] } : {},
+        contextOptions: { deviceScaleFactor: Number(process.env.PERF_DPR) || 1 }
+      }),
       instances: [{ browser: 'chromium' }],
       viewport: { width: 1280, height: 900 },
       // a count over its maximum shows nothing on the page

@@ -18,12 +18,12 @@ import {
   selectSizes
 } from './run'
 import { OPERATIONS, SCENARIOS, type Scenario } from './scenarios'
+import { STRESS_GESTURES } from './stress-gestures'
 
 const LABEL = inject('perfLabel')
-const GESTURE_IDS = ['hover', 'translate', 'translate-all', 'pan', 'zoom', 'brush', 'mixed', 'opacity']
 const MEASURED_SCENARIOS = selectScenarios(
   [...SCENARIOS, ...OPERATIONS],
-  [...SCENARIOS.filter(scenario => GESTURE_IDS.includes(scenario.id)), ...OPERATIONS]
+  [...SCENARIOS.filter(scenario => STRESS_GESTURES.includes(scenario.id)), ...OPERATIONS]
 )
 const GESTURES = MEASURED_SCENARIOS.filter(scenario => !OPERATIONS.includes(scenario))
 const MEASURED_OPERATIONS = MEASURED_SCENARIOS.filter(scenario => OPERATIONS.includes(scenario))

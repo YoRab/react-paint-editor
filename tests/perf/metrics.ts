@@ -26,6 +26,18 @@ export const getReactBuild = (): ReactBuild => {
   return 'ReactDebugCurrentFrame' in internals ? 'development' : 'production'
 }
 
+/**
+ * The GPU drawing the page, as WebGL names it, like "ANGLE (NVIDIA, NVIDIA GeForce RTX 3080 (0x00002216) Direct3D11…)".
+ * Without PERF_GPU, headless Chromium draws with SwiftShader, its software GPU: the canvases are then drawn by the CPU
+ */
+export const getGpuRenderer = (): string => {
+  const gl = document.createElement('canvas').getContext('webgl')
+  if (!gl) return 'none'
+  const renderer = String(gl.getParameter(gl.getExtension('WEBGL_debug_renderer_info')?.UNMASKED_RENDERER_WEBGL ?? gl.RENDERER))
+  gl.getExtension('WEBGL_lose_context')?.loseContext()
+  return renderer
+}
+
 // ─── Collected during a run ────────────────────────────────────────────────────
 
 export const PROFILER_IDS = ['root', 'sibling', 'editor', 'canvas', 'probe'] as const
@@ -295,6 +307,8 @@ export type Report = {
   eventsPerFrame: number
   /** Pixels of the screen in a CSS pixel (devicePixelRatio) */
   pixelRatio: number
+  /** The GPU drawing the page (getGpuRenderer). The reports made before 2026-11-26 do not hold it: they were drawn by SwiftShader */
+  gpu?: string
   /** Metrics by "scenario@shapes": the median of the measured runs */
   results: Record<string, Metrics>
   /** Metrics of each measured run, by "scenario@shapes". The reports made before 2026-11-25 only hold the medians */
