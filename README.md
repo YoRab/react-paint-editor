@@ -435,6 +435,13 @@ The free drawing (brush, polygon, curve) follows the path of the pointer: it is 
 
 ### Performance
 
+The canvas draws its shapes on two layers, each one at most once per frame, leaves out the shapes out of the view, and renders no React component during a gesture. Measured with Chromium on an Intel Core i7-12700K, on November 26, 2026:
+
+- dragging a shape keeps 60 fps up to 10,000 shapes, and up to 2,000 on a CPU 4 times slower, like a mid-range phone;
+- a drawing of 20,000 shapes loads in 74 ms, and its image is exported in 58 ms.
+
+The [Performance page](https://yorab.github.io/react-paint-editor/?path=/docs/features-performance--docs) gives all the figures, the tips backed by them, and how to measure your application. To read the state without slowing the gestures:
+
 - Select precise slices of the state: a component reading `state.history.canUndo` does not render while a shape is dragged, one reading `state.shapes` does.
 - When a selector builds an object or an array, give `shallowEqual` (or your own equality function) as third argument, otherwise the component renders on each change of the state.
 - Read `state.interaction` (gesture running, hovered shape and part of the selection, selection frame, modifier keys) only when you need it: it changes on each move of the pointer.
