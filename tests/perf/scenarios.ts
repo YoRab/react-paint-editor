@@ -1,7 +1,7 @@
 import { expect } from 'vitest'
-import type { EditorState, Point, ShapeInput, UseReactPaintOptions } from '../../src/index'
+import type { EditorState, GestureType, Point, ShapeInput, UseReactPaintOptions } from '../../src/index'
 import type { PerfApp } from './fixture'
-import { nextFrame, waitFor } from './metrics'
+import { type CountName, type Metrics, nextFrame, waitFor } from './metrics'
 import {
   CANVAS_HEIGHT,
   CANVAS_WIDTH,
@@ -13,6 +13,7 @@ import {
   generateNestedGroups,
   generateOutlinedShapes,
   generatePictures,
+  generateTransparentGroup,
   generateTransparentShapes,
   getGrabPoint,
   getLeaves,
@@ -36,6 +37,9 @@ export type Criteria = {
   hostRenders?: number
   probeCommits?: number
   canvasCommits?: number
+  /** Draws of the layer of the shapes, and of the layer of the selection */
+  shapesLayerDraws?: number
+  selectionLayerDraws?: number
 }
 
 export type Scenario = {
@@ -50,9 +54,15 @@ export type Scenario = {
   setup?: (context: ScenarioContext) => Promise<void>
   /** The measured gesture */
   run: (context: ScenarioContext) => Promise<void>
-  /** Checks that the gesture did its job, so that a gesture broken by an API change is never measured */
-  verify: (context: ScenarioContext) => void
+  /** Checks that the gesture did its job, from the state and the metrics, so that a gesture broken by an API change is never measured */
+  verify: (context: ScenarioContext, metrics: Metrics) => void
   criteria?: Criteria
+  /** Counts which depend on the speed of the machine, left out of the comparison with counts-baseline.json: say why */
+  variableCounts?: CountName[]
+  /** A scenario whose counts this one must have, compared in the same run of pnpm bench:counts whatever the baseline */
+  sameCountsAs?: string
+  /** The largest drawing on which the gesture can be played, the larger ones being skipped: say why */
+  maxShapes?: number
 }
 
 // ─── DOM helpers ───────────────────────────────────────────────────────────────
@@ -64,6 +74,12 @@ const getElement = <T extends Element>(selector: string): T => {
 }
 
 const getDrawCanvas = () => getElement<HTMLCanvasElement>('[data-testid="draw-canvas"]')
+
+/** The canvases of the two layers: the shapes are drawn in the draw canvas, the selection in the canvas over it, if any */
+export const getLayerCanvases = () => ({
+  shapesCanvas: getDrawCanvas(),
+  selectionCanvas: document.querySelector<HTMLCanvasElement>('.react-paint-canvas-selectioncanvas')
+})
 
 const toClient = ([x, y]: Point) => {
   const rect = getDrawCanvas().getBoundingClientRect()
@@ -151,8 +167,17 @@ const selectBrushTool = async (app: PerfApp) => {
 
 const MOVES = 300
 
-/** No render of the consumer nor of the canvas during a gesture, and a single save of the history at its end */
-const GESTURE_CRITERIA: Criteria = { hostRenders: 0, probeCommits: 1, canvasCommits: 0 }
+/**
+ * Each layer is drawn at most once per frame, and the events are sent at most one per frame: each layer is drawn at most
+ * once per event. A drag also draws the frames of its press and of its release
+ */
+const atMostOneDrawPerEvent = (events: number): Criteria => ({ shapesLayerDraws: events, selectionLayerDraws: events })
+
+/**
+ * No render of the consumer nor of the canvas during a gesture, a single save of the history at its end, and each layer
+ * drawn at most once per move, press and release
+ */
+const GESTURE_CRITERIA: Criteria = { hostRenders: 0, probeCommits: 1, canvasCommits: 0, ...atMostOneDrawPerEvent(MOVES + 2) }
 
 /** 300 moves from the first shape drawn to the last one, without button: the shape hovered at the end has this type */
 const createHoverScenario = ({ hoveredType, ...scenario }: Pick<Scenario, 'id' | 'generate'> & { hoveredType: StateShape['type'] }): Scenario => ({
@@ -166,7 +191,7 @@ const createHoverScenario = ({ hoveredType, ...scenario }: Pick<Scenario, 'id' |
     expect(app.getState().interaction.hoveredShape?.type).toBe(hoveredType)
     expect(app.getState().selectedShapes).toHaveLength(0)
   },
-  criteria: { ...GESTURE_CRITERIA, probeCommits: 0 }
+  criteria: { ...GESTURE_CRITERIA, probeCommits: 0, shapesLayerDraws: 0, selectionLayerDraws: MOVES }
 })
 
 const hover = createHoverScenario({ id: 'hover', hoveredType: 'rect' })
@@ -183,7 +208,7 @@ const createTranslateScenario = ({
   pick = shapes => Math.floor(shapes.length / 2),
   selectAll = false,
   ...scenario
-}: Pick<Scenario, 'id' | 'generate' | 'options'> & { pick?: (shapes: ShapeInput[]) => number; selectAll?: boolean }): Scenario => {
+}: Pick<Scenario, 'id' | 'generate' | 'options' | 'maxShapes'> & { pick?: (shapes: ShapeInput[]) => number; selectAll?: boolean }): Scenario => {
   let movedIds: string[] = []
   // the shapes drawn by the moved shapes, which move with them
   let movedLeaves: { id: string; x: number | undefined }[] = []
@@ -219,10 +244,102 @@ const createTranslateScenario = ({
 
 const translate = createTranslateScenario({ id: 'translate' })
 
-const translateAll = createTranslateScenario({ id: 'translate-all', selectAll: true })
+/**
+ * The gesture of a scenario, measured by frameDrawn and gestureMeasured: its counts are the ones of the scenario, and the
+ * gap of its time with the scenario is the cost of the profiling. It checks that the events tell the draws counted by
+ * the benchmark
+ */
+const withProfiling = (scenario: Scenario, gestureType: GestureType): Scenario => {
+  let shapesFrames = 0
+  let gestureTypes: GestureType[] = []
+  return {
+    ...scenario,
+    id: `${scenario.id}-profiled`,
+    sameCountsAs: scenario.id,
+    setup: async context => {
+      await scenario.setup?.(context)
+      // the listeners are left to the app, unmounted after the run
+      context.app.paint.registerEvent('frameDrawn', frame => {
+        if (frame.layer === 'shapes') shapesFrames++
+      })
+      context.app.paint.registerEvent('gestureMeasured', gesture => gestureTypes.push(gesture.type))
+    },
+    run: async context => {
+      // the draws which end the setup, before the measure, are left out
+      shapesFrames = 0
+      gestureTypes = []
+      await scenario.run(context)
+    },
+    verify: (context, metrics) => {
+      scenario.verify(context, metrics)
+      expect(gestureTypes, 'gestures measured').toEqual([gestureType])
+      expect(shapesFrames, 'draws of the layer of the shapes given by frameDrawn').toBe(metrics.shapesLayerDraws)
+    }
+  }
+}
+
+const translateProfiled = withProfiling(translate, 'translate')
+
+/**
+ * The shape closest to the center of the drawing. The middle one of the list may be on a border: with 5000 shapes, it is
+ * on the anchor which resizes the selection of all the shapes from their left side
+ */
+const pickCentralShape = (shapes: ShapeInput[]) => {
+  let closest = 0
+  let closestDistance = Number.POSITIVE_INFINITY
+  for (const [index, shape] of shapes.entries()) {
+    const [x, y] = getGrabPoint(shape)
+    const distance = Math.hypot(x - SHAPES_AREA.width / 2, y - SHAPES_AREA.height / 2)
+    if (distance < closestDistance) {
+      closest = index
+      closestDistance = distance
+    }
+  }
+  return closest
+}
+
+const translateAll = createTranslateScenario({ id: 'translate-all', pick: pickCentralShape, selectAll: true })
+
+/**
+ * The gesture of a scenario with a listener of shapesChanged, which serializes the changes of each move as a collaboration
+ * sends them: its counts are the ones of the scenario, and the gap of its time with the scenario is the cost of the changes,
+ * exported on each move once listened
+ */
+const withShapesChanged = (scenario: Scenario): Scenario => {
+  let lastUpdated = 0
+  return {
+    ...scenario,
+    id: `${scenario.id}-shapes-changed`,
+    sameCountsAs: scenario.id,
+    setup: async context => {
+      await scenario.setup?.(context)
+      // the listener is left to the app, unmounted after the run
+      context.app.paint.registerEvent('shapesChanged', (_shapes, _source, changes) => {
+        // the message a collaboration would send: its cost is the one measured
+        JSON.stringify({ changes, save: false })
+        lastUpdated = changes.updated.length
+      })
+    },
+    run: async context => {
+      lastUpdated = 0
+      await scenario.run(context)
+    },
+    verify: (context, metrics) => {
+      scenario.verify(context, metrics)
+      // the last move changed each selected shape
+      expect(lastUpdated, 'shapes updated by the last move').toBe(context.app.getState().selectedShapes.length)
+    }
+  }
+}
+
+const translateAllShapesChanged = withShapesChanged(translateAll)
 
 // the shapes of translate-all, in a single group of 3 levels
 const translateGroup = createTranslateScenario({ id: 'translate-group', generate: generateGroup, pick: () => 0 })
+
+// the group of translate-group at half opacity, painted on a single layer: compare it to translate-group, and to opacity,
+// whose shapes are each painted on a layer
+const translateGroupOpacity = createTranslateScenario({ id: 'translate-group-opacity', generate: generateTransparentGroup, pick: () => 0 })
 
 // the brush is in the foreground
 const translateLongBrush = createTranslateScenario({ id: 'translate-long-brush', generate: generateLongBrush, pick: () => 0 })
@@ -236,7 +353,9 @@ const pickMiddleRect = (shapes: ShapeInput[]) => {
   return rects.reduce((closest, index) => (Math.abs(index - middle) < Math.abs(closest - middle) ? index : closest))
 }
 
-const mixed = createTranslateScenario({ id: 'mixed', generate: generateMixedShapes, pick: pickMiddleRect })
+// From 20000 shapes, the cells of the grid are 5 px wide: the strokes of the lines, curves and brushes, grabbed up to
+// 8.5 px away, and the texts wider than their cell cover the rectangles, and the press grabs one of these shapes instead
+const mixed = createTranslateScenario({ id: 'mixed', generate: generateMixedShapes, pick: pickMiddleRect, maxShapes: 10_000 })
 
 // the grid as stars: the path of a custom shape is built from its parameters again on each move. Compare it to translate
 const translateCustom = createTranslateScenario({ id: 'translate-custom', generate: generateCustomShapes, options: CUSTOM_SHAPE_OPTIONS })
@@ -255,7 +374,7 @@ const frame: Scenario = {
     expect(app.getState().selectedShapes.length).toBeGreaterThan(shapes.length / 2)
     expect(app.getState().interaction.selectionFrame).toBeUndefined()
   },
-  criteria: { ...GESTURE_CRITERIA, probeCommits: 0 }
+  criteria: { ...GESTURE_CRITERIA, probeCommits: 0, shapesLayerDraws: 0 }
 }
 
 const frameInside: Scenario = {
@@ -271,7 +390,7 @@ const frameInside: Scenario = {
     expect(selectedIds.length).toBeGreaterThan(0)
     expect(selectedIds).not.toContain(OUTLINE_ID)
   },
-  criteria: { ...GESTURE_CRITERIA, probeCommits: 0 }
+  criteria: { ...GESTURE_CRITERIA, probeCommits: 0, ...atMostOneDrawPerEvent(MOVES / 2 + 2), shapesLayerDraws: 0 }
 }
 
 const WHEELS = 200
@@ -289,7 +408,7 @@ const pan: Scenario = {
     expect(x).toBeCloseTo(-2 * WHEELS, 0)
     expect(y).toBeCloseTo(-5 * WHEELS, 0)
   },
-  criteria: { hostRenders: 0, probeCommits: 0 }
+  criteria: { hostRenders: 0, probeCommits: 0, ...atMostOneDrawPerEvent(WHEELS) }
 }
 
 const ZOOM_IN_WHEELS = 150
@@ -307,7 +426,7 @@ const createZoomScenario = (scenario: Pick<Scenario, 'id' | 'generate'>): Scenar
     const expectedZoom = 1.005 ** ZOOM_IN_WHEELS * 0.995 ** (WHEELS - ZOOM_IN_WHEELS)
     expect(app.getState().view.zoom).toBeCloseTo(expectedZoom, 2)
   },
-  criteria: { hostRenders: 0, probeCommits: 0 }
+  criteria: { hostRenders: 0, probeCommits: 0, ...atMostOneDrawPerEvent(WHEELS) }
 })
 
 const zoom = createZoomScenario({ id: 'zoom' })
@@ -353,7 +472,7 @@ const longBrush: Scenario = {
     expect(brushShape?.type === 'brush' ? brushShape.points.length : 0).toBe(LONG_BRUSH_STROKES)
     expect(brushShape?.type === 'brush' ? brushShape.points.flat().length : 0).toBeGreaterThan((LONG_BRUSH_STROKES * MOVES) / 2)
   },
-  criteria: { ...GESTURE_CRITERIA, probeCommits: LONG_BRUSH_STROKES }
+  criteria: { ...GESTURE_CRITERIA, probeCommits: LONG_BRUSH_STROKES, ...atMostOneDrawPerEvent((MOVES + 2) * LONG_BRUSH_STROKES) }
 }
 
 const UNDO_CLICKS = 20
@@ -382,7 +501,8 @@ const createUndoScenario = ({ id, listenData = false, ...scenario }: Pick<Scenar
       expect(app.getState().history.canUndo).toBe(true)
       // one event for each click
       if (listenData) expect(app.getDataEvents() - dataEventsBefore).toBe(UNDO_CLICKS)
-    }
+    },
+    criteria: atMostOneDrawPerEvent(UNDO_CLICKS)
   }
 }
 
@@ -426,7 +546,7 @@ const createLayersScenario = ({ id, listenData = false }: Pick<Scenario, 'id' | 
       if (listenData) expect(app.getDataEvents() - dataEventsBefore).toBe(LAYER_CLICKS)
     },
     // the first click gives something to undo
-    criteria: GESTURE_CRITERIA
+    criteria: { ...GESTURE_CRITERIA, ...atMostOneDrawPerEvent(LAYER_CLICKS) }
   }
 }
 
@@ -477,7 +597,11 @@ const createAddPictureScenario = ({ id, listenData = false }: Pick<Scenario, 'id
       if (listenData) expect(app.getDataEvents() - dataEventsBefore).toBe(ADDED_PICTURES)
     },
     // the first picture gives something to undo
-    criteria: GESTURE_CRITERIA
+    criteria: { ...GESTURE_CRITERIA, ...atMostOneDrawPerEvent(ADDED_PICTURES) },
+    // the steps of the loading of a photo (reading of the file, decoding, loading of the image, state of the loader) fall
+    // into one task of the browser or several, depending on the speed of the machine, and React commits them together
+    // or apart: 12 commits at full speed, 12 to 15 with PERF_CPU=4. Waiting after each photo did not help
+    variableCounts: ['rootCommits', 'editorCommits']
   }
 }
 
@@ -485,9 +609,68 @@ const addPicture = createAddPictureScenario({ id: 'add-picture' })
 
 const addPictureAutosave = createAddPictureScenario({ id: 'add-picture-autosave', listenData: true })
 
+// ─── Operations ────────────────────────────────────────────────────────────────
+
+/** Loads the drawing again, in the emptied canvas, from its JSON string as an automatic save keeps it */
+const createLoadScenario = (): Scenario => {
+  let json = ''
+  return {
+    id: 'load',
+    setup: async ({ app }) => {
+      json = JSON.stringify(app.paint.getCurrentData())
+      await app.paint.actions.loadData({ shapes: [] })
+    },
+    run: async ({ app }) => {
+      await app.paint.actions.loadData(json)
+      // the layer of the shapes, asked by the load, is drawn in the next frame before this callback
+      await nextFrame()
+    },
+    verify: ({ app, shapes }, { shapesLayerDraws }) => {
+      expect(app.getState().shapes).toHaveLength(shapes.length)
+      expect(shapesLayerDraws, 'draws of the layer of the shapes during the measure').toBe(1)
+    }
+  }
+}
+
+/** A change of the style of a shape: dataChanged gives the data of the whole drawing, serialized as an automatic save does */
+const createExportDataScenario = (): Scenario => {
+  let saved = ''
+  return {
+    id: 'export-data',
+    setup: async ({ app }) => {
+      saved = ''
+      // the listener is left to the app, unmounted after the run
+      app.paint.registerEvent('dataChanged', data => {
+        saved = JSON.stringify(data)
+      })
+    },
+    run: async ({ app }) => app.paint.actions.setShapesStyle([app.getState().shapes[0]!.id], { strokeColor: '#ff0000' }),
+    verify: ({ shapes }) => {
+      expect((JSON.parse(saved) as { shapes: unknown[] }).shapes).toHaveLength(shapes.length)
+      expect(saved).toContain('#ff0000')
+    }
+  }
+}
+
+/** The PNG image of the drawing, as the export of the editor makes it */
+const createExportImageScenario = (): Scenario => {
+  let image = ''
+  return {
+    id: 'export-image',
+    run: async ({ app }) => {
+      image = app.paint.getCurrentImage()
+    },
+    verify: () => expect(image).toMatch(/^data:image\/png;base64,/)
+  }
+}
+
+/** Single calls of the API measured by the stress test, outside of the gestures: neither the benchmark nor its counts run them */
+export const OPERATIONS: Scenario[] = [createLoadScenario(), createExportDataScenario(), createExportImageScenario()]
+
 export const SCENARIOS: Scenario[] = [
   hover,
   translate,
+  translateProfiled,
   frame,
   pan,
   brush,
@@ -503,11 +686,13 @@ export const SCENARIOS: Scenario[] = [
   layers,
   layersAutosave,
   translateAll,
+  translateAllShapesChanged,
   translateLongBrush,
   addPicture,
   addPictureAutosave,
   hoverGroups,
   translateGroup,
+  translateGroupOpacity,
   undoGroupsAutosave,
   translateCustom
 ]

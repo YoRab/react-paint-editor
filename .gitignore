@@ -9,6 +9,8 @@
 /coverage
 /tests/perf/results/*
 !/tests/perf/results/.gitkeep
+# copies of the library made by pnpm bench:compare
+/.bench-variants
 
 # production
 /declarationfiles

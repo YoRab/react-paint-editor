@@ -91,7 +91,12 @@
     "react-dom": "18.x || 19.x"
   },
   "scripts": {
-    "bench": "vitest run --project=perf --reporter=default",
+    "bench": "vitest run --config vitest.perf.config.ts --reporter=default tests/perf/interactions",
+    "bench:counts": "vitest run --config vitest.perf.config.ts --reporter=default tests/perf/counts",
+    "bench:compare": "node scripts/bench-compare.mjs",
+    "bench:micro": "vitest run --config vitest.micro.config.ts",
+    "bench:reference": "node scripts/perf-reference.mjs",
+    "bench:stress": "vitest run --config vitest.perf.config.ts --reporter=default tests/perf/stress",
     "build": "rm -rf dist && vite build --config vite.config.umd.ts && vite build",
     "build-storybook": "storybook build",
     "check-package": "publint && attw --pack . --ignore-rules cjs-resolves-to-esm false-esm --exclude-entrypoints react-paint.css editor/editor.css",
@@ -102,6 +107,7 @@
     "prepublishOnly": "pnpm build && pnpm declarationfiles",
     "publishnpm": "pnpm publish --access public",
     "publishbeta": "pnpm publish --access public --tag beta",
+    "size": "node scripts/bundle-size.mjs",
     "start": "storybook dev -p 6006",
     "test": "vitest --project=unit",
     "test-storybook": "vitest --project=storybook",

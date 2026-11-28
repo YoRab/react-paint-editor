@@ -8,6 +8,7 @@ import {
   STYLE_FIELDS_SHAPE_TYPES
 } from '@canvas/constants/shapes'
 import type { HoverModeData, SelectionModeData, SelectionModeResize } from '@canvas/types/Mode'
+import type { FrameMeasure } from '@canvas/types/performance'
 import type { DrawableShape, Point, Rect, SelectionType, ShapeEntity, ShapeType, StyleShape } from '@canvas/types/Shapes'
 import type { CustomTool } from '@canvas/types/tools'
 import { createDetachedContext, initCanvasContext, transformCanvas, updateCanvasContext } from '@canvas/utils/canvas'
@@ -135,36 +136,94 @@ const needsLayer = (shape: ShapeEntity, opacity: number, pixelScale: number): bo
 }
 
 /**
- * Canvases out of the page, shared by the shapes drawn with their opacity on a canvas, one for each size: once drawn on
- * the canvas, a layer is copied as a whole the next time it is changed, so the smallest layer fitting a shape is used.
- * The layers of a canvas are freed with it, and when its size changes
+ * The atlas of each canvas: a canvas out of the page, as wide as it, where the layers of the shapes drawn with their
+ * opacity are painted side by side, then copied on the canvas together. A canvas copied then changed is drawn apart by the
+ * GPU at its next copy: a layer shared by the shapes, copied after each one, kept the GPU busy for 60 ms per frame with
+ * 2000 shapes. An atlas grows with the layers of a draw, up to the height of its canvas, and is freed with it
  */
-const layersByCanvas = new WeakMap<HTMLCanvasElement, { width: number; height: number; layers: Map<number, CanvasRenderingContext2D | null> }>()
+const atlases = new WeakMap<HTMLCanvasElement, CanvasRenderingContext2D | null>()
 
-/** Sizes of the layers: powers of 2, at most the size of the canvas */
-const getLayerSize = (size: number, max: number) => Math.min(max, Math.max(32, 2 ** Math.ceil(Math.log2(size))))
+/** The height of a new atlas, in pixels */
+const ATLAS_MIN_HEIGHT = 64
 
-const getLayerContext = (width: number, height: number, canvas: HTMLCanvasElement): CanvasRenderingContext2D | null => {
-  let canvasLayers = layersByCanvas.get(canvas)
-  if (canvasLayers?.width !== canvas.width || canvasLayers.height !== canvas.height) {
-    canvasLayers = { width: canvas.width, height: canvas.height, layers: new Map() }
-    layersByCanvas.set(canvas, canvasLayers)
+const resizeAtlas = (atlas: CanvasRenderingContext2D, width: number, height: number) => {
+  // a new size empties the canvas and resets its context
+  atlas.canvas.width = width
+  atlas.canvas.height = height
+  initCanvasContext(atlas)
+}
+
+/** The atlas of a canvas, at least as high as given, in powers of 2, up to the height of the canvas. Null without a document */
+const getAtlas = (canvas: HTMLCanvasElement, minHeight: number): CanvasRenderingContext2D | null => {
+  const height = Math.min(canvas.height, 2 ** Math.ceil(Math.log2(Math.max(ATLAS_MIN_HEIGHT, minHeight))))
+  let atlas = atlases.get(canvas)
+  if (atlas === undefined) {
+    atlas = createDetachedContext()
+    atlases.set(canvas, atlas)
+    if (atlas) resizeAtlas(atlas, canvas.width, height)
+  } else if (atlas && (atlas.canvas.width !== canvas.width || atlas.canvas.height < height || atlas.canvas.height > canvas.height)) {
+    resizeAtlas(atlas, canvas.width, height)
   }
-  const layerWidth = getLayerSize(width, canvas.width)
-  const layerHeight = getLayerSize(height, canvas.height)
-  // the sizes of a canvas are below 65536 pixels
-  const key = layerWidth * 65536 + layerHeight
-  let layer = canvasLayers.layers.get(key)
-  if (layer === undefined) {
-    layer = createDetachedContext()
-    if (layer) {
-      layer.canvas.width = layerWidth
-      layer.canvas.height = layerHeight
-      initCanvasContext(layer)
-    }
-    canvasLayers.layers.set(key, layer)
+  return atlas
+}
+
+/**
+ * The layers of the shapes drawn on a canvas by a call: they are painted on the atlas of the canvas, in rows from its top
+ * left corner, and copied once it is full or the shapes are drawn. The draws on the canvas between the first layer and
+ * the copies wait in the batch, to keep their order
+ */
+type LayerBatch = {
+  ctx: CanvasRenderingContext2D
+  /** The atlas of the canvas, once a layer is painted */
+  atlas: CanvasRenderingContext2D | null
+  /** The place of the next layer, and the height of its row: the height of its highest layer */
+  x: number
+  y: number
+  rowHeight: number
+  /** The draws on the canvas waiting for the atlas, its copies included, in their order */
+  pending: (() => void)[]
+}
+
+const createBatch = (ctx: CanvasRenderingContext2D): LayerBatch => ({ ctx, atlas: null, x: 0, y: 0, rowHeight: 0, pending: [] })
+
+/** Runs the draws waiting for the atlas: the atlas can be painted again from its top left corner */
+const flushBatch = (batch: LayerBatch) => {
+  for (const draw of batch.pending) draw()
+  batch.pending = []
+  batch.x = 0
+  batch.y = 0
+  batch.rowHeight = 0
+}
+
+/**
+ * The place of the box of a layer in the atlas: next to the last one, or below its row. A full atlas is copied first,
+ * then grows. The box of a shape cut by a border of the canvas stops at the border, and the shape goes beyond it, toward
+ * the border: cut on the left, it starts a row, and cut at the top, it goes in the first row, so that it goes out of the
+ * atlas rather than over the layers painted before it. Toward the right and the bottom, it goes over the places of the
+ * next layers, cleared before they are painted. A clip would keep it in its place, but it changes a few pixels
+ */
+const placeLayer = (
+  batch: LayerBatch,
+  { x: left, y: top, width, height }: Rect
+): { atlas: CanvasRenderingContext2D; x: number; y: number } | null => {
+  batch.atlas ??= getAtlas(batch.ctx.canvas, height)
+  if (!batch.atlas) return null
+  if (batch.x + width > batch.atlas.canvas.width || (left === 0 && batch.x > 0)) {
+    batch.x = 0
+    batch.y += batch.rowHeight
+    batch.rowHeight = 0
   }
-  return layer
+  const isFull = batch.y + height > batch.atlas.canvas.height
+  if (isFull || (top === 0 && batch.y > 0)) {
+    flushBatch(batch)
+    // the copies are made: the atlas can grow, which empties it
+    if (isFull) batch.atlas = getAtlas(batch.ctx.canvas, Math.max(2 * batch.atlas.canvas.height, height))
+    if (!batch.atlas) return null
+  }
+  const place = { atlas: batch.atlas, x: batch.x, y: batch.y }
+  batch.x += width
+  batch.rowHeight = Math.max(batch.rowHeight, height)
+  return place
 }
 
 /**
@@ -177,7 +236,10 @@ const getLayerMargin = (shape: ShapeEntity) => (shape.type === 'text' ? shape.fo
 /** Margin of the layers in pixels, for the antialiasing */
 const LAYER_PIXEL_MARGIN = 2
 
-/** Box in pixels of a rectangle of the shape transformed by the matrix: only its part inside the canvas is drawn */
+/**
+ * Box in pixels of a rectangle of the shape transformed by the matrix: only its part inside the canvas is drawn. placeLayer
+ * relies on a box cut by the left or the top border starting at 0
+ */
 const getPixelBox = (canvas: HTMLCanvasElement, matrix: DOMMatrix, rect: Rect): Rect => {
   const corners = getRectCorners(rect).map(
     ([cornerX, cornerY]): Point => [matrix.a * cornerX + matrix.c * cornerY + matrix.e, matrix.b * cornerX + matrix.d * cornerY + matrix.f]
@@ -194,47 +256,92 @@ const getPixelBox = (canvas: HTMLCanvasElement, matrix: DOMMatrix, rect: Rect): 
 }
 
 /**
- * Paints on the shared layer of the canvas, at its resolution, in the transformation given, then copies the box of the
- * layer on the canvas, with the opacity of the canvas or the one given
+ * Paints the box of a layer on the atlas of the canvas, at its resolution, in the transformation given. Its copy on the
+ * canvas, with the opacity given, waits in the batch
  */
 const paintOnLayer = (
-  ctx: CanvasRenderingContext2D,
+  batch: LayerBatch,
   matrix: DOMMatrix,
   box: Rect,
   paint: (layerCtx: CanvasRenderingContext2D) => void,
-  opacity?: number
+  opacity: number
 ): void => {
   if (box.width <= 0 || box.height <= 0) return
-  const layerCtx = getLayerContext(box.width, box.height, ctx.canvas)
-  if (!layerCtx) return
+  const place = placeLayer(batch, box)
+  if (!place) return
+  const { atlas, x, y } = place
+  const { ctx } = batch
 
-  layerCtx.setTransform(1, 0, 0, 1, 0, 0)
-  layerCtx.clearRect(0, 0, box.width, box.height)
-  // the transformation, moved to the corner of the layer
-  layerCtx.setTransform(matrix.a, matrix.b, matrix.c, matrix.d, matrix.e - box.x, matrix.f - box.y)
-  paint(layerCtx)
+  // the atlas keeps no state of the layer, like a clip, for the next ones
+  atlas.save()
+  atlas.setTransform(1, 0, 0, 1, 0, 0)
+  atlas.clearRect(x, y, box.width, box.height)
+  // the transformation, moved to the place of the layer
+  atlas.setTransform(matrix.a, matrix.b, matrix.c, matrix.d, matrix.e - box.x + x, matrix.f - box.y + y)
+  paint(atlas)
+  atlas.restore()
 
-  ctx.save()
-  ctx.setTransform(1, 0, 0, 1, 0, 0)
-  if (opacity !== undefined) ctx.globalAlpha = opacity
-  ctx.drawImage(layerCtx.canvas, 0, 0, box.width, box.height, box.x, box.y, box.width, box.height)
+  batch.pending.push(() => {
+    ctx.save()
+    ctx.setTransform(1, 0, 0, 1, 0, 0)
+    ctx.globalAlpha = opacity
+    ctx.drawImage(atlas.canvas, x, y, box.width, box.height, box.x, box.y, box.width, box.height)
+    ctx.restore()
+  })
+}
+
+/** Draws a shape on the canvas, in its transformation, with its style and the opacity given by getShapeOpacity */
+const drawShapeDirectly = (
+  ctx: CanvasRenderingContext2D,
+  shape: ShapeEntity,
+  opacity: number,
+  settings: UtilsSettings,
+  options: DrawShapesOptions
+): void => {
+  transformCanvas(ctx, settings, shape.rotation, shape.computed.center)
+  updateCanvasContext(ctx, shape.style)
+  ctx.globalAlpha = opacity
+  drawShapeByType(ctx, shape, options)
   ctx.restore()
 }
 
 /**
- * Draws a shape painted several times, with its opacity: it is painted opaque on a shared layer, at the resolution of the
+ * Draws a shape painted several times, with its opacity: it is painted opaque on a layer, at the resolution of the
  * canvas, then the layer is copied with the opacity
  */
-const drawShapeOnLayer = (ctx: CanvasRenderingContext2D, shape: ShapeEntity, options: DrawShapesOptions): void => {
+const drawShapeOnLayer = (
+  ctx: CanvasRenderingContext2D,
+  shape: ShapeEntity,
+  opacity: number,
+  settings: UtilsSettings,
+  options: DrawShapesOptions,
+  batch: LayerBatch
+): void => {
+  transformCanvas(ctx, settings, shape.rotation, shape.computed.center)
   const matrix = ctx.getTransform()
+  // the canvas is given back as it was: the draws waiting for the atlas may run before the layer is painted
+  ctx.restore()
   const box = getPixelBox(ctx.canvas, matrix, expandRect(shape.computed.outerBorders, getLayerMargin(shape)))
-  paintOnLayer(ctx, matrix, box, layerCtx => {
-    updateCanvasContext(layerCtx, { ...shape.style, opacity: 100 })
-    // the shared layer keeps no state of the shape, like a clip, for the next ones
-    layerCtx.save()
-    drawShapeByType(layerCtx, shape, options)
-    layerCtx.restore()
-  })
+  paintOnLayer(
+    batch,
+    matrix,
+    box,
+    layerCtx => {
+      updateCanvasContext(layerCtx, { ...shape.style, opacity: 100 })
+      drawShapeByType(layerCtx, shape, options)
+    },
+    opacity
+  )
+}
+
+/**
+ * The opacity of a shape on the canvas, from its style, with a part of it for a faded shape, without changing the
+ * canvas: like globalAlpha, it keeps the opacity of the canvas for a value out of 0 to 1
+ */
+const getShapeOpacity = (ctx: CanvasRenderingContext2D, shape: ShapeEntity, options: DrawShapesOptions): number => {
+  const styleOpacity = (shape.style?.opacity ?? 100) / 100
+  const opacity = styleOpacity >= 0 && styleOpacity <= 1 ? styleOpacity : ctx.globalAlpha
+  return options.fadedIds?.has(shape.id) ? opacity * FADED_OPACITY_RATIO : opacity
 }
 
 /** What changes the drawing of the shapes, besides their own fields */
@@ -250,26 +357,44 @@ export type DrawShapesOptions = {
    * by a scale of its context. It gives the strokes thinner than a pixel and the lines in pixels of the screen
    */
   pixelRatio?: number | undefined
+  /** Counters of the shapes drawn, left out of the view and painted on a layer, given only while a draw is measured */
+  stats?: DrawStats | undefined
 }
+
+export type DrawStats = Pick<FrameMeasure, 'drawnShapes' | 'culledShapes' | 'layeredShapes'>
 
 /** Part of their opacity kept by the faded shapes */
 const FADED_OPACITY_RATIO = 0.3
 
-/** Draws shapes from the background, the first of the list in front */
+/** Draws shapes from the background, the first of the list in front, their layers in the batch of the canvas */
 const drawShapeList = (
+  ctx: CanvasRenderingContext2D,
+  shapes: readonly ShapeEntity[],
+  settings: UtilsSettings,
+  currentView: Rect,
+  options: DrawShapesOptions,
+  batch: LayerBatch
+): void => {
+  for (let i = shapes.length - 1; i >= 0; i--) drawShape(ctx, shapes[i]!, settings, currentView, options, batch)
+}
+
+/** Draws shapes with a batch of their own, whose layers are all copied when they are drawn */
+const drawShapesInBatch = (
   ctx: CanvasRenderingContext2D,
   shapes: readonly ShapeEntity[],
   settings: UtilsSettings,
   currentView: Rect,
   options: DrawShapesOptions
 ): void => {
-  for (let i = shapes.length - 1; i >= 0; i--) drawShape(ctx, shapes[i]!, settings, currentView, options)
+  const batch = createBatch(ctx)
+  drawShapeList(ctx, shapes, settings, currentView, options, batch)
+  flushBatch(batch)
 }
 
 /**
- * Draws the shapes of a group with its opacity: they are drawn together on a shared layer, at the resolution of the
- * canvas, then the layer is copied with the opacity, so that the shapes seen through each other are not darker. The layer
- * of a group in a group is the one of its canvas, the layer of the outer group
+ * Draws the shapes of a group with its opacity: they are drawn together on a layer, at the resolution of the canvas, then
+ * the layer is copied with the opacity, so that the shapes seen through each other are not darker. The layers of the
+ * shapes of the group are painted on the atlas of the atlas, and copied in the layer of the group
  */
 const drawGroupOnLayer = (
   ctx: CanvasRenderingContext2D,
@@ -277,7 +402,8 @@ const drawGroupOnLayer = (
   opacity: number,
   settings: UtilsSettings,
   currentView: Rect,
-  options: DrawShapesOptions
+  options: DrawShapesOptions,
+  batch: LayerBatch
 ) => {
   const matrix = ctx.getTransform()
   transformCanvas(ctx, settings)
@@ -288,8 +414,9 @@ const drawGroupOnLayer = (
     getBoundingRect(leaves.map(leaf => expandRect(leaf.computed.boundingBox, getLayerMargin(leaf))))
   )
   ctx.restore()
+  if (options.stats) options.stats.layeredShapes++
   // the transformation of the canvas: the shapes add the one of the view
-  paintOnLayer(ctx, matrix, box, layerCtx => drawShapeList(layerCtx, group.shapes, settings, currentView, options), opacity)
+  paintOnLayer(batch, matrix, box, layerCtx => drawShapesInBatch(layerCtx, group.shapes, settings, currentView, options), opacity)
 }
 
 /** The shapes of a group, drawn with the opacity of the group */
@@ -298,12 +425,13 @@ const drawGroup = (
   group: ShapeEntity<'group'>,
   settings: UtilsSettings,
   currentView: Rect,
-  options: DrawShapesOptions
+  options: DrawShapesOptions,
+  batch: LayerBatch
 ): void => {
   const opacity = (group.style?.opacity ?? 100) / 100
   if (opacity <= 0) return
-  if (opacity >= 1) drawShapeList(ctx, group.shapes, settings, currentView, options)
-  else drawGroupOnLayer(ctx, group, opacity, settings, currentView, options)
+  if (opacity >= 1) drawShapeList(ctx, group.shapes, settings, currentView, options, batch)
+  else drawGroupOnLayer(ctx, group, opacity, settings, currentView, options, batch)
 }
 
 const drawShape = (
@@ -311,30 +439,35 @@ const drawShape = (
   shape: ShapeEntity,
   settings: UtilsSettings,
   currentView: Rect,
-  options: DrawShapesOptions
+  options: DrawShapesOptions,
+  batch: LayerBatch
 ): void => {
+  const { stats } = options
   if (shape.visible === false || shape.id === options.hiddenId) return
-  if (!getRectIntersection(shape.computed.boundingBox, currentView)) return
+  if (!getRectIntersection(shape.computed.boundingBox, currentView)) {
+    if (stats) stats.culledShapes++
+    return
+  }
   if (shape.type === 'group') {
-    drawGroup(ctx, shape, settings, currentView, options)
+    drawGroup(ctx, shape, settings, currentView, options, batch)
     return
   }
 
-  transformCanvas(ctx, settings, shape.rotation, shape.computed.center)
-  updateCanvasContext(ctx, shape.style)
-  if (options.fadedIds?.has(shape.id)) ctx.globalAlpha *= FADED_OPACITY_RATIO
-
-  if (ctx.globalAlpha > 0) {
-    if (needsLayer(shape, ctx.globalAlpha, settings.canvasSize.scaleRatio * (options.pixelRatio ?? 1))) drawShapeOnLayer(ctx, shape, options)
-    else drawShapeByType(ctx, shape, options)
-  }
-
-  ctx.restore()
+  const opacity = getShapeOpacity(ctx, shape, options)
+  if (opacity <= 0) return
+  if (needsLayer(shape, opacity, settings.canvasSize.scaleRatio * (options.pixelRatio ?? 1))) {
+    drawShapeOnLayer(ctx, shape, opacity, settings, options, batch)
+    if (stats) stats.layeredShapes++
+  } else if (batch.pending.length) {
+    // after a layer, the shape waits for its copy
+    batch.pending.push(() => drawShapeDirectly(ctx, shape, opacity, settings, options))
+  } else drawShapeDirectly(ctx, shape, opacity, settings, options)
+  if (stats) stats.drawnShapes++
 }
 
 /** Draws the shapes from the background, the first of the list in front, the ones out of the view left out */
 export const drawShapes = (ctx: CanvasRenderingContext2D, shapes: ShapeEntity[], settings: UtilsSettings, options: DrawShapesOptions = {}): void =>
-  drawShapeList(ctx, shapes, settings, getCurrentView(settings), options)
+  drawShapesInBatch(ctx, shapes, settings, getCurrentView(settings), options)
 
 /** Turns a shape around a point, a group with its shapes and its frame */
 export const rotateShape = <T extends ShapeEntity>(shape: T, rotationToApply: number, selectionCenter: Point, settings: UtilsSettings): T => {

@@ -168,6 +168,7 @@ export type {
   ToolSettingValues,
   ZoomAction
 } from '@canvas/types/editor'
+export type { CanvasLayer, FrameMeasure, GestureMeasure, GestureType, LayerMeasure } from '@canvas/types/performance'
 export type {
   CustomShapeDefinition,
   CustomShapeParams,
@@ -196,6 +197,7 @@ export { shallowEqual } from '@canvas/utils/equality'
 export { ReactPaintError, type ReactPaintErrorCode } from '@canvas/utils/error'
 export { formatMessage, formatNumber, type MessageParams, mergeLocale } from '@canvas/utils/locale'
 export { DATA_VERSION } from '@canvas/utils/migrations'
+export { connectPerformanceTimeline } from '@canvas/utils/performanceTimeline'
 export { getSelectedShapes, getSelectedShapesTools } from '@canvas/utils/selectedShapes'
 export { getSelectedLeaves, getSelectionStyle } from '@canvas/utils/selection'
 export { canGroupShapes, flattenShapes, getParentGroup, getShapeLeaves } from '@canvas/utils/shapes/tree'

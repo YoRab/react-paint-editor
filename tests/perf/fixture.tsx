@@ -1,5 +1,6 @@
-// The only file of the benchmark that depends on the public API of the library:
-// scenarios drive the app with DOM events and read its state through `getState`.
+// The only file of the benchmark that mounts the library: scenarios drive the app with DOM events and read its state
+// through `getState`, and the operations of the stress test call its handle, `paint`.
+// During `pnpm bench:compare`, vitest.perf.config.ts serves the modules of `src/` from the copy of an older version.
 
 import { Profiler, useEffect } from 'react'
 import { createRoot } from 'react-dom/client'
@@ -16,6 +17,8 @@ import {
 import { nextFrame, type Recorder, waitFor } from './metrics'
 
 export type PerfApp = {
+  /** The handle of the app, given by useReactPaint */
+  paint: ReactPaint
   getState: () => EditorState
   /** Number of dataChanged events received, when they are listened */
   getDataEvents: () => number
@@ -107,6 +110,7 @@ export const mountApp = async ({ shapes, options, recorder, listenData }: MountO
   await nextFrame()
 
   return {
+    paint: paintRef.current!,
     getState,
     getDataEvents: () => dataEvents.count,
     unmount: () => {

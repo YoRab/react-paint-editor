@@ -35,6 +35,13 @@
   border-color: #0056b3;
 }
 
+.example-button:disabled {
+  opacity: 0.5;
+  cursor: default;
+  transform: none;
+  box-shadow: none;
+}
+
 .example-buttons {
   display: inline-flex;
   gap: 12px;

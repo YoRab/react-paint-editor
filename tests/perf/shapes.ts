@@ -245,6 +245,11 @@ export const generateNestedGroups = (count: number): ShapeInput[] => groupBy(gro
 /** The groups of generateNestedGroups in a single group: 3 levels of groups */
 export const generateGroup = (count: number): ShapeInput[] => [{ type: 'group', shapes: generateNestedGroups(count) }]
 
+/** The group of generateGroup at half opacity: its opaque shapes are painted together on a layer, copied with its opacity */
+export const generateTransparentGroup = (count: number): ShapeInput[] => [
+  { type: 'group', shapes: generateNestedGroups(count), style: { opacity: 50 } }
+]
+
 /** The shapes drawn by the shapes, given or in the state: the shapes of the groups, from the foreground */
 export const getLeaves = <T extends { type: string }>(shapes: readonly T[]): T[] =>
   shapes.flatMap(shape => (shape.type === 'group' ? getLeaves((shape as T & { shapes: T[] }).shapes) : [shape]))
