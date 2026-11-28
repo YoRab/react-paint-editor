@@ -6,6 +6,7 @@ import { execFileSync } from 'node:child_process'
 import { existsSync, readFileSync, writeFileSync } from 'node:fs'
 import { cpus, totalmem, version } from 'node:os'
 import { join, relative, resolve } from 'node:path'
+import { getCapacity } from '../tests/perf/capacity.ts'
 import { formatJson, isSoftwareGpu } from '../tests/perf/report.ts'
 import { STRESS_GESTURES as GESTURES } from '../tests/perf/stress-gestures.ts'
 
@@ -71,18 +72,28 @@ const measure = id => {
   )
 }
 
+/** The results of a scenario in a report by number of shapes, which keys of integers keep in increasing order */
+const getScenarioResults = (results, scenario) =>
+  Object.fromEntries(
+    Object.entries(results)
+      .filter(([key]) => key.startsWith(`${scenario}@`))
+      .map(([key, metrics]) => [key.slice(scenario.length + 1), metrics])
+  )
+
 /** A metric of the results of a report, by scenario then by number of shapes: { translate: { 100: 4.5, 500: 6.6 } } */
 const byScenario = (results, scenarios, metric) =>
   Object.fromEntries(
     scenarios.map(scenario => [
       scenario,
-      Object.fromEntries(
-        Object.entries(results)
-          .filter(([key]) => key.startsWith(`${scenario}@`))
-          .map(([key, metrics]) => [key.slice(scenario.length + 1), metrics[metric]])
-      )
+      Object.fromEntries(Object.entries(getScenarioResults(results, scenario)).map(([size, metrics]) => [size, metrics[metric]]))
     ])
   )
+
+/** The capacity of a gesture, computed again: the reports made before 2026-11-27 counted the work of the frames only */
+const getGestureCapacity = (results, gesture) => {
+  const bySize = getScenarioResults(results, gesture)
+  return getCapacity(Object.keys(bySize).map(Number), size => bySize[size])
+}
 
 /** The figures of a condition, from its report, checked against the condition: a report of other runs would mislead */
 const readCondition = id => {
@@ -109,8 +120,9 @@ const readCondition = id => {
     // the id of the condition gives its CPU rate, its pixel ratio and its GPU
     figures: {
       date: report.date,
-      capacity: Object.fromEntries(gestures.map(gesture => [gesture, report.capacity[gesture]])),
+      capacity: Object.fromEntries(gestures.map(gesture => [gesture, getGestureCapacity(report.results, gesture)])),
       frameWorkP95: byScenario(report.results, gestures, 'frameWorkP95'),
+      frameIntervalP95: byScenario(report.results, gestures, 'frameP95'),
       operationMs: byScenario(report.results, OPERATIONS, 'totalMs')
     }
   }

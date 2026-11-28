@@ -1,7 +1,7 @@
 import { Canvas, Meta, Source } from '@storybook/addon-docs/blocks'
 import LinkTo from '@storybook/addon-links/react'
 import * as PerformanceStories from './Performance.stories'
-import { CapacityOf, CapacityTable, FrameWorkOf, FrameWorkTable, OperationsTable, ReferenceConditions } from './PerformanceFigures'
+import { CapacityOf, CapacityTable, FrameIntervalTable, FrameWorkOf, FrameWorkTable, OperationsTable, ReferenceConditions } from './PerformanceFigures'
 
 <Meta of={PerformanceStories} />
 
@@ -32,7 +32,8 @@ The GPU draws the pixels of the canvas, like in the browsers of the users, excep
 
 ### Capacity
 
-The capacity of a gesture is the largest drawing whose frames take at most 16.7 ms (60 fps), or 33.3 ms (30 fps), for 95 % of them, the smaller drawings too.
+The capacity of a gesture is the largest drawing whose frames keep 60 fps, or 30 fps, for 95 % of them, the smaller drawings too: the main thread works at most 16.7 ms (33.3 ms) in a frame, and the frames come at least every 16.7 ms (33.3 ms), give or take 10 %.
+The GPU can delay the frames while the main thread waits, when it draws for longer than a frame: the intervals between the frames show it, not the work of the main thread.
 The real capacity lies between it and the next size: from one run to the next, it may come out one size lower or higher.
 The table gives the conditions drawn by the GPU: the software rendering is chosen above the tables of the next sections.
 
@@ -44,6 +45,12 @@ The work of the main thread in a frame, for 95 % of them: the drawing of the can
 A gesture whose frames take over 50 ms is not measured on the larger drawings (–).
 
 <FrameWorkTable />
+
+### Interval between frames
+
+The interval between two frames, for 95 % of them: 16.7 ms at 60 fps. It grows when the main thread works for longer than a frame, or when the GPU does.
+
+<FrameIntervalTable />
 
 ### Load and export
 
@@ -61,9 +68,9 @@ The other tips, on reading the state, are in the <LinkTo title='API Reference' s
 
 A semi-transparent shape painted several times, like a fill and a stroke, a stroke and its arrows, a text and its background, or a stroke of a pixel or thinner, drawn segment by segment, is painted on a layer first, then copied with its opacity: where its paints overlap, it would be darker otherwise.
 A shape painted once, with only a fill or only a stroke, is drawn directly.
-Dragging a shape among 1,000 rectangles filled and stroked at half opacity takes <FrameWorkOf gesture='opacity' shapes={1000} /> per frame, against <FrameWorkOf gesture='translate' shapes={1000} /> when they are opaque:
-it keeps 60 fps up to <CapacityOf gesture='opacity' /> shapes, against <CapacityOf gesture='translate' />.
-Beyond, the cost rises fast: 2,000 semi-transparent rectangles take <FrameWorkOf gesture='opacity' shapes={2000} />, against <FrameWorkOf gesture='translate' shapes={2000} /> when they are opaque.
+Dragging a shape among 1,000 rectangles filled and stroked at half opacity takes <FrameWorkOf gesture='opacity' shapes={1000} /> of the main thread per frame, against <FrameWorkOf gesture='translate' shapes={1000} /> when they are opaque, but the GPU draws each copy apart, which delays the frames:
+the drag keeps 60 fps up to <CapacityOf gesture='opacity' /> shapes, against <CapacityOf gesture='translate' />.
+Beyond 1,000 shapes, the main thread stops to wait for the GPU, and its own work grows: 2,000 semi-transparent rectangles take <FrameWorkOf gesture='opacity' shapes={2000} />, against <FrameWorkOf gesture='translate' shapes={2000} /> when they are opaque.
 For the many shapes of a drawing, prefer an opaque color, or a semi-transparent fill without stroke.
 
 ### Semi-transparent groups
@@ -134,7 +141,7 @@ useEffect(() => connectPerformanceTimeline(paint), [paint])`}
 ## Our method
 
 The figures above come from `pnpm bench:reference`, which runs the stress test of the repository in the 6 conditions.
-The work of a frame is measured from the animation frame callback of the frame to a message posted from it, which runs once the frame is rendered, like the benchmark of Excalidraw. It counts the main thread only: a machine with another GPU, or another browser, gives other figures.
+The work of a frame is measured from the animation frame callback of the frame to a message posted from it, which runs once the frame is rendered, like the benchmark of Excalidraw. It counts the main thread only, so the capacity also checks the intervals between the frames, which the GPU delays when it draws for longer than a frame. A machine with another GPU, or another browser, gives other figures.
 
 The repository also measures what does not depend on the machine. On each pull request, the CI checks the counts of each scenario of the benchmark against a baseline reviewed with the code: the renders and the commits of React, the draws of each layer and the calls drawing pixels.
 A component rendered during a drag, or a shape drawn for nothing, fails it. The CI also checks the size of the bundle against a budget.

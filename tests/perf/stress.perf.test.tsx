@@ -1,9 +1,10 @@
 // Stress test: the work of the frames of the main gestures on larger and larger drawings, the capacity of the canvas,
-// the largest drawing whose frames fit in 60 and 30 fps, and the duration of the load and of the exports. Run by
+// the largest drawing whose frames keep 60 and 30 fps, and the duration of the load and of the exports. Run by
 // `pnpm bench:stress` (see README.md)
 
 import { afterAll, beforeAll, describe, inject, it } from 'vitest'
 import { commands } from 'vitest/browser'
+import { BUDGETS, type Capacity, getCapacity, INTERVAL_TOLERANCE } from './capacity'
 import { type Metrics, medianMetrics, type Report } from './metrics'
 import { formatJson, formatTextTable } from './report'
 import {
@@ -30,19 +31,17 @@ const MEASURED_OPERATIONS = MEASURED_SCENARIOS.filter(scenario => OPERATIONS.inc
 const SIZES = selectSizes([100, 500, 1000, 2000, 5000, 10_000, 20_000])
 const MEASURED_RUNS = 3
 
-/** The work of a frame, p95, which keeps each frame rate */
-const BUDGETS = { fps60: 1000 / 60, fps30: 1000 / 30 }
-
-/** Once the work of its frames, p95, goes over it, a gesture is not measured on the larger drawings: they would take minutes */
+/**
+ * Once the work of its frames, p95, goes over it, a gesture is not measured on the larger drawings: they would take
+ * minutes. Its intervals do not stop it: frames delayed by the GPU keep the main thread free, and the run short enough
+ */
 const STOP_MS = 50
-
-type Capacity = Record<keyof typeof BUDGETS, number | null>
 
 type StressReport = Report & {
   budgets: typeof BUDGETS
   /**
-   * By gesture, the largest drawing measured whose frames fit in each budget, the smaller ones too: the real capacity lies
-   * between it and the next size. Null when the smallest one does not fit
+   * By gesture, the largest drawing measured whose frames keep each frame rate, the smaller ones too: the real capacity
+   * lies between it and the next size. Before 2026-11-27, it counted the work of the frames only, not their intervals
    */
   capacity: Record<string, Capacity>
 }
@@ -51,19 +50,6 @@ const results: Record<string, Metrics> = {}
 const samples: Record<string, Metrics[]> = {}
 /** The gestures whose frames went over STOP_MS, or which failed: they would fail again on the larger drawings */
 const stopped = new Set<string>()
-
-const getCapacity = (scenario: Scenario): Capacity => {
-  const getLargestFitting = (budget: number) => {
-    let capacity: number | null = null
-    for (const size of SIZES) {
-      const metrics = results[getResultKey(scenario, size)]
-      if (!metrics || metrics.frameWorkP95 > budget) break
-      capacity = size
-    }
-    return capacity
-  }
-  return { fps60: getLargestFitting(BUDGETS.fps60), fps30: getLargestFitting(BUDGETS.fps30) }
-}
 
 /** A capacity for the table: "≥ 20000" at the top of the climb, "< 100" below its bottom */
 const formatCapacity = (capacity: number | null) => {
@@ -85,7 +71,7 @@ beforeAll(async () => {
 afterAll(async () => {
   await endRuns()
   if (!Object.keys(results).length) return
-  const capacity = Object.fromEntries(GESTURES.map(scenario => [scenario.id, getCapacity(scenario)]))
+  const capacity = Object.fromEntries(GESTURES.map(scenario => [scenario.id, getCapacity(SIZES, size => results[getResultKey(scenario, size)])]))
   const report: StressReport = { ...getConditions(LABEL), budgets: BUDGETS, capacity, results, samples }
   await commands.writeFile(`tests/perf/results/stress-${LABEL}.json`, formatJson(report))
 
@@ -93,12 +79,13 @@ afterAll(async () => {
     ? [
         formatSizeTable('work of a frame, p95 (ms), by number of shapes', GESTURES, 'frameWorkP95'),
         formatSizeTable('work of a frame, mean (ms), by number of shapes', GESTURES, 'frameWorkMean'),
+        formatSizeTable('interval between frames, p95 (ms), by number of shapes', GESTURES, 'frameP95'),
         formatTextTable('capacity, in shapes', [
           ['gesture', '60 fps', '30 fps'],
           ...GESTURES.map(({ id }) => [id, formatCapacity(capacity[id]!.fps60), formatCapacity(capacity[id]!.fps30)])
         ]),
-        `Capacity: the largest drawing whose frames fit in ${Math.round(BUDGETS.fps60 * 10) / 10} ms (60 fps) and in ${Math.round(BUDGETS.fps30 * 10) / 10} ms (30 fps), at p95. ` +
-          `A gesture whose frames take over ${STOP_MS} ms, or which fails, is not measured on larger drawings (–)`
+        `Capacity: the largest drawing whose frames keep 60 fps and 30 fps, at p95: their work fits in ${Math.round(BUDGETS.fps60 * 10) / 10} ms and ${Math.round(BUDGETS.fps30 * 10) / 10} ms, ` +
+          `and they come as often, give or take ${Math.round((INTERVAL_TOLERANCE - 1) * 100)} %. A gesture whose frames take over ${STOP_MS} ms, or which fails, is not measured on larger drawings (–)`
       ]
     : []
   const operationTables = MEASURED_OPERATIONS.length

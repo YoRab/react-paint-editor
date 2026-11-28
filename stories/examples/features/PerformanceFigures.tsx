@@ -8,10 +8,12 @@ type ConditionId = 'cpu1-dpr1' | 'cpu4-dpr1' | 'cpu1-dpr2' | 'cpu4-dpr2' | 'soft
 type BySize = Record<string, number>
 type Figures = {
   date: string
-  /** By gesture, the largest drawing whose frames fit in each frame rate, the smaller ones too: null below the smallest one */
+  /** By gesture, the largest drawing whose frames keep each frame rate, the smaller ones too: null below the smallest one */
   capacity: Record<string, { fps60: number | null; fps30: number | null }>
   /** By gesture: the work of a frame, p95, in ms */
   frameWorkP95: Record<string, BySize>
+  /** By gesture: the interval between two frames, p95, in ms */
+  frameIntervalP95: Record<string, BySize>
   /** By operation: its duration, in ms */
   operationMs: Record<string, BySize>
 }
@@ -133,7 +135,9 @@ export const CapacityTable = () => {
 }
 
 /** A table with a row per item and a column per number of shapes, in the conditions chosen above it */
-const SizeTable = ({ items, firstColumn, field }: { items: Record<string, string>; firstColumn: string; field: 'frameWorkP95' | 'operationMs' }) => {
+type SizeField = 'frameWorkP95' | 'frameIntervalP95' | 'operationMs'
+
+const SizeTable = ({ items, firstColumn, field }: { items: Record<string, string>; firstColumn: string; field: SizeField }) => {
   const [condition, setCondition] = useState<ConditionId>('cpu1-dpr1')
   const selectId = useId()
   const figures = reference.conditions[condition]
@@ -185,6 +189,9 @@ const SizeTable = ({ items, firstColumn, field }: { items: Record<string, string
 
 /** The work of a frame of each gesture, p95, by number of shapes: "–" once the frames of a smaller drawing took over 50 ms */
 export const FrameWorkTable = () => <SizeTable items={GESTURES} firstColumn='Gesture' field='frameWorkP95' />
+
+/** The interval between two frames of each gesture, p95, by number of shapes */
+export const FrameIntervalTable = () => <SizeTable items={GESTURES} firstColumn='Gesture' field='frameIntervalP95' />
 
 /** The duration of each operation, by number of shapes */
 export const OperationsTable = () => <SizeTable items={OPERATIONS} firstColumn='Operation' field='operationMs' />
