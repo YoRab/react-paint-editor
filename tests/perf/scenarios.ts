@@ -61,6 +61,8 @@ export type Scenario = {
   variableCounts?: CountName[]
   /** A scenario whose counts this one must have, compared in the same run of pnpm bench:counts whatever the baseline */
   sameCountsAs?: string
+  /** The largest drawing on which the gesture can be played, the larger ones being skipped: say why */
+  maxShapes?: number
 }
 
 // ─── DOM helpers ───────────────────────────────────────────────────────────────
@@ -206,7 +208,7 @@ const createTranslateScenario = ({
   pick = shapes => Math.floor(shapes.length / 2),
   selectAll = false,
   ...scenario
-}: Pick<Scenario, 'id' | 'generate' | 'options'> & { pick?: (shapes: ShapeInput[]) => number; selectAll?: boolean }): Scenario => {
+}: Pick<Scenario, 'id' | 'generate' | 'options' | 'maxShapes'> & { pick?: (shapes: ShapeInput[]) => number; selectAll?: boolean }): Scenario => {
   let movedIds: string[] = []
   // the shapes drawn by the moved shapes, which move with them
   let movedLeaves: { id: string; x: number | undefined }[] = []
@@ -351,7 +353,9 @@ const pickMiddleRect = (shapes: ShapeInput[]) => {
   return rects.reduce((closest, index) => (Math.abs(index - middle) < Math.abs(closest - middle) ? index : closest))
 }
 
-const mixed = createTranslateScenario({ id: 'mixed', generate: generateMixedShapes, pick: pickMiddleRect })
+// From 20000 shapes, the cells of the grid are 5 px wide: the strokes of the lines, curves and brushes, grabbed up to
+// 8.5 px away, and the texts wider than their cell cover the rectangles, and the press grabs one of these shapes instead
+const mixed = createTranslateScenario({ id: 'mixed', generate: generateMixedShapes, pick: pickMiddleRect, maxShapes: 10_000 })
 
 // the grid as stars: the path of a custom shape is built from its parameters again on each move. Compare it to translate
 const translateCustom = createTranslateScenario({ id: 'translate-custom', generate: generateCustomShapes, options: CUSTOM_SHAPE_OPTIONS })

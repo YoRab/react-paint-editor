@@ -13,6 +13,7 @@ import {
   endRuns,
   getConditions,
   getResultKey,
+  getSizeSkip,
   measureRuns,
   prepareRuns,
   selectScenarios,
@@ -103,6 +104,7 @@ describe('stress', () => {
     const isGesture = GESTURES.includes(scenario)
     for (const [index, size] of SIZES.entries()) {
       it(`${scenario.id} with ${size} shapes`, async ({ skip, onTestFailed }) => {
+        skip(...getSizeSkip(scenario, size))
         skip(stopped.has(scenario.id), `a smaller drawing failed, or its frames took over ${STOP_MS} ms`)
         onTestFailed(() => {
           stopped.add(scenario.id)

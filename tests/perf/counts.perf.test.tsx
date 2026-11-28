@@ -5,7 +5,7 @@ import { afterAll, beforeAll, describe, expect, inject, it } from 'vitest'
 import { commands } from 'vitest/browser'
 import { COUNT_NAMES, type CountName, type Counts, pickCounts } from './metrics'
 import { type Comparison, compareSamples, formatJson, listSignificant } from './report'
-import { checkCriteria, endRuns, getResultKey, prepareRuns, REACT_BUILD, runOnce, selectScenarios } from './run'
+import { checkCriteria, endRuns, getResultKey, getSizeSkip, prepareRuns, REACT_BUILD, runOnce, selectScenarios } from './run'
 import { SCENARIOS } from './scenarios'
 
 const MEASURED_SCENARIOS = selectScenarios(SCENARIOS)
@@ -76,7 +76,8 @@ afterAll(async () => {
 describe('counts', () => {
   for (const scenario of MEASURED_SCENARIOS) {
     for (const size of SIZES) {
-      it(`${scenario.id} with ${size} shapes`, async () => {
+      it(`${scenario.id} with ${size} shapes`, async ({ skip }) => {
+        skip(...getSizeSkip(scenario, size))
         const key = getResultKey(scenario, size)
         const metrics = await runOnce(scenario, size, EVENTS_PER_FRAME)
         const counts = pickCounts(metrics)

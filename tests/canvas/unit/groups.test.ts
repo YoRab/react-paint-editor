@@ -659,11 +659,16 @@ describe('selection in the groups', () => {
 describe('drawing of a group', () => {
   const drawSettings = createPaintStore().getSettings()
 
+  /** The strokes and the copies of all the contexts, in their order: "canvas:stroke", "atlas0:copy" */
+  const events: string[] = []
+
   /** A context recording the strokes and the copies of the layers, and the opacity they are drawn with */
-  const createRecordingContext = () => {
+  const createRecordingContext = (name: string) => {
     const strokes: unknown[] = []
     const alphas: number[] = []
     const copies: { alpha: number; source: unknown }[] = []
+    /** The places of the copies in their source: the place of each layer in the atlas */
+    const places: Point[] = []
     const ctx = {
       canvas: { width: 1000, height: 600 },
       globalAlpha: 1,
@@ -682,20 +687,24 @@ describe('drawing of a group', () => {
       stroke(path: unknown) {
         strokes.push(path)
         alphas.push(this.globalAlpha)
+        events.push(`${name}:stroke`)
       },
-      drawImage(source: unknown) {
+      drawImage(source: unknown, sourceX: number, sourceY: number) {
         copies.push({ alpha: this.globalAlpha, source })
+        places.push([sourceX, sourceY])
+        events.push(`${name}:copy`)
       }
     }
-    return { ctx, strokes, alphas, copies }
+    return { ctx, strokes, alphas, copies, places }
   }
 
   const layers: ReturnType<typeof createRecordingContext>[] = []
   beforeEach(() => {
     layers.length = 0
+    events.length = 0
     vi.stubGlobal('document', {
       createElement: () => {
-        const layer = createRecordingContext()
+        const layer = createRecordingContext(`atlas${layers.length}`)
         layers.push(layer)
         return { ...layer.ctx.canvas, getContext: () => layer.ctx }
       }
@@ -709,7 +718,7 @@ describe('drawing of a group', () => {
   })
 
   const draw = (shapes: ShapeEntity[], options?: DrawShapesOptions) => {
-    const recording = createRecordingContext()
+    const recording = createRecordingContext('canvas')
     drawShapes(recording.ctx as unknown as CanvasRenderingContext2D, shapes, drawSettings, options)
     return recording
   }
@@ -729,9 +738,9 @@ describe('drawing of a group', () => {
     expect(strokes).toEqual([])
     expect(layers).toHaveLength(1)
     expect(layers[0]!.strokes).toEqual([b.path, a.path])
-    // the layer is the smallest one holding the shapes
+    // the layer is painted on the atlas of the canvas, as wide as it, and as high as the layer in a power of 2
     expect(copies).toEqual([{ alpha: 0.5, source: layers[0]!.ctx.canvas }])
-    expect(layers[0]!.ctx.canvas).toMatchObject({ width: 512, height: 64 })
+    expect(layers[0]!.ctx.canvas).toMatchObject({ width: 1000, height: 64 })
   })
 
   it('draws a group with an opacity in a group with an opacity on the layer of the outer group', () => {
@@ -768,6 +777,53 @@ describe('drawing of a group', () => {
     const { copies, alphas } = draw([thin], { pixelRatio: 2 })
     expect(copies).toEqual([])
     expect(alphas).toEqual([0.5])
+  })
+
+  /** A rectangle filled and stroked at half opacity: it is painted on a layer */
+  const transparent = (id: string, x: number, fields: Partial<ShapeEntity<'rect'>> = {}) =>
+    rect(id, x, 0, { style: { fillColor: '#ff0000', opacity: 50 }, ...fields })
+
+  it('paints the layers on the atlas before copying them, and draws the shapes between them once the layers before are copied', () => {
+    // drawn from the background: t1, y, t2, then x
+    const { copies } = draw([rect('x', 600), transparent('t2', 400), rect('y', 200), transparent('t1', 0)])
+    expect(layers).toHaveLength(1)
+    expect(events).toEqual(['atlas0:stroke', 'atlas0:stroke', 'canvas:copy', 'canvas:stroke', 'canvas:copy', 'canvas:stroke'])
+    expect(copies).toEqual([
+      { alpha: 0.5, source: layers[0]!.ctx.canvas },
+      { alpha: 0.5, source: layers[0]!.ctx.canvas }
+    ])
+  })
+
+  it('copies the layers of a full atlas before painting the next ones, then makes the atlas higher', () => {
+    // three wide rectangles in a row of the atlas, as wide as the canvas: the atlas of 64 pixels holds two rows
+    const shapes = Array.from({ length: 9 }, (_, index) => transparent(`t${index}`, 50 + index * 100, { y: 100, width: 300, height: 20 }))
+    draw(shapes)
+    expect(layers).toHaveLength(1)
+    const firstCopies = events.indexOf('canvas:copy')
+    const restCopies = events.length / 2 - firstCopies
+    expect(firstCopies).toBeGreaterThan(0)
+    expect(restCopies).toBeGreaterThan(0)
+    expect(events).toEqual([
+      ...Array(firstCopies).fill('atlas0:stroke'),
+      ...Array(firstCopies).fill('canvas:copy'),
+      ...Array(restCopies).fill('atlas0:stroke'),
+      ...Array(restCopies).fill('canvas:copy')
+    ])
+    expect(layers[0]!.ctx.canvas).toMatchObject({ width: 1000, height: 128 })
+  })
+
+  it('places a shape cut on the left at the start of a row, and a shape cut at the top in the first row, copying the atlas first', () => {
+    // drawn from the background: inside, cut on the left, then cut at the top. Each one goes beyond its box toward the
+    // border, out of the atlas rather than over the layers before it. Low enough for two rows in the atlas of 64 pixels
+    const inside = transparent('inside', 300, { y: 200, height: 10 })
+    const left = transparent('left', -50, { y: 200, height: 10 })
+    const top = transparent('top', 600, { y: -5, height: 10 })
+    const { places } = draw([top, left, inside])
+    expect(events).toEqual(['atlas0:stroke', 'atlas0:stroke', 'canvas:copy', 'canvas:copy', 'atlas0:stroke', 'canvas:copy'])
+    expect(places[0]).toEqual([0, 0])
+    expect(places[1]![0]).toBe(0)
+    expect(places[1]![1]).toBeGreaterThan(0)
+    expect(places[2]).toEqual([0, 0])
   })
 })
 

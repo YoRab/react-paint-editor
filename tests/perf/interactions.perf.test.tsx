@@ -10,6 +10,7 @@ import {
   endRuns,
   getConditions,
   getResultKey,
+  getSizeSkip,
   measureRuns,
   prepareRuns,
   selectScenarios,
@@ -70,7 +71,8 @@ afterAll(async () => {
 describe('interactions', () => {
   for (const scenario of MEASURED_SCENARIOS) {
     for (const size of SIZES) {
-      it(`${scenario.id} with ${size} shapes`, async () => {
+      it(`${scenario.id} with ${size} shapes`, async ({ skip }) => {
+        skip(...getSizeSkip(scenario, size))
         const runs = await measureRuns(scenario, size, WARMUP_RUNS, MEASURED_RUNS)
         const key = getResultKey(scenario, size)
         const metrics = medianMetrics(runs)

@@ -87,6 +87,10 @@ export const selectSizes = (defaults: number[]) => {
   return sizes.length ? sizes : defaults
 }
 
+/** Whether the drawing is larger than the gesture of the scenario allows, and the note of the skipped test */
+export const getSizeSkip = ({ id, maxShapes = Number.POSITIVE_INFINITY }: Scenario, size: number) =>
+  [size > maxShapes, `${id} is played on ${maxShapes} shapes at most`] as const
+
 /** The key of the result of a scenario at a size in the reports and the baseline: "scenario@shapes" */
 export const getResultKey = ({ id }: Pick<Scenario, 'id'>, size: number) => `${id}@${size}`
 

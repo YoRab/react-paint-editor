@@ -56,6 +56,7 @@ PERF_CPU=4 pnpm bench:counts                # checks that the counts do not depe
 - The counts measured are also written to `tests/perf/results/counts.json`, in the format of the baseline.
 - A count which changes with `PERF_CPU=4` depends on the speed of the machine: the CI, slower, would not measure the baseline. Such a count is left out of the comparison by the `variableCounts` of its scenario, with the reason. Only `rootCommits` and `editorCommits` of `add-picture` and `add-picture-autosave` are: the steps of the loading of a photo fall into one task of the browser or several, and React commits them together or apart.
 - A scenario with `sameCountsAs` must have the counts of another scenario, compared in the same run, also with `-u`: `translate-profiled`, measured by `frameDrawn` and `gestureMeasured`, has the counts of `translate`, so the profiling adds no render and no draw.
+- A scenario with `maxShapes` is skipped on the larger drawings, with the reason in the scenario: `mixed` is played on 10000 shapes at most, since from 20000 shapes the lines, curves, brushes and texts around its rectangle cover it.
 
 ## Compare two versions
 
@@ -93,7 +94,7 @@ PERF_LABEL=hidpi PERF_DPR=2 pnpm bench:stress
 PERF_LABEL=gpu PERF_GPU=1 pnpm bench:stress       # drawn by the GPU of the machine
 ```
 
-`stress.perf.test.tsx` measures the main gestures, `hover`, `translate`, `translate-all`, `pan`, `zoom`, `brush`, `mixed` and `opacity`, on larger and larger drawings: 100, 500, 1000, 2000, 5000, 10000 and 20000 shapes, 3 runs each, after a warm-up run on the first size. `PERF_SCENARIOS` takes any scenario of the benchmark, and the operations below. The acceptance criteria of the scenarios are checked at each size.
+`stress.perf.test.tsx` measures the main gestures, `hover`, `translate`, `translate-all`, `pan`, `zoom`, `brush`, `mixed` and `opacity`, on larger and larger drawings: 100, 500, 1000, 2000, 5000, 10000 and 20000 shapes (10000 at most for `mixed`, see `maxShapes`), 3 runs each, after a warm-up run on the first size. `PERF_SCENARIOS` takes any scenario of the benchmark, and the operations below. The acceptance criteria of the scenarios are checked at each size.
 
 - It measures the work of the frames, `frameWorkP95` and `frameWorkMean` (see the metrics). Unlike the frame intervals, they show the margin left in a frame on a fast machine.
 - A gesture whose frames take over 50 ms (p95) is not measured on the larger drawings: they would take minutes, and the gesture no longer keeps 30 fps. Neither is a gesture which fails, like a scenario whose check no longer passes: it would fail again on each of them.
